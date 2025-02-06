@@ -441,7 +441,7 @@ class SimulateController extends Controller
             );
 
             $storeStats->storeplayerseasonstats($stats['team_id'], $stats['player_id']);
-            $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+            // $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
         }
 
         // Calculate scores based on player stats
