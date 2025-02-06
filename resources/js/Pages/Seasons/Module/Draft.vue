@@ -246,10 +246,25 @@ const selectPlayer = (player) => {
 
 const draftPlayer = async () => {
     try {
+        // Show processing (loading) Swal
+        const loadingSwal = await Swal.fire({
+            title: 'Processing...',
+            text: 'Please wait while the players is being drafted.',
+            icon: 'info',
+            showConfirmButton: false,
+            allowOutsideClick: false,  // Prevents user from closing the Swal
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
         const response = await axios.post(route("draft.players")); // Update with your API endpoint
 
-        if(response){
-              // Show success alert
+        if (response) {
+            // Close the processing Swal
+            loadingSwal.close();
+
+            // Show success alert
             await Swal.fire({
                 title: 'Success!',
                 text: 'Player drafted successfully!',
@@ -257,6 +272,7 @@ const draftPlayer = async () => {
                 confirmButtonText: 'OK'
             });
 
+            // Fetch draft results and available players
             await fetchDraftResults();
             await fetchAvailablePlayers();
 
@@ -264,16 +280,20 @@ const draftPlayer = async () => {
             emits("newSeason", Math.random());
         }
     } catch (error) {
+        // Close the processing Swal in case of error
+        Swal.close();
+
         console.error("Error fetching draft history:", error);
 
         // Show error alert
         await Swal.fire({
             title: 'Error!',
-            text: error.response.data.message,
+            text: error.response?.data?.message || 'An unexpected error occurred.',
             icon: 'error',
         });
     }
 };
+
 const fetchRandomFullName1 = async () => {
     try {
         // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
