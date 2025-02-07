@@ -1,6 +1,6 @@
 <template>
     <!-- Player Profile and Playoff Performance in One Row -->
-    <div class="flex flex-col md:flex-row gap-6">
+    <div class="flex flex-col md:flex-row gap-6" v-if="!isLoading">
         <!-- Player Details Section -->
         <div
             class="player-details mb-6 flex-2"
@@ -404,8 +404,13 @@
             <PlayerRadarChart v-if="main_performance.player_details" :key="main_performance.player_details.player_id" :playerRatings="main_performance.player_details" />
         </div>
     </div>
-    <div class="flex">
-
+    <div class="flex" v-else>
+        <div class="flex items-center justify-center w-full h-32">
+            <div class="block text-center">
+                <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+                <p>Loading player data...</p>
+            </div>
+        </div>
     </div>
 </template>
 
@@ -433,8 +438,7 @@ const props = defineProps({
     },
 });
 const main_performance = ref([]);
-const season_logs = ref(props.season_logs);
-const playoff_logs = ref(props.playoff_logs);
+const isLoading = ref(false);
 const player_id = ref(props.player_id);
 
 // Watch for changes in player_id
@@ -445,11 +449,14 @@ onMounted(() => {
 
 const fetchPlayerMainPerformance = async () => {
     try {
+        isLoading.value = true;
         const response = await axios.post(route("players.main.performance"), {
             player_id: player_id.value,
         });
         main_performance.value = response.data;
+        isLoading.value = false;
     } catch (error) {
+        isLoading.value = false;
         console.error("Error fetching player playoff performance:", error);
     }
 };
