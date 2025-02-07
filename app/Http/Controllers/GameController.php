@@ -530,10 +530,6 @@ class GameController extends Controller
         $headToHead = \DB::table('head_to_head')
             ->where('team_id', $homeTeamId)
             ->where('opponent_id', $awayTeamId)
-            ->orWhere(function ($query) use ($homeTeamId, $awayTeamId) {
-                $query->where('team_id', $awayTeamId)
-                    ->where('opponent_id', $homeTeamId);
-            })
             ->first(); // We expect at most one record, so using first()
 
         if (!$headToHead) {
