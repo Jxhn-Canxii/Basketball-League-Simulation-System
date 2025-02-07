@@ -162,8 +162,8 @@ class SimulateController extends Controller
                 ];
             } else {
                 $performanceFactor = rand(100, 120) / 100; // Randomize within 80% to 120%
-                $offensiveRating = $player->shooting_rating + $player->passing_rating + 100;
-                $pointsPerMinute = 0.5 + ($player->shooting_rating / $offensiveRating);
+                $offensiveRating = ($player->shooting_rating + $player->passing_rating) / 200;
+                $pointsPerMinute = $offensiveRating + ($player->shooting_rating / 200);
                 $points = round($pointsPerMinute * $minutes * $performanceFactor);
 
                 $points = rand(0, $points);
@@ -248,8 +248,8 @@ class SimulateController extends Controller
                 ];
             } else {
                 $performanceFactor = rand(100, 120) / 100; // Randomize within 80% to 120%
-                $offensiveRating = $player->shooting_rating + $player->passing_rating + 100;
-                $pointsPerMinute = 0.5 + ($player->shooting_rating / $offensiveRating);
+                $offensiveRating = ($player->shooting_rating + $player->passing_rating) / 200;
+                $pointsPerMinute = $offensiveRating + ($player->shooting_rating / 200);
                 $points = round($pointsPerMinute * $minutes * $performanceFactor);
 
                 $points = rand(0, $points);
@@ -634,8 +634,8 @@ class SimulateController extends Controller
                     ];
                 } else {
                     $performanceFactor = rand(100, 120) / 100; // Randomize within 80% to 120%
-                    $offensiveRating = $player->shooting_rating + $player->passing_rating + 100;
-                    $pointsPerMinute = 0.5 + ($player->shooting_rating / $offensiveRating);
+                    $offensiveRating = ($player->shooting_rating + $player->passing_rating) / 200;
+                    $pointsPerMinute = $offensiveRating + ($player->shooting_rating / 200);
                     $points = round($pointsPerMinute * $minutes * $performanceFactor);
 
                     $points = rand(0, $points);
@@ -714,8 +714,8 @@ class SimulateController extends Controller
                     ];
                 } else {
                     $performanceFactor = rand(100, 120) / 100; // Randomize within 80% to 120%
-                    $offensiveRating = $player->shooting_rating + $player->passing_rating + 100;
-                    $pointsPerMinute = 0.5 + ($player->shooting_rating / $offensiveRating);
+                    $offensiveRating = ($player->shooting_rating + $player->passing_rating) / 200;
+                    $pointsPerMinute = $offensiveRating + ($player->shooting_rating / 200);
                     $points = round($pointsPerMinute * $minutes * $performanceFactor);
 
                     $points = rand(0, $points);
