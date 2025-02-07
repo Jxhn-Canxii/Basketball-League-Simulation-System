@@ -145,7 +145,7 @@
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 flex items-center"
             >
-                <i class="fa fa-trophy text-yellow-500 mr-2"></i>
+                <i class="fa fa-network-wired text-purple-500 mr-2"></i>
                 Playoff
             </h3>
             <div v-if="main_performance.playoff_performance">
@@ -251,7 +251,7 @@
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 flex items-center"
             >
-                <i class="fa fa-star text-yellow-500 mr-2"></i>
+                <i class="fa fa-trophy text-yellow-500 mr-2"></i>
                 Championships
             </h3>
             <div v-if="main_performance.national_championships?.length > 0">
