@@ -108,15 +108,16 @@ class RatingsController extends Controller
 
             // Rank players and assign roles
             $rankedPlayers = $stats->values();
-            // Assign the top 3 players as "star players"
-            foreach ($rankedPlayers->take(3) as $playerStat) {
+            // Assign the top 1 player as "star player"
+            $rankedPlayers->take(1)->each(function ($playerStat) {
                 Player::where('id', $playerStat->player_id)->update(['role' => 'star player']);
-            }
+            });
 
-            // Assign the next 2 players as "starters"
-            foreach ($rankedPlayers->slice(3, 2) as $playerStat) {
+            // Assign the next 4 players as "starters"
+            $rankedPlayers->slice(1, 4)->each(function ($playerStat) {
                 Player::where('id', $playerStat->player_id)->update(['role' => 'starter']);
-            }
+            });
+
 
             // Assign the next 5 players as "role players"
             foreach ($rankedPlayers->slice(5, 5) as $playerStat) {
