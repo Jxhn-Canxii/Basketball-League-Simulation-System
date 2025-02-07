@@ -258,7 +258,7 @@
                 class="text-md font-semibold text-gray-700 mb-2 flex items-center"
             >
                 <i class="fa fa-trophy text-yellow-500 mr-2"></i>
-                Championships
+                Championships ({{  main_performance.national_championships?.length + main_performance.conference_championships?.length + main_performance.national_overall_champions?.length + main_performance.conference_overall_champions?.length }})
             </h3>
             <div v-if="main_performance.national_championships?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
