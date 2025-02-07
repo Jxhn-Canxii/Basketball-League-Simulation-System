@@ -100,9 +100,9 @@
             </div>
 
             <!-- Display proposals by selected category -->
-            <div v-if="proposalsByCategory[selectedCategory].length > 0">
+            <div v-if="approvedByCategory[selectedCategory].length > 0">
                 <div class="grid grid-cols-2 gap-4">
-                    <div v-for="(proposal, index) in proposalsByCategory[selectedCategory]" :key="proposal.id" class="border p-4 rounded-lg bg-white shadow-md">
+                    <div v-for="(proposal, index) in approvedByCategory[selectedCategory]" :key="proposal.id" class="border p-4 rounded-lg bg-white shadow-md">
                         <div class="mt-4 flex justify-between items-center">
                             <div class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
                                 <h4 class="text-center font-semibold text-lg">{{ proposal.player_from_name }}</h4>
@@ -185,7 +185,12 @@ const proposalsByCategory = ref({
     "role player": [],
     "bench": []
 });
-
+const approvedByCategory = ref({
+    "star player": [],
+    "starter": [],
+    "role player": [],
+    "bench": []
+});
 onMounted(async () => {
     await fetchPendingTradeProposals();
     await fetchApprovedTradeProposals();
@@ -216,7 +221,6 @@ const fetchApprovedTradeProposals = async () => {
         const response = await axios.get(route("trade.list.approved")); // Update with your API endpoint
         approved.value = response.data.trade_proposals;
         current_season.value = response.data.current_season;
-        proposals.value = []; //clear pending proposals
         categorizeApprovedProposalsByRole();
     } catch (error) {
         console.error("Error fetching available proposals:", error);
@@ -240,16 +244,16 @@ const categorizeProposalsByRole = () => {
 };
 const categorizeApprovedProposalsByRole = () => {
     // Clear current categorization
-    proposalsByCategory.value["star player"] = [];
-    proposalsByCategory.value["starter"] = [];
-    proposalsByCategory.value["role player"] = [];
-    proposalsByCategory.value["bench"] = [];
+    approvedByCategory.value["star player"] = [];
+    approvedByCategory.value["starter"] = [];
+    approvedByCategory.value["role player"] = [];
+    approvedByCategory.value["bench"] = [];
 
     approved.value.forEach(proposal => {
         const role = proposal.player_to_role.toLowerCase();
         console.log(proposal.player_to_name);
-        if (proposalsByCategory.value[role]) {
-            proposalsByCategory.value[role].push(proposal);
+        if (approvedByCategory.value[role]) {
+            approvedByCategory.value[role].push(proposal);
         }
     });
 };
@@ -297,6 +301,7 @@ const autoTrade = async () => {
         const response = await axios.get(route("trade.decision.automated"));
         
         if (response && response.data && response.data.decisions) {
+            proposals.value = []; //clear pending proposals
             fetchApprovedTradeProposals();
             emits("newSeason", Math.random());
         }

@@ -555,7 +555,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
         activeIndex.value = index;
 
         // Show simulating game status
-        const simulatingAlert = Swal.fire({
+        Swal.fire({
             title: "Simulating...",
             text: "Please wait while the game is being simulated.",
             icon: "info",

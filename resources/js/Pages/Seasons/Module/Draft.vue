@@ -245,52 +245,51 @@ const selectPlayer = (player) => {
 };
 
 const draftPlayer = async () => {
+    // Show processing (loading) Swal
     try {
-        // Show processing (loading) Swal
-        const loadingSwal = await Swal.fire({
+        Swal.fire({
             title: 'Processing...',
-            text: 'Please wait while the players is being drafted.',
-            icon: 'info',
-            showConfirmButton: false,
-            allowOutsideClick: false,  // Prevents user from closing the Swal
+            text: 'Please wait while the player is being drafted.',
+            icon: "info",
+            allowOutsideClick: false,
             didOpen: () => {
                 Swal.showLoading();
-            }
+            },
         });
 
-        const response = await axios.post(route("draft.players")); // Update with your API endpoint
+        const response = await axios.get(route("draft.players")); // Make sure the API route is correct
+         // Close the processing Swal
+         Swal.close();
 
-        if (response) {
-            // Close the processing Swal
-            loadingSwal.close();
+        // Show success alert
+        await Swal.fire({
+            title: 'Success!',
+            text: 'Player drafted successfully!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+        });
 
-            // Show success alert
-            await Swal.fire({
-                title: 'Success!',
-                text: 'Player drafted successfully!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-
-            // Fetch draft results and available players
-            await fetchDraftResults();
-            await fetchAvailablePlayers();
-
-            isHide.value = true;
-            emits("newSeason", Math.random());
-        }
-    } catch (error) {
-        // Close the processing Swal in case of error
         Swal.close();
 
-        console.error("Error fetching draft history:", error);
+        // Fetch draft results and available players
+        await fetchDraftResults();
+        await fetchAvailablePlayers();
 
-        // Show error alert
-        await Swal.fire({
-            title: 'Error!',
-            text: error.response?.data?.message || 'An unexpected error occurred.',
-            icon: 'error',
-        });
+        isHide.value = true;
+        emits("newSeason", Math.random());
+    } catch (error) {
+      
+
+        console.error(error);
+          // Close the processing Swal in case of error
+        // Swal.close();
+
+        // await Swal.fire({
+        //     title: 'Error!',
+        //     text: errorMessage,
+        //     icon: 'error',
+        //     confirmButtonText: 'OK'
+        // });
     }
 };
 
