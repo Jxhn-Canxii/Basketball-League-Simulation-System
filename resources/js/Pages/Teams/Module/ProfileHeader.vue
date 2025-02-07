@@ -11,6 +11,12 @@
             >
                 <i class="fa fa-user text-blue-500 mr-2"></i>
                 Player Details
+                <small v-if="main_performance.player_details.injury_recovery_game_count > 0">
+                    <span class="inline-flex items-center justify-center animate-pulse ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-400 text-white">
+                        <i class="fa fa-medkit mr-1"></i> 
+                        {{ main_performance.player_details.injury_recovery_game_count ?? "-" }}
+                    </span>
+                </small>
             </h3>
             <p class="first-letter:uppercase">
                 <strong>Player ID:</strong> #{{
@@ -41,13 +47,22 @@
                 </span>
             </p>
             <p>
-                <strong>Country:</strong>
-                {{ main_performance.player_details.country ?? "-" }}
-            </p>
-            <p>
                 <strong>Team:</strong>
                 {{ main_performance.player_details.team_name ?? "-" }}
             </p>
+            <p>
+                <strong>Country:</strong>
+                {{ main_performance.player_details.country ?? "-" }}
+            </p>
+        
+            <h3
+                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+            >
+                <i class="fa fa-bar-chart text-orange-500 mr-2"></i>
+                Draft Details
+            </h3>
+
+          
             <p>
                 <strong>Draft:</strong>
                 {{ main_performance.player_details.draft_status ?? "-" }}
@@ -72,6 +87,12 @@
                     {{ main_performance.player_details.role }}
                 </span>
             </p>
+            <h3
+                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+            >
+                <i class="fa fa-list text-red-500 mr-2"></i>
+                League Experience
+            </h3>
             <p>
                 <strong>Season Exp:</strong>
                 <span
@@ -104,11 +125,17 @@
                     ({{ main_performance.playoff_count ?? 0 }})
                 </span>
             </p>
+            <h3
+                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+            >
+                <i class="fa fa-file-contract text-green-500 mr-2"></i>
+                Contracts
+            </h3>
             <p>
-                <strong>Contract:</strong>
+                <strong>Contract Left:</strong>
                 {{
-                    main_performance.player_details.contract_years +
-                        " years left" ?? "Unsigned"
+                    main_performance.player_details.contract_years > 0 ? main_performance.player_details.contract_years +
+                        " years left" : "Unsigned"
                 }}
             </p>
         </div>
@@ -224,7 +251,7 @@
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 flex items-center"
             >
-                <i class="fa fa-star text-gray-500 mr-2"></i>
+                <i class="fa fa-star text-yellow-500 mr-2"></i>
                 Championships
             </h3>
             <div v-if="main_performance.national_championships?.length > 0">
@@ -321,11 +348,13 @@
                     </p>
                 </div>
             </div>
-
+            <div v-else class="text-sm text-red-500">
+                <p>No championship available.</p>
+            </div>
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
             >
-                <i class="fa fa-star text-gray-500 mr-2"></i>
+                <i class="fa fa-medal text-yellow-500 mr-2"></i>
                 Awards
             </h3>
             <div v-if="main_performance.mvp_seasons?.length > 0">
@@ -366,6 +395,9 @@
                         {{ season.award_name }} ({{ season.season_name }})
                     </p>
                 </div>
+            </div>
+            <div v-else class="text-sm text-red-500">
+                <p>No awards data available.</p>
             </div>
         </div>
         <div class="career-highs flex-1">

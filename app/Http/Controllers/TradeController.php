@@ -43,7 +43,13 @@ class TradeController extends Controller
     public function getApprovedTradeProposals()
     {
         $latestSeasonId = DB::table('player_season_stats')->max('season_id') + 1;
+        $latestSeasonStatus = DB::table('seasons')
+        ->where('id', DB::table('seasons')->max('id'))  // Find the latest season by the max ID
+        ->value('status');  // Get the status of the latest season
     
+
+        $tradeSeasonEnd = config('timeline.player_trade') === $latestSeasonStatus;
+
         $proposals = DB::table('trade_proposals')
             ->leftJoin('teams as team_from', 'trade_proposals.team_from_id', '=', 'team_from.id')
             ->leftJoin('teams as team_to', 'trade_proposals.team_to_id', '=', 'team_to.id')
@@ -69,7 +75,9 @@ class TradeController extends Controller
     
         return response()->json([
             'trade_proposals' => $proposals,
-            'current_season' => $latestSeasonId
+            'current_season' => $latestSeasonId,
+            'trade_season_end' => $tradeSeasonEnd,
+            'current_status' => $latestSeasonStatus
         ]);
     }
     public function automatedTradeDecision()
@@ -487,7 +495,7 @@ class TradeController extends Controller
     private function findUnhappyStars()
     {
         $latestSeasonId = DB::table('seasons')->max('id');
-    
+
         $starPlayers = DB::table('players')
             ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
             ->join('standings_view', 'players.team_id', '=', 'standings_view.team_id')

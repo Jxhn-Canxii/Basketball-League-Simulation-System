@@ -3,7 +3,7 @@
         <h2 class="text-xl font-semibold text-gray-800">Trade Proposal</h2>
 
         <!-- Show 'Generate Proposal' button if proposals are empty -->
-        <div v-if="proposals.length === 0 && current_season > 1" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
+        <div v-if="proposals.length === 0 && current_season > 1 && !trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
             <button 
                 @click="generateTradeProposal"
                 v-if="approved.length === 0"
@@ -12,6 +12,7 @@
             </button>
             <button 
                 @click="endTrade" 
+                v-if="!trade_season_end"
                 class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
                 End Trade Season
             </button>
@@ -89,7 +90,7 @@
         <div v-if="approved.length > 0  && current_season > 2" >
             <!-- Show 'End Trade' button if there are proposals -->
             <!-- Tabs for categorizing proposals by role -->
-            <div class="flex mb-4 space-x-4">
+            <div class="flex mb-4 space-x-4 mt-6">
                 <button 
                     v-for="(category, index) in categories" 
                     :key="index" 
@@ -177,6 +178,7 @@ const selectedPlayer = ref(null);
 const proposals = ref([]);
 const approved = ref([]);
 const current_season = ref(null);
+const trade_season_end = ref(false);
 const selectedCategory = ref("star player"); // Default category
 const categories = ref(["star player", "starter", "role player", "bench"]); // Categories for roles
 const proposalsByCategory = ref({
@@ -221,6 +223,7 @@ const fetchApprovedTradeProposals = async () => {
         const response = await axios.get(route("trade.list.approved")); // Update with your API endpoint
         approved.value = response.data.trade_proposals;
         current_season.value = response.data.current_season;
+        trade_season_end.value = response.data.trade_season_end;
         categorizeApprovedProposalsByRole();
     } catch (error) {
         console.error("Error fetching available proposals:", error);
@@ -274,7 +277,7 @@ const endTrade = async () => {
                 icon: 'success',
                 confirmButtonText: 'OK'
             });
-            fetchPendingTradeProposals();
+            fetchApprovedTradeProposals();
             emits("newSeason", Math.random());
         }
     } catch (error) {
