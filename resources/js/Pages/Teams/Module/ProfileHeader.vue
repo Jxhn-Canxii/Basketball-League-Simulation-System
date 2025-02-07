@@ -284,7 +284,7 @@
             </div>
             <div v-if="main_performance.conference_championships?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
-                    Conference Championships
+                    Conf. Championships
                     {{
                         main_performance.conference_championships?.length > 0
                             ? "(" +
