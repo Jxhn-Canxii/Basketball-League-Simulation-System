@@ -18,126 +18,132 @@
                     </span>
                 </small>
             </h3>
-            <p class="first-letter:uppercase">
-                <strong>Player ID:</strong> #{{
-                    main_performance.player_details.player_id ?? "-"
-                }}
-            </p>
-            <p class="text-nowrap">
-                <strong>Name:</strong>
-                <span>
-                    {{ main_performance.player_details.player_name ?? "-" }} ,{{
-                    main_performance.player_details.age ?? "N/A"
+            <div class="ml-4">
+                <p class="first-letter:uppercase">
+                    <strong>Player ID:</strong> #{{
+                        main_performance.player_details.player_id ?? "-"
                     }}
-                    <sup
-                        :class="
-                            main_performance.player_details.age >=
-                            main_performance.player_details.retirement_age
-                                ? 'p-1 rounded-full text-red-500'
-                                :  'p-1 rounded-full text-yellow-500'
-                        "
-                    >
-                        {{
-                            main_performance.player_details.age >=
-                            main_performance.player_details.retirement_age
-                                ? "R"
-                                : "A"
+                </p>
+                <p class="text-nowrap">
+                    <strong>Name:</strong>
+                    <span>
+                        {{ main_performance.player_details.player_name ?? "-" }} ,{{
+                        main_performance.player_details.age ?? "N/A"
                         }}
-                    </sup>
-                </span>
-            </p>
-            <p>
-                <strong>Team:</strong>
-                {{ main_performance.player_details.team_name ?? "-" }}
-            </p>
-            <p>
-                <strong>Country:</strong>
-                {{ main_performance.player_details.country ?? "-" }}
-            </p>
-        
+                        <sup
+                            :class="
+                                main_performance.player_details.age >=
+                                main_performance.player_details.retirement_age
+                                    ? 'p-1 rounded-full text-red-500'
+                                    :  'p-1 rounded-full text-yellow-500'
+                            "
+                        >
+                            {{
+                                main_performance.player_details.age >=
+                                main_performance.player_details.retirement_age
+                                    ? "R"
+                                    : "A"
+                            }}
+                        </sup>
+                    </span>
+                </p>
+                <p>
+                    <strong>Team:</strong>
+                    {{ main_performance.player_details.team_name ?? "-" }}
+                </p>
+                <p>
+                    <strong>Country:</strong>
+                    {{ main_performance.player_details.country ?? "-" }}
+                </p>
+            </div>
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-bar-chart text-orange-500 mr-2"></i>
                 Draft Details
             </h3>
-
-          
-            <p>
-                <strong>Draft:</strong>
-                {{ main_performance.player_details.draft_status ?? "-" }}
-                {{
-                    main_performance.player_details.drafted_team
-                        ? "(" +
-                          main_performance.player_details.drafted_team +
-                          ")"
-                        : ""
-                }}
-            </p>
-            <p>
-                <strong>Draft Class:</strong>
-                {{ main_performance.player_details.draft_class ?? "-" }}
-            </p>
-            <p>
-                <strong>Role:</strong>
-                <span
-                    :class="roleClasses(main_performance.player_details.role)"
-                    class="p-1 mx-2 rounded-full"
-                >
-                    {{ main_performance.player_details.role }}
-                </span>
-            </p>
+            <div class="ml-4">
+                <p>
+                    <strong>Draft:</strong>
+                    {{ main_performance.player_details.draft_status ?? "-" }}
+                    {{
+                        main_performance.player_details.drafted_team
+                            ? "(" +
+                            main_performance.player_details.drafted_team +
+                            ")"
+                            : ""
+                    }}
+                </p>
+                <p>
+                    <strong>Draft Class:</strong>
+                    {{ main_performance.player_details.draft_class ?? "-" }}
+                </p>
+                <p>
+                    <strong>Role:</strong>
+                    <span
+                        :class="roleClasses(main_performance.player_details.role)"
+                        class="p-1 mx-2 rounded-full"
+                    >
+                        {{ main_performance.player_details.role }}
+                    </span>
+                </p>
+            </div>
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-list text-red-500 mr-2"></i>
                 League Experience
             </h3>
-            <p>
-                <strong>Season Exp:</strong>
-                <span
-                    class="text-xs"
-                    :class="playerExpStatusClass(main_performance.season_count)"
-                >
-                    {{
-                        playerExpStatusText(
-                            main_performance.season_count ??
-                                main_performance.season_count
-                        )
-                    }}
-                    ({{ main_performance.season_count ?? 0 }})
-                </span>
-            </p>
-            <p>
-                <strong>Playoff Exp:</strong>
-                <span
-                    class="text-xs"
-                    :class="
-                        playerExpStatusClass(main_performance.playoff_count)
-                    "
-                >
-                    {{
-                        playerExpStatusText(
-                            main_performance.playoff_count ??
-                                main_performance.playoff_count
-                        )
-                    }}
-                    ({{ main_performance.playoff_count ?? 0 }})
-                </span>
-            </p>
+            <div class="ml-4">
+                <p>
+                    <strong>Season Exp:</strong>
+                    <span
+                        class="text-xs"
+                        :class="playerExpStatusClass(main_performance.season_count)"
+                    >
+                        {{
+                            playerExpStatusText(
+                                main_performance.season_count ??
+                                    main_performance.season_count
+                            )
+                        }}
+                        ({{ main_performance.season_count ?? 0 }})
+                    </span>
+                </p>
+                <p>
+                    <strong>Playoff Exp:</strong>
+                    <span
+                        class="text-xs"
+                        :class="
+                            playerExpStatusClass(main_performance.playoff_count)
+                        "
+                    >
+                        {{
+                            playerExpStatusText(
+                                main_performance.playoff_count ??
+                                    main_performance.playoff_count
+                            )
+                        }}
+                        ({{ main_performance.playoff_count ?? 0 }})
+                    </span>
+                </p>
+            </div>
+           
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-file-contract text-green-500 mr-2"></i>
                 Contracts
             </h3>
-            <p>
-                <strong>Contract Left:</strong>
-                {{
-                    main_performance.player_details.contract_years > 0 ? main_performance.player_details.contract_years +
-                        " years left" : "Unsigned"
-                }}
-            </p>
+            <div class="ml-4">
+                <p>
+                    <strong>Contract Left:</strong>
+                    {{
+                        main_performance.player_details.contract_years > 0 ? main_performance.player_details.contract_years +
+                            " years left" : "Unsigned"
+                    }}
+                </p>
+            </div>
         </div>
 
         <!-- Playoff Performance Section -->
@@ -148,7 +154,7 @@
                 <i class="fa fa-network-wired text-purple-500 mr-2"></i>
                 Playoff
             </h3>
-            <div v-if="main_performance.playoff_performance">
+            <div v-if="main_performance.playoff_performance" class="ml-4">
                 <p>
                     <strong>Conf. Playins:</strong>
                     {{ main_performance.playoff_performance.play_ins_elims_round_1_appearances + main_performance.playoff_performance.play_ins_elims_round_2_appearances + main_performance.playoff_performance.play_ins_finals_appearances  ?? 0 }}
@@ -183,7 +189,7 @@
                     {{ main_performance.mvp_count ?? 0 }}
                 </p>
             </div>
-            <div v-else>
+            <div v-else class="ml-4">
                 <p>No playoff performance data available.</p>
             </div>
             <h3
@@ -192,7 +198,7 @@
                 <i class="fa fa-chart-line text-purple-500 mr-2"></i>
                 Career Highs
             </h3>
-            <div v-if="main_performance.career_highs">
+            <div v-if="main_performance.career_highs" class="ml-4">
                 <p>
                     <strong>Points:</strong>
                     {{
@@ -242,7 +248,7 @@
                     }}
                 </p>
             </div>
-            <div v-else>
+            <div v-else class="ml-4">
                 <p>No career highs data available.</p>
             </div>
         </div>
@@ -254,7 +260,7 @@
                 <i class="fa fa-trophy text-yellow-500 mr-2"></i>
                 Championships
             </h3>
-            <div v-if="main_performance.national_championships?.length > 0">
+            <div v-if="main_performance.national_championships?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
                     National Championships
                     {{
@@ -276,7 +282,7 @@
                     </p>
                 </div>
             </div>
-            <div v-if="main_performance.conference_championships?.length > 0">
+            <div v-if="main_performance.conference_championships?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
                     Conference Championships
                     {{
@@ -295,7 +301,7 @@
                     :key="index"
                     class="flex items-center mb-2"
                 >
-                    <i class="fa fa-ribbon text-yellow-500 mr-2"></i>
+                    <i class="fa fa-trophy text-yellow-500 mr-2"></i>
                     <p class="text-xs">
                         {{ season.season_name }} ({{
                             season.championship_team
@@ -303,8 +309,7 @@
                     </p>
                 </div>
             </div>
-           
-            <div v-if="main_performance.national_overall_champions?.length > 0">
+            <div v-if="main_performance.national_overall_champions?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
                     Nationals Rank #1
                     {{
@@ -326,7 +331,7 @@
                     </p>
                 </div>
             </div>
-            <div v-if="main_performance.conference_overall_champions?.length > 0">
+            <div v-if="main_performance.conference_overall_champions?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
                     Conference Rank #1
                     {{
@@ -348,16 +353,16 @@
                     </p>
                 </div>
             </div>
-            <div v-else class="text-sm text-red-500">
+            <div v-else class="text-sm text-red-500 ml-4">
                 <p>No championship available.</p>
             </div>
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
             >
-                <i class="fa fa-medal text-yellow-500 mr-2"></i>
-                Awards
+                <i class="fa fa-star text-yellow-500 mr-2"></i>
+                MVP
             </h3>
-            <div v-if="main_performance.mvp_seasons?.length > 0">
+            <div v-if="main_performance.mvp_seasons?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
                     MVP Seasons
                     {{
@@ -371,11 +376,20 @@
                     :key="index"
                     class="flex items-center mb-2"
                 >
-                    <i class="fa fa-medal text-yellow-500 mr-2"></i>
+                    <i class="fa fa-star text-yellow-500 mr-2"></i>
                     <p class="text-sm">{{ season }}</p>
                 </div>
             </div>
-            <div v-if="main_performance.awards?.length > 0">
+            <div v-else class="text-sm text-red-500 ml-4">
+                <p>No MVP data available.</p>
+            </div>
+            <h3
+                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+            >
+                <i class="fa fa-medal text-yellow-500 mr-2"></i>
+                Awards
+            </h3>
+            <div v-if="main_performance.awards?.length > 0" class="ml-4">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
                     Awards
                     {{
@@ -396,7 +410,7 @@
                     </p>
                 </div>
             </div>
-            <div v-else class="text-sm text-red-500">
+            <div v-else class="text-sm text-red-500 ml-4">
                 <p>No awards data available.</p>
             </div>
         </div>
