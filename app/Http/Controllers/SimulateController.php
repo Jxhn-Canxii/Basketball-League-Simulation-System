@@ -821,22 +821,40 @@ class SimulateController extends Controller
             }
 
              // Calculate scores based on player stats
-             $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
-             ->where('game_id', $gameData->game_id)
-             ->sum('points');
+            $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
+            ->where('game_id', $gameData->game_id)
+            ->sum('points');
 
             $awayScore = PlayerGameStats::where('team_id', $gameData->away_team_id)
-                ->where('game_id', $gameData->game_id)
-                ->sum('points');
+            ->where('game_id', $gameData->game_id)
+            ->sum('points');
 
+            // Check if the game is tied
+            if ($homeScore === $awayScore) {
+                // Simulate overtime
+                $overtimeMinutes = 5; // 5-minute overtime period
+                $overtimeStats = $this->simulateOvertime($homeTeamPlayers, $awayTeamPlayers, $gameData, $overtimeMinutes);
 
+                // Add overtime stats to the playerGameStats array
+                foreach ($overtimeStats as $stat) {
+                    $playerGameStats[] = $stat;
+                }
+
+                // Recalculate scores after overtime
+                $homeScore += array_sum(array_map(function ($stat) use ($gameData) {
+                    return $stat['team_id'] === $gameData->home_team_id ? $stat['points'] : 0;
+                }, $overtimeStats));
+
+                $awayScore += array_sum(array_map(function ($stat) use ($gameData) {
+                    return $stat['team_id'] === $gameData->away_team_id ? $stat['points'] : 0;
+                }, $overtimeStats));
+            }
+
+            // Update game data with final scores
             $gameData->home_score = $homeScore;
             $gameData->away_score = $awayScore;
             $gameData->status = 2;
-
-            // Save the updated scores
             $gameData->save();
-
 
             // Check if all rounds have been simulated for the season
             $allRoundsSimulatedForSeason = Schedules::where('season_id', $currentSeasonId)
@@ -932,6 +950,123 @@ class SimulateController extends Controller
     {
         $stealsPerMinute = 0.3 + ($player->steals_rating / 200);
         return round($stealsPerMinute * $minutes * $performanceFactor / 4);
+    }
+    private function simulateOvertime($homeTeamPlayers, $awayTeamPlayers, $gameData, $overtimeMinutes)
+    {
+        $overtimeStats = [];
+        $currentSeasonId = $gameData->season_id;
+
+        // Distribute overtime minutes for home team players
+        $homeOvertimeMinutes = $this->distributeMinutes($homeTeamPlayers, $overtimeMinutes, $gameData->game_id);
+
+        // Simulate home team player stats for overtime
+        foreach ($homeTeamPlayers as $player) {
+            $minutes = $homeOvertimeMinutes[$player->id] ?? 0;
+            if ($minutes === 0 || $player->is_injured) {
+                continue;
+            }
+
+            $performanceFactor = rand(100, 120) / 100;
+            $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
+
+            // Simulate stats for overtime
+            $twoPointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating / 100))) ?? 0;
+            $twoPointMade = rand(0, $twoPointAttempts);
+
+            $threePointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating / 100))) ?? 0;
+            $threePointMade = rand(0, $threePointAttempts);
+
+            $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
+            $freeThrowsMade = rand(0, $freeThrowAttempts);
+
+            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade);
+
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $turnovers = rand(0, 1); // Fewer turnovers in overtime
+            $fouls = rand(0, 1); // Fewer fouls in overtime
+
+            $overtimeStats[] = [
+                'player_id' => $player->id,
+                'game_id' => $gameData->game_id,
+                'season_id' => $currentSeasonId,
+                'team_id' => $player->team_id,
+                'points' => $points,
+                'rebounds' => $rebounds,
+                'assists' => 0, // Temporary value
+                'steals' => $steals,
+                'blocks' => $blocks,
+                'turnovers' => $turnovers,
+                'fouls' => $fouls,
+                'minutes' => $minutes,
+                'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
+                'field_goals_made' => $twoPointMade + $threePointMade,
+                'three_point_attempts' => $threePointAttempts,
+                'three_pointers_made' => $threePointMade,
+                'two_pointers_made' => $twoPointMade,
+                'two_point_attempts' => $twoPointAttempts,
+                'free_throw_attempts' => $freeThrowAttempts,
+                'free_throws_made' => $freeThrowsMade,
+            ];
+        }
+
+        // Distribute overtime minutes for away team players
+        $awayOvertimeMinutes = $this->distributeMinutes($awayTeamPlayers, $overtimeMinutes, $gameData->game_id);
+
+        // Simulate away team player stats for overtime
+        foreach ($awayTeamPlayers as $player) {
+            $minutes = $awayOvertimeMinutes[$player->id] ?? 0;
+            if ($minutes === 0 || $player->is_injured) {
+                continue;
+            }
+
+            $performanceFactor = rand(100, 120) / 100;
+            $defensiveImpact = $this->calculateDefensiveImpact($gameData->home_team_id);
+
+            // Simulate stats for overtime
+            $twoPointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating / 100))) ?? 0;
+            $twoPointMade = rand(0, $twoPointAttempts);
+
+            $threePointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating / 100))) ?? 0;
+            $threePointMade = rand(0, $threePointAttempts);
+
+            $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
+            $freeThrowsMade = rand(0, $freeThrowAttempts);
+
+            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade);
+
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $turnovers = rand(0, 1); // Fewer turnovers in overtime
+            $fouls = rand(0, 1); // Fewer fouls in overtime
+
+            $overtimeStats[] = [
+                'player_id' => $player->id,
+                'game_id' => $gameData->game_id,
+                'season_id' => $currentSeasonId,
+                'team_id' => $player->team_id,
+                'points' => $points,
+                'rebounds' => $rebounds,
+                'assists' => 0, // Temporary value
+                'steals' => $steals,
+                'blocks' => $blocks,
+                'turnovers' => $turnovers,
+                'fouls' => $fouls,
+                'minutes' => $minutes,
+                'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
+                'field_goals_made' => $twoPointMade + $threePointMade,
+                'three_point_attempts' => $threePointAttempts,
+                'three_pointers_made' => $threePointMade,
+                'two_pointers_made' => $twoPointMade,
+                'two_point_attempts' => $twoPointAttempts,
+                'free_throw_attempts' => $freeThrowAttempts,
+                'free_throws_made' => $freeThrowsMade,
+            ];
+        }
+
+        return $overtimeStats;
     }
     public function getscheduleids(Request $request)
     {
