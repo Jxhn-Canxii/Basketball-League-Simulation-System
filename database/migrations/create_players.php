@@ -1,45 +1,49 @@
-<?php
+CREATE TABLE players (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    country VARCHAR(100),
+    address VARCHAR(255),
+    team_id BIGINT UNSIGNED,
+    contract_years INT DEFAULT 0,
+    contract_expires_at DATE,
+    is_active BOOLEAN DEFAULT TRUE,
+    is_rookie BOOLEAN DEFAULT FALSE,
+    age INT NOT NULL,
+    retirement_age INT DEFAULT 35,
+    
+    -- New Position Column
+    position ENUM('PG', 'SG', 'SF', 'PF', 'C') NOT NULL DEFAULT 'SG',
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+    role VARCHAR(100),
 
-return new class extends Migration
-{
-    /**
-     * Run the migrations.
-     */
-    public function up()
-    {
-        Schema::create('players', function (Blueprint $table) {
-            $table->id(); // Primary key
-            $table->string('name'); // Player name or other columns
-            $table->unsignedBigInteger('team_id')->nullable();
-            $table->integer('contract_years')->default(1);
-            $table->timestamp('contract_expires_at')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_rookie')->default(true);
-            $table->integer('age')->default(0);
-            $table->integer('retirement_age')->default(0);
-            $table->decimal('injury_prone_percentage', 5, 2)->default(0.00);
-            $table->string('role')->default('bench'); // Default role is 'bench
+    -- Ratings
+    shooting_rating DECIMAL(5,2) DEFAULT 0,
+    defense_rating DECIMAL(5,2) DEFAULT 0,
+    passing_rating DECIMAL(5,2) DEFAULT 0,
+    rebounding_rating DECIMAL(5,2) DEFAULT 0,
+    health_rating DECIMAL(5,2) DEFAULT 0,
+    intellegence_rating DECIMAL(5,2) DEFAULT 0,
+    stamina_rating DECIMAL(5,2) DEFAULT 0,
+    speed_rating DECIMAL(5,2) DEFAULT 0,
+    overall_rating DECIMAL(5,2) DEFAULT 0,
+    type VARCHAR(50),
 
-            // Rating columns
-            $table->decimal('shooting_rating', 5, 2)->default(0.00);
-            $table->decimal('defense_rating', 5, 2)->default(0.00);
-            $table->decimal('passing_rating', 5, 2)->default(0.00);
-            $table->decimal('rebounding_rating', 5, 2)->default(0.00);
-            $table->decimal('overall_rating', 5, 2)->default(0.00);
+    -- Draft Information
+    draft_id BIGINT UNSIGNED,
+    draft_order INT DEFAULT NULL,
+    drafted_team_id BIGINT UNSIGNED DEFAULT NULL,
+    is_drafted BOOLEAN DEFAULT FALSE,
+    draft_status VARCHAR(255) DEFAULT NULL,
 
-            $table->timestamps();
-        });
-    }
+    -- Injury & Fatigue
+    injury_prone_percentage DECIMAL(5,2) DEFAULT 0,
+    is_injured BOOLEAN DEFAULT FALSE,
+    injury_type VARCHAR(255) DEFAULT NULL,
+    fatigue DECIMAL(5,2) DEFAULT 0,
+    injury_history TEXT DEFAULT NULL,
+    injury_recovery_games INT DEFAULT 0,
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down()
-    {
-        Schema::dropIfExists('players');
-    }
-};
+    -- Timestamps
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
