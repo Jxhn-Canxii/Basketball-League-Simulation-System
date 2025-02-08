@@ -9,10 +9,8 @@ class Player extends Model
 {
     use HasFactory;
 
-    // Define the table associated with the model (optional if follows Laravel conventions)
     protected $table = 'players';
 
-    // The attributes that are mass assignable
     protected $fillable = [
         'name',
         'country',
@@ -26,11 +24,19 @@ class Player extends Model
         'retirement_age',
         'injury_prone_percentage',
         'role',
+        'position', // Newly added position field
         'type',
         'shooting_rating',
         'defense_rating',
         'passing_rating',
         'rebounding_rating',
+        'athleticism_rating', // New
+        'basketball_iq_rating', // New
+        'strength_rating', // New
+        'stamina_rating', // New
+        'clutch_rating', // New
+        'leadership_rating', // New
+        'work_ethic_rating', // New
         'overall_rating',
         'draft_id',
         'draft_order',
@@ -44,12 +50,8 @@ class Player extends Model
         'injury_recovery_games',
     ];
 
-    // The attributes that are hidden for arrays (optional)
-    protected $hidden = [
-        // Any attributes you want to hide
-    ];
+    protected $hidden = [];
 
-    // The attributes that should be cast to native types (optional)
     protected $casts = [
         'contract_expires_at' => 'datetime',
     ];

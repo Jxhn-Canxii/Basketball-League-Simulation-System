@@ -705,7 +705,7 @@ class PlayersController extends Controller
         $age = rand(18, 25);
         $contractYears = rand(1, 5); // 1 to 5-year contract
         $attributes = $this->getRandomArchetypeAndAttributes();
-    
+       
         // Assign variables properly
         $selectedArchetype = $attributes['archetype'];
         $position = $attributes['position']; 

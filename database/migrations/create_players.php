@@ -10,7 +10,7 @@ CREATE TABLE players (
     is_rookie BOOLEAN DEFAULT FALSE,
     age INT NOT NULL,
     retirement_age INT DEFAULT 35,
-    
+
     -- New Position Column
     position VARCHAR(10),
 
@@ -21,10 +21,13 @@ CREATE TABLE players (
     defense_rating DECIMAL(5,2) DEFAULT 0,
     passing_rating DECIMAL(5,2) DEFAULT 0,
     rebounding_rating DECIMAL(5,2) DEFAULT 0,
-    health_rating DECIMAL(5,2) DEFAULT 0,
-    intellegence_rating DECIMAL(5,2) DEFAULT 0,
+    athleticism_rating DECIMAL(5,2) DEFAULT 0,
+    basketball_iq_rating DECIMAL(5,2) DEFAULT 0,
+    strength_rating DECIMAL(5,2) DEFAULT 0,
     stamina_rating DECIMAL(5,2) DEFAULT 0,
-    speed_rating DECIMAL(5,2) DEFAULT 0,
+    clutch_rating DECIMAL(5,2) DEFAULT 0,
+    leadership_rating DECIMAL(5,2) DEFAULT 0,
+    work_ethic_rating DECIMAL(5,2) DEFAULT 0,
     overall_rating DECIMAL(5,2) DEFAULT 0,
     type VARCHAR(50),
 
