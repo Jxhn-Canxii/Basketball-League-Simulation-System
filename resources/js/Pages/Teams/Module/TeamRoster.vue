@@ -51,6 +51,11 @@
                         <th
                             class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
                         >
+                            Pos
+                        </th>
+                        <th
+                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                        >
                             Exp
                         </th>
                         <th
@@ -172,6 +177,9 @@
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
                             {{ player.name }}<sup>{{ player.age }}</sup>
+                        </td>
+                        <td class="px-2 py-1 whitespace-nowrap border">
+                            {{ player.position }}
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
                             {{ player.total_seasons_played }} yrs.

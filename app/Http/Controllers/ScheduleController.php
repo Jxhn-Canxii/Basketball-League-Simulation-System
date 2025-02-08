@@ -288,12 +288,12 @@ class ScheduleController extends Controller
 
         // Ensure we only process if there are exactly 2 conferences
         if ($conferenceCount < 4) {
-            playoffschedulebyrank($request);
+            $this->playoffschedulebyrank($request);
         }else{
-            playoffschedulebyconference($request);
+            $this->playoffschedulebyconference($request);
         }
     }
-    public static function playoffschedulebyrank($request)
+    private static function playoffschedulebyrank($request)
     {
         // Retrieve inputs
         $seasonId = $request->season_id;
@@ -371,7 +371,7 @@ class ScheduleController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
         }
     }
-    public static function playoffschedulebyconference($request)
+    private static function playoffschedulebyconference($request)
     {
         // Retrieve inputs
         $seasonId = $request->season_id;

@@ -25,6 +25,7 @@
                             <thead class="bg-gray-50 text-nowrap">
                                 <tr>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Country</th>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Awards</th>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Current Team</th>
@@ -43,6 +44,7 @@
                                             <i class="fa fa-star fa-sm text-yellow-500"></i>
                                         </sup>
                                     </td>
+                                    <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap border">{{ player.country }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap border text-wrap">{{ player.awards }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name ?? '-' }}</td>

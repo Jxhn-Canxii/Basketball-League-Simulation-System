@@ -315,12 +315,13 @@ class TransactionsController extends Controller
         if ($teamsCount === 0) {
             // Update the last season's status to 15 if there are no incomplete teams
             // Update player roles based on the last season's stats
-            $update = ($seasonId == 0) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->updateTeamRolesBasedOnStats();
+            $update = ($seasonId == 0) ? $this->updateTeamRolesBasedOnStatsByRating() : true;
             // $update = true;
             if ($update) {
                 // After drafting logic but before DB::commit()
 
-                if ($seasonId == 0) {
+                if($seasonId == 0) {
+                    
                     DB::table('players')
                         ->where('draft_id', 1)
                         ->where('is_drafted', 0)

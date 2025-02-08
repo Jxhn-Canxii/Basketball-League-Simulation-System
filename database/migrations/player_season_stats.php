@@ -6,6 +6,7 @@ CREATE TABLE player_season_stats (
     role VARCHAR(255),
 
     -- Basic Per-Game Averages
+    avg_minutes_per_game DECIMAL(5, 2) DEFAULT 0,
     avg_points_per_game DECIMAL(5, 2) DEFAULT 0,
     avg_rebounds_per_game DECIMAL(5, 2) DEFAULT 0,
     avg_assists_per_game DECIMAL(5, 2) DEFAULT 0,
@@ -17,6 +18,8 @@ CREATE TABLE player_season_stats (
     -- Shooting Efficiency
     total_field_goals_made INT DEFAULT 0,
     total_field_goal_attempts INT DEFAULT 0,
+    total_two_pointers_made INT DEFAULT 0,
+    total_two_point_attempts INT DEFAULT 0,
     total_three_pointers_made INT DEFAULT 0,
     total_three_point_attempts INT DEFAULT 0,
     total_free_throws_made INT DEFAULT 0,
@@ -32,18 +35,28 @@ CREATE TABLE player_season_stats (
     total_fouls INT DEFAULT 0,
     total_minutes_played INT DEFAULT 0,
     total_games_played INT DEFAULT 0,
+    total_games INT DEFAULT 0,
 
-    -- Advanced Metrics
-    per DECIMAL(6, 3) GENERATED ALWAYS AS (
-        (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts - total_field_goals_made) - total_turnovers) / total_minutes_played
+    -- Advanced Metrics (Modified to DECIMAL(6,3) for 'eff')
+    per DECIMAL(5, 3) GENERATED ALWAYS AS (
+        CASE
+            WHEN total_minutes_played = 0 THEN 0
+            ELSE (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts - total_field_goals_made) - total_turnovers) / total_minutes_played
+        END
     ) STORED,
-    
-    ts_percent DECIMAL(6, 3) GENERATED ALWAYS AS (
-        total_points / (2 * (total_field_goal_attempts + (0.44 * total_free_throw_attempts)))
+
+    ts_percent DECIMAL(5, 3) GENERATED ALWAYS AS (
+        CASE
+            WHEN (total_field_goal_attempts + (0.44 * total_free_throw_attempts)) = 0 THEN 0
+            ELSE total_points / (2 * (total_field_goal_attempts + (0.44 * total_free_throw_attempts)))
+        END
     ) STORED,
 
     eff DECIMAL(6, 3) GENERATED ALWAYS AS (
-        (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts + total_free_throw_attempts + total_turnovers))
+        CASE
+            WHEN (total_field_goal_attempts + total_free_throw_attempts + total_turnovers) = 0 THEN 0
+            ELSE (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts + total_free_throw_attempts + total_turnovers))
+        END
     ) STORED,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

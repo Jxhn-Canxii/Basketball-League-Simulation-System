@@ -318,6 +318,7 @@ class PlayersController extends Controller
                     $playerStats[] = [
                         'player_id' => $player->id,
                         'name' => $player->name,
+                        'position' => $player->position,
                         'age' => $player->age,
                         'role' => $stats->role,
                         'is_active' => $player->is_active,
@@ -427,6 +428,7 @@ class PlayersController extends Controller
                     $playerStats[] = [
                         'player_id' => $playerId,
                         'name' => $player->name,
+                        'position' => $player->position,
                         'age' => $player->age,
                         'role' => $player->role,
                         'is_active' => $player->is_active,
@@ -546,6 +548,7 @@ class PlayersController extends Controller
                 'players.id as player_id',
                 'players.country',
                 'players.name',
+                'players.position',
                 'players.age',
                 'players.role',
                 'players.is_active',

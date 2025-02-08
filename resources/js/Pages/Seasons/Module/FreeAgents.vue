@@ -72,6 +72,11 @@
                                 <th
                                     class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
                                 >
+                                    POS
+                                </th>
+                                <th
+                                    class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                >
                                     Awards
                                 </th>
                                 <th
@@ -159,6 +164,9 @@
                                             <i class="fa fa-star fa-sm text-yellow-500"></i>
                                         </sup>
                                     </span>
+                                </td>
+                                <td class="px-2 py-1 whitespace-nowrap border text-wrap">
+                                    {{ player.position }}
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap border text-wrap">
                                     {{ player.awards }}
