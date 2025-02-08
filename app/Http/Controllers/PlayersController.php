@@ -688,13 +688,11 @@ class PlayersController extends Controller
             'address' => 'required|string|max:255',
             'country' => 'required|string',
         ]);
-
+    
         $latestSeasonId = DB::table('seasons')->max('id');
-
-        // Start at 1 if no records are found, otherwise increment the latest season ID
         $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
-
-        // Check if a player with the same name already exists in any team
+    
+        // Check if player already exists
         $existingPlayer = Player::where('name', $request->name)->first();
         if ($existingPlayer) {
             return response()->json([
@@ -702,48 +700,37 @@ class PlayersController extends Controller
                 'message' => 'A player with this name already exists in another team.',
             ], 400);
         }
-
-        // Generate random attributes
-        $age = mt_rand(18, 25);
-        $contractYears = rand(1, 5); // Random contract years between 1 and 5
-
-        // Get random archetype and attributes
+    
+        // Generate player attributes
+        $age = rand(18, 25);
+        $contractYears = rand(1, 5); // 1 to 5-year contract
         $attributes = $this->getRandomArchetypeAndAttributes();
+    
+        // Assign variables properly
         $selectedArchetype = $attributes['archetype'];
+        $position = $attributes['position']; 
         $shootingRating = $attributes['shooting_rating'];
         $defenseRating = $attributes['defense_rating'];
         $passingRating = $attributes['passing_rating'];
         $reboundingRating = $attributes['rebounding_rating'];
-
-        // Randomize player role
-        // $roles = ['star player', 'starter', 'role player', 'bench'];
-        // $role = $roles[array_rand($roles)];
-        // $role = 'bench';
-        // Modify ratings slightly based on role if needed
-        // switch ($role) {
-        //     case 'star player':
-        //         $shootingRating = min($shootingRating + rand(0, 10), 99);
-        //         $defenseRating = min($defenseRating + rand(0, 10), 99);
-        //         $passingRating = min($passingRating + rand(0, 10), 99);
-        //         $reboundingRating = min($reboundingRating + rand(0, 10), 99);
-        //         break;
-        //         // Add modifications for other roles as necessary
-        // }
-
-        // Calculate contract expiration date
-        $contractExpiresAt = Carbon::now()->addYears($contractYears);
-        $injuryPercentage = 0;
-        if (rand(1, 100) <= 30) {
-            // 40% chance to be injury-prone
-            // Assign a random value between 10 and 100 in increments of 10
-            $injuryPercentage = rand(50, 100);
-        }
-
-        $healthRatings = 99 -  $injuryPercentage;
-        // Calculate overall rating
-        $overallRating = ($shootingRating + $defenseRating + $passingRating + $reboundingRating +  $healthRatings) / 5;
-        
-        // Assign role based on the overall rating
+        $athleticism = $attributes['athleticism_rating'];
+        $basketballIq = $attributes['basketball_iq_rating'];
+        $strength = $attributes['strength_rating'];
+        $stamina = $attributes['stamina_rating'];
+        $clutch = $attributes['clutch_rating'];
+        $leadership = $attributes['leadership_rating'];
+        $workEthic = $attributes['work_ethic_rating'];
+    
+        // Injury calculation (30% chance)
+        $injuryPercentage = (rand(1, 100) <= 30) ? rand(50, 100) : 0;
+        $healthRatings = 99 - $injuryPercentage;
+    
+        // Calculate overall rating (now includes more factors)
+        $overallRating = round(($shootingRating + $defenseRating + $passingRating + $reboundingRating + 
+                               $athleticism + $basketballIq + $strength + $stamina + 
+                               $clutch + $leadership + $workEthic + $healthRatings) / 12, 2);
+    
+        // Determine role based on overall rating
         if ($overallRating >= 90) {
             $role = 'star player';
         } elseif ($overallRating >= 75) {
@@ -753,16 +740,17 @@ class PlayersController extends Controller
         } else {
             $role = 'bench';
         }
-        
-        $retirementAge = rand($age + 1, 45); // Retirement age should be greater than current age
-
-                // Determine retirement age based on health ratings
-        $minRetirementAge = max($age + 1, 35); // Ensure retirement age is always greater than current age and at least 35
-        $maxRetirementAge = 45 - (int)((99 - $healthRatings) / 5); // Scale max age based on health (lower health = earlier max age)
-        $maxRetirementAge = max($minRetirementAge, $maxRetirementAge); // Ensure maxAge is not less than minAge
-
-        $retirementAge = rand($minRetirementAge, $maxRetirementAge); // Randomize within the range
-        
+    
+        // Contract expiration
+        $contractExpiresAt = Carbon::now()->addYears($contractYears);
+    
+        // Retirement age logic (health impacts retirement)
+        $minRetirementAge = max($age + 1, 35);
+        $maxRetirementAge = 45 - (int)((99 - $healthRatings) / 5);
+        $maxRetirementAge = max($minRetirementAge, $maxRetirementAge);
+        $retirementAge = rand($minRetirementAge, $maxRetirementAge);
+    
+        // Create player
         $player = Player::create([
             'name' => $request->name,
             'address' => $request->address,
@@ -775,11 +763,19 @@ class PlayersController extends Controller
             'contract_expires_at' => $contractExpiresAt,
             'is_active' => true,
             'role' => $role,
-            'type' => $selectedArchetype, // Save archetype name
+            'position' => $position,
+            'type' => $selectedArchetype, 
             'shooting_rating' => $shootingRating,
             'defense_rating' => $defenseRating,
             'passing_rating' => $passingRating,
             'rebounding_rating' => $reboundingRating,
+            'athleticism_rating' => $athleticism,
+            'basketball_iq_rating' => $basketballIq,
+            'strength_rating' => $strength,
+            'stamina_rating' => $stamina,
+            'clutch_rating' => $clutch,
+            'leadership_rating' => $leadership,
+            'work_ethic_rating' => $workEthic,
             'overall_rating' => $overallRating,
             'draft_id' => $currentSeasonId,
             'draft_order' => 0,
@@ -788,13 +784,14 @@ class PlayersController extends Controller
             'draft_status' => 'Undrafted',
             'is_rookie' => true,
         ]);
-
+    
         return response()->json([
             'error' => false,
             'message' => 'Player added successfully',
             'player' => $player,
         ]);
     }
+    
 
     /**
      * Get a random archetype and its attributes.
@@ -814,150 +811,100 @@ class PlayersController extends Controller
     }
     private function getRandomArchetypeAndAttributes()
     {
-        $seasonId = $this->getLatestSeasonId();  // Assuming this gets the current season ID
-
-        // Define archetypes and their attribute ranges
+        $seasonId = $this->getLatestSeasonId();  // Get latest season
+    
+        // Define archetypes with expanded attributes
         $archetypes = [
             'playmaker' => [
-                'shooting' => [70, 85],
-                'defense' => [65, 80],
-                'passing' => [85, 99],
-                'rebounding' => [60, 75],
+                'shooting' => [70, 85], 'defense' => [65, 80], 'passing' => [85, 99], 'rebounding' => [60, 75],
+                'athleticism' => [75, 90], 'basketball_iq' => [85, 99], 'strength' => [60, 75], 'stamina' => [80, 95],
+                'clutch' => [70, 90], 'leadership' => [80, 95], 'work_ethic' => [75, 90]
             ],
             'defender' => [
-                'shooting' => [60, 75],
-                'defense' => [85, 99],
-                'passing' => [60, 75],
-                'rebounding' => [70, 85],
+                'shooting' => [60, 75], 'defense' => [85, 99], 'passing' => [60, 75], 'rebounding' => [70, 85],
+                'athleticism' => [70, 85], 'basketball_iq' => [75, 90], 'strength' => [75, 90], 'stamina' => [75, 90],
+                'clutch' => [65, 85], 'leadership' => [70, 85], 'work_ethic' => [80, 95]
             ],
             'scorer' => [
-                'shooting' => [85, 99],
-                'defense' => [60, 75],
-                'passing' => [65, 80],
-                'rebounding' => [60, 75],
+                'shooting' => [85, 99], 'defense' => [60, 75], 'passing' => [65, 80], 'rebounding' => [60, 75],
+                'athleticism' => [80, 95], 'basketball_iq' => [70, 85], 'strength' => [65, 80], 'stamina' => [75, 90],
+                'clutch' => [85, 99], 'leadership' => [70, 85], 'work_ethic' => [70, 85]
             ],
             'all-rounder' => [
-                'shooting' => [75, 90],
-                'defense' => [75, 90],
-                'passing' => [75, 90],
-                'rebounding' => [75, 90],
+                'shooting' => [75, 90], 'defense' => [75, 90], 'passing' => [75, 90], 'rebounding' => [75, 90],
+                'athleticism' => [80, 90], 'basketball_iq' => [85, 99], 'strength' => [75, 90], 'stamina' => [80, 95],
+                'clutch' => [80, 95], 'leadership' => [85, 99], 'work_ethic' => [85, 99]
             ],
             'hustler' => [
-                'shooting' => [60, 75],
-                'defense' => [70, 85],
-                'passing' => [60, 75],
-                'rebounding' => [65, 80],
-            ],
-            'underperformer' => [
-                'shooting' => [50, 65],
-                'defense' => [50, 65],
-                'passing' => [50, 65],
-                'rebounding' => [50, 65],
-            ],
-            'project' => [
-                'shooting' => [40, 60],
-                'defense' => [40, 60],
-                'passing' => [40, 60],
-                'rebounding' => [40, 60],
-            ],
-            'journeyman' => [
-                'shooting' => [55, 70],
-                'defense' => [55, 70],
-                'passing' => [55, 70],
-                'rebounding' => [55, 70],
-            ],
-            'benchwarmer' => [
-                'shooting' => [45, 60],
-                'defense' => [45, 60],
-                'passing' => [45, 60],
-                'rebounding' => [45, 60],
-            ],
-            'shooter' => [
-                'shooting' => [80, 95],
-                'defense' => [50, 65],
-                'passing' => [55, 70],
-                'rebounding' => [50, 65],
-            ],
-            'playoff-clutch' => [
-                'shooting' => [75, 90],
-                'defense' => [70, 85],
-                'passing' => [70, 85],
-                'rebounding' => [65, 80],
-            ],
-            'spot-up-shooter' => [
-                'shooting' => [85, 99],
-                'defense' => [50, 65],
-                'passing' => [50, 65],
-                'rebounding' => [50, 65],
-            ],
-            'energy-guy' => [
-                'shooting' => [60, 75],
-                'defense' => [65, 80],
-                'passing' => [55, 70],
-                'rebounding' => [60, 75],
-            ],
-            'weak-link' => [
-                'shooting' => [45, 60],
-                'defense' => [45, 60],
-                'passing' => [45, 60],
-                'rebounding' => [45, 60],
-            ],
-            'training-camp' => [
-                'shooting' => [40, 55],
-                'defense' => [40, 55],
-                'passing' => [40, 55],
-                'rebounding' => [40, 55],
-            ],
-            'specialist' => [
-                'shooting' => [70, 85],
-                'defense' => [50, 65],
-                'passing' => [50, 65],
-                'rebounding' => [50, 65],
+                'shooting' => [60, 75], 'defense' => [70, 85], 'passing' => [60, 75], 'rebounding' => [65, 80],
+                'athleticism' => [75, 90], 'basketball_iq' => [70, 85], 'strength' => [70, 85], 'stamina' => [85, 99],
+                'clutch' => [65, 80], 'leadership' => [70, 85], 'work_ethic' => [90, 99]
             ],
             'generational' => [
-                'shooting' => [95, 99],
-                'defense' => [95, 99],
-                'passing' => [95, 99],
-                'rebounding' => [95, 99],
-            ],
-            'one-of-one' => [
-                'shooting' => [99, 99],
-                'defense' => [99, 99],
-                'passing' => [99, 99],
-                'rebounding' => [99, 99],
+                'shooting' => [95, 99], 'defense' => [95, 99], 'passing' => [95, 99], 'rebounding' => [95, 99],
+                'athleticism' => [95, 99], 'basketball_iq' => [95, 99], 'strength' => [95, 99], 'stamina' => [95, 99],
+                'clutch' => [95, 99], 'leadership' => [95, 99], 'work_ethic' => [95, 99]
             ],
         ];
-        //test
-        // Check if next season is divisible by 4
+    
+        // Check if next season allows generational players
         $nextSeasonId = $seasonId + 1;
         if ($nextSeasonId % 4 === 0) {
-            // Add 'generational' and 'one-of-one' archetypes to the pool
             $archetypesToChooseFrom = array_merge($archetypes, [
-                'generational' => $archetypes['generational'],
-                'one-of-one' => $archetypes['one-of-one']
+                'generational' => $archetypes['generational']
             ]);
         } else {
-            // Use the regular archetypes (without 'generational' and 'one-of-one')
             $archetypesToChooseFrom = $archetypes;
         }
-
-        // Randomly select an archetype from the adjusted list
+    
+        // Select archetype
         $archetypeKeys = array_keys($archetypesToChooseFrom);
         $selectedArchetype = $archetypeKeys[array_rand($archetypeKeys)];
         $archetypeAttributes = $archetypesToChooseFrom[$selectedArchetype];
-
-        // Generate random ratings based on the selected archetype
-        $attributes = [
+    
+        // Generate ratings
+        $shooting = rand($archetypeAttributes['shooting'][0], $archetypeAttributes['shooting'][1]);
+        $defense = rand($archetypeAttributes['defense'][0], $archetypeAttributes['defense'][1]);
+        $passing = rand($archetypeAttributes['passing'][0], $archetypeAttributes['passing'][1]);
+        $rebounding = rand($archetypeAttributes['rebounding'][0], $archetypeAttributes['rebounding'][1]);
+        $athleticism = rand($archetypeAttributes['athleticism'][0], $archetypeAttributes['athleticism'][1]);
+        $basketballIq = rand($archetypeAttributes['basketball_iq'][0], $archetypeAttributes['basketball_iq'][1]);
+        $strength = rand($archetypeAttributes['strength'][0], $archetypeAttributes['strength'][1]);
+        $stamina = rand($archetypeAttributes['stamina'][0], $archetypeAttributes['stamina'][1]);
+        $clutch = rand($archetypeAttributes['clutch'][0], $archetypeAttributes['clutch'][1]);
+        $leadership = rand($archetypeAttributes['leadership'][0], $archetypeAttributes['leadership'][1]);
+        $workEthic = rand($archetypeAttributes['work_ethic'][0], $archetypeAttributes['work_ethic'][1]);
+    
+        // Assign position
+        if ($passing >= 85) {
+            $position = ($shooting >= 80) ? 'PG/SG' : 'PG';
+        } elseif ($shooting >= 85) {
+            $position = ($defense >= 70) ? 'SG/SF' : 'SG';
+        } elseif ($defense >= 85) {
+            $position = ($rebounding >= 75) ? 'SF/PF' : 'SF';
+        } elseif ($rebounding >= 85) {
+            $position = ($defense >= 75) ? 'PF/C' : 'C';
+        } else {
+            $position = ['PG', 'SG', 'SF', 'PF', 'C'][array_rand(['PG', 'SG', 'SF', 'PF', 'C'])];
+        }
+    
+        return [
             'archetype' => $selectedArchetype,
-            'shooting_rating' => rand($archetypeAttributes['shooting'][0], $archetypeAttributes['shooting'][1]),
-            'defense_rating' => rand($archetypeAttributes['defense'][0], $archetypeAttributes['defense'][1]),
-            'passing_rating' => rand($archetypeAttributes['passing'][0], $archetypeAttributes['passing'][1]),
-            'rebounding_rating' => rand($archetypeAttributes['rebounding'][0], $archetypeAttributes['rebounding'][1]),
+            'position' => $position,
+            'shooting_rating' => $shooting,
+            'defense_rating' => $defense,
+            'passing_rating' => $passing,
+            'rebounding_rating' => $rebounding,
+            'athleticism_rating' => $athleticism,
+            'basketball_iq_rating' => $basketballIq,
+            'strength_rating' => $strength,
+            'stamina_rating' => $stamina,
+            'clutch_rating' => $clutch,
+            'leadership_rating' => $leadership,
+            'work_ethic_rating' => $workEthic,
         ];
-
-        return $attributes;
     }
-
+    
     private function getRandomArchetypeAndAttributesV1()
     {
         // Define archetypes and their attribute ranges

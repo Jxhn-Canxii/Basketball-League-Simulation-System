@@ -12,7 +12,7 @@ CREATE TABLE players (
     retirement_age INT DEFAULT 35,
     
     -- New Position Column
-    position ENUM('PG', 'SG', 'SF', 'PF', 'C') NOT NULL DEFAULT 'SG',
+    position VARCHAR(10),
 
     role VARCHAR(100),
 
