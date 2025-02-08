@@ -396,27 +396,27 @@ class AwardsController extends Controller
         try {
             // Get the latest season ID or default to 1 if none exists
             $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 1;
-
+    
             // Fetch the specified player from the team
             $player = DB::table('players')
                 ->where('team_id', $teamId)
                 ->where('id', $playerId)
                 ->where('is_active', true)
                 ->first();
-
+    
             if (!$player) {
                 return response()->json(['error' => 'Player not found or inactive'], 404);
             }
-
+    
             // Query to count the total games played for a team in a given season
-            $gamesPlayedCount = $this->totalRegularSeasonGames($latestSeasonId,$teamId);
-
+            $gamesPlayedCount = $this->totalRegularSeasonGames($latestSeasonId, $teamId);
+    
             // Check if the player has stats in the latest season
             $hasStats = DB::table('player_game_stats')
                 ->where('player_id', $player->id)
                 ->where('season_id', $latestSeasonId)
                 ->exists();
-
+    
             if ($hasStats) {
                 // Calculate the player's aggregated stats for the latest season
                 $playerStats = DB::table('player_game_stats')
@@ -426,21 +426,28 @@ class AwardsController extends Controller
                         'player_id',
                         'team_id',
                         DB::raw('COUNT(CASE WHEN minutes > 0 THEN 1 END) as total_games_played'),
-                        DB::raw('SUM(CASE WHEN minutes > 0 THEN points ELSE 0 END) as total_points'),
-                        DB::raw('SUM(CASE WHEN minutes > 0 THEN rebounds ELSE 0 END) as total_rebounds'),
-                        DB::raw('SUM(CASE WHEN minutes > 0 THEN assists ELSE 0 END) as total_assists'),
-                        DB::raw('SUM(CASE WHEN minutes > 0 THEN steals ELSE 0 END) as total_steals'),
-                        DB::raw('SUM(CASE WHEN minutes > 0 THEN blocks ELSE 0 END) as total_blocks'),
-                        DB::raw('SUM(CASE WHEN minutes > 0 THEN turnovers ELSE 0 END) as total_turnovers'),
-                        DB::raw('SUM(CASE WHEN minutes > 0 THEN fouls ELSE 0 END) as total_fouls'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN minutes ELSE NULL END) as avg_minutes_per_game'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN points ELSE NULL END) as avg_points_per_game'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN rebounds ELSE NULL END) as avg_rebounds_per_game'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN assists ELSE NULL END) as avg_assists_per_game'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN steals ELSE NULL END) as avg_steals_per_game'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN blocks ELSE NULL END) as avg_blocks_per_game'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN turnovers ELSE NULL END) as avg_turnovers_per_game'),
-                        DB::raw('AVG(CASE WHEN minutes > 0 THEN fouls ELSE NULL END) as avg_fouls_per_game')
+                        DB::raw('SUM(minutes) as total_minutes_played'),
+                        DB::raw('SUM(points) as total_points'),
+                        DB::raw('SUM(rebounds) as total_rebounds'),
+                        DB::raw('SUM(assists) as total_assists'),
+                        DB::raw('SUM(steals) as total_steals'),
+                        DB::raw('SUM(blocks) as total_blocks'),
+                        DB::raw('SUM(turnovers) as total_turnovers'),
+                        DB::raw('SUM(fouls) as total_fouls'),
+                        DB::raw('SUM(field_goals_made) as total_field_goals_made'),
+                        DB::raw('SUM(field_goal_attempts) as total_field_goal_attempts'),
+                        DB::raw('SUM(three_pointers_made) as total_three_pointers_made'),
+                        DB::raw('SUM(three_point_attempts) as total_three_point_attempts'),
+                        DB::raw('SUM(free_throws_made) as total_free_throws_made'),
+                        DB::raw('SUM(free_throw_attempts) as total_free_throw_attempts'),
+                        DB::raw('AVG(minutes) as avg_minutes_per_game'),
+                        DB::raw('AVG(points) as avg_points_per_game'),
+                        DB::raw('AVG(rebounds) as avg_rebounds_per_game'),
+                        DB::raw('AVG(assists) as avg_assists_per_game'),
+                        DB::raw('AVG(steals) as avg_steals_per_game'),
+                        DB::raw('AVG(blocks) as avg_blocks_per_game'),
+                        DB::raw('AVG(turnovers) as avg_turnovers_per_game'),
+                        DB::raw('AVG(fouls) as avg_fouls_per_game')
                     )
                     ->groupBy('player_id', 'team_id')
                     ->first();
@@ -450,6 +457,7 @@ class AwardsController extends Controller
                     'player_id' => $player->id,
                     'total_games' => $gamesPlayedCount,
                     'total_games_played' => 0,
+                    'total_minutes_played' => 0,
                     'total_points' => 0,
                     'total_rebounds' => 0,
                     'total_assists' => 0,
@@ -457,6 +465,12 @@ class AwardsController extends Controller
                     'total_blocks' => 0,
                     'total_turnovers' => 0,
                     'total_fouls' => 0,
+                    'total_field_goals_made' => 0,
+                    'total_field_goal_attempts' => 0,
+                    'total_three_pointers_made' => 0,
+                    'total_three_point_attempts' => 0,
+                    'total_free_throws_made' => 0,
+                    'total_free_throw_attempts' => 0,
                     'avg_minutes_per_game' => 0,
                     'avg_points_per_game' => 0,
                     'avg_rebounds_per_game' => 0,
@@ -467,13 +481,13 @@ class AwardsController extends Controller
                     'avg_fouls_per_game' => 0,
                 ];
             }
-
-            // Fetch the player's role for the specified season
+    
+            // Fetch the player's role and position for the specified season
             $playerRating = DB::table('player_ratings')
                 ->where('player_id', $player->id)
                 ->where('season_id', $latestSeasonId)
                 ->first();
-
+    
             // Insert or update the player's season stats in the player_season_stats table
             DB::table('player_season_stats')->updateOrInsert(
                 [
@@ -483,6 +497,7 @@ class AwardsController extends Controller
                 [
                     'team_id' => $player->team_id,
                     'role' => $playerRating->role ?? $player->role, // Role from player_ratings or default
+                    'position' => $playerRating->position ?? $player->position, // Position from player_ratings or default
                     'avg_minutes_per_game' => $playerStats->avg_minutes_per_game,
                     'avg_points_per_game' => $playerStats->avg_points_per_game,
                     'avg_rebounds_per_game' => $playerStats->avg_rebounds_per_game,
@@ -493,6 +508,7 @@ class AwardsController extends Controller
                     'avg_fouls_per_game' => $playerStats->avg_fouls_per_game,
                     'total_games' => $gamesPlayedCount,
                     'total_games_played' => $playerStats->total_games_played,
+                    'total_minutes_played' => $playerStats->total_minutes_played,
                     'total_points' => $playerStats->total_points,
                     'total_rebounds' => $playerStats->total_rebounds,
                     'total_assists' => $playerStats->total_assists,
@@ -500,11 +516,17 @@ class AwardsController extends Controller
                     'total_blocks' => $playerStats->total_blocks,
                     'total_turnovers' => $playerStats->total_turnovers,
                     'total_fouls' => $playerStats->total_fouls,
+                    'total_field_goals_made' => $playerStats->total_field_goals_made,
+                    'total_field_goal_attempts' => $playerStats->total_field_goal_attempts,
+                    'total_three_pointers_made' => $playerStats->total_three_pointers_made,
+                    'total_three_point_attempts' => $playerStats->total_three_point_attempts,
+                    'total_free_throws_made' => $playerStats->total_free_throws_made,
+                    'total_free_throw_attempts' => $playerStats->total_free_throw_attempts,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
             );
-
+    
             return response()->json(['message' => 'Player season stats stored successfully.']);
         } catch (\Exception $e) {
             // Log the error and return a generic error response
@@ -512,6 +534,7 @@ class AwardsController extends Controller
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }
+    
 
 
     public function getseasonawards(Request $request)
