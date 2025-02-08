@@ -149,8 +149,11 @@ export const roundStatusFormatter = (round,start,playIns) => {
     else if(start == 16 && playIns == false){
         switch (round) {
             case 'start':
-                newRound = 'quarter_finals';
+                newRound = 'round_of_16';
                 break;
+            case 'round_of_16':
+                newRound = 'quarter_finals';
+                break; 
             case 'quarter_finals':
                 newRound = 'semi_finals';
                 break;

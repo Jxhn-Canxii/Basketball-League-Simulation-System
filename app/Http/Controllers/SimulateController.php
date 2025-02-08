@@ -919,19 +919,19 @@ class SimulateController extends Controller
     private function calculateRebounds($player, $minutes, $performanceFactor)
     {
         $reboundPerMinute = 0.3 + ($player->rebounding_rating / 300);
-        return round($reboundPerMinute * $minutes * $performanceFactor);
+        return round($reboundPerMinute * $minutes * $performanceFactor / 2);
     }
 
     private function calculateBlocks($player, $minutes, $performanceFactor)
     {
         $blocksPerMinute = 0.3 + ($player->blocks_rating / 200);
-        return round($blocksPerMinute * $minutes * $performanceFactor);
+        return round($blocksPerMinute * $minutes * $performanceFactor / 4);
     }
 
     private function calculateSteals($player, $minutes, $performanceFactor)
     {
         $stealsPerMinute = 0.3 + ($player->steals_rating / 200);
-        return round($stealsPerMinute * $minutes * $performanceFactor);
+        return round($stealsPerMinute * $minutes * $performanceFactor / 4);
     }
     public function getscheduleids(Request $request)
     {
