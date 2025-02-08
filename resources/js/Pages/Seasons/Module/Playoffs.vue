@@ -22,7 +22,6 @@
                     </p>
                 </div>
             </div>
-
             <div
                 class="flex justify-center text-red-500 pt-4"
                 v-if="season_info.seasons && season_info.seasons[0].status == 2"
@@ -37,266 +36,269 @@
                     ) in season_playoffs.playoffs"
                     :key="roundName"
                     class="block"
+                    
                 >
-                    <h3
-                        v-if="season_playoffs.playoffs[roundName].length > 0"
-                        class="text-lg font-semibold text-orange-400 mt-4"
-                    >
-                        {{ roundNameFormatter(roundName) }}
-                    </h3>
-                    <div
-                        class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                    >
-                        <div
-                            v-for="(match, mm) in season_playoffs.playoffs[
-                                roundName
-                            ]"
-                            :key="match.game_id"
-                            class="col-span-1"
+                    <div v-if="season_playoffs.playoffs[roundName].length > 0">
+                        <h3
+                            v-if="season_playoffs.playoffs[roundName].length > 0"
+                            class="text-lg font-semibold text-orange-400 mt-4"
                         >
-                            <div class="shadow-md rounded-md overflow-hidden">
-                                <div
-                                    :class="
-                                        getConferenceClass(
-                                            match.home_team.conference,
-                                            match.away_team.conference
-                                        )
-                                    "
-                                    class="px-4 py-5 sm:px-6"
-                                >
-                                    <h3
-                                        class="text-xs font-extrabold text-nowrap uppercase leading-6 text-gray-800"
-                                    >
-                                        #{{ match.home_team.overall_rank }}
-                                        <a
-                                            href="#"
-                                            class="text-blue-500"
-                                            @click.prevent="
-                                                isTeamModalOpen =
-                                                    match.home_team.id
-                                            "
-                                            ><u>{{
-                                                match.home_team.name || "TBD"
-                                            }}</u></a
-                                        >
-                                        <sup class="text-red-500 font-bold"
-                                            >vs</sup
-                                        >
-                                        #{{ match.away_team.overall_rank }}
-                                        <a
-                                            href="#"
-                                            class="text-blue-500"
-                                            @click.prevent="
-                                                isTeamModalOpen =
-                                                    match.away_team.id
-                                            "
-                                            ><u>{{
-                                                match.away_team.name || "TBD"
-                                            }}</u></a
-                                        >
-                                    </h3>
-                                    <p
-                                        class="mt-1 text-xs uppercase text-gray-500"
-                                    >
-                                        {{ roundNameFormatter(roundName) }}
-                                    </p>
-                                </div>
-                                <div
-                                    class="border-gray-200 flex justify-between"
-                                >
+                            {{ roundNameFormatter(roundName) }}
+                        </h3>
+                        <div
+                            class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        >
+                            <div
+                                v-for="(match, mm) in season_playoffs.playoffs[
+                                    roundName
+                                ]"
+                                :key="match.game_id"
+                                class="col-span-1"
+                            >
+                                <div class="shadow-md rounded-md overflow-hidden">
                                     <div
-                                        class="bg-white px-4 text-nowrap text-gray-600 text-xs py-3"
-                                    >
-                                        {{ match.home_team.conference }} #{{
-                                            match.home_team.conference_rank
-                                        }}
-                                        vs {{ match.away_team.conference }} #{{
-                                            match.away_team.conference_rank
-                                        }}
-                                    </div>
-                                    <div
-                                        class="bg-white px-4 text-nowrap text-red-600 text-xs py-3 flex items-center"
-                                    >
-                                        <button
-                                            class="button"
-                                            @click.prevent="
-                                                compareTeams(
-                                                    match.home_team.id,
-                                                    match.away_team.id
-                                                )
-                                            "
-                                        >
-                                            Compare
-                                            <i
-                                                class="fa fa-exchange-alt ml-1"
-                                            ></i>
-                                            <!-- Font Awesome icon -->
-                                        </button>
-                                    </div>
-                                </div>
-                                <div class="border-t border-gray-200">
-                                    <dl
-                                        v-if="
-                                            (match.home_team.home_score === 0 &&
-                                                match.away_team.away_score ===
-                                                    0) ||
-                                            match.home_team.home_score ==
-                                                match.away_team.away_score
+                                        :class="
+                                            getConferenceClass(
+                                                match.home_team.conference,
+                                                match.away_team.conference
+                                            )
                                         "
+                                        class="px-4 py-5 sm:px-6"
+                                    >
+                                        <h3
+                                            class="text-xs font-extrabold text-nowrap uppercase leading-6 text-gray-800"
+                                        >
+                                            #{{ match.home_team.overall_rank }}
+                                            <a
+                                                href="#"
+                                                class="text-blue-500"
+                                                @click.prevent="
+                                                    isTeamModalOpen =
+                                                        match.home_team.id
+                                                "
+                                                ><u>{{
+                                                    match.home_team.name || "TBD"
+                                                }}</u></a
+                                            >
+                                            <sup class="text-red-500 font-bold"
+                                                >vs</sup
+                                            >
+                                            #{{ match.away_team.overall_rank }}
+                                            <a
+                                                href="#"
+                                                class="text-blue-500"
+                                                @click.prevent="
+                                                    isTeamModalOpen =
+                                                        match.away_team.id
+                                                "
+                                                ><u>{{
+                                                    match.away_team.name || "TBD"
+                                                }}</u></a
+                                            >
+                                        </h3>
+                                        <p
+                                            class="mt-1 text-xs uppercase text-gray-500"
+                                        >
+                                            {{ roundNameFormatter(roundName) }}
+                                        </p>
+                                    </div>
+                                    <div
+                                        class="border-gray-200 flex justify-between"
                                     >
                                         <div
-                                            v-if="!isHide || activeIndex != mm"
-                                            class="bg-white px-4 py-3 flex justify-between sm:gap-4 sm:px-6"
+                                            class="bg-white px-4 text-nowrap text-gray-600 text-xs py-3"
+                                        >
+                                            {{ match.home_team.conference }} #{{
+                                                match.home_team.conference_rank
+                                            }}
+                                            vs {{ match.away_team.conference }} #{{
+                                                match.away_team.conference_rank
+                                            }}
+                                        </div>
+                                        <div
+                                            class="bg-white px-4 text-nowrap text-red-600 text-xs py-3 flex items-center"
                                         >
                                             <button
-                                                @click="
-                                                    simulateGame(
-                                                        match.id,
-                                                        match.game_id,
-                                                        2,
-                                                        mm,
-                                                        roundName
+                                                class="button"
+                                                @click.prevent="
+                                                    compareTeams(
+                                                        match.home_team.id,
+                                                        match.away_team.id
                                                     )
                                                 "
-                                                class="text-nowrap text-indigo-600 font-bold text-sm hover:text-indigo-900"
                                             >
-                                                Simulate Game
-                                                {{
-                                                    match.home_team.score ==
-                                                        match.away_team
-                                                            .away_score &&
-                                                    match.home_team
-                                                        .home_score != 0 &&
-                                                    match.away_team
-                                                        .away_score != 0
-                                                        ? "(Overtime)"
-                                                        : ""
-                                                }}
+                                                Compare
+                                                <i
+                                                    class="fa fa-exchange-alt ml-1"
+                                                ></i>
+                                                <!-- Font Awesome icon -->
                                             </button>
-                                            <a
-                                                href="#"
-                                                class="text-sm text-green-500 underline font-bold"
-                                                @click.prevent="
-                                                    isGameResultModalOpen =
-                                                        match.game_id
-                                                "
-                                                >View Result</a
-                                            >
                                         </div>
-                                        <div
-                                            v-else
-                                            class="bg-white px-4 py-3 text-center text-nowrap sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
+                                    </div>
+                                    <div class="border-t border-gray-200">
+                                        <dl
+                                            v-if="
+                                                (match.home_team.home_score === 0 &&
+                                                    match.away_team.away_score ===
+                                                        0) ||
+                                                match.home_team.home_score ==
+                                                    match.away_team.away_score
+                                            "
                                         >
-                                            <p
-                                                class="text-red-500 animate-pulse text-xs"
+                                            <div
+                                                v-if="!isHide || activeIndex != mm"
+                                                class="bg-white px-4 py-3 flex justify-between sm:gap-4 sm:px-6"
                                             >
-                                                Getting results
-                                            </p>
-                                        </div>
-                                    </dl>
-                                    <dl v-else>
-                                        <div
-                                            class="bg-gray-100 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
-                                        >
-                                            <dt
-                                                class="text-sm font-medium text-gray-500"
+                                                <button
+                                                    @click="
+                                                        simulateGame(
+                                                            match.id,
+                                                            match.game_id,
+                                                            2,
+                                                            mm,
+                                                            roundName
+                                                        )
+                                                    "
+                                                    class="text-nowrap text-indigo-600 font-bold text-sm hover:text-indigo-900"
+                                                >
+                                                    Simulate Game
+                                                    {{
+                                                        match.home_team.score ==
+                                                            match.away_team
+                                                                .away_score &&
+                                                        match.home_team
+                                                            .home_score != 0 &&
+                                                        match.away_team
+                                                            .away_score != 0
+                                                            ? "(Overtime)"
+                                                            : ""
+                                                    }}
+                                                </button>
+                                                <a
+                                                    href="#"
+                                                    class="text-sm text-green-500 underline font-bold"
+                                                    @click.prevent="
+                                                        isGameResultModalOpen =
+                                                            match.game_id
+                                                    "
+                                                    >View Result</a
+                                                >
+                                            </div>
+                                            <div
+                                                v-else
+                                                class="bg-white px-4 py-3 text-center text-nowrap sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
                                             >
-                                                Home
-                                            </dt>
-                                            <dd
-                                                class="mt-1 text-sm text-gray-900 sm:col-span-2"
-                                                :class="
-                                                    match.home_team.id ==
-                                                    match.winner
-                                                        ? 'font-bold'
-                                                        : ''
-                                                "
+                                                <p
+                                                    class="text-red-500 animate-pulse text-xs"
+                                                >
+                                                    Getting results
+                                                </p>
+                                            </div>
+                                        </dl>
+                                        <dl v-else>
+                                            <div
+                                                class="bg-gray-100 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
                                             >
-                                                {{ match.home_team.home_score }}
-                                                <!-- Medal icon for winner -->
-                                                <span
-                                                    v-if="
+                                                <dt
+                                                    class="text-sm font-medium text-gray-500"
+                                                >
+                                                    Home
+                                                </dt>
+                                                <dd
+                                                    class="mt-1 text-sm text-gray-900 sm:col-span-2"
+                                                    :class="
                                                         match.home_team.id ==
                                                         match.winner
+                                                            ? 'font-bold'
+                                                            : ''
                                                     "
-                                                    class="ml-2 text-yellow-500"
                                                 >
-                                                    <i class="fas fa-medal"></i>
-                                                </span>
-                                            </dd>
-                                        </div>
-                                        <div
-                                            class="bg-gray-200 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
-                                        >
-                                            <dt
-                                                class="text-sm font-medium text-gray-500"
+                                                    {{ match.home_team.home_score }}
+                                                    <!-- Medal icon for winner -->
+                                                    <span
+                                                        v-if="
+                                                            match.home_team.id ==
+                                                            match.winner
+                                                        "
+                                                        class="ml-2 text-yellow-500"
+                                                    >
+                                                        <i class="fas fa-medal"></i>
+                                                    </span>
+                                                </dd>
+                                            </div>
+                                            <div
+                                                class="bg-gray-200 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
                                             >
-                                                Away
-                                            </dt>
-                                            <dd
-                                                class="mt-1 text-sm text-gray-900 sm:col-span-2"
-                                                :class="
-                                                    match.away_team.id ==
-                                                    match.winner
-                                                        ? 'font-bold'
-                                                        : ''
-                                                "
-                                            >
-                                                {{ match.away_team.away_score }}
-                                                <!-- Medal icon for winner -->
-                                                <span
-                                                    v-if="
+                                                <dt
+                                                    class="text-sm font-medium text-gray-500"
+                                                >
+                                                    Away
+                                                </dt>
+                                                <dd
+                                                    class="mt-1 text-sm text-gray-900 sm:col-span-2"
+                                                    :class="
                                                         match.away_team.id ==
                                                         match.winner
+                                                            ? 'font-bold'
+                                                            : ''
                                                     "
-                                                    class="ml-2 text-yellow-500"
                                                 >
-                                                    <i class="fas fa-medal"></i>
-                                                </span>
-                                            </dd>
-                                        </div>
-                                        <div
-                                            class="bg-white px-4 py-3 text-center text-nowrap sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
-                                        >
-                                            <a
-                                                href="#"
-                                                class="text-sm text-green-500 underline font-bold"
-                                                @click.prevent="
-                                                    isGameResultModalOpen =
-                                                        match.game_id
-                                                "
-                                                >View Result</a
+                                                    {{ match.away_team.away_score }}
+                                                    <!-- Medal icon for winner -->
+                                                    <span
+                                                        v-if="
+                                                            match.away_team.id ==
+                                                            match.winner
+                                                        "
+                                                        class="ml-2 text-yellow-500"
+                                                    >
+                                                        <i class="fas fa-medal"></i>
+                                                    </span>
+                                                </dd>
+                                            </div>
+                                            <div
+                                                class="bg-white px-4 py-3 text-center text-nowrap sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
                                             >
-                                        </div>
-                                    </dl>
+                                                <a
+                                                    href="#"
+                                                    class="text-sm text-green-500 underline font-bold"
+                                                    @click.prevent="
+                                                        isGameResultModalOpen =
+                                                            match.game_id
+                                                    "
+                                                    >View Result</a
+                                                >
+                                            </div>
+                                        </dl>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    <div
-                        class="flex justify-end"
-                        v-if="
-                            !isHide &&
-                            season_playoffs.playoffs[roundName].length > 0
-                        "
-                    >
-                        <button
+                        <div
+                            class="flex justify-end"
                             v-if="
-                                season_info.seasons[0].status ==
-                                    roundGridFormatter(
-                                        roundName,
-                                        season_info.seasons[0].start_playoffs
-                                    ) &&
-                                season_playoffs.playoffs[roundName].length >
-                                    0 &&
-                                roundName != 'finals'
+                                !isHide &&
+                                season_playoffs.playoffs[roundName].length > 0
                             "
-                            @click="createPlayOffSchedule(roundName)"
-                            class="text-indigo-600 font-bold text-md flex bg-orange-200 shadow p-1 rounded-full hover:text-indigo-900 mt-4"
                         >
-                            End
-                            {{ roundNameFormatter(roundName) }}
-                        </button>
+                            <button
+                                v-if="
+                                    season_info.seasons[0].status ==
+                                        roundGridFormatter(
+                                            roundName,
+                                            season_info.seasons[0].start_playoffs
+                                        ) &&
+                                    season_playoffs.playoffs[roundName].length >
+                                        0 &&
+                                    roundName != 'finals'
+                                "
+                                @click="createPlayOffSchedule(roundName)"
+                                class="text-indigo-600 font-bold text-md flex bg-orange-200 shadow p-1 rounded-full hover:text-indigo-900 mt-4"
+                            >
+                                End
+                                {{ roundNameFormatter(roundName) }}
+                            </button>
+                        </div>
                     </div>
                     <!-- <div class="flex justify-end" v-else>
                         <button

@@ -301,7 +301,7 @@ class ScheduleController extends Controller
         $start = $request->start;
 
         // Update season champions and losers if needed
-        if (($start == 16 && $round === 'round_of_16')) {
+        if (($start == 16 && $round === 'quarter_finals')) {
             self::updateSeasonChampionsAndLosers($seasonId);
         }
 
