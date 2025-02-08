@@ -1816,8 +1816,8 @@ class SimulateController extends Controller
     
                 // Assign roles
                 $roles = [
-                    'star player' => 1,
-                    'starter' => 4,
+                    'star player' => 3,
+                    'starter' => 2,
                     'role player' => 5,
                     'bench' => 5,
                 ];
