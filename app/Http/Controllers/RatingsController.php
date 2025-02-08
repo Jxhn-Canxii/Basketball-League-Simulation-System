@@ -137,7 +137,7 @@ class RatingsController extends Controller
                 DB::table('transactions')->insert([
                     'player_id' => $playerStat->player_id,
                     'season_id' => $seasonId,
-                    'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.' ?? 'Unknown Team'),
+                    'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
                     'from_team_id' => $teamId,
                     'to_team_id' => 0,
                     'status' => 'waived',
