@@ -299,7 +299,7 @@ class ScheduleController extends Controller
         $seasonId = $request->season_id;
         $round = $request->round;
         $start = $request->start;
-        
+
         // Update season champions and losers if needed
         if (($start == 16 && $round === 'round_of_16')) {
             self::updateSeasonChampionsAndLosers($seasonId);
@@ -345,7 +345,7 @@ class ScheduleController extends Controller
                     ->toArray();
 
                 // Generate pairings for the round of 16 (or other rounds)
-                $pairings = ($round == 'round_of_16') ? self::pairTeams($topTeamsByOverallRank, 8) : self::generatePairingsOneConference($seasonId, $conferenceId, $round);
+                $pairings = ($round == 'quarter_finals') ? self::pairTeams($topTeamsByOverallRank, 8) : self::generatePairingsOneConference($seasonId, $conferenceId, $round);
 
                 // Create the playoff schedule for the specified round for the current conference
                 $schedule = self::createSchedule($pairings, $seasonId, $round, $conferenceId);
