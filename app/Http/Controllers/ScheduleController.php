@@ -276,6 +276,108 @@ class ScheduleController extends Controller
         $round = $request->round;
         $start = $request->start;
 
+        // Retrieve the league_id from the seasons table
+        $leagueId = DB::table('seasons')
+            ->where('id', $seasonId)
+            ->value('league_id');
+
+        // Retrieve the number of conferences based on the league_id
+        $conferenceCount = DB::table('conferences')
+            ->where('league_id', $leagueId)
+            ->count();
+
+        // Ensure we only process if there are exactly 2 conferences
+        if ($conferenceCount < 4) {
+            playoffschedulebyrank($request);
+        }else{
+            playoffschedulebyconference($request);
+        }
+    }
+    public static function playoffschedulebyrank($request)
+    {
+        // Retrieve inputs
+        $seasonId = $request->season_id;
+        $round = $request->round;
+        $start = $request->start;
+
+        // Update season champions and losers if needed
+        if (($start == 16 && $round === 'round_of_16')) {
+            self::updateSeasonChampionsAndLosers($seasonId);
+        }
+
+        // Retrieve the league_id from the seasons table
+        $leagueId = DB::table('seasons')
+            ->where('id', $seasonId)
+            ->value('league_id');
+
+        // Retrieve the number of conferences based on the league_id
+        $conferenceCount = DB::table('conferences')
+            ->where('league_id', $leagueId)
+            ->count();
+
+
+        // Initialize an array to collect all schedules
+        $allSchedules = [];
+
+        $topTeamsCount = $conferenceCount * 16 / $conferenceCount;
+
+        // Get top teams from each conference
+        $conferences = DB::table('conferences')
+            ->where('league_id', $leagueId)
+            ->pluck('id')
+            ->toArray();
+
+        if ($round == 'finals') {
+            $pairings = self::generatePairingsOneConference($seasonId, 0, $round);
+            $allSchedules = self::createSchedule($pairings, $seasonId, $round, 0);
+        } else {
+            //round of 32,round of 36 and quarter finals
+            // Determine the number of top teams to select per conference
+
+            foreach ($conferences as $conferenceId) {
+                // Get the top 6 teams by overall rank for the conference, breaking ties as necessary
+                $topTeamsByOverallRank = DB::table('standings_view')
+                    ->where('season_id', $seasonId)
+                    ->where('conference_id', $conferenceId)
+                    ->orderBy('overall_rank', 'asc') // Order by overall rank
+                    ->take(16) // Get exactly 6 teams, breaking ties with the additional criteria
+                    ->pluck('team_id')
+                    ->toArray();
+
+                // Generate pairings for the round of 16 (or other rounds)
+                $pairings = ($round == 'round_of_16') ? self::pairTeams($topTeamsByOverallRank, 8) : self::generatePairingsOneConference($seasonId, $conferenceId, $round);
+
+                // Create the playoff schedule for the specified round for the current conference
+                $schedule = self::createSchedule($pairings, $seasonId, $round, $conferenceId);
+
+                // Append the current conference's schedule to the allSchedules array
+                $allSchedules = array_merge($allSchedules, $schedule);
+            }
+        }
+        // Insert all playoff schedules into the database in a single batch
+        try {
+            self::insertSchedule($seasonId, $round, $allSchedules);
+
+            // Update the season's status based on the round
+            $status = self::roundStatusFormatter($round);
+            DB::table('seasons')
+                ->where('id', $seasonId)
+                ->update(['status' => $status]);
+
+            // If the schedule was inserted successfully, return a success response
+            return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
+        } catch (Exception $e) {
+            // If an exception occurred (due to duplicate schedule), return an error response
+            return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
+        }
+    }
+    public static function playoffschedulebyconference($request)
+    {
+        // Retrieve inputs
+        $seasonId = $request->season_id;
+        $round = $request->round;
+        $start = $request->start;
+
         // Update season champions and losers if needed
         if (($start == 16 && $round === 'play_ins_elims_round_1')) {
             self::updateSeasonChampionsAndLosers($seasonId);
@@ -614,6 +716,33 @@ class ScheduleController extends Controller
         }
     }
     // Function to generate pairings for playoff matches based on the round
+    private static function generatePairingsOneConference($seasonId, $conferenceId, $round)
+    {
+        // Initialize pairings array
+        $pairings = [];
+
+        // Generate pairings based on the round
+        switch ($round) {
+            case 'quarter_finals':
+                // Pair the teams for quarter-finals
+                $winners = self::getWinnersOfRound('round_of_16', $seasonId, $conferenceId);
+                $pairings = self::pairTeams($winners, 4);
+                break;
+            case 'semi_finals':
+                // Pair the winners of quarter-finals for semi-finals
+                $winners = self::getWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
+                $pairings = self::pairTeams($winners, 2);
+                break;
+            case 'finals':
+                // Pair the winners of semi-finals for finals
+                $winners = self::getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
+
+                $pairings = self::pairTeams($winners, 2);
+                break;
+        }
+
+        return $pairings;
+    }
     private static function generatePairings16($seasonId, $conferenceId, $round)
     {
         // Initialize pairings array

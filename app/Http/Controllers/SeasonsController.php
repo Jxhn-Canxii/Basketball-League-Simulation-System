@@ -203,9 +203,11 @@ class SeasonsController extends Controller
 
         $conferences = self::allconference($seasonId);
 
+        $totalConference = count($conferences);
         return response()->json([
             'seasons' => $seasons,
             'conferences' => $conferences,
+            'is_play_ins' =>  $totalConference > 4;
         ]);
     }
     private function allconference($seasonId)

@@ -472,7 +472,7 @@ const compareTeams = (home_id, away_id) => {
 const createPlayOffSchedule = async (round) => {
     try {
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
-        round = roundStatusFormatter(round, start_playoffs);
+        round = roundStatusFormatter(round, start_playoffs,season_info.value.seasons[0].is_play_ins);
         const response = await axios.post(route("create.schedule.playoff"), {
             season_id: form.seasons_id, // Assuming the parameter name should be schedule_id
             round: round,
