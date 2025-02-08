@@ -56,6 +56,7 @@ export const roundNameFormatter = (round) => {
     }
 }
 export const roundGridFormatter = (round,start) => {
+    const playIns = true;
     if(start == 32){
         switch (round) {
             case 'play_ins_elims':
@@ -118,8 +119,7 @@ export const roundGridFormatter = (round,start) => {
     }
 
 }
-export const roundStatusFormatter = (round,start) => {
-    const playIns = true;
+export const roundStatusFormatter = (round,start,playIns) => {
     let newRound;
     if(start == 32){
         switch (round) {
@@ -149,18 +149,15 @@ export const roundStatusFormatter = (round,start) => {
     else if(start == 16 && playIns == false){
         switch (round) {
             case 'start':
-                newRound = 'round_of_16';
-                break;
-            case 'round_of_16':
                 newRound = 'quarter_finals';
                 break;
             case 'quarter_finals':
                 newRound = 'semi_finals';
                 break;
             case 'semi_finals':
-                newRound = 'interconference_semi_finals';
+                newRound = 'finals';
                 break;
-            case 'interconference_semi_finals':
+            case 'finals':
                 newRound = 'finals';
                 break;
             default:

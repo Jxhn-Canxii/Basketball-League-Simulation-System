@@ -224,8 +224,8 @@ class ConferenceController extends Controller
                     4 => ['round_of_16'],
                     5 => ['quarter_finals'],
                     6 => ['semi_finals'],
-                    7 => ['interconference_semi_finals'],
                     8 => ['finals'],
+                    9 => ['finals'],
                 ];
             }
             if ($type == 1) {

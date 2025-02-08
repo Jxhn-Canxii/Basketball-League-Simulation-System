@@ -447,7 +447,7 @@ const isHide = ref(false);
 const activeIndex = ref(0);
 const season_info = ref(false);
 const season_playoffs = ref(false);
-
+const is_play_ins = ref(false);
 const form = useForm({
     seasons_id: 0,
 });
@@ -471,8 +471,10 @@ const compareTeams = (home_id, away_id) => {
 };
 const createPlayOffSchedule = async (round) => {
     try {
+        console.log(round);
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
-        round = roundStatusFormatter(round, start_playoffs,season_info.value.seasons[0].is_play_ins);
+        round = roundStatusFormatter(round,start_playoffs, is_play_ins.value);
+        console.log(round);
         const response = await axios.post(route("create.schedule.playoff"), {
             season_id: form.seasons_id, // Assuming the parameter name should be schedule_id
             round: round,
@@ -501,12 +503,15 @@ const createPlayOffSchedule = async (round) => {
 ///functions that can trigger a change value of change_key
 const fetchSeasonInfo = async (id) => {
     try {
+        let type = 0;
         form.seasons_id = id;
         const response = await axios.post(route("seasons.info"), {
             season_id: form.seasons_id,
         });
+
         season_info.value = response.data;
-        fetchSeasonPlayoffs(1);
+        is_play_ins.value = response.data.is_play_ins;
+        fetchSeasonPlayoffs(is_play_ins.value ? 2 : 1);
     } catch (error) {
         console.error("Error fetching season information:", error);
     }

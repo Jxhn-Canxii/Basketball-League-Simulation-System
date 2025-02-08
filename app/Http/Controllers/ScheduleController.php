@@ -288,9 +288,9 @@ class ScheduleController extends Controller
 
         // Ensure we only process if there are exactly 2 conferences
         if ($conferenceCount < 4) {
-            $this->playoffschedulebyrank($request);
+            Self::playoffschedulebyrank($request);
         }else{
-            $this->playoffschedulebyconference($request);
+            Self::playoffschedulebyconference($request);
         }
     }
     private static function playoffschedulebyrank($request)
@@ -299,7 +299,7 @@ class ScheduleController extends Controller
         $seasonId = $request->season_id;
         $round = $request->round;
         $start = $request->start;
-
+        
         // Update season champions and losers if needed
         if (($start == 16 && $round === 'round_of_16')) {
             self::updateSeasonChampionsAndLosers($seasonId);
@@ -736,7 +736,7 @@ class ScheduleController extends Controller
             case 'finals':
                 // Pair the winners of semi-finals for finals
                 $winners = self::getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
-
+                
                 $pairings = self::pairTeams($winners, 2);
                 break;
         }
@@ -778,39 +778,7 @@ class ScheduleController extends Controller
 
         return $pairings;
     }
-    // Function to get the winners of a specific round
-    private static function getWinnersOfRoundV1($round, $seasonId, $conferenceId)
-    {
-        // Retrieve the winners of the specified round from the database
-        $winners = false;
-        if ($round != 'semi_finals') {
-            $winners = DB::table('schedules')
-                ->where('round', $round)
-                ->where('conference_id', $conferenceId)
-                ->where('season_id', $seasonId)
-                ->get();
-        } else {
-            $winners = DB::table('schedules')
-                ->where('round', $round)
-                ->where('season_id', $seasonId)
-                ->get();
-        }
 
-
-        $winningIds = [];
-
-        foreach ($winners as $game) {
-            if ($game->home_score > $game->away_score) {
-                $winningIds[] = $game->home_id;
-            } elseif ($game->away_score > $game->home_score) {
-                $winningIds[] = $game->away_id;
-            } else {
-                // Handle draws if necessary
-            }
-        }
-
-        return $winningIds;
-    }
     private static function getWinnersOfRound($round, $seasonId, $conferenceId)
     {
         // Retrieve the winners of the specified round from the database
