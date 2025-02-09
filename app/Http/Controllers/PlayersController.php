@@ -288,7 +288,7 @@ class PlayersController extends Controller
         // Define role-based priority
         if (!empty($playerStats)) {
             usort($playerStats, function ($a, $b) {
-                return $b['effeciency'] <=> $a['effeciency']; // Sort descending by combined_score
+                return $b['per_game_score'] <=> $a['per_game_score']; // Sort descending by combined_score
             });
         }
 

@@ -144,9 +144,15 @@
                         </th>
                         <th
                             class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Fouls Per Game"
+                            title="Effeciency"
                         >
                             EFF
+                        </th>
+                        <th
+                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            title="Player Effeciency Ratings"
+                        >
+                            PER
                         </th>
                         <!-- <th
                             class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
@@ -242,6 +248,9 @@
                         <td class="px-2 py-1 whitespace-nowrap border">
                             <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
                         </td>
+                        <td class="px-2 py-1 whitespace-nowrap border">
+                            {{ player.per_game_score }}
+                        </td>
                         <!-- <td class="px-2 py-1 whitespace-nowrap border">
                             {{ player.combined_score }}
                         </td> -->
@@ -292,7 +301,7 @@
                         v-else
                         class="hover:bg-gray-100"
                     >
-                        <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="21">***No Players Found***</td>
+                        <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="22">***No Players Found***</td>
                     </tr>
                 </tbody>
             </table>
