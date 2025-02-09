@@ -6,6 +6,7 @@
         <div v-if="proposals.length === 0 && current_season > 1 && !trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
             <button 
                 @click="generateTradeProposal"
+                v-if="proposals.length > 0"
                 class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                 Generate Proposal
             </button>
