@@ -130,7 +130,7 @@ import Modal from "@/Components/Modal.vue";
 import axios from "axios";
 import { useForm } from "@inertiajs/vue3";
 
-import PlayerPerformance from "@/Pages/Teams/Module/PlayerPerformance.vue";
+import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 
 const showPlayerProfileModal = ref(false);
 const awards = ref([]);

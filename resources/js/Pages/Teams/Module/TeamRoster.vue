@@ -312,77 +312,6 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Modal for Adding Player -->
-        <Modal :show="showAddPlayerModal" :maxWidth="'sm'">
-            <button
-                class="flex float-end bg-gray-100 p-3"
-                @click.prevent="showAddPlayerModal = false"
-            >
-                <i class="fa fa-times text-black-600"></i>
-            </button>
-            <div class="grid grid-cols-1 gap-6 p-6">
-                <h2 class="text-lg font-semibold text-gray-800">Add Player</h2>
-                <div>
-                    <label
-                        for="player_name"
-                        class="block text-sm font-medium text-gray-700"
-                        >Player Name</label
-                    >
-                    <input
-                        v-model="newPlayerName"
-                        id="player_name"
-                        type="text"
-                        required
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm sm:text-sm"
-                    />
-                </div>
-                <button
-                    @click="addPlayer()"
-                    class="px-4 py-2 bg-green-500 text-white rounded"
-                >
-                    Add Player
-                </button>
-            </div>
-        </Modal>
-
-        <!-- Modal for Extending Contract -->
-        <Modal :show="showExtendModal" :maxWidth="'sm'">
-            <button
-                class="flex float-end bg-gray-100 p-3"
-                @click.prevent="showExtendModal = false"
-            >
-                <i class="fa fa-times text-black-600"></i>
-            </button>
-            <div class="grid grid-cols-1 gap-6 p-6">
-                <h2 class="text-lg font-semibold text-gray-800">
-                    Extend Contract
-                </h2>
-                <div><strong>Player:</strong> {{ selectedPlayer.name }}</div>
-                <div>
-                    <label
-                        for="additional_years"
-                        class="block text-sm font-medium text-gray-700"
-                        >Additional Years</label
-                    >
-                    <input
-                        v-model="additionalYears"
-                        id="additional_years"
-                        type="number"
-                        min="1"
-                        max="5"
-                        class="mt-1 block w-full border-gray-300 rounded-md shadow-sm sm:text-sm"
-                    />
-                </div>
-                <button
-                    @click="confirmExtendContract"
-                    class="px-4 py-2 bg-blue-500 text-white rounded"
-                >
-                    Extend Contract
-                </button>
-            </div>
-        </Modal>
-
         <!-- Modal for Player Profile -->
         <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
             <button
@@ -404,7 +333,7 @@ import { ref, onMounted, watch } from "vue";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import axios from "axios";
-import PlayerPerformance from "./PlayerPerformance.vue";
+import PlayerPerformance from "../../Players/Module/PlayerPerformance.vue";
 
 const props = defineProps({
     team_id: {
@@ -412,7 +341,6 @@ const props = defineProps({
         required: true,
     },
 });
-const showAddPlayerModal = ref(false);
 const showExtendModal = ref(false);
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);

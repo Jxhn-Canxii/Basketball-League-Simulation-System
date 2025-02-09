@@ -440,7 +440,7 @@ import axios from 'axios'; // Ensure axios is imported
 import Swal from "sweetalert2";
 import { roundNameFormatter, roleBadgeClass, playerFormatter } from "@/Utility/Formatter";
 
-import PlayerPerformance from '../Teams/Module/PlayerPerformance.vue';
+import PlayerPerformance from '../Players/Module/PlayerPerformance.vue';
 
 const average = ref([]);
 const total = ref([]);

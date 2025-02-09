@@ -108,7 +108,7 @@ import Swal from "sweetalert2";
 import Modal from "@/Components/Modal.vue";
 import Paginator from "@/Components/Paginator.vue";
 
-import PlayerPerformance from '../Teams/Module/PlayerPerformance.vue';
+import PlayerPerformance from './Module/PlayerPerformance.vue';
 
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref([]);
@@ -144,48 +144,6 @@ const showPlayerProfile = (player) => {
     selectedPlayer.value = player;
     showPlayerProfileModal.value = true;
 };
-
-const assignTeams = async (player_id) => {
-    try {
-        // Show confirmation dialog
-        const result = await Swal.fire({
-            title: 'Are you sure?',
-            text: 'Do you want to assign this player to a team?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonText: 'Yes, assign it!',
-            cancelButtonText: 'No, cancel',
-            reverseButtons: true
-        });
-
-        if (result.isConfirmed) {
-            // Proceed with the request if confirmed
-            const response = await axios.post(route("assign.freeagent.teams"), { player_id: player_id });
-
-            Swal.fire({
-                icon: 'success',
-                title: 'Success!',
-                text: response.data.message, // Assuming the response contains a 'message' field
-            });
-            fetchAllPlayers();
-        } else {
-            // Show cancellation message if canceled
-            Swal.fire({
-                icon: 'info',
-                title: 'Cancelled',
-                text: 'The player was not assigned to a team.',
-            });
-        }
-    } catch (error) {
-        console.error("Error assigning team:", error);
-        Swal.fire({
-            icon: 'error',
-            title: 'Oops...',
-            text: 'Something went wrong!',
-        });
-    }
-};
-
 const roleClasses = (role) => {
     switch (role) {
         case "starter":

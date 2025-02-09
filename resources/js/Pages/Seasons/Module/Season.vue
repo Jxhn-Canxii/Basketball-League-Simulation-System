@@ -70,24 +70,15 @@
                                         {{ team.conference_rank }}
                                     </td>
                                     <td class="px-1 py-1 whitespace-nowrap text-sm">
-                                        <button
-                                            type="button"
-                                            class="uppercase"
+                                        <TeamDetails
                                             :title="
                                                 ' Playoff Appearance:' +
                                                 team.playoff_appearances
                                             "
-                                            @click.prevent="
-                                                viewSeasons(team.team_id);
-                                            "
-                                        >
-                                            <b
-                                                >{{ team.team_name }}
-                                                <sup class="text-slate-500">{{
-                                                    team.streak_status
-                                                }}</sup></b
-                                            >
-                                        </button>
+                                            :team_id="team.team_id" 
+                                            :key="team.team_id" 
+                                            :showButton="0" 
+                                            :text="`${team.team_name}`" />
                                     </td>
                                     <td class="px-1 py-1 whitespace-nowrap text-sm">
                                         {{ team.wins }}
@@ -310,21 +301,15 @@
                             <td
                                 class="px-2 py-2 whitespace-nowrap uppercase text-sm"
                             >
-                                <button
-                                    type="button"
-                                    class="uppercase"
-                                    :title="
-                                        'Conference champions:' +
-                                        team.conference_1_rank +
-                                        ' Playoff Appearance:' +
-                                        team.playoff_appearances
-                                    "
-                                    @click.prevent="
-                                        viewSeasons(team.team_id);
-                                    "
-                                >
-                                    <b>{{ team.team_name }}</b>
-                                </button>
+                                <TeamDetails
+                                :title="
+                                    ' Playoff Appearance:' +
+                                    team.playoff_appearances
+                                "
+                                :team_id="team.team_id" 
+                                :key="team.team_id" 
+                                :showButton="0" 
+                                :text="`${team.team_name}`" />
                             </td>
                             <td
                                 class="px-2 py-2 whitespace-nowrap text-nowrap text-sm"
@@ -412,25 +397,41 @@
                 </div>
                 <!-- Stats List -->
                 <ul class="mt-4 uppercase" v-if="season_info.seasons">
-                    <li>
+                    <li class="flex space-x-3">
                         <i class="fas fa-trophy"></i>Finals Champion:
-                        {{ season_info.seasons[0].finals_winner_name }}
+                        <TeamDetails
+                                    :team_id="season_info.seasons[0].finals_winner_id" 
+                                    :key="season_info.seasons[0].finals_winner_id" 
+                                    :showButton="0" 
+                                    :text="`${season_info.seasons[0].finals_winner_name}`" />
                     </li>
-                    <li>
+                    <li class="flex space-x-3">
                         <i class="fas fa-medal"></i>Finals Runner Up:
-                        {{ season_info.seasons[0].finals_loser_name }}
+                        <TeamDetails
+                                    :team_id="season_info.seasons[0].finals_loser_id" 
+                                    :key="season_info.seasons[0].finals_loser_id" 
+                                    :showButton="0" 
+                                    :text="`${season_info.seasons[0].finals_loser_name}`" />
                     </li>
-                    <li>
+                    <li class="flex space-x-3">
                         <i class="fas fa-trophy"></i> Regular Season Champion:
-                        {{ season_info.seasons[0].champion_name }}
+                        <TeamDetails
+                                    :team_id="season_info.seasons[0].champion_id" 
+                                    :key="season_info.seasons[0].champion_id" 
+                                    :showButton="0" 
+                                    :text="`${season_info.seasons[0].champion_name}`" />
                     </li>
-                    <li>
+                    <li class="flex space-x-3">
                         <i class="fas fa-bomb"></i> Weakest:
-                        {{ season_info.seasons[0].weakest_name }}
+                        <TeamDetails
+                                    :team_id="season_info.seasons[0].weakest_id" 
+                                    :key="season_info.seasons[0].weakest_id" 
+                                    :showButton="0" 
+                                    :text="`${season_info.seasons[0].weakest_name}`" />
                     </li>
-                    <li>
+                    <li class="flex space-x-3">
                         <i class="fas fa-calendar-alt"></i> Season Name:
-                        {{ season_info.seasons[0].name }}
+                        <b>{{ season_info.seasons[0].name }}</b>
                     </li>
                 </ul>
 
@@ -466,13 +467,21 @@
                     >
                         <div class="px-4 py-5 sm:px-6">
                             <h3
-                                class="text-xs font-extrabold text-nowrap leading-6 uppercase text-gray-900"
+                                class="text-xs flex font-extrabold text-nowrap leading-6 space-x-2 uppercase text-gray-900"
                             >
-                                {{ game.home_team_name }}
+                                <TeamDetails
+                                    :team_id="game.home_team_id" 
+                                    :key="game.home_team_id" 
+                                    :showButton="0" 
+                                    :text="`${game.home_team_name}`" />
                                 <br />
-                                <sup class="text-red-500">vs</sup>
+                                <small class="text-red-500">vs</small>
                                 <br />
-                                {{ game.away_team_name }}
+                                <TeamDetails
+                                    :team_id="game.away_team_id" 
+                                    :key="game.away_team_id" 
+                                    :showButton="0" 
+                                    :text="`${game.away_team_name}`" />
                             </h3>
                             <p
                                 class="mt-1 max-w-2xl text-xs uppercase text-gray-500"
@@ -575,81 +584,6 @@
             </div>
         </div>
     </div>
-    <Modal :show="isTeamModalOpen" :maxWidth="'fullscreen'">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isTeamModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
-        <div class="flex justify-start mt-5 border-b border-gray-200">
-            <button
-                :class="[
-                    'px-4 py-2',
-                    currentTab === 'info'
-                        ? 'border-b-2 border-blue-500 text-blue-500'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-                @click="currentTab = 'info'"
-            >
-                Team Info
-            </button>
-            <button
-                :class="[
-                    'px-4 py-2',
-                    currentTab === 'history'
-                        ? 'border-b-2 border-blue-500 text-blue-500'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-                @click="currentTab = 'history'"
-            >
-                Team Season History
-            </button>
-            <button
-                :class="[
-                    'px-4 py-2',
-                    currentTab === 'roster'
-                        ? 'border-b-2 border-blue-500 text-blue-500'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-                @click="currentTab = 'roster'"
-            >
-                Team Roster
-            </button>
-            <button
-                :class="[
-                    'px-4 py-2',
-                    currentTab === 'legend'
-                        ? 'border-b-2 border-blue-500 text-blue-500'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-                @click="currentTab = 'legend'"
-            >
-                Top 15 Player
-            </button>
-        </div>
-        <div class="mt-4">
-            <TeamInfo 
-                v-if="currentTab === 'info'" 
-                :key="teamId"
-                :team_id="teamId" />
-            <TeamHistory
-                v-if="currentTab === 'history'"
-                :key="teamId"
-                :team_id="teamId"
-            />
-            <TeamRoster
-                v-if="currentTab === 'roster'"
-                :key="teamId"
-                :team_id="teamId"
-            />
-            <Top10Player
-                v-if="currentTab === 'legend'"
-                :key="teamId"
-                :team_id="teamId"
-            />
-        </div>
-    </Modal>
     <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'">
         <button
             class="flex float-end bg-gray-100 p-3"
@@ -677,6 +611,7 @@ import TeamRoster from "@/Pages/Teams/Module/TeamRoster.vue";
 import Top10Player from "@/Pages/Teams/Module/Top10Player.vue";
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
 import SeasonTimeLine from "@/Pages/Analytics/Module/SeasonTimeLine.vue";
+import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 
 const season_info = ref(false);
 const season_conference = ref(false);

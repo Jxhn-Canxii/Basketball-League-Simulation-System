@@ -74,35 +74,21 @@
                                         class="px-4 py-5 sm:px-6"
                                     >
                                         <h3
-                                            class="text-xs font-extrabold text-nowrap uppercase leading-6 text-gray-800"
+                                            class="text-xs font-extrabold flex text-nowrap space-x-4 uppercase leading-6 text-gray-800"
                                         >
-                                            #{{ match.home_team.overall_rank }}
-                                            <a
-                                                href="#"
-                                                class="text-blue-500"
-                                                @click.prevent="
-                                                    isTeamModalOpen =
-                                                        match.home_team.id
-                                                "
-                                                ><u>{{
-                                                    match.home_team.name || "TBD"
-                                                }}</u></a
-                                            >
-                                            <sup class="text-red-500 font-bold"
-                                                >vs</sup
-                                            >
-                                            #{{ match.away_team.overall_rank }}
-                                            <a
-                                                href="#"
-                                                class="text-blue-500"
-                                                @click.prevent="
-                                                    isTeamModalOpen =
-                                                        match.away_team.id
-                                                "
-                                                ><u>{{
-                                                    match.away_team.name || "TBD"
-                                                }}</u></a
-                                            >
+                                            <TeamDetails
+                                            :team_id="match.home_team.id" 
+                                            :key="match.home_team.id" 
+                                            :showButton="0" 
+                                            :text="`#${match.home_team.overall_rank} ${match.home_team.name ?? 'TBD'}`"/>
+
+                                            <small class="text-red-500">vs</small>
+
+                                            <TeamDetails
+                                                :team_id="match.away_team.id" 
+                                                :key="match.away_team.id" 
+                                                :showButton="0" 
+                                                :text="`#${match.away_team.overall_rank} ${match.away_team.name ?? 'TBD'}`" />
                                         </h3>
                                         <p
                                             class="mt-1 text-xs uppercase text-gray-500"
@@ -345,61 +331,6 @@
             </div>
         </div>
     </div>
-
-    <Modal :show="isTeamModalOpen" :maxWidth="'fullscreen'">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isTeamModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
-        <div class="flex justify-start mt-5 border-b border-gray-200">
-            <button
-                :class="[
-                    'px-4 py-2',
-                    currentTab === 'history'
-                        ? 'border-b-2 border-blue-500 text-blue-500'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-                @click="currentTab = 'history'"
-            >
-                Team Season History
-            </button>
-            <button
-                :class="[
-                    'px-4 py-2',
-                    currentTab === 'info'
-                        ? 'border-b-2 border-blue-500 text-blue-500'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-                @click="currentTab = 'info'"
-            >
-                Team Info
-            </button>
-            <button
-                :class="[
-                    'px-4 py-2',
-                    currentTab === 'legend'
-                        ? 'border-b-2 border-blue-500 text-blue-500'
-                        : 'text-gray-500 hover:text-gray-700',
-                ]"
-                @click="currentTab = 'legend'"
-            >
-                Top 15 Player
-            </button>
-        </div>
-        <div class="mt-4">
-            <TeamInfo v-if="currentTab === 'info'" :team_id="isTeamModalOpen" />
-            <TeamHistory
-                v-if="currentTab === 'history'"
-                :team_id="isTeamModalOpen"
-            />
-            <Top10Player
-                v-if="currentTab === 'legend'"
-                :team_id="isTeamModalOpen"
-            />
-        </div>
-    </Modal>
     <Modal :show="isTeamComparisonModalOpen" :maxWidth="'6xl'">
         <button
             class="flex float-end bg-gray-100 p-3"
@@ -446,6 +377,7 @@ import TeamInfo from "@/Pages/Teams/Module/TeamInfo.vue";
 import TeamComparison from "@/Pages/Teams/Module/TeamComparison.vue";
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
 import Top10Player from "@/Pages/Teams/Module/Top10Player.vue";
+import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 
 const isAddModalOpen = ref(false);
 const isTeamModalOpen = ref(false);

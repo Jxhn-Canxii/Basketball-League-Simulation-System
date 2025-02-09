@@ -48,15 +48,13 @@
                     {{ gameDetails?.home_team.score }}
                 </h2>
                 <p
-                    class="text-md font-semibold text-white"
+                    class="text-md font-semibold text-white text-center"
                     :style="{
                         backgroundColor:
                             '#' + gameDetails?.home_team.secondary_color,
                     }"
                 >
-                    {{ gameDetails?.home_team.name }} ({{
-                        gameDetails?.home_team.streak
-                    }})
+                    <TeamDetails :team_id="gameDetails?.home_team.team_id" :key="gameDetails?.home_team.team_id" :showButton="0" :text="`${gameDetails?.home_team.name} (${ gameDetails?.home_team.streak })`" />
                 </p>
                 <div class="flex justify-center" v-if="!props.showBoxScore">
                     <ul class="flex space-x-2 mt-2">
@@ -163,15 +161,13 @@
                     {{ gameDetails?.away_team.score }}
                 </h2>
                 <p
-                    class="text-md font-semibold text-white"
+                    class="text-md font-semibold text-white text-center"
                     :style="{
                         backgroundColor:
                             '#' + gameDetails?.away_team.secondary_color,
                     }"
                 >
-                    {{ gameDetails?.away_team.name }} ({{
-                        gameDetails?.away_team.streak
-                    }})
+                    <TeamDetails :team_id="gameDetails?.away_team.team_id" :key="gameDetails?.away_team.team_id" :showButton="0" :text="`${gameDetails?.away_team.name} (${ gameDetails?.away_team.streak })`" />
                 </p>
                 <div class="flex justify-center" v-if="!props.showBoxScore">
                     <ul class="flex space-x-2 mt-2">
@@ -844,7 +840,8 @@ import { roundNameFormatter, roleBadgeClass, playerFormatter } from "@/Utility/F
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import TeamRoster from "@/Pages/Teams/Module/TeamRoster.vue";
-import PlayerPerformance from "@/Pages/Teams/Module/PlayerPerformance.vue";
+import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
+import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 
 const props = defineProps({
     game_id: {

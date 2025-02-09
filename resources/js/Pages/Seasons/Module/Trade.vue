@@ -170,7 +170,7 @@ import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";
 import Modal from "@/Components/Modal.vue";
-import PlayerPerformance from "@/Pages/Teams/Module/PlayerPerformance.vue";
+import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 
 const emits = defineEmits(["newSeason"]);
 const showPlayerProfileModal = ref(false);

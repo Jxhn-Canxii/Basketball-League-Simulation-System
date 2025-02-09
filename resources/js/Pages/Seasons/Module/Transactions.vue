@@ -116,7 +116,7 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import Paginator from "@/Components/Paginator.vue";
 import { roleClasses } from "@/Utility/Formatter";
-import PlayerPerformance from "@/Pages/Teams/Module/PlayerPerformance.vue";
+import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 import Modal from "@/Components/Modal.vue";
 
 const showPlayerProfileModal = ref(false);

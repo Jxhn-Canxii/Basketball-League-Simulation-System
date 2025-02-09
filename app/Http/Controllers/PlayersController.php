@@ -1673,6 +1673,7 @@ class PlayersController extends Controller
                 ->on('transactions.season_id', '=', 'player_season_stats.season_id');
         })
         ->where('transactions.player_id', $player_id)
+        ->where('transactions.status','!=','signed')
         ->select(
             'transactions.id',
             'transactions.season_id',

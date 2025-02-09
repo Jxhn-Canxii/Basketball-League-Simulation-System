@@ -195,7 +195,16 @@ class TeamsController extends Controller
 
         return response()->json($teamSeasonHistory);
     }
+    public function teamstransactionhistory(Request $request)
+    {
+        $teamId = $request->team_id;
+        $page = $request->page_num ?? 1;
+        $itemsPerPage = $request->itemsperpage ?? 10;
 
+        $teamTransactionHistory = $this->getTransactionHistory($teamId, $page, $itemsPerPage);
+
+        return response()->json($teamTransactionHistory);
+    }
     private function getSeasonHistory($teamId, $page, $itemsPerPage)
     {
         // Calculate the offset for pagination
@@ -279,6 +288,58 @@ class TeamsController extends Controller
             'total_pages' => $totalPages
         ];
     }
+    private function getTransactionHistory($teamId, $page, $itemsPerPage)
+    {
+        // Calculate the offset for pagination
+        $offset = ($page - 1) * $itemsPerPage;
+    
+        // Fetch transaction history related to the team (either from_team_id or to_team_id)
+        $transactionHistory = DB::table('transactions')
+            ->select(
+                'transactions.id',
+                'transactions.player_id',
+                'transactions.season_id',
+                'transactions.details',
+                'transactions.from_team_id',
+                'transactions.to_team_id',
+                'transactions.status',
+                'players.name as player_name',
+                'from_team.name as from_team_name', // Name of the team that sent the player
+                'to_team.name as to_team_name' // Name of the team that received the player
+            )
+            ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
+            ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
+            ->join('players', 'transactions.player_id', '=', 'players.id')
+            ->where(function ($query) use ($teamId) {
+                $query->where('transactions.from_team_id', '=', $teamId) // Team is the source of the transaction
+                    ->orWhere('transactions.to_team_id', '=', $teamId); // Team is the recipient of the transaction
+            })
+            ->where('transactions.status','!=','signed')
+            ->orderByDesc('transactions.id')
+            ->offset($offset)
+            ->limit($itemsPerPage)
+            ->get();
+    
+        // Get the total number of transactions for the team
+        $totalItems = DB::table('transactions')
+            ->where(function ($query) use ($teamId) {
+                $query->where('transactions.from_team_id', '=', $teamId)
+                    ->orWhere('transactions.to_team_id', '=', $teamId);
+            })
+            ->count();
+    
+        // Calculate the total number of pages
+        $totalPages = ceil($totalItems / $itemsPerPage);
+    
+        return [
+            'transactions' => $transactionHistory,
+            'total_items' => $totalItems,
+            'items_per_page' => $itemsPerPage,
+            'current_page' => $page,
+            'total_pages' => $totalPages
+        ];
+    }
+    
 
     public function teamlastseason(Request $request)
     {

@@ -96,7 +96,7 @@ import axios from "axios";
 
 import Paginator from "@/Components/Paginator.vue";
 import TopStatistics from "@/Pages/Analytics/Module/TopStatistics.vue";
-import PlayerPerformance from "@/Pages/Teams/Module/PlayerPerformance.vue";
+import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 
 const emits = defineEmits(["newSeason"]);
 const showPlayerProfileModal = ref(false);

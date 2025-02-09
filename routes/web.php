@@ -71,6 +71,7 @@ Route::middleware('auth')->group(function () {
         Route::post('team-head2head-records', [TeamsController::class, 'teammatchesh2h'])->name('teams.matches.h2h');
         Route::post('team-rivals', [TeamsController::class, 'teamrivals'])->name('teams.rivals');
         Route::post('team-latest-season', [TeamsController::class, 'teamslatestseason'])->name('teams.latest.season');
+        Route::post('team-transaction-history', [TeamsController::class, 'teamstransactionhistory'])->name('teams.transaction.history');
         Route::post('team-match-history', [TeamsController::class, 'matchhistory'])->name('match.history');
     });
 
