@@ -59,6 +59,35 @@ CREATE TABLE player_season_stats (
         END
     ) STORED,
 
+    -- Added Stored Columns for Shooting Percentages
+    field_goal_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
+        CASE
+            WHEN total_field_goal_attempts = 0 THEN 0
+            ELSE (total_field_goals_made / total_field_goal_attempts) * 100
+        END
+    ) STORED,
+
+    two_point_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
+        CASE
+            WHEN total_two_point_attempts = 0 THEN 0
+            ELSE (total_two_pointers_made / total_two_point_attempts) * 100
+        END
+    ) STORED,
+
+    three_point_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
+        CASE
+            WHEN total_three_point_attempts = 0 THEN 0
+            ELSE (total_three_pointers_made / total_three_point_attempts) * 100
+        END
+    ) STORED,
+
+    free_throw_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
+        CASE
+            WHEN total_free_throw_attempts = 0 THEN 0
+            ELSE (total_free_throws_made / total_free_throw_attempts) * 100
+        END
+    ) STORED,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );

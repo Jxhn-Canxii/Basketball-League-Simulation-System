@@ -671,6 +671,7 @@ class AwardsController extends Controller
             DB::table('player_season_stats')->updateOrInsert(
                 [
                     'player_id' => $player->id,
+                    'team_id' => $player->team_id,
                     'season_id' => $latestSeasonId,
                 ],
                 [

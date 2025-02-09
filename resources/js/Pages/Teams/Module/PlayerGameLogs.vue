@@ -7,8 +7,8 @@
             <hr class="my-4 border-t border-gray-200" />
 
             <!-- Player Profile and Playoff Performance in One Row -->
-            <ProfileHeader :player_id="player_id" />
-
+            <!-- <ProfileHeader :player_id="player_id" /> -->
+            <!-- <h3 v-if="game_logs">{{ game_logs.player_name.player_name }} ({{ game_logs.player_name.team_name ?? 'Free Agent' }})</h3> -->
 
             <!-- Divider -->
             <hr class="my-4 border-t border-gray-200" />
@@ -31,14 +31,20 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Minutes</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Points Made">Points</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Rebounds Made">Rebounds</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Assist Made">Assist</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Steals Made">Steals</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Blocks Made">Blocks</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Turnover Made">Turnovers</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Min</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Points Made">Pts</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Rebounds Made">Reb</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Assist Made">Ast</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Steals Made">Stl</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Blocks Made">Blk</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Turnover Made">TO</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Fouls Made">Fouls</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Field Goals Made / Attempted">Field Goals</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="2PT Made / Attempted">2PT</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="3PT Made / Attempted">3PT</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Free Throws Made / Attempted">Free Throws</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Player Efficiency Rating">PER</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Efficiency">EFF</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -46,9 +52,9 @@
                             v-for="(player, index) in game_logs.game_logs"
                             :key="index"
                             :class="{
-                                'bg-green-200': player.game_result === 'Win' && player.game_minutes > 0,
-                                'bg-red-200': player.game_result === 'Loss' && player.game_minutes > 0,
-                                'bg-slate-200': player.game_minutes == 0,
+                                'bg-green-200': player.game_result === 'Win' && player.minutes > 0,
+                                'bg-red-200': player.game_result === 'Loss' && player.minutes > 0,
+                                'bg-slate-200': player.minutes === 0,
                             }"
                             class="hover:bg-gray-100"
                         >
@@ -56,14 +62,34 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.opponent_team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_minutes == 0 ? 'DNP' : player.game_minutes }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_points.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_rebounds.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_assists.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_steals.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_blocks.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_minutes == 0 ? (0).toFixed(1) : player.game_turnovers.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_minutes == 0 ? (0).toFixed(1) : player.game_fouls.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.rebounds.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.assists.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.steals.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.blocks.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
+                            <!-- Field Goal Stats -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.field_goals_made }} / {{ player.field_goal_attempts }} ({{ player.field_goal_percentage.toFixed(1) }}%)
+                            </td>
+                            <!-- 3PT Stats -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.two_pointers_made }} / {{ player.two_point_attempts }} ({{ player.two_point_percentage.toFixed(1) }}%)
+                            </td>
+                            <!-- 3PT Stats -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.three_pointers_made }} / {{ player.three_point_attempts }} ({{ player.three_point_percentage.toFixed(1) }}%)
+                            </td>
+                            <!-- Free Throw Stats -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.free_throws_made }} / {{ player.free_throw_attempts }} ({{ player.free_throw_percentage.toFixed(1) }}%)
+                            </td>
+                            <!-- PER -->
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ parseFloat(player.per ?? 0).toFixed(2) }}</td>
+                            <!-- EFF -->
+                            <td class="px-2 py-1 whitespace-nowrap border text-right"><b :class="player.eff <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.eff }}</b></td>
                         </tr>
                     </tbody>
                 </table>

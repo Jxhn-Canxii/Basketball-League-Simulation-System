@@ -100,6 +100,12 @@
                         >
                             MPG
                         </th>
+                        <!-- <th
+                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            title="Average Field Goal %"
+                        >
+                            AFG
+                        </th> -->
                         <th
                             class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
                             title="Points Per Game"
@@ -224,7 +230,7 @@
                         <td class="px-2 py-1 whitespace-nowrap border">
                             {{ player.average_minutes_per_game.toFixed(1) }}
                         </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
+                        <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
                             {{ player.average_points_per_game.toFixed(1) }}
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
@@ -301,7 +307,7 @@
                         v-else
                         class="hover:bg-gray-100"
                     >
-                        <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="22">***No Players Found***</td>
+                        <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
                     </tr>
                 </tbody>
             </table>

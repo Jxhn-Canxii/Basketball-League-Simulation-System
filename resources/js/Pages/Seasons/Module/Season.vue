@@ -650,7 +650,7 @@
             />
         </div>
     </Modal>
-    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'">
+    <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'">
         <button
             class="flex float-end bg-gray-100 p-3"
             @click.prevent="isGameResultModalOpen = false"
