@@ -146,8 +146,14 @@
                             class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
                             title="Fouls Per Game"
                         >
-                            Ratings
+                            EFF
                         </th>
+                        <!-- <th
+                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            title="Fouls Per Game"
+                        >
+                            Ratings
+                        </th> -->
                         <th
                             class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
                         >
@@ -234,8 +240,11 @@
                             {{ player.average_fouls_per_game.toFixed(1) }}
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.combined_score }}
+                            <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
                         </td>
+                        <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                            {{ player.combined_score }}
+                        </td> -->
                         <td class="px-2 py-1 whitespace-nowrap border">
                             <!-- If the player is new to the team -->
                             <span

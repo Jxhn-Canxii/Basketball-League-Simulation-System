@@ -41,6 +41,7 @@ class GameController extends Controller
                 'message' => 'Game not found',
             ], 404);
         }
+        
         $playerStats = \DB::table('player_game_stats')
             ->where('player_game_stats.game_id', $game_id)
             ->leftJoin('players as p', 'player_game_stats.player_id', '=', 'p.id') // Alias for players table
@@ -73,15 +74,17 @@ class GameController extends Controller
                 'player_game_stats.fouls',
                 'player_game_stats.minutes',
 
-                // Get the list of awards for the player in the current season
-                // DB::raw("COALESCE(
-                //     GROUP_CONCAT(
-                //         CONCAT(
-                //             sa.award_name,
-                //             ' (Season ', sa.season_id, ') by ',
-                //             t.name
-                //         ) SEPARATOR ', '),
-                //     null) as awards"),
+                'player_game_stats.field_goal_attempts',
+                'player_game_stats.field_goals_made',
+                'player_game_stats.two_point_attempts',
+                'player_game_stats.two_pointers_made',
+                'player_game_stats.three_point_attempts',
+                'player_game_stats.three_pointers_made',
+                'player_game_stats.free_throw_attempts',
+                'player_game_stats.free_throws_made',
+                'player_game_stats.per',
+                'player_game_stats.ts_percent',
+                'player_game_stats.eff',
 
                 // Determine if the player is the Finals MVP for this season
                 DB::raw("CASE WHEN p.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = p.id LIMIT 1) THEN 1 ELSE 0 END as is_finals_mvp"),
@@ -139,7 +142,18 @@ class GameController extends Controller
                 'player_game_stats.blocks',
                 'player_game_stats.turnovers',
                 'player_game_stats.fouls',
-                'player_game_stats.minutes'
+                'player_game_stats.minutes',
+                'player_game_stats.field_goal_attempts',
+                'player_game_stats.field_goals_made',
+                'player_game_stats.two_point_attempts',
+                'player_game_stats.two_pointers_made',
+                'player_game_stats.three_point_attempts',
+                'player_game_stats.three_pointers_made',
+                'player_game_stats.free_throw_attempts',
+                'player_game_stats.free_throws_made',
+                'player_game_stats.per',
+                'player_game_stats.ts_percent',
+                'player_game_stats.eff'
             )
             ->get()
             ->keyBy('player_id');
@@ -147,19 +161,59 @@ class GameController extends Controller
 
 
         // Fetch all players that might be relevant to the game (ignoring team_id here)
-        $players = \DB::table('players')
-            ->whereIn('id', $playerStats->pluck('player_id')->toArray())
-            ->get()
-            ->keyBy('id');
+        // Get all player stats with calculated percentages
+        $playerStats = $playerStats->map(function ($stat) {
+            // Calculate shooting percentages
+            $stat->field_goal_percent = $stat->field_goal_attempts > 0 
+                ? round(($stat->field_goals_made / $stat->field_goal_attempts) * 100, 1)
+                : 0;
 
-        // Calculate stat leaders
+            $stat->three_point_percent = $stat->three_point_attempts > 0 
+                ? round(($stat->three_pointers_made / $stat->three_point_attempts) * 100, 1)
+                : 0;
+
+            $stat->free_throw_percent = $stat->free_throw_attempts > 0 
+                ? round(($stat->free_throws_made / $stat->free_throw_attempts) * 100, 1)
+                : 0;
+
+            return $stat;
+        });
+
+        // Calculate stat leaders with qualification thresholds
         $statLeaders = [
             'points' => $playerStats->sortByDesc('points')->first(),
             'assists' => $playerStats->sortByDesc('assists')->first(),
             'rebounds' => $playerStats->sortByDesc('rebounds')->first(),
             'steals' => $playerStats->sortByDesc('steals')->first(),
             'blocks' => $playerStats->sortByDesc('blocks')->first(),
+            'field_goal_percent' => $playerStats->filter(function ($stat) {
+                return $stat->field_goal_attempts >= 5;
+            })->sortByDesc('field_goal_percent')->first(),
+            'three_pointers' => [
+                'made' => $playerStats->sortByDesc('three_pointers_made')->first(),
+                'percent' => $playerStats->filter(function ($stat) {
+                    return $stat->three_point_attempts >= 3;
+                })->sortByDesc('three_point_percent')->first()
+            ],
+            'free_throw_percent' => $playerStats->filter(function ($stat) {
+                return $stat->free_throw_attempts >= 2;
+            })->sortByDesc('free_throw_percent')->first(),
+            'advanced' => [
+                'per' => $playerStats->sortByDesc('per')->first(),
+                'ts_percent' => $playerStats->sortByDesc('ts_percent')->first(),
+                'eff' => $playerStats->sortByDesc('eff')->first()
+            ]
         ];
+
+        // Add defensive stats leader (combination of steals and blocks)
+        $statLeaders['defensive'] = $playerStats->sortByDesc(function ($stat) {
+            return $stat->steals + $stat->blocks;
+        })->first();
+
+        // Add efficiency leader (PTS + REB + AST)
+        $statLeaders['efficiency'] = $playerStats->sortByDesc(function ($stat) {
+            return $stat->points + $stat->rebounds + $stat->assists;
+        })->first();
 
         $randomSeasonStatsLeaders = $this->getStatsLeaders($game->season_id);
         // Determine the winning team
@@ -213,6 +267,12 @@ class GameController extends Controller
         // Query to get head-to-head record
         $headToHeadRecord = $this->getHeadToHeadRecord($game->home_id, $game->away_id);
 
+         // Fetch all players that might be relevant to the game (ignoring team_id here)
+         $players = \DB::table('players')
+         ->whereIn('id', $playerStats->pluck('player_id')->toArray())
+         ->get()
+         ->keyBy('id');
+
         // Split player stats into home and away teams, using the game team IDs
         $homeTeamPlayers = $players->filter(function ($player) use ($game, $playerStats) {
             $playerStat = $playerStats->get($player->id);
@@ -224,10 +284,26 @@ class GameController extends Controller
             return $playerStat && $playerStat->team_id == $game->away_id;
         });
 
-        // Convert home team player stats to an array, including those with no recorded stats
         $homeTeamPlayersArray = $homeTeamPlayers->map(function ($player) use ($playerStats) {
             $stats = $playerStats->get($player->id);
-
+        
+            // Field goal percentage, 2-point percentage, 3-point percentage, and free throw percentage calculation
+            $fgPercentage = $stats && $stats->field_goal_attempts ? ($stats->field_goals_made / $stats->field_goal_attempts) * 100 : 0;
+            $twoPPercentage = $stats && $stats->two_point_attempts ? ($stats->two_pointers_made / $stats->two_point_attempts) * 100 : 0;
+            $threePPercentage = $stats && $stats->three_point_attempts ? ($stats->three_pointers_made / $stats->three_point_attempts) * 100 : 0;
+            $ftPercentage = $stats && $stats->free_throw_attempts ? ($stats->free_throws_made / $stats->free_throw_attempts) * 100 : 0;
+        
+            // Calculate a composite score based on various stats (weights are customizable)
+            $compositeScore = (
+                ($stats->points * 1) + 
+                ($stats->assists * 1.5) + 
+                ($stats->rebounds * 1.2) + 
+                ($stats->steals * 2) + 
+                ($stats->blocks * 2) - 
+                ($stats->turnovers * 1) - 
+                ($stats->fouls * 0.5)
+            );
+        
             return [
                 'player_id' => $player->id,
                 'team_id' => $player->team_id,
@@ -243,13 +319,46 @@ class GameController extends Controller
                 'turnovers' => $stats ? $stats->turnovers : 0,
                 'fouls' => $stats ? $stats->fouls : 0,
                 'minutes' => $stats ? $stats->minutes : 'DNP',
+                'field_goal_attempts' => $stats ? $stats->field_goal_attempts : 0,
+                'field_goals_made' => $stats ? $stats->field_goals_made : 0,
+                'two_point_attempts' => $stats ? $stats->two_point_attempts : 0,
+                'two_pointers_made' => $stats ? $stats->two_pointers_made : 0,
+                'three_point_attempts' => $stats ? $stats->three_point_attempts : 0,
+                'three_pointers_made' => $stats ? $stats->three_pointers_made : 0,
+                'free_throw_attempts' => $stats ? $stats->free_throw_attempts : 0,
+                'free_throws_made' => $stats ? $stats->free_throws_made : 0,
+                'field_goal_percentage' => $fgPercentage,
+                'two_point_percentage' => $twoPPercentage,
+                'three_point_percentage' => $threePPercentage,
+                'free_throw_percentage' => $ftPercentage,
+                'per' => $stats ? $stats->per : null,  // Player efficiency rating
+                'ts_percent' => $stats ? $stats->ts_percent : null,  // True shooting percentage
+                'efficiency' => $stats ? $stats->eff : null,  // Efficiency
+                'composite_score' => $compositeScore  // Add composite score to the array
             ];
-        })->values()->toArray();
-
+        })->sortByDesc('composite_score')->values()->toArray();  // Sort by composite score in descending order
+        
         // Convert away team player stats to an array, including those with no recorded stats
         $awayTeamPlayersArray = $awayTeamPlayers->map(function ($player) use ($playerStats) {
             $stats = $playerStats->get($player->id);
-
+        
+            // Field goal percentage, 2-point percentage, 3-point percentage, and free throw percentage calculation
+            $fgPercentage = $stats && $stats->field_goal_attempts ? ($stats->field_goals_made / $stats->field_goal_attempts) * 100 : 0;
+            $twoPPercentage = $stats && $stats->two_point_attempts ? ($stats->two_pointers_made / $stats->two_point_attempts) * 100 : 0;
+            $threePPercentage = $stats && $stats->three_point_attempts ? ($stats->three_pointers_made / $stats->three_point_attempts) * 100 : 0;
+            $ftPercentage = $stats && $stats->free_throw_attempts ? ($stats->free_throws_made / $stats->free_throw_attempts) * 100 : 0;
+        
+            // Calculate a composite score based on various stats (weights are customizable)
+            $compositeScore = (
+                ($stats->points * 1) + 
+                ($stats->assists * 1.5) + 
+                ($stats->rebounds * 1.2) + 
+                ($stats->steals * 2) + 
+                ($stats->blocks * 2) - 
+                ($stats->turnovers * 1) - 
+                ($stats->fouls * 0.5)
+            );
+        
             return [
                 'player_id' => $player->id,
                 'team_id' => $player->team_id,
@@ -265,9 +374,25 @@ class GameController extends Controller
                 'turnovers' => $stats ? $stats->turnovers : 0,
                 'fouls' => $stats ? $stats->fouls : 0,
                 'minutes' => $stats ? $stats->minutes : 'DNP',
+                'field_goal_attempts' => $stats ? $stats->field_goal_attempts : 0,
+                'field_goals_made' => $stats ? $stats->field_goals_made : 0,
+                'two_point_attempts' => $stats ? $stats->two_point_attempts : 0,
+                'two_pointers_made' => $stats ? $stats->two_pointers_made : 0,
+                'three_point_attempts' => $stats ? $stats->three_point_attempts : 0,
+                'three_pointers_made' => $stats ? $stats->three_pointers_made : 0,
+                'free_throw_attempts' => $stats ? $stats->free_throw_attempts : 0,
+                'free_throws_made' => $stats ? $stats->free_throws_made : 0,
+                'field_goal_percentage' => $fgPercentage,
+                'two_point_percentage' => $twoPPercentage,
+                'three_point_percentage' => $threePPercentage,
+                'free_throw_percentage' => $ftPercentage,
+                'per' => $stats ? $stats->per : null,
+                'ts_percent' => $stats ? $stats->ts_percent : null,
+                'efficiency' => $stats ? $stats->eff : null,
+                'composite_score' => $compositeScore  // Add composite score to the array
             ];
-        })->values()->toArray();
-
+        })->sortByDesc('composite_score')->values()->toArray();  // Sort by composite score in descending order
+        
         $homeTeamRatings = $this->getTeamRatingsPerSeason($game->season_id, $game->home_id);
         $awayTeamRatings = $this->getTeamRatingsPerSeason($game->season_id, $game->away_id);
 

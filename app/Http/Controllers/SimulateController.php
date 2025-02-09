@@ -1906,6 +1906,7 @@ class SimulateController extends Controller
                         'total_steals' => 0,
                         'total_blocks' => 0,
                         'total_turnovers' => 0,
+                        'eff' => 0,
                         'total_fouls' => 0,
                         'total_games_played' => 0,
                         'overall_rating' => $player->overall_rating ?? 50, // Default low rating if missing
@@ -1917,37 +1918,9 @@ class SimulateController extends Controller
     
                 // Calculate composite score considering efficiency per avg_minutes_per_game
                 $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                    $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
-                        ? ($stat->avg_points_per_game * 0.4 +
-                        $stat->avg_rebounds_per_game * 0.2 +
-                        $stat->avg_assists_per_game * 0.2 +
-                        $stat->avg_steals_per_game * 0.1 +
-                        $stat->avg_blocks_per_game * 0.1 -
-                        $stat->avg_turnovers_per_game * 0.1 -
-                        $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
-                        : 0; // Default to 0 if avg_minutes_per_game is 0 or undefined
-
-    
-                    $perGameScore = $stat->avg_points_per_game * 0.3 +
-                        $stat->avg_rebounds_per_game * 0.2 +
-                        $stat->avg_assists_per_game * 0.2 +
-                        $stat->avg_steals_per_game * 0.1 +
-                        $stat->avg_blocks_per_game * 0.1 -
-                        $stat->avg_turnovers_per_game * 0.1 -
-                        $stat->avg_fouls_per_game * 0.1;
-    
-                    $totalScore = $stat->total_points * 0.2 +
-                        $stat->total_rebounds * 0.2 +
-                        $stat->total_assists * 0.2 +
-                        $stat->total_steals * 0.15 +
-                        $stat->total_blocks * 0.15 -
-                        $stat->total_turnovers * 0.1 -
-                        $stat->total_fouls * 0.1;
-    
-                    $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
-    
-                    return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
+                    return $stat->eff;  // Replace 'eff' with the actual attribute name if it's different
                 });
+                
     
                 // Assign roles
                 $roles = [
