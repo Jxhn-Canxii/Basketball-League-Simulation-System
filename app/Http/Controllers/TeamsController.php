@@ -730,7 +730,6 @@ class TeamsController extends Controller
     {
         return DB::table('seasons')
             ->where('finals_winner_id', $teamId)
-            ->where('status', 7)
             ->pluck('seasons.name');
     }
 
