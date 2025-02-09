@@ -207,7 +207,8 @@ class SeasonsController extends Controller
         return response()->json([
             'seasons' => $seasons,
             'conferences' => $conferences,
-            'is_play_ins' =>  $totalConference > 4,
+            'is_play_ins' =>  $totalConference > 3,
+            'conference_count' => $totalConference
         ]);
     }
     private function allconference($seasonId)

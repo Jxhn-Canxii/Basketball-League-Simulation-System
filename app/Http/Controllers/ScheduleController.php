@@ -378,6 +378,7 @@ class ScheduleController extends Controller
         $round = $request->round;
         $start = $request->start;
 
+        
         // Update season champions and losers if needed
         if (($start == 16 && $round === 'play_ins_elims_round_1')) {
             self::updateSeasonChampionsAndLosers($seasonId);

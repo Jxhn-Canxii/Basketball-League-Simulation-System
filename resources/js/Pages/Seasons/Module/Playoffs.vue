@@ -512,8 +512,8 @@ const fetchSeasonInfo = async (id) => {
         });
 
         season_info.value = response.data;
-        is_play_ins.value = response.data.is_play_ins;
-        fetchSeasonPlayoffs(is_play_ins.value ? 2 : 1);
+        is_play_ins.value = response.data.is_play_ins ? 1 : 2;
+        fetchSeasonPlayoffs(is_play_ins.value);
     } catch (error) {
         console.error("Error fetching season information:", error);
     }
