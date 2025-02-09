@@ -36,9 +36,6 @@
         >
             <div
                 class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative"
-                @click.prevent="
-                    isTeamRosterModalOpen = gameDetails?.home_team.team_id
-                "
                 :style="{
                     backgroundColor: '#' + gameDetails?.home_team.primary_color,
                 }"
@@ -149,9 +146,6 @@
 
             <div
                 class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative"
-                @click.prevent="
-                    isTeamRosterModalOpen = gameDetails?.away_team.team_id
-                "
                 :style="{
                     backgroundColor: '#' + gameDetails?.away_team.primary_color,
                 }"
@@ -802,21 +796,6 @@
             </div>
         </div>
     </div>
-    <Modal :show="isTeamRosterModalOpen" :maxWidth="'fullscreen'">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isTeamRosterModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
-        <div class="mt-4">
-            <TeamRoster
-                v-if="isTeamRosterModalOpen"
-                :team_id="isTeamRosterModalOpen"
-            />
-        </div>
-    </Modal>
-
     <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
         <button
             class="flex float-end bg-gray-100 p-3"
