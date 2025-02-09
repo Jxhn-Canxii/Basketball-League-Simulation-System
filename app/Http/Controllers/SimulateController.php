@@ -148,7 +148,7 @@ class SimulateController extends Controller
                 $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
                 
                 // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0,$adjustedTwoPointAttempts);
+                $twoPointMade = rand(0,$twoPointAttempts);
                 
                 $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
                 $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
@@ -210,7 +210,7 @@ class SimulateController extends Controller
                 $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
                 
                 // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0,$adjustedTwoPointAttempts);
+                $twoPointMade = rand(0,$twoPointAttempts);
                 
                 $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
                 $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
@@ -576,7 +576,7 @@ class SimulateController extends Controller
                 $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
                 
                 // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0, $adjustedTwoPointAttempts);
+                $twoPointMade = rand(0,$twoPointAttempts);
                 
                 $threePointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
                 $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
@@ -638,7 +638,7 @@ class SimulateController extends Controller
                 $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
                 
                 // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0,$adjustedTwoPointAttempts);
+                $twoPointMade = rand(0,$twoPointAttempts);
                 
                 $threePointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
                 $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
