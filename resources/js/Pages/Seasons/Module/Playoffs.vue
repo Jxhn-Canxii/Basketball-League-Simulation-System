@@ -4,7 +4,15 @@
         v-if="season_info.seasons && season_info.seasons[0].status > 1"
     >
         <div class="md:col-span-4 overflow-y-auto">
-            <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs</h2>
+            <div class="flex justify-between">
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs</h2>
+                <button 
+                    @click="simulateFullPlayoffs"
+                    class="bg-green-500 text-white p-2 rounded mt-4"
+                >
+                    Simulate Full Playoffs
+                </button>
+            </div>
             <div
                 class="flex justify-center"
                 v-if="season_info.seasons && season_info.seasons[0].status == 2"
@@ -554,6 +562,61 @@ const fetchSeasonPlayoffs = async (type) => {
         }
     } catch (error) {
         console.error("Error fetching season playoffs:", error);
+    }
+};
+const simulateFullPlayoffs = async () => {
+    try {
+        // Define playoff round sequence
+        const playoffRounds = [
+            'start',
+            'round_of_16',
+            'quarterfinals', 
+            'semifinals',
+            'finals'
+        ];
+
+        // Helper function to delay execution
+        const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+        
+        for (const round of playoffRounds) {
+            // Refresh playoff data
+            await fetchSeasonInfo(props.season_id);
+            await fetchSeasonPlayoffs(2);
+            
+            // Check if round exists and has games
+            if (season_playoffs.value.playoffs?.[round]?.length > 0) {
+                // Simulate all games in current round
+                const games = season_playoffs.value.playoffs[round];
+                
+                for (const [index, game] of games.entries()) {
+                    await simulateGame(
+                        game.id,
+                        game.game_id,
+                        2,
+                        index,
+                        round
+                    );
+                    await delay(1000); // Add delay between games
+                    isGameResultModalOpen.value = false;
+                }
+
+                // Advance to next round
+                await createPlayOffSchedule(round);
+                await delay(2000); // Allow time for bracket update
+            }
+        }
+
+        // Final refresh after all rounds
+        await fetchSeasonInfo(props.season_id);
+        await fetchSeasonPlayoffs(2);
+        
+    } catch (error) {
+        console.error('Playoff simulation error:', error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Simulation Failed',
+            text: 'There was an error processing the playoff simulation'
+        });
     }
 };
 const simulateGame = async (id, game_id, type, index, round) => {

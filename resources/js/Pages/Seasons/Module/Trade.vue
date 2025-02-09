@@ -6,7 +6,6 @@
         <div v-if="proposals.length === 0 && current_season > 1 && !trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
             <button 
                 @click="generateTradeProposal"
-                v-if="approved.length === 0"
                 class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
                 Generate Proposal
             </button>
@@ -25,7 +24,7 @@
             </button>
         </div>
         <!-- Display list of proposals -->
-        <div v-if="proposals.length > 0  && current_season > 2" >
+        <div v-if="proposals.length > 0  && current_season > 1" >
             <!-- Show 'End Trade' button if there are proposals -->
             <!-- Tabs for categorizing proposals by role -->
             <div class="flex mb-4 space-x-4">
@@ -87,7 +86,7 @@
                 <p class="text-center text-gray-500">No trade proposals available for this category.</p>
             </div>
         </div>
-        <div v-if="approved.length > 0  && current_season > 2" >
+        <div v-if="approved.length > 0  && current_season > 1" >
             <!-- Show 'End Trade' button if there are proposals -->
             <!-- Tabs for categorizing proposals by role -->
             <div class="flex mb-4 space-x-4 mt-6">
@@ -239,7 +238,6 @@ const categorizeProposalsByRole = () => {
 
     proposals.value.forEach(proposal => {
         const role = proposal.player_to_role.toLowerCase();
-        console.log(proposal.player_to_name);
         if (proposalsByCategory.value[role]) {
             proposalsByCategory.value[role].push(proposal);
         }
@@ -254,7 +252,7 @@ const categorizeApprovedProposalsByRole = () => {
 
     approved.value.forEach(proposal => {
         const role = proposal.player_to_role.toLowerCase();
-        console.log(proposal.player_to_name);
+
         if (approvedByCategory.value[role]) {
             approvedByCategory.value[role].push(proposal);
         }

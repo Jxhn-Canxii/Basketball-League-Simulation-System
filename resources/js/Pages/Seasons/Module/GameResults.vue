@@ -293,14 +293,14 @@
                         >
                             <th class="py-2 px-3 text-xs">Name</th>
                             <th class="py-2 px-3 text-xs">Role</th>
-                            <th class="px-2 py-3 text-xs">Min</th>
-                            <th class="px-2 py-3 text-xs" title="Points Made">Pts</th>
-                            <th class="px-2 py-3 text-xs" title="Rebounds Made">Reb</th>
-                            <th class="px-2 py-3 text-xs" title="Assist Made">Ast</th>
-                            <th class="px-2 py-3 text-xs" title="Steals Made">Stl</th>
-                            <th class="px-2 py-3 text-xs" title="Blocks Made">Blk</th>
-                            <th class="px-2 py-3 text-xs" title="Turnover Made">TO</th>
-                            <th class="px-2 py-3 text-xs" title="Fouls Made">Fouls</th>
+                            <th class="px-2 py-3 text-xs text-right">Min</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Points Made">Pts</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Rebounds Made">Reb</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Assist Made">Ast</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Steals Made">Stl</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Blocks Made">Blk</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Turnover Made">TO</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Fouls Made">Fouls</th>
                             <!-- <th class="px-2 py-3 text-xs" title="Field Goals Made / Attempted">Field Goals</th>
                             <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
                             <th class="px-2 py-3 text-xs" title="3PT Made / Attempted">3PT</th>
@@ -329,14 +329,14 @@
                                     player.role
                                 }}</span>
                             </td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.rebounds.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.assists.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.steals.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.blocks.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.points.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.rebounds.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.assists.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.steals.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.blocks.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
                             <!-- Field Goal Stats -->
                             <!-- <td class="px-2 py-1 whitespace-nowrap border">
                                 {{ player.field_goals_made }} / {{ player.field_goal_attempts }} ({{ player.field_goal_percentage.toFixed(1) }}%)
@@ -441,14 +441,14 @@
                         >
                             <th class="py-2 px-3 text-xs">Name</th>
                             <th class="py-2 px-3 text-xs">Role</th>
-                            <th class="px-2 py-3 text-xs">Min</th>
-                            <th class="px-2 py-3 text-xs" title="Points Made">Pts</th>
-                            <th class="px-2 py-3 text-xs" title="Rebounds Made">Reb</th>
-                            <th class="px-2 py-3 text-xs" title="Assist Made">Ast</th>
-                            <th class="px-2 py-3 text-xs" title="Steals Made">Stl</th>
-                            <th class="px-2 py-3 text-xs" title="Blocks Made">Blk</th>
-                            <th class="px-2 py-3 text-xs" title="Turnover Made">TO</th>
-                            <th class="px-2 py-3 text-xs" title="Fouls Made">Fouls</th>
+                            <th class="px-2 py-3 text-xs text-right">Min</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Points Made">Pts</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Rebounds Made">Reb</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Assist Made">Ast</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Steals Made">Stl</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Blocks Made">Blk</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Turnover Made">TO</th>
+                            <th class="px-2 py-3 text-xs text-right" title="Fouls Made">Fouls</th>
                             <!-- <th class="px-2 py-3 text-xs" title="Field Goals Made / Attempted">Field Goals</th>
                             <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
                             <th class="px-2 py-3 text-xs" title="3PT Made / Attempted">3PT</th>
@@ -477,14 +477,14 @@
                                     player.role
                                 }}</span>
                             </td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.rebounds.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.assists.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.steals.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.blocks.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.points.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.rebounds.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.assists.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.steals.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.blocks.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
                             <!-- Field Goal Stats -->
                             <!-- <td class="px-2 py-1 whitespace-nowrap border">
                                 {{ player.field_goals_made }} / {{ player.field_goal_attempts }} ({{ player.field_goal_percentage.toFixed(1) }}%)
