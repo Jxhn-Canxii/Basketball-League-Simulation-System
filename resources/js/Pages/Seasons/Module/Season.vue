@@ -62,8 +62,10 @@
                                     ) in season_standings.standings"
                                     :key="index"
                                     :class="
-                                        index <= 8
-                                            ? 'bg-orange-300 text-black text-bold' : ''
+                                        index <= 5
+                                            ? 'bg-orange-300 text-black text-bold' :
+                                        index >= 6 && index <=9
+                                            ? 'bg-blue-300 text-black text-bold' : ''
                                     "
                                 >
                                     <td class="px-1 py-1 whitespace-nowrap text-sm">
@@ -288,10 +290,10 @@
                         <tr
                             v-for="(team, index) in season_standings.standings"
                             :key="index"
-                            :class="
-                                index <= 8
-                                    ? 'bg-orange-300 text-black text-bold' : ''
-                            "
+                            :class="index <= 5
+                                ? 'bg-orange-300 text-black text-bold' :
+                            index >= 6 && index <=9
+                                ? 'bg-blue-300 text-black text-bold' : ''"
                         >
                             <td
                                 class="px-2 py-2 whitespace-nowrap text-nowrap text-sm"
