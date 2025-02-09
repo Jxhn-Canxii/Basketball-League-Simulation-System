@@ -830,24 +830,22 @@ class SimulateController extends Controller
             ->sum('points');
 
             // Check if the game is tied
+            $reasons = [
+                'due to bad weather',
+                'because of unforeseen technical issues',
+                'due to a power failure at the stadium',
+                'because of security concerns',
+                'due to a transportation issue for the teams',
+                'because of an equipment malfunction',
+            ];
+            
+            $randomReason = $reasons[array_rand($reasons)];
+            
             if ($homeScore === $awayScore) {
-                // Simulate overtime
-                $overtimeMinutes = 5; // 5-minute overtime period
-                $overtimeStats = $this->simulateOvertime($homeTeamPlayers, $awayTeamPlayers, $gameData, $overtimeMinutes);
-
-                // Add overtime stats to the playerGameStats array
-                foreach ($overtimeStats as $stat) {
-                    $playerGameStats[] = $stat;
-                }
-
-                // Recalculate scores after overtime
-                $homeScore += array_sum(array_map(function ($stat) use ($gameData) {
-                    return $stat['team_id'] === $gameData->home_team_id ? $stat['points'] : 0;
-                }, $overtimeStats));
-
-                $awayScore += array_sum(array_map(function ($stat) use ($gameData) {
-                    return $stat['team_id'] === $gameData->away_team_id ? $stat['points'] : 0;
-                }, $overtimeStats));
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'The game is postponed ' . $randomReason . '!',
+                ], 500);
             }
 
             // Update game data with final scores
