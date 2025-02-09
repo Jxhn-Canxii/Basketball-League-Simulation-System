@@ -1977,6 +1977,18 @@ class SimulateController extends Controller
                     }
     
                     $roleCounts[$role]++;
+                    
+                    if($playerStat->role != $role){
+                        DB::table('transactions')->insert([
+                            'player_id' => $playerStat->player_id,
+                            'season_id' => $seasonId,
+                            'details' => 'Has moved from '.$playerStat->role.' to '.$role.' for the upcoming games.',
+                            'from_team_id' => $playerStat->team_id,
+                            'to_team_id' => $playerStat->team_id, // 0 for free agent pool
+                            'status' => 'role change',
+                        ]);
+                    }
+
                     Player::where('id', $playerStat->player_id)->update(['role' => $role]);
                 }
     
