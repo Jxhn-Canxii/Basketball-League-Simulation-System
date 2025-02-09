@@ -23,7 +23,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="(transaction, index) in team_history.transactions" :key="transaction.id" @click.enter.prevent="showTooltip = transaction.details" class="hover:bg-gray-200">
+                    <tr v-for="(transaction, index) in team_history.transactions" :key="transaction.id" @click.enter.prevent="showPlayerProfileModal = transaction.player_id" class="hover:bg-gray-200">
                         <td class="px-2 py-3 whitespace-nowrap border">Season {{ transaction.season_id }}</td>
                         <td class="px-2 py-3 whitespace-nowrap border">{{ transaction.player_name }}</td>
                         <td class="px-2 py-3 whitespace-nowrap border">{{ transaction.from_team_name ?? '-' }}</td>
@@ -45,6 +45,18 @@
             />
           </div>
     </div>
+    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
+        <button
+            class="flex float-end bg-gray-100 p-3"
+            @click.prevent="showPlayerProfileModal = false"
+        >
+            <i class="fa fa-times text-black-600"></i>
+        </button>
+        <div class="p-6 block">
+            <!-- Image Section -->
+            <PlayerPerformance :key="showPlayerProfileModal" :player_id="showPlayerProfileModal" />
+        </div>
+    </Modal>
 </template>
 
 <script setup>
@@ -56,6 +68,7 @@ import Modal from "@/Components/Modal.vue";
 import Paginator from "@/Components/Paginator.vue";
 import Swal from "sweetalert2";
 import axios from "axios";
+import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 
 const props = defineProps({
     team_id: {
@@ -63,7 +76,7 @@ const props = defineProps({
         required: true
     }
 });
-const showTooltip = ref(false);
+const showPlayerProfileModal = ref(false);
 const team_info = ref([]);
 const team_history = ref([]);
 
