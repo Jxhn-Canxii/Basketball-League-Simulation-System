@@ -354,7 +354,9 @@
                                 {{ player.free_throws_made }} / {{ player.free_throw_attempts }} ({{ player.free_throw_percentage.toFixed(1) }}%)
                             </td>
                             <!-- PER -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ parseFloat(player.per).toFixed(2) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">
+                                {{ isNaN(parseFloat(player.per)) ? 0 : parseFloat(player.per).toFixed(2) }}
+                            </td>
                             <!-- EFF -->
                             <td class="px-2 py-1 whitespace-nowrap border text-right"><b :class="player.efficiency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.efficiency }}</b></td>
                         </tr>
@@ -500,9 +502,11 @@
                                 {{ player.free_throws_made }} / {{ player.free_throw_attempts }} ({{ player.free_throw_percentage.toFixed(1) }}%)
                             </td>
                             <!-- PER -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ parseFloat(player.per).toFixed(2) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">
+                                {{ isNaN(parseFloat(player.per)) ? 0 : parseFloat(player.per).toFixed(2) }}
+                            </td>
                             <!-- EFF -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-right"><b :class="player.efficiency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.efficiency }}</b></td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right"><b :class="player.efficiency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.efficiency ?? 0 }}</b></td>
                         </tr>
                         <tr v-if="sortedHomePlayers.length === 0">
                             <td
