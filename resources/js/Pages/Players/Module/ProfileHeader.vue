@@ -87,6 +87,10 @@
                         {{ main_performance.player_details.role }}
                     </span>
                 </p>
+                <p>
+                    <strong>Position:</strong>
+                    {{ main_performance.player_details.position ?? "-" }}
+                </p>
             </div>
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
