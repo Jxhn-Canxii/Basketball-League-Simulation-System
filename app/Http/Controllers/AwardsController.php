@@ -258,7 +258,7 @@ class AwardsController extends Controller
 
         return response()->json(['message' => 'Player season stats stored successfully.']);
     }
-    public function storeallplayerseasonstats()
+    public static function storeallplayerseasonstats()
     {
         // Get the latest season ID or set it to 12 if it doesn’t exist
         $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 1;
@@ -584,7 +584,7 @@ class AwardsController extends Controller
             }
     
             // Query to count the total games played for a team in a given season
-            $gamesPlayedCount = $this->totalRegularSeasonGames($latestSeasonId, $teamId);
+            $gamesPlayedCount = self::totalRegularSeasonGames($latestSeasonId, $teamId);
     
             // Check if the player has stats in the latest season
             $hasStats = DB::table('player_game_stats')
@@ -1220,7 +1220,7 @@ class AwardsController extends Controller
         return response()->json($mvpList);
     }
     
-    private function totalRegularSeasonGames($seasonId, $teamId)
+    public static function totalRegularSeasonGames($seasonId, $teamId)
     {
         $gamesPlayedCount = DB::table('schedules')
             ->where('season_id', $seasonId)
