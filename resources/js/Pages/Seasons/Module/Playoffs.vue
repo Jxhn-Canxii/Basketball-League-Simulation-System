@@ -416,7 +416,7 @@ const createPlayOffSchedule = async (round) => {
 
         Swal.fire({
             title: "Simulating...",
-            text: "Please wait while creating the schedule.",
+            text: "Please wait while creating the schedule for "+roundNameFormatter(round),
             icon: "info",
             allowOutsideClick: false,
             didOpen: () => {
