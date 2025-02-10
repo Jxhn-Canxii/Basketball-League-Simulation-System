@@ -410,6 +410,25 @@ class SimulateController extends Controller
             ->where('game_id', $gameData->game_id)
             ->sum('points');
 
+        // Check if the game is tied
+        $reasons = [
+            'due to bad weather',
+            'because of unforeseen technical issues',
+            'due to a power failure at the stadium',
+            'because of security concerns',
+            'due to a transportation issue for the teams',
+            'because of an equipment malfunction',
+        ];
+        
+        $randomReason = $reasons[array_rand($reasons)];
+        
+        if ($homeScore === $awayScore) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'The game is postponed ' . $randomReason . '!',
+            ], 500);
+        }
+
         // Update the scores
         $gameData->home_score = $homeScore;
         $gameData->away_score = $awayScore;
