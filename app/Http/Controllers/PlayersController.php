@@ -33,7 +33,7 @@ class PlayersController extends Controller
             'status' => session('status'),
         ]);
     }
-    public function listplayers(Request $request)
+    public function listteamroster(Request $request)
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',
@@ -198,8 +198,8 @@ class PlayersController extends Controller
                     DB::raw('SUM(CASE WHEN minutes > 0 THEN fouls ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_fouls'),
                     DB::raw('SUM(CASE WHEN minutes > 0 THEN minutes ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_minutes'),
                     DB::raw('SUM(CASE WHEN eff > 0 THEN eff ELSE 0 END) / NULLIF(COUNT(CASE WHEN eff > 0 THEN 1 END), 0) as avg_eff'),
-                    DB::raw('SUM(CASE WHEN field_goal_percentage > 0 THEN field_goal_percentage ELSE 0 END) / NULLIF(COUNT(CASE WHEN field_goal_percentage > 0 THEN 1 END), 0) as field_goal_percentage')
-                    
+                    DB::raw('SUM(CASE WHEN field_goal_percentage > 0 THEN field_goal_percentage ELSE 0 END) / NULLIF(COUNT(CASE WHEN field_goal_percentage > 0 THEN 1 END), 0) as field_goal_percentage'),
+                    DB::raw('SUM(CASE WHEN per > 0 THEN per ELSE 0 END) / NULLIF(COUNT(CASE WHEN per > 0 THEN 1 END), 0) as per_game_score')
                 )
                 ->where('season_id', $seasonId) // Filter by the specific season
                 ->groupBy('player_id')
@@ -220,6 +220,7 @@ class PlayersController extends Controller
                     'average_turnovers_per_game' => (float)0,
                     'average_fouls_per_game' => (float)0,
                     'field_goal_percentage' => (float)0,
+                    'per_game_score' => (float) 0,
                     'average_eff' => (float)0,
                     'games_played' => 0,
                 ];
@@ -235,7 +236,10 @@ class PlayersController extends Controller
                         'average_blocks_per_game' => (float) $playerGameStats[$playerId]->avg_blocks,
                         'average_turnovers_per_game' => (float) $playerGameStats[$playerId]->avg_turnovers,
                         'average_fouls_per_game' => (float) $playerGameStats[$playerId]->avg_fouls,
+                        'field_goal_percentage' => (float) $playerGameStats[$playerId]->field_goal_percentage,
+                        'per_game_score' => (float) $playerGameStats[$playerId]->per_game_score,
                         'games_played' => (int) $playerGameStats[$playerId]->games_played,
+                        'average_eff' => (float) $playerGameStats[$playerId]->avg_eff,
                     ];
                 }
 
@@ -249,6 +253,7 @@ class PlayersController extends Controller
                     ->where('team_id', $teamId)
                     ->count('team_id');
                 
+                $totalSeasonGameSchedule = $this->getScheduleCount($teamId, $seasonId);
                 // Only include players with games played > 0 if season status is 11
                 if ($seasonStatus != 11 || $stats['games_played'] > 0) {
 
@@ -276,13 +281,14 @@ class PlayersController extends Controller
                         'average_blocks_per_game' => $stats['average_blocks_per_game'],
                         'average_turnovers_per_game' => $stats['average_turnovers_per_game'],
                         'average_fouls_per_game' => $stats['average_fouls_per_game'],
-                        'effeciency' => (float)$stats['average_eff'],
+                        'effeciency' => number_format($stats['average_eff'],2),
                         'games_played' => $stats['games_played'],
-                        'field_goal_percentage' => $stats['field_goal_percentage'],
-                        'per_game_score' => number_format(0, 2),
+                        'field_goal_percentage' => number_format( $stats['field_goal_percentage'],2),
+                        'per_game_score' =>number_format( $stats['per_game_score'],2),
                         'total_score' => number_format(0, 2),
                         'combined_score' => number_format(0, 2),
                         'seasons_played_with_team' => $seasonsPlayedWithTeam + 1,
+                        'team_total_games' => (float)$totalSeasonGameSchedule,
                         'total_seasons_played' => $totalSeasonsPlayed + 1,
                         'latest_season' => $currentSeasonId,
                     ];
@@ -848,7 +854,7 @@ class PlayersController extends Controller
         ];
     }
     
-    public function getplayerseasonperformance(Request $request)
+    public function getplayerseasonperformanceV1(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -977,7 +983,137 @@ class PlayersController extends Controller
         ]);
     }
 
+    public function getplayerseasonperformance(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+        ]);
     
+        $playerId = $request->player_id;
+    
+        // Fetch player season stats for the given player
+        $playerStats = \DB::table('player_season_stats')
+        ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+        ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
+        ->join('seasons', 'player_season_stats.season_id', '=', 'seasons.id') // Join with seasons table
+        ->leftJoin('player_ratings', function ($join) {
+            $join->on('player_season_stats.player_id', '=', 'player_ratings.player_id')
+                ->on('player_season_stats.season_id', '=', 'player_ratings.season_id');
+        }) // Left join with player_ratings table
+        ->select(
+            'players.id as player_id',
+            'players.name as player_name',
+            'player_season_stats.season_id',
+            'player_ratings.overall_rating',
+            'seasons.name as season_name', // Select season name
+            \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY teams.name ASC) as team_names'), // Concatenate team names, ordered
+            \DB::raw('MIN(player_season_stats.role) as player_role'), // Get the most recent role
+            \DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
+            \DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
+            \DB::raw('AVG(player_season_stats.avg_assists_per_game) as avg_assists_per_game'),
+            \DB::raw('AVG(player_season_stats.avg_steals_per_game) as avg_steals_per_game'),
+            \DB::raw('AVG(player_season_stats.avg_blocks_per_game) as avg_blocks_per_game'),
+            \DB::raw('AVG(player_season_stats.avg_turnovers_per_game) as avg_turnovers_per_game'),
+            \DB::raw('AVG(player_season_stats.avg_fouls_per_game) as avg_fouls_per_game'),
+            \DB::raw('SUM(player_season_stats.total_points) as total_points'),
+            \DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
+            \DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
+            \DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
+            \DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
+            \DB::raw('SUM(player_season_stats.total_turnovers) as total_turnovers'),
+            \DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
+            \DB::raw('SUM(player_season_stats.total_minutes_played) as total_minutes_played'),
+            \DB::raw('SUM(player_season_stats.total_games_played) as total_games_played'),
+            \DB::raw('AVG(player_season_stats.per) as per'),
+            \DB::raw('AVG(player_season_stats.ts_percent) as ts_percent'),
+            \DB::raw('AVG(player_season_stats.eff) as eff'), // Efficiency
+            \DB::raw('SUM(player_season_stats.total_field_goals_made) as total_field_goals_made'),
+            \DB::raw('SUM(player_season_stats.total_field_goal_attempts) as total_field_goal_attempts'),
+            \DB::raw('SUM(player_season_stats.total_two_pointers_made) as total_two_pointers_made'),
+            \DB::raw('SUM(player_season_stats.total_two_point_attempts) as total_two_point_attempts'),
+            \DB::raw('SUM(player_season_stats.total_three_pointers_made) as total_three_pointers_made'),
+            \DB::raw('SUM(player_season_stats.total_three_point_attempts) as total_three_point_attempts'),
+            \DB::raw('SUM(player_season_stats.total_free_throws_made) as total_free_throws_made'),
+            \DB::raw('SUM(player_season_stats.total_free_throw_attempts) as total_free_throw_attempts')
+        )
+        ->where('player_season_stats.player_id', $playerId)
+        ->groupBy(
+            'players.id', 'players.name', 'player_season_stats.season_id', 
+            'player_ratings.overall_rating', 'seasons.name'
+        )
+        ->orderBy('player_season_stats.season_id', 'desc') // Sort by season_id in descending order
+        ->get();
+    
+    
+        if ($playerStats->isEmpty()) {
+            return response()->json([
+                'error' => 'No stats found for the given player.',
+                'player_stats' => [],
+            ], 404);
+        }
+    
+        // Initialize an array to hold formatted player stats
+        $formattedPlayerStats = [];
+    
+        foreach ($playerStats as $stats) {
+            // Calculate shooting percentages (avoid division by zero)
+            $fieldGoalPercentage = $stats->total_field_goal_attempts > 0 ? ($stats->total_field_goals_made / $stats->total_field_goal_attempts) * 100 : 0;
+            $twoPointPercentage = $stats->total_two_point_attempts > 0 ? ($stats->total_two_pointers_made / $stats->total_two_point_attempts) * 100 : 0;
+            $threePointPercentage = $stats->total_three_point_attempts > 0 ? ($stats->total_three_pointers_made / $stats->total_three_point_attempts) * 100 : 0;
+            $freeThrowPercentage = $stats->total_free_throw_attempts > 0 ? ($stats->total_free_throws_made / $stats->total_free_throw_attempts) * 100 : 0;
+    
+            // Append player season stats with averages, shooting percentages, and other stats
+            $formattedPlayerStats[] = [
+                'player_id' => $stats->player_id,
+                'player_name' => $stats->player_name,
+                'player_role' => $stats->player_role,
+                'team_names' => $stats->team_names, // Concatenated team names
+                'season_id' => $stats->season_id,
+                'overall_rating' => $stats->overall_rating,
+                'season_name' => $stats->season_name, // Season name
+                'efficiency' => $stats->eff, // Efficiency
+                'total_points' => $stats->total_points,
+                'total_rebounds' => $stats->total_rebounds,
+                'total_assists' => $stats->total_assists,
+                'total_steals' => $stats->total_steals,
+                'total_blocks' => $stats->total_blocks,
+                'total_turnovers' => $stats->total_turnovers,
+                'total_fouls' => $stats->total_fouls,
+                'total_minutes_played' => $stats->total_minutes_played,
+                'total_games_played' => $stats->total_games_played,
+                'per' => $stats->per,
+                'ts_percent' => $stats->ts_percent,
+                'average_points_per_game' => round($stats->avg_points_per_game, 2),
+                'average_rebounds_per_game' => round($stats->avg_rebounds_per_game, 2),
+                'average_assists_per_game' => round($stats->avg_assists_per_game, 2),
+                'average_steals_per_game' => round($stats->avg_steals_per_game, 2),
+                'average_blocks_per_game' => round($stats->avg_blocks_per_game, 2),
+                'average_turnovers_per_game' => round($stats->avg_turnovers_per_game, 2),
+                'average_fouls_per_game' => round($stats->avg_fouls_per_game, 2),
+                // Include shooting percentages
+                'field_goal_percentage' => round($fieldGoalPercentage, 2),
+                'two_point_percentage' => round($twoPointPercentage, 2),
+                'three_point_percentage' => round($threePointPercentage, 2),
+                'free_throw_percentage' => round($freeThrowPercentage, 2),
+                // Include attempts and made
+                'total_field_goals_made' => $stats->total_field_goals_made,
+                'total_field_goal_attempts' => $stats->total_field_goal_attempts,
+                'total_two_pointers_made' => $stats->total_two_pointers_made,
+                'total_two_point_attempts' => $stats->total_two_point_attempts,
+                'total_three_pointers_made' => $stats->total_three_pointers_made,
+                'total_three_point_attempts' => $stats->total_three_point_attempts,
+                'total_free_throws_made' => $stats->total_free_throws_made,
+                'total_free_throw_attempts' => $stats->total_free_throw_attempts,
+            ];
+        }
+    
+        return response()->json([
+            'player_stats' => $formattedPlayerStats,
+        ]);
+    }
+    
+
     public function getplayerplayoffperformance(Request $request)
     {
         // Validate the request data
@@ -1726,4 +1862,19 @@ class PlayersController extends Controller
             'data' => $injuryHistory
         ]);
     }
+    private function getScheduleCount($teamId, $seasonId)
+    {
+        $count = DB::table('schedules')
+            ->where('season_id', $seasonId) // Filter by season_id
+            ->where(function($query) use ($teamId) {
+                // Check if team_id is in either home_id or away_id
+                $query->where('home_id', $teamId)
+                      ->orWhere('away_id', $teamId);
+            })
+            ->count();
+            
+        return $count;
+    }
+    
+
 }

@@ -9,10 +9,10 @@
             v-bind:disabled="isTeamModalOpen"
             class="px-2 py-2 bg-blue-500 font-bold text-md float-center text-white shadow"
         >
-            <i class="fa fa-eye"></i> {{ props.text }}
+            <i class="fa fa-eye"></i> {{ props.text?? 'View' }}
         </button>
         <b v-if="props.showButton == 0" class="hover:text-blue-500" @click.prevent="isTeamModalOpen = true">
-            {{ props.text }}
+            {{ props.text == 'null' ? 'TBD' : props.text }}
         </b>
         <Modal :show="isTeamModalOpen" :maxWidth="'fullscreen'">
             <button

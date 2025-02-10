@@ -162,7 +162,7 @@ Route::middleware('auth')->group(function () {
         Route::get('', [PlayersController::class, 'index'])->name('players.index');
         Route::get('experience', [PlayersController::class, 'experience'])->name('experience.index');
         Route::get('freeagents', [PlayersController::class, 'freeagents'])->name('freeagents.index');
-        Route::post('list-players', [PlayersController::class, 'listplayers'])->name('players.list');
+        Route::post('list-players', [PlayersController::class, 'listteamroster'])->name('players.team.roster');
         Route::post('add-player', [PlayersController::class, 'addplayer'])->name('players.add');
         Route::post('add-free-agent', [PlayersController::class, 'addfreeagentplayer'])->name('players.add.free.agent');
 

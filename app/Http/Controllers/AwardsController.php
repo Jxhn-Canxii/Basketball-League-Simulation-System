@@ -566,7 +566,7 @@ class AwardsController extends Controller
 
         return response()->json(['message' => 'Player season stats stored successfully.']);
     }
-    public function storeplayerseasonstats($teamId, $playerId)
+    public static function storeplayerseasonstats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or default to 1 if none exists

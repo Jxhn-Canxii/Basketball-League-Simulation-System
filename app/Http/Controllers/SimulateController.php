@@ -61,7 +61,6 @@ class SimulateController extends Controller
             'schedule_id' => 'required|exists:schedules,id',
         ]);
 
-        $storeStats = new AwardsController;
         // Fetch game data
         $gameData = Schedules::join('teams as home', 'schedules.home_id', '=', 'home.id')
             ->join('teams as away', 'schedules.away_id', '=', 'away.id')
@@ -397,7 +396,7 @@ class SimulateController extends Controller
                 $stats
             );
 
-            $storeStats->storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+            AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
             // $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
         }
 
@@ -836,7 +835,7 @@ class SimulateController extends Controller
                     ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
                     $stats
                 );
-                $storeStats->storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+                AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
             }
 
              // Calculate scores based on player stats
@@ -1353,6 +1352,9 @@ class SimulateController extends Controller
                                 'to_team_id' => $player->team_id,
                                 'status' => 'signed',
                             ]);
+
+                            //store initial player season stats
+                            AwardsController::storeplayerseasonstats( $player->team_id, $randomPlayer->id);
                         }
                     } else {
                         // Optionally log or handle the case where the player is not waived

@@ -379,7 +379,7 @@ const fetchTeamInfo = async (id) => {
 const fetchTeamRoster = async (id) => {
     try {
         team_roster.value = [];
-        const response = await axios.post(route("players.list"), {
+        const response = await axios.post(route("players.team.roster"), {
             team_id: id,
             season_id: season_id.value,
         });
