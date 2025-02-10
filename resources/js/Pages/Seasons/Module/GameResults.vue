@@ -35,7 +35,7 @@
             class="flex flex-col lg:flex-row justify-between mb-4 border-b-2 border-gray-700 pb-4"
         >
             <div
-                class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative"
+                class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative order-1 md:order-1"
                 :style="{
                     backgroundColor: '#' + gameDetails?.home_team.primary_color,
                 }"
@@ -100,7 +100,7 @@
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.home_team.team_id }}</small>
             </div>
 
-            <div class="flex-1 text-center mb-2 lg:mb-0 text-white">
+            <div class="flex-1 text-center mb-2 lg:mb-0 text-white order-3 md:order-2">
                 <div class="bg-gray-800 p-2 rounded-lg m-1">
                     <p class="text-xs font-semibold text-yellow-500">
                         Liga Dos
@@ -145,7 +145,7 @@
             </div>
 
             <div
-                class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative"
+                class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative order-2 md:order-3"
                 :style="{
                     backgroundColor: '#' + gameDetails?.away_team.primary_color,
                 }"
