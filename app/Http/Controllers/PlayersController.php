@@ -854,135 +854,6 @@ class PlayersController extends Controller
         ];
     }
     
-    public function getplayerseasonperformanceV1(Request $request)
-    {
-        // Validate the request data
-        $request->validate([
-            'player_id' => 'required|exists:players,id',
-        ]);
-
-        $playerId = $request->player_id;
-
-        // Fetch player season stats for the given player
-        $playerStats = \DB::table('player_season_stats')
-        ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-        ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
-        ->join('seasons', 'player_season_stats.season_id', '=', 'seasons.id') // Join with seasons table
-        ->leftJoin('player_ratings', function ($join) {
-            $join->on('player_season_stats.player_id', '=', 'player_ratings.player_id')
-                ->on('player_season_stats.season_id', '=', 'player_ratings.season_id');
-        }) // Left join with player_ratings table
-        ->select(
-            'players.id as player_id',
-            'players.name as player_name',
-            'player_season_stats.season_id',
-            'player_ratings.overall_rating',
-            'seasons.name as season_name', // Select season name
-            \DB::raw('GROUP_CONCAT(DISTINCT teams.name) as team_names'), // Concatenate team names
-            'player_season_stats.role as player_role',
-            \DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
-            \DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
-            \DB::raw('AVG(player_season_stats.avg_assists_per_game) as avg_assists_per_game'),
-            \DB::raw('AVG(player_season_stats.avg_steals_per_game) as avg_steals_per_game'),
-            \DB::raw('AVG(player_season_stats.avg_blocks_per_game) as avg_blocks_per_game'),
-            \DB::raw('AVG(player_season_stats.avg_turnovers_per_game) as avg_turnovers_per_game'),
-            \DB::raw('AVG(player_season_stats.avg_fouls_per_game) as avg_fouls_per_game'),
-            \DB::raw('SUM(player_season_stats.total_points) as total_points'),
-            \DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
-            \DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
-            \DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
-            \DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
-            \DB::raw('SUM(player_season_stats.total_turnovers) as total_turnovers'),
-            \DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
-            \DB::raw('SUM(player_season_stats.total_minutes_played) as total_minutes_played'),
-            \DB::raw('SUM(player_season_stats.total_games_played) as total_games_played'),
-            \DB::raw('AVG(player_season_stats.per) as per'),
-            \DB::raw('AVG(player_season_stats.ts_percent) as ts_percent'),
-            \DB::raw('AVG(player_season_stats.eff) as eff'), // Efficiency
-            \DB::raw('SUM(player_season_stats.total_field_goals_made) as total_field_goals_made'),
-            \DB::raw('SUM(player_season_stats.total_field_goal_attempts) as total_field_goal_attempts'),
-            \DB::raw('SUM(player_season_stats.total_two_pointers_made) as total_two_pointers_made'),
-            \DB::raw('SUM(player_season_stats.total_two_point_attempts) as total_two_point_attempts'),
-            \DB::raw('SUM(player_season_stats.total_three_pointers_made) as total_three_pointers_made'),
-            \DB::raw('SUM(player_season_stats.total_three_point_attempts) as total_three_point_attempts'),
-            \DB::raw('SUM(player_season_stats.total_free_throws_made) as total_free_throws_made'),
-            \DB::raw('SUM(player_season_stats.total_free_throw_attempts) as total_free_throw_attempts')
-        )
-        ->where('player_season_stats.player_id', $playerId)
-        ->groupBy(
-            'players.id', 'players.name', 'player_season_stats.season_id', 'player_season_stats.team_id', 
-            'player_ratings.overall_rating', 'seasons.name', 'player_season_stats.role'
-        )
-        ->orderBy('player_season_stats.season_id', 'desc') // Sort by season_id in descending order
-        ->get();
-
-        if ($playerStats->isEmpty()) {
-            return response()->json([
-                'error' => 'No stats found for the given player.',
-                'player_stats' => [],
-            ], 404);
-        }
-
-        // Initialize an array to hold formatted player stats
-        $formattedPlayerStats = [];
-
-        foreach ($playerStats as $stats) {
-            // Calculate shooting percentages (avoid division by zero)
-            $fieldGoalPercentage = $stats->total_field_goal_attempts > 0 ? ($stats->total_field_goals_made / $stats->total_field_goal_attempts) * 100 : 0;
-            $twoPointPercentage = $stats->total_two_point_attempts > 0 ? ($stats->total_two_pointers_made / $stats->total_two_point_attempts) * 100 : 0;
-            $threePointPercentage = $stats->total_three_point_attempts > 0 ? ($stats->total_three_pointers_made / $stats->total_three_point_attempts) * 100 : 0;
-            $freeThrowPercentage = $stats->total_free_throw_attempts > 0 ? ($stats->total_free_throws_made / $stats->total_free_throw_attempts) * 100 : 0;
-
-            // Append player season stats with averages, shooting percentages, and other stats
-            $formattedPlayerStats[] = [
-                'player_id' => $stats->player_id,
-                'player_name' => $stats->player_name,
-                'player_role' => $stats->player_role,
-                'team_names' => $stats->team_names, // Single team (adjust for multiple if necessary)
-                'season_id' => $stats->season_id,
-                'overall_rating' => $stats->overall_rating,
-                'season_name' => $stats->season_name, // Season name
-                'efficiency' => $stats->eff, // Efficiency
-                'total_points' => $stats->total_points,
-                'total_rebounds' => $stats->total_rebounds,
-                'total_assists' => $stats->total_assists,
-                'total_steals' => $stats->total_steals,
-                'total_blocks' => $stats->total_blocks,
-                'total_turnovers' => $stats->total_turnovers,
-                'total_fouls' => $stats->total_fouls,
-                'total_minutes_played' => $stats->total_minutes_played,
-                'total_games_played' => $stats->total_games_played,
-                'per' => $stats->per,
-                'ts_percent' => $stats->ts_percent,
-                'average_points_per_game' => round($stats->avg_points_per_game, 2),
-                'average_rebounds_per_game' => round($stats->avg_rebounds_per_game, 2),
-                'average_assists_per_game' => round($stats->avg_assists_per_game, 2),
-                'average_steals_per_game' => round($stats->avg_steals_per_game, 2),
-                'average_blocks_per_game' => round($stats->avg_blocks_per_game, 2),
-                'average_turnovers_per_game' => round($stats->avg_turnovers_per_game, 2),
-                'average_fouls_per_game' => round($stats->avg_fouls_per_game, 2),
-                // Include shooting percentages
-                'field_goal_percentage' => round($fieldGoalPercentage, 2),
-                'two_point_percentage' => round($twoPointPercentage, 2),
-                'three_point_percentage' => round($threePointPercentage, 2),
-                'free_throw_percentage' => round($freeThrowPercentage, 2),
-                // Include attempts and made
-                'total_field_goals_made' => $stats->total_field_goals_made,
-                'total_field_goal_attempts' => $stats->total_field_goal_attempts,
-                'total_two_pointers_made' => $stats->total_two_pointers_made,
-                'total_two_point_attempts' => $stats->total_two_point_attempts,
-                'total_three_pointers_made' => $stats->total_three_pointers_made,
-                'total_three_point_attempts' => $stats->total_three_point_attempts,
-                'total_free_throws_made' => $stats->total_free_throws_made,
-                'total_free_throw_attempts' => $stats->total_free_throw_attempts,
-            ];
-        }
-
-        return response()->json([
-            'player_stats' => $formattedPlayerStats,
-        ]);
-    }
-
     public function getplayerseasonperformance(Request $request)
     {
         // Validate the request data
@@ -1008,7 +879,7 @@ class PlayersController extends Controller
             'player_ratings.overall_rating',
             'seasons.name as season_name', // Select season name
             \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY teams.name ASC) as team_names'), // Concatenate team names, ordered
-            \DB::raw('MIN(player_season_stats.role) as player_role'), // Get the most recent role
+            \DB::raw('MAX(player_season_stats.role) as player_role'), // Get the most recent role
             \DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
             \DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
             \DB::raw('AVG(player_season_stats.avg_assists_per_game) as avg_assists_per_game'),

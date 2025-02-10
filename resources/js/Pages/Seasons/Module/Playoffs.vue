@@ -355,7 +355,7 @@
             <i class="fa fa-times text-black-600"></i>
         </button>
         <div class="mt-4">
-            <GameResults :game_id="isGameResultModalOpen" />
+            <GameResults :key="isGameResultModalOpen" :game_id="isGameResultModalOpen" />
         </div>
     </Modal>
 </template>
@@ -524,7 +524,9 @@ const simulateFullPlayoffs = async () => {
     try {
         // Define playoff round sequence
         const playoffRounds = [
-            'start',
+            'play_ins_elims_round_1',
+            'play_ins_elims_round_2',
+            'play_ins_finals',
             'round_of_16',
             'quarterfinals', 
             'semifinals',
@@ -552,8 +554,8 @@ const simulateFullPlayoffs = async () => {
                         index,
                         round
                     );
-                    await delay(1000); // Add delay between games
-                    isGameResultModalOpen.value = false;
+                    await delay(2000); // Add delay between games
+                    // isGameResultModalOpen.value = false;
                 }
 
                 // Advance to next round
@@ -606,11 +608,10 @@ const simulateGame = async (id, game_id, type, index, round) => {
             title: "Success!",
             text: response.data.message, // Assuming the response contains a 'message' field
         });
-
-        Swal.close();
-
-        isHide.value = false;
+        
         isGameResultModalOpen.value = game_id;
+        Swal.close();
+        isHide.value = false;
     } catch (error) {
         console.error("Error simulating the game:", error);
 
