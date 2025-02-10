@@ -91,6 +91,10 @@
                     <strong>Position:</strong>
                     {{ main_performance.player_details.position ?? "-" }}
                 </p>
+                <p>
+                    <strong>Archetype:</strong>
+                    <a class="uppercase">&nbsp;{{ main_performance.player_details.archetype.replaceAll('_',' ') ?? "-" }}</a>
+                </p>
             </div>
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
