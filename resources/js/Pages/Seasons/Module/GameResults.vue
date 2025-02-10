@@ -512,9 +512,9 @@
         </div>
 
         <!-- Best Player of the Game -->
-        <div class="flex bg-white">
+        <div class="block md:flex bg-white">
             <!-- Best Player Section: 1/4 Width -->
-            <div class="w-1/2 p-2">
+            <div class="w-full md:w-1/2 p-2">
                 <h3 class="text-lg font-semibold mb-1">Player of the Game</h3>
                 <div
                     v-if="bestPlayer"
@@ -632,7 +632,7 @@
                 </div>
             </div>
             <!-- Stat Leaders Section: 3/4 Width -->
-            <div class="w-1/2 p-2 bg-white">
+            <div class="w-full md:w-1/2 p-2 bg-white">
                 <h3 class="text-lg font-semibold mb-2">Stat Leaders</h3>
                 <div class="min-w-full shadow-lg border-gray-300 p-4">
                     <ul class="space-y-4">
