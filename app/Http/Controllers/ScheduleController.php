@@ -301,7 +301,6 @@ class ScheduleController extends Controller
                 'message' => 'Round schedule already created',
             ], 404); // 404 - Not Found
         }
-        return false;
         // Retrieve the league_id from the seasons table
         $leagueId = DB::table('seasons')
             ->where('id', $seasonId)
