@@ -1,35 +1,35 @@
 {
-  "_ApplicationLogo-DSrBuOHR.js": {
-    "file": "assets/ApplicationLogo-DSrBuOHR.js",
+  "_ApplicationLogo-F4Vw0I96.js": {
+    "file": "assets/ApplicationLogo-F4Vw0I96.js",
     "imports": [
       "__plugin-vue_export-helper-DlAUqK2U.js",
       "resources/js/app.js"
     ]
   },
-  "_AuthenticatedLayout-CgtpReJB.js": {
-    "file": "assets/AuthenticatedLayout-CgtpReJB.js",
+  "_AuthenticatedLayout-yj2hfAl_.js": {
+    "file": "assets/AuthenticatedLayout-yj2hfAl_.js",
     "imports": [
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
-  "_Formatter-ni77-f23.js": {
-    "file": "assets/Formatter-ni77-f23.js"
+  "_Formatter-KNgv_r4L.js": {
+    "file": "assets/Formatter-KNgv_r4L.js"
   },
-  "_InputError-pEAFV_g-.js": {
-    "file": "assets/InputError-pEAFV_g-.js",
+  "_InputError-IG-4Qj9f.js": {
+    "file": "assets/InputError-IG-4Qj9f.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_Modal-Cj1VQ7Nw.js": {
-    "file": "assets/Modal-Cj1VQ7Nw.js",
+  "_Modal-Byk1Hf7R.js": {
+    "file": "assets/Modal-Byk1Hf7R.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_Paginator--Pkt1TlT.js": {
-    "file": "assets/Paginator--Pkt1TlT.js",
+  "_Paginator-9Pz9Hx3K.js": {
+    "file": "assets/Paginator-9Pz9Hx3K.js",
     "imports": [
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
@@ -38,46 +38,54 @@
       "assets/Paginator-CBiUYX0z.css"
     ]
   },
-  "_Paginator.vue_vue_type_style_index_0_scoped_522e4bd2_lang-!~{011}~.js": {
+  "_Paginator.vue_vue_type_style_index_0_scoped_522e4bd2_lang-!~{019}~.js": {
     "file": "assets/Paginator-CBiUYX0z.css",
-    "src": "_Paginator.vue_vue_type_style_index_0_scoped_522e4bd2_lang-!~{011}~.js"
+    "src": "_Paginator.vue_vue_type_style_index_0_scoped_522e4bd2_lang-!~{019}~.js"
   },
-  "_PlayerGameLogs.vue_vue_type_style_index_0_scoped_9639e4a3_lang-!~{01b}~.js": {
-    "file": "assets/PlayerGameLogs-DAppoaG_.css",
-    "src": "_PlayerGameLogs.vue_vue_type_style_index_0_scoped_9639e4a3_lang-!~{01b}~.js"
+  "_PlayerGameLogs.vue_vue_type_style_index_0_scoped_3b03f98e_lang-!~{01h}~.js": {
+    "file": "assets/PlayerGameLogs-SVEcV6zG.css",
+    "src": "_PlayerGameLogs.vue_vue_type_style_index_0_scoped_3b03f98e_lang-!~{01h}~.js"
   },
-  "_PlayerPerformance.vue_vue_type_style_index_0_scoped_309b00d8_lang-!~{01c}~.js": {
-    "file": "assets/PlayerPerformance-C1MqfJhi.css",
-    "src": "_PlayerPerformance.vue_vue_type_style_index_0_scoped_309b00d8_lang-!~{01c}~.js"
+  "_PlayerInjury.vue_vue_type_style_index_0_scoped_ac23c378_lang-!~{01i}~.js": {
+    "file": "assets/PlayerInjury-DytjqumY.css",
+    "src": "_PlayerInjury.vue_vue_type_style_index_0_scoped_ac23c378_lang-!~{01i}~.js"
   },
-  "_PrimaryButton-C21RRYVB.js": {
-    "file": "assets/PrimaryButton-C21RRYVB.js",
+  "_PlayerPerformance.vue_vue_type_style_index_0_scoped_10f8ec67_lang-!~{01m}~.js": {
+    "file": "assets/PlayerPerformance-8HJFlxHe.css",
+    "src": "_PlayerPerformance.vue_vue_type_style_index_0_scoped_10f8ec67_lang-!~{01m}~.js"
+  },
+  "_PlayerSeasonStats.vue_vue_type_style_index_0_scoped_a07cc3ca_lang-!~{01l}~.js": {
+    "file": "assets/PlayerSeasonStats-CvNKYE3H.css",
+    "src": "_PlayerSeasonStats.vue_vue_type_style_index_0_scoped_a07cc3ca_lang-!~{01l}~.js"
+  },
+  "_PlayerTransactions.vue_vue_type_style_index_0_scoped_947bb8f6_lang-!~{01j}~.js": {
+    "file": "assets/PlayerTransactions-DG4qW-VN.css",
+    "src": "_PlayerTransactions.vue_vue_type_style_index_0_scoped_947bb8f6_lang-!~{01j}~.js"
+  },
+  "_PrimaryButton-CoHPfZHO.js": {
+    "file": "assets/PrimaryButton-CoHPfZHO.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
-  "_ProfileHeader.vue_vue_type_style_index_0_scoped_94f210e2_lang-!~{01a}~.js": {
-    "file": "assets/ProfileHeader-Ceivh0UY.css",
-    "src": "_ProfileHeader.vue_vue_type_style_index_0_scoped_94f210e2_lang-!~{01a}~.js"
+  "_ProfileHeader.vue_vue_type_style_index_0_scoped_7bb607d9_lang-!~{01g}~.js": {
+    "file": "assets/ProfileHeader-DLyBenBi.css",
+    "src": "_ProfileHeader.vue_vue_type_style_index_0_scoped_7bb607d9_lang-!~{01g}~.js"
   },
-  "_ScoringShares.vue_vue_type_style_index_0_scoped_ec644458_lang-!~{013}~.js": {
+  "_ScoringShares.vue_vue_type_style_index_0_scoped_ec644458_lang-!~{01b}~.js": {
     "file": "assets/ChampionshipShares-B_SY1GJM.css",
-    "src": "_StatButton.vue_vue_type_style_index_0_scoped_6f1a3e3b_lang-!~{01h}~.js"
+    "src": "_StatButton.vue_vue_type_style_index_0_scoped_6f1a3e3b_lang-!~{01r}~.js"
   },
-  "_SeasonLeaders.vue_vue_type_style_index_0_scoped_5d4d1524_lang-!~{014}~.js": {
+  "_SeasonLeaders.vue_vue_type_style_index_0_scoped_5d4d1524_lang-!~{01c}~.js": {
     "file": "assets/SeasonLeaders-DW6aPNpI.css",
-    "src": "_SeasonLeaders.vue_vue_type_style_index_0_scoped_5d4d1524_lang-!~{014}~.js"
+    "src": "_SeasonLeaders.vue_vue_type_style_index_0_scoped_5d4d1524_lang-!~{01c}~.js"
   },
-  "_SeasonTimeLine.vue_vue_type_style_index_0_scoped_1f889c80_lang-!~{017}~.js": {
+  "_StatButton.vue_vue_type_style_index_0_scoped_6f1a3e3b_lang-!~{01r}~.js": {
     "file": "assets/ChampionshipShares-B_SY1GJM.css",
-    "src": "_StatButton.vue_vue_type_style_index_0_scoped_6f1a3e3b_lang-!~{01h}~.js"
+    "src": "_StatButton.vue_vue_type_style_index_0_scoped_6f1a3e3b_lang-!~{01r}~.js"
   },
-  "_StatButton.vue_vue_type_style_index_0_scoped_6f1a3e3b_lang-!~{01h}~.js": {
-    "file": "assets/ChampionshipShares-B_SY1GJM.css",
-    "src": "_StatButton.vue_vue_type_style_index_0_scoped_6f1a3e3b_lang-!~{01h}~.js"
-  },
-  "_TextInput-3jNhMO5l.js": {
-    "file": "assets/TextInput-3jNhMO5l.js",
+  "_TextInput-DbSNCmbD.js": {
+    "file": "assets/TextInput-DbSNCmbD.js",
     "imports": [
       "resources/js/app.js"
     ]
@@ -88,20 +96,20 @@
   "_auto.esm-BcgxFODZ.js": {
     "file": "assets/auto.esm-BcgxFODZ.js"
   },
-  "_sweetalert2.all-CSk-Voah.js": {
-    "file": "assets/sweetalert2.all-CSk-Voah.js",
+  "_sweetalert2.all-BPNQ_qnr.js": {
+    "file": "assets/sweetalert2.all-BPNQ_qnr.js",
     "imports": [
       "resources/js/app.js"
     ]
   },
   "resources/js/Pages/Analytics/Index.vue": {
-    "file": "assets/Index-JBw_bxvx.js",
+    "file": "assets/Index-FD5ZMTR3.js",
     "src": "resources/js/Pages/Analytics/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "resources/js/Pages/Analytics/Module/TopStatistics.vue",
       "resources/js/Pages/Analytics/Module/WinShares.vue",
       "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
@@ -110,53 +118,76 @@
       "resources/js/Pages/Analytics/Module/AllTimeGameRecords.vue",
       "resources/js/Pages/Analytics/Module/DraftSummary.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Formatter-ni77-f23.js",
-      "_Modal-Cj1VQ7Nw.js",
+      "_Formatter-KNgv_r4L.js",
+      "_Modal-Byk1Hf7R.js",
       "resources/js/Pages/Seasons/Module/GameResults.vue",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js",
       "resources/js/Pages/Teams/Module/TeamRoster.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue"
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
+      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "resources/js/Pages/Teams/Module/Top10Player.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
       "assets/ChampionshipShares-B_SY1GJM.css",
       "assets/SeasonLeaders-DW6aPNpI.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Analytics/Module/AllTimeGameRecords.vue": {
-    "file": "assets/AllTimeGameRecords-M2-DvG2T.js",
+    "file": "assets/AllTimeGameRecords-DasJ3HKL.js",
     "src": "resources/js/Pages/Analytics/Module/AllTimeGameRecords.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Modal-Cj1VQ7Nw.js",
+      "_Modal-Byk1Hf7R.js",
       "resources/js/Pages/Seasons/Module/GameResults.vue",
-      "_Formatter-ni77-f23.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "resources/js/Pages/Teams/Module/TeamRoster.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Paginator--Pkt1TlT.js",
+      "_Formatter-KNgv_r4L.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js",
+      "resources/js/Pages/Teams/Module/TeamRoster.vue",
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
+      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "resources/js/Pages/Teams/Module/Top10Player.vue",
+      "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue"
     ],
     "css": [
+      "assets/ProfileHeader-DLyBenBi.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Analytics/Module/ChampionshipShares.vue": {
-    "file": "assets/ChampionshipShares-DhZJJePW.js",
+    "file": "assets/ChampionshipShares-B0Bx_njl.js",
     "src": "resources/js/Pages/Analytics/Module/ChampionshipShares.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -169,7 +200,7 @@
     ]
   },
   "resources/js/Pages/Analytics/Module/DraftSummary.vue": {
-    "file": "assets/DraftSummary-Dcea0uPm.js",
+    "file": "assets/DraftSummary-B_LoUe8v.js",
     "src": "resources/js/Pages/Analytics/Module/DraftSummary.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -181,7 +212,7 @@
     ]
   },
   "resources/js/Pages/Analytics/Module/ScoringShares.vue": {
-    "file": "assets/ScoringShares-CQdNDHGn.js",
+    "file": "assets/ScoringShares-CERUdFok.js",
     "src": "resources/js/Pages/Analytics/Module/ScoringShares.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -194,12 +225,12 @@
     ]
   },
   "resources/js/Pages/Analytics/Module/SeasonLeaders.vue": {
-    "file": "assets/SeasonLeaders-DYJhHuQl.js",
+    "file": "assets/SeasonLeaders-DPK46_SO.js",
     "src": "resources/js/Pages/Analytics/Module/SeasonLeaders.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
+      "_Formatter-KNgv_r4L.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -207,7 +238,7 @@
     ]
   },
   "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue": {
-    "file": "assets/SeasonTimeLine-Be1U2c0Y.js",
+    "file": "assets/SeasonTimeLine-OHizS8Ca.js",
     "src": "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -220,20 +251,20 @@
     ]
   },
   "resources/js/Pages/Analytics/Module/TopStatistics.vue": {
-    "file": "assets/TopStatistics-CXhMlBFT.js",
+    "file": "assets/TopStatistics-D4CcBzlf.js",
     "src": "resources/js/Pages/Analytics/Module/TopStatistics.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Formatter-ni77-f23.js"
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Formatter-KNgv_r4L.js"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css"
     ]
   },
   "resources/js/Pages/Analytics/Module/WinShares.vue": {
-    "file": "assets/WinShares-shxQM7_K.js",
+    "file": "assets/WinShares-BBy4A6S0.js",
     "src": "resources/js/Pages/Analytics/Module/WinShares.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -246,110 +277,116 @@
     ]
   },
   "resources/js/Pages/Auth/ConfirmPassword.vue": {
-    "file": "assets/ConfirmPassword-_y57T-DP.js",
+    "file": "assets/ConfirmPassword-C1Rff8ht.js",
     "src": "resources/js/Pages/Auth/ConfirmPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ApplicationLogo-DSrBuOHR.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_PrimaryButton-C21RRYVB.js",
+      "_ApplicationLogo-F4Vw0I96.js",
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_PrimaryButton-CoHPfZHO.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/ForgotPassword.vue": {
-    "file": "assets/ForgotPassword-D4EXci7B.js",
+    "file": "assets/ForgotPassword-B-ZZWCK3.js",
     "src": "resources/js/Pages/Auth/ForgotPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ApplicationLogo-DSrBuOHR.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_PrimaryButton-C21RRYVB.js",
+      "_ApplicationLogo-F4Vw0I96.js",
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_PrimaryButton-CoHPfZHO.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/Login.vue": {
-    "file": "assets/Login-GNbACrn1.js",
+    "file": "assets/Login-DOGN8W61.js",
     "src": "resources/js/Pages/Auth/Login.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ApplicationLogo-DSrBuOHR.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_PrimaryButton-C21RRYVB.js",
+      "_ApplicationLogo-F4Vw0I96.js",
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_PrimaryButton-CoHPfZHO.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/Register.vue": {
-    "file": "assets/Register-B8X-NPeH.js",
+    "file": "assets/Register-Be53Vk78.js",
     "src": "resources/js/Pages/Auth/Register.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ApplicationLogo-DSrBuOHR.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_PrimaryButton-C21RRYVB.js",
+      "_ApplicationLogo-F4Vw0I96.js",
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_PrimaryButton-CoHPfZHO.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/ResetPassword.vue": {
-    "file": "assets/ResetPassword-yvNUr7Vk.js",
+    "file": "assets/ResetPassword-DJ7eKsj8.js",
     "src": "resources/js/Pages/Auth/ResetPassword.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ApplicationLogo-DSrBuOHR.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_PrimaryButton-C21RRYVB.js",
+      "_ApplicationLogo-F4Vw0I96.js",
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_PrimaryButton-CoHPfZHO.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Auth/VerifyEmail.vue": {
-    "file": "assets/VerifyEmail-BgDGTwsA.js",
+    "file": "assets/VerifyEmail-vbdXhW1m.js",
     "src": "resources/js/Pages/Auth/VerifyEmail.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_ApplicationLogo-DSrBuOHR.js",
-      "_PrimaryButton-C21RRYVB.js",
+      "_ApplicationLogo-F4Vw0I96.js",
+      "_PrimaryButton-CoHPfZHO.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ]
   },
   "resources/js/Pages/Awards/Index.vue": {
-    "file": "assets/Index-C4SF53A7.js",
+    "file": "assets/Index-C1d8Q4fO.js",
     "src": "resources/js/Pages/Awards/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
       "resources/js/app.js",
       "resources/js/Pages/Awards/Module/PlayerAwards.vue",
       "resources/js/Pages/Awards/Module/MVPList.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "_Modal-Byk1Hf7R.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js"
     ],
     "css": [
       "assets/Index-C0nRG6Rc.css",
+      "assets/ProfileHeader-DLyBenBi.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Awards/Module/MVPList.vue": {
-    "file": "assets/MVPList-D94LiepX.js",
+    "file": "assets/MVPList-B9fm0RdA.js",
     "src": "resources/js/Pages/Awards/Module/MVPList.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -361,52 +398,58 @@
     ]
   },
   "resources/js/Pages/Awards/Module/PlayerAwards.vue": {
-    "file": "assets/PlayerAwards-CfWEZY7a.js",
+    "file": "assets/PlayerAwards-Cc8BtmiD.js",
     "src": "resources/js/Pages/Awards/Module/PlayerAwards.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
+      "_Modal-Byk1Hf7R.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js"
     ],
     "css": [
-      "assets/PlayerAwards-BmOVSZ2M.css",
+      "assets/PlayerAwards-Dg1kFeB_.css",
+      "assets/ProfileHeader-DLyBenBi.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Experience/Index.vue": {
-    "file": "assets/Index-CewD92vH.js",
+    "file": "assets/Index-B5wufw6r.js",
     "src": "resources/js/Pages/Experience/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "resources/js/Pages/Experience/Module/PlayerPlayoffAppearance.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Paginator--Pkt1TlT.js"
+      "_Paginator-9Pz9Hx3K.js"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css"
     ]
   },
   "resources/js/Pages/Experience/Module/PlayerPlayoffAppearance.vue": {
-    "file": "assets/PlayerPlayoffAppearance-DU4xW5ql.js",
+    "file": "assets/PlayerPlayoffAppearance-C1tBYa8Q.js",
     "src": "resources/js/Pages/Experience/Module/PlayerPlayoffAppearance.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Paginator--Pkt1TlT.js",
+      "_Paginator-9Pz9Hx3K.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -415,62 +458,71 @@
     ]
   },
   "resources/js/Pages/FreeAgents/Index.vue": {
-    "file": "assets/Index-C6k4q5KP.js",
+    "file": "assets/Index-C_e8nCmQ.js",
     "src": "resources/js/Pages/FreeAgents/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
       "resources/js/app.js",
       "resources/js/Pages/Seasons/Module/FreeAgents.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_Paginator--Pkt1TlT.js",
-      "_Formatter-ni77-f23.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Modal-Byk1Hf7R.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_Formatter-KNgv_r4L.js",
       "resources/js/Pages/Analytics/Module/TopStatistics.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Leaders/Index.vue": {
-    "file": "assets/Index-BmjkI783.js",
+    "file": "assets/Index-n-qTYyV8.js",
     "src": "resources/js/Pages/Leaders/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Formatter-ni77-f23.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Formatter-KNgv_r4L.js",
       "_auto.esm-BcgxFODZ.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
+      "assets/ProfileHeader-DLyBenBi.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Leagues/Index.vue": {
-    "file": "assets/Index-CB-oEJx8.js",
+    "file": "assets/Index-CPB8bWaY.js",
     "src": "resources/js/Pages/Leagues/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout-CgtpReJB.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_Paginator--Pkt1TlT.js",
-      "_InputError-pEAFV_g-.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
+      "_Modal-Byk1Hf7R.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_InputError-IG-4Qj9f.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -478,87 +530,216 @@
     ]
   },
   "resources/js/Pages/Players/Index.vue": {
-    "file": "assets/Index-DNbPNBU3.js",
+    "file": "assets/Index-COOrX1sW.js",
     "src": "resources/js/Pages/Players/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout-CgtpReJB.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
+      "_AuthenticatedLayout-yj2hfAl_.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Modal-Byk1Hf7R.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Formatter-ni77-f23.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue"
+    ],
+    "css": [
+      "assets/Paginator-CBiUYX0z.css",
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
+    ]
+  },
+  "resources/js/Pages/Players/Module/PlayerGameLogs.vue": {
+    "file": "assets/PlayerGameLogs-Cul8j15G.js",
+    "src": "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_Formatter-KNgv_r4L.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_auto.esm-BcgxFODZ.js",
+      "__plugin-vue_export-helper-DlAUqK2U.js"
+    ],
+    "css": [
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/Paginator-CBiUYX0z.css"
+    ]
+  },
+  "resources/js/Pages/Players/Module/PlayerInjury.vue": {
+    "file": "assets/PlayerInjury-Drw5FpMl.js",
+    "src": "resources/js/Pages/Players/Module/PlayerInjury.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
       "_auto.esm-BcgxFODZ.js"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css"
+    ]
+  },
+  "resources/js/Pages/Players/Module/PlayerPerformance.vue": {
+    "file": "assets/PlayerPerformance-CFHiCQT7.js",
+    "src": "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_Modal-Byk1Hf7R.js",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "_Paginator-9Pz9Hx3K.js"
+    ],
+    "css": [
+      "assets/PlayerPerformance-8HJFlxHe.css",
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/Paginator-CBiUYX0z.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css"
+    ]
+  },
+  "resources/js/Pages/Players/Module/PlayerRadarChart.vue": {
+    "file": "assets/PlayerRadarChart-CvCKtDOi.js",
+    "src": "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/app.js"
+    ]
+  },
+  "resources/js/Pages/Players/Module/PlayerSeasonStats.vue": {
+    "file": "assets/PlayerSeasonStats-RR79R1cp.js",
+    "src": "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Modal-Byk1Hf7R.js",
+      "_auto.esm-BcgxFODZ.js",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "_Formatter-KNgv_r4L.js",
+      "_Paginator-9Pz9Hx3K.js"
+    ],
+    "css": [
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/Paginator-CBiUYX0z.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css"
+    ]
+  },
+  "resources/js/Pages/Players/Module/PlayerTransactions.vue": {
+    "file": "assets/PlayerTransactions-BuWgQObF.js",
+    "src": "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "_auto.esm-BcgxFODZ.js"
+    ],
+    "css": [
+      "assets/Paginator-CBiUYX0z.css",
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerTransactions-DG4qW-VN.css"
+    ]
+  },
+  "resources/js/Pages/Players/Module/ProfileHeader.vue": {
+    "file": "assets/ProfileHeader-BMRvDcj6.js",
+    "src": "resources/js/Pages/Players/Module/ProfileHeader.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "_auto.esm-BcgxFODZ.js"
+    ],
+    "css": [
+      "assets/ProfileHeader-DLyBenBi.css"
     ]
   },
   "resources/js/Pages/Profile/Edit.vue": {
-    "file": "assets/Edit-C_vpp8jl.js",
+    "file": "assets/Edit-BeUVZC1n.js",
     "src": "resources/js/Pages/Profile/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
       "resources/js/Pages/Profile/Partials/DeleteUserForm.vue",
       "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
       "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_PrimaryButton-C21RRYVB.js"
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_Modal-Byk1Hf7R.js",
+      "_PrimaryButton-CoHPfZHO.js"
     ]
   },
   "resources/js/Pages/Profile/Partials/DeleteUserForm.vue": {
-    "file": "assets/DeleteUserForm-DXviUV2J.js",
+    "file": "assets/DeleteUserForm-DKmVrPz2.js",
     "src": "resources/js/Pages/Profile/Partials/DeleteUserForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_Modal-Cj1VQ7Nw.js"
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_Modal-Byk1Hf7R.js"
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue": {
-    "file": "assets/UpdatePasswordForm-5BTKzT4a.js",
+    "file": "assets/UpdatePasswordForm-DW5SwtBs.js",
     "src": "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_PrimaryButton-C21RRYVB.js"
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_PrimaryButton-CoHPfZHO.js"
     ]
   },
   "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue": {
-    "file": "assets/UpdateProfileInformationForm-bzEIMVpW.js",
+    "file": "assets/UpdateProfileInformationForm-BgHwjVzF.js",
     "src": "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_InputError-pEAFV_g-.js",
-      "_TextInput-3jNhMO5l.js",
-      "_PrimaryButton-C21RRYVB.js"
+      "_InputError-IG-4Qj9f.js",
+      "_TextInput-DbSNCmbD.js",
+      "_PrimaryButton-CoHPfZHO.js"
     ]
   },
   "resources/js/Pages/Records/Index.vue": {
-    "file": "assets/Index-BPnAqoD4.js",
+    "file": "assets/Index-CCwk59e8.js",
     "src": "resources/js/Pages/Records/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
       "resources/js/app.js",
       "resources/js/Pages/Records/Module/TeamScoringRankings.vue",
       "resources/js/Pages/Records/Module/Championships.vue",
@@ -569,20 +750,20 @@
       "resources/js/Pages/Records/Module/TeamWinningRankings.vue",
       "resources/js/Pages/Records/Module/Top20Players.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Paginator--Pkt1TlT.js",
-      "_Formatter-ni77-f23.js"
+      "_Paginator-9Pz9Hx3K.js",
+      "_Formatter-KNgv_r4L.js"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css"
     ]
   },
   "resources/js/Pages/Records/Module/Championships.vue": {
-    "file": "assets/Championships-NQvY8ZdV.js",
+    "file": "assets/Championships-tFe9evHE.js",
     "src": "resources/js/Pages/Records/Module/Championships.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Paginator--Pkt1TlT.js",
+      "_Paginator-9Pz9Hx3K.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -590,25 +771,25 @@
     ]
   },
   "resources/js/Pages/Records/Module/Last12Games.vue": {
-    "file": "assets/Last12Games-CB4GoKNF.js",
+    "file": "assets/Last12Games-CjC9AuyU.js",
     "src": "resources/js/Pages/Records/Module/Last12Games.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js"
+      "_Formatter-KNgv_r4L.js"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css"
     ]
   },
   "resources/js/Pages/Records/Module/PlayerScoringRankings.vue": {
-    "file": "assets/PlayerScoringRankings-Cr-e_AAj.js",
+    "file": "assets/PlayerScoringRankings-CsC2v7FT.js",
     "src": "resources/js/Pages/Records/Module/PlayerScoringRankings.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Paginator--Pkt1TlT.js",
-      "_Formatter-ni77-f23.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_Formatter-KNgv_r4L.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -616,7 +797,7 @@
     ]
   },
   "resources/js/Pages/Records/Module/Rivals.vue": {
-    "file": "assets/Rivals-BGA-3olC.js",
+    "file": "assets/Rivals-C4qJ1a4K.js",
     "src": "resources/js/Pages/Records/Module/Rivals.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -627,13 +808,13 @@
     ]
   },
   "resources/js/Pages/Records/Module/TeamScoringRankings.vue": {
-    "file": "assets/TeamScoringRankings-CEopcGPB.js",
+    "file": "assets/TeamScoringRankings-CPx6z8vU.js",
     "src": "resources/js/Pages/Records/Module/TeamScoringRankings.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Paginator--Pkt1TlT.js",
-      "_Formatter-ni77-f23.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_Formatter-KNgv_r4L.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -641,13 +822,13 @@
     ]
   },
   "resources/js/Pages/Records/Module/TeamWinningRankings.vue": {
-    "file": "assets/TeamWinningRankings-UXg0x5BW.js",
+    "file": "assets/TeamWinningRankings-kfk5Hv3K.js",
     "src": "resources/js/Pages/Records/Module/TeamWinningRankings.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
+      "_Formatter-KNgv_r4L.js",
+      "_Paginator-9Pz9Hx3K.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -655,11 +836,11 @@
     ]
   },
   "resources/js/Pages/Records/Module/Top20Players.vue": {
-    "file": "assets/Top20Players-DM2gxnsF.js",
+    "file": "assets/Top20Players-6dLiv-Jg.js",
     "src": "resources/js/Pages/Records/Module/Top20Players.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_Paginator--Pkt1TlT.js",
+      "_Paginator-9Pz9Hx3K.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
@@ -669,7 +850,7 @@
     ]
   },
   "resources/js/Pages/Records/Module/TopPlayoffTeams.vue": {
-    "file": "assets/TopPlayoffTeams-MBZBbZw-.js",
+    "file": "assets/TopPlayoffTeams-Dq5CoS3m.js",
     "src": "resources/js/Pages/Records/Module/TopPlayoffTeams.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -680,13 +861,13 @@
     ]
   },
   "resources/js/Pages/Seasons/Details.vue": {
-    "file": "assets/Details-ChUnB-BM.js",
+    "file": "assets/Details-DxM0qyoK.js",
     "src": "resources/js/Pages/Seasons/Details.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout-CgtpReJB.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "resources/js/Pages/Seasons/Module/Season.vue",
       "resources/js/Pages/Seasons/Module/Playoffs.vue",
       "resources/js/Pages/Seasons/Module/SeasonAwards.vue",
@@ -694,67 +875,82 @@
       "resources/js/Pages/Seasons/Module/DraftBoard.vue",
       "resources/js/Pages/Seasons/Module/Transactions.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "resources/js/Pages/Teams/Module/TeamHistory.vue",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/TeamInfo.vue",
-      "resources/js/Pages/Teams/Module/TeamRoster.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
+      "_Modal-Byk1Hf7R.js",
       "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Teams/Module/TeamRoster.vue",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js",
       "resources/js/Pages/Teams/Module/Top10Player.vue",
       "resources/js/Pages/Seasons/Module/GameResults.vue",
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
+      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue",
       "resources/js/Pages/Teams/Module/TeamComparison.vue"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css",
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css",
       "assets/ChampionshipShares-B_SY1GJM.css",
       "assets/SeasonLeaders-DW6aPNpI.css"
     ]
   },
   "resources/js/Pages/Seasons/Index.vue": {
-    "file": "assets/Index-DmG4d5SP.js",
+    "file": "assets/Index-WmMxvti_.js",
     "src": "resources/js/Pages/Seasons/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout-CgtpReJB.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_Paginator--Pkt1TlT.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
+      "_Modal-Byk1Hf7R.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "resources/js/Pages/Seasons/Module/Trade.vue",
       "resources/js/Pages/Seasons/Module/FreeAgents.vue",
       "resources/js/Pages/Seasons/Module/Awards.vue",
       "resources/js/Pages/Seasons/Module/Draft.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Formatter-ni77-f23.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
       "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
       "resources/js/Pages/Analytics/Module/TopStatistics.vue"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Seasons/Module/Awards.vue": {
-    "file": "assets/Awards-BtJWdrsB.js",
+    "file": "assets/Awards-rqm00gsr.js",
     "src": "resources/js/Pages/Seasons/Module/Awards.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -762,16 +958,16 @@
     ]
   },
   "resources/js/Pages/Seasons/Module/Draft.vue": {
-    "file": "assets/Draft-BQ3YtW3w.js",
+    "file": "assets/Draft-DUihZYhY.js",
     "src": "resources/js/Pages/Seasons/Module/Draft.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Paginator--Pkt1TlT.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Paginator-9Pz9Hx3K.js",
       "resources/js/Pages/Analytics/Module/TopStatistics.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Formatter-ni77-f23.js"
+      "_Formatter-KNgv_r4L.js"
     ],
     "css": [
       "assets/Draft-CHtOg6NA.css",
@@ -779,150 +975,191 @@
     ]
   },
   "resources/js/Pages/Seasons/Module/DraftBoard.vue": {
-    "file": "assets/DraftBoard-DqVUSCnA.js",
+    "file": "assets/DraftBoard-C1j7BXKa.js",
     "src": "resources/js/Pages/Seasons/Module/DraftBoard.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Modal-Cj1VQ7Nw.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Modal-Byk1Hf7R.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js"
     ],
     "css": [
-      "assets/DraftBoard-BsWc6HL9.css",
+      "assets/DraftBoard-WGEQGUoo.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Seasons/Module/FreeAgents.vue": {
-    "file": "assets/FreeAgents-CEAEWlSa.js",
+    "file": "assets/FreeAgents-BkK-8byh.js",
     "src": "resources/js/Pages/Seasons/Module/FreeAgents.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_Paginator--Pkt1TlT.js",
-      "_Formatter-ni77-f23.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Modal-Byk1Hf7R.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_Formatter-KNgv_r4L.js",
       "resources/js/Pages/Analytics/Module/TopStatistics.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue"
     ],
     "css": [
-      "assets/FreeAgents-BN0rSyqn.css",
+      "assets/FreeAgents-_6Obbabu.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Seasons/Module/GameResults.vue": {
-    "file": "assets/GameResults-huW_M7iC.js",
+    "file": "assets/GameResults-Bg8dEebY.js",
     "src": "resources/js/Pages/Seasons/Module/GameResults.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_Formatter-KNgv_r4L.js",
+      "_Modal-Byk1Hf7R.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
       "resources/js/Pages/Teams/Module/TeamRoster.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js",
+      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "resources/js/Pages/Teams/Module/Top10Player.vue",
+      "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue"
     ],
     "css": [
-      "assets/GameResults-BUQqJg1j.css",
+      "assets/GameResults-BQLmtoo2.css",
+      "assets/ProfileHeader-DLyBenBi.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Seasons/Module/Playoffs.vue": {
-    "file": "assets/Playoffs-BuUKsZa4.js",
+    "file": "assets/Playoffs-B5gGTBbb.js",
     "src": "resources/js/Pages/Seasons/Module/Playoffs.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Formatter-ni77-f23.js",
-      "resources/js/Pages/Teams/Module/TeamHistory.vue",
-      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "_Modal-Byk1Hf7R.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Formatter-KNgv_r4L.js",
       "resources/js/Pages/Teams/Module/TeamComparison.vue",
       "resources/js/Pages/Seasons/Module/GameResults.vue",
       "resources/js/Pages/Teams/Module/Top10Player.vue",
-      "_Paginator--Pkt1TlT.js",
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js",
       "resources/js/Pages/Teams/Module/TeamRoster.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
       "assets/ChampionshipShares-B_SY1GJM.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Seasons/Module/Season.vue": {
-    "file": "assets/Season-V6fZWl1L.js",
+    "file": "assets/Season-BxzcyZZD.js",
     "src": "resources/js/Pages/Seasons/Module/Season.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "resources/js/Pages/Teams/Module/TeamHistory.vue",
-      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Modal-Byk1Hf7R.js",
+      "_auto.esm-BcgxFODZ.js",
       "resources/js/Pages/Teams/Module/TeamRoster.vue",
       "resources/js/Pages/Teams/Module/Top10Player.vue",
       "resources/js/Pages/Seasons/Module/GameResults.vue",
-      "_auto.esm-BcgxFODZ.js",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
+      "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue"
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js",
+      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue"
     ],
     "css": [
-      "assets/ChampionshipShares-B_SY1GJM.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Seasons/Module/SeasonAwards.vue": {
-    "file": "assets/SeasonAwards-CDkQKDCO.js",
+    "file": "assets/SeasonAwards-BiKX9qjX.js",
     "src": "resources/js/Pages/Seasons/Module/SeasonAwards.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -930,151 +1167,139 @@
     ]
   },
   "resources/js/Pages/Seasons/Module/Trade.vue": {
-    "file": "assets/Trade-CNRpM5VR.js",
+    "file": "assets/Trade-G3ogX58K.js",
     "src": "resources/js/Pages/Seasons/Module/Trade.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Modal-Byk1Hf7R.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js"
     ],
     "css": [
+      "assets/ProfileHeader-DLyBenBi.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Seasons/Module/Transactions.vue": {
-    "file": "assets/Transactions-B8nplQ3N.js",
+    "file": "assets/Transactions-D0CPP22f.js",
     "src": "resources/js/Pages/Seasons/Module/Transactions.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "_Modal-Cj1VQ7Nw.js",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Paginator--Pkt1TlT.js",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "_Modal-Byk1Hf7R.js",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Teams/Index.vue": {
-    "file": "assets/Index-BJYUNgyO.js",
+    "file": "assets/Index-COznNzvJ.js",
     "src": "resources/js/Pages/Teams/Index.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_AuthenticatedLayout-CgtpReJB.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_Paginator--Pkt1TlT.js",
-      "_InputError-pEAFV_g-.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "_AuthenticatedLayout-yj2hfAl_.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
+      "resources/js/Pages/Teams/Module/Add.vue",
+      "resources/js/Pages/Teams/Module/Edit.vue",
+      "resources/js/Pages/Teams/Module/Delete.vue",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "_Modal-Byk1Hf7R.js",
       "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "_Formatter-KNgv_r4L.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
       "resources/js/Pages/Teams/Module/TeamRoster.vue",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
       "resources/js/Pages/Teams/Module/Top10Player.vue",
       "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Formatter-ni77-f23.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue",
+      "_InputError-IG-4Qj9f.js"
     ],
     "css": [
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css",
-      "assets/ChampionshipShares-B_SY1GJM.css"
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
-  "resources/js/Pages/Teams/Module/PlayerGameLogs.vue": {
-    "file": "assets/PlayerGameLogs-DCS7WkXC.js",
-    "src": "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
+  "resources/js/Pages/Teams/Module/Add.vue": {
+    "file": "assets/Add-CVEdQqIN.js",
+    "src": "resources/js/Pages/Teams/Module/Add.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
-    ],
-    "css": [
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css"
+      "_Modal-Byk1Hf7R.js",
+      "_InputError-IG-4Qj9f.js",
+      "_sweetalert2.all-BPNQ_qnr.js"
     ]
   },
-  "resources/js/Pages/Teams/Module/PlayerPerformance.vue": {
-    "file": "assets/PlayerPerformance-CqFuDLew.js",
-    "src": "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
+  "resources/js/Pages/Teams/Module/Delete.vue": {
+    "file": "assets/Delete-DtixpZZQ.js",
+    "src": "resources/js/Pages/Teams/Module/Delete.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Modal-Cj1VQ7Nw.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
-    ],
-    "css": [
-      "assets/PlayerPerformance-C1MqfJhi.css",
-      "assets/Paginator-CBiUYX0z.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/ProfileHeader-Ceivh0UY.css"
+      "_sweetalert2.all-BPNQ_qnr.js"
     ]
   },
-  "resources/js/Pages/Teams/Module/PlayerRadarChart.vue": {
-    "file": "assets/PlayerRadarChart-CXwZY8eU.js",
-    "src": "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-    "isDynamicEntry": true,
-    "imports": [
-      "_auto.esm-BcgxFODZ.js",
-      "resources/js/app.js"
-    ]
-  },
-  "resources/js/Pages/Teams/Module/ProfileHeader.vue": {
-    "file": "assets/ProfileHeader-7AjSg0MQ.js",
-    "src": "resources/js/Pages/Teams/Module/ProfileHeader.vue",
+  "resources/js/Pages/Teams/Module/Edit.vue": {
+    "file": "assets/Edit-kHojT83o.js",
+    "src": "resources/js/Pages/Teams/Module/Edit.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "__plugin-vue_export-helper-DlAUqK2U.js",
-      "_auto.esm-BcgxFODZ.js"
-    ],
-    "css": [
-      "assets/ProfileHeader-Ceivh0UY.css"
+      "_Modal-Byk1Hf7R.js",
+      "_InputError-IG-4Qj9f.js",
+      "_sweetalert2.all-BPNQ_qnr.js"
     ]
   },
   "resources/js/Pages/Teams/Module/StatButton.vue": {
-    "file": "assets/StatButton-cJF8UORY.js",
+    "file": "assets/StatButton-kXkz1pMr.js",
     "src": "resources/js/Pages/Teams/Module/StatButton.vue",
     "isDynamicEntry": true,
     "imports": [
@@ -1086,12 +1311,12 @@
     ]
   },
   "resources/js/Pages/Teams/Module/TeamComparison.vue": {
-    "file": "assets/TeamComparison-GE85f66n.js",
+    "file": "assets/TeamComparison-CRurN9kl.js",
     "src": "resources/js/Pages/Teams/Module/TeamComparison.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
+      "_Formatter-KNgv_r4L.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -1099,16 +1324,52 @@
       "assets/ChampionshipShares-B_SY1GJM.css"
     ]
   },
+  "resources/js/Pages/Teams/Module/TeamDetails.vue": {
+    "file": "assets/TeamDetails-fhB7fexO.js",
+    "src": "resources/js/Pages/Teams/Module/TeamDetails.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_Modal-Byk1Hf7R.js",
+      "resources/js/Pages/Teams/Module/TeamInfo.vue",
+      "resources/js/Pages/Teams/Module/TeamHistory.vue",
+      "resources/js/Pages/Teams/Module/TeamRoster.vue",
+      "resources/js/Pages/Teams/Module/Top10Player.vue",
+      "resources/js/Pages/Analytics/Module/SeasonTimeLine.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue",
+      "_Formatter-KNgv_r4L.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue"
+    ],
+    "css": [
+      "assets/Paginator-CBiUYX0z.css",
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
+    ]
+  },
   "resources/js/Pages/Teams/Module/TeamHistory.vue": {
-    "file": "assets/TeamHistory-DWVPQI_B.js",
+    "file": "assets/TeamHistory-C-enRjin.js",
     "src": "resources/js/Pages/Teams/Module/TeamHistory.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_Paginator--Pkt1TlT.js",
-      "_sweetalert2.all-CSk-Voah.js",
+      "_Formatter-KNgv_r4L.js",
+      "_Modal-Byk1Hf7R.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
     "css": [
@@ -1116,46 +1377,82 @@
     ]
   },
   "resources/js/Pages/Teams/Module/TeamInfo.vue": {
-    "file": "assets/TeamInfo-C8vxkJTn.js",
+    "file": "assets/TeamInfo-DplBEgPv.js",
     "src": "resources/js/Pages/Teams/Module/TeamInfo.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Formatter-ni77-f23.js",
-      "_sweetalert2.all-CSk-Voah.js"
+      "_Formatter-KNgv_r4L.js",
+      "_sweetalert2.all-BPNQ_qnr.js"
     ]
   },
   "resources/js/Pages/Teams/Module/TeamRoster.vue": {
-    "file": "assets/TeamRoster-CoymUaQj.js",
+    "file": "assets/TeamRoster-QtkOpryY.js",
     "src": "resources/js/Pages/Teams/Module/TeamRoster.vue",
     "isDynamicEntry": true,
     "imports": [
       "resources/js/app.js",
-      "_Modal-Cj1VQ7Nw.js",
-      "_sweetalert2.all-CSk-Voah.js",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
+      "_Modal-Byk1Hf7R.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
       "__plugin-vue_export-helper-DlAUqK2U.js",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "_Formatter-ni77-f23.js",
-      "_Paginator--Pkt1TlT.js",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "_auto.esm-BcgxFODZ.js"
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "_Paginator-9Pz9Hx3K.js"
     ],
     "css": [
-      "assets/TeamRoster-Bct-BInh.css",
+      "assets/TeamRoster-CZK08KmB.css",
+      "assets/ProfileHeader-DLyBenBi.css",
       "assets/Paginator-CBiUYX0z.css",
-      "assets/ProfileHeader-Ceivh0UY.css",
-      "assets/PlayerGameLogs-DAppoaG_.css",
-      "assets/PlayerPerformance-C1MqfJhi.css"
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
+    ]
+  },
+  "resources/js/Pages/Teams/Module/TeamTransactions.vue": {
+    "file": "assets/TeamTransactions-DAhWRd36.js",
+    "src": "resources/js/Pages/Teams/Module/TeamTransactions.vue",
+    "isDynamicEntry": true,
+    "imports": [
+      "resources/js/app.js",
+      "_Modal-Byk1Hf7R.js",
+      "_Paginator-9Pz9Hx3K.js",
+      "_sweetalert2.all-BPNQ_qnr.js",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "__plugin-vue_export-helper-DlAUqK2U.js",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
+      "_Formatter-KNgv_r4L.js",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "_auto.esm-BcgxFODZ.js",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue"
+    ],
+    "css": [
+      "assets/Paginator-CBiUYX0z.css",
+      "assets/ProfileHeader-DLyBenBi.css",
+      "assets/PlayerGameLogs-SVEcV6zG.css",
+      "assets/PlayerInjury-DytjqumY.css",
+      "assets/PlayerTransactions-DG4qW-VN.css",
+      "assets/PlayerSeasonStats-CvNKYE3H.css",
+      "assets/PlayerPerformance-8HJFlxHe.css"
     ]
   },
   "resources/js/Pages/Teams/Module/Top10Player.vue": {
-    "file": "assets/Top10Player-CEa0QxcD.js",
+    "file": "assets/Top10Player-DIjyoq3J.js",
     "src": "resources/js/Pages/Teams/Module/Top10Player.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_Paginator--Pkt1TlT.js",
+      "_Paginator-9Pz9Hx3K.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
@@ -1165,12 +1462,12 @@
     ]
   },
   "resources/js/Pages/Users/Index.vue": {
-    "file": "assets/Index-Bub6vrzN.js",
+    "file": "assets/Index-DsecgRSx.js",
     "src": "resources/js/Pages/Users/Index.vue",
     "isDynamicEntry": true,
     "imports": [
-      "_AuthenticatedLayout-CgtpReJB.js",
-      "_Paginator--Pkt1TlT.js",
+      "_AuthenticatedLayout-yj2hfAl_.js",
+      "_Paginator-9Pz9Hx3K.js",
       "resources/js/app.js",
       "__plugin-vue_export-helper-DlAUqK2U.js"
     ],
@@ -1179,7 +1476,7 @@
     ]
   },
   "resources/js/app.js": {
-    "file": "assets/app-HnWsA3jU.js",
+    "file": "assets/app-BdI97E9y.js",
     "src": "resources/js/app.js",
     "isEntry": true,
     "dynamicImports": [
@@ -1207,6 +1504,13 @@
       "resources/js/Pages/Leaders/Index.vue",
       "resources/js/Pages/Leagues/Index.vue",
       "resources/js/Pages/Players/Index.vue",
+      "resources/js/Pages/Players/Module/PlayerGameLogs.vue",
+      "resources/js/Pages/Players/Module/PlayerInjury.vue",
+      "resources/js/Pages/Players/Module/PlayerPerformance.vue",
+      "resources/js/Pages/Players/Module/PlayerRadarChart.vue",
+      "resources/js/Pages/Players/Module/PlayerSeasonStats.vue",
+      "resources/js/Pages/Players/Module/PlayerTransactions.vue",
+      "resources/js/Pages/Players/Module/ProfileHeader.vue",
       "resources/js/Pages/Profile/Edit.vue",
       "resources/js/Pages/Profile/Partials/DeleteUserForm.vue",
       "resources/js/Pages/Profile/Partials/UpdatePasswordForm.vue",
@@ -1233,20 +1537,21 @@
       "resources/js/Pages/Seasons/Module/Trade.vue",
       "resources/js/Pages/Seasons/Module/Transactions.vue",
       "resources/js/Pages/Teams/Index.vue",
-      "resources/js/Pages/Teams/Module/PlayerGameLogs.vue",
-      "resources/js/Pages/Teams/Module/PlayerPerformance.vue",
-      "resources/js/Pages/Teams/Module/PlayerRadarChart.vue",
-      "resources/js/Pages/Teams/Module/ProfileHeader.vue",
+      "resources/js/Pages/Teams/Module/Add.vue",
+      "resources/js/Pages/Teams/Module/Delete.vue",
+      "resources/js/Pages/Teams/Module/Edit.vue",
       "resources/js/Pages/Teams/Module/StatButton.vue",
       "resources/js/Pages/Teams/Module/TeamComparison.vue",
+      "resources/js/Pages/Teams/Module/TeamDetails.vue",
       "resources/js/Pages/Teams/Module/TeamHistory.vue",
       "resources/js/Pages/Teams/Module/TeamInfo.vue",
       "resources/js/Pages/Teams/Module/TeamRoster.vue",
+      "resources/js/Pages/Teams/Module/TeamTransactions.vue",
       "resources/js/Pages/Teams/Module/Top10Player.vue",
       "resources/js/Pages/Users/Index.vue"
     ],
     "css": [
-      "assets/app-gEi_BAL3.css"
+      "assets/app-D89bpWUA.css"
     ]
   }
 }
