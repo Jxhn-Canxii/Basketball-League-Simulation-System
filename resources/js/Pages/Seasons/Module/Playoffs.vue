@@ -414,6 +414,7 @@ const compareTeams = (home_id, away_id) => {
 const createPlayOffSchedule = async (round) => {
     try {
 
+        let prev_round = round;
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
         round = roundStatusFormatter(round,start_playoffs, is_play_ins.value);
 
@@ -426,10 +427,11 @@ const createPlayOffSchedule = async (round) => {
                 Swal.showLoading();
             },
         });
-        
+
         const response = await axios.post(route("create.schedule.playoff"), {
             season_id: form.seasons_id, // Assuming the parameter name should be schedule_id
             round: round,
+            prev_round: prev_round,
             start: start_playoffs,
         });
         Swal.close();
@@ -450,7 +452,7 @@ const createPlayOffSchedule = async (round) => {
         Swal.fire({
             icon: "error",
             title: "Error!",
-            text: "Failed to simulate the game. Please try again later.",
+            text: error.response.data.message,
         });
     }
 };
@@ -468,6 +470,11 @@ const fetchSeasonInfo = async (id) => {
         fetchSeasonPlayoffs(is_play_ins.value);
     } catch (error) {
         console.error("Error fetching season information:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: error.response.data.message,
+        });
     }
 };
 const fetchSeasonPlayoffs = async (type) => {
@@ -506,6 +513,11 @@ const fetchSeasonPlayoffs = async (type) => {
         }
     } catch (error) {
         console.error("Error fetching season playoffs:", error);
+        Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: error.response.data.message,
+        });
     }
 };
 const simulateFullPlayoffs = async () => {
@@ -609,7 +621,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
         Swal.fire({
             icon: "error",
             title: "Error!",
-            text: "Failed to simulate the game. Please try again later.",
+            text: error.response.data.message,
         });
     }
 };

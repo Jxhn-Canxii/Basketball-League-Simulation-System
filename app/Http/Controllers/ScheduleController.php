@@ -273,26 +273,53 @@ class ScheduleController extends Controller
     {
         // Retrieve inputs
         $seasonId = $request->season_id;
+        $prev_round = $request->prev_round;
         $round = $request->round;
         $start = $request->start;
+    
+        // Check if all previous rounds are finished and if the current round exists
+        $schedules = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->whereIn('round', [$prev_round, $round])  // Fetch previous round and current round in one query
+            ->get(); // Retrieve all results at once
 
+        // Check if any previous round has status other than 2 (not finished)
+        $allPrevRoundsFinished = $schedules->where('round', $prev_round)
+            ->every(fn($schedule) => $schedule->status == 2); // Ensures previous round status is 2
+
+        // Check if the current round exists
+        $currentRoundExists = $schedules->where('round', $round)->isNotEmpty(); // If the current round exists in the schedule
+
+        if (!$allPrevRoundsFinished) {
+            return response()->json([
+                'message' => 'Current round schedule is ongoing. Cannot create schedule for next round.',
+            ], 404); // 404 - Not Found
+        }
+
+        if ($currentRoundExists) {
+            return response()->json([
+                'message' => 'Round schedule already created',
+            ], 404); // 404 - Not Found
+        }
+        return false;
         // Retrieve the league_id from the seasons table
         $leagueId = DB::table('seasons')
             ->where('id', $seasonId)
             ->value('league_id');
-
+    
         // Retrieve the number of conferences based on the league_id
         $conferenceCount = DB::table('conferences')
             ->where('league_id', $leagueId)
             ->count();
-
+    
         // Ensure we only process if there are exactly 2 conferences
         if ($conferenceCount < 4) {
             Self::playoffschedulebyrank($request);
-        }else{
+        } else {
             Self::playoffschedulebyconference($request);
         }
     }
+    
     private static function playoffschedulebyrank($request)
     {
         // Retrieve inputs
