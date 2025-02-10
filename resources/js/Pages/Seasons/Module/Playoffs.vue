@@ -414,6 +414,9 @@ const compareTeams = (home_id, away_id) => {
 const createPlayOffSchedule = async (round) => {
     try {
 
+        let start_playoffs = season_info.value.seasons[0].start_playoffs;
+        round = roundStatusFormatter(round,start_playoffs, is_play_ins.value);
+
         Swal.fire({
             title: "Simulating...",
             text: "Please wait while creating the schedule for "+roundNameFormatter(round),
@@ -423,9 +426,7 @@ const createPlayOffSchedule = async (round) => {
                 Swal.showLoading();
             },
         });
-
-        let start_playoffs = season_info.value.seasons[0].start_playoffs;
-        round = roundStatusFormatter(round,start_playoffs, is_play_ins.value);
+        
         const response = await axios.post(route("create.schedule.playoff"), {
             season_id: form.seasons_id, // Assuming the parameter name should be schedule_id
             round: round,
