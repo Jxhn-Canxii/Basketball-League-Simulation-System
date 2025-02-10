@@ -8,7 +8,7 @@
             <h2 class="text-lg font-semibold text-gray-800 mb-2 text-left">
                 {{ season_info?.seasons[0].name ?? "" }} {{ season_standings?.conference_name ?? "" }} Standings
             </h2>
-            <div class="grid grid-cols-3 gap-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="block">
                     <div class="block">
                         <table
@@ -160,7 +160,7 @@
                     </div> -->
                 </div>
 
-                <div class="block md:col-span-2 ml-10 pl-10">
+                <div class="block md:col-span-2">
                     <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
                     <p v-else class="text-red-500 font-bold">No games available!</p>
                     <!-- <SeasonTimeLine :key="topPlayersKey" :isConference="activeConferenceTab" /> -->
