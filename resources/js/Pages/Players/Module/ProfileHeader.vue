@@ -82,7 +82,7 @@
                     <strong>Role:</strong>
                     <span
                         :class="roleClasses(main_performance.player_details.role)"
-                        class="p-1 mx-2 rounded-full"
+                        class="p-1 mx-2 rounded-full uppercase border-2"
                     >
                         {{ main_performance.player_details.role }}
                     </span>
