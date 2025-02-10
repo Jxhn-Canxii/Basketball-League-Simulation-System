@@ -188,8 +188,8 @@
                                         {{ player.role }}
                                     </span>
                                 </td>
-                                <td class="px-2 py-1 whitespace-nowrap border">
-                                    {{ player.type }}
+                                <td class="px-2 py-1 whitespace-nowrap border uppercase">
+                                    {{ player.type.replaceAll('_',' ') }}
                                 </td>
                                 <!-- New columns for ratings -->
                                 <td class="px-2 py-1 whitespace-nowrap border">
