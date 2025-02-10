@@ -413,15 +413,25 @@ const compareTeams = (home_id, away_id) => {
 };
 const createPlayOffSchedule = async (round) => {
     try {
-        console.log(round);
+
+        Swal.fire({
+            title: "Simulating...",
+            text: "Please wait while creating the schedule.",
+            icon: "info",
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
+
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
         round = roundStatusFormatter(round,start_playoffs, is_play_ins.value);
-        console.log(round);
         const response = await axios.post(route("create.schedule.playoff"), {
             season_id: form.seasons_id, // Assuming the parameter name should be schedule_id
             round: round,
             start: start_playoffs,
         });
+        Swal.close();
         isHide.value = true;
         await fetchSeasonInfo(form.seasons_id);
         await fetchSeasonPlayoffs(2);
@@ -435,6 +445,7 @@ const createPlayOffSchedule = async (round) => {
     } catch (error) {
         console.error("Error simulating the game:", error);
         // Show error message using Swal2 if needed
+        Swal.close();
         Swal.fire({
             icon: "error",
             title: "Error!",
