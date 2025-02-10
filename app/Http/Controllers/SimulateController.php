@@ -60,6 +60,17 @@ class SimulateController extends Controller
         $request->validate([
             'schedule_id' => 'required|exists:schedules,id',
         ]);
+        
+        $isGameFinished = DB::table('schedules')
+            ->where('id', $request->schedule_id)
+            ->where('status', 2)  // Fetch previous round and current round in one query
+            ->exists(); // Use exists() for a boolean result
+
+        if ($isGameFinished) {
+            return response()->json([
+                'message' => 'Game already simulated!',
+            ], 400); // 400 - Bad Request is more appropriate for this scenario
+        }
 
         // Fetch game data
         $gameData = Schedules::join('teams as home', 'schedules.home_id', '=', 'home.id')
@@ -497,6 +508,17 @@ class SimulateController extends Controller
             'schedule_id' => 'required|exists:schedules,id',
         ]);
 
+        $isGameFinished = DB::table('schedules')
+            ->where('id', $request->schedule_id)
+            ->where('status', 2)  // Fetch previous round and current round in one query
+            ->exists(); // Use exists() for a boolean result
+
+        if ($isGameFinished) {
+            return response()->json([
+                'message' => 'Game already simulated!',
+            ], 400); // 400 - Bad Request is more appropriate for this scenario
+        }
+        
         $storeStats = new AwardsController;
 
         // Start a database transaction

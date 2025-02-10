@@ -530,6 +530,7 @@ const simulateFullPlayoffs = async () => {
             'round_of_16',
             'quarterfinals', 
             'semifinals',
+            'interconference_semi_finals',
             'finals'
         ];
 
