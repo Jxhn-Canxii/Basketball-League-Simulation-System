@@ -434,12 +434,12 @@ const createPlayOffSchedule = async (round) => {
             prev_round: prev_round,
             start: start_playoffs,
         });
-        Swal.close();
         isHide.value = true;
         await fetchSeasonInfo(form.seasons_id);
         await fetchSeasonPlayoffs(2);
         isHide.value = false;
         isAddModalOpen.value = false;
+        Swal.close();
         Swal.fire({
             icon: "success",
             title: "Success!",
