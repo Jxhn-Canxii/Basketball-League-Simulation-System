@@ -226,7 +226,7 @@
         search: "",
         conference_id: 0,
         season_id: 0,
-        itemsperpage: 10,
+        itemsperpage: 6,
     });
     const fetchConferenceSchedules = async (page = 1) => {
         try {

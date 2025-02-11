@@ -2,7 +2,7 @@
     <!-- this div will be at the bottom the top div will create an ilussion of overlay make the standings and top10 players card float at the center-->
     <div>
         <div
-            class="w-full mb-2 flex overflow-x-auto border-b-2"
+            class="w-full flex overflow-x-auto border-b-2"
         >
             <ul class="flex flex-wrap">
                 <li
@@ -39,7 +39,6 @@
                 </li>
             </ul>
         </div>
-        <small class="text-xs text-gray-500">Transaction ID:{{ updateKey }}</small>
         <div
             class="grid grid-cols-1 md:grid-cols-7 gap-6 p-6"
             v-if="season_info.seasons && season_info.seasons[0].type != 1"
