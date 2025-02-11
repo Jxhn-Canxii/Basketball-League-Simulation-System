@@ -27,7 +27,36 @@
     </div>
     <div class="block" v-if="isHide">
         <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
-        <p v-else class="text-red-500 font-bold">No games available!</p>
+        <div class="p-4 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg max-w-7xl mx-auto" v-else>
+            <!-- Skeleton Loader -->
+            <div class="flex justify-center items-center h-full">
+                <!-- Centered Loader -->
+                <div class="flex flex-col items-center space-y-6">
+                    <!-- Placeholder for Home Team Name -->
+                    <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
+
+                    <!-- Placeholder for Home Team Score -->
+                    <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
+
+                    <!-- Placeholder for "VS" Text -->
+                    <div class="text-white text-xl font-semibold">
+                        <span class="animate-pulse">VS</span>
+                    </div>
+
+                    <!-- Placeholder for Away Team Score -->
+                    <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
+
+                    <!-- Placeholder for Away Team Name -->
+                    <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
+
+                    <!-- Placeholder for Round or Game Status -->
+                    <div class="w-48 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
+
+                    <!-- Placeholder for Matchup Record -->
+                    <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
+                </div>
+            </div>
+        </div>
     </div>
     <div class="block" v-else>
         <div class="flex justify-end mb-2"></div>
