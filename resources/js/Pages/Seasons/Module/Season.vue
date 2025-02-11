@@ -40,15 +40,15 @@
             </ul>
         </div>
         <div
-            class="grid grid-cols-1 md:grid-cols-7 gap-6 p-6"
+            class="grid grid-cols-1 md:grid-cols-3 gap-6 p-0"
             v-if="season_info.seasons && season_info.seasons[0].type != 1"
         >
             <!-- Standings UI (Left Side) -->
-            <div class="md:col-span-3 sm:col-span-1 overflow-y-auto">
+            <div class="overflow-y-auto">
                 <Standings v-if="updateKey" :key="updateKey" :showLegend="season_info.seasons[0].status > 2" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
             </div>
             <!-- Schedule and Results UI (Right Side) -->
-            <div class="md:col-span-4 sm:col-span-1 overflow-y-auto">
+            <div class="md:col-span-2 sm:col-span-1 overflow-y-auto">
                 <SeasonSchedule v-if="season_info" @transaction_id="(id) => handleTransaction(id)" :key="activeConferenceTab" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
             </div>
         </div>
