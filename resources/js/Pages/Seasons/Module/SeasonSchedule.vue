@@ -164,6 +164,19 @@
             ">
             <p class="text-gray-500">No schedule available.</p>
         </div>
+        <div class="flex w-full overflow-auto"
+        v-if="
+            season_schedules &&
+            season_schedules.schedules?.length > 0 && !loadingSchedules
+        ">
+            <Paginator
+                v-if="season_schedules.total_count"
+                :page_number="search_schedule.page_num"
+                :total_rows="season_schedules.total_count ?? 0"
+                :itemsperpage="season_schedules.itemsperpage"
+                @page_num="handlePagination"
+            />
+        </div>
     </div>
     <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'">
         <button
@@ -206,21 +219,34 @@
         },
         season_data: Object,
     });
-    const fetchConferenceSchedules = async () => {
+    const search_schedule = ref({
+        current_page: 1,
+        total_pages: 0,
+        total: 0,
+        search: "",
+        conference_id: 0,
+        season_id: 0,
+        itemsperpage: 10,
+    });
+    const fetchConferenceSchedules = async (page = 1) => {
         try {
             season_schedules.value = [];
             loadingSchedules.value = true;
-            const response = await axios.post(route("conferences.schedules"), {
-                season_id: props.season_id,
-                conference_id: props.conference_id,
-            });
+            search_schedule.value.current_page = page;
+            search_schedule.value.season_id = props.season_id;
+            search_schedule.value.conference_id = props.conference_id;
+
+            const response = await axios.post(route("conferences.schedules"), search_schedule.value);
             season_schedules.value = response.data;
             loadingSchedules.value = false;
         } catch (error) {
             console.error("Error fetching season standings:", error);
         }
     };
-    
+    const handlePagination = (page_num) => {
+        search_schedule.value.page_num = page_num ?? 1;
+        fetchConferenceSchedules();
+    };
     const simulatePerRound = async () => {
         const rounds = season_schedules.value.rounds;
         const lastRoundIndex = rounds.length - 1; // Get the index of the last round
@@ -338,7 +364,7 @@
                 schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
             });
             activeGameId.value = response.data.game_id ?? 0;
-            emit('transaction_id',response.data.game_id ?? 0);
+            emit('transaction_id',Math.random());
             // Show success message using Swal2
             // Swal.fire({
             //     icon: "success",
