@@ -45,11 +45,11 @@ class PlayersController extends Controller
 
         // Initialize an array to hold player stats
         $playerStats = [];
-        $latestSeasonId = DB::table('player_game_stats')->max('season_id');
-        $currentSeasonId = DB::table('seasons')->max('id');
-        if (is_null($seasonId) || $seasonId == 0) {
-            $seasonId = $latestSeasonId;
-        }
+        $latestSeasonId = DB::table('seasons')->max('id');
+        // $currentSeasonId = DB::table('seasons')->max('id');
+        // if (is_null($seasonId) || $seasonId == 0) {
+        //     $seasonId = $latestSeasonId;
+        // }
 
         // Fetch the season status
         $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
@@ -169,7 +169,7 @@ class PlayersController extends Controller
                         'combined_score' => number_format($combinedScore, 2),
                         'seasons_played_with_team' => $seasonsPlayedWithTeam,
                         'total_seasons_played' => $totalSeasonsPlayed,
-                        'latest_season' => $currentSeasonId,
+                        'latest_season' => $latestSeasonId,
                     ];
                 }
             }

@@ -316,6 +316,7 @@ class TransactionsController extends Controller
             // Update the last season's status to 15 if there are no incomplete teams
             // Update player roles based on the last season's stats
             $update = ($seasonId == 0) ? $this->updateTeamRolesBasedOnStatsByRating() : true;
+
             // $update = true;
             if ($update) {
                 // After drafting logic but before DB::commit()
@@ -512,6 +513,8 @@ class TransactionsController extends Controller
                 DB::table('players')->whereIn('id', $rolePlayers)->update(['role' => 'role player']);
                 DB::table('players')->whereIn('id', $benchPlayers)->update(['role' => 'bench']);
 
+                //official registration in player season stats table
+                AwardsController::storeplayerseasonstats( $teamId, $player->id);
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
