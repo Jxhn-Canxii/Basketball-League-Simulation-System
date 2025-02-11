@@ -909,7 +909,128 @@ class TeamsController extends Controller
         return $records;
     }
 
-
+    public static function countTeamOnePicksAndCheckChampion(Request $request)
+    {
+        $request->validate([
+            'team_id' => 'required|exists:teams,id',
+            'season_id' => 'nullable|integer',
+        ]); 
+    
+        // If validation passes, the $teamId is valid
+        $teamId = $request->team_id;
+        
+        // Get the most recent season (the latest season by id)
+        $latestSeason = DB::table('seasons')
+            ->orderBy('id', 'desc')  // Assuming `id` is auto-incremented and represents the season order
+            ->first();
+    
+        // If season_id is greater than 0, override the latest season with the provided season_id
+        if ((int) $request->season_id > 0) {
+            $latestSeasonId = (int) $request->season_id;  // Make sure this is an integer
+        } else {
+            $latestSeasonId = $latestSeason->id;  // Use the id of the latest season from DB
+        }
+    
+        if (!$latestSeasonId) {
+            return [
+                'team_one_pick_count' => 0,
+                'is_defending_champion' => false,
+                'is_weakest' => false,
+                'finals_mvp_count' => 0,
+                'is_conference_champion' => false,
+                'is_finals_champion' => false,
+                'is_finalist' => false,
+                'overall_rank' => null,
+            ];
+        }
+    
+        // Get the previous season by selecting the season with id = latestSeasonId - 1
+        $previousSeason = DB::table('seasons')
+            ->where('id', $latestSeasonId - 1)
+            ->first();
+    
+        if (!$previousSeason) {
+            return [
+                'team_one_pick_count' => 0,
+                'is_defending_champion' => false,
+                'is_weakest' => false,
+                'finals_mvp_count' => 0,
+                'is_conference_champion' => false,
+                'is_finals_champion' => false,
+                'is_finalist' => false,
+                'overall_rank' => null,
+            ];
+        }
+    
+        // Check if the team is the defending champion in the previous season
+        $isDefendingChampion = DB::table('seasons')
+            ->where('champion_id', $teamId)
+            ->where('id', $previousSeason->id)  // Check for the previous season by id
+            ->exists();
+    
+        // Count the number of team #1 picks where draft_status ends with 'R1 P1'
+        $teamOnePickCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('draft_status', 'like', '%R1 P1')
+            ->count();
+    
+        // Check if the team is considered the weakest in the previous season
+        $isWeakest = DB::table('seasons')
+            ->where('weakest_id', $teamId)
+            ->where('id', $previousSeason->id)  // Check for the previous season by id
+            ->exists();
+    
+        // Count how many times the team has been the Finals MVP
+        $finalsMvpCount = DB::table('seasons')
+            ->where('finals_mvp_id', $teamId)
+            ->count();
+    
+        // Check if the team is a conference champion in any conference (West, East, North, South)
+        $isConferenceChampion = DB::table('seasons')
+            ->where(function($query) use ($teamId) {
+                $query->where('west_champion_id', $teamId)
+                    ->orWhere('east_champion_id', $teamId)
+                    ->orWhere('north_champion_id', $teamId)
+                    ->orWhere('south_champion_id', $teamId);
+            })
+            ->where('id', $previousSeason->id)  // Check for the previous season by id
+            ->exists();
+    
+        // Check if the team is the finals champion
+        $isFinalsChampion = DB::table('seasons')
+            ->where('finals_winner_id', $teamId)
+            ->where('id', $previousSeason->id)  // Check for the previous season by id
+            ->exists();
+    
+        // Check if the team is a finalist (winner or loser in the finals)
+        $isFinalist = DB::table('seasons')
+            ->where(function($query) use ($teamId) {
+                $query->where('finals_winner_id', $teamId)
+                    ->orWhere('finals_loser_id', $teamId);
+            })
+            ->where('id', $previousSeason->id)  // Check for the previous season by id
+            ->exists();
+    
+        // Check the conference overall rank from the standings_view for the previous season
+        $conferenceRank = DB::table('standings_view')
+            ->where('team_id', $teamId)
+            ->where('season_id', $previousSeason->id)
+            ->value('conference_rank');  // Assuming 'conference_rank' is a column in 'standings_view'
+    
+        return [
+            'team_one_pick_count' => $teamOnePickCount,
+            'is_defending_champion' => $isDefendingChampion,
+            'is_weakest' => $isWeakest,
+            'finals_mvp_count' => $finalsMvpCount,
+            'is_conference_champion' => $isConferenceChampion,
+            'is_finals_champion' => $isFinalsChampion,
+            'is_finalist' => $isFinalist,
+            'prev_conference_rank' => $conferenceRank,
+            'prev_season' => $previousSeason->id,
+            'curr_season' => $latestSeasonId,
+        ];
+    }
+    
     // Store a newly created resource in storage.
     public function add(Request $request)
     {

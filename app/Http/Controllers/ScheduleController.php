@@ -205,7 +205,7 @@ class ScheduleController extends Controller
                 // }
                 // Save matches to the database
                 Schedules::insert($matches);
-
+                
                 // // Create player game stats for each game
                 // if ($matches) {
                 //     foreach ($matches as $match) {

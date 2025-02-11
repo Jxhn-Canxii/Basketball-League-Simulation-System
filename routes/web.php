@@ -73,6 +73,7 @@ Route::middleware('auth')->group(function () {
         Route::post('team-latest-season', [TeamsController::class, 'teamslatestseason'])->name('teams.latest.season');
         Route::post('team-transaction-history', [TeamsController::class, 'teamstransactionhistory'])->name('teams.transaction.history');
         Route::post('team-match-history', [TeamsController::class, 'matchhistory'])->name('match.history');
+        Route::post('team-recent-season-performance', [TeamsController::class, 'countTeamOnePicksAndCheckChampion'])->name('team.recent.performance');
     });
 
     Route::prefix('simulate/')->group(function(){

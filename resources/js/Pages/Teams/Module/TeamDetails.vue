@@ -13,6 +13,44 @@
         </button>
         <b v-if="props.showButton == 0" class="hover:text-blue-500" @click.prevent="isTeamModalOpen = true">
             {{ props.text == 'null' ? 'TBD' : props.text }}
+            <sup v-if="props.showInfo" class="space-x-1">
+               <!-- Defending Conference Champion (CC) -->
+                <i v-if="data.is_conference_champion" class="fas fa-trophy text-blue-500" title="Defending Conference Champion"></i>
+
+                <!-- Defending Overall Champion (OC) -->
+                <i v-if="data.is_defending_champion" class="fas fa-crown text-yellow-500" title="Defending Overall Champion"></i>
+
+                <!-- Defending National Champion (NC) -->
+                <i v-if="data.is_finals_champion" class="fas fa-globe-americas text-green-500" title="Defending National Champion"></i>
+
+                <!-- Last Season Finalist (NF) -->
+                <i v-if="data.is_finalist" class="fas fa-star text-purple-500" title="Last Season Finalist"></i>
+
+                <!-- Finals MVP Count -->
+                <b v-if="data.finals_mvp_count" class="text-white p-1 rounded-full text-xs bg-orange-500" title="# of Finals MVP in A Season Count">{{ data.finals_mvp_count }}</b>
+
+                <!-- #1 Pick in A Season Count -->
+                <b v-if="data.team_one_pick_count" class="text-white p-1 rounded-full text-xs bg-red-500" title="#1 Pick in A Season Count">{{ data.team_one_pick_count }}</b>
+
+                <!-- Overall Rank and Arrow Comparison -->
+                <b v-if="data.prev_conference_rank && props.current_conference_rank > 0" :class="{
+                    'text-green-500': props.current_conference_rank < data.prev_conference_rank, 
+                    'text-red-500': props.current_conference_rank > data.prev_conference_rank, 
+                    'text-gray-500': props.current_conference_rank === data.prev_conference_rank
+                }" title="Overall Rank Comparison">
+               
+                <span v-if="props.current_conference_rank < data.prev_conference_rank" class="text-green-500">
+                    <i class="fa fa-arrow-up"></i>
+                </span>
+                <span v-if="props.current_conference_rank > data.prev_conference_rank" class="text-red-500">
+                    <i class="fa fa-arrow-down"></i>
+                </span>
+                <span v-if="props.current_conference_rank === data.prev_conference_rank" class="text-gray-500">
+                    <i class="fa fa-minus"></i>
+                </span>
+
+                </b>
+            </sup>
         </b>
         <Modal :show="isTeamModalOpen" :maxWidth="'fullscreen'">
             <button
@@ -74,7 +112,7 @@
 <script setup>
 import Modal from "@/Components/Modal.vue";
 import { ref, onMounted } from "vue";
-
+import axios from 'axios';
 import TeamInfo from "./TeamInfo.vue";
 import TeamHistory from "./TeamHistory.vue";
 import TeamRoster from "./TeamRoster.vue";
@@ -84,11 +122,56 @@ import TeamTransactions from "./TeamTransactions.vue";
 
 const isTeamModalOpen = ref(false);
 const currentTab  = ref('info');
+const data = ref({
+    is_conference_champion: false,
+    is_defending_champion: false,
+    is_finals_champion: false,
+    is_finalist: false,
+    finals_mvp_count: 0,
+    team_one_pick_count: 0,
+    current_conference_rank: 0,
+});
 
 const props = defineProps({
     team_id: Number,
     showButton: Number,
+    season_id: {
+        type: Number,
+        default: 0,
+    },
+    current_conference_rank:  {
+        type: Number,
+        default: 0,
+    },
     text: String,
+    showInfo: {
+        type: Boolean,
+        default: false, // Default to false if not explicitly set
+    },
 });
+
+onMounted(() => {
+    if (props.showInfo) {
+        fetchTeamInfo(); // Only fetch data if showInfo is true
+    }
+});
+
+const fetchTeamInfo = async () => {
+    try {
+        const response = await axios.post(route("team.recent.performance"), {
+            team_id: props.team_id,
+            season_id: props.season_id,
+        });
+
+        // Check if the response data is valid
+        if (response.data) {
+            data.value = response.data;
+        } else {
+            console.error("Received invalid data", response.data);
+        }
+    } catch (error) {
+        console.error("Error fetching home team info:", error);
+    }
+};
 
 </script>

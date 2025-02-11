@@ -78,7 +78,8 @@
                                                 team.playoff_appearances
                                             "
                                             :team_id="team.team_id" 
-                                            :key="team.team_id" 
+                                            :key="team.team_id"
+                                            :showInfo="false"
                                             :showButton="0" 
                                             :text="`${team.team_name}`" />
                                     </td>
@@ -304,12 +305,12 @@
                                 class="px-2 py-2 whitespace-nowrap uppercase text-sm"
                             >
                                 <TeamDetails
-                                :title="
-                                    ' Playoff Appearance:' +
-                                    team.playoff_appearances
-                                "
+                                :title="' Playoff Appearance:' + team.playoff_appearances"
                                 :team_id="team.team_id" 
-                                :key="team.team_id" 
+                                :key="team.team_id"
+                                :showInfo="!isHide"
+                                :current_conference_rank="team.conference_rank"
+                                :season_id="team.season_id"
                                 :showButton="0" 
                                 :text="`${team.team_name}`" />
                             </td>
