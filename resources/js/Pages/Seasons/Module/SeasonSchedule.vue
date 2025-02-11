@@ -27,7 +27,7 @@
     </div>
     <div class="block" v-if="isHide">
         <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
-        <div class="p-4 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg max-w-7xl mx-auto" v-else>
+        <div v-else class="p-0 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg max-w-7xl mx-auto">
             <!-- Skeleton Loader -->
             <div class="flex justify-center items-center h-full">
                 <!-- Centered Loader -->
