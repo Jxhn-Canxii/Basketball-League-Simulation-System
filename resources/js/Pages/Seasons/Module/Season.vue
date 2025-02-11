@@ -39,17 +39,18 @@
                 </li>
             </ul>
         </div>
+        <small class="text-xs text-gray-500">Transaction ID:{{ updateKey }}</small>
         <div
             class="grid grid-cols-1 md:grid-cols-7 gap-6 p-6"
             v-if="season_info.seasons && season_info.seasons[0].type != 1"
         >
             <!-- Standings UI (Left Side) -->
             <div class="md:col-span-3 sm:col-span-1 overflow-y-auto">
-                <Standings v-if="season_info" :key="activeConferenceTab" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
+                <Standings v-if="season_info" :key="updateKey" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
             </div>
             <!-- Schedule and Results UI (Right Side) -->
             <div class="md:col-span-4 sm:col-span-1 overflow-y-auto">
-                <SeasonSchedule v-if="season_info" :key="activeConferenceTab" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
+                <SeasonSchedule v-if="season_info" @transaction_id="handleTransaction()" :key="activeConferenceTab" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
             </div>
         </div>
     </div>
@@ -65,6 +66,7 @@ import SeasonSchedule from "./SeasonSchedule.vue";
 
 const season_info = ref(false);
 const activeConferenceTab = ref(false);
+const updateKey = ref(0);
 const props = defineProps({
     season_id: {
         type: [Number,String],
@@ -74,6 +76,7 @@ const props = defineProps({
 const fetchConferenceData = async (id) => {
     // await fetchSeasonInfo();
     activeConferenceTab.value = id;
+    updateKey.value = id;
 }
 const fetchSeasonInfo = async () => {
     try {
@@ -82,10 +85,15 @@ const fetchSeasonInfo = async () => {
         });
         season_info.value = response.data;
         activeConferenceTab.value = season_info.value.conferences[0].id;
+        updateKey.value = season_info.value.conferences[0].id;
     } catch (error) {
         console.error("Error fetching season information:", error);
     }
 };
+const handleTransaction = (id) => {
+    console.log('emitted: '+id);
+    updateKey.value = id;
+}
 //team modal
 onMounted(() => {
     fetchSeasonInfo();

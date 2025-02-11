@@ -1,15 +1,5 @@
 <template>
-    <div class="block" v-if="isHide">
-        <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
-        <p v-else class="text-red-500 font-bold">No games available!</p>
-    </div>
-    <div class="block" v-else>
-        <div class="flex justify-end mb-2"></div>
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">
-            Schedule and Results ({{
-                season_schedules?.schedules?.length
-            }})
-        </h2>
+    <div>
         <div
             class="flex justify-end mb-2 space-x-2"
             v-if="season_schedules && !season_schedules.is_simulated && !loadingSchedules"
@@ -34,6 +24,18 @@
         <div v-else>
             <p class="text-end"></p>
         </div>
+    </div>
+    <div class="block" v-if="isHide">
+        <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
+        <p v-else class="text-red-500 font-bold">No games available!</p>
+    </div>
+    <div class="block" v-else>
+        <div class="flex justify-end mb-2"></div>
+        <h2 class="text-lg font-semibold text-gray-800 mb-2">
+            Schedule and Results ({{
+                season_schedules?.schedules?.length
+            }})
+        </h2>
         <div
             v-if="
                 season_schedules &&
@@ -181,6 +183,7 @@
     import Swal from "sweetalert2";
     import axios from "axios";
     import Modal from "@/Components/Modal.vue";
+    import Paginator from "@/Components/Paginator.vue";
     
     import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
     import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
@@ -189,9 +192,9 @@
     const isGameResultModalOpen = ref(false);
     const isHide = ref(false);
     const currentRound = ref(0);
-    const topPlayersKey = ref(0); // Key for TopPlayers component
     const loadingSchedules = ref(false);
     const activeGameId = ref(0);
+    const emit = defineEmits(["transaction_id"]);
     const props = defineProps({
         season_id: {
             type: [Number,String],
@@ -246,6 +249,8 @@
         }
     };
     const simulateAllRoundGames = async (round, isLast,conference_id) => {
+        console.log(round);
+        console.log(conference_id);
         try {
             isHide.value = true;
             currentRound.value = round;
@@ -260,11 +265,10 @@
             for (const gameId of gameIds) {
                 // Perform an action with each game ID
                 console.log(`Processing Game ID: ${gameId}`);
-                await simulateGame(gameId,conference_id);
+                await simulateGame(gameId);
                 // You can also add more logic here, like fetching game details or updating the state
             }
     
-            topPlayersKey.value = round;
             if (isLast && conference_id == 4) {
                 Swal.fire({
                     icon: "success",
@@ -279,11 +283,11 @@
         } catch (error) {
             console.error("Error simulating the game:", error);
             // Show error message using Swal2 if needed
-            Swal.fire({
-                icon: "warning",
-                title: "Warning!",
-                text: error.response.data.error,
-            });
+            // Swal.fire({
+            //     icon: "warning",
+            //     title: "Warning!",
+            //     text: error.response.data.error,
+            // });
         }
     };
     const simulateRoundGames = async (round, isLast) => {
@@ -293,7 +297,7 @@
             const response = await axios.post(route("game.per.round"), {
                 season_id: props.season_id, // Assuming the parameter name should be schedule_id
                 round: round,
-                conference_id: activeConferenceTab.value,
+                conference_id: props.conference_id,
             });
             // await localStorage.setItem('season-key',generateRandomKey());
             const gameIds = response.data.schedule_ids; // Assuming the response contains 'game_ids'
@@ -301,11 +305,10 @@
             for (const gameId of gameIds) {
                 // Perform an action with each game ID
                 console.log(`Processing Game ID: ${gameId}`);
-                await simulateGame(gameId,activeConferenceTab.value);
+                await simulateGame(gameId);
                 // You can also add more logic here, like fetching game details or updating the state
             }
     
-            topPlayersKey.value = round;
             if (isLast) {
                 Swal.fire({
                     icon: "success",
@@ -327,18 +330,15 @@
             });
         }
     };
-    const simulateGame = async (schedule_id,conference_id) => {
+    const simulateGame = async (schedule_id) => {
         try {
             isHide.value = true;
     
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
             });
-            // await localStorage.setItem('season-key',generateRandomKey());
-            // isHide.value = false;
-            topPlayersKey.value++; // Trigger update of TopPlayers component
-            await fetchConferenceStandings(conference_id);
             activeGameId.value = response.data.game_id ?? 0;
+            emit('transaction_id',response.data.game_id ?? 0);
             // Show success message using Swal2
             // Swal.fire({
             //     icon: "success",

@@ -3,6 +3,7 @@
     <div class="md:col-span-3 sm:col-span-1 overflow-y-auto">
         <h2 class="text-lg font-semibold text-gray-800 mb-2" >
             <!-- {{ season_info.conferences[0].name }}  {{ season_info.seasons[0].name }} Standings -->
+              Standings
         </h2>
         <table
             class="min-w-full divide-y divide-gray-200"
