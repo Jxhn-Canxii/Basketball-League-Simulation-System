@@ -33,7 +33,7 @@
                 <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-green-500" title="#1 Pick in A Roster Count">{{ data.overall_mvp_count }}</b>
 
                 <!-- Regular Season MVP Count -->
-                <b v-if="data.dpos_count > 0" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Season MVP in A Roster Count">{{ data.overall_mvp_count }}</b>
+                <b v-if="data.dpos_count > 0" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Season MVP in A Roster Count">{{ data.dpos_count }}</b>
 
                 <!-- Regular Season MVP Count -->
                 <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-indigo-500" title="# of Defensive Player of The Season in A Roster Count">{{ data.dpos_count }}</b>
