@@ -290,7 +290,7 @@ class PlayersController extends Controller
                         'seasons_played_with_team' => $seasonsPlayedWithTeam + 1,
                         'team_total_games' => (float)$totalSeasonGameSchedule,
                         'total_seasons_played' => $totalSeasonsPlayed + 1,
-                        'latest_season' => $currentSeasonId,
+                        'latest_season' => $latestSeasonId,
                     ];
                 }
             }

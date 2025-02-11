@@ -969,10 +969,13 @@ class TeamsController extends Controller
             ->exists();
     
         // Count the number of team #1 picks where draft_status ends with 'R1 P1'
-        $teamOnePickCount = DB::table('players')
-            ->where('team_id', $teamId)
-            ->where('draft_status', 'like', '%R1 P1')
+        $teamOnePickCount = DB::table('player_season_stats')
+            ->join('players', 'players.id', '=', 'player_season_stats.player_id') // Joining player_season_stats with players table
+            ->where('player_season_stats.team_id', $teamId) // Corrected 'team_id' reference
+            ->where('player_season_stats.season_id', $latestSeasonId) // Filter by season ID
+            ->where('players.draft_status', 'like', '%R1 P1') // Check for 'R1 P1' draft status
             ->count();
+
     
         // Check if the team is considered the weakest in the previous season
         $isWeakest = DB::table('seasons')
@@ -982,8 +985,11 @@ class TeamsController extends Controller
     
         // Count how many times the team has been the Finals MVP
         $finalsMvpCount = DB::table('seasons')
-            ->where('finals_mvp_id', $teamId)
+            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'seasons.finals_mvp_id')  // Join on MVP player_id
+            ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
+            ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
             ->count();
+
     
         // Check if the team is a conference champion in any conference (West, East, North, South)
         $isConferenceChampion = DB::table('seasons')
