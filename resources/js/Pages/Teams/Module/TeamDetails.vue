@@ -37,17 +37,17 @@
                     'text-green-500': props.current_conference_rank < data.prev_conference_rank, 
                     'text-red-500': props.current_conference_rank > data.prev_conference_rank, 
                     'text-gray-500': props.current_conference_rank === data.prev_conference_rank
-                }" title="Overall Rank Comparison">
-                {{ data.prev_conference_rank }}
-                <span v-if="props.current_conference_rank < data.prev_conference_rank" class="text-green-500">
-                    <i class="fa fa-arrow-up"></i>
-                </span>
-                <span v-if="props.current_conference_rank > data.prev_conference_rank" class="text-red-500">
-                    <i class="fa fa-arrow-down"></i>
-                </span>
-                <span v-if="props.current_conference_rank === data.prev_conference_rank" class="text-gray-500">
-                    <i class="fa fa-minus"></i>
-                </span>
+                }" title="Overall Rank Comparison" class="text-xs">
+                    {{ data.prev_conference_rank }}
+                    <span v-if="props.current_conference_rank < data.prev_conference_rank" class="text-green-500">
+                        <i class="fa fa-arrow-up"></i>
+                    </span>
+                    <span v-if="props.current_conference_rank > data.prev_conference_rank" class="text-red-500">
+                        <i class="fa fa-arrow-down"></i>
+                    </span>
+                    <span v-if="props.current_conference_rank === data.prev_conference_rank" class="text-gray-500">
+                        <i class="fa fa-minus"></i>
+                    </span>
 
                 </b>
             </sup>
