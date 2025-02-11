@@ -27,19 +27,19 @@
                 <i v-if="data.is_finalist" class="fas fa-star text-purple-500" title="Last Season Finalist"></i>
 
                 <!-- Finals MVP Count -->
-                <b v-if="data.finals_mvp_count" class="text-white p-1 rounded-full text-xs bg-orange-500" title="# of Finals MVP in A Roster Count">{{ data.finals_mvp_count }}</b>
+                <b v-if="data.finals_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-orange-500" title="# of Finals MVP in A Roster Count">{{ data.finals_mvp_count }}</b>
 
                 <!-- Regular Season MVP Count -->
-                <b v-if="data.overall_mvp_count" class="text-white p-1 rounded-full text-xs bg-green-500" title="#1 Pick in A Roster Count">{{ data.overall_mvp_count }}</b>
+                <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-green-500" title="#1 Pick in A Roster Count">{{ data.overall_mvp_count }}</b>
 
                 <!-- Regular Season MVP Count -->
-                <b v-if="data.dpos_count" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Season MVP in A Roster Count">{{ data.overall_mvp_count }}</b>
+                <b v-if="data.dpos_count > 0" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Season MVP in A Roster Count">{{ data.overall_mvp_count }}</b>
 
                 <!-- Regular Season MVP Count -->
-                <b v-if="data.overall_mvp_count" class="text-white p-1 rounded-full text-xs bg-indigo-500" title="# of Defensive Player of The Season in A Roster Count">{{ data.dpos_count }}</b>
+                <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-indigo-500" title="# of Defensive Player of The Season in A Roster Count">{{ data.dpos_count }}</b>
 
                  <!-- # of Finals MVP in A Roster Count -->
-                 <b v-if="data.ros_count" class="text-white p-1 rounded-full text-xs bg-red-500" title="# of Rookie of The Season in A Roster Count">{{ data.ros_count }}</b>
+                 <b v-if="data.ros_count > 0" class="text-white p-1 rounded-full text-xs bg-red-500" title="# of Rookie of The Season in A Roster Count">{{ data.ros_count }}</b>
 
                 <!-- Overall Rank and Arrow Comparison -->
                 <b v-if="data.prev_conference_rank && props.current_conference_rank > 0" :class="{
