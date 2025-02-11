@@ -41,6 +41,7 @@
                     <!-- Placeholder for "VS" Text -->
                     <div class="text-white text-xl font-semibold">
                         <span class="animate-pulse">VS</span>
+                        <small>Getting Game information...</small>
                     </div>
 
                     <!-- Placeholder for Away Team Score -->
