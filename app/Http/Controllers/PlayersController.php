@@ -59,7 +59,6 @@ class PlayersController extends Controller
             ->where('team_id', $teamId)
             ->where('season_id', $seasonId)
             ->get();
-
         if (count($playerStatsData) > 0) {
             foreach ($playerStatsData as $stats) {
                 // Fetch the player

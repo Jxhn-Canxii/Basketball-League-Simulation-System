@@ -937,6 +937,9 @@ class TeamsController extends Controller
                 'is_defending_champion' => false,
                 'is_weakest' => false,
                 'finals_mvp_count' => 0,
+                'overall_mvp_count' => 0,
+                'dpos_count' => 0,
+                'ros_count' => 0,
                 'is_conference_champion' => false,
                 'is_finals_champion' => false,
                 'is_finalist' => false,
@@ -955,6 +958,9 @@ class TeamsController extends Controller
                 'is_defending_champion' => false,
                 'is_weakest' => false,
                 'finals_mvp_count' => 0,
+                'overall_mvp_count' => 0,
+                'dpos_count' => 0,
+                'ros_count' => 0,
                 'is_conference_champion' => false,
                 'is_finals_champion' => false,
                 'is_finalist' => false,
@@ -990,7 +996,26 @@ class TeamsController extends Controller
             ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
             ->count();
 
+        $seasonMvpCount = DB::table('season_awards')
+            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
+            ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
+            ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
+            ->where('season_awards.award_name', 'Best Overall Player')  // Ensure the player played in the current season
+            ->count();
     
+        $defensivePlayerOfTheSeasonCount = DB::table('season_awards')
+            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
+            ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
+            ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
+            ->where('season_awards.award_name', 'Best Defensive Player')  // Ensure the player played in the current season
+            ->count();
+
+        $rookiePlayerOfTheSeasonCount = DB::table('season_awards')
+            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
+            ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
+            ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
+            ->where('season_awards.award_name', 'Rookie of the Season')  // Ensure the player played in the current season
+            ->count();
         // Check if the team is a conference champion in any conference (West, East, North, South)
         $isConferenceChampion = DB::table('seasons')
             ->where(function($query) use ($teamId) {
@@ -1029,6 +1054,9 @@ class TeamsController extends Controller
             'is_weakest' => $isWeakest,
             'finals_mvp_count' => $finalsMvpCount,
             'is_conference_champion' => $isConferenceChampion,
+            'overall_mvp_count' => $seasonMvpCount,
+            'dpos_count' => $defensivePlayerOfTheSeasonCount,
+            'ros_count' => $rookiePlayerOfTheSeasonCount,
             'is_finals_champion' => $isFinalsChampion,
             'is_finalist' => $isFinalist,
             'prev_conference_rank' => $conferenceRank,
