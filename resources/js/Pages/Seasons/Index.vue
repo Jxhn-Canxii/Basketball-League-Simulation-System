@@ -90,16 +90,7 @@
                         seasons.is_new_season == 6 || seasons.is_new_season == 7
                     "
                 >
-                    <button
-                        @click.prevent="isAddModalOpen = true"
-                        v-bind:class="{
-                            'opacity-25': isAddModalOpen,
-                        }"
-                        v-bind:disabled="isAddModalOpen"
-                        class="px-2 py-2 bg-blue-500 rounded font-bold text-md float-end text-white shadow"
-                    >
-                        <i class="fa fa-calendar-plus"></i> New Season
-                    </button>
+                    <Add @transaction_id="handleCreateSeason" />
                 </div>
                 <div class="flex overflow-hidden gap-5 p-2">
                     <input
@@ -608,9 +599,9 @@ const handlePagination = (page_num) => {
 };
 
 const handleTradeSeason = (newSeason) => {
-    // if (newSeason) {
-    //     isTradeModalOpen.value = false;
-    // }
+    fetchSeasons();
+};
+const handleCreateSeason = (newSeason) => {
     fetchSeasons();
 };
 const handleNewSeason = (newSeason) => {
@@ -630,39 +621,7 @@ const leagueDropdown = async () => {
         console.error("Error fetching leagues:", error);
     }
 };
-const createNewSeason = async () => {
-    if (form.league_id == 0) {
-        Swal.fire({
-            title: "Warning!",
-            text: "Please assign league!",
-            icon: "warning",
-        });
-        return false;
-    } else {
-        try {
-            isProcessing.value = true;
-            const response = await axios.post(route("create.schedule.regular"), form);
-            isAddModalOpen.value = false;
-            Swal.fire({
-                icon: "success",
-                title: "Success!",
-                text: response.data.message, // Assuming the response contains a 'message' field
-            });
-            form.reset("name", "type", "league_id");
-            isProcessing.value = false;
-            fetchSeasons();
-            seasonsDropdown();
-        } catch (error) {
-            console.error("Error creating schedule:", error);
-            // Show error message using Swal2 if needed
-            Swal.fire({
-                icon: "error",
-                title: "Error!",
-                text: error.response.data.message,
-            });
-        }
-    }
-};
+
 const prepareCurrentSeasonStats = async () => {
     try {
         const team_ids = seasons.value.team_ids;
