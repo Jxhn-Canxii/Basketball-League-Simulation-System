@@ -39,9 +39,8 @@
                     <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
 
                     <!-- Placeholder for "VS" Text -->
-                    <div class="text-white text-xl font-semibold">
+                    <div class="text-white text-xl font-semibold block">
                         <span class="animate-pulse">VS</span>
-                        <small>Getting Game information...</small>
                     </div>
 
                     <!-- Placeholder for Away Team Score -->
@@ -321,7 +320,7 @@
             for (const gameId of gameIds) {
                 // Perform an action with each game ID
                 console.log(`Processing Game ID: ${gameId}`);
-                await simulateGame(gameId);
+                await simulateGame(gameId,conference_id);
                 // You can also add more logic here, like fetching game details or updating the state
             }
     
@@ -386,7 +385,7 @@
             });
         }
     };
-    const simulateGame = async (schedule_id) => {
+    const simulateGame = async (schedule_id,conference_id) => {
         try {
             isHide.value = true;
     
@@ -394,7 +393,7 @@
                 schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
             });
             activeGameId.value = response.data.game_id ?? 0;
-            emit('transaction_id',Math.random());
+            emit('transaction_id',conference_id);
             // Show success message using Swal2
             // Swal.fire({
             //     icon: "success",
