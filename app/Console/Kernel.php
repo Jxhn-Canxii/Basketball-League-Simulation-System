@@ -18,25 +18,25 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule): void
     {
         // Tasks that run every minute
-        $schedule->call(function () {
-            try {
+        // $schedule->call(function () {
+        //     try {
                 
 
-                // Log and execute updateAllTimeTopStats
-                try {
-                    app(LeadersController::class)->updateAllTimeTopStats();
-                    Log::info('updateAllTimeTopStats executed successfully!');
-                    logger('updateAllTimeTopStats executed successfully at: ' . now());
-                } catch (\Exception $e) {
-                    Log::error('Error in updateAllTimeTopStats: ' . $e->getMessage());
-                    logger('Error in updateAllTimeTopStats: ' . $e->getMessage());
-                }
+        //         // Log and execute updateAllTimeTopStats
+        //         try {
+        //             app(LeadersController::class)->updateAllTimeTopStats();
+        //             Log::info('updateAllTimeTopStats executed successfully!');
+        //             logger('updateAllTimeTopStats executed successfully at: ' . now());
+        //         } catch (\Exception $e) {
+        //             Log::error('Error in updateAllTimeTopStats: ' . $e->getMessage());
+        //             logger('Error in updateAllTimeTopStats: ' . $e->getMessage());
+        //         }
 
-            } catch (\Exception $e) {
-                Log::error('Error running every-minute tasks: ' . $e->getMessage());
-                logger('Error running tasks: ' . $e->getMessage());
-            }
-        })->hourly();
+        //     } catch (\Exception $e) {
+        //         Log::error('Error running every-minute tasks: ' . $e->getMessage());
+        //         logger('Error running tasks: ' . $e->getMessage());
+        //     }
+        // })->hourly();
         // $schedule->call(function () {
         //     try {
         //         // Log and execute storeallplayerseasonstats

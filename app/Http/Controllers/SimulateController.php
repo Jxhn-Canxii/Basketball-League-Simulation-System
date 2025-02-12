@@ -1384,8 +1384,9 @@ class SimulateController extends Controller
                                 'status' => 'signed',
                             ]);
 
+                            $storeStats = new AwardsController;
                             //store initial player season stats
-                            AwardsController::storeplayerseasonstats( $player->team_id, $randomPlayer->id);
+                            $storeStats->storeplayerseasonstats( $player->team_id, $randomPlayer->id);
                         }
                     } else {
                         // Optionally log or handle the case where the player is not waived
@@ -2117,7 +2118,8 @@ class SimulateController extends Controller
 
                 // Update Player Season Stats (Incrementing Leader Fields)
                 Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
-                AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+                $storeStats = new AwardsController;
+                $storeStats->storeplayerseasonstats($stats['team_id'], $stats['player_id']);
                 
                 DB::table('player_season_stats')->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],

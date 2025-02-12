@@ -315,7 +315,7 @@ class TransactionsController extends Controller
         if ($teamsCount === 0) {
             // Update the last season's status to 15 if there are no incomplete teams
             // Update player roles based on the last season's stats
-            $update = ($seasonId == 0) ? $this->updateTeamRolesBasedOnStatsByRating() : true;
+            $update = ($seasonId <= 0) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->updateTeamRolesBasedOnStats();
 
             // $update = true;
             if ($update) {
@@ -496,6 +496,9 @@ class TransactionsController extends Controller
 
                 // Assign roles based on overall rating
                 foreach ($players as $index => $player) {
+                    $storeStats = new AwardsController;
+                    $storeStats->storeplayerseasonstats( $player->team_id, $player->id);
+
                     if (count($starPlayers) < 3) {
                         $starPlayers[] = $player->id;
                     } elseif (count($starters) < 2) {
@@ -505,8 +508,6 @@ class TransactionsController extends Controller
                     } else {
                         $benchPlayers[] = $player->id;
                     }
-
-                    AwardsController::storeplayerseasonstats( $teamId, $player->id);
                 }
 
                 // Update each player's role in the database
@@ -556,6 +557,7 @@ class TransactionsController extends Controller
                 $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
                     return (object)[
                         'player_id' => $player->id,
+                        'team_id' => $player->team_id,
                         'role' => 'bench',  // Default role
                         'avg_points_per_game' => 0,
                         'avg_rebounds_per_game' => 0,
@@ -609,6 +611,9 @@ class TransactionsController extends Controller
 
                 // Assign roles based on thresholds
                 foreach ($rankedPlayers as $playerStat) {
+                    $storeStats = new AwardsController;
+                    $storeStats->storeplayerseasonstats( $playerStat->team_id, $playerStat->player_id);
+
                     $score = $playerStat->is_rookie
                         ? $playerStat->overall_rating // Use rating for rookies
                         : $playerStat->composite_score; // Use composite score for veterans

@@ -155,6 +155,8 @@ class AwardsController extends Controller
                     // Insert actual shooting stats:
                     'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
                     'field_goals_made' => $twoPointMade + $threePointMade,
+                    'two_point_attempts' => $threePointAttempts,
+                    'two_pointers_made' => $threePointMade,
                     'three_point_attempts' => $threePointAttempts,
                     'three_pointers_made' => $threePointMade,
                     'free_throw_attempts' => $freeThrowAttempts,
@@ -477,7 +479,6 @@ class AwardsController extends Controller
     
             return response()->json(['message' => 'Player season stats stored successfully.']);
         } catch (\Exception $e) {
-            dd($e);
             // Log the error and return a generic error response
             \Log::error('Error in storeplayerseasonstats: ' . $e->getMessage());
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
