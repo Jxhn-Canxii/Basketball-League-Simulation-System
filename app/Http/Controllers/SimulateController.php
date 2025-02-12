@@ -2082,7 +2082,7 @@ class SimulateController extends Controller
                     ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
                     $stats
                 );
-                
+
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
                             - (($stats['fg_missed'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
@@ -2093,7 +2093,7 @@ class SimulateController extends Controller
                 }
 
                 // Assign Game Leader Titles
-                $stats['point_game_leader'] = ($stats['points'] == $maxPoints) ? 1 : 0;
+                $stats['points_game_leader'] = ($stats['points'] == $maxPoints) ? 1 : 0;
                 $stats['rebounds_game_leader'] = ($stats['rebounds'] == $maxRebounds) ? 1 : 0;
                 $stats['assists_game_leader'] = ($stats['assists'] == $maxAssists) ? 1 : 0;
                 $stats['steals_game_leader'] = ($stats['steals'] == $maxSteals) ? 1 : 0;
