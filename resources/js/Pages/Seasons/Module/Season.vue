@@ -92,7 +92,7 @@ const fetchSeasonInfo = async () => {
 };
 const handleTransaction = (id) => {
     console.log('emitted: '+id);
-    updateKey.value = id+(Math.random());
+    updateKey.value = id+':'+(Math.random());
     activeConferenceTab.value = id;
 }
 //team modal
