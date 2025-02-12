@@ -4,14 +4,14 @@
             class="flex justify-end mb-2 space-x-2"
             v-if="season_schedules && !season_schedules.is_simulated && !loadingSchedules"
         >
-            <button
+            <!-- <button
                 @click="simulatePerRound()"
                 :disabled="isHide"
                 :class="isHide ? 'opacity-50' : ''"
                 class="text-indigo-600 bg-orange-300 shadow rounded-full p-2 font-bold text-md text-nowrap hover:text-indigo-900"
             >
                 Simulate Conference
-            </button>
+            </button> -->
             <button
                 @click="simulateConference(props.season_id,props.conference_id)"
                 :disabled="isHide"
