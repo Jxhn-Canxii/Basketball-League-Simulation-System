@@ -68,8 +68,8 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.assists.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.steals.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.blocks.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
                             <!-- Field Goal Stats -->
                             <td class="px-2 py-1 whitespace-nowrap border">
                                 {{ player.field_goals_made }} / {{ player.field_goal_attempts }} ({{ player.field_goal_percentage.toFixed(1) }}%)
