@@ -329,12 +329,23 @@
             const gameIds = response.data.schedule_ids; // Assuming the response contains 'game_ids'
             const conference_count = response.data.conference_count;
             // Loop through each game ID
-            for (const gameId of gameIds) {
-                // Perform an action with each game ID
-                console.log(`Processing Game ID: ${gameId}`);
-                await simulateGame(gameId,conference_id,isLast);
-                // You can also add more logic here, like fetching game details or updating the state
-                if (isLast && conference_id < conference_count) {
+            if(gameIds.length > 0){
+                for (const gameId of gameIds) {
+                    // Perform an action with each game ID
+                    console.log(`Processing Game ID: ${gameId}`);
+                    await simulateGame(gameId,conference_id,isLast);
+                    // You can also add more logic here, like fetching game details or updating the state
+                }
+                await simulateConference(props.season_id,props.conference_id);
+                Swal.fire({
+                    icon: "info", // Fix capitalization (should be lowercase)
+                    title: "Checking Conference Games Results",
+                    text: `Checking current results...`,
+                    timer: 3000, // Auto-hide after 3 seconds (3000ms)
+                    showConfirmButton: false, // Hide the "OK" button
+                });
+            }else{
+                if (conference_id < conference_count) {
                     //if less than 4 conference_id return false;
                     let nextConference = conference_id + 1;
 
@@ -348,7 +359,7 @@
                     await simulateConference(props.season_id,nextConference);
                     isHide.value = false;
                 }
-                if (isLast && conference_id == conference_count) {
+                if (conference_id == conference_count) {
                     Swal.fire({
                         icon: "success",
                         title: "Success!",
@@ -360,6 +371,8 @@
                     currentRound.value = false;
                 }
             }
+            
+           
         } catch (error) {
             console.error("Error simulating the game:", error);
             isHide.value = false;
