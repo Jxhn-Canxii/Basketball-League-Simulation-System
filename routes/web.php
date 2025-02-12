@@ -155,6 +155,8 @@ Route::middleware('auth')->group(function () {
         Route::post('conference-playoffs', [ConferenceController::class, 'seasonsplayoffs'])->name('conferences.playoffs');
         Route::post('league-conference', [ConferenceController::class, 'leagueconference'])->name('conference.season.dropdown');
 
+        Route::post('get-rounds', [ConferenceController::class, 'getconferenceroundnotsimulated'])->name('upcoming.rounds.season');
+
     });
     Route::prefix('games/')->group(function(){
         Route::post('box-score', [GameController::class, 'getboxscore'])->name('game.boxscore');

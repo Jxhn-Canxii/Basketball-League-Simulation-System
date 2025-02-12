@@ -238,7 +238,29 @@ class ConferenceController extends Controller
             'total_count' => $totalSchedules,
         ]);
     }
-    
+    public function getconferenceroundnotsimulated(Request $request){
+        $seasonId = $request->season_id;
+        $conferenceId = $request->conference_id;
+        $excludedRounds = config('playoffs');
+
+        $rounds = DB::table('schedule_view')
+        ->where('season_id', $seasonId)
+        ->where('conference_id', $conferenceId)
+        ->whereNotIn('round', $excludedRounds)
+        ->where('status', 1)  // Filter to include only rounds with status = 1
+        ->distinct('round')
+        ->pluck('round'); // Get a list of distinct rounds
+
+        if ($rounds->isEmpty()) {
+            return response()->json([
+                'error' => 'All conference rounds already simulated!.',
+            ], 404); // Return 404 error with the message if no rounds are found
+        }
+
+        return response()->json([
+            'rounds' => $rounds, // Include the list of rounds in the response
+        ]);
+    }
     public function seasonsplayoffs(Request $request)
     {
         // Retrieve the season_id from the request

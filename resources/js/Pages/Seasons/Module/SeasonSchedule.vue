@@ -294,16 +294,30 @@
     
     };
     const simulateAll = async () => {
-        const rounds = season_schedules.value.rounds;
-        const lastRoundIndex = rounds.length - 1; // Get the index of the last round
-    
-        for (const [index, round] of rounds.entries()) {
-            // Check if it's the last round
-            const isLastRound =  (index === rounds[lastRoundIndex]);
+        try {
+            const response = await axios.post(route("upcoming.rounds.season"), {
+                season_id: props.season_id, // Assuming the parameter name should be schedule_id
+                conference_id: props.conference_id,
+            });
 
-            console.log(index);
-            console.log(lastRoundIndex);
-            await simulateAllRoundGames(round, isLastRound,props.conference_id);
+            const rounds = response.data.rounds;
+            const lastRoundIndex = rounds.length - 1; // Get the index of the last round
+        
+            for (const [index, round] of rounds.entries()) {
+                // Check if it's the last round
+                const isLastRound =  (index === rounds[lastRoundIndex]);
+
+                console.log(index);
+                console.log(lastRoundIndex);
+                await simulateAllRoundGames(round, isLastRound,props.conference_id);
+            }
+        } catch (error) {
+            console.log(error);
+             Swal.fire({
+                icon: "warning",
+                title: "Warning!",
+                text: error.response.data.error,
+            });
         }
     };
     const simulateAllRoundGames = async (round, isLast,conference_id) => {
