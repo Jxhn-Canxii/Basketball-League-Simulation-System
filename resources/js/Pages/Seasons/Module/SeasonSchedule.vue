@@ -304,8 +304,6 @@
         }
     };
     const simulateAllRoundGames = async (round, isLast,conference_id) => {
-        console.log(round);
-        console.log(conference_id);
         try {
             isHide.value = true;
             currentRound.value = round;
