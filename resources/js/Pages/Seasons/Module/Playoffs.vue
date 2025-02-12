@@ -4,14 +4,14 @@
         v-if="season_info.seasons && season_info.seasons[0].status > 1"
     >
         <div class="md:col-span-4 overflow-y-auto">
-            <div class="flex justify-between">
+            <div class="flex justify-start">
                 <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs</h2>
-                <button 
+                <!-- <button 
                     @click="simulateFullPlayoffs"
                     class="bg-green-500 text-white p-2 rounded mt-4"
                 >
                     Simulate Full Playoffs
-                </button>
+                </button> -->
             </div>
             <div
                 class="flex justify-center"
