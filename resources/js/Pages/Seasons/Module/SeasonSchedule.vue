@@ -319,7 +319,6 @@
                 position: "top-end", // Position at top-right
             });
 
-            isHide.value = true;
             currentRound.value = round;
             const response = await axios.post(route("game.per.round"), {
                 season_id: props.season_id, // Assuming the parameter name should be schedule_id
@@ -335,33 +334,35 @@
                 console.log(`Processing Game ID: ${gameId}`);
                 await simulateGame(gameId,conference_id,isLast);
                 // You can also add more logic here, like fetching game details or updating the state
-            }
-            if (isLast && conference_id < conference_count) {
-                //if less than 4 conference_id return false;
-                let nextConference = conference_id + 1;
+                if (isLast && conference_id < conference_count) {
+                    //if less than 4 conference_id return false;
+                    let nextConference = conference_id + 1;
 
-                Swal.fire({
-                    icon: "success", // Fix capitalization (should be lowercase)
-                    title: "All Games Played in this conference",
-                    text: `Fetching schedule for the next conference -> ${nextConference}`,
-                    timer: 3000, // Auto-hide after 3 seconds (3000ms)
-                    showConfirmButton: false, // Hide the "OK" button
-                });
-                await simulateConference(props.season_id,nextConference);
-            }
-            if (isLast && conference_id == conference_count) {
-                Swal.fire({
-                    icon: "success",
-                    title: "Success!",
-                    text: response.data.message, // Assuming the response contains a 'message' field
-                });
-    
-                await fetchConferenceSchedules(conference_id);
-                isHide.value = false;
-                currentRound.value = false;
+                    Swal.fire({
+                        icon: "success", // Fix capitalization (should be lowercase)
+                        title: "All Games Played in this conference",
+                        text: `Fetching schedule for the next conference -> ${nextConference}`,
+                        timer: 3000, // Auto-hide after 3 seconds (3000ms)
+                        showConfirmButton: false, // Hide the "OK" button
+                    });
+                    await simulateConference(props.season_id,nextConference);
+                    isHide.value = false;
+                }
+                if (isLast && conference_id == conference_count) {
+                    Swal.fire({
+                        icon: "success",
+                        title: "Success!",
+                        text: response.data.message, // Assuming the response contains a 'message' field
+                    });
+        
+                    await fetchConferenceSchedules(conference_id);
+                    isHide.value = false;
+                    currentRound.value = false;
+                }
             }
         } catch (error) {
             console.error("Error simulating the game:", error);
+            isHide.value = false;
             // Show error message using Swal2 if needed
             // Swal.fire({
             //     icon: "warning",
@@ -372,14 +373,15 @@
     };
     const simulateGame = async (schedule_id,conference_id,isLast ) => {
         try {
-            isHide.value = true;
-    
+
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
                 is_last: isLast,
             });
             activeGameId.value = response.data.game_id ?? 0;
+            isHide.value = true;
             emit('transaction_id',conference_id);
+
             // Show success message using Swal2
             // Swal.fire({
             //     icon: "success",
