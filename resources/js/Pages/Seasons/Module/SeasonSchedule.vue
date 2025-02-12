@@ -386,7 +386,7 @@
     };
     const simulateGame = async (schedule_id,conference_id,isLast ) => {
         try {
-
+            isHide.value = true;
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
                 is_last: isLast,
