@@ -505,6 +505,8 @@ class TransactionsController extends Controller
                     } else {
                         $benchPlayers[] = $player->id;
                     }
+
+                    AwardsController::storeplayerseasonstats( $teamId, $player->id);
                 }
 
                 // Update each player's role in the database
@@ -514,7 +516,6 @@ class TransactionsController extends Controller
                 DB::table('players')->whereIn('id', $benchPlayers)->update(['role' => 'bench']);
 
                 //official registration in player season stats table
-                AwardsController::storeplayerseasonstats( $teamId, $player->id);
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();

@@ -171,6 +171,8 @@ import axios from "axios";
 
 const emit = defineEmits(["transaction_id"]);
 const isAddModalOpen = ref(false);
+const leagues_dropdown = ref([]);
+const isProcessing = ref(false);
 const form = useForm({
     type: 3,
     start: 16,

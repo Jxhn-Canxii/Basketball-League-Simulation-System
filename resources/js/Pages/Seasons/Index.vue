@@ -553,6 +553,7 @@ import Trade from "@/Pages/Seasons/Module/Trade.vue";
 import FreeAgents from "@/Pages/Seasons/Module/FreeAgents.vue";
 import Awards from "./Module/Awards.vue";
 import Draft from "./Module/Draft.vue";
+import Add from "./Module/Add.vue";
 
 const isAddModalOpen = ref(false);
 const isTradeModalOpen = ref(false);
