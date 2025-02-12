@@ -2108,7 +2108,7 @@ class SimulateController extends Controller
                 DB::table('player_season_stats')->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
                     [
-                        'points_game_leader' => DB::raw("point_game_leader + {$stats['point_game_leader']}"),
+                        'points_game_leader' => DB::raw("points_game_leader + {$stats['points_game_leader']}"),
                         'rebounds_game_leader' => DB::raw("rebounds_game_leader + {$stats['rebounds_game_leader']}"),
                         'assists_game_leader' => DB::raw("assists_game_leader + {$stats['assists_game_leader']}"),
                         'steals_game_leader' => DB::raw("steals_game_leader + {$stats['steals_game_leader']}"),
