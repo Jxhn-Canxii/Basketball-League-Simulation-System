@@ -13,7 +13,7 @@
                 Simulate Conference
             </button>
             <button
-                @click="simulateAll()"
+                @click="simulateConference(props.season_id,props.conference_id)"
                 :disabled="isHide"
                 :class="isHide ? 'opacity-50' : ''"
                 class="text-indigo-600 bg-orange-400 shadow rounded-full p-2 font-bold text-md text-nowrap hover:text-indigo-900"
@@ -293,11 +293,11 @@
         }
     
     };
-    const simulateAll = async () => {
+    const simulateConference = async (season_id,conference_id) => {
         try {
             const response = await axios.post(route("upcoming.rounds.season"), {
-                season_id: props.season_id, // Assuming the parameter name should be schedule_id
-                conference_id: props.conference_id,
+                season_id: season_id, // Assuming the parameter name should be schedule_id
+                conference_id: conference_id,
             });
 
             const rounds = response.data.rounds;
@@ -309,7 +309,7 @@
 
                 console.log(index);
                 console.log(lastRoundIndex);
-                await simulateAllRoundGames(round, isLastRound,props.conference_id);
+                await simulateConferenceRoundGames(round, isLastRound,conference_id);
             }
         } catch (error) {
             console.log(error);
@@ -320,7 +320,7 @@
             });
         }
     };
-    const simulateAllRoundGames = async (round, isLast,conference_id) => {
+    const simulateConferenceRoundGames = async (round, isLast,conference_id) => {
         try {
             isHide.value = true;
             currentRound.value = round;
@@ -331,6 +331,7 @@
             });
             // await localStorage.setItem('season-key',generateRandomKey());
             const gameIds = response.data.schedule_ids; // Assuming the response contains 'game_ids'
+            const conference_count = response.data.conference_count;
             // Loop through each game ID
             for (const gameId of gameIds) {
                 // Perform an action with each game ID
@@ -338,10 +339,12 @@
                 await simulateGame(gameId,conference_id);
                 // You can also add more logic here, like fetching game details or updating the state
             }
-            if (isLast && conference_id < 4) {
-                emit('simulate_next_conference',true);
+            if (isLast && conference_id < conference_count) {
+                //if less than 4 conference_id return false;
+                let nextConference = conference_id + 1;
+                simulateConference(props.season_id,nextConference);
             }
-            if (isLast && conference_id == 4) {
+            if (isLast && conference_id == conference_count) {
                 Swal.fire({
                     icon: "success",
                     title: "Success!",
@@ -435,7 +438,7 @@
 
         //check if the schedule is auto simulated
         if(props.simulate_next){
-            await simulateAll();
+            await simulateConference();
         }
     }
     onMounted(() => {

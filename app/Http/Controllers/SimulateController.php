@@ -1128,8 +1128,14 @@ class SimulateController extends Controller
             ->pluck('id')
             ->toArray(); // Get the IDs as an array
 
+        $conferenceCount = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->distinct('conference_id')
+            ->count('conference_id');
+
         return response()->json([
             'schedule_ids' => $scheduleIds,
+            'conference_count' => $conferenceCount,
         ]);
     }
     private function distributeMinutes($playersArray, $totalMinutes, $gameId)

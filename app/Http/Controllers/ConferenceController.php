@@ -217,7 +217,7 @@ class ConferenceController extends Controller
         //     ->whereNotIn('round', $excludedRounds)
         //     ->distinct('round')
         //     ->pluck('round'); // Get a list of distinct rounds
-    
+       
         // Get total count of schedules to calculate the total number of pages
         $totalSchedules = DB::table('schedule_view')
             ->where('season_id', $seasonId)
