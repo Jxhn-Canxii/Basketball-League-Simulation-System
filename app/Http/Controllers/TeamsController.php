@@ -390,8 +390,7 @@ class TeamsController extends Controller
     {
         $teamId = $request->team_id;
 
-        $topRivals = $this->getTopRivals($teamId);
-        $winLossRecords = $this->getWinLossRecords($teamId, $topRivals);
+        $winLossRecords = $this->getWinLossRecords($teamId);
 
         return  response()->json([
             'top_rivals' => $winLossRecords,
@@ -835,79 +834,48 @@ class TeamsController extends Controller
             ->limit(4) // Limit to top 3 rivals
             ->pluck('opponent_name');
     }
-    private function getTopRivals($teamId)
+    
+
+    private function getWinLossRecords($teamId)
     {
-        return DB::table('schedules')
+        // Fetch top 5 head-to-head records with the highest total wins + losses
+        $results = DB::table('head_to_head')
+            ->join('teams as team', 'team.id', '=', 'head_to_head.team_id') // Join to get team's name
+            ->join('teams as opponent', 'opponent.id', '=', 'head_to_head.opponent_id') // Join to get opponent's name
+            ->where('head_to_head.team_id', $teamId)
             ->select(
-                DB::raw('CASE WHEN schedules.away_id = ' . $teamId . ' THEN home_team.name ELSE away_team.name END as opponent_name'),
-                DB::raw('(SUM(CASE WHEN schedules.home_id = ' . $teamId . ' THEN 1 ELSE 0 END) + SUM(CASE WHEN schedules.away_id = ' . $teamId . ' THEN 1 ELSE 0 END)) as total_games')
+                'head_to_head.team_id',
+                'team.name as team_name', // Fetch team name
+                'head_to_head.opponent_id',
+                'opponent.name as opponent_name', // Fetch opponent name
+                'head_to_head.wins',
+                'head_to_head.losses',
+                DB::raw('(head_to_head.wins + head_to_head.losses) as total_games') // Calculate total games played
             )
-            ->join('teams as home_team', 'schedules.home_id', '=', 'home_team.id')
-            ->join('teams as away_team', 'schedules.away_id', '=', 'away_team.id')
-            ->where(function ($query) use ($teamId) {
-                $query->where('schedules.home_id', $teamId)
-                    ->orWhere('schedules.away_id', $teamId);
-            })
-            ->whereIn('schedules.round', config('playoffs'))
-            ->groupBy('opponent_name')
-            ->orderBy('total_games', 'desc')
-            ->limit(5)
-            ->pluck('opponent_name');
-    }
-
-    private function getWinLossRecords($teamId, $rivals)
-    {
+            ->orderByDesc('total_games') // Sort by total games (wins + losses) in descending order
+            ->limit(5) // Get only the top 5 records
+            ->get();
+    
         $records = [];
-        foreach ($rivals as $rival) {
-            $wins = DB::table('schedules')
-                ->select(
-                    'teams_home.name as home_team_name',
-                    'teams_away.name as away_team_name',
-                    'schedules.home_id',
-                    'schedules.away_id',
-                    'schedules.home_score',
-                    'schedules.away_score',
-                )
-                ->leftJoin('teams as teams_home', 'schedules.home_id', '=', 'teams_home.id')
-                ->leftJoin('teams as teams_away', 'schedules.away_id', '=', 'teams_away.id')
-                // ->where('round', 'finals')
-                ->where(function ($query) use ($teamId, $rival) {
-                    $query->where(function ($query) use ($teamId, $rival) {
-                        $query->where('away_id', $teamId)
-                            ->where('teams_home.name', $rival);
-                    })
-                        ->orWhere(function ($query) use ($teamId, $rival) {
-                            $query->where('home_id', $teamId)
-                                ->where('teams_away.name', $rival);
-                        });
-                })
-                ->where(function ($query) use ($teamId) {
-                    $query->where('home_id', $teamId)
-                        ->orWhere('away_id', $teamId);
-                })
-                ->get();
-
-            $winsCount = 0;
-            foreach ($wins as $win) {
-                $winner = $win->home_score > $win->away_score ? $win->home_id : $win->away_id;
-                if ($winner == $teamId) {
-                    $winsCount++;
-                }
-            }
-
-            $losses = count($wins) - $winsCount;
-
+    
+        foreach ($results as $record) {
             $records[] = [
-                'team_name' => $rival,
-                'wins' => $winsCount,
-                'losses' => $losses,
-                'home_id' => $winsCount > $losses ? $teamId : null,
-                'away_id' => $winsCount < $losses ? $teamId : null
+                'team_id' => $record->team_id,
+                'team_name' => $record->team_name, // Include team name
+                'opponent_id' => $record->opponent_id,
+                'opponent_name' => $record->opponent_name, // Include opponent name
+                'wins' => $record->wins,
+                'losses' => $record->losses,
+                'total_games' => $record->total_games, // Show total games played
+                'home_id' => $record->wins > $record->losses ? $teamId : null,
+                'away_id' => $record->wins < $record->losses ? $teamId : null
             ];
         }
-
+    
         return $records;
     }
+    
+    
 
     public static function countTeamOnePicksAndCheckChampion(Request $request)
     {

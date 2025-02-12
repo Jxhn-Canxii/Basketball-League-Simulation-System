@@ -83,25 +83,39 @@ class RecordsController extends Controller
     }
     public function get_rivalries()
     {
-        $rivalries = DB::table('schedules')
+        $results = DB::table('head_to_head')
+            ->join('teams as team', 'team.id', '=', 'head_to_head.team_id') // Join to get team's name
+            ->join('teams as opponent', 'opponent.id', '=', 'head_to_head.opponent_id') // Join to get opponent's name
             ->select(
-                DB::raw('LEAST(home_team.name, away_team.name) as team1'),
-                DB::raw('GREATEST(home_team.name, away_team.name) as team2'),
-                DB::raw('SUM(CASE WHEN schedules.home_id = home_team.id AND schedules.home_score > schedules.away_score THEN 1 WHEN schedules.away_id = home_team.id AND schedules.away_score > schedules.home_score THEN 1 ELSE 0 END) as wins_team1'),
-                DB::raw('SUM(CASE WHEN schedules.home_id = away_team.id AND schedules.home_score > schedules.away_score THEN 1 WHEN schedules.away_id = away_team.id AND schedules.away_score > schedules.home_score THEN 1 ELSE 0 END) as wins_team2'),
-                DB::raw('COUNT(*) as total_games')
+                'head_to_head.team_id',
+                'team.name as team_name', // Fetch team name
+                'head_to_head.opponent_id',
+                'opponent.name as opponent_name', // Fetch opponent name
+                'head_to_head.wins',
+                'head_to_head.losses',
+                DB::raw('(head_to_head.wins + head_to_head.losses) as total_games') // Calculate total games played
             )
-            ->join('teams as home_team', 'schedules.home_id', '=', 'home_team.id')
-            ->join('teams as away_team', 'schedules.away_id', '=', 'away_team.id')
-            ->whereIn('schedules.round', config('playoffs'))
-            ->groupBy('team1', 'team2')
-            ->having(DB::raw('COUNT(*)'), '>=', 2)  // Only include teams that have faced each other at least 2 times
-            ->orderBy('total_games', 'desc')
-            ->limit(20)
+            ->orderByDesc('total_games') // Sort by total games (wins + losses) in descending order
+            ->limit(10) // Get only the top 5 records
             ->get();
-
+    
+        $records = [];
+    
+        foreach ($results as $record) {
+            $records[] = [
+                'team_id' => $record->team_id,
+                'team_name' => $record->team_name, // Include team name
+                'opponent_id' => $record->opponent_id,
+                'opponent_name' => $record->opponent_name, // Include opponent name
+                'wins' => $record->wins,
+                'losses' => $record->losses,
+                'total_games' => $record->total_games, // Show total games played
+                'home_id' => $record->team_name,
+                'away_id' => $record->opponent_name,
+            ];
+        }
         return response()->json([
-            'data' => $rivalries,
+            'data' => $records,
         ]);
     }
     public function playoff_appearances()
