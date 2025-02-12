@@ -2077,6 +2077,12 @@ class SimulateController extends Controller
                     unset($stats['passing_rating']);
                 }
 
+                // Update Player Game Stats
+                DB::table('player_game_stats')->updateOrInsert(
+                    ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
+                    $stats
+                );
+                
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
                             - (($stats['fg_missed'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
@@ -2098,17 +2104,11 @@ class SimulateController extends Controller
             foreach ($playerGameStats as &$stats) {
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
 
-                // Update Player Game Stats
-                DB::table('player_game_stats')->updateOrInsert(
-                    ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
-                    $stats
-                );
-
                 // Update Player Season Stats (Incrementing Leader Fields)
                 DB::table('player_season_stats')->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
                     [
-                        'point_game_leader' => DB::raw("point_game_leader + {$stats['point_game_leader']}"),
+                        'points_game_leader' => DB::raw("point_game_leader + {$stats['point_game_leader']}"),
                         'rebounds_game_leader' => DB::raw("rebounds_game_leader + {$stats['rebounds_game_leader']}"),
                         'assists_game_leader' => DB::raw("assists_game_leader + {$stats['assists_game_leader']}"),
                         'steals_game_leader' => DB::raw("steals_game_leader + {$stats['steals_game_leader']}"),
@@ -2125,7 +2125,7 @@ class SimulateController extends Controller
             // Log::error("Error updating season stats: " . $e->getMessage());
 
             // Optionally, throw the error again to stop execution
-            throw new Exception("Failed to update season stats. Please check logs.");
+            throw new Exception("Failed to update season stats. Please check logs.".$e->getMessage());
         }
     }
     private function getLatestSeasonId()

@@ -39,7 +39,7 @@ CREATE TABLE player_season_stats (
 
     -- Leader per game counter
     bpg_game_leader INT DEFAULT 0,
-    point_game_leader INT DEFAULT 0,
+    points_game_leader INT DEFAULT 0,
     rebounds_game_leader INT DEFAULT 0,
     assists_game_leader INT DEFAULT 0,
     steals_game_leader INT DEFAULT 0,
