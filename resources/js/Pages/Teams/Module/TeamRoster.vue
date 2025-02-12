@@ -84,6 +84,12 @@
                         </th>
                         <th
                             class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            title="Best Player of the Game Count"
+                        >
+                            BPOTG
+                        </th>
+                        <th
+                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
                             title="Total Team Games"
                         >
                             GT
@@ -220,6 +226,9 @@
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
                             {{ player.overall_rating ?? '-' }}
+                        </td>
+                        <td class="px-2 py-1 whitespace-nowrap border">
+                            {{ player.bpg_game_leader.toFixed(1) }}
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
                             {{ Math.round(player.team_total_games ?? 0) }}
