@@ -392,24 +392,25 @@ class SimulateController extends Controller
         // unset($stats);
 
         // Update or insert player game stats
-        foreach ($playerGameStats as $stats) {
+        $this->updateSeasonStats($playerGameStats);
+        // foreach ($playerGameStats as $stats) {
 
-            // Assuming you have a Player model
-            Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
+        //     // Assuming you have a Player model
+        //     Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
 
-            PlayerGameStats::updateOrCreate(
-                [
-                    'player_id' => $stats['player_id'],
-                    'game_id' => $stats['game_id'],
-                    'season_id' => $stats['season_id'],
-                    'team_id' => $stats['team_id'],
-                ],
-                $stats
-            );
+        //     PlayerGameStats::updateOrCreate(
+        //         [
+        //             'player_id' => $stats['player_id'],
+        //             'game_id' => $stats['game_id'],
+        //             'season_id' => $stats['season_id'],
+        //             'team_id' => $stats['team_id'],
+        //         ],
+        //         $stats
+        //     );
 
-            AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
-            // $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
-        }
+        //     AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+        //     // $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+        // }
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
@@ -849,16 +850,18 @@ class SimulateController extends Controller
 
 
             // Update database records with new stats
-            foreach ($playerGameStats as $stats) {
-                if (isset($stats['passing_rating'])) {
-                    unset($stats['passing_rating']);
-                }
-                PlayerGameStats::updateOrCreate(
-                    ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
-                    $stats
-                );
-                AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
-            }
+            $this->updateSeasonStats($playerGameStats);
+            // foreach ($playerGameStats as $stats) {
+            //     if (isset($stats['passing_rating'])) {
+            //         unset($stats['passing_rating']);
+            //     }
+            //     PlayerGameStats::updateOrCreate(
+            //         ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
+            //         $stats
+            //     );
+
+            //     AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+            // }
 
              // Calculate scores based on player stats
             $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
@@ -2051,7 +2054,80 @@ class SimulateController extends Controller
     
         return true;
     }
-    
+    private function updateSeasonStats($playerGameStats)
+    {
+        if (empty($playerGameStats)) {
+            throw new Exception("Player game stats are empty. Cannot update season stats.");
+        }
+
+        try {
+            // Find max values for each category
+            $maxPoints = max(array_column($playerGameStats, 'points'));
+            $maxRebounds = max(array_column($playerGameStats, 'rebounds'));
+            $maxAssists = max(array_column($playerGameStats, 'assists'));
+            $maxSteals = max(array_column($playerGameStats, 'steals'));
+            $maxBlocks = max(array_column($playerGameStats, 'blocks'));
+
+            // Determine Best Player of the Game (BPG) using Efficiency Formula
+            $bestPlayerId = null;
+            $bestEfficiency = -INF;
+
+            foreach ($playerGameStats as &$stats) {
+                if (isset($stats['passing_rating'])) {
+                    unset($stats['passing_rating']);
+                }
+
+                // Calculate efficiency (EFF) for Best Player of the Game
+                $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
+                            - (($stats['fg_missed'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
+
+                if ($efficiency > $bestEfficiency) {
+                    $bestEfficiency = $efficiency;
+                    $bestPlayerId = $stats['player_id'];
+                }
+
+                // Assign Game Leader Titles
+                $stats['point_game_leader'] = ($stats['points'] == $maxPoints) ? 1 : 0;
+                $stats['rebounds_game_leader'] = ($stats['rebounds'] == $maxRebounds) ? 1 : 0;
+                $stats['assists_game_leader'] = ($stats['assists'] == $maxAssists) ? 1 : 0;
+                $stats['steals_game_leader'] = ($stats['steals'] == $maxSteals) ? 1 : 0;
+                $stats['blocks_game_leader'] = ($stats['blocks'] == $maxBlocks) ? 1 : 0;
+            }
+
+            // Mark the Best Player of the Game (BPG)
+            foreach ($playerGameStats as &$stats) {
+                $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
+
+                // Update Player Game Stats
+                DB::table('player_game_stats')->updateOrInsert(
+                    ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
+                    $stats
+                );
+
+                // Update Player Season Stats (Incrementing Leader Fields)
+                DB::table('player_season_stats')->updateOrInsert(
+                    ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
+                    [
+                        'point_game_leader' => DB::raw("point_game_leader + {$stats['point_game_leader']}"),
+                        'rebounds_game_leader' => DB::raw("rebounds_game_leader + {$stats['rebounds_game_leader']}"),
+                        'assists_game_leader' => DB::raw("assists_game_leader + {$stats['assists_game_leader']}"),
+                        'steals_game_leader' => DB::raw("steals_game_leader + {$stats['steals_game_leader']}"),
+                        'blocks_game_leader' => DB::raw("blocks_game_leader + {$stats['blocks_game_leader']}"),
+                        'bpg_game_leader' => DB::raw("bpg_game_leader + {$stats['bpg_game_leader']}"),
+                    ]
+                );
+            }
+
+            Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
+            AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+        } catch (Exception $e) {
+            // Log error for debugging
+            // Log::error("Error updating season stats: " . $e->getMessage());
+
+            // Optionally, throw the error again to stop execution
+            throw new Exception("Failed to update season stats. Please check logs.");
+        }
+    }
     private function getLatestSeasonId()
     {
         // Fetch the latest season ID based on descending order of IDs

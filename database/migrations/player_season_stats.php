@@ -37,6 +37,14 @@ CREATE TABLE player_season_stats (
     total_games_played INT DEFAULT 0,
     total_games INT DEFAULT 0,
 
+    -- Leader per game counter
+    bpg_game_leader INT DEFAULT 0,
+    point_game_leader INT DEFAULT 0,
+    rebounds_game_leader INT DEFAULT 0,
+    assists_game_leader INT DEFAULT 0,
+    steals_game_leader INT DEFAULT 0,
+    blocks_game_leader INT DEFAULT 0,
+
     -- Advanced Metrics (Modified to DECIMAL(6,3) for 'eff')
     per DECIMAL(5, 3) GENERATED ALWAYS AS (
         CASE
