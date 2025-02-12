@@ -294,14 +294,6 @@
             for (const [index, round] of rounds.entries()) {
                 // Check if it's the last round
                 const isLastRound =  (rounds[index] === rounds[lastRoundIndex]);
-                Swal.fire({
-                    icon: "success",
-                    title: "Simulating Round "+rounds[index],
-                    timer: 3000, // Auto-hide after 3 seconds
-                    showConfirmButton: false, // Hide the "OK" button
-                    toast: true, // Enable toast mode
-                    position: "top-end", // Position at top-right
-                });
 
                 console.log(rounds[index]+'current round ='+rounds[lastRoundIndex]+'last round');
                 await simulateConferenceRoundGames(round, isLastRound,conference_id);
@@ -316,7 +308,17 @@
         }
     };
     const simulateConferenceRoundGames = async (round, isLast,conference_id) => {
+        
         try {
+            Swal.fire({
+                icon: "success",
+                title: "Simulating Round "+round,
+                timer: 3000, // Auto-hide after 3 seconds
+                showConfirmButton: false, // Hide the "OK" button
+                toast: true, // Enable toast mode
+                position: "top-end", // Position at top-right
+            });
+
             isHide.value = true;
             currentRound.value = round;
             const response = await axios.post(route("game.per.round"), {
@@ -401,9 +403,9 @@
         await fetchConferenceSchedules();
 
         //check if the schedule is auto simulated
-        // if(props.simulate_next){
-        //     await simulateConference();
-        // }
+        if(props.simulate_next){
+            await simulateConference();
+        }
     }
     onMounted(() => {
         autoSimulateChecker();
