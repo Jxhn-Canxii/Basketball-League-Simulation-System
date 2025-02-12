@@ -330,13 +330,14 @@
                 //if less than 4 conference_id return false;
                 let nextConference = conference_id + 1;
 
-                 Swal.fire({
-                    icon: "Success",
+                Swal.fire({
+                    icon: "success", // Fix capitalization (should be lowercase)
                     title: "All Games Played in this conference",
-                    text: 'Fetching schedule for the next conference ->'+nextConference,
+                    text: `Fetching schedule for the next conference -> ${nextConference}`,
+                    timer: 3000, // Auto-hide after 3 seconds (3000ms)
+                    showConfirmButton: false, // Hide the "OK" button
                 });
-                await fetchConferenceSchedules(nextConference);
-                simulateConference(props.season_id,nextConference);
+                await simulateConference(props.season_id,nextConference);
             }
             if (isLast && conference_id == conference_count) {
                 Swal.fire({
@@ -392,9 +393,9 @@
         await fetchConferenceSchedules();
 
         //check if the schedule is auto simulated
-        if(props.simulate_next){
-            await simulateConference();
-        }
+        // if(props.simulate_next){
+        //     await simulateConference();
+        // }
     }
     onMounted(() => {
         autoSimulateChecker();
