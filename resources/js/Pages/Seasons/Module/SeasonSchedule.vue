@@ -317,46 +317,38 @@
                 conference_id: conference_id,
             });
             // await localStorage.setItem('season-key',generateRandomKey());
-            // Loop through each game ID
-            const gameIds = response.data.schedule_ids; // List of game IDs
+            const gameIds = response.data.schedule_ids; // Assuming the response contains 'game_ids'
             const conference_count = response.data.conference_count;
-
-            for (let i = 0; i < gameIds.length; i++) {
-                const gameId = gameIds[i];
+            // Loop through each game ID
+            for (const gameId of gameIds) {
+                // Perform an action with each game ID
                 console.log(`Processing Game ID: ${gameId}`);
-                
-                await simulateGame(gameId, conference_id, isLast);
-
-                // Check if this is the last game of the conference
-                const isLastGame = i === gameIds.length - 1;
-
-                if (isLastGame && isLast) {
-                    if (conference_id < conference_count) {
-                        let nextConference = conference_id + 1;
-
-                        Swal.fire({
-                            icon: "success",
-                            title: "All Games Played in this conference",
-                            text: `Fetching schedule for the next conference -> ${nextConference}`,
-                        });
-
-                        await fetchConferenceSchedules(nextConference);
-                        simulateConference(props.season_id, nextConference);
-                    } 
-                    else if (conference_id === conference_count) {
-                        Swal.fire({
-                            icon: "success",
-                            title: "Success!",
-                            text: response.data.message, // Assuming the response contains a 'message' field
-                        });
-
-                        await fetchConferenceSchedules(conference_id);
-                        isHide.value = false;
-                        currentRound.value = false;
-                    }
-                }
+                await simulateGame(gameId,conference_id,isLast);
+                // You can also add more logic here, like fetching game details or updating the state
             }
+            if (isLast && conference_id < conference_count) {
+                //if less than 4 conference_id return false;
+                let nextConference = conference_id + 1;
 
+                 Swal.fire({
+                    icon: "Success",
+                    title: "All Games Played in this conference",
+                    text: 'Fetching schedule for the next conference ->'+nextConference,
+                });
+                await fetchConferenceSchedules(nextConference);
+                simulateConference(props.season_id,nextConference);
+            }
+            if (isLast && conference_id == conference_count) {
+                Swal.fire({
+                    icon: "success",
+                    title: "Success!",
+                    text: response.data.message, // Assuming the response contains a 'message' field
+                });
+    
+                await fetchConferenceSchedules(conference_id);
+                isHide.value = false;
+                currentRound.value = false;
+            }
         } catch (error) {
             console.error("Error simulating the game:", error);
             // Show error message using Swal2 if needed
