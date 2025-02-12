@@ -68,6 +68,7 @@
                         <TeamDetails
                         :title="' Playoff Appearance:' + team.playoff_appearances"
                         :team_id="team.team_id" 
+                        :key="team.team_id"
                         :showInfo="props.showLegend"
                         :current_conference_rank="team.conference_rank"
                         :season_id="team.season_id"
