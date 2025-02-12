@@ -43,8 +43,8 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="2PT Made / Attempted">2PT</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="3PT Made / Attempted">3PT</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Free Throws Made / Attempted">Free Throws</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Player Efficiency Rating">PER</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Efficiency">EFF</th>
+                            <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider" title="Player Efficiency Rating">PER</th>
+                            <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider" title="Efficiency">EFF</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
