@@ -280,19 +280,7 @@
         search_schedule.value.page_num = page_num ?? 1;
         fetchConferenceSchedules();
     };
-    const simulatePerRound = async () => {
-        const rounds = season_schedules.value.rounds;
-        const lastRoundIndex = rounds.length - 1; // Get the index of the last round
-    
-        for (const [index, round] of rounds.entries()) {
-            // Check if it's the last round
-            const isLastRound = index === lastRoundIndex;
-    
-            // Pass an additional parameter if it's the last round
-            await simulateRoundGames(round, isLastRound);
-        }
-    
-    };
+
     const simulateConference = async (season_id,conference_id) => {
         try {
             const response = await axios.post(route("upcoming.rounds.season"), {
@@ -305,10 +293,9 @@
         
             for (const [index, round] of rounds.entries()) {
                 // Check if it's the last round
-                const isLastRound =  (index === rounds[lastRoundIndex]);
+                const isLastRound =  (rounds[index] === rounds[lastRoundIndex]);
 
-                console.log(index);
-                console.log(lastRoundIndex);
+                console.log(rounds[index]+'current round ='+rounds[lastRoundIndex]+'last round');
                 await simulateConferenceRoundGames(round, isLastRound,conference_id);
             }
         } catch (error) {
@@ -330,38 +317,46 @@
                 conference_id: conference_id,
             });
             // await localStorage.setItem('season-key',generateRandomKey());
-            const gameIds = response.data.schedule_ids; // Assuming the response contains 'game_ids'
-            const conference_count = response.data.conference_count;
             // Loop through each game ID
-            for (const gameId of gameIds) {
-                // Perform an action with each game ID
-                console.log(`Processing Game ID: ${gameId}`);
-                await simulateGame(gameId,conference_id);
-                // You can also add more logic here, like fetching game details or updating the state
-            }
-            if (isLast && conference_id < conference_count) {
-                //if less than 4 conference_id return false;
-                let nextConference = conference_id + 1;
+            const gameIds = response.data.schedule_ids; // List of game IDs
+            const conference_count = response.data.conference_count;
 
-                 Swal.fire({
-                    icon: "Success",
-                    title: "All Games Played in this conference",
-                    text: 'Fetching schedule for the next conference ->'+nextConference,
-                });
-                await fetchConferenceSchedules(nextConference);
-                simulateConference(props.season_id,nextConference);
+            for (let i = 0; i < gameIds.length; i++) {
+                const gameId = gameIds[i];
+                console.log(`Processing Game ID: ${gameId}`);
+                
+                await simulateGame(gameId, conference_id, isLast);
+
+                // Check if this is the last game of the conference
+                const isLastGame = i === gameIds.length - 1;
+
+                if (isLastGame && isLast) {
+                    if (conference_id < conference_count) {
+                        let nextConference = conference_id + 1;
+
+                        Swal.fire({
+                            icon: "success",
+                            title: "All Games Played in this conference",
+                            text: `Fetching schedule for the next conference -> ${nextConference}`,
+                        });
+
+                        await fetchConferenceSchedules(nextConference);
+                        simulateConference(props.season_id, nextConference);
+                    } 
+                    else if (conference_id === conference_count) {
+                        Swal.fire({
+                            icon: "success",
+                            title: "Success!",
+                            text: response.data.message, // Assuming the response contains a 'message' field
+                        });
+
+                        await fetchConferenceSchedules(conference_id);
+                        isHide.value = false;
+                        currentRound.value = false;
+                    }
+                }
             }
-            if (isLast && conference_id == conference_count) {
-                Swal.fire({
-                    icon: "success",
-                    title: "Success!",
-                    text: response.data.message, // Assuming the response contains a 'message' field
-                });
-    
-                await fetchConferenceSchedules(conference_id);
-                isHide.value = false;
-                currentRound.value = false;
-            }
+
         } catch (error) {
             console.error("Error simulating the game:", error);
             // Show error message using Swal2 if needed
@@ -372,52 +367,13 @@
             // });
         }
     };
-    const simulateRoundGames = async (round, isLast) => {
-        try {
-            isHide.value = true;
-            currentRound.value = round;
-            const response = await axios.post(route("game.per.round"), {
-                season_id: props.season_id, // Assuming the parameter name should be schedule_id
-                round: round,
-                conference_id: props.conference_id,
-            });
-            // await localStorage.setItem('season-key',generateRandomKey());
-            const gameIds = response.data.schedule_ids; // Assuming the response contains 'game_ids'
-            // Loop through each game ID
-            for (const gameId of gameIds) {
-                // Perform an action with each game ID
-                console.log(`Processing Game ID: ${gameId}`);
-                await simulateGame(gameId);
-                // You can also add more logic here, like fetching game details or updating the state
-            }
-    
-            if (isLast) {
-                Swal.fire({
-                    icon: "success",
-                    title: "Success!",
-                    text: response.data.message, // Assuming the response contains a 'message' field
-                });
-    
-                await fetchConferenceSchedules(conference_id);
-                isHide.value = false;
-                currentRound.value = false;
-            }
-        } catch (error) {
-            console.error("Error simulating the game:", error);
-            // Show error message using Swal2 if needed
-            Swal.fire({
-                icon: "warning",
-                title: "Warning!",
-                text: error.response.data.error,
-            });
-        }
-    };
-    const simulateGame = async (schedule_id,conference_id) => {
+    const simulateGame = async (schedule_id,conference_id,isLast ) => {
         try {
             isHide.value = true;
     
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
+                is_last: isLast,
             });
             activeGameId.value = response.data.game_id ?? 0;
             emit('transaction_id',conference_id);
