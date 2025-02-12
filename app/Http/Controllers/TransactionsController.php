@@ -532,113 +532,36 @@ class TransactionsController extends Controller
     }
 
     private function updateTeamRolesBasedOnStats()
-{
-    $seasonId = $this->getLatestSeasonId();
-    $teams = DB::table('teams')->pluck('id');
+    {
+        $teams = DB::table('teams')->pluck('id');
 
-    foreach ($teams as $teamId) {
-        DB::beginTransaction(); // Keep transaction but check rollback issues
+        foreach ($teams as $teamId) {
+            DB::beginTransaction(); // Keep transaction but check rollback issues
 
-        try {
-            //Log::info("Processing Team ID: {$teamId}");
+            try {
+                //Log::info("Processing Team ID: {$teamId}");
 
-            $stats = DB::table('player_season_stats')
-                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                ->where('player_season_stats.season_id', $seasonId)
-                ->where('players.team_id', $teamId)
-                ->get();
+                $allPlayersStats = DB::table('players')
+                    ->where('team_id', $teamId)
+                    ->where('is_active', 1)
+                    ->where('contract_years','>', 0)
+                    ->get();
 
-            $playersWithoutStats = DB::table('players')
-                ->where('team_id', $teamId)
-                ->whereNotIn('id', $stats->pluck('player_id'))
-                ->get();
-
-            $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
-                return (object)[
-                    'player_id' => $player->id,
-                    'team_id' => $player->team_id,
-                    'role' => 'bench',
-                    'avg_points_per_game' => 0,
-                    'avg_rebounds_per_game' => 0,
-                    'avg_assists_per_game' => 0,
-                    'avg_steals_per_game' => 0,
-                    'avg_blocks_per_game' => 0,
-                    'avg_turnovers_per_game' => 0,
-                    'avg_fouls_per_game' => 0,
-                    'total_points' => 0,
-                    'total_rebounds' => 0,
-                    'total_assists' => 0,
-                    'total_steals' => 0,
-                    'total_blocks' => 0,
-                    'total_turnovers' => 0,
-                    'total_fouls' => 0,
-                    'total_games_played' => 0,
-                    'overall_rating' => $player->overall_rating ?? 50,
-                    'injury_prone_percentage' => $player->injury_prone_percentage ?? 50,
-                    'is_rookie' => $player->is_rookie ?? 0,
-                ];
-            }));
-
-            $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                $perGameScore = $stat->avg_points_per_game * 0.3 +
-                    $stat->avg_rebounds_per_game * 0.2 +
-                    $stat->avg_assists_per_game * 0.2 +
-                    $stat->avg_steals_per_game * 0.1 +
-                    $stat->avg_blocks_per_game * 0.1 -
-                    $stat->avg_turnovers_per_game * 0.1 -
-                    $stat->avg_fouls_per_game * 0.1;
-
-                $totalScore = $stat->total_points * 0.2 +
-                    $stat->total_rebounds * 0.2 +
-                    $stat->total_assists * 0.2 +
-                    $stat->total_steals * 0.15 +
-                    $stat->total_blocks * 0.15 -
-                    $stat->total_turnovers * 0.1 -
-                    $stat->total_fouls * 0.1;
-
-                $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
-
-                if ($stat->is_rookie) {
-                    return $stat->overall_rating * 1.5;
+                foreach ($allPlayersStats as $playerStat) {
+                    $storeStats = new AwardsController;
+                    $storeStats->storeplayernextseasonstats($teamId, $playerStat->id);
                 }
 
-                return ($perGameScore + $totalScore) * $injuryFactor;
-            });
-
-            foreach ($rankedPlayers as $playerStat) {
-                //Log::info("Processing Player ID: {$playerStat->player_id}");
-
-                $storeStats = new AwardsController;
-                $score = $playerStat->is_rookie
-                    ? $playerStat->overall_rating
-                    : ($playerStat->composite_score ?? 0); // Fix potential NULL value
-
-                $role = 'bench';
-                if ($score >= 85) {
-                    $role = 'star player';
-                } elseif ($score >= 70) {
-                    $role = 'starter';
-                } elseif ($score >= 55) {
-                    $role = 'role player';
-                }
-
-                //Log::info("Updating Player ID: {$playerStat->player_id} with Role: {$role}");
-                Player::where('id', $playerStat->player_id)->update(['role' => $role]);
-
-                $response = $storeStats->storeplayernextseasonstats($teamId, $playerStat->player_id);
-                //Log::info("Response from storeplayernextseasonstats:", ['response' => $response]);
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                //Log::error("Error assigning role for team {$teamId}: " . $e->getMessage());
+                return $e->getMessage();
             }
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            //Log::error("Error assigning role for team {$teamId}: " . $e->getMessage());
-            return $e->getMessage();
         }
-    }
 
-    return true;
-}
+        return true;
+    }
 
 
     private function determineContractYears($role)
