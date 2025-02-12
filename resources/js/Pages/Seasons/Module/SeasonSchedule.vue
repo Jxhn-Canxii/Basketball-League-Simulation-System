@@ -299,7 +299,8 @@
     
         for (const [index, round] of rounds.entries()) {
             // Check if it's the last round
-            const isLastRound = index === lastRoundIndex;
+            const isLastRound =  (index === rounds[lastRoundIndex]);
+
             console.log(index);
             console.log(lastRoundIndex);
             await simulateAllRoundGames(round, isLastRound,props.conference_id);
@@ -324,7 +325,7 @@
                 // You can also add more logic here, like fetching game details or updating the state
             }
             if (isLast && conference_id < 4) {
-                emits('simulate_next_conference',true);
+                emit('simulate_next_conference',true);
             }
             if (isLast && conference_id == 4) {
                 Swal.fire({
