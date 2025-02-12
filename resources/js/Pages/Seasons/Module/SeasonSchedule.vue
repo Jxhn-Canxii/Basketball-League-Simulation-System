@@ -236,7 +236,7 @@
     const currentRound = ref(0);
     const loadingSchedules = ref(false);
     const activeGameId = ref(0);
-    const emit = defineEmits(["transaction_id"]);
+    const emit = defineEmits(["transaction_id","simulate_next_conference"]);
     const props = defineProps({
         season_id: {
             type: [Number,String],
@@ -247,6 +247,10 @@
             required: true,
         },
         season_data: Object,
+        simulate_next: {
+            type: Boolean,
+            default: false,
+        }
     });
     const search_schedule = ref({
         current_page: 1,
@@ -293,14 +297,12 @@
         const rounds = season_schedules.value.rounds;
         const lastRoundIndex = rounds.length - 1; // Get the index of the last round
     
-        for (let mode = 1; mode <= 4; mode++) {
-            for (const [index, round] of rounds.entries()) {
-                // Check if it's the last round
-                const isLastRound = index === lastRoundIndex;
-    
-                // Pass an additional parameter if it's the last round
-                await simulateAllRoundGames(round, isLastRound,mode);
-            }
+        for (const [index, round] of rounds.entries()) {
+            // Check if it's the last round
+            const isLastRound = index === lastRoundIndex;
+            console.log(index);
+            console.log(lastRoundIndex);
+            await simulateAllRoundGames(round, isLastRound,props.conference_id);
         }
     };
     const simulateAllRoundGames = async (round, isLast,conference_id) => {
@@ -321,7 +323,9 @@
                 await simulateGame(gameId,conference_id);
                 // You can also add more logic here, like fetching game details or updating the state
             }
-    
+            if (isLast && conference_id < 4) {
+                emits('simulate_next_conference',true);
+            }
             if (isLast && conference_id == 4) {
                 Swal.fire({
                     icon: "success",
@@ -411,8 +415,15 @@
     
         }
     };
-    
+    const autoSimulateChecker = async () => {
+        await fetchConferenceSchedules();
+
+        //check if the schedule is auto simulated
+        if(props.simulate_next){
+            await simulateAll();
+        }
+    }
     onMounted(() => {
-        fetchConferenceSchedules();
+        autoSimulateChecker();
     });
     </script>

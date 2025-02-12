@@ -50,7 +50,14 @@
             </div>
             <!-- Schedule and Results UI (Right Side) -->
             <div class="md:col-span-2 sm:col-span-1 overflow-y-auto pt-3">
-                <SeasonSchedule v-if="season_info" @transaction_id="(id) => handleTransaction(id)" :key="activeConferenceTab" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
+                <SeasonSchedule v-if="season_info" 
+                @transaction_id="(id) => handleTransaction(id)" 
+                @simulate_next_conference="(isSimulated) => handleSimulateConfernece(isSimulated)" 
+                :key="activeConferenceTab" 
+                :season_id="props.season_id" 
+                :conference_id="activeConferenceTab" 
+                :simulate_next="isAutoSimulate"
+                :season_data="season_info.seasons" />
             </div>
         </div>
     </div>
@@ -66,6 +73,7 @@ import SeasonSchedule from "./SeasonSchedule.vue";
 
 const season_info = ref(false);
 const activeConferenceTab = ref(false);
+const isAutoSimulate = ref(false);
 const updateKey = ref(0);
 const props = defineProps({
     season_id: {
@@ -94,6 +102,10 @@ const handleTransaction = (id) => {
     console.log('emitted: '+id);
     updateKey.value = id+':'+(Math.random());
     activeConferenceTab.value = id;
+}
+const handleSimulateConfernece = (simulate) => {
+    console.log('Simulate: '+simulate);
+    isAutoSimulate.value = simulate;
 }
 //team modal
 onMounted(() => {
