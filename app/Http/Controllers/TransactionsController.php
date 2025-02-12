@@ -315,7 +315,7 @@ class TransactionsController extends Controller
         if ($teamsCount === 0) {
             // Update the last season's status to 15 if there are no incomplete teams
             // Update player roles based on the last season's stats
-            $update = ($seasonId <= 0) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->updateTeamRolesBasedOnStats();
+            $update = ($seasonId <= 0) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
 
             // $update = true;
             if ($update) {
@@ -531,7 +531,7 @@ class TransactionsController extends Controller
         return true; // Return true if all updates succeed
     }
 
-    private function updateTeamRolesBasedOnStats()
+    private function storeNextSeasonStatsPerTeam()
     {
         $teams = DB::table('teams')->pluck('id');
 
