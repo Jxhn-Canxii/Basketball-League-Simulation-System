@@ -294,6 +294,14 @@
             for (const [index, round] of rounds.entries()) {
                 // Check if it's the last round
                 const isLastRound =  (rounds[index] === rounds[lastRoundIndex]);
+                Swal.fire({
+                    icon: "success",
+                    title: "Simulating Round "+rounds[index],
+                    timer: 3000, // Auto-hide after 3 seconds
+                    showConfirmButton: false, // Hide the "OK" button
+                    toast: true, // Enable toast mode
+                    position: "top-end", // Position at top-right
+                });
 
                 console.log(rounds[index]+'current round ='+rounds[lastRoundIndex]+'last round');
                 await simulateConferenceRoundGames(round, isLastRound,conference_id);
