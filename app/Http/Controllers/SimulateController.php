@@ -2084,14 +2084,19 @@ class SimulateController extends Controller
                 }
 
                 // Update Player Game Stats
-                DB::table('player_game_stats')->updateOrInsert(
-                    ['player_id' => $stats['player_id'], 'game_id' => $stats['game_id']],
+                PlayerGameStats::updateOrCreate(
+                    [
+                        'player_id' => $stats['player_id'],
+                        'game_id' => $stats['game_id'],
+                        'season_id' => $stats['season_id'],
+                        'team_id' => $stats['team_id'],
+                    ],
                     $stats
                 );
 
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
-                            - (($stats['fg_missed'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
+                            - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
 
                 if ($efficiency > $bestEfficiency) {
                     $bestEfficiency = $efficiency;
@@ -2111,6 +2116,9 @@ class SimulateController extends Controller
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
 
                 // Update Player Season Stats (Incrementing Leader Fields)
+                Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
+                AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+                
                 DB::table('player_season_stats')->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
                     [
@@ -2124,8 +2132,7 @@ class SimulateController extends Controller
                 );
             }
 
-            Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
-            AwardsController::storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+            
         } catch (Exception $e) {
             // Log error for debugging
             // Log::error("Error updating season stats: " . $e->getMessage());

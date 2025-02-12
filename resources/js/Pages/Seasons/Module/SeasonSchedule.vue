@@ -342,6 +342,13 @@
             if (isLast && conference_id < conference_count) {
                 //if less than 4 conference_id return false;
                 let nextConference = conference_id + 1;
+
+                 Swal.fire({
+                    icon: "Success",
+                    title: "All Games Played in this conference",
+                    text: 'Fetching schedule for the next conference ->'+nextConference,
+                });
+                await fetchConferenceSchedules(nextConference);
                 simulateConference(props.season_id,nextConference);
             }
             if (isLast && conference_id == conference_count) {
