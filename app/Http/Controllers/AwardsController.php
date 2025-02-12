@@ -485,7 +485,97 @@ class AwardsController extends Controller
         }
     }
     
+    public static function storeplayernextseasonstats($teamId, $playerId)
+    {
+        try {
+            // Get the latest season ID or set it to 1 if none exists
+            $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 0;
+            $nextSeasonId = $latestSeasonId + 1;
+    
+            // Fetch the player
+            $player = DB::table('players')
+                ->where('team_id', $teamId)
+                ->where('id', $playerId)
+                ->where('is_active', true)
+                ->first();
+    
+            if (!$player) {
+                return response()->json(['error' => 'Player not found or inactive'], 404);
+            }
+            
+            // Fetch player rating if available
+            $playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
+            $role = $playerRating->role ?? $player->role; // Default role if rating doesn't exist
+    
+            // Data to insert/update
+            $data = [
+                'player_id' => $player->id,
+                'team_id' => $player->team_id,
+                'season_id' => $nextSeasonId,
+                'role' => $role,
+                'avg_minutes_per_game' => 0,
+                'avg_points_per_game' => 0,
+                'avg_rebounds_per_game' => 0,
+                'avg_assists_per_game' => 0,
+                'avg_steals_per_game' => 0,
+                'avg_blocks_per_game' => 0,
+                'avg_turnovers_per_game' => 0,
+                'avg_fouls_per_game' => 0,
+                'total_games' => 0,
+                'total_games_played' => 0,
+                'total_minutes_played' => 0,
+                'total_points' => 0,
+                'total_rebounds' => 0,
+                'total_assists' => 0,
+                'total_steals' => 0,
+                'total_blocks' => 0,
+                'total_turnovers' => 0,
+                'total_fouls' => 0,
+                'total_field_goals_made' => 0,
+                'total_field_goal_attempts' => 0,
+                'total_two_pointers_made' => 0,
+                'total_two_point_attempts' => 0,
+                'total_three_pointers_made' => 0,
+                'total_three_point_attempts' => 0,
+                'total_free_throws_made' => 0,
+                'total_free_throw_attempts' => 0,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+    
+             // Return data before insertion for debugging
+            // return response()->json([
+            //     'message' => 'Attempting to insert/update player season stats',
+            //     'player_id' => $player->id,
+            //     'team_id' => $player->team_id,
+            //     'season_id' => $nextSeasonId,
+            //     'data' => $data
+            // ]);
+    
+            // Save to database
+            DB::table('player_season_stats')->updateOrInsert(
+                [
+                    'player_id' => $player->id,
+                    'team_id' => $player->team_id,
+                    'season_id' => $nextSeasonId,
+                ],
+                $data
+            );
 
+            //return true;
+            // if(!$insertRecords){
+            //     return response()->json(['message' => "Failed storing stats for Player ID: {$playerId}",'data' => $data]);
+            // }
+
+            return response()->json(['message' => "Stored stats for Player ID: {$playerId}",'data' => $data]);
+    
+        } catch (\Exception $e) {
+            \Log::error('Error in storeplayernextseasonstats: ' . $e->getMessage());
+            return response()->json(['error' =>$e->getMessage()], 500);
+        }
+    }
+    
+    
 
     public function getseasonawards(Request $request)
     {
