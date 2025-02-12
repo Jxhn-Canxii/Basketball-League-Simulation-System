@@ -404,7 +404,7 @@
 
         //check if the schedule is auto simulated
         if(props.simulate_next){
-            await simulateConference();
+            await simulateConference(props.season_id,props.conference_id);
         }
     }
     onMounted(() => {
