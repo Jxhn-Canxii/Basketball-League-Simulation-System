@@ -202,21 +202,21 @@ class ConferenceController extends Controller
             ->where('status', 1)
             ->doesntExist(); // Use doesntExist() to check if no records match
     
-        // Count distinct rounds
-        $distinctRoundsCount = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->whereNotIn('round', $excludedRounds)
-            ->distinct('round')
-            ->count('round');
+        // // Count distinct rounds
+        // $distinctRoundsCount = DB::table('schedule_view')
+        //     ->where('season_id', $seasonId)
+        //     ->where('conference_id', $conferenceId)
+        //     ->whereNotIn('round', $excludedRounds)
+        //     ->distinct('round')
+        //     ->count('round');
     
-        // Retrieve distinct rounds
-        $rounds = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->whereNotIn('round', $excludedRounds)
-            ->distinct('round')
-            ->pluck('round'); // Get a list of distinct rounds
+        // // Retrieve distinct rounds
+        // $rounds = DB::table('schedule_view')
+        //     ->where('season_id', $seasonId)
+        //     ->where('conference_id', $conferenceId)
+        //     ->whereNotIn('round', $excludedRounds)
+        //     ->distinct('round')
+        //     ->pluck('round'); // Get a list of distinct rounds
     
         // Get total count of schedules to calculate the total number of pages
         $totalSchedules = DB::table('schedule_view')
@@ -231,8 +231,8 @@ class ConferenceController extends Controller
         return response()->json([
             'schedules' => $schedules,
             'is_simulated' => $allRoundsSimulated,
-            'distinct_rounds_count' => $distinctRoundsCount,
-            'rounds' => $rounds, // Include the list of rounds in the response
+            // 'distinct_rounds_count' => $distinctRoundsCount,
+            // 'rounds' => $rounds, // Include the list of rounds in the response
             'current_page' => $currentPage,
             'total_pages' => $totalPages,
             'total_count' => $totalSchedules,
