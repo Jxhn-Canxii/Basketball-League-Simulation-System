@@ -336,6 +336,13 @@
                         await fetchConferenceSchedules();
                     }
                 } catch (error) {
+                    isHide.value = false;
+                    hasPendingGames = false;
+                    Swal.fire({
+                        icon: "success",
+                        title: "All games simulated!",
+                        text: error.response.data.message,
+                    });
                     console.error("Error fetching or simulating games:", error);
                 }
             }
