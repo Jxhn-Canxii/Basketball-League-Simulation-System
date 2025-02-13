@@ -391,7 +391,7 @@
                 is_last: isLast,
             });
             activeGameId.value = response.data.game_id ?? 0;
-            isHide.value = true;
+            isHide.value = response.data.game_id ?? 0;
             emit('transaction_id',conference_id);
 
             // Show success message using Swal2
