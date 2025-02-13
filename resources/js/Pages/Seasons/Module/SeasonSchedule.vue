@@ -220,6 +220,7 @@
     </Modal>
     </template>
     <script setup>
+    import { useForm } from "@inertiajs/vue3";
     import { ref, onMounted, watch, computed } from "vue";
     import Swal from "sweetalert2";
     import axios from "axios";
@@ -276,112 +277,147 @@
         fetchConferenceSchedules();
     };
 
-    const simulateConference = async (season_id, conference_id) => {
+    const simulateConference = async (season_id,conference_id) => {
         try {
             const response = await axios.post(route("upcoming.rounds.season"), {
-                season_id: season_id,
+                season_id: season_id, // Assuming the parameter name should be schedule_id
                 conference_id: conference_id,
             });
 
             const rounds = response.data.rounds;
-            const lastRoundIndex = rounds.length - 1; 
-            localStorage.setItem("current_conference", conference_id); // Store progress
-
+            const lastRoundIndex = rounds.length - 1; // Get the index of the last round
+        
             for (const [index, round] of rounds.entries()) {
-                const isLastRound = rounds[index] === rounds[lastRoundIndex];
+                // Check if it's the last round
+                const isLastRound =  (rounds[index] === rounds[lastRoundIndex]);
 
-                console.log(`Simulating Round: ${round}`);
-                await simulateConferenceRoundGames(round, isLastRound, conference_id);
+                console.log(rounds[index]+'current round ='+rounds[lastRoundIndex]+'last round');
+                await simulateConferenceRoundGames(round, isLastRound,conference_id);
             }
-
         } catch (error) {
-            console.error("Error simulating conference:", error);
-            Swal.fire({
+            console.log(error);
+             Swal.fire({
                 icon: "warning",
                 title: "Warning!",
-                text: error.response?.data?.error || "An error occurred.",
+                text: error.response.data.error,
             });
         }
     };
-
-    const simulateConferenceRoundGames = async (round, isLast, conference_id) => {
+    const simulateConferenceRoundGames = async (round, isLast,conference_id) => {
+        
         try {
             Swal.fire({
                 icon: "success",
-                title: `Simulating Round ${round}`,
-                timer: 3000,
-                showConfirmButton: false,
-                toast: true,
-                position: "top-end",
+                title: "Simulating Round "+round,
+                timer: 3000, // Auto-hide after 3 seconds
+                showConfirmButton: false, // Hide the "OK" button
+                toast: true, // Enable toast mode
+                position: "top-end", // Position at top-right
             });
 
             currentRound.value = round;
             const response = await axios.post(route("game.per.round"), {
-                season_id: props.season_id,
+                season_id: props.season_id, // Assuming the parameter name should be schedule_id
                 round: round,
                 conference_id: conference_id,
             });
-
-            const gameIds = response.data.schedule_ids;
+            // await localStorage.setItem('season-key',generateRandomKey());
+            const gameIds = response.data.schedule_ids; // Assuming the response contains 'game_ids'
             const conference_count = response.data.conference_count;
-
-            if (gameIds.length > 0) {
+            // Loop through each game ID
+            if(gameIds.length > 0){
                 for (const gameId of gameIds) {
                     console.log(`Processing Game ID: ${gameId}`);
-                    await new Promise(resolve => setTimeout(resolve, 2000));
-                    await simulateGame(gameId, conference_id, isLast);
+                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds
+                    await simulateGame(gameId, conference_id, isLast); // Wait for the game simulation to finish
                 }
+                await simulateConference(props.season_id,props.conference_id);
+                Swal.fire({
+                    icon: "info", // Fix capitalization (should be lowercase)
+                    title: "Checking Conference Games Results",
+                    text: `Checking current results...`,
+                    timer: 3000, // Auto-hide after 3 seconds (3000ms)
+                    showConfirmButton: false, // Hide the "OK" button
+                });
+            }else{
+                if (conference_id < conference_count) {
+                    //if less than 4 conference_id return false;
+                    let nextConference = conference_id + 1;
 
-                // Move to the next round in the same conference
-                await simulateConference(props.season_id, conference_id);
-            } else {
-                // If all rounds in the current conference are finished, move to the next conference
-                let nextConference = conference_id + 1;
-
-                if (nextConference <= conference_count) {
+                    Swal.fire({
+                        icon: "success", // Fix capitalization (should be lowercase)
+                        title: "All Games Played in this conference",
+                        text: `Fetching schedule for the next conference -> ${nextConference}`,
+                        timer: 3000, // Auto-hide after 3 seconds (3000ms)
+                        showConfirmButton: false, // Hide the "OK" button
+                    });
+                    await simulateConference(props.season_id,nextConference);
+                    // isHide.value = false;
+                }
+                if (conference_id == conference_count) {
                     Swal.fire({
                         icon: "success",
-                        title: `All games in Conference ${conference_id} are done.`,
-                        text: `Moving to Conference ${nextConference}...`,
-                        timer: 3000,
-                        showConfirmButton: false,
+                        title: "Success!",
+                        text: response.data.message, // Assuming the response contains a 'message' field
                     });
-
-                    localStorage.setItem("current_conference", nextConference);
-                    await simulateConference(props.season_id, nextConference);
-                } else {
-                    localStorage.removeItem("is_simulated");
-                    localStorage.removeItem("current_conference");
-                    Swal.fire({
-                        icon: "success",
-                        title: "Season Simulation Completed!",
-                        text: "All games in all conferences have been simulated.",
-                    });
-
-                    await fetchConferenceSchedules();
+        
+                    await fetchConferenceSchedules(conference_id);
                     isHide.value = false;
                     currentRound.value = false;
                 }
             }
+            
+           
         } catch (error) {
-            console.error("Error simulating round:", error);
+            console.error("Error simulating the game:", error);
             isHide.value = false;
+            // Show error message using Swal2 if needed
+            // Swal.fire({
+            //     icon: "warning",
+            //     title: "Warning!",
+            //     text: error.response.data.error,
+            // });
         }
     };
+    const simulateGame = async (schedule_id,conference_id,isLast ) => {
+        try {
 
+            const response = await axios.post(route("game.simulate.regular"), {
+                schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
+                is_last: isLast,
+            });
+            activeGameId.value = response.data.game_id ?? 0;
+            isHide.value = response.data.game_id ?? 0;
+            emit('transaction_id',conference_id);
+
+            // Show success message using Swal2
+            // Swal.fire({
+            //     icon: "success",
+            //     title: "Success!",
+            //     text: response.data.message, // Assuming the response contains a 'message' field
+            // });
+        } catch (error) {
+            console.error("Error simulating per conference:", error);
+            // Show error message using Swal2 if needed
+            Swal.fire({
+                icon: "error",
+                title: "Error!",
+                text: error.response.data.message,
+                timer: 3000, // Auto-hide after 3 seconds (3000 ms)
+                showConfirmButton: false, // Hide the "OK" button
+            });
+    
+        }
+    };
     const autoSimulateChecker = async () => {
         await fetchConferenceSchedules();
 
-        const is_simulated = localStorage.getItem("is_simulated");
-        const lastConference = localStorage.getItem("current_conference") || props.conference_id;
-
-        if (is_simulated) {
-            await simulateConference(props.season_id, parseInt(lastConference));
-        }
-    };
-
+        //check if the schedule is auto simulated
+        // if(props.simulate_next){
+        //     await simulateConference(props.season_id,props.conference_id);
+        // }
+    }
     onMounted(() => {
         autoSimulateChecker();
     });
-
     </script>
