@@ -279,9 +279,11 @@
         
         let startSimulating = false;
 
+        let currentSimulatingConference = props.conference_id;
+
         for (const conference of props.season_data.conferences) {
             // Skip conferences until we reach the one matching props.conference_id
-            if (conference.id === props.conference_id) {
+            if (conference.id === currentSimulatingConference) {
                 startSimulating = true;
             }
 
