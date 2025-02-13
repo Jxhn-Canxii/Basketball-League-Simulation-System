@@ -30,10 +30,10 @@
                 <b v-if="data.finals_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-orange-500" title="# of Finals MVP in A Roster Count">{{ data.finals_mvp_count }}</b>
 
                 <!-- Regular Season MVP Count -->
-                <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-green-500" title="#1 Pick in A Roster Count">{{ data.overall_mvp_count }}</b>
+                <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-green-500" title="# of Best Player of the Season in A Roster Count">{{ data.overall_mvp_count }}</b>
 
                 <!-- Regular Season MVP Count -->
-                <b v-if="data.dpos_count > 0" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Season MVP in A Roster Count">{{ data.dpos_count }}</b>
+                <b v-if="data.dpos_count > 0" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Defensive Player of the Season in A Roster Count">{{ data.dpos_count }}</b>
 
                  <!-- # of Finals MVP in A Roster Count -->
                  <b v-if="data.ros_count > 0" class="text-white p-1 rounded-full text-xs bg-red-500" title="# of Rookie of The Season in A Roster Count">{{ data.ros_count }}</b>
