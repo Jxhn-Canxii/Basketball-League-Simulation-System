@@ -273,20 +273,15 @@
        fetchConferenceSchedules();
    };
    
-   const simulateAll = async () =>
-    {
+   const simulateAll = async () => {
         isHide.value = true;
-        
         let startSimulating = false;
-
         let currentSimulatingConference = props.conference_id;
 
         for (const conference of props.season_data.conferences) {
-            // Skip conferences until we reach the one matching props.conference_id
             if (conference.id === currentSimulatingConference) {
                 startSimulating = true;
             }
-
             if (!startSimulating) {
                 continue;
             }
@@ -297,13 +292,13 @@
 
             while (hasPendingGames) {
                 try {
-                    // Fetch upcoming games for the current conference
+                    // Fetch upcoming games
                     const response = await axios.post(route("upcoming.rounds.season"), {
                         season_id: props.season_id,
                         conference_id: conference.id,
                     });
 
-                    const rounds = response.data.rounds;
+                    let rounds = response.data.rounds;
 
                     if (rounds.length === 0) {
                         console.log(`No pending games left for conference ${conference.id}, moving to the next.`);
@@ -311,54 +306,59 @@
                         continue;
                     }
 
-                    // Loop through rounds and simulate games
                     for (const round of rounds) {
                         console.log(`Simulating Round: ${round} for Conference ${conference.id}`);
 
-                        const roundResponse = await axios.post(route("game.per.round"), {
+                        let roundResponse = await axios.post(route("game.per.round"), {
                             season_id: props.season_id,
                             round: round,
                             conference_id: conference.id,
                         });
 
-                        const gameIds = roundResponse.data.schedule_ids;
+                        let gameIds = roundResponse.data.schedule_ids;
 
-                        if (gameIds.length === 0) {
-                            console.log(`No games found for round ${round}`);
-                            continue;
+                        while (gameIds.length > 0) {
+                            for (const gameId of gameIds) {
+                                console.log(`Simulating Game ID: ${gameId}`);
+
+                                try {
+                                    await simulateGameWithResults(gameId, conference.id);
+                                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                                } catch (error) {
+                                    console.error(`Error simulating Game ID: ${gameId}`, error);
+                                }
+                            }
+
+                            // **Re-fetch the remaining games to confirm they were simulated**
+                            roundResponse = await axios.post(route("game.per.round"), {
+                                season_id: props.season_id,
+                                round: round,
+                                conference_id: conference.id,
+                            });
+
+                            gameIds = roundResponse.data.schedule_ids; // Get any unsimulated games
+
+                            if (gameIds.length > 0) {
+                                console.warn(`Retrying ${gameIds.length} failed simulations for Conference ${conference.id}`);
+                            }
                         }
-
-                        for (const gameId of gameIds) {
-                            console.log(`Simulating Game ID: ${gameId}`);
-                            await simulateGameWithResults(gameId, conference.id);
-                            await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay between games
-                        }
-
                     }
                 } catch (error) {
-                    //isHide.value = false;
-                    // hasPendingGames = false;
-                    // Swal.fire({
-                    //     icon: "success",
-                    //     title: "All games simulated!",
-                    //     text: error.response.data.message,
-                    // });
                     console.error("Error fetching or simulating games:", error);
                 }
             }
         }
 
         isHide.value = false;
-        // Refresh schedules after simulating all games in the round
         await fetchConferenceSchedules();
+
         Swal.fire({
             icon: "success",
             title: "All games simulated!",
             text: "All games in the remaining conferences have been completed.",
         });
-    };
-
-
+    };  
+    
     const simulateGameWithResults = async (schedule_id,conference_id) => {
         try {
             const response = await axios.post(route("game.simulate.regular"), {
