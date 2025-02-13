@@ -330,7 +330,6 @@
             const conference_count = response.data.conference_count;
             // Loop through each game ID
             if(gameIds.length > 0){
-                isHide.value = true;
                 for (const gameId of gameIds) {
                     // Perform an action with each game ID
                     console.log(`Processing Game ID: ${gameId}`);
@@ -358,7 +357,7 @@
                         showConfirmButton: false, // Hide the "OK" button
                     });
                     await simulateConference(props.season_id,nextConference);
-                    // isHide.value = false;
+                    isHide.value = false;
                 }
                 if (conference_id == conference_count) {
                     Swal.fire({
@@ -387,7 +386,7 @@
     };
     const simulateGame = async (schedule_id,conference_id,isLast ) => {
         try {
-
+            isHide.value = true;
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id, // Assuming the parameter name should be schedule_id
                 is_last: isLast,
