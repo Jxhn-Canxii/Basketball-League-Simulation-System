@@ -52,12 +52,11 @@
             <div class="md:col-span-2 sm:col-span-1 overflow-y-auto pt-3">
                 <SeasonSchedule v-if="season_info" 
                 @transaction_id="(id) => handleTransaction(id)" 
-                @simulate_next_conference="(isSimulated) => handleSimulateConfernece(isSimulated)" 
                 :key="activeConferenceTab" 
                 :season_id="props.season_id" 
                 :conference_id="activeConferenceTab" 
                 :simulate_next="isAutoSimulate"
-                :season_data="season_info.seasons" />
+                :season_data="season_info" />
             </div>
         </div>
     </div>
@@ -102,10 +101,6 @@ const handleTransaction = (id) => {
     console.log('emitted: '+id);
     updateKey.value = id+':'+(Math.random());
     activeConferenceTab.value = id;
-}
-const handleSimulateConfernece = (simulate) => {
-    console.log('Simulate: '+simulate);
-    isAutoSimulate.value = simulate;
 }
 //team modal
 onMounted(() => {
