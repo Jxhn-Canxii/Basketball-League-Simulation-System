@@ -330,10 +330,12 @@
             const conference_count = response.data.conference_count;
             // Loop through each game ID
             if(gameIds.length > 0){
+                isHide.value = true;
                 for (const gameId of gameIds) {
+                    // Perform an action with each game ID
                     console.log(`Processing Game ID: ${gameId}`);
-                    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait for 2 seconds
-                    await simulateGame(gameId, conference_id, isLast); // Wait for the game simulation to finish
+                    await simulateGame(gameId,conference_id,isLast);
+                    // You can also add more logic here, like fetching game details or updating the state
                 }
                 await simulateConference(props.season_id,props.conference_id);
                 Swal.fire({
