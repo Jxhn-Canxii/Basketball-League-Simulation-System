@@ -381,8 +381,8 @@
            activeGameId.value = response.data.game_id ?? 0;
    
            // Fetch updated schedule to reflect game results
-           await fetchConferenceSchedules();
-   
+           //await fetchConferenceSchedules();
+           emit('transaction_id',props.conference_id);
            Swal.fire({
                icon: "success",
                title: "Game Simulated!",
