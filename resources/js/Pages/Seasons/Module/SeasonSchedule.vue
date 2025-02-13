@@ -337,7 +337,7 @@
                     }
                 } catch (error) {
                     isHide.value = false;
-                    hasPendingGames = false;
+                    // hasPendingGames = false;
                     Swal.fire({
                         icon: "success",
                         title: "All games simulated!",
