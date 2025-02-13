@@ -332,8 +332,6 @@
                             await new Promise((resolve) => setTimeout(resolve, 2000)); // Delay between games
                         }
 
-                        // Refresh schedules after simulating all games in the round
-                        await fetchConferenceSchedules();
                     }
                 } catch (error) {
                     //isHide.value = false;
@@ -349,7 +347,8 @@
         }
 
         isHide.value = false;
-
+        // Refresh schedules after simulating all games in the round
+        await fetchConferenceSchedules();
         Swal.fire({
             icon: "success",
             title: "All games simulated!",

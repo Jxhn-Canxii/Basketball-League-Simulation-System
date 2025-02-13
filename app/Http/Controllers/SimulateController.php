@@ -1386,7 +1386,7 @@ class SimulateController extends Controller
 
                             $storeStats = new AwardsController;
                             //store initial player season stats
-                            $storeStats->storeplayerseasonstats( $player->team_id, $randomPlayer->id);
+                            $storeStats->storeplayercurrentseasonstats( $player->team_id, $randomPlayer->id);
                         }
                     } else {
                         // Optionally log or handle the case where the player is not waived
