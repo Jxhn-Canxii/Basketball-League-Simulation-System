@@ -336,7 +336,7 @@
                         await fetchConferenceSchedules();
                     }
                 } catch (error) {
-                    isHide.value = false;
+                    //isHide.value = false;
                     // hasPendingGames = false;
                     Swal.fire({
                         icon: "success",
