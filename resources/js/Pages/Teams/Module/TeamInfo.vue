@@ -381,7 +381,7 @@
                         <h3
                             class="text-xs font-bold text-nowrap uppercase leading-6 text-gray-800"
                         >
-                            {{ team.team_name }}
+                            {{ team.opponent_name }}
                         </h3>
                     </div>
                     <div class="border-t border-gray-200">
