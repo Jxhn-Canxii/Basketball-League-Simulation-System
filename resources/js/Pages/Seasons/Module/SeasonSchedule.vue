@@ -236,7 +236,7 @@
     const currentRound = ref(0);
     const loadingSchedules = ref(false);
     const activeGameId = ref(0);
-    const emit = defineEmits(["transaction_id"]);
+    const emit = defineEmits(["transaction_id","simulate_next_conference"]);
     const props = defineProps({
         season_id: {
             type: [Number,String],
@@ -247,6 +247,10 @@
             required: true,
         },
         season_data: Object,
+        simulate_next: {
+            type: Boolean,
+            default: false,
+        }
     });
     const search_schedule = ref({
         current_page: 1,
