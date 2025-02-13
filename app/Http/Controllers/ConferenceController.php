@@ -251,11 +251,11 @@ class ConferenceController extends Controller
         ->distinct('round')
         ->pluck('round'); // Get a list of distinct rounds
 
-        if ($rounds->isEmpty()) {
-            return response()->json([
-                'error' => 'All conference rounds already simulated!.',
-            ], 404); // Return 404 error with the message if no rounds are found
-        }
+        // if ($rounds->isEmpty()) {
+        //     return response()->json([
+        //         'error' => 'All conference rounds already simulated!.',
+        //     ], 404); // Return 404 error with the message if no rounds are found
+        // }
 
         return response()->json([
             'rounds' => $rounds, // Include the list of rounds in the response
