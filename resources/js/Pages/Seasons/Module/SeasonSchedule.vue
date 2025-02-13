@@ -302,10 +302,9 @@
 
                     if (rounds.length === 0) {
                         console.log(`No pending games left for conference ${conference.id}, moving to the next.`);
-                        hasPendingGames = false;
+                        hasPendingGames = (conference.id != 4);
                         continue;
                     }
-
                     for (const round of rounds) {
                         console.log(`Simulating Round: ${round} for Conference ${conference.id}`);
 
@@ -342,6 +341,8 @@
                                 console.warn(`Retrying ${gameIds.length} failed simulations for Conference ${conference.id}`);
                             }
                         }
+
+
                     }
                 } catch (error) {
                     console.error("Error fetching or simulating games:", error);
@@ -358,7 +359,7 @@
             text: "All games in the remaining conferences have been completed.",
         });
     };  
-    
+
     const simulateGameWithResults = async (schedule_id,conference_id) => {
         try {
             const response = await axios.post(route("game.simulate.regular"), {
