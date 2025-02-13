@@ -79,7 +79,9 @@
                                             <TeamDetails
                                             :team_id="match.home_team.id" 
                                             :key="match.home_team.id" 
-                                            :showButton="0" 
+                                            :showButton="0"
+                                            :showInfo="true"
+                                            :current_conference_rank="match.home_team.conference_rank"
                                             :text="`#${match.home_team.overall_rank} ${match.home_team.name ?? 'TBD'}`"/>
 
                                             <small class="text-red-500">vs</small>
@@ -87,7 +89,9 @@
                                             <TeamDetails
                                                 :team_id="match.away_team.id" 
                                                 :key="match.away_team.id" 
-                                                :showButton="0" 
+                                                :showButton="0"
+                                                :showInfo="true"
+                                                :current_conference_rank="match.away_team.conference_rank"
                                                 :text="`#${match.away_team.overall_rank} ${match.away_team.name ?? 'TBD'}`" />
                                         </h3>
                                         <p
