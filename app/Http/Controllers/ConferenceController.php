@@ -268,6 +268,31 @@ class ConferenceController extends Controller
             'is_finished' => $isFullySimulated,
         ]);
     }
+    public function getseasonroundnotsimulated(Request $request)
+    {
+        $seasonId = $request->season_id;
+        $excludedRounds = config('playoffs');
+
+        $rounds = DB::table('schedule_view')
+            ->join('conferences', 'schedule_view.conference_id', '=', 'conferences.id') // Join conferences table
+            ->where('schedule_view.season_id', $seasonId)
+            ->whereNotIn('schedule_view.round', $excludedRounds)
+            ->where('schedule_view.status', 1) // Only rounds with status = 1
+            ->distinct()
+            ->pluck('schedule_view.round');
+
+        $isFullySimulated = !DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->whereNotIn('round', $excludedRounds)
+            ->where('status', '!=', 2) // Check if any game is not yet simulated
+            ->exists(); // If no such games exist, the season is fully simulated
+
+        return response()->json([
+            'rounds' => $rounds, // Include the list of rounds with conference info
+            'is_finished' => $isFullySimulated,
+        ]);
+    }
+
     public function seasonsplayoffs(Request $request)
     {
         // Retrieve the season_id from the request

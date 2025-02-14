@@ -509,7 +509,7 @@ class SimulateController extends Controller
 
         $isGameFinished = DB::table('schedules')
             ->where('id', $request->schedule_id)
-            ->where('status', 2)  // Fetch previous round and current round in one query
+            ->where('status', config('timeline.play_offs'))  // Fetch previous round and current round in one query
             ->exists(); // Use exists() for a boolean result
 
         if ($isGameFinished) {
@@ -1111,30 +1111,47 @@ class SimulateController extends Controller
         // Validate the request data
         $request->validate([
             'season_id' => 'required|exists:seasons,id',
-            'conference_id' => 'required|exists:conferences,id',
+            'round' => 'required',
         ]);
 
         $seasonId = $request->season_id;
-        $conferenceId = $request->conference_id;
+        $round = $request->round;
 
-        // Retrieve schedule IDs for the given season and conference
-        $scheduleIds = Schedules::where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
+        // Retrieve schedule records for the given season and round
+        $schedules = Schedules::where('season_id', $seasonId)
+            ->where('round', $round)
             ->where('status', 1)
             ->orderBy('id')
-            ->pluck('id')
-            ->toArray(); // Get the IDs as an array
+            ->select('id', 'conference_id')
+            ->get();
 
-        $conferenceCount = DB::table('schedules')
-            ->where('season_id', $seasonId)
-            ->distinct('conference_id')
-            ->count('conference_id');
+        // Group by conference_id
+        $groupedByConference = $schedules->groupBy('conference_id');
+
+        // Interleave results to alternate by conference
+        $interleaved = [];
+        $hasData = true;
+
+        while ($hasData) {
+            $hasData = false;
+
+            foreach ($groupedByConference as $conferenceId => $games) {
+                if (!$games->isEmpty()) {
+                    $interleaved[] = $games->shift(); // Take the first available game
+                    $hasData = true;
+                }
+            }
+        }
+
+        // Count distinct conferences in this round
+        $conferenceCount = $groupedByConference->count();
 
         return response()->json([
-            'schedule_ids' => $scheduleIds,
+            'schedule_ids' => $interleaved,
             'conference_count' => $conferenceCount,
         ]);
     }
+
     private function distributeMinutes($playersArray, $totalMinutes, $gameId)
     {
         // Define role-based priorities and their minute allocation limits

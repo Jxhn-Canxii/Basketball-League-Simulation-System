@@ -63,7 +63,7 @@ class ScheduleController extends Controller
                 'start_playoffs' => $request->start,
                 'league_id' => $request->league_id,
                 'is_conference' => 1,
-                'status' => 1, // Assuming default status is 'active'
+                'status' => config('timeline.start'), // Assuming default status is 'active'
             ]);
 
             // Create the double round robin schedule by conference
@@ -712,30 +712,30 @@ class ScheduleController extends Controller
 
         switch ($round) {
             case 'round_of_32':
-                return 6;
+                return config('timeline.round_of_32');
                 break;
             case 'play_ins_elims_round_1':
-                return 4;
+                return config('timeline.play_ins_elims_round_1');
                 break;
             case 'play_ins_elims_round_2':
-                return 5;
+                return config('timeline.play_ins_elims_round_2');
                 break;
             case 'play_ins_finals':
-                return 6;
+                return config('timeline.play_ins_finals');
                 break;
             case 'round_of_16':
-                return 7;
+                return config('timeline.round_of_16');
                 break;
             case 'quarter_finals':
-                return 8;
+                return config('timeline.quarter_finals');
                 break;
             case 'semi_finals':
-                return 9;
+                return config('timeline.semi_finals');
             case 'interconference_semi_finals':
-                return 10;
+                return config('timeline.interconference_semi_finals');
                 break;
             case 'finals':
-                return 11;
+                return config('timeline.finals');
                 break;
             default:
                 return 8;

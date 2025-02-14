@@ -48,7 +48,7 @@ class TradeController extends Controller
         ->value('status');  // Get the status of the latest season
     
 
-        $tradeSeasonEnd = config('timeline.player_trade') === $latestSeasonStatus;
+        $tradeSeasonEnd = config('timeline.off_season_trade') === $latestSeasonStatus;
 
         $proposals = DB::table('trade_proposals')
             ->leftJoin('teams as team_from', 'trade_proposals.team_from_id', '=', 'team_from.id')

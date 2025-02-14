@@ -273,7 +273,7 @@
         fetchConferenceSchedules();
     };
    
-    const simulateAll = async () => {
+    const simulateAllPerConference = async () => {
         isHide.value = true;
         let startSimulating = false;
         let failedGames = {}; // Store failed games by conference
@@ -293,7 +293,7 @@
 
             while (hasPendingGames) {
                 try {
-                    const response = await axios.post(route("upcoming.rounds.season"), {
+                    const response = await axios.post(route("upcoming.rounds.season.conference"), {
                         season_id: props.season_id,
                         conference_id: conference.id,
                     });
@@ -388,6 +388,99 @@
             icon: "success",
             title: "All games simulated!",
             text: "All games in the remaining conferences have been completed.",
+        });
+    };
+    const simulateAll = async () => {
+        isHide.value = true;
+        let failedGames = new Set(); // Store failed games
+
+        console.log("Checking pending games for the season...");
+
+        try {
+            const response = await axios.post(route("upcoming.rounds.season"), {
+                season_id: props.season_id,
+            });
+
+            let rounds = response.data.rounds;
+            let isFinished = response.data.is_finished;
+
+
+            if (isFinished) {
+                Swal.fire({
+                    icon: "success",
+                    title: "All games are simulated!",
+                    text: "The entire season has been completed.",
+                });
+                isHide.value = false;
+                return;
+            }
+
+            for (const roundData of rounds) {
+                console.log(`Simulating Round: ${roundData.round}`);
+
+                let roundResponse = await axios.post(route("game.per.round"), {
+                    season_id: props.season_id,
+                    round: roundData,
+                });
+
+                let gameIds = roundResponse.data.schedule_ids;
+
+                while (gameIds.length > 0) {
+                    for (const gameId of gameIds) {
+                        console.log(`Simulating Game ID: ${gameId}`);
+
+                        try {
+                            await simulateGameWithResults(gameId.id,gameId.conference_id);
+                            await new Promise((resolve) => setTimeout(resolve, 2000));
+
+                            // Remove successfully simulated game from failedGames if it exists
+                            failedGames.delete(gameId);
+                        } catch (error) {
+                            console.error(`Error simulating Game ID: ${gameId.id}`, error);
+                            failedGames.add(gameId);
+                        }
+                    }
+
+                    // Re-fetch remaining unsimulated games
+                    roundResponse = await axios.post(route("game.per.round"), {
+                        season_id: props.season_id,
+                        round: roundData.round,
+                    });
+
+                    gameIds = roundResponse.data.schedule_ids;
+
+                    if (gameIds.length > 0) {
+                        console.warn(`Retrying ${gameIds.length} failed simulations`);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Error fetching or simulating games:", error);
+        }
+
+        // Retry failed games
+        if (failedGames.size > 0) {
+            console.warn(`Retrying ${failedGames.size} failed games...`);
+
+            for (const gameId of [...failedGames]) {
+                try {
+                    console.log(`Retrying Game ID: ${gameId}`);
+                    await simulateGameWithResults(gameId);
+                    await new Promise((resolve) => setTimeout(resolve, 2000));
+                    failedGames.delete(gameId); // Remove from failed list on success
+                } catch (error) {
+                    console.error(`Retry failed for Game ID: ${gameId}`, error);
+                }
+            }
+        }
+
+        isHide.value = false;
+        await fetchConferenceSchedules();
+
+        Swal.fire({
+            icon: "success",
+            title: "All games simulated!",
+            text: "The entire season has been completed.",
         });
     };
 
