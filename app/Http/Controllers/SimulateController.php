@@ -1345,7 +1345,7 @@ class SimulateController extends Controller
                 // Ensure the season is active (status = 1) before proceeding
                 if ($seasonStatus == 1) {
                     // Add 20% chance for the player to be waived
-                    if (rand(1, 100) <= 70) {
+                    if (rand(1, 100) <= 90) {
                         // Insert transaction for waiving the player
                         DB::table('transactions')->insert([
                             'player_id' => $player->id,

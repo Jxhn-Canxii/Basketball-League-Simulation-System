@@ -303,6 +303,7 @@
                     if (rounds.length === 0) {
                         console.log(`No pending games left for conference ${conference.id}, moving to the next.`);
                         hasPendingGames = (conference.id != 4);
+                        currentSimulatingConference = currentSimulatingConference + 1;
                         continue;
                     }
                     for (const round of rounds) {
