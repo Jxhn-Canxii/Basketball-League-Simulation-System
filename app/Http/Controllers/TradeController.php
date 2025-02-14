@@ -368,11 +368,11 @@ class TradeController extends Controller
         }
     
         // Add unhappy stars and calculate their scores
-        $unhappyStars = $this->findUnhappyStars();
-        foreach ($unhappyStars as &$star) {
-            $star['composite_score'] = $this->calculatePerformanceScore((object) $star);
-        }
-        $tradeablePlayers = array_merge($tradeablePlayers, $unhappyStars);
+        // $unhappyStars = $this->findUnhappyStars();
+        // foreach ($unhappyStars as &$star) {
+        //     $star['composite_score'] = $this->calculatePerformanceScore((object) $star);
+        // }
+        // $tradeablePlayers = array_merge($tradeablePlayers, $unhappyStars);
     
         // Step 2: Sort players by performance score (highest first)
         usort($tradeablePlayers, fn($a, $b) => $b['composite_score'] <=> $a['composite_score']);
