@@ -52,7 +52,8 @@
             <div class="md:col-span-2 sm:col-span-1 overflow-y-auto pt-3">
                 <SeasonSchedule v-if="season_info" 
                 @transaction_id="(id) => handleTransaction(id)" 
-                :season_id="props.season_id" 
+                :season_id="props.season_id"
+                :key="selectedConference"
                 :conference_id="activeConferenceTab" 
                 :simulate_next="isAutoSimulate"
                 :season_data="season_info" />
@@ -73,6 +74,7 @@ const season_info = ref(false);
 const activeConferenceTab = ref(false);
 const isAutoSimulate = ref(false);
 const updateKey = ref(0);
+const selectedConference = ref(0);
 const props = defineProps({
     season_id: {
         type: [Number,String],
@@ -83,6 +85,7 @@ const fetchConferenceData = async (id) => {
     // await fetchSeasonInfo();
     activeConferenceTab.value = id;
     updateKey.value = id;
+    selectedConference.value = id;
 }
 const fetchSeasonInfo = async () => {
     try {
