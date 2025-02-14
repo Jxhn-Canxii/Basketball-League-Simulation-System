@@ -153,26 +153,25 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
-                // Adjust attempts based on minutes, shooting rating, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0,$twoPointAttempts);
-                
-                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for three-pointers based on defensive impact
-                $threePointMade = rand(0,$adjustedThreePointAttempts);
-                
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts * (1-$defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for free throws based on defensive impact
-                $freeThrowsMade = rand(0,$adjustedFreeThrowAttempts);   
-                
-                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade);
+                // Adjust attempts based on minutes, shooting ratings, and defensive impact
+                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
+                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+
+                // Adjust made shots for two-pointers based on accuracy
+                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+
+                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
+                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
+
+                // Adjust made shots for three-pointers based on accuracy
+                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
+
+                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
+                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
+                // Adjust made shots for free throws based on accuracy
+                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+
+                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
                 // Simulate other stats
                 $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
@@ -201,7 +200,7 @@ class SimulateController extends Controller
                     'two_pointers_made' => $twoPointMade,
                     'two_point_attempts' => $twoPointAttempts,
                     'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowsMade,
+                    'free_throws_made' => $freeThrowMade,
                 ];
             }
             // Repeat similar simulation for away team players...
@@ -214,27 +213,26 @@ class SimulateController extends Controller
 
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
-                
-                // Adjust attempts based on minutes, shooting rating, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0,$twoPointAttempts);
-                
-                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for three-pointers based on defensive impact
-                $threePointMade = rand(0,$adjustedThreePointAttempts);
-                
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts * (1-$defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for free throws based on defensive impact
-                $freeThrowsMade = rand(0,$adjustedFreeThrowAttempts);                
 
-                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade);
+                // Adjust attempts based on minutes, shooting ratings, and defensive impact
+                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
+                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+
+                // Adjust made shots for two-pointers based on accuracy
+                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+
+                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
+                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
+
+                // Adjust made shots for three-pointers based on accuracy
+                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
+
+                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
+                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
+                // Adjust made shots for free throws based on accuracy
+                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+                
+                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
                 // Simulate other stats
                 $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
@@ -263,7 +261,7 @@ class SimulateController extends Controller
                     'two_point_attempts' => $twoPointAttempts,
                     'three_pointers_made' => $threePointMade,
                     'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowsMade,
+                    'free_throws_made' => $freeThrowMade,
                 ];
             }
         // Convert to arrays
@@ -612,26 +610,25 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
-                // Adjust attempts based on minutes, shooting rating, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
+                // Adjust attempts based on minutes, shooting ratings, and defensive impact
+                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
+                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+
+                // Adjust made shots for two-pointers based on accuracy
+                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+
+                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
+                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
+
+                // Adjust made shots for three-pointers based on accuracy
+                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
+
+                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
+                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
+                // Adjust made shots for free throws based on accuracy
+                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
                 
-                // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0,$twoPointAttempts);
-                
-                $threePointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for three-pointers based on defensive impact
-                $threePointMade = rand(0,$adjustedThreePointAttempts);
-                
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts * (1-$defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for free throws based on defensive impact
-                $freeThrowsMade = rand(0,$adjustedFreeThrowAttempts);   
-                
-                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade);
+                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
                 // Simulate other stats
                 $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
@@ -660,7 +657,7 @@ class SimulateController extends Controller
                     'two_pointers_made' => $twoPointMade,
                     'two_point_attempts' => $twoPointAttempts,
                     'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowsMade,
+                    'free_throws_made' => $freeThrowMade,
                 ];
             }
             // Repeat similar simulation for away team players...
@@ -674,26 +671,26 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
-                // Adjust attempts based on minutes, shooting rating, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts * (1 - $defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for two-pointers based on defensive impact
-                $twoPointMade = rand(0,$twoPointAttempts);
-                
-                $threePointAttempts = rand(0, floor($minutes * (1 * $player->shooting_rating  / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts * (1- $defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for three-pointers based on defensive impact
-                $threePointMade = rand(0,$adjustedThreePointAttempts);
-                
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->shooting_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts * (1-$defensiveImpact))); // Reduce attempts based on defense
-                
-                // Adjust made shots for free throws based on defensive impact
-                $freeThrowsMade = rand(0,$adjustedFreeThrowAttempts);                
+                // Adjust attempts based on minutes, shooting ratings, and defensive impact
+                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
+                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
 
-                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade);
+                // Adjust made shots for two-pointers based on accuracy
+                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+
+                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
+                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
+
+                // Adjust made shots for three-pointers based on accuracy
+                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
+
+                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
+                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
+                // Adjust made shots for free throws based on accuracy
+                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+                              
+
+                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
                 // Simulate other stats
                 $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
@@ -722,7 +719,7 @@ class SimulateController extends Controller
                     'two_point_attempts' => $twoPointAttempts,
                     'three_pointers_made' => $threePointMade,
                     'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowsMade,
+                    'free_throws_made' => $freeThrowMade,
                 ];
             }
             // Assist distribution logic remains similar but ensures 15-player roster
@@ -968,7 +965,7 @@ class SimulateController extends Controller
             ->where('is_active', 1)
             ->avg(DB::raw('(defense_rating + rebounding_rating) / 2')) ?? 0;
         
-        return $defenseRating / 30;
+        return floor($defenseRating / 30);
     }
     private function calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade)
     {

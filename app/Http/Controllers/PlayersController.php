@@ -659,145 +659,41 @@ class PlayersController extends Controller
             'playmaker' => [
                 'shooting' => [70, 85], 'defense' => [65, 80], 'passing' => [85, 99], 'rebounding' => [60, 75],
                 'athleticism' => [75, 90], 'basketball_iq' => [85, 99], 'strength' => [60, 75], 'stamina' => [80, 95],
-                'clutch' => [70, 90], 'leadership' => [80, 95], 'work_ethic' => [75, 90]
+                'clutch' => [70, 90], 'leadership' => [80, 95], 'work_ethic' => [75, 90],
+                'two_point_rating' => [75, 90], 'three_point_rating' => [65, 80], 'free_throw_rating' => [70, 85]
             ],
             'defender' => [
                 'shooting' => [60, 75], 'defense' => [85, 99], 'passing' => [60, 75], 'rebounding' => [70, 85],
                 'athleticism' => [70, 85], 'basketball_iq' => [75, 90], 'strength' => [75, 90], 'stamina' => [75, 90],
-                'clutch' => [65, 85], 'leadership' => [70, 85], 'work_ethic' => [80, 95]
+                'clutch' => [65, 85], 'leadership' => [70, 85], 'work_ethic' => [80, 95],
+                'two_point_rating' => [65, 80], 'three_point_rating' => [55, 70], 'free_throw_rating' => [60, 75]
             ],
             'scorer' => [
                 'shooting' => [85, 99], 'defense' => [60, 75], 'passing' => [65, 80], 'rebounding' => [60, 75],
                 'athleticism' => [80, 95], 'basketball_iq' => [70, 85], 'strength' => [65, 80], 'stamina' => [75, 90],
-                'clutch' => [85, 99], 'leadership' => [70, 85], 'work_ethic' => [70, 85]
-            ],
-            'all-rounder' => [
-                'shooting' => [75, 90], 'defense' => [75, 90], 'passing' => [75, 90], 'rebounding' => [75, 90],
-                'athleticism' => [80, 90], 'basketball_iq' => [85, 99], 'strength' => [75, 90], 'stamina' => [80, 95],
-                'clutch' => [80, 95], 'leadership' => [85, 99], 'work_ethic' => [85, 99]
-            ],
-            'hustler' => [
-                'shooting' => [60, 75], 'defense' => [70, 85], 'passing' => [60, 75], 'rebounding' => [65, 80],
-                'athleticism' => [75, 90], 'basketball_iq' => [70, 85], 'strength' => [70, 85], 'stamina' => [85, 99],
-                'clutch' => [65, 80], 'leadership' => [70, 85], 'work_ethic' => [90, 99]
-            ],
-            'generational' => [
-                'shooting' => [95, 99], 'defense' => [95, 99], 'passing' => [95, 99], 'rebounding' => [95, 99],
-                'athleticism' => [95, 99], 'basketball_iq' => [95, 99], 'strength' => [95, 99], 'stamina' => [95, 99],
-                'clutch' => [95, 99], 'leadership' => [95, 99], 'work_ethic' => [95, 99]
+                'clutch' => [85, 99], 'leadership' => [70, 85], 'work_ethic' => [70, 85],
+                'two_point_rating' => [85, 99], 'three_point_rating' => [80, 95], 'free_throw_rating' => [75, 90]
             ],
             'sharpshooter' => [
                 'shooting' => [90, 99], 'defense' => [55, 70], 'passing' => [60, 75], 'rebounding' => [50, 65],
                 'athleticism' => [70, 85], 'basketball_iq' => [80, 95], 'strength' => [50, 65], 'stamina' => [75, 90],
-                'clutch' => [80, 95], 'leadership' => [70, 85], 'work_ethic' => [75, 90]
+                'clutch' => [80, 95], 'leadership' => [70, 85], 'work_ethic' => [75, 90],
+                'two_point_rating' => [75, 90], 'three_point_rating' => [90, 99], 'free_throw_rating' => [85, 99]
             ],
-            'enforcer' => [
-                'shooting' => [60, 75], 'defense' => [85, 99], 'passing' => [55, 70], 'rebounding' => [80, 95],
-                'athleticism' => [75, 85], 'basketball_iq' => [70, 85], 'strength' => [85, 99], 'stamina' => [80, 95],
-                'clutch' => [60, 80], 'leadership' => [65, 80], 'work_ethic' => [85, 99]
+            'big_man' => [
+                'shooting' => [60, 75], 'defense' => [75, 90], 'passing' => [55, 70], 'rebounding' => [85, 99],
+                'athleticism' => [70, 85], 'basketball_iq' => [75, 90], 'strength' => [85, 99], 'stamina' => [75, 90],
+                'clutch' => [65, 80], 'leadership' => [70, 85], 'work_ethic' => [80, 95],
+                'two_point_rating' => [80, 95], 'three_point_rating' => [50, 65], 'free_throw_rating' => [55, 70]
             ],
-            'playoff_performer' => [
-                'shooting' => [75, 90], 'defense' => [75, 90], 'passing' => [75, 90], 'rebounding' => [70, 85],
-                'athleticism' => [80, 90], 'basketball_iq' => [85, 99], 'strength' => [70, 85], 'stamina' => [75, 90],
-                'clutch' => [90, 99], 'leadership' => [85, 99], 'work_ethic' => [80, 95]
-            ],
-            'lob_threat' => [
-                'shooting' => [60, 75], 'defense' => [70, 85], 'passing' => [70, 85], 'rebounding' => [80, 95],
-                'athleticism' => [85, 99], 'basketball_iq' => [70, 85], 'strength' => [75, 90], 'stamina' => [80, 95],
-                'clutch' => [70, 85], 'leadership' => [65, 80], 'work_ethic' => [80, 95]
-            ],
-            'stretch_big' => [
-                'shooting' => [75, 90], 'defense' => [70, 85], 'passing' => [60, 75], 'rebounding' => [80, 95],
-                'athleticism' => [70, 85], 'basketball_iq' => [75, 90], 'strength' => [80, 95], 'stamina' => [75, 90],
-                'clutch' => [65, 80], 'leadership' => [70, 85], 'work_ethic' => [75, 90]
-            ],
-            'point_forward' => [
-                'shooting' => [75, 90], 'defense' => [70, 85], 'passing' => [85, 99], 'rebounding' => [75, 90],
-                'athleticism' => [80, 95], 'basketball_iq' => [85, 99], 'strength' => [70, 85], 'stamina' => [80, 95],
-                'clutch' => [70, 85], 'leadership' => [80, 95], 'work_ethic' => [75, 90]
-            ],
-            'post_specialist' => [
-                'shooting' => [60, 75], 'defense' => [70, 85], 'passing' => [60, 75], 'rebounding' => [85, 99],
-                'athleticism' => [70, 85], 'basketball_iq' => [75, 90], 'strength' => [80, 95], 'stamina' => [75, 90],
-                'clutch' => [65, 80], 'leadership' => [70, 85], 'work_ethic' => [80, 95]
-            ],
-            'energy_guy' => [
-                'shooting' => [60, 75], 'defense' => [70, 85], 'passing' => [60, 75], 'rebounding' => [65, 80],
-                'athleticism' => [85, 99], 'basketball_iq' => [70, 85], 'strength' => [70, 85], 'stamina' => [90, 99],
-                'clutch' => [65, 80], 'leadership' => [60, 75], 'work_ethic' => [90, 99]
-            ],
-            'role_player' => [
-                'shooting' => [50, 70], 'defense' => [50, 70], 'passing' => [50, 70], 'rebounding' => [50, 70],
-                'athleticism' => [50, 70], 'basketball_iq' => [55, 75], 'strength' => [50, 70], 'stamina' => [55, 75],
-                'clutch' => [50, 70], 'leadership' => [50, 70], 'work_ethic' => [55, 75]
-            ],
-            'shooter' => [
-                'shooting' => [60, 80], 'defense' => [45, 65], 'passing' => [50, 70], 'rebounding' => [45, 65],
-                'athleticism' => [50, 70], 'basketball_iq' => [50, 70], 'strength' => [50, 70], 'stamina' => [55, 75],
-                'clutch' => [55, 75], 'leadership' => [50, 70], 'work_ethic' => [55, 75]
-            ],
-            'defensive_specialist' => [
-                'shooting' => [40, 60], 'defense' => [65, 85], 'passing' => [40, 60], 'rebounding' => [50, 70],
-                'athleticism' => [55, 75], 'basketball_iq' => [50, 70], 'strength' => [55, 75], 'stamina' => [55, 75],
-                'clutch' => [45, 65], 'leadership' => [50, 70], 'work_ethic' => [55, 75]
-            ],
-            'playmaker' => [
-                'shooting' => [50, 70], 'defense' => [50, 70], 'passing' => [60, 80], 'rebounding' => [50, 70],
-                'athleticism' => [55, 75], 'basketball_iq' => [60, 80], 'strength' => [50, 70], 'stamina' => [55, 75],
-                'clutch' => [50, 70], 'leadership' => [55, 75], 'work_ethic' => [55, 75]
-            ],
-            'athletic' => [
-                'shooting' => [50, 70], 'defense' => [55, 75], 'passing' => [45, 65], 'rebounding' => [50, 70],
-                'athleticism' => [65, 85], 'basketball_iq' => [50, 70], 'strength' => [55, 75], 'stamina' => [60, 80],
-                'clutch' => [50, 70], 'leadership' => [50, 70], 'work_ethic' => [55, 75]
-            ],
-            'all_rounder' => [
-                'shooting' => [55, 75], 'defense' => [55, 75], 'passing' => [55, 75], 'rebounding' => [55, 75],
-                'athleticism' => [60, 80], 'basketball_iq' => [60, 80], 'strength' => [55, 75], 'stamina' => [60, 80],
-                'clutch' => [55, 75], 'leadership' => [60, 80], 'work_ethic' => [60, 80]
-            ],
-            'slasher' => [
-                'shooting' => [50, 70], 'defense' => [50, 70], 'passing' => [45, 65], 'rebounding' => [45, 65],
-                'athleticism' => [60, 80], 'basketball_iq' => [50, 70], 'strength' => [50, 70], 'stamina' => [55, 75],
-                'clutch' => [50, 70], 'leadership' => [50, 70], 'work_ethic' => [55, 75]
-            ],
-            'spot_up_shooter' => [
-                'shooting' => [65, 85], 'defense' => [45, 65], 'passing' => [40, 60], 'rebounding' => [45, 65],
-                'athleticism' => [45, 65], 'basketball_iq' => [50, 70], 'strength' => [45, 65], 'stamina' => [50, 70],
-                'clutch' => [55, 75], 'leadership' => [50, 70], 'work_ethic' => [50, 70]
-            ],
-            // Worst archetype (low values for everything)
-            // 'clumsy' => [
-            //     'shooting' => [25, 40], 'defense' => [20, 35], 'passing' => [20, 35], 'rebounding' => [20, 35],
-            //     'athleticism' => [15, 30], 'basketball_iq' => [10, 25], 'strength' => [10, 25], 'stamina' => [15, 30],
-            //     'clutch' => [10, 25], 'leadership' => [5, 20], 'work_ethic' => [5, 20]
-            // ],
-            // 'bricklayer' => [
-            //     'shooting' => [10, 25], 'defense' => [20, 40], 'passing' => [15, 30], 'rebounding' => [20, 35],
-            //     'athleticism' => [20, 35], 'basketball_iq' => [15, 30], 'strength' => [15, 30], 'stamina' => [20, 35],
-            //     'clutch' => [10, 20], 'leadership' => [5, 15], 'work_ethic' => [10, 25]
-            // ],
-            // 'slowpoke' => [
-            //     'shooting' => [20, 40], 'defense' => [15, 30], 'passing' => [20, 40], 'rebounding' => [25, 40],
-            //     'athleticism' => [10, 25], 'basketball_iq' => [15, 35], 'strength' => [20, 40], 'stamina' => [15, 30],
-            //     'clutch' => [15, 30], 'leadership' => [10, 20], 'work_ethic' => [10, 20]
-            // ],
-            // 'no_skill' => [
-            //     'shooting' => [5, 20], 'defense' => [5, 15], 'passing' => [10, 25], 'rebounding' => [5, 20],
-            //     'athleticism' => [10, 20], 'basketball_iq' => [5, 15], 'strength' => [5, 15], 'stamina' => [5, 20],
-            //     'clutch' => [5, 15], 'leadership' => [5, 10], 'work_ethic' => [5, 10]
-            // ],
-            // 'bumbling' => [
-            //     'shooting' => [15, 30], 'defense' => [10, 25], 'passing' => [10, 20], 'rebounding' => [10, 25],
-            //     'athleticism' => [10, 20], 'basketball_iq' => [5, 15], 'strength' => [5, 15], 'stamina' => [10, 20],
-            //     'clutch' => [10, 20], 'leadership' => [5, 10], 'work_ethic' => [5, 15]
-            // ],
-            // 'lazy' => [
-            //     'shooting' => [15, 30], 'defense' => [10, 25], 'passing' => [15, 30], 'rebounding' => [10, 25],
-            //     'athleticism' => [10, 25], 'basketball_iq' => [5, 15], 'strength' => [5, 20], 'stamina' => [5, 15],
-            //     'clutch' => [10, 20], 'leadership' => [5, 10], 'work_ethic' => [5, 10]
-            // ],
+            'generational' => [
+                'shooting' => [95, 99], 'defense' => [95, 99], 'passing' => [95, 99], 'rebounding' => [95, 99],
+                'athleticism' => [95, 99], 'basketball_iq' => [95, 99], 'strength' => [95, 99], 'stamina' => [95, 99],
+                'clutch' => [95, 99], 'leadership' => [95, 99], 'work_ethic' => [95, 99],
+                'two_point_rating' => [95, 99], 'three_point_rating' => [95, 99], 'free_throw_rating' => [95, 99]
+            ]
         ];
+        
     
         // Check if next season allows generational players
         $nextSeasonId = $seasonId + 1;

@@ -18,6 +18,9 @@ CREATE TABLE players (
 
     -- Ratings
     shooting_rating DECIMAL(5,2) DEFAULT 0,
+    two_point_rating DECIMAL(5,2) DEFAULT 0,
+    three_point_rating DECIMAL(5,2) DEFAULT 0,
+    free_throw_rating DECIMAL(5,2) DEFAULT 0,
     defense_rating DECIMAL(5,2) DEFAULT 0,
     passing_rating DECIMAL(5,2) DEFAULT 0,
     rebounding_rating DECIMAL(5,2) DEFAULT 0,

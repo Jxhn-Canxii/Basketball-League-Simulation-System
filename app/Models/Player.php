@@ -27,6 +27,9 @@ class Player extends Model
         'position', // Newly added position field
         'type',
         'shooting_rating',
+        'three_point_rating',
+        'two_point_rating',
+        'free_throw_rating',
         'defense_rating',
         'passing_rating',
         'rebounding_rating',
