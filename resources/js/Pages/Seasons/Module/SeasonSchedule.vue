@@ -268,20 +268,21 @@
        }
    };
    
-   const handlePagination = (page_num) => {
-       search_schedule.value.page_num = page_num ?? 1;
-       fetchConferenceSchedules();
-   };
+    const handlePagination = (page_num) => {
+        search_schedule.value.page_num = page_num ?? 1;
+        fetchConferenceSchedules();
+    };
    
-   const simulateAll = async () => {
+    const simulateAll = async () => {
         isHide.value = true;
         let startSimulating = false;
-        let currentSimulatingConference = props.conference_id;
+        let failedGames = {}; // Store failed games by conference
 
         for (const conference of props.season_data.conferences) {
-            if (conference.id === currentSimulatingConference) {
+            if (conference.id === props.conference_id) {
                 startSimulating = true;
             }
+
             if (!startSimulating) {
                 continue;
             }
@@ -292,20 +293,24 @@
 
             while (hasPendingGames) {
                 try {
-                    // Fetch upcoming games
                     const response = await axios.post(route("upcoming.rounds.season"), {
                         season_id: props.season_id,
                         conference_id: conference.id,
                     });
 
                     let rounds = response.data.rounds;
+                    let isFinished = response.data.is_finished;
 
-                    if (rounds.length === 0) {
-                        console.log(`No pending games left for conference ${conference.id}, moving to the next.`);
-                        hasPendingGames = (conference.id != 4);
-                        currentSimulatingConference = currentSimulatingConference + 1;
-                        continue;
+                    if (isFinished) {
+                        Swal.fire({
+                            icon: "success",
+                            title: `All ${conference.name} conference games are simulated!`,
+                            text: `Conference ${conference.name} is finished. Moving to the next.`,
+                        });
+                        console.log(`Conference ${conference.id} is finished. Moving to the next.`);
+                        break;
                     }
+
                     for (const round of rounds) {
                         console.log(`Simulating Round: ${round} for Conference ${conference.id}`);
 
@@ -317,6 +322,11 @@
 
                         let gameIds = roundResponse.data.schedule_ids;
 
+                        // Store failed games if not initialized
+                        if (!failedGames[conference.id]) {
+                            failedGames[conference.id] = new Set();
+                        }
+
                         while (gameIds.length > 0) {
                             for (const gameId of gameIds) {
                                 console.log(`Simulating Game ID: ${gameId}`);
@@ -324,29 +334,47 @@
                                 try {
                                     await simulateGameWithResults(gameId, conference.id);
                                     await new Promise((resolve) => setTimeout(resolve, 2000));
+
+                                    // Remove successfully simulated game from failedGames if it exists
+                                    failedGames[conference.id].delete(gameId);
                                 } catch (error) {
                                     console.error(`Error simulating Game ID: ${gameId}`, error);
+                                    failedGames[conference.id].add(gameId);
                                 }
                             }
 
-                            // **Re-fetch the remaining games to confirm they were simulated**
+                            // Re-fetch remaining unsimulated games
                             roundResponse = await axios.post(route("game.per.round"), {
                                 season_id: props.season_id,
                                 round: round,
                                 conference_id: conference.id,
                             });
 
-                            gameIds = roundResponse.data.schedule_ids; // Get any unsimulated games
+                            gameIds = roundResponse.data.schedule_ids;
 
                             if (gameIds.length > 0) {
                                 console.warn(`Retrying ${gameIds.length} failed simulations for Conference ${conference.id}`);
                             }
                         }
-
-
                     }
                 } catch (error) {
                     console.error("Error fetching or simulating games:", error);
+                }
+            }
+
+            // Retry failed games for this conference
+            if (failedGames[conference.id] && failedGames[conference.id].size > 0) {
+                console.warn(`Retrying ${failedGames[conference.id].size} failed games for Conference ${conference.id}`);
+
+                for (const gameId of [...failedGames[conference.id]]) {
+                    try {
+                        console.log(`Retrying Game ID: ${gameId}`);
+                        await simulateGameWithResults(gameId, conference.id);
+                        await new Promise((resolve) => setTimeout(resolve, 2000));
+                        failedGames[conference.id].delete(gameId); // Remove from failed list on success
+                    } catch (error) {
+                        console.error(`Retry failed for Game ID: ${gameId}`, error);
+                    }
                 }
             }
         }
@@ -359,7 +387,8 @@
             title: "All games simulated!",
             text: "All games in the remaining conferences have been completed.",
         });
-    };  
+    };
+
 
     const simulateGameWithResults = async (schedule_id,conference_id) => {
         try {

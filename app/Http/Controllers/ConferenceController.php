@@ -197,7 +197,6 @@ class ConferenceController extends Controller
         // Check if all non-final rounds are simulated
         $allRoundsSimulated = DB::table('schedule_view')
             ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
             ->whereNotIn('round', $excludedRounds)
             ->where('status', 1)
             ->doesntExist(); // Use doesntExist() to check if no records match
@@ -251,6 +250,13 @@ class ConferenceController extends Controller
         ->distinct('round')
         ->pluck('round'); // Get a list of distinct rounds
 
+        $isFullySimulated = !DB::table('schedule_view')
+        ->where('season_id', $seasonId)
+        ->where('conference_id', $conferenceId)
+        ->whereNotIn('round', $excludedRounds)
+        ->where('status', '!=', 2) // Check if any game is not yet simulated
+        ->exists(); // If no such games exist, the conference is fully simulated
+
         // if ($rounds->isEmpty()) {
         //     return response()->json([
         //         'error' => 'All conference rounds already simulated!.',
@@ -259,6 +265,7 @@ class ConferenceController extends Controller
 
         return response()->json([
             'rounds' => $rounds, // Include the list of rounds in the response
+            'is_finished' => $isFullySimulated,
         ]);
     }
     public function seasonsplayoffs(Request $request)
