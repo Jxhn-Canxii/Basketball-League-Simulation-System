@@ -416,7 +416,7 @@
             }
 
             for (const roundData of rounds) {
-                console.log(`Simulating Round: ${roundData.round}`);
+                console.log(`Simulating Round: ${roundData}`);
 
                 let roundResponse = await axios.post(route("game.per.round"), {
                     season_id: props.season_id,

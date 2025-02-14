@@ -157,19 +157,17 @@ class SimulateController extends Controller
                 $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
                 $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
 
-                // Adjust made shots for two-pointers based on accuracy
-                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
 
-                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
+                // Assign returned values to variables
+                $twoPointAttempts = $shotStats['two_point_attempts'];
+                $twoPointMade = $shotStats['two_point_made'];
 
-                // Adjust made shots for three-pointers based on accuracy
-                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
+                $threePointAttempts = $shotStats['three_point_attempts'];
+                $threePointMade = $shotStats['three_point_made'];
 
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
-                // Adjust made shots for free throws based on accuracy
-                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+                $freeThrowAttempts = $shotStats['free_throw_attempts'];
+                $freeThrowMade = $shotStats['free_throw_made'];
 
                 $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
@@ -214,23 +212,17 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
 
-                // Adjust attempts based on minutes, shooting ratings, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
 
-                // Adjust made shots for two-pointers based on accuracy
-                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+                // Assign returned values to variables
+                $twoPointAttempts = $shotStats['two_point_attempts'];
+                $twoPointMade = $shotStats['two_point_made'];
 
-                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
+                $threePointAttempts = $shotStats['three_point_attempts'];
+                $threePointMade = $shotStats['three_point_made'];
 
-                // Adjust made shots for three-pointers based on accuracy
-                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
-
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
-                // Adjust made shots for free throws based on accuracy
-                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+                $freeThrowAttempts = $shotStats['free_throw_attempts'];
+                $freeThrowMade = $shotStats['free_throw_made'];
                 
                 $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
@@ -610,23 +602,17 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
-                // Adjust attempts based on minutes, shooting ratings, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
 
-                // Adjust made shots for two-pointers based on accuracy
-                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+                // Assign returned values to variables
+                $twoPointAttempts = $shotStats['two_point_attempts'];
+                $twoPointMade = $shotStats['two_point_made'];
 
-                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
+                $threePointAttempts = $shotStats['three_point_attempts'];
+                $threePointMade = $shotStats['three_point_made'];
 
-                // Adjust made shots for three-pointers based on accuracy
-                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
-
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
-                // Adjust made shots for free throws based on accuracy
-                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+                $freeThrowAttempts = $shotStats['free_throw_attempts'];
+                $freeThrowMade = $shotStats['free_throw_made'];
                 
                 $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
@@ -671,23 +657,17 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
-                // Adjust attempts based on minutes, shooting ratings, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
 
-                // Adjust made shots for two-pointers based on accuracy
-                $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
-
-                $threePointAttempts = rand(0, floor($minutes * (0.5 * $player->three_point_rating / 100))) ?? 0;
-                $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact); // Reduce attempts based on defense
-
-                // Adjust made shots for three-pointers based on accuracy
-                $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
-
-                $freeThrowAttempts = rand(0, floor($minutes * (0.5 * $player->free_throw_rating / 100))) ?? 0;
-                $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact); // Reduce attempts based on defense
-                // Adjust made shots for free throws based on accuracy
-                $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+                // Assign returned values to variables
+                $twoPointAttempts = $shotStats['two_point_attempts'];
+                $twoPointMade = $shotStats['two_point_made'];
+            
+                $threePointAttempts = $shotStats['three_point_attempts'];
+                $threePointMade = $shotStats['three_point_made'];
+            
+                $freeThrowAttempts = $shotStats['free_throw_attempts'];
+                $freeThrowMade = $shotStats['free_throw_made'];
                               
 
                 $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
@@ -2157,6 +2137,66 @@ class SimulateController extends Controller
             throw new Exception("Failed to update season stats. Please check logs.".$e->getMessage());
         }
     }
+   
+
+    // Private function to calculate shot attempts
+    private function calculateShotAttempts($player, $minutes, $defensiveImpact)
+    {
+        // Define attempt weightings for positions
+        $positionWeights = [
+            'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
+            'SG' => ['two_point' => 0.4, 'three_point' => 0.6, 'free_throw' => 0.5],
+            'SF' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.5],
+            'PF' => ['two_point' => 0.7, 'three_point' => 0.3, 'free_throw' => 0.5],
+            'C'  => ['two_point' => 0.8, 'three_point' => 0.2, 'free_throw' => 0.4],
+        ];
+
+        // Define role multipliers (Star players shoot more, bench players shoot less)
+        $roleMultipliers = [
+            'star player' => 1.2,
+            'starter' => 1.0,
+            'role player' => 0.8,
+            'bench' => 0.6
+        ];
+
+        // Determine if player has a hybrid position
+        $positions = explode("/", $player->position);
+        $primaryPosition = $positions[0];
+        $secondaryPosition = $positions[1] ?? $primaryPosition;
+
+        // Calculate position-based shot distribution
+        $positionFactor = [
+            'two_point' => ($positionWeights[$primaryPosition]['two_point'] + $positionWeights[$secondaryPosition]['two_point']) / 2,
+            'three_point' => ($positionWeights[$primaryPosition]['three_point'] + $positionWeights[$secondaryPosition]['three_point']) / 2,
+            'free_throw' => ($positionWeights[$primaryPosition]['free_throw'] + $positionWeights[$secondaryPosition]['free_throw']) / 2
+        ];
+
+        // Get player's role factor
+        $roleFactor = $roleMultipliers[$player->role] ?? 1.0;
+
+        // Calculate shot attempts
+        $twoPointAttempts = rand(0, floor($minutes * ($positionFactor['two_point'] * $roleFactor * $player->two_point_rating / 100))) ?? 0;
+        $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+        $twoPointMade = rand(0, floor($adjustedTwoPointAttempts * ($player->two_point_rating / 100)));
+
+        $threePointAttempts = rand(0, floor($minutes * ($positionFactor['three_point'] * $roleFactor * $player->three_point_rating / 100))) ?? 0;
+        $adjustedThreePointAttempts = max(0, floor($threePointAttempts) - $defensiveImpact);
+        $threePointMade = rand(0, floor($adjustedThreePointAttempts * ($player->three_point_rating / 100)));
+
+        $freeThrowAttempts = rand(0, floor($minutes * ($positionFactor['free_throw'] * $roleFactor * $player->free_throw_rating / 100))) ?? 0;
+        $adjustedFreeThrowAttempts = max(0, floor($freeThrowAttempts) - $defensiveImpact);
+        $freeThrowMade = rand(0, floor($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100)));
+
+        return [
+            'two_point_attempts' => $twoPointAttempts,
+            'two_point_made' => $twoPointMade,
+            'three_point_attempts' => $threePointAttempts,
+            'three_point_made' => $threePointMade,
+            'free_throw_attempts' => $freeThrowAttempts,
+            'free_throw_made' => $freeThrowMade,
+        ];
+    }
+
     private function getLatestSeasonId()
     {
         // Fetch the latest season ID based on descending order of IDs
