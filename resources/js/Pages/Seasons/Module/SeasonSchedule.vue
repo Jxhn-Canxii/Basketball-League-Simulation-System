@@ -18,7 +18,7 @@
                 :class="isHide ? 'opacity-50' : ''"
                 class="text-indigo-600 bg-orange-400 shadow rounded-full p-2 font-bold text-md text-nowrap hover:text-indigo-900"
             >
-                Simulate All Season
+                <span class="text-end">{{ isHide ? 'Getting results...' : 'Simulate All Season' }}</span>
             </button>
         </div>
         <div v-else>
@@ -279,13 +279,13 @@
         let failedGames = {}; // Store failed games by conference
 
         for (const conference of props.season_data.conferences) {
-            if (conference.id === props.conference_id) {
-                startSimulating = true;
-            }
+            // if (conference.id === props.conference_id) {
+            //     startSimulating = true;
+            // }
 
-            if (!startSimulating) {
-                continue;
-            }
+            // if (!startSimulating) {
+            //     continue;
+            // }
 
             console.log(`Checking pending games for conference: ${conference.name}`);
 
@@ -307,7 +307,9 @@
                             title: `All ${conference.name} conference games are simulated!`,
                             text: `Conference ${conference.name} is finished. Moving to the next.`,
                         });
+                        isHide.value = true;
                         console.log(`Conference ${conference.id} is finished. Moving to the next.`);
+                        emit('transaction_id',conference.id);
                         break;
                     }
 
@@ -392,6 +394,8 @@
 
     const simulateGameWithResults = async (schedule_id,conference_id) => {
         try {
+
+            isHide.value = true;
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id,
             });
