@@ -444,7 +444,7 @@
                     // Re-fetch remaining unsimulated games
                     roundResponse = await axios.post(route("game.per.round"), {
                         season_id: props.season_id,
-                        round: roundData.round,
+                        round: roundData,
                     });
 
                     gameIds = roundResponse.data.schedule_ids;
