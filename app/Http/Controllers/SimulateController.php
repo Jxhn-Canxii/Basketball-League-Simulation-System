@@ -157,7 +157,7 @@ class SimulateController extends Controller
                 $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
                 $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
 
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,true);
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
 
                 // Assign returned values to variables
                 $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -212,7 +212,7 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
 
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact, true);
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
 
                 // Assign returned values to variables
                 $twoPointAttempts = $shotStats['two_point_attempts'];

@@ -256,7 +256,7 @@ class TradeController extends Controller
 
         DB::table('seasons')
         ->where('id',  $latestSeasonId)
-        ->update(['status' => config('timeline.player_trade')]);
+        ->update(['status' => config('timeline.off_season_trade')]);
 
         return response()->json(['message' => 'Trade window ended!']);
     }
