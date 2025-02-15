@@ -2140,7 +2140,7 @@ class SimulateController extends Controller
    
 
     // Private function to calculate shot attempts
-    private function calculateShotAttempts($player, $minutes, $defensiveImpact)
+    private function calculateShotAttemptsV1($player, $minutes, $defensiveImpact)
     {
         // Define attempt weightings for positions
         $positionWeights = [
@@ -2196,7 +2196,59 @@ class SimulateController extends Controller
             'free_throw_made' => $freeThrowMade,
         ];
     }
-
+    private function calculateShotAttempts($player, $minutes, $defensiveImpact)
+    {
+        $positionWeights = [
+            'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
+            'SG' => ['two_point' => 0.4, 'three_point' => 0.6, 'free_throw' => 0.5],
+            'SF' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.5],
+            'PF' => ['two_point' => 0.7, 'three_point' => 0.3, 'free_throw' => 0.5],
+            'C'  => ['two_point' => 0.8, 'three_point' => 0.2, 'free_throw' => 0.4],
+        ];
+        
+        $roleMultipliers = [
+            'star player' => 1.2,
+            'starter' => 1.0,
+            'role player' => 0.8,
+            'bench' => 0.6
+        ];
+        
+        $positions = explode("/", $player->position);
+        $primaryPosition = $positions[0];
+        $secondaryPosition = $positions[1] ?? $primaryPosition;
+        
+        $positionFactor = [
+            'two_point' => ($positionWeights[$primaryPosition]['two_point'] + $positionWeights[$secondaryPosition]['two_point']) / 2,
+            'three_point' => ($positionWeights[$primaryPosition]['three_point'] + $positionWeights[$secondaryPosition]['three_point']) / 2,
+            'free_throw' => ($positionWeights[$primaryPosition]['free_throw'] + $positionWeights[$secondaryPosition]['free_throw']) / 2
+        ];
+        
+        $roleFactor = $roleMultipliers[$player->role] ?? 1.0;
+        
+        $baseAttempts = max(1, round($minutes * 0.8)); // Base attempts scaled by playing time
+        
+        $twoPointAttempts = round($baseAttempts * $positionFactor['two_point'] * $roleFactor);
+        $threePointAttempts = round($baseAttempts * $positionFactor['three_point'] * $roleFactor);
+        $freeThrowAttempts = round($baseAttempts * $positionFactor['free_throw'] * $roleFactor * 0.5); // FT attempts are usually lower
+        
+        $adjustedTwoPointAttempts = max(0, $twoPointAttempts - $defensiveImpact);
+        $adjustedThreePointAttempts = max(0, $threePointAttempts - $defensiveImpact);
+        $adjustedFreeThrowAttempts = max(0, $freeThrowAttempts - ($defensiveImpact * 0.5));
+        
+        $twoPointMade = round($adjustedTwoPointAttempts * ($player->two_point_rating / 100));
+        $threePointMade = round($adjustedThreePointAttempts * ($player->three_point_rating / 100));
+        $freeThrowMade = round($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100));
+        
+        return [
+            'two_point_attempts' => $adjustedTwoPointAttempts,
+            'two_point_made' => $twoPointMade,
+            'three_point_attempts' => $adjustedThreePointAttempts,
+            'three_point_made' => $threePointMade,
+            'free_throw_attempts' => $adjustedFreeThrowAttempts,
+            'free_throw_made' => $freeThrowMade,
+        ];
+    }
+    
     private function getLatestSeasonId()
     {
         // Fetch the latest season ID based on descending order of IDs
