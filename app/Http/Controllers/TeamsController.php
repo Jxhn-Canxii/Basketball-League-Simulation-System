@@ -314,7 +314,7 @@ class TeamsController extends Controller
                 $query->where('transactions.from_team_id', '=', $teamId) // Team is the source of the transaction
                     ->orWhere('transactions.to_team_id', '=', $teamId); // Team is the recipient of the transaction
             })
-            ->where('transactions.status','!=','signed')
+            ->where('transactions.status','!=','transfer')
             ->orderBy('transactions.season_id', 'desc')  // Sort by season_id in descending order
             ->orderBy('transactions.id', 'desc')  // Sort by id in descending order as secondary sorting
             ->offset($offset)
