@@ -1997,8 +1997,8 @@ class SimulateController extends Controller
     
                 // Assign roles
                 $roles = [
-                    'star player' => 1,
-                    'starter' => 4,
+                    'star player' => 3,
+                    'starter' => 2,
                     'role player' => 5,
                     'bench' => 5,
                 ];
@@ -2187,6 +2187,10 @@ class SimulateController extends Controller
         $twoPointMade = round($adjustedTwoPointAttempts * $twoPointAccuracy);
         $threePointMade = round($adjustedThreePointAttempts * $threePointAccuracy);
         $freeThrowMade = round($adjustedFreeThrowAttempts * $freeThrowAccuracy);
+
+        $twoPointMade = rand(0, $twoPointMade);
+        $threePointMade = rand(0, $threePointMade);
+        $freeThrowMade = rand(0, $threePointMade);
         
         return [
             'two_point_attempts' => $adjustedTwoPointAttempts,

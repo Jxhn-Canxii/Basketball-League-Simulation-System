@@ -1,0 +1,22 @@
+CREATE TABLE coaches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    age INT NOT NULL,
+    nationality VARCHAR(100),
+    team_id INT DEFAULT NULL,
+    coaching_style ENUM('defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo') NOT NULL,
+    experience_years INT NOT NULL,
+    offensive_rating INT CHECK (offensive_rating BETWEEN 1 AND 100),
+    defensive_rating INT CHECK (defensive_rating BETWEEN 1 AND 100),
+    development_rating INT CHECK (development_rating BETWEEN 1 AND 100),
+    leadership_rating INT CHECK (leadership_rating BETWEEN 1 AND 100),
+    strategy_rating INT CHECK (strategy_rating BETWEEN 1 AND 100),
+    work_ethic_rating INT CHECK (work_ethic_rating BETWEEN 1 AND 100),
+    preferred_team_composition JSON NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE,
+    contract_years INT DEFAULT 0,
+    contract_expires_at DATE DEFAULT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL
+);
