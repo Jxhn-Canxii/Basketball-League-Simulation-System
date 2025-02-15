@@ -113,20 +113,20 @@ class SeasonsController extends Controller
             ->value('status');
 
         // Check the status and return the appropriate value
-        if ($lastSeasonStatus == 11) {
+        if ($lastSeasonStatus == config('timeline.finals')) {
             return 1; //show update awards update to 9
-        } elseif ($lastSeasonStatus == 12) {
+        } elseif ($lastSeasonStatus == config('timeline.awards')) {
             return 2; //update player status update to 10
-        } elseif ($lastSeasonStatus == 13) {
-            return 3; //player rookie drafting update to 11
+        } elseif ($lastSeasonStatus == config('timeline.player_update')) {
+            return 3; //player rookie drafting update
         }
-        elseif ($lastSeasonStatus == 14) {
+        elseif ($lastSeasonStatus == config('timeline.draft')) {
             return 4; //player signing
         }
-        elseif ($lastSeasonStatus == 15) {
+        elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
             return 5; // player trade
         }
-        elseif ($lastSeasonStatus == 16) {
+        elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 6; // new season
         }
         // Optionally, you can return a default value if no status matches
