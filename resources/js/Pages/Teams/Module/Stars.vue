@@ -101,23 +101,24 @@
                         </p>
                     </td>
                     <td
+                        :title="player.draft_status == 'Special Draft' || player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status"
                         class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
                     >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
+                        <p class="text-gray-900 whitespace-nowrap truncate uppercase font-bold">
                             {{ player.player_name }}
                         </p>
                     </td>
                     <td
                         class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
                     >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
+                        <p class="text-gray-900 whitespace-nowrap truncate uppercase">
                             {{ player.current_role }}
                         </p>
                     </td>
                     <td
                         class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
                     >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
+                        <p class="text-gray-900 whitespace-nowrap truncate uppercase">
                             {{ player.current_team }}
                         </p>
                     </td>
@@ -167,14 +168,14 @@
                         class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
                     >
                         <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.per }}
+                            {{ parseFloat(player.per ?? 0).toFixed(2) }}
                         </p>
                     </td>
                     <td
                         class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
                     >
                         <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.eff }}
+                            {{ parseFloat(player.eff ?? 0).toFixed(2) }}
                         </p>
                     </td>
                 </tr>

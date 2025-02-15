@@ -1804,6 +1804,8 @@ class PlayersController extends Controller
                 's.id AS season_id',
                 's.name AS season_name',
                 'p.id AS player_id',
+                'p.draft_status AS draft_status',
+                'p.draft_id AS draft_id',
                 'p.name AS player_name',
                 'p.role AS current_role',
                 'pss.role AS season_role',
