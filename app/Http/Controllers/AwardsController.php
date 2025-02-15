@@ -1046,12 +1046,12 @@ class AwardsController extends Controller
             $this->insertAward($mostImprovedPlayer, 'Most Improved Player', 'Player with the highest increase in average points per game from the previous season', $latestSeasonId);
 
             // Insert the Rookie of the Season award
-            if ($rookieOfTheYear) {
+            if ($rookieOfTheYear &&  $latestSeasonId > 1) {
                 $this->insertAward($rookieOfTheYear, 'Rookie of the Season', 'Best rookie player of the season', $latestSeasonId);
             }
 
             // Insert the 6th Man of the Year award
-            if ($sixthManOfTheYear) {
+            if ($sixthManOfTheYear &&  $latestSeasonId > 1) {
                 $this->insertAward($sixthManOfTheYear, '6th Man of the Year', 'Best player coming off the bench', $latestSeasonId);
             }
 
