@@ -26,8 +26,8 @@
                     <tr v-for="(transaction, index) in team_history.transactions" :key="transaction.id" @click.enter.prevent="showPlayerProfileModal = transaction.player_id" class="hover:bg-gray-200">
                         <td class="px-2 py-3 whitespace-nowrap border">Season {{ transaction.season_id }}</td>
                         <td class="px-2 py-3 whitespace-nowrap border">{{ transaction.player_name }}</td>
-                        <td class="px-2 py-3 whitespace-nowrap border">{{ transaction.from_team_name ?? '-' }}</td>
-                        <td class="px-2 py-3 whitespace-nowrap border">{{ transaction.to_team_name ?? 'Free Agent' }}</td>
+                        <td class="px-2 py-3 whitespace-nowrap border" :class="transaction.from_team_name == transaction.to_team_name ? 'text-center' : ''" :colspan="transaction.from_team_name == transaction.to_team_name ? 2 : 1">{{ transaction.from_team_name ?? 'Free Agent' }}</td>
+                        <td class="px-2 py-3 whitespace-nowrap border" :hidden="transaction.from_team_name == transaction.to_team_name">{{ transaction.to_team_name ?? 'Free Agent' }}</td>
                         <td class="px-2 py-3 whitespace-nowrap border">{{ transaction.details }}</td>
                         <td class="px-2 py-3 whitespace-nowrap border">{{ transaction.status }}</td>
                     </tr>
