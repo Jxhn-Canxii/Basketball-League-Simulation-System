@@ -189,6 +189,7 @@ class ConferenceController extends Controller
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
             ->whereNotIn('round', $excludedRounds)
+            ->orderBy('status','desc')
             ->skip($offset)
             ->take($itemsPerPage)
             ->get()
