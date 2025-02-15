@@ -368,10 +368,10 @@ watch(
     }
 );
 
-onMounted(() => {
-    seasonsDropdown();
-    fetchTeamInfo(props.team_id);
-    fetchTeamRoster(props.team_id);
+onMounted(async () => {
+    await seasonsDropdown();
+    await fetchTeamInfo(props.team_id);
+    await fetchTeamRoster(props.team_id);
 });
 
 const fetchTeamInfo = async (id) => {
@@ -403,7 +403,8 @@ const seasonsDropdown = async () => {
             season_id: 0,
         });
         seasons.value = response.data;
-        season_id.value = seasons?.value[0].season_id ?? 0;
+        console.log(response.data[0].season_id);
+        season_id.value = response.data[0].season_id ?? 0;
     } catch (error) {
         console.error("Error fetching team info:", error);
     }
