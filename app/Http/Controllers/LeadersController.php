@@ -207,102 +207,25 @@ class LeadersController extends Controller
 
     public function getSingleStatsLeaders()
     {
-        // Fetch top players for each stat category from all_time_top_stats
-        // Highest Points in a Single Game
-        $topSinglePoints = DB::table('all_time_top_stats')
-            ->select(
-                'player_id',
-                'player_name',
-                'game_id',
-                'team1.name as team_name', // Player's team name
-                'team2.name as opponent_team_name', // Opponent team name
-                DB::raw('MAX(stat_value) as highest_points'),
-                'season_id'
-            )
-            ->join('teams as team1', 'team1.id', '=', 'all_time_top_stats.team_id') // Join for player team_name
-            ->join('teams as team2', 'team2.id', '=', 'all_time_top_stats.opponent_id') // Join for opponent team_name using opponent_id
-            ->where('stat_category', 'points')
-            ->groupBy('player_id', 'player_name', 'game_id', 'team1.name', 'team2.name', 'season_id')
-            ->orderByDesc('highest_points')
-            ->limit(10)
-            ->get();
 
+        $topSinglePoints = DB::table('top_10_single_game_points')
+            ->get();
         // Highest Rebounds in a Single Game
-        $topSingleRebounds = DB::table('all_time_top_stats')
-            ->select(
-                'player_id',
-                'player_name',
-                'game_id',
-                'team1.name as team_name',
-                'team2.name as opponent_team_name',
-                DB::raw('MAX(stat_value) as highest_rebounds'),
-                'season_id'
-            )
-            ->join('teams as team1', 'team1.id', '=', 'all_time_top_stats.team_id')
-            ->join('teams as team2', 'team2.id', '=', 'all_time_top_stats.opponent_id')
-            ->where('stat_category', 'rebounds')
-            ->groupBy('player_id', 'player_name', 'game_id', 'team1.name', 'team2.name', 'season_id')
-            ->orderByDesc('highest_rebounds')
-            ->limit(10)
+        $topSingleRebounds = DB::table('top_10_single_game_rebounds')
             ->get();
 
         // Highest Assists in a Single Game
-        $topSingleAssists = DB::table('all_time_top_stats')
-            ->select(
-                'player_id',
-                'player_name',
-                'game_id',
-                'team1.name as team_name',
-                'team2.name as opponent_team_name',
-                DB::raw('MAX(stat_value) as highest_assists'),
-                'season_id'
-            )
-            ->join('teams as team1', 'team1.id', '=', 'all_time_top_stats.team_id')
-            ->join('teams as team2', 'team2.id', '=', 'all_time_top_stats.opponent_id')
-            ->where('stat_category', 'assists')
-            ->groupBy('player_id', 'player_name', 'game_id', 'team1.name', 'team2.name', 'season_id')
-            ->orderByDesc('highest_assists')
-            ->limit(10)
+        $topSingleAssists = DB::table('top_10_single_game_assists')
             ->get();
-
+        
         // Highest Blocks in a Single Game
-        $topSingleBlocks = DB::table('all_time_top_stats')
-            ->select(
-                'player_id',
-                'player_name',
-                'game_id',
-                'team1.name as team_name',
-                'team2.name as opponent_team_name',
-                DB::raw('MAX(stat_value) as highest_blocks'),
-                'season_id'
-            )
-            ->join('teams as team1', 'team1.id', '=', 'all_time_top_stats.team_id')
-            ->join('teams as team2', 'team2.id', '=', 'all_time_top_stats.opponent_id')
-            ->where('stat_category', 'blocks')
-            ->groupBy('player_id', 'player_name', 'game_id', 'team1.name', 'team2.name', 'season_id')
-            ->orderByDesc('highest_blocks')
-            ->limit(10)
+        $topSingleBlocks = DB::table('top_10_single_game_blocks')
             ->get();
-
+    
         // Highest Steals in a Single Game
-        $topSingleSteals = DB::table('all_time_top_stats')
-            ->select(
-                'player_id',
-                'player_name',
-                'game_id',
-                'team1.name as team_name',
-                'team2.name as opponent_team_name',
-                DB::raw('MAX(stat_value) as highest_steals'),
-                'season_id'
-            )
-            ->join('teams as team1', 'team1.id', '=', 'all_time_top_stats.team_id')
-            ->join('teams as team2', 'team2.id', '=', 'all_time_top_stats.opponent_id')
-            ->where('stat_category', 'steals')
-            ->groupBy('player_id', 'player_name', 'game_id', 'team1.name', 'team2.name', 'season_id')
-            ->orderByDesc('highest_steals')
-            ->limit(10)
+        $topSingleSteals = DB::table('top_10_single_game_steals')
             ->get();
-
+            
         // Return data as a JSON response
         return response()->json([
             'topSinglePoints' => $topSinglePoints,

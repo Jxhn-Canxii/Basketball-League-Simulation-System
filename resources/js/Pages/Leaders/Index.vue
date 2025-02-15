@@ -15,7 +15,7 @@
                     <i class="fa fa-reload"></i> Reload Data
                 </button>
             </div>
-            <div class="grid grid-cols-5 gap-6">
+            <div class="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-5 gap-6">
                 <!-- Points Table -->
                 <div class="bg-white inline-block min-w-full overflow-hidden rounded shadow p-2 mt-4">
                     <h3 class="text-md font-semibold text-gray-800">Average Points Leaders</h3>
@@ -306,12 +306,12 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.team_name }} vs {{ player.opponent_team_name }} <sup>{{ player.season_id }}</sup></span>
+                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-600 text-white font-bold text-md p-2">
-                                        {{ player.highest_points }}
+                                        {{ player.points }}
                                     </div>
                                 </div>
                             </li>
@@ -333,12 +333,12 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.team_name }} vs {{ player.opponent_team_name }} <sup>{{ player.season_id }}</sup></span>
+                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-600 text-white font-bold text-md p-2">
-                                        {{ player.highest_assists }}
+                                        {{ player.assists }}
                                     </div>
                                 </div>
                             </li>
@@ -360,12 +360,12 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.team_name }} vs {{ player.opponent_team_name }} <sup>{{ player.season_id }}</sup></span>
+                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-600 text-white font-bold text-md p-2">
-                                        {{ player.highest_rebounds }}
+                                        {{ player.rebounds }}
                                     </div>
                                 </div>
                             </li>
@@ -387,12 +387,12 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.team_name }} vs {{ player.opponent_team_name }} <sup>{{ player.season_id }}</sup></span>
+                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-600 text-white font-bold text-md p-2">
-                                        {{ player.highest_steals }}
+                                        {{ player.steals }}
                                     </div>
                                 </div>
                             </li>
@@ -414,12 +414,12 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.team_name }} vs {{ player.opponent_team_name }} <sup>{{ player.season_id }}</sup></span>
+                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
                                     <div class="flex items-center justify-center w-10 h-10 rounded-full bg-yellow-600 text-white font-bold text-md p-2">
-                                        {{ player.highest_blocks }}
+                                        {{ player.blocks }}
                                     </div>
                                 </div>
                             </li>
