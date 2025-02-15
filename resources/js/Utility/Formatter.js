@@ -20,7 +20,7 @@ export const eliminationFormatter = (type) => {
 };
 export const roundNameFormatter = (round) => {
     if (typeof round === 'number') {
-        return `Round # ${round - 1}`;
+        return `Round # ${round}`;
     }
 
     switch (round) {
