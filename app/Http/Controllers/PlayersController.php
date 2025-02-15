@@ -551,6 +551,9 @@ class PlayersController extends Controller
         $selectedArchetype = $attributes['archetype'];
         $position = $attributes['position']; 
         $shootingRating = $attributes['shooting_rating'];
+        $twoPointRating = $attributes['two_point_rating'];
+        $twoPointRating = $attributes['three_point_rating'];
+        $freeThrowRating = $attributes['free_throw_rating'];
         $defenseRating = $attributes['defense_rating'];
         $passingRating = $attributes['passing_rating'];
         $reboundingRating = $attributes['rebounding_rating'];
@@ -607,6 +610,9 @@ class PlayersController extends Controller
             'position' => $position,
             'type' => $selectedArchetype, 
             'shooting_rating' => $shootingRating,
+            'two_point_rating' => $twoPointRating,
+            'three_point_rating' => $twoPointRating,
+            'free_throw_rating' => $freeThrowRating,
             'defense_rating' => $defenseRating,
             'passing_rating' => $passingRating,
             'rebounding_rating' => $reboundingRating,
