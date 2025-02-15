@@ -1781,6 +1781,83 @@ class PlayersController extends Controller
         return response()->json($sortedPlayers->values());
     }
     
+    public function getstarplayersbyteam(Request $request)
+    {
+        // Validate the request
+        $request->validate([
+            'team_id' => 'required|exists:teams,id',
+        ]);
+    
+        $teamId = $request->team_id;
+    
+       
+        // Query to fetch star players for the given team across all seasons with all stats
+        $starPlayers = DB::table('player_season_stats AS pss')
+            ->join('players AS p', 'pss.player_id', '=', 'p.id')
+            ->join('seasons AS s', 'pss.season_id', '=', 's.id')
+            ->join('teams AS ct', 'p.team_id', '=', 'ct.id') 
+            ->join('teams AS t', 'pss.team_id', '=', 't.id') // Joining teams to get current team name
+            ->where('pss.team_id', $teamId)
+            ->where('pss.role', 'star player') // Filtering only star players
+            ->orderByDesc('pss.season_id') // Sort by latest season
+            ->select([
+                's.id AS season_id',
+                's.name AS season_name',
+                'p.id AS player_id',
+                'p.name AS player_name',
+                'p.role AS current_role',
+                'pss.role AS season_role',
+                'ct.name AS current_team',
+                't.name AS season_team',
+                
+                // Player Season Stats
+                'pss.avg_minutes_per_game',
+                'pss.avg_points_per_game',
+                'pss.avg_rebounds_per_game',
+                'pss.avg_assists_per_game',
+                'pss.avg_steals_per_game',
+                'pss.avg_blocks_per_game',
+                'pss.avg_turnovers_per_game',
+                'pss.avg_fouls_per_game',
+                'pss.total_field_goals_made',
+                'pss.total_field_goal_attempts',
+                'pss.total_two_pointers_made',
+                'pss.total_two_point_attempts',
+                'pss.total_three_pointers_made',
+                'pss.total_three_point_attempts',
+                'pss.total_free_throws_made',
+                'pss.total_free_throw_attempts',
+                'pss.total_points',
+                'pss.total_rebounds',
+                'pss.total_assists',
+                'pss.total_steals',
+                'pss.total_blocks',
+                'pss.total_turnovers',
+                'pss.total_fouls',
+                'pss.total_minutes_played',
+                'pss.total_games_played',
+                'pss.total_games',
+                'pss.bpg_game_leader',
+                'pss.points_game_leader',
+                'pss.rebounds_game_leader',
+                'pss.assists_game_leader',
+                'pss.steals_game_leader',
+                'pss.blocks_game_leader',
+                'pss.per',
+                'pss.ts_percent',
+                'pss.eff',
+                'pss.field_goal_percentage',
+                'pss.two_point_percentage',
+                'pss.three_point_percentage',
+                'pss.free_throw_percentage',
+                'pss.created_at',
+                'pss.updated_at',
+            ])
+            ->get();
+    
+        return response()->json($starPlayers);
+    }
+    
     public function getplayertransactions(Request $request)
     {
         // Retrieve the player_id from the request

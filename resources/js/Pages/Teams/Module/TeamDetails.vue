@@ -91,6 +91,12 @@
                     Team Transactions
                 </button>
                 <button
+                    :class="['px-4 py-2', currentTab === 'stars' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    @click="currentTab = 'stars'"
+                >
+                    Stars
+                </button>
+                <button
                     :class="['px-4 py-2', currentTab === 'timeline' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                     @click="currentTab = 'timeline'"
                 >
@@ -109,6 +115,7 @@
                 <TeamRoster :key="props.team_id" v-if="currentTab === 'roster'" :team_id="props.team_id" />
                 <TeamTransactions :key="props.team_id" v-if="currentTab === 'transactions'" :team_id="props.team_id" />
                 <Top10Player :key="props.team_id" v-if="currentTab === 'legend'" :team_id="props.team_id" />
+                <Stars :key="props.team_id" v-if="currentTab === 'stars'" :team_id="props.team_id" />
                 <SeasonTimeLine :key="props.team_id" v-if="currentTab === 'timeline'" :teamId="props.team_id" />
             </div>
         </Modal>
@@ -125,6 +132,7 @@ import TeamRoster from "./TeamRoster.vue";
 import Top10Player from "./Top10Player.vue";
 import SeasonTimeLine from "@/Pages/Analytics/Module/SeasonTimeLine.vue";
 import TeamTransactions from "./TeamTransactions.vue";
+import Stars from "./Stars.vue";
 
 const isTeamModalOpen = ref(false);
 const currentTab  = ref('info');
