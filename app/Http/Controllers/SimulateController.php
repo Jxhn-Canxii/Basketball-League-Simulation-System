@@ -2196,7 +2196,7 @@ class SimulateController extends Controller
             'free_throw_made' => $freeThrowMade,
         ];
     }
-    private function calculateShotAttempts($player, $minutes, $defensiveImpact)
+    private function calculateShotAttempts($player, $minutes, $defensiveImpact, $isClutchTime = false)
     {
         $positionWeights = [
             'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
@@ -2224,20 +2224,27 @@ class SimulateController extends Controller
         ];
         
         $roleFactor = $roleMultipliers[$player->role] ?? 1.0;
+        $fatigueFactor = max(0.5, (100 - $player->fatigue) / 100);
+        $injuryFactor = $player->is_injured ? 0.3 : 1.0;
+        $clutchBoost = ($isClutchTime && $player->clutch_rating > 80) ? 1.2 : 1.0;
         
-        $baseAttempts = max(1, round($minutes * 0.8)); // Base attempts scaled by playing time
+        $baseAttempts = max(1, round($minutes * 0.8));
         
-        $twoPointAttempts = round($baseAttempts * $positionFactor['two_point'] * $roleFactor);
-        $threePointAttempts = round($baseAttempts * $positionFactor['three_point'] * $roleFactor);
-        $freeThrowAttempts = round($baseAttempts * $positionFactor['free_throw'] * $roleFactor * 0.5); // FT attempts are usually lower
+        $twoPointAttempts = round($baseAttempts * $positionFactor['two_point'] * $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost);
+        $threePointAttempts = round($baseAttempts * $positionFactor['three_point'] * $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost);
+        $freeThrowAttempts = round(($twoPointAttempts * 0.3 + $threePointAttempts * 0.1) * ($player->strength_rating / 100));
         
         $adjustedTwoPointAttempts = max(0, $twoPointAttempts - $defensiveImpact);
         $adjustedThreePointAttempts = max(0, $threePointAttempts - $defensiveImpact);
         $adjustedFreeThrowAttempts = max(0, $freeThrowAttempts - ($defensiveImpact * 0.5));
         
-        $twoPointMade = round($adjustedTwoPointAttempts * ($player->two_point_rating / 100));
-        $threePointMade = round($adjustedThreePointAttempts * ($player->three_point_rating / 100));
-        $freeThrowMade = round($adjustedFreeThrowAttempts * ($player->free_throw_rating / 100));
+        $twoPointAccuracy = ($player->two_point_rating / 100) * ($player->basketball_iq_rating / 100) * $fatigueFactor * $injuryFactor;
+        $threePointAccuracy = ($player->three_point_rating / 100) * ($player->basketball_iq_rating / 100) * $fatigueFactor * $injuryFactor;
+        $freeThrowAccuracy = ($player->free_throw_rating / 100) * ($player->work_ethic_rating / 100) * $fatigueFactor * $injuryFactor;
+        
+        $twoPointMade = round($adjustedTwoPointAttempts * $twoPointAccuracy);
+        $threePointMade = round($adjustedThreePointAttempts * $threePointAccuracy);
+        $freeThrowMade = round($adjustedFreeThrowAttempts * $freeThrowAccuracy);
         
         return [
             'two_point_attempts' => $adjustedTwoPointAttempts,
