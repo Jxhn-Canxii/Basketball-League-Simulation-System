@@ -249,7 +249,9 @@ class ConferenceController extends Controller
         ->whereNotIn('round', $excludedRounds)
         ->where('status', 1)  // Filter to include only rounds with status = 1
         ->distinct('round')
+        ->orderBy('round', 'asc')  // Order by round in ascending order
         ->pluck('round'); // Get a list of distinct rounds
+
 
         $isFullySimulated = !DB::table('schedule_view')
         ->where('season_id', $seasonId)
