@@ -522,123 +522,123 @@ class PlayersController extends Controller
             'player' => $player,
         ]);
     }
-    public function addfreeagentplayerV1(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:players,name',
-            'address' => 'required|string|max:255',
-            'country' => 'required|string',
-        ]);
+    // public function addfreeagentplayerV1(Request $request)
+    // {
+    //     $request->validate([
+    //         'name' => 'required|string|max:255|unique:players,name',
+    //         'address' => 'required|string|max:255',
+    //         'country' => 'required|string',
+    //     ]);
     
-        $latestSeasonId = DB::table('seasons')->max('id');
-        $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
+    //     $latestSeasonId = DB::table('seasons')->max('id');
+    //     $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
     
-        // Check if player already exists
-        $existingPlayer = Player::where('name', $request->name)->first();
-        if ($existingPlayer) {
-            return response()->json([
-                'error' => true,
-                'message' => 'A player with this name already exists in another team.',
-            ], 400);
-        }
+    //     // Check if player already exists
+    //     $existingPlayer = Player::where('name', $request->name)->first();
+    //     if ($existingPlayer) {
+    //         return response()->json([
+    //             'error' => true,
+    //             'message' => 'A player with this name already exists in another team.',
+    //         ], 400);
+    //     }
     
-        // Generate player attributes
-        $age = rand(18, 25);
-        $contractYears = rand(1, 5); // 1 to 5-year contract
-        $attributes = $this->getRandomArchetypeAndAttributes();
+    //     // Generate player attributes
+    //     $age = rand(18, 25);
+    //     $contractYears = rand(1, 5); // 1 to 5-year contract
+    //     $attributes = $this->getRandomArchetypeAndAttributes();
        
-        // Assign variables properly
-        $selectedArchetype = $attributes['archetype'];
+    //     // Assign variables properly
+    //     $selectedArchetype = $attributes['archetype'];
 
-        $position = $attributes['position']; 
-        $shootingRating = $attributes['shooting_rating'];
-        $twoPointRating = $attributes['two_point_rating'];
-        $twoPointRating = $attributes['three_point_rating'];
-        $freeThrowRating = $attributes['free_throw_rating'];
-        $defenseRating = $attributes['defense_rating'];
-        $passingRating = $attributes['passing_rating'];
-        $reboundingRating = $attributes['rebounding_rating'];
-        $athleticism = $attributes['athleticism_rating'];
-        $basketballIq = $attributes['basketball_iq_rating'];
-        $strength = $attributes['strength_rating'];
-        $stamina = $attributes['stamina_rating'];
-        $clutch = $attributes['clutch_rating'];
-        $leadership = $attributes['leadership_rating'];
-        $workEthic = $attributes['work_ethic_rating'];
+    //     $position = $attributes['position']; 
+    //     $shootingRating = $attributes['shooting_rating'];
+    //     $twoPointRating = $attributes['two_point_rating'];
+    //     $twoPointRating = $attributes['three_point_rating'];
+    //     $freeThrowRating = $attributes['free_throw_rating'];
+    //     $defenseRating = $attributes['defense_rating'];
+    //     $passingRating = $attributes['passing_rating'];
+    //     $reboundingRating = $attributes['rebounding_rating'];
+    //     $athleticism = $attributes['athleticism_rating'];
+    //     $basketballIq = $attributes['basketball_iq_rating'];
+    //     $strength = $attributes['strength_rating'];
+    //     $stamina = $attributes['stamina_rating'];
+    //     $clutch = $attributes['clutch_rating'];
+    //     $leadership = $attributes['leadership_rating'];
+    //     $workEthic = $attributes['work_ethic_rating'];
     
-        // Injury calculation (30% chance)
-        $injuryPercentage = (rand(1, 100) <= 30) ? rand(50, 100) : 0;
-        $healthRatings = 99 - $injuryPercentage;
+    //     // Injury calculation (30% chance)
+    //     $injuryPercentage = (rand(1, 100) <= 30) ? rand(50, 100) : 0;
+    //     $healthRatings = 99 - $injuryPercentage;
     
-        // Calculate overall rating (now includes more factors)
-        $overallRating = round(($shootingRating + $defenseRating + $passingRating + $reboundingRating + 
-                               $athleticism + $basketballIq + $strength + $stamina + 
-                               $clutch + $leadership + $workEthic + $healthRatings) / 12, 2);
+    //     // Calculate overall rating (now includes more factors)
+    //     $overallRating = round(($shootingRating + $defenseRating + $passingRating + $reboundingRating + 
+    //                            $athleticism + $basketballIq + $strength + $stamina + 
+    //                            $clutch + $leadership + $workEthic + $healthRatings) / 12, 2);
     
-        // Determine role based on overall rating
-        if ($overallRating >= 90) {
-            $role = 'star player';
-        } elseif ($overallRating >= 75) {
-            $role = 'starter';
-        } elseif ($overallRating >= 60) {
-            $role = 'role player';
-        } else {
-            $role = 'bench';
-        }
+    //     // Determine role based on overall rating
+    //     if ($overallRating >= 90) {
+    //         $role = 'star player';
+    //     } elseif ($overallRating >= 75) {
+    //         $role = 'starter';
+    //     } elseif ($overallRating >= 60) {
+    //         $role = 'role player';
+    //     } else {
+    //         $role = 'bench';
+    //     }
     
-        // Contract expiration
-        $contractExpiresAt = Carbon::now()->addYears($contractYears);
+    //     // Contract expiration
+    //     $contractExpiresAt = Carbon::now()->addYears($contractYears);
     
-        // Retirement age logic (health impacts retirement)
-        $minRetirementAge = max($age + 1, 35);
-        $maxRetirementAge = 45 - (int)((99 - $healthRatings) / 5);
-        $maxRetirementAge = max($minRetirementAge, $maxRetirementAge);
-        $retirementAge = rand($minRetirementAge, $maxRetirementAge);
+    //     // Retirement age logic (health impacts retirement)
+    //     $minRetirementAge = max($age + 1, 35);
+    //     $maxRetirementAge = 45 - (int)((99 - $healthRatings) / 5);
+    //     $maxRetirementAge = max($minRetirementAge, $maxRetirementAge);
+    //     $retirementAge = rand($minRetirementAge, $maxRetirementAge);
     
-        // Create player
-        $player = Player::create([
-            'name' => $request->name,
-            'address' => $request->address,
-            'country' => $request->country,
-            'team_id' => 0,
-            'age' => $age,
-            'retirement_age' => $retirementAge,
-            'injury_prone_percentage' => $injuryPercentage,
-            'contract_years' => 0,
-            'contract_expires_at' => $contractExpiresAt,
-            'is_active' => true,
-            'role' => $role,
-            'position' => $position,
-            'type' => $selectedArchetype, 
-            'shooting_rating' => $shootingRating,
-            'two_point_rating' => $twoPointRating,
-            'three_point_rating' => $twoPointRating,
-            'free_throw_rating' => $freeThrowRating,
-            'defense_rating' => $defenseRating,
-            'passing_rating' => $passingRating,
-            'rebounding_rating' => $reboundingRating,
-            'athleticism_rating' => $athleticism,
-            'basketball_iq_rating' => $basketballIq,
-            'strength_rating' => $strength,
-            'stamina_rating' => $stamina,
-            'clutch_rating' => $clutch,
-            'leadership_rating' => $leadership,
-            'work_ethic_rating' => $workEthic,
-            'overall_rating' => $overallRating,
-            'draft_id' => $currentSeasonId,
-            'draft_order' => 0,
-            'drafted_team_id' => 0,
-            'is_drafted' => 0,
-            'draft_status' => 'Undrafted',
-            'is_rookie' => true,
-        ]);
+    //     // Create player
+    //     $player = Player::create([
+    //         'name' => $request->name,
+    //         'address' => $request->address,
+    //         'country' => $request->country,
+    //         'team_id' => 0,
+    //         'age' => $age,
+    //         'retirement_age' => $retirementAge,
+    //         'injury_prone_percentage' => $injuryPercentage,
+    //         'contract_years' => 0,
+    //         'contract_expires_at' => $contractExpiresAt,
+    //         'is_active' => true,
+    //         'role' => $role,
+    //         'position' => $position,
+    //         'type' => $selectedArchetype, 
+    //         'shooting_rating' => $shootingRating,
+    //         'two_point_rating' => $twoPointRating,
+    //         'three_point_rating' => $twoPointRating,
+    //         'free_throw_rating' => $freeThrowRating,
+    //         'defense_rating' => $defenseRating,
+    //         'passing_rating' => $passingRating,
+    //         'rebounding_rating' => $reboundingRating,
+    //         'athleticism_rating' => $athleticism,
+    //         'basketball_iq_rating' => $basketballIq,
+    //         'strength_rating' => $strength,
+    //         'stamina_rating' => $stamina,
+    //         'clutch_rating' => $clutch,
+    //         'leadership_rating' => $leadership,
+    //         'work_ethic_rating' => $workEthic,
+    //         'overall_rating' => $overallRating,
+    //         'draft_id' => $currentSeasonId,
+    //         'draft_order' => 0,
+    //         'drafted_team_id' => 0,
+    //         'is_drafted' => 0,
+    //         'draft_status' => 'Undrafted',
+    //         'is_rookie' => true,
+    //     ]);
     
-        return response()->json([
-            'error' => false,
-            'message' => 'Player added successfully',
-            'player' => $player,
-        ]);
-    }
+    //     return response()->json([
+    //         'error' => false,
+    //         'message' => 'Player added successfully',
+    //         'player' => $player,
+    //     ]);
+    // }
     
     public function addfreeagentplayer(Request $request)
     {
@@ -664,8 +664,19 @@ class PlayersController extends Controller
         $age = rand(18, 25);
         $contractYears = rand(1, 5); // 1 to 5-year contract
         $attributes = $this->getRandomArchetypeAndAttributes();
-        
-        // Assign variables properly
+
+        // Check if the player is generational and enforce the limit
+        if ($attributes['archetype'] === 'generational') {
+            $generationalCount = Player::where('is_rookie', true)
+                ->where('type', $attributes['archetype'])
+                ->count();
+
+            if ($generationalCount >= 7) {
+                return response()->json(['error' => 'Maximum limit of 7 generational rookies reached for this season.'], 400);
+            }
+        }
+
+                // Assign variables properly
         $selectedArchetype = $attributes['archetype'];
         $position = $attributes['position']; 
         $shootingRating = $attributes['shooting_rating'];
