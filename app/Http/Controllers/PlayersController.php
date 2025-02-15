@@ -549,6 +549,7 @@ class PlayersController extends Controller
        
         // Assign variables properly
         $selectedArchetype = $attributes['archetype'];
+
         $position = $attributes['position']; 
         $shootingRating = $attributes['shooting_rating'];
         $twoPointRating = $attributes['two_point_rating'];
@@ -836,7 +837,11 @@ class PlayersController extends Controller
         $archetypeAttributes = $archetypesToChooseFrom[$selectedArchetype];
     
         // Generate ratings
+       
         $shooting = rand($archetypeAttributes['shooting'][0], $archetypeAttributes['shooting'][1]);
+        $twoPoint = rand($archetypeAttributes['two_point_rating'][0], $archetypeAttributes['two_point_rating'][1]);
+        $threePoint = rand($archetypeAttributes['three_point_rating'][0], $archetypeAttributes['three_point_rating'][1]);
+        $freeThrow = rand($archetypeAttributes['free_throw_rating'][0], $archetypeAttributes['free_throw_rating'][1]);
         $defense = rand($archetypeAttributes['defense'][0], $archetypeAttributes['defense'][1]);
         $passing = rand($archetypeAttributes['passing'][0], $archetypeAttributes['passing'][1]);
         $rebounding = rand($archetypeAttributes['rebounding'][0], $archetypeAttributes['rebounding'][1]);
@@ -865,6 +870,9 @@ class PlayersController extends Controller
             'archetype' => $selectedArchetype,
             'position' => $position,
             'shooting_rating' => $shooting,
+            'two_point_rating' => $twoPoint,
+            'three_point_rating' => $threePoint,
+            'free_throw_rating' => $freeThrow,
             'defense_rating' => $defense,
             'passing_rating' => $passing,
             'rebounding_rating' => $rebounding,
