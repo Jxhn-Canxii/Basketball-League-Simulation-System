@@ -499,9 +499,9 @@ class TransactionsController extends Controller
                     $storeStats = new AwardsController;
                     $storeStats->storeplayerseasonstats( $player->team_id, $player->id);
 
-                    if (count($starPlayers) < 3) {
+                    if (count($starPlayers) < 1) {
                         $starPlayers[] = $player->id;
-                    } elseif (count($starters) < 2) {
+                    } elseif (count($starters) < 4) {
                         $starters[] = $player->id;
                     } elseif (count($rolePlayers) < 5) {
                         $rolePlayers[] = $player->id;
