@@ -287,12 +287,33 @@ class ConferenceController extends Controller
             ->where('status', '!=', 2) // Check if any game is not yet simulated
             ->exists(); // If no such games exist, the season is fully simulated
 
+        if($isFullySimulated){
+            $this->updateInjuryFreeAgents();
+        }
         return response()->json([
             'rounds' => $rounds, // Include the list of rounds with conference info
             'is_finished' => $isFullySimulated,
         ]);
     }
+    private function updateInjuryFreeAgents()
+    {
+        // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
+        DB::table('players')
+            ->where('team_id', 0) // Only for free agents (team_id = 0)
+            ->where('is_injured', 1) // Only consider injured players
+            ->where('is_active', 1) // Only consider active players
+            ->where('injury_recovery_games', '>', 0) // Only consider players with recovery games left
+            ->decrement('injury_recovery_games', 1); // Decrease recovery games by 1
 
+        // After decrementing, check if recovery games is 0, and mark player as not injured
+        DB::table('players')
+            ->where('team_id', 0) // Only for free agents
+            ->where('is_injured', 1) // Only for injured players
+            ->where('injury_recovery_games', 0) // Check if recovery games are 0 after decrement
+            ->update([
+                'is_injured' => 0, // Set is_injured to 0 for players with no injury recovery games left
+            ]);
+    }
     public function seasonsplayoffs(Request $request)
     {
         // Retrieve the season_id from the request

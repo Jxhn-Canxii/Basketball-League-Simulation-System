@@ -460,7 +460,6 @@ class SimulateController extends Controller
         }
 
         $this->updateAllTeamStreaks();
-        $this->updateInjuryFreeAgents($gameData->conference_id, 1);
         $this->updateHeadToHeadResults($gameData->id);
         // Prepare the schedule response data
         $schedule = [
@@ -882,7 +881,6 @@ class SimulateController extends Controller
             $this->updateTeamRolesBasedOnStats($gameData->home_id, $gameData->round);
             $this->updateTeamRolesBasedOnStats($gameData->away_id, $gameData->round);
             $this->updateAllTeamStreaks();
-            $this->updateInjuryFreeAgents($gameData->conference_id, 0);
             $this->updateHeadToHeadResults($gameData->id);
             if ($allRoundsSimulatedForSeason) {
                 // Update the season's status to 2
@@ -1423,25 +1421,25 @@ class SimulateController extends Controller
     }
 
     
-    private function updateInjuryFreeAgents($conferenceId, $isPlayoff)
-    {
-        // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
-        DB::table('players')
-            ->where('team_id', 0) // Only for free agents (team_id = 0)
-            ->where('is_injured', 1) // Only consider injured players
-            ->where('is_active', 1) // Only consider active players
-            ->where('injury_recovery_games', '>', 0) // Only consider players with recovery games left
-            ->decrement('injury_recovery_games', 1); // Decrease recovery games by 1
+    // private function updateInjuryFreeAgents($conferenceId, $isPlayoff)
+    // {
+    //     // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
+    //     DB::table('players')
+    //         ->where('team_id', 0) // Only for free agents (team_id = 0)
+    //         ->where('is_injured', 1) // Only consider injured players
+    //         ->where('is_active', 1) // Only consider active players
+    //         ->where('injury_recovery_games', '>', 0) // Only consider players with recovery games left
+    //         ->decrement('injury_recovery_games', 1); // Decrease recovery games by 1
 
-        // After decrementing, check if recovery games is 0, and mark player as not injured
-        DB::table('players')
-            ->where('team_id', 0) // Only for free agents
-            ->where('is_injured', 1) // Only for injured players
-            ->where('injury_recovery_games', 0) // Check if recovery games are 0 after decrement
-            ->update([
-                'is_injured' => 0, // Set is_injured to 0 for players with no injury recovery games left
-            ]);
-    }
+    //     // After decrementing, check if recovery games is 0, and mark player as not injured
+    //     DB::table('players')
+    //         ->where('team_id', 0) // Only for free agents
+    //         ->where('is_injured', 1) // Only for injured players
+    //         ->where('injury_recovery_games', 0) // Check if recovery games are 0 after decrement
+    //         ->update([
+    //             'is_injured' => 0, // Set is_injured to 0 for players with no injury recovery games left
+    //         ]);
+    // }
     private function getRandomPlayerV1(){
         $randomPlayer = DB::table('players')
             ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id', 'left') // Join player stats
