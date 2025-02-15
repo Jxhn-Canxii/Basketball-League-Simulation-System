@@ -289,9 +289,9 @@ class ConferenceController extends Controller
             ->where('status', '!=', 2) // Check if any game is not yet simulated
             ->exists(); // If no such games exist, the conference is fully simulated
 
-        if($isFullySimulated){
-            $this->updateInjuryFreeAgents();
-        }
+        // if($isFullySimulated){
+        //     $this->updateInjuryFreeAgents();
+        // }
         return response()->json([
             'rounds' => $rounds, // Include the list of rounds with conference info
             'is_finished' => $isFullySimulated,

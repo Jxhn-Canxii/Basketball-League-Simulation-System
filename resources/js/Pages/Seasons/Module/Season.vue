@@ -57,6 +57,44 @@
                 :conference_id="activeConferenceTab" 
                 :simulate_next="isAutoSimulate"
                 :season_data="season_info" />
+                <div
+                    class="w-full flex min-w-full overflow-x-auto border-b-2"
+                >
+                    <ul class="flex flex-wrap">
+                        <li
+                            v-for="conference in season_info.conferences"
+                            :key="conference.id"
+                            @click.prevent="fetchConferenceData(conference.id)"
+                            :class="
+                                activeConferenceTab == conference.id
+                                    ? 'animate-pulse font-bold text-orange-500'
+                                    : ''
+                            "
+                            class="whitespace-nowrap group flex items-center px-3 py-2 cursor-pointer relative flex-shrink-0 max-w-xs"
+                        >
+                            <i
+                                :class="
+                                    activeConferenceTab == conference.id
+                                        ? 'text-orange-500'
+                                        : 'text-gray-500'
+                                "
+                                class="fa fa-shield mr-2"
+                                :title="conference.name + ' Conference'"
+                            ></i>
+                            <span
+                                hidden
+                                class="text-truncate hidden sm:inline md:inline"
+                                >{{ conference.name }}
+                                {{
+                                    conference.champions_count > 0
+                                        ? "( " + conference.champions_count + " )"
+                                        : ""
+                                }}</span
+                            >
+                            <!-- Warning Badge Notification Counter -->
+                        </li>
+                    </ul>
+                </div>
             </div>
         </div>
     </div>
