@@ -211,7 +211,9 @@ Route::middleware('auth')->group(function () {
     Route::prefix('trades/')->group(function(){
         Route::get('trade-list-pending', [TradeController::class, 'getPendingTradeProposals'])->name('trade.list.pending');
         Route::get('trade-list-approved', [TradeController::class, 'getApprovedTradeProposals'])->name('trade.list.approved');
-        Route::post('trade-end', [TradeController::class, 'endTradeWindow'])->name('trade.end');
+        
+        Route::post('trade-end-inseason', [TradeController::class, 'endInSeasonTradeWindow'])->name('trade.end.inseason');
+        Route::post('trade-end-offseason', [TradeController::class, 'endOffSeasonTradeWindow'])->name('trade.end.offseason');
         Route::get('trade-generate', [TradeController::class, 'generateTradeProposals'])->name('trade.generate');
         Route::post('trade-approve', [TradeController::class, 'approveTrade'])->name('trade.approve');
         Route::post('trade-generate', [TradeController::class, 'rejectTrade'])->name('trade.reject');

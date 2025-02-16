@@ -251,7 +251,16 @@ class TradeController extends Controller
         ]);
     }
     
-    public function endTradeWindow(){
+    public function endInSeasonTradeWindow(){
+        $latestSeasonId = get_current_season_id();
+
+        DB::table('seasons')
+        ->where('id',  $latestSeasonId)
+        ->update(['status' => config('timeline.in_season_trade')]);
+
+        return response()->json(['message' => 'Trade window ended!']);
+    }
+    public function endOffSeasonTradeWindow(){
         $latestSeasonId = get_current_season_id();
 
         DB::table('seasons')

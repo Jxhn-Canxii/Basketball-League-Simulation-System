@@ -173,6 +173,12 @@ import Modal from "@/Components/Modal.vue";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 
 const emits = defineEmits(["newSeason"]);
+const props = defineProps({
+    isOffSeason:{
+        type: Boolean,
+        default: true,
+    },
+});
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);
 const proposals = ref([]);
@@ -272,7 +278,9 @@ const handlePagination = (page_num) => {
 // End trade function (currently not used here)
 const endTrade = async () => {
     try {
-        const response = await axios.post(route("trade.end"));
+
+        const endTradeUrl = props.isOffSeason ? 'trade.end.offseason' : 'trade.end.inseason';
+        const response = await axios.post(route(endTradeUrl));
         if (response) {
             await Swal.fire({
                 title: 'Success!',
@@ -324,53 +332,6 @@ const autoTrade = async () => {
         await Swal.fire({
             title: 'Error!',
             text: error.response ? error.response.data.message : 'An error occurred.',
-            icon: 'error',
-        });
-    }
-};
-
-
-// Approve trade proposal
-const approveProposal = async (proposalId) => {
-    try {
-        const response = await axios.post(route("trade.approve"),{ proposal_id: proposalId });
-        if (response) {
-            await Swal.fire({
-                title: 'Success!',
-                text: 'Trade proposal approved!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-            fetchPendingTradeProposals(); // Refresh proposals list
-        }
-    } catch (error) {
-        console.error("Error approving proposal:", error);
-        await Swal.fire({
-            title: 'Error!',
-            text: error.response.data.message,
-            icon: 'error',
-        });
-    }
-};
-
-// Reject trade proposal
-const rejectProposal = async (proposalId) => {
-    try {
-        const response = await axios.post(route("trade.reject"),{ proposal_id: proposalId });
-        if (response) {
-            await Swal.fire({
-                title: 'Success!',
-                text: 'Trade proposal rejected!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-            fetchPendingTradeProposals(); // Refresh proposals list
-        }
-    } catch (error) {
-        console.error("Error rejecting proposal:", error);
-        await Swal.fire({
-            title: 'Error!',
-            text: error.response.data.message,
             icon: 'error',
         });
     }

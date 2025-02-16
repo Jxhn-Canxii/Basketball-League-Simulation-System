@@ -256,56 +256,74 @@
             <GameResults :game_id="isGameResultModalOpen" />
         </div>
     </Modal>
-    </template>
-   <script setup>
-   import { ref, onMounted } from "vue";
-   import Swal from "sweetalert2";
-   import axios from "axios";
-   import Modal from "@/Components/Modal.vue";
-   import Paginator from "@/Components/Paginator.vue";
-   import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
-   import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
-   
-   const season_schedules = ref(false);
-   const isGameResultModalOpen = ref(false);
-   const isHide = ref(false);
-   const activeConferenceTab = ref(0);
-   const loadingSchedules = ref(false);
-   const activeGameId = ref(0);
-   const emit = defineEmits(["transaction_id", "simulate_next_conference"]);
-   const props = defineProps({
-       season_id: { type: [Number, String], required: true },
-       conference_id: { type: [Number, String], required: true },
-       season_data: Object,
-       simulate_next: { type: Boolean, default: false },
-   });
-   
-   const search_schedule = ref({
-       current_page: 1,
-       total_pages: 0,
-       total: 0,
-       search: "",
-       conference_id: 0,
-       season_id: 0,
-       itemsperpage: 6,
-   });
-   
-   const fetchConferenceSchedules = async (page = 1) => {
-       try {
-           season_schedules.value = [];
-           loadingSchedules.value = true;
-           search_schedule.value.current_page = page;
-           search_schedule.value.season_id = props.season_id;
-           search_schedule.value.conference_id = props.conference_id;
-   
-           const response = await axios.post(route("conferences.schedules"), search_schedule.value);
-           season_schedules.value = response.data;
-           loadingSchedules.value = false;
-       } catch (error) {
-           console.error("Error fetching season standings:", error);
-       }
-   };
-   
+    <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'">
+                <button
+                    class="flex float-end bg-gray-100 p-3"
+                    @click.prevent="
+                        isTradeModalOpen = false
+                    "
+                >
+                    <i class="fa fa-times text-black-600"></i>
+                </button>
+                <div class="mt-4 p-3 block">
+                    <Trade
+                        @newSeason="handleTradeSeason"
+                        :isOffSeason="false"
+                    />
+                </div>
+            </Modal>
+</template>
+<script setup>
+    import { ref, onMounted } from "vue";
+    import Swal from "sweetalert2";
+    import axios from "axios";
+    import Modal from "@/Components/Modal.vue";
+    import Paginator from "@/Components/Paginator.vue";
+    import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
+    import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
+    import Trade from "./Trade.vue";
+    
+    const season_schedules = ref(false);
+    const isTradeModalOpen = ref(false);
+    const isGameResultModalOpen = ref(false);
+    const isHide = ref(false);
+    const activeConferenceTab = ref(0);
+    const loadingSchedules = ref(false);
+    const activeGameId = ref(0);
+    const emit = defineEmits(["transaction_id", "simulate_next_conference"]);
+    const props = defineProps({
+        season_id: { type: [Number, String], required: true },
+        conference_id: { type: [Number, String], required: true },
+        season_data: Object,
+        simulate_next: { type: Boolean, default: false },
+    });
+    
+    const search_schedule = ref({
+        current_page: 1,
+        total_pages: 0,
+        total: 0,
+        search: "",
+        conference_id: 0,
+        season_id: 0,
+        itemsperpage: 6,
+    });
+
+    const fetchConferenceSchedules = async (page = 1) => {
+        try {
+            season_schedules.value = [];
+            loadingSchedules.value = true;
+            search_schedule.value.current_page = page;
+            search_schedule.value.season_id = props.season_id;
+            search_schedule.value.conference_id = props.conference_id;
+
+            const response = await axios.post(route("conferences.schedules"), search_schedule.value);
+            season_schedules.value = response.data;
+            loadingSchedules.value = false;
+        } catch (error) {
+            console.error("Error fetching season standings:", error);
+        }
+    };
+
     const handlePagination = (page_num) => {
         search_schedule.value.page_num = page_num ?? 1;
         fetchConferenceSchedules();
@@ -313,6 +331,7 @@
    
     const simulateAll = async () => {
         isHide.value = true;
+        isTradeModalOpen.value = false;
         let failedGames = new Set(); // Store failed games
 
         console.log("Checking pending games for the season...");
@@ -324,8 +343,10 @@
 
             let rounds = response.data.rounds;
             let isFinished = response.data.is_finished;
+            let isTradeDeadline = response.data.is_trade_deadline;
+            if(isTradeDeadline){
 
-
+            }
             if (isFinished) {
                 Swal.fire({
                     icon: "success",
@@ -448,5 +469,5 @@
    onMounted(async () => {
        await fetchConferenceSchedules();
    });
-   </script>
+</script>
    
