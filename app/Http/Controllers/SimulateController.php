@@ -1171,19 +1171,19 @@ class SimulateController extends Controller
                 // Define initial minute ranges based on role priority
                 switch ($rolePriority[$player['role']] ?? 5) {
                     case 1: // Star player
-                        $assignedMinutesForRole = rand(5, 48); // Star players get the most minutes
+                        $assignedMinutesForRole = rand(5, 40); // Star players get the most minutes
                         break;
                     case 2: // All Star
-                        $assignedMinutesForRole = rand(5, 45); // Starters get slightly fewer minutes
+                        $assignedMinutesForRole = rand(5, 35); // Starters get slightly fewer minutes
                         break;
                     case 3: // Starter
-                        $assignedMinutesForRole = rand(5, 40); // Starters get slightly fewer minutes
+                        $assignedMinutesForRole = rand(5, 30); // Starters get slightly fewer minutes
                         break;
                     case 4: // Role player
-                        $assignedMinutesForRole = rand(0, 30); // Role players get fewer minutes
+                        $assignedMinutesForRole = rand(0, 25); // Role players get fewer minutes
                         break;
                     case 5: // Bench
-                        $assignedMinutesForRole = rand(0, 25);  // Bench players get the least minutes
+                        $assignedMinutesForRole = rand(0, 20);  // Bench players get the least minutes
                         break;
                     default:
                         $assignedMinutesForRole = 0;

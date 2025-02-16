@@ -294,6 +294,8 @@ export const roleClasses = (role) => {
 export const roleBadgeClass = (role) => {
     switch(role) {
       case 'star player':
+        return 'bg-yellow-500 text-white rounded-full px-2 py-1 text-xs';
+    case 'all star':
         return 'bg-red-500 text-white rounded-full px-2 py-1 text-xs';
       case 'starter':
         return 'bg-blue-500 text-white rounded-full px-2 py-1 text-xs';

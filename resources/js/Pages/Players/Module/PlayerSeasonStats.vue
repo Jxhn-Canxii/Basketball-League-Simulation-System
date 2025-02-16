@@ -186,9 +186,8 @@ import { ref, onMounted, watch } from "vue";
 import axios from "axios";
 import PlayerGameLogs from "./PlayerGameLogs.vue";
 import Modal from "@/Components/Modal.vue";
-import ProfileHeader from "./ProfileHeader.vue";
-import PlayerInjury from "./PlayerInjury.vue";
-import PlayerTransactions from "./PlayerTransactions.vue";
+import { roleClasses } from "@/Utility/Formatter";
+
 const props = defineProps({
     player_id: {
         type: Number,
@@ -229,20 +228,6 @@ const fetchPlayerSeasonPerformance = async () => {
         season_logs.value = response.data;
     } catch (error) {
         console.error("Error fetching player season performance:", error);
-    }
-};
-const roleClasses = (role) => {
-    switch (role) {
-        case "starter":
-            return "bg-blue-100 text-blue-800";
-        case "star player":
-            return "bg-yellow-100 text-yellow-800";
-        case "role player":
-            return "bg-green-100 text-green-800";
-        case "bench":
-            return "bg-gray-100 text-gray-800";
-        default:
-            return "bg-gray-200 text-gray-800"; // Default case
     }
 };
 </script>
