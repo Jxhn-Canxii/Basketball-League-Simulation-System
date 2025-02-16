@@ -149,120 +149,120 @@ class SimulateController extends Controller
         $awayMinutes = $this->distributeMinutes($awayTeamPlayers, $totalMinutes, $request->schedule_id);
 
         // Simulate player game stats for home team
-            // Simulate home team player stats with detailed shooting metrics
-            foreach ($homeTeamPlayers as $player) {
-                $minutes = $homeMinutes[$player->id] ?? 0;
-                if ($minutes === 0 || $player->is_injured) {
-                    $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
-                    continue;
-                }
-
-                $performanceFactor = rand(100, 120) / 100;
-                $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
-                
-                // Adjust attempts based on minutes, shooting ratings, and defensive impact
-                $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
-                $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
-
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
-
-                // Assign returned values to variables
-                $twoPointAttempts = $shotStats['two_point_attempts'];
-                $twoPointMade = $shotStats['two_point_made'];
-
-                $threePointAttempts = $shotStats['three_point_attempts'];
-                $threePointMade = $shotStats['three_point_made'];
-
-                $freeThrowAttempts = $shotStats['free_throw_attempts'];
-                $freeThrowMade = $shotStats['free_throw_made'];
-
-                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
-
-                // Simulate other stats
-                $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-                $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-                $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-                $turnovers = rand(0, 2);
-                $fouls = rand(0, 4);
-
-                $playerGameStats[] = [
-                    'player_id' => $player->id,
-                    'game_id' => $gameData->game_id,
-                    'season_id' => $currentSeasonId,
-                    'team_id' => $player->team_id,
-                    'points' => $points,
-                    'rebounds' => $rebounds,
-                    'assists' => 0, // Temporary value
-                    'steals' => $steals,
-                    'blocks' => $blocks,
-                    'turnovers' => $turnovers,
-                    'fouls' => $fouls,
-                    'minutes' => $minutes,
-                    'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
-                    'field_goals_made' => $twoPointMade + $threePointMade,
-                    'three_point_attempts' => $threePointAttempts,
-                    'three_pointers_made' => $threePointMade,
-                    'two_pointers_made' => $twoPointMade,
-                    'two_point_attempts' => $twoPointAttempts,
-                    'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowMade,
-                ];
+        // Simulate home team player stats with detailed shooting metrics
+        foreach ($homeTeamPlayers as $player) {
+            $minutes = $homeMinutes[(string) $player->id] ?? 0;
+            if ($minutes === 0 || $player->is_injured) {
+                $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
+                continue;
             }
-            // Repeat similar simulation for away team players...
-            foreach ($awayTeamPlayers as $player) {
-                $minutes = $awayMinutes[$player->id] ?? 0;
-                if ($minutes === 0 || $player->is_injured) {
-                    $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
-                    continue;
-                }
 
-                $performanceFactor = rand(100, 120) / 100;
-                $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
+            $performanceFactor = rand(100, 120) / 100;
+            $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
+            
+            // Adjust attempts based on minutes, shooting ratings, and defensive impact
+            $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
+            $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
 
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
+            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
 
-                // Assign returned values to variables
-                $twoPointAttempts = $shotStats['two_point_attempts'];
-                $twoPointMade = $shotStats['two_point_made'];
+            // Assign returned values to variables
+            $twoPointAttempts = $shotStats['two_point_attempts'];
+            $twoPointMade = $shotStats['two_point_made'];
 
-                $threePointAttempts = $shotStats['three_point_attempts'];
-                $threePointMade = $shotStats['three_point_made'];
+            $threePointAttempts = $shotStats['three_point_attempts'];
+            $threePointMade = $shotStats['three_point_made'];
 
-                $freeThrowAttempts = $shotStats['free_throw_attempts'];
-                $freeThrowMade = $shotStats['free_throw_made'];
-                
-                $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+            $freeThrowAttempts = $shotStats['free_throw_attempts'];
+            $freeThrowMade = $shotStats['free_throw_made'];
 
-                // Simulate other stats
-                $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-                $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-                $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-                $turnovers = rand(0, 2);
-                $fouls = rand(0, 4);
+            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
 
-                $playerGameStats[] = [
-                    'player_id' => $player->id,
-                    'game_id' => $gameData->game_id,
-                    'season_id' => $currentSeasonId,
-                    'team_id' => $player->team_id,
-                    'points' => $points,
-                    'rebounds' => $rebounds,
-                    'assists' => 0, // Temporary value
-                    'steals' => $steals,
-                    'blocks' => $blocks,
-                    'turnovers' => $turnovers,
-                    'fouls' => $fouls,
-                    'minutes' => $minutes,
-                    'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
-                    'field_goals_made' => $twoPointMade + $threePointMade,
-                    'three_point_attempts' => $threePointAttempts,
-                    'two_pointers_made' => $twoPointMade,
-                    'two_point_attempts' => $twoPointAttempts,
-                    'three_pointers_made' => $threePointMade,
-                    'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowMade,
-                ];
+            // Simulate other stats
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $turnovers = rand(0, 2);
+            $fouls = rand(0, 4);
+
+            $playerGameStats[] = [
+                'player_id' => $player->id,
+                'game_id' => $gameData->game_id,
+                'season_id' => $currentSeasonId,
+                'team_id' => $player->team_id,
+                'points' => $points,
+                'rebounds' => $rebounds,
+                'assists' => 0, // Temporary value
+                'steals' => $steals,
+                'blocks' => $blocks,
+                'turnovers' => $turnovers,
+                'fouls' => $fouls,
+                'minutes' => $minutes,
+                'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
+                'field_goals_made' => $twoPointMade + $threePointMade,
+                'three_point_attempts' => $threePointAttempts,
+                'three_pointers_made' => $threePointMade,
+                'two_pointers_made' => $twoPointMade,
+                'two_point_attempts' => $twoPointAttempts,
+                'free_throw_attempts' => $freeThrowAttempts,
+                'free_throws_made' => $freeThrowMade,
+            ];
+        }
+        // Repeat similar simulation for away team players...
+        foreach ($awayTeamPlayers as $player) {
+            $minutes = $awayMinutes[(string) $player->id] ?? 0;
+            if ($minutes === 0 || $player->is_injured) {
+                $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
+                continue;
             }
+
+            $performanceFactor = rand(100, 120) / 100;
+            $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
+
+            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
+
+            // Assign returned values to variables
+            $twoPointAttempts = $shotStats['two_point_attempts'];
+            $twoPointMade = $shotStats['two_point_made'];
+
+            $threePointAttempts = $shotStats['three_point_attempts'];
+            $threePointMade = $shotStats['three_point_made'];
+
+            $freeThrowAttempts = $shotStats['free_throw_attempts'];
+            $freeThrowMade = $shotStats['free_throw_made'];
+            
+            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+
+            // Simulate other stats
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $turnovers = rand(0, 2);
+            $fouls = rand(0, 4);
+
+            $playerGameStats[] = [
+                'player_id' => $player->id,
+                'game_id' => $gameData->game_id,
+                'season_id' => $currentSeasonId,
+                'team_id' => $player->team_id,
+                'points' => $points,
+                'rebounds' => $rebounds,
+                'assists' => 0, // Temporary value
+                'steals' => $steals,
+                'blocks' => $blocks,
+                'turnovers' => $turnovers,
+                'fouls' => $fouls,
+                'minutes' => $minutes,
+                'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
+                'field_goals_made' => $twoPointMade + $threePointMade,
+                'three_point_attempts' => $threePointAttempts,
+                'two_pointers_made' => $twoPointMade,
+                'two_point_attempts' => $twoPointAttempts,
+                'three_pointers_made' => $threePointMade,
+                'free_throw_attempts' => $freeThrowAttempts,
+                'free_throws_made' => $freeThrowMade,
+            ];
+        }
         // Convert to arrays
         $homeTeamPlayers = $homeTeamPlayers->toArray();
         $awayTeamPlayers = $awayTeamPlayers->toArray();
@@ -600,7 +600,8 @@ class SimulateController extends Controller
 
             // Simulate home team player stats with detailed shooting metrics
             foreach ($homeTeamPlayers as $player) {
-                $minutes = $homeMinutes[$player->id] ?? 0;
+                $minutes = $homeMinutes[(string) $player->id] ?? 0;
+
                 if ($minutes === 0 || $player->is_injured) {
                     $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                     continue;
@@ -655,7 +656,7 @@ class SimulateController extends Controller
             }
             // Repeat similar simulation for away team players...
             foreach ($awayTeamPlayers as $player) {
-                $minutes = $awayMinutes[$player->id] ?? 0;
+                $minutes = $awayMinutes[(string) $player->id] ?? 0;
                 if ($minutes === 0 || $player->is_injured) {
                     $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                     continue;
@@ -986,7 +987,7 @@ class SimulateController extends Controller
 
         // Simulate home team player stats for overtime
         foreach ($homeTeamPlayers as $player) {
-            $minutes = $homeOvertimeMinutes[$player->id] ?? 0;
+            $minutes = $homeOvertimeMinutes[(string) $player->id] ?? 0;
             if ($minutes === 0 || $player->is_injured) {
                 continue;
             }
@@ -1041,7 +1042,7 @@ class SimulateController extends Controller
 
         // Simulate away team player stats for overtime
         foreach ($awayTeamPlayers as $player) {
-            $minutes = $awayOvertimeMinutes[$player->id] ?? 0;
+            $minutes = $awayOvertimeMinutes[(string) $player->id] ?? 0;
             if ($minutes === 0 || $player->is_injured) {
                 continue;
             }
@@ -1167,7 +1168,7 @@ class SimulateController extends Controller
         ]);
     }
 
-    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    private function distributeMinutesV1($playersArray, $totalMinutes, $gameId)
     {
         // Define role-based priorities and their minute allocation limits
         $rolePriority = [
@@ -1268,6 +1269,112 @@ class SimulateController extends Controller
 
         return $minutes;
     }
+    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    {
+        // Define role-based priorities and their minute allocation limits
+        $rolePriority = [
+            'star player' => 1,   // Highest priority
+            'all star' => 2,   // High priority
+            'starter' => 3,       // Mid priority
+            'role player' => 4,   // Lower priority
+            'bench' => 5,         // Lowest priority
+        ];
+
+        // Define realistic minute ranges based on NBA games
+        $roleMinuteLimits = [
+            'star player' => [30, 42],  // Star players play the most
+            'all star' => [28, 40],
+            'starter' => [25, 38],  
+            'role player' => [10, 28],  
+            'bench' => [0, 15],  // Bench players play the least
+        ];
+
+        // Convert Eloquent collection to array if necessary
+        // $playersArray = $playersArray->toArray();
+
+        // Sort players by role priority (higher priority first)
+        $sortedPlayers = collect($playersArray)->sortBy(function ($player) use ($rolePriority) {
+            return $rolePriority[$player['role']] ?? 5; // Default to lowest priority if role not found
+        })->values();
+
+        $minutes = [];
+        $assignedMinutes = 0;
+
+        // First pass: Allocate minutes based on roles and check for injuries
+        foreach ($sortedPlayers as $player) {
+            if (rand(1, 100) <= $player['injury_prone_percentage']) {
+                // Player is injured and should get zero minutes
+                $minutes[$player['id']] = 0;
+                continue;
+            }
+
+            // Get role-based minute range
+            $role = $player['role'];
+            $minMinutes = $roleMinuteLimits[$role][0] ?? 0;
+            $maxMinutes = $roleMinuteLimits[$role][1] ?? 15; // Default to bench range if role not found
+
+            // Assign random minutes within the range
+            $assignedMinutesForPlayer = rand($minMinutes, $maxMinutes);
+
+            // Ensure no player exceeds 48 minutes (max regulation time)
+            $assignedMinutesForPlayer = min($assignedMinutesForPlayer, 48);
+
+            $minutes[$player['id']] = $assignedMinutesForPlayer;
+            $assignedMinutes += $assignedMinutesForPlayer;
+
+            // Update fatigue for the player
+            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+        }
+
+        // Ensure total minutes match the required total
+        $remainingMinutes = $totalMinutes - $assignedMinutes;
+
+        if ($remainingMinutes > 0) {
+            // Get available players who can take more minutes (excluding injured)
+            $availablePlayers = array_filter($sortedPlayers->toArray(), function ($player) use ($minutes) {
+                return $minutes[$player['id']] > 0 && $minutes[$player['id']] < 48;
+            });
+
+            if (!empty($availablePlayers)) {
+                $totalWeight = array_sum(array_map(function ($player) use ($rolePriority) {
+                    return 1 / ($rolePriority[$player['role']] ?? 5); // Higher priority gets more weight
+                }, $availablePlayers));
+
+                // Distribute remaining minutes proportionally
+                foreach ($availablePlayers as $player) {
+                    $playerWeight = 1 / ($rolePriority[$player['role']] ?? 5);
+                    $extraMinutes = round(($playerWeight / $totalWeight) * $remainingMinutes);
+
+                    // Ensure player doesn't exceed 48 minutes
+                    $minutes[$player['id']] = min($minutes[$player['id']] + $extraMinutes, 48);
+                }
+            }
+        }
+
+        // Ensure exact match with totalMinutes by minor adjustment
+        $totalAssignedMinutes = array_sum($minutes);
+        $difference = $totalMinutes - $totalAssignedMinutes;
+
+        if ($difference !== 0) {
+            foreach ($minutes as $id => &$minute) {
+                if ($difference > 0 && $minute < 48) {
+                    $minute++;
+                    $difference--;
+                } elseif ($difference < 0 && $minute > 0) {
+                    $minute--;
+                    $difference++;
+                }
+                if ($difference === 0) break;
+            }
+        }
+        foreach ($minutes as &$minute) { 
+            $minute += ($difference / count($minutes));
+        }
+        unset($minute); // Avoid reference issues
+        
+        return $minutes;
+    }
+
     private function fatigueRate($player, $minutes, $gameId)
     {
         try {
@@ -1370,12 +1477,10 @@ class SimulateController extends Controller
 
             // Check if the player is a star player or not and adjust recovery games threshold accordingly
             $requiredRecoveryGames = ($player->role == 'star player') ? 30 : 15;
-
+            $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
             // Check if the player's recovery games are greater than or equal to the required threshold
             if ($player->is_injured && $player->injury_recovery_games >= $requiredRecoveryGames) {
                 // Fetch the current season's status (assuming you want the most recent season)
-                $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-
                 // Ensure the season is active (status = 1) before proceeding
                 if ($seasonStatus == 1) {
                     // Add 20% chance for the player to be waived
@@ -1438,53 +1543,62 @@ class SimulateController extends Controller
                 ->where('is_injured', true)
                 ->get();
 
-            if ($teamInjuries->count() >= 7) {
+            if ($teamInjuries->count() >= 7 && $seasonStatus == 1) {
                 // Sort players by injury recovery games (worst injuries first)
                 $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(5);
 
                 foreach ($sortedInjuries as $injuredPlayer) {
-                    // Waive the player
-                    DB::table('transactions')->insert([
-                        'player_id' => $injuredPlayer->id,
-                        'season_id' => $seasonId,
-                        'details' => 'Waived due to excessive injury recovery time (Fire Leopard Rule)',
-                        'from_team_id' => $injuredPlayer->team_id,
-                        'to_team_id' => 0, // 0 for free agent pool
-                        'status' => 'waived',
-                    ]);
+                    // Waive t$sortedInjurieshe player
+                    $forcedWaivedCount = DB::table('transactions')
+                        ->where( 'season_id', $seasonId)
+                        ->where('team_id', $player->team_id)
+                        ->where('type', 'waived-hardship')
+                        ->count();
 
-                    // Update player's contract and team details to reflect they are waived
-                    DB::table('players')->where('id', $injuredPlayer->id)->update([
-                        'contract_years' => 0,
-                        'team_id' => 0,
-                        'is_active' => 1,  // They are still active in the free agent pool
-                        'is_injured' => 1, // Mark the player as no longer injured
-                    ]);
+                    if($injuredPlayer->injury_recovery_games >= 10 && $forcedWaivedCount > 5){
 
-                     // Try to find a random player with the same role
-                     $randomPlayer = $this->getRandomPlayer();
-
-                     if ($randomPlayer) {
-                         $freeAgentStandardContract = $this->getContractYearsBasedOnRole($player->role);
-                         // Update the new player with the appropriate contract role
-                         DB::table('players')->where('id', $randomPlayer->id)->update([
-                             'team_id' => $player->team_id,
-                             'contract_years' => $freeAgentStandardContract, // Assign a random contract length
-                         ]);
-
-                         DB::table('transactions')->insert([
-                             'player_id' => $randomPlayer->id,
-                             'season_id' => $seasonId,
-                             'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
-                             'from_team_id' => 0, // From free agent pool
-                             'to_team_id' => $player->team_id,
-                             'status' => 'signed',
-                         ]);
-
-                         $storeStats = new AwardsController;
-                         //store initial player season stats
-                         $storeStats->storeplayercurrentseasonstats( $player->team_id, $randomPlayer->id);
-                     }
+                        DB::table('transactions')->insert([
+                            'player_id' => $injuredPlayer->id,
+                            'season_id' => $seasonId,
+                            'details' => 'Waived due to excessive injury recovery time (Fire Leopard Rule)',
+                            'from_team_id' => $injuredPlayer->team_id,
+                            'to_team_id' => 0, // 0 for free agent pool
+                            'status' => 'waived-hardship',
+                        ]);
+    
+                        // Update player's contract and team details to reflect they are waived
+                        DB::table('players')->where('id', $injuredPlayer->id)->update([
+                            'contract_years' => 0,
+                            'team_id' => 0,
+                            'is_active' => 1,  // They are still active in the free agent pool
+                            'is_injured' => 1, // Mark the player as no longer injured
+                        ]);
+    
+                         // Try to find a random player with the same role
+                         $randomPlayer = $this->getRandomPlayer();
+    
+                         if ($randomPlayer) {
+                             $freeAgentStandardContract = $this->getContractYearsBasedOnRole($player->role);
+                             // Update the new player with the appropriate contract role
+                             DB::table('players')->where('id', $randomPlayer->id)->update([
+                                 'team_id' => $player->team_id,
+                                 'contract_years' => $freeAgentStandardContract, // Assign a random contract length
+                             ]);
+    
+                             DB::table('transactions')->insert([
+                                 'player_id' => $randomPlayer->id,
+                                 'season_id' => $seasonId,
+                                 'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
+                                 'from_team_id' => 0, // From free agent pool
+                                 'to_team_id' => $player->team_id,
+                                 'status' => 'signed',
+                             ]);
+    
+                             $storeStats = new AwardsController;
+                             //store initial player season stats
+                             $storeStats->storeplayercurrentseasonstats( $player->team_id, $randomPlayer->id);
+                         }
+                    }
                 }
             }
 
