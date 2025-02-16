@@ -276,37 +276,15 @@ class ConferenceController extends Controller
         $seasonId = $request->season_id;
         $excludedRounds = config('playoffs');
 
-        // Get the latest season status (assuming you store this status in the 'seasons' table)
-        $latestSeasonStatus = DB::table('seasons')
-            ->where('id', $seasonId)
-            ->value('status'); // Get the 'status' of the current season
-
-        // Get the list of distinct rounds in the season (excluding the ones in $excludedRounds)
+          // Get the list of distinct rounds in the season (excluding the ones in $excludedRounds)
         $rounds = DB::table('schedules')
-            ->where('season_id', $seasonId)
-            ->whereNotIn('round', $excludedRounds)
-            ->where('status', 1)  // Filter to include only rounds with status = 1
-            ->distinct('round')
-            ->orderByRaw('CAST(round AS UNSIGNED) ASC')  // Order by round as an integer
-            ->pluck('round'); // Get a list of distinct rounds
-        
-        // Get the total number of rounds in the season
-        $totalRounds = DB::table('schedules')
-            ->where('season_id', $seasonId)
-            ->whereNotIn('round', $excludedRounds)
-            ->distinct('round')
-            ->count();
-        
-        // Get the number of rounds that are already simulated (status != 2)
-        $simulatedRounds = DB::table('schedules')
-            ->where('season_id', $seasonId)
-            ->whereNotIn('round', $excludedRounds)
-            ->where('status', '==', 2) // Check if any game is not yet simulated
-            ->distinct('round')
-            ->count();
-
-        // Check if half of the rounds are simulated
-        $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) && $latestSeasonStatus == 1;
+          ->where('season_id', $seasonId)
+          ->whereNotIn('round', $excludedRounds)
+          ->where('status', 1)  // Filter to include only rounds with status = 1
+          ->distinct('round')
+          ->orderByRaw('CAST(round AS UNSIGNED) ASC')  // Order by round as an integer
+          ->pluck('round'); // Get a list of distinct rounds
+       
 
         // Determine if the season is fully simulated
         $isFullySimulated = DB::table('schedules')
@@ -326,10 +304,6 @@ class ConferenceController extends Controller
         return response()->json([
             'rounds' => $rounds, // Include the list of rounds
             'is_finished' => $isFullySimulated,
-            'is_trade_deadline' => $isTradeDeadline, // Add trade deadline info
-            'simulated_rounds' => $simulatedRounds,
-            'total_rounds' => $totalRounds,
-            'status' => $latestSeasonStatus,
         ]);
     }
 

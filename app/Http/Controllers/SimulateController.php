@@ -1103,7 +1103,28 @@ class SimulateController extends Controller
 
         $seasonId = $request->season_id;
         $round = $request->round;
+        $excludedRounds = config('playoffs');
 
+         // Get the latest season status (assuming you store this status in the 'seasons' table)
+        $latestSeasonStatus = DB::table('seasons')
+            ->where('id', $seasonId)
+            ->value('status'); // Get the 'status' of the current season
+      
+             // Get the number of rounds that are already simulated (status != 2)
+        $simulatedRounds = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->whereNotIn('round', $excludedRounds)
+            ->where('status', '=', 2) // Check if any game is not yet simulated
+            ->distinct('round')
+            ->count();
+     
+        // Get the total number of rounds in the season
+        $totalRounds = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->whereNotIn('round', $excludedRounds)
+            ->distinct('round')
+            ->count();
+     
         // Retrieve schedule records for the given season and round
         $schedules = Schedules::where('season_id', $seasonId)
             ->where('round', $round)
@@ -1111,6 +1132,9 @@ class SimulateController extends Controller
             ->orderBy('id')
             ->select('id', 'conference_id')
             ->get();
+
+             // Check if half of the rounds are simulated
+        $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) && $latestSeasonStatus == 1;
 
         // Group by conference_id
         $groupedByConference = $schedules->groupBy('conference_id');
@@ -1136,6 +1160,10 @@ class SimulateController extends Controller
         return response()->json([
             'schedule_ids' => $interleaved,
             'conference_count' => $conferenceCount,
+            'is_trade_deadline' => $isTradeDeadline, // Add trade deadline info
+            'simulated_rounds' => $simulatedRounds,
+            'total_rounds' => $totalRounds,
+            'status' => $latestSeasonStatus,
         ]);
     }
 
@@ -1171,10 +1199,10 @@ class SimulateController extends Controller
                 // Define initial minute ranges based on role priority
                 switch ($rolePriority[$player['role']] ?? 5) {
                     case 1: // Star player
-                        $assignedMinutesForRole = rand(5, 40); // Star players get the most minutes
+                        $assignedMinutesForRole = rand(5, 30); // Star players get the most minutes
                         break;
                     case 2: // All Star
-                        $assignedMinutesForRole = rand(5, 35); // Starters get slightly fewer minutes
+                        $assignedMinutesForRole = rand(5, 30); // Starters get slightly fewer minutes
                         break;
                     case 3: // Starter
                         $assignedMinutesForRole = rand(5, 30); // Starters get slightly fewer minutes
