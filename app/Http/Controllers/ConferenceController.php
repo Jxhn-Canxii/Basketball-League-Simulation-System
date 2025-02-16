@@ -301,7 +301,7 @@ class ConferenceController extends Controller
         $simulatedRounds = DB::table('schedules')
             ->where('season_id', $seasonId)
             ->whereNotIn('round', $excludedRounds)
-            ->where('status', '!=', 2) // Check if any game is not yet simulated
+            ->where('status', '==', 2) // Check if any game is not yet simulated
             ->distinct('round')
             ->count();
 
@@ -309,24 +309,27 @@ class ConferenceController extends Controller
         $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) && $latestSeasonStatus == 1;
 
         // Determine if the season is fully simulated
-        $isFullySimulated = !DB::table('schedules')
+        $isFullySimulated = DB::table('schedules')
             ->where('season_id', $seasonId)
             ->whereNotIn('round', $excludedRounds)
-            ->where('status', '!=', 2) // Check if any game is not yet simulated
+            ->where('status', '==', 2) // Check if any game is not yet simulated
             ->exists(); // If no such games exist, the conference is fully simulated
 
         // Optionally, you could handle the trade deadline flag here
-        if ($isTradeDeadline) {
-            // Set is_trade_deadline = true (you can update the status in the database or perform some action)
-            DB::table('seasons')->where('id', $seasonId)->update([
-                'is_trade_deadline' => true,
-            ]);
-        }
+        // if ($isTradeDeadline) {
+        //     // Set is_trade_deadline = true (you can update the status in the database or perform some action)
+        //     DB::table('seasons')->where('id', $seasonId)->update([
+        //         'is_trade_deadline' => true,
+        //     ]);
+        // }
 
         return response()->json([
             'rounds' => $rounds, // Include the list of rounds
             'is_finished' => $isFullySimulated,
             'is_trade_deadline' => $isTradeDeadline, // Add trade deadline info
+            'simulated_rounds' => $simulatedRounds,
+            'total_rounds' => $totalRounds,
+            'status' => $latestSeasonStatus,
         ]);
     }
 
