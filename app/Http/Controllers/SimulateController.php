@@ -1419,7 +1419,7 @@ class SimulateController extends Controller
                     DB::table('transactions')->insert([
                         'player_id' => $injuredPlayer->id,
                         'season_id' => $seasonId,
-                        'details' => 'Waived due to excessive injury recovery time',
+                        'details' => 'Waived due to excessive injury recovery time (Fire Leopard Rule)',
                         'from_team_id' => $injuredPlayer->team_id,
                         'to_team_id' => 0, // 0 for free agent pool
                         'status' => 'waived',
