@@ -27,6 +27,44 @@
     </div>
     <div class="block" v-if="isHide">
         <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
+        <div
+            v-if="activeGameId != 0"
+            class="w-full flex min-w-full overflow-x-auto border-b-2"
+        >
+            <ul class="flex flex-wrap">
+                <li
+                    v-for="conference in season_data.conferences"
+                    :key="conference.id"
+                    :class="
+                        activeConferenceTab == conference.id
+                            ? 'animate-pulse font-bold text-orange-500'
+                            : ''
+                    "
+                    class="whitespace-nowrap group flex items-center px-3 py-2 cursor-pointer relative flex-shrink-0 max-w-xs"
+                >
+                    <i
+                        :class="
+                            activeConferenceTab == conference.id
+                                ? 'text-orange-500'
+                                : 'text-gray-500'
+                        "
+                        class="fa fa-shield mr-2"
+                        :title="conference.name + ' Conference'"
+                    ></i>
+                    <span
+                        hidden
+                        class="text-truncate hidden sm:inline md:inline"
+                        >{{ conference.name }}
+                        {{
+                            conference.champions_count > 0
+                                ? "( " + conference.champions_count + " )"
+                                : ""
+                        }}</span
+                    >
+                    <!-- Warning Badge Notification Counter -->
+                </li>
+            </ul>
+        </div>
         <div v-else class="p-0 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg max-w-7xl mx-auto">
             <!-- Skeleton Loader -->
             <div class="flex justify-center items-center h-full">
@@ -231,7 +269,7 @@
    const season_schedules = ref(false);
    const isGameResultModalOpen = ref(false);
    const isHide = ref(false);
-   const currentRound = ref(0);
+   const activeConferenceTab = ref(0);
    const loadingSchedules = ref(false);
    const activeGameId = ref(0);
    const emit = defineEmits(["transaction_id", "simulate_next_conference"]);
@@ -273,123 +311,6 @@
         fetchConferenceSchedules();
     };
    
-    const simulateAllPerConference = async () => {
-        isHide.value = true;
-        let startSimulating = false;
-        let failedGames = {}; // Store failed games by conference
-
-        for (const conference of props.season_data.conferences) {
-            // if (conference.id === props.conference_id) {
-            //     startSimulating = true;
-            // }
-
-            // if (!startSimulating) {
-            //     continue;
-            // }
-
-            console.log(`Checking pending games for conference: ${conference.name}`);
-
-            let hasPendingGames = true;
-
-            while (hasPendingGames) {
-                try {
-                    const response = await axios.post(route("upcoming.rounds.season.conference"), {
-                        season_id: props.season_id,
-                        conference_id: conference.id,
-                    });
-
-                    let rounds = response.data.rounds;
-                    let isFinished = response.data.is_finished;
-
-                    if (isFinished) {
-                        Swal.fire({
-                            icon: "success",
-                            title: `All ${conference.name} conference games are simulated!`,
-                            text: `Conference ${conference.name} is finished. Moving to the next.`,
-                        });
-                        isHide.value = true;
-                        console.log(`Conference ${conference.id} is finished. Moving to the next.`);
-                        emit('transaction_id',conference.id);
-                        break;
-                    }
-
-                    for (const round of rounds) {
-                        console.log(`Simulating Round: ${round} for Conference ${conference.id}`);
-
-                        let roundResponse = await axios.post(route("game.per.round"), {
-                            season_id: props.season_id,
-                            round: round,
-                            conference_id: conference.id,
-                        });
-
-                        let gameIds = roundResponse.data.schedule_ids;
-
-                        // Store failed games if not initialized
-                        if (!failedGames[conference.id]) {
-                            failedGames[conference.id] = new Set();
-                        }
-
-                        while (gameIds.length > 0) {
-                            for (const gameId of gameIds) {
-                                console.log(`Simulating Game ID: ${gameId}`);
-
-                                try {
-                                    await simulateGameWithResults(gameId, conference.id);
-                                    await new Promise((resolve) => setTimeout(resolve, 2000));
-
-                                    // Remove successfully simulated game from failedGames if it exists
-                                    failedGames[conference.id].delete(gameId);
-                                } catch (error) {
-                                    console.error(`Error simulating Game ID: ${gameId}`, error);
-                                    failedGames[conference.id].add(gameId);
-                                }
-                            }
-
-                            // Re-fetch remaining unsimulated games
-                            roundResponse = await axios.post(route("game.per.round"), {
-                                season_id: props.season_id,
-                                round: round,
-                                conference_id: conference.id,
-                            });
-
-                            gameIds = roundResponse.data.schedule_ids;
-
-                            if (gameIds.length > 0) {
-                                console.warn(`Retrying ${gameIds.length} failed simulations for Conference ${conference.id}`);
-                            }
-                        }
-                    }
-                } catch (error) {
-                    console.error("Error fetching or simulating games:", error);
-                }
-            }
-
-            // Retry failed games for this conference
-            if (failedGames[conference.id] && failedGames[conference.id].size > 0) {
-                console.warn(`Retrying ${failedGames[conference.id].size} failed games for Conference ${conference.id}`);
-
-                for (const gameId of [...failedGames[conference.id]]) {
-                    try {
-                        console.log(`Retrying Game ID: ${gameId}`);
-                        await simulateGameWithResults(gameId, conference.id);
-                        await new Promise((resolve) => setTimeout(resolve, 2000));
-                        failedGames[conference.id].delete(gameId); // Remove from failed list on success
-                    } catch (error) {
-                        console.error(`Retry failed for Game ID: ${gameId}`, error);
-                    }
-                }
-            }
-        }
-
-        isHide.value = false;
-        await fetchConferenceSchedules();
-
-        Swal.fire({
-            icon: "success",
-            title: "All games simulated!",
-            text: "All games in the remaining conferences have been completed.",
-        });
-    };
     const simulateAll = async () => {
         isHide.value = true;
         let failedGames = new Set(); // Store failed games
@@ -508,6 +429,7 @@
             });
 
             // Wait for the user to view results before moving to the next game
+            activeConferenceTab.value = conference_id;
             emit('transaction_id',conference_id);
             await new Promise((resolve) => setTimeout(resolve, 3000)); // Allow time for UI to update
 
@@ -522,43 +444,7 @@
             });
         }
     };
-
-   /**
-    * Simulates a single game.
-    */
-   const simulateGame = async (schedule_id) => {
-       try {
-           const response = await axios.post(route("game.simulate.regular"), {
-               schedule_id: schedule_id,
-           });
-   
-           activeGameId.value = response.data.game_id ?? 0;
-           isHide.value = true;
-           // Fetch updated schedule to reflect game results
-           //await fetchConferenceSchedules();
-           emit('transaction_id',props.conference_id);
-           Swal.fire({
-               icon: "success",
-               title: "Game Simulated!",
-               text: `Game ID ${schedule_id} has been completed.`,
-               timer: 1500,
-               showConfirmButton: false,
-               toast: true,
-               position: "top-end",
-           });
-   
-       } catch (error) {
-           console.error("Error simulating game:", error);
-           Swal.fire({
-               icon: "error",
-               title: "Error!",
-               text: error.response?.data?.message || "An error occurred.",
-               timer: 3000,
-               showConfirmButton: false,
-           });
-       }
-   };
-   
+  
    onMounted(async () => {
        await fetchConferenceSchedules();
    });
