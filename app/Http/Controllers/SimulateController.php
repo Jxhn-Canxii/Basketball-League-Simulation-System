@@ -1410,7 +1410,7 @@ class SimulateController extends Controller
                 ->where('is_injured', true)
                 ->get();
 
-            if ($teamInjuries->count() >= 8) {
+            if ($teamInjuries->count() >= 7) {
                 // Sort players by injury recovery games (worst injuries first)
                 $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(5);
 
