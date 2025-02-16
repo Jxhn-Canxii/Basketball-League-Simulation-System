@@ -504,8 +504,8 @@ class AwardsController extends Controller
             }
             
             // Fetch player rating if available
-            $playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
-            $role = $playerRating->role ?? $player->role; // Default role if rating doesn't exist
+            // $playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
+            $role = $player->role; // Default role if rating doesn't exist
     
             // Data to insert/update
             $data = [
@@ -593,8 +593,8 @@ class AwardsController extends Controller
             }
             
             // Fetch player rating if available
-            $playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
-            $role = $playerRating->role ?? $player->role; // Default role if rating doesn't exist
+            //$playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
+            $role = $player->role; // Default role if rating doesn't exist
     
             // Data to insert/update
             $data = [
@@ -1022,7 +1022,7 @@ class AwardsController extends Controller
 
             // Determine the 6th Man of the Year award
             $rolePlayers = $eligiblePlayerStats->filter(function ($stats) {
-                return $stats->role !== 'star player' && $stats->role !== 'starter';
+                return $stats->role !== 'star player' && $stats->role !== 'all star' && $stats->role !== 'starter';
             });
 
             $sixthManOfTheYear = $rolePlayers->sort(function ($a, $b) {
