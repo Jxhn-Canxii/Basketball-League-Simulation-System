@@ -270,11 +270,17 @@ class ConferenceController extends Controller
             'is_finished' => $isFullySimulated,
         ]);
     }
+
     public function getseasonroundnotsimulated(Request $request)
     {
         $seasonId = $request->season_id;
         $excludedRounds = config('playoffs');
-    
+
+        // Get the latest season status (assuming you store this status in the 'seasons' table)
+        $latestSeasonStatus = DB::table('seasons')
+            ->where('id', $seasonId)
+            ->value('status'); // Get the 'status' of the current season
+
         // Get the list of distinct rounds in the season (excluding the ones in $excludedRounds)
         $rounds = DB::table('schedules')
             ->where('season_id', $seasonId)
@@ -298,28 +304,32 @@ class ConferenceController extends Controller
             ->where('status', '!=', 2) // Check if any game is not yet simulated
             ->distinct('round')
             ->count();
-    
+
         // Check if half of the rounds are simulated
-        $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2);
-    
+        $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) && $latestSeasonStatus == 1;
+
         // Determine if the season is fully simulated
         $isFullySimulated = !DB::table('schedules')
             ->where('season_id', $seasonId)
             ->whereNotIn('round', $excludedRounds)
             ->where('status', '!=', 2) // Check if any game is not yet simulated
             ->exists(); // If no such games exist, the conference is fully simulated
-    
+
         // Optionally, you could handle the trade deadline flag here
-        // if ($isTradeDeadline) {
-           
-        // }
-    
+        if ($isTradeDeadline) {
+            // Set is_trade_deadline = true (you can update the status in the database or perform some action)
+            DB::table('seasons')->where('id', $seasonId)->update([
+                'is_trade_deadline' => true,
+            ]);
+        }
+
         return response()->json([
             'rounds' => $rounds, // Include the list of rounds
             'is_finished' => $isFullySimulated,
             'is_trade_deadline' => $isTradeDeadline, // Add trade deadline info
         ]);
     }
+
     
     private function updateInjuryFreeAgents()
     {
