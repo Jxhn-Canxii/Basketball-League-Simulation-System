@@ -25,7 +25,7 @@ class AwardsController extends Controller
      * @return \Illuminate\Http\JsonResponse
      */
 
-    public static function storeallplayerseasonstats()
+    public static function storeAllPlayerSeasonStats()
     {
         // Get the latest season ID or set it to 12 if it doesn’t exist
         $latestSeasonId = get_current_season_id() ?? 1;
@@ -217,7 +217,7 @@ class AwardsController extends Controller
             }
         }
     }
-    public function storeallplayerperseasonstats($latestSeasonId)
+    public function storeAllPlayerPerSeasonStats($latestSeasonId)
     {
         // Validate the incoming request
 
@@ -335,7 +335,7 @@ class AwardsController extends Controller
 
         return response()->json(['message' => 'Player season stats stored successfully.']);
     }
-    public static function storeplayerseasonstats($teamId, $playerId)
+    public static function storePlayerSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or default to 1 if none exists
@@ -485,7 +485,7 @@ class AwardsController extends Controller
         }
     }
     
-    public static function storeplayernextseasonstats($teamId, $playerId)
+    public static function storePlayerNextSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
@@ -575,7 +575,7 @@ class AwardsController extends Controller
         }
     }
     
-    public static function storeplayercurrentseasonstats($teamId, $playerId)
+    public static function storePlayerCurrentSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
@@ -664,7 +664,7 @@ class AwardsController extends Controller
         }
     }
 
-    public function getseasonawards(Request $request)
+    public function getSeasonAwards(Request $request)
     {
 
         // Validate the incoming request
@@ -766,7 +766,7 @@ class AwardsController extends Controller
         ]);
     }
 
-    public function storeseasonawards()
+    public function storeSeasonAwards()
     {
         // Get the latest season ID
         $latestSeasonId = get_current_season_id() ?? 0;
@@ -926,7 +926,7 @@ class AwardsController extends Controller
         ]);
     }
 
-    public function storeseasonawardsauto(Request $request)
+    public function storeSeasonAwardsAuto(Request $request)
     {
         try {
             // Get the latest season ID
@@ -1107,7 +1107,7 @@ class AwardsController extends Controller
             ], 500);
         }
     }
-    private function insertaward($playerStats, $awardName, $awardDescription, $seasonId)
+    private function insertAward($playerStats, $awardName, $awardDescription, $seasonId)
     {
         if ($playerStats) {
             DB::table('season_awards')->updateOrInsert(

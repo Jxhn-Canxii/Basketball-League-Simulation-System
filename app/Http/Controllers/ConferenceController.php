@@ -32,7 +32,7 @@ class ConferenceController extends Controller
         return response()->json($conferences);
     }
 
-    public function seasoninfo(Request $request)
+    public function seasonInfo(Request $request)
     {
         // Retrieve the season_id from the request
         $seasonId = $request->season_id;
@@ -56,7 +56,7 @@ class ConferenceController extends Controller
         ]);
     }
 
-    public function seasonstandings(Request $request)
+    public function seasonStandings(Request $request)
     {
         // Retrieve the season_id and conference_id from the request
         $seasonId = $request->season_id;
@@ -83,7 +83,7 @@ class ConferenceController extends Controller
     }
 
     // Function to get power rankings
-    public function powerrankings(Request $request)
+    public function powerRankings(Request $request)
     {
         // Retrieve the season_id from the request
         $seasonId = $request->season_id;
@@ -128,7 +128,7 @@ class ConferenceController extends Controller
             'previous_round_results' => $previousRoundResults,
         ]);
     }
-    public function seasonschedulesV1(Request $request)
+    public function seasonSchedulesV1(Request $request)
     {
         // Retrieve the season_id and conference_id from the request
         $seasonId = $request->season_id;
@@ -238,7 +238,7 @@ class ConferenceController extends Controller
             'total_count' => $totalSchedules,
         ]);
     }
-    public function getconferenceroundnotsimulated(Request $request){
+    public function getConferenceRoundNotSimulated(Request $request){
         $seasonId = $request->season_id;
         $conferenceId = $request->conference_id;
         $excludedRounds = config('playoffs');
@@ -271,7 +271,7 @@ class ConferenceController extends Controller
         ]);
     }
 
-    public function getseasonroundnotsimulated(Request $request)
+    public function getSeasonRoundNotSimulated(Request $request)
     {
         $seasonId = $request->season_id;
         $excludedRounds = config('playoffs');

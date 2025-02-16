@@ -33,7 +33,7 @@ class PlayersController extends Controller
             'status' => session('status'),
         ]);
     }
-    public function listteamroster(Request $request)
+    public function listTeamRoster(Request $request)
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',
@@ -317,7 +317,7 @@ class PlayersController extends Controller
         ]);
     }
 
-    public function getfreeagents(Request $request)
+    public function getFreeAgents(Request $request)
     {
         // Get pagination parameters from the request
         $perPage = $request->input('itemsperpage', 10); // Number of items per page
@@ -372,7 +372,7 @@ class PlayersController extends Controller
         ]);
     }
 
-    public function getallplayers(Request $request)
+    public function getAllPlayers(Request $request)
     {
         // Get pagination parameters from the request
         $perPage = $request->input('itemsperpage', 10); // Number of items per page
@@ -450,10 +450,8 @@ class PlayersController extends Controller
             'free_agents' => $freeAgents,
         ]);
     }
-
-
     // Add a player to a team with random attributes
-    public function addplayer(Request $request)
+    public function addPlayer(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -642,7 +640,7 @@ class PlayersController extends Controller
     //     ]);
     // }
     
-    public function addfreeagentplayer(Request $request)
+    public function addFreeAgentPlayer(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:players,name',
@@ -891,7 +889,7 @@ class PlayersController extends Controller
         ];
     }
     
-    public function getplayerseasonperformance(Request $request)
+    public function getPlayerSeasonPerformance(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -1022,7 +1020,7 @@ class PlayersController extends Controller
     }
     
 
-    public function getplayerplayoffperformance(Request $request)
+    public function getPlayerPlayoffPerformance(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -1139,7 +1137,7 @@ class PlayersController extends Controller
     }
     
 
-    public function getplayermainperformance(Request $request)
+    public function getPlayerMainPerformance(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -1366,7 +1364,7 @@ class PlayersController extends Controller
         ]);
     }
 
-    public function getplayergamelogs(Request $request)
+    public function getPlayerGameLogs(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -1449,7 +1447,7 @@ class PlayersController extends Controller
         ]);
     }
 
-    public function getplayerswithfilters(Request $request)
+    public function getPlayersWithFilters(Request $request)
     {
         $sortColumn = $request->input('sort_by');
         $sortOrder = $request->input('sort_order', 'desc');
@@ -1774,7 +1772,7 @@ class PlayersController extends Controller
         return response()->json($sortedPlayers->values());
     }
     
-    public function getstarplayersbyteam(Request $request)
+    public function getStarPlayersByTeam(Request $request)
     {
         // Validate the request
         $request->validate([
@@ -1853,7 +1851,7 @@ class PlayersController extends Controller
         return response()->json($starPlayers);
     }
     
-    public function getplayertransactions(Request $request)
+    public function getPlayerTransactions(Request $request)
     {
         // Retrieve the player_id from the request
         $player_id = $request->input('player_id'); // or $request->player_id if it's passed as a query parameter
@@ -1905,7 +1903,7 @@ class PlayersController extends Controller
         ]);
     }
 
-    public function getplayerinjuryhistory(Request $request)
+    public function getPlayerInjuryHistory(Request $request)
     {
         // Retrieve the player_id from the request
         $player_id = $request->input('player_id');

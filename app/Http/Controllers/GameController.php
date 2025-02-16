@@ -15,7 +15,7 @@ use Inertia\Inertia;
 class GameController extends Controller
 {
 
-    public function getboxscore(Request $request)
+    public function getBoxScore(Request $request)
     {
         // Validate the request
         $request->validate([
