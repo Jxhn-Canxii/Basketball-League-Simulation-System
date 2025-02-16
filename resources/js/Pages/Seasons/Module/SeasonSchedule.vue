@@ -267,7 +267,7 @@
                 </button>
                 <div class="mt-4 p-3 block">
                     <Trade
-                        @newSeason="handleTradeSeason"
+                        :key="props.conference_id"
                         :isOffSeason="false"
                     />
                 </div>
