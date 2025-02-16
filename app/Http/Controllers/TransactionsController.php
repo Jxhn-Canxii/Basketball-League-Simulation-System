@@ -295,7 +295,7 @@ class TransactionsController extends Controller
     public function assignremainingfreeagents()
     {
 
-        $seasonId = get_current_season_id();
+        $seasonId = get_current_season_id() ?? 0;
         $currentseasonId = $seasonId + 1;
         // Fetch teams with fewer than 15 players
         $teamsWithFewMembers = DB::table('teams')
