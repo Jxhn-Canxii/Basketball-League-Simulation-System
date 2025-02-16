@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Leagues;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class LeaguesController extends Controller
 {
@@ -97,4 +98,36 @@ class LeaguesController extends Controller
         $leagues = Leagues::all(['id', 'name']); // Fetch only id and name columns
         return response()->json($leagues);
     }
+
+    public function resetleague()
+    {
+        $tables = [
+            'drafts',
+            'head_to_head',
+            'injury_histories',
+            'players',
+            'player_game_stats',
+            'play_off_appearances',
+            'player_ratings',
+            'player_season_stats',
+            'schedules',
+            'seasons',
+            'season_awards',
+            'streak',
+            'trade_logs',
+            'trade_proposals',
+            'transactions',
+        ];
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;'); // Disable foreign key checks
+
+        foreach ($tables as $table) {
+            DB::table($table)->truncate();
+        }
+
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;'); // Re-enable foreign key checks
+
+        return response()->json(['message' => 'Tables truncated successfully']);
+    }
+
 }

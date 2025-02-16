@@ -151,7 +151,7 @@ class SimulateController extends Controller
         // Simulate player game stats for home team
         // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
-            $minutes = $homeMinutes[(string) $player->id] ?? 0;
+            $minutes = (float) $homeMinutes[$player->id];
             if ($minutes === 0 || $player->is_injured) {
                 $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
@@ -210,7 +210,7 @@ class SimulateController extends Controller
         }
         // Repeat similar simulation for away team players...
         foreach ($awayTeamPlayers as $player) {
-            $minutes = $awayMinutes[(string) $player->id] ?? 0;
+            $minutes = (float) $awayMinutes[$player->id];
             if ($minutes === 0 || $player->is_injured) {
                 $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
@@ -597,11 +597,10 @@ class SimulateController extends Controller
             $playerGameStats = [];
             $homeMinutes = $this->distributeMinutes($homeTeamPlayers, $totalMinutes, $request->schedule_id);
             $awayMinutes = $this->distributeMinutes($awayTeamPlayers, $totalMinutes, $request->schedule_id);
-
+            
             // Simulate home team player stats with detailed shooting metrics
             foreach ($homeTeamPlayers as $player) {
-                $minutes = $homeMinutes[(string) $player->id] ?? 0;
-
+                $minutes = (float) $homeMinutes[$player->id];
                 if ($minutes === 0 || $player->is_injured) {
                     $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                     continue;
@@ -656,7 +655,7 @@ class SimulateController extends Controller
             }
             // Repeat similar simulation for away team players...
             foreach ($awayTeamPlayers as $player) {
-                $minutes = $awayMinutes[(string) $player->id] ?? 0;
+                $minutes = (float) $awayMinutes[$player->id];
                 if ($minutes === 0 || $player->is_injured) {
                     $playerGameStats[] = $this->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                     continue;
@@ -1286,13 +1285,14 @@ class SimulateController extends Controller
             'all star' => [28, 40],
             'starter' => [25, 38],  
             'role player' => [10, 28],  
-            'bench' => [0, 15],  // Bench players play the least
+            'bench' => [5, 15],  // Bench players play the least
         ];
 
         // Convert Eloquent collection to array if necessary
         // $playersArray = $playersArray->toArray();
 
         // Sort players by role priority (higher priority first)
+        
         $sortedPlayers = collect($playersArray)->sortBy(function ($player) use ($rolePriority) {
             return $rolePriority[$player['role']] ?? 5; // Default to lowest priority if role not found
         })->values();
@@ -1335,7 +1335,10 @@ class SimulateController extends Controller
                 return $minutes[$player['id']] > 0 && $minutes[$player['id']] < 48;
             });
 
-            if (!empty($availablePlayers)) {
+            // Count the number of available players
+            $numAvailablePlayers = count($availablePlayers);
+            
+            if ($numAvailablePlayers > 0) {
                 $totalWeight = array_sum(array_map(function ($player) use ($rolePriority) {
                     return 1 / ($rolePriority[$player['role']] ?? 5); // Higher priority gets more weight
                 }, $availablePlayers));
@@ -1353,25 +1356,21 @@ class SimulateController extends Controller
 
         // Ensure exact match with totalMinutes by minor adjustment
         $totalAssignedMinutes = array_sum($minutes);
-        $difference = $totalMinutes - $totalAssignedMinutes;
-
-        if ($difference !== 0) {
-            foreach ($minutes as $id => &$minute) {
-                if ($difference > 0 && $minute < 48) {
-                    $minute++;
-                    $difference--;
-                } elseif ($difference < 0 && $minute > 0) {
-                    $minute--;
-                    $difference++;
-                }
-                if ($difference === 0) break;
-            }
-        }
-        foreach ($minutes as &$minute) { 
-            $minute += ($difference / count($minutes));
-        }
-        unset($minute); // Avoid reference issues
         
+        if ($totalAssignedMinutes !== $totalMinutes) {
+            // If there is a discrepancy, adjust the last few players' minutes (either add or subtract)
+            $difference = $totalMinutes - $totalAssignedMinutes;
+            foreach ($minutes as $id => &$minute) {
+                if ($difference > 0) {
+                    $minute += ($difference / count($minutes)); // Add extra minutes proportionally
+                } elseif ($difference < 0) {
+                    $minute = max(0, $minute + ($difference / count($minutes))); // Prevent negative minutes
+                }
+            }
+            unset($minute); // Prevent reference issues
+            
+        }
+        //unset($minute); // Avoid reference issues
         return $minutes;
     }
 
@@ -1484,7 +1483,7 @@ class SimulateController extends Controller
                 // Ensure the season is active (status = 1) before proceeding
                 if ($seasonStatus == 1) {
                     // Add 20% chance for the player to be waived
-                    if (rand(1, 100) <= 90) {
+                    if (rand(1, 100) <= 30) {
                         // Insert transaction for waiving the player
                         DB::table('transactions')->insert([
                             'player_id' => $player->id,
