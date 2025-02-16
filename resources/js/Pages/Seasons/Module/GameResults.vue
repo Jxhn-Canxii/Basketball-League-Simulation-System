@@ -814,11 +814,10 @@
 
 <script setup>
 import { ref, computed, onMounted } from "vue";
-import axios from "axios";
-import { roundNameFormatter, roleBadgeClass, playerFormatter } from "@/Utility/Formatter";
+import axios from "axios"; 
+import { roundNameFormatter, roleBadgeClass, roleClasses, playerFormatter } from "@/Utility/Formatter";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
-import TeamRoster from "@/Pages/Teams/Module/TeamRoster.vue";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 
@@ -948,20 +947,6 @@ const formatInjuredPlayers = (players) => {
     .join(', ');
 };
 
-const roleClasses = (role) => {
-    switch (role) {
-        case "starter":
-            return "bg-blue-100 text-blue-800";
-        case "star player":
-            return "bg-yellow-100 text-yellow-800";
-        case "role player":
-            return "bg-green-100 text-green-800";
-        case "bench":
-            return "bg-gray-100 text-gray-800";
-        default:
-            return "bg-gray-200 text-gray-800"; // Default case
-    }
-};
 onMounted(() => {
     fetchBoxScore();
 });
