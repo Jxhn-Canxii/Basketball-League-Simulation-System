@@ -44,7 +44,7 @@ class RatingsController extends Controller
             }
             $players = $query->get();
 
-            $seasonId = $this->getLatestSeasonId();
+            $seasonId = get_current_season_id();
 
             // Fetch the team name if team_id is provided
             $teamName = '';
@@ -601,22 +601,4 @@ class RatingsController extends Controller
         ];
     }
 
-
-    // Function to retrieve the previous season ID based on the latest season ID
-    private function getPreviousSeasonId($latestSeasonId)
-    {
-        // Fetch the latest season from the database
-        // $latestSeason = get_current_season_id();
-
-        // Assuming that seasons have a 'year' or an incremental 'id'
-        // We will fetch the previous season by looking for the one that is closest to but less than the latest season
-        $previousSeason = Seasons::where('id', '<', $latestSeasonId)
-            ->orderBy('id', 'desc') // Get the season immediately before the latest one
-            ->first();
-
-        // If a previous season exists, return its ID, otherwise return null
-        return $previousSeason ? $previousSeason->id : null;
-    }
-
-    // Example method to get the current season ID
 }
