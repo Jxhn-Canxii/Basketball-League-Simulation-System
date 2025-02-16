@@ -91,6 +91,7 @@
                     v-if="players.length > 0 && !loading"
                     :key="ii"
                     class="text-gray-700"
+                    @click.enter.prevent="showPlayerProfileModal = player.player_id"
                     :class="player.season_team != player.current_team ? 'bg-red-50' : 'bg-green-50'"
                 >
                     <td
@@ -202,17 +203,32 @@
             />
         </div> -->
     </div>
+    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
+        <button
+            class="flex float-end bg-gray-100 p-3"
+            @click.prevent="showPlayerProfileModal = false"
+        >
+            <i class="fa fa-times text-black-600"></i>
+        </button>
+        <div class="p-6 block">
+            <!-- Image Section -->
+            <PlayerPerformance :key="showPlayerProfileModal" :player_id="showPlayerProfileModal" />
+        </div>
+    </Modal>
 </template>
 
 <script setup>
 import { ref, onMounted, onUnmounted } from "vue";
 import Paginator from "@/Components/Paginator.vue";
 import axios from "axios";
-import { useForm } from "@inertiajs/vue3";
+import Modal from "@/Components/Modal.vue";
+import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 
 const props = defineProps({
     team_id: Number,
 });
+
+const showPlayerProfileModal = ref(false);
 const players = ref([]);
 const team_info = ref([]);
 const loading = ref(false);
