@@ -180,15 +180,17 @@ const approved = ref([]);
 const current_season = ref(null);
 const trade_season_end = ref(false);
 const selectedCategory = ref("star player"); // Default category
-const categories = ref(["star player", "starter", "role player", "bench"]); // Categories for roles
+const categories = ref(["star player","all star", "starter", "role player", "bench"]); // Categories for roles
 const proposalsByCategory = ref({
     "star player": [],
+    "all star": [],
     "starter": [],
     "role player": [],
     "bench": []
 });
 const approvedByCategory = ref({
     "star player": [],
+    "all star": [],
     "starter": [],
     "role player": [],
     "bench": []
@@ -233,6 +235,7 @@ const fetchApprovedTradeProposals = async () => {
 const categorizeProposalsByRole = () => {
     // Clear current categorization
     proposalsByCategory.value["star player"] = [];
+    proposalsByCategory.value["all star"] = [];
     proposalsByCategory.value["starter"] = [];
     proposalsByCategory.value["role player"] = [];
     proposalsByCategory.value["bench"] = [];
@@ -247,6 +250,7 @@ const categorizeProposalsByRole = () => {
 const categorizeApprovedProposalsByRole = () => {
     // Clear current categorization
     approvedByCategory.value["star player"] = [];
+    approvedByCategory.value["all star"] = [];
     approvedByCategory.value["starter"] = [];
     approvedByCategory.value["role player"] = [];
     approvedByCategory.value["bench"] = [];
