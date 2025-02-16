@@ -1144,9 +1144,10 @@ class SimulateController extends Controller
         // Define role-based priorities and their minute allocation limits
         $rolePriority = [
             'star player' => 1,   // Highest priority
-            'starter' => 2,       // Second highest priority
-            'role player' => 3,   // Lower priority
-            'bench' => 4,         // Lowest priority
+            'all star' => 2,   // Highest priority
+            'starter' => 3,       // Second highest priority
+            'role player' => 4,   // Lower priority
+            'bench' => 5,         // Lowest priority
         ];
 
         // Convert Eloquent collection to array
@@ -1161,6 +1162,7 @@ class SimulateController extends Controller
         $assignedMinutes = 0;
 
         // Allocate minutes based on priority roles
+        
         foreach ($sortedPlayers as $player) {
             if (rand(1, 100) >= $player['injury_prone_percentage']) {
                 // Player is injured and should get zero minutes
@@ -1171,13 +1173,16 @@ class SimulateController extends Controller
                     case 1: // Star player
                         $assignedMinutesForRole = rand(5, 48); // Star players get the most minutes
                         break;
-                    case 2: // Starter
+                    case 2: // All Star
                         $assignedMinutesForRole = rand(5, 45); // Starters get slightly fewer minutes
                         break;
-                    case 3: // Role player
+                    case 3: // Starter
+                        $assignedMinutesForRole = rand(5, 40); // Starters get slightly fewer minutes
+                        break;
+                    case 4: // Role player
                         $assignedMinutesForRole = rand(0, 30); // Role players get fewer minutes
                         break;
-                    case 4: // Bench
+                    case 5: // Bench
                         $assignedMinutesForRole = rand(0, 25);  // Bench players get the least minutes
                         break;
                     default:
@@ -1396,6 +1401,62 @@ class SimulateController extends Controller
                 } else {
                     // Optionally log or handle the case where the season status is not 1
                     \Log::info("Player " . $player->id . " could not be waived because the season is not active.");
+                }
+            }
+             // Check if the team has 8 active injuries and needs to waive 5 worst injured players
+            // new rule applied (Fire Leopard Rule: the team should have at least minimum 7 players active to play in a game)
+            $teamInjuries = DB::table('players')
+                ->where('team_id', $player->team_id)
+                ->where('is_injured', true)
+                ->get();
+
+            if ($teamInjuries->count() >= 8) {
+                // Sort players by injury recovery games (worst injuries first)
+                $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(5);
+
+                foreach ($sortedInjuries as $injuredPlayer) {
+                    // Waive the player
+                    DB::table('transactions')->insert([
+                        'player_id' => $injuredPlayer->id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived due to excessive injury recovery time',
+                        'from_team_id' => $injuredPlayer->team_id,
+                        'to_team_id' => 0, // 0 for free agent pool
+                        'status' => 'waived',
+                    ]);
+
+                    // Update player's contract and team details to reflect they are waived
+                    DB::table('players')->where('id', $injuredPlayer->id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                        'is_active' => 1,  // They are still active in the free agent pool
+                        'is_injured' => 1, // Mark the player as no longer injured
+                    ]);
+
+                     // Try to find a random player with the same role
+                     $randomPlayer = $this->getRandomPlayer();
+
+                     if ($randomPlayer) {
+                         $freeAgentStandardContract = $this->getContractYearsBasedOnRole($player->role);
+                         // Update the new player with the appropriate contract role
+                         DB::table('players')->where('id', $randomPlayer->id)->update([
+                             'team_id' => $player->team_id,
+                             'contract_years' => $freeAgentStandardContract, // Assign a random contract length
+                         ]);
+
+                         DB::table('transactions')->insert([
+                             'player_id' => $randomPlayer->id,
+                             'season_id' => $seasonId,
+                             'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
+                             'from_team_id' => 0, // From free agent pool
+                             'to_team_id' => $player->team_id,
+                             'status' => 'signed',
+                         ]);
+
+                         $storeStats = new AwardsController;
+                         //store initial player season stats
+                         $storeStats->storeplayercurrentseasonstats( $player->team_id, $randomPlayer->id);
+                     }
                 }
             }
 
