@@ -344,8 +344,9 @@
             let rounds = response.data.rounds;
             let isFinished = response.data.is_finished;
             let isTradeDeadline = response.data.is_trade_deadline;
+            isTradeModalOpen.value = false;
             if(isTradeDeadline){
-
+                isTradeModalOpen.value = true;
             }
             if (isFinished) {
                 Swal.fire({
