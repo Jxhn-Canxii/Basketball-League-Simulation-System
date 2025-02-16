@@ -1249,7 +1249,7 @@ class SimulateController extends Controller
             }
 
             // Fetch the most recent season id
-            $seasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 1;
+            $seasonId = get_current_season_id() ?? 1;
 
             // Calculate fatigue increase based on minutes played
             $fatigueIncrease = $minutes > 0 ? round($minutes * 0.5) : 0;
@@ -1948,7 +1948,7 @@ class SimulateController extends Controller
             return true; // Exit the function if the round is not divisible by 5
         }
     
-        $seasonId = $this->getLatestSeasonId();
+        $seasonId = get_current_season_id();
         $teams = DB::table('teams')->pluck('id');
     
         foreach ($teams as $teamId) {
@@ -2241,20 +2241,5 @@ class SimulateController extends Controller
             'free_throw_attempts' => $adjustedFreeThrowAttempts,
             'free_throw_made' => $freeThrowMade,
         ];
-    }
-    
-    private function getLatestSeasonId()
-    {
-        // Fetch the latest season ID based on descending order of IDs
-        $latestSeasonId = Seasons::orderBy('id', 'desc')->pluck('id')->first();
-
-        if ($latestSeasonId) {
-            return $latestSeasonId;
-        } else {
-            return 0;
-        }
-
-        // Handle the case where no seasons are found
-        throw new \Exception('No seasons found.');
     }
 }

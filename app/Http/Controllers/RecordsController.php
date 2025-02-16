@@ -362,7 +362,7 @@ class RecordsController extends Controller
     public function updatePlayerPlayoffAppearances()
     {
         // $seasonId = $request->season_id;
-        $seasonId = DB::table('seasons')->max('id');
+        $seasonId = get_current_season_id();
         // Retrieve player playoff statistics for the given season
         $playerData = DB::table('players AS p')
             ->leftJoin('player_game_stats AS pg', 'p.id', '=', 'pg.player_id')

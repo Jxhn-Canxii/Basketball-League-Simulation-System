@@ -238,7 +238,7 @@ class LeadersController extends Controller
     public function updateAllTimeTopStats()
     {
         // Get the current season id (you can get this from your business logic or the latest game)
-        $currentSeasonId = DB::table('seasons')->latest('id')->value('id');
+        $currentSeasonId = get_current_season_id();
         // Define the stat categories and corresponding columns in the player_game_stats table
         $statCategories = [
             'points' => 'pgs.points',

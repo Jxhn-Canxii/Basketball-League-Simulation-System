@@ -485,7 +485,7 @@ class DraftController extends Controller
     public function draftresults()
     {
         // Get the latest season_id from the standings_view
-        $latestSeasonId = $this->getLatestSeasonId();
+        $latestSeasonId = get_current_season_id();
 
         // Fetch draft results for the latest season from the drafts table
         $draftResults = DB::table('drafts')
@@ -519,7 +519,7 @@ class DraftController extends Controller
     private function updatePlayerPlayoffAppearances()
     {
         // $seasonId = $request->season_id;
-        $seasonId = DB::table('seasons')->max('id');
+        $seasonId = get_current_season_id();
         // Retrieve player playoff statistics for the given season
         $playerData = DB::table('players AS p')
             ->leftJoin('player_game_stats AS pg', 'p.id', '=', 'pg.player_id')
@@ -586,19 +586,7 @@ class DraftController extends Controller
 
         return true;
     }
-    private function getLatestSeasonId()
-    {
-        // Fetch the latest season ID based on descending order of IDs
-        $latestSeasonId = Seasons::orderBy('id', 'desc')->pluck('id')->first();
-
-        if ($latestSeasonId) {
-            return $latestSeasonId;
-        }
-
-        // Handle the case where no seasons are found
-        throw new \Exception('No seasons found.');
-    }
-
+    
     private function determineContractYears($role)
     {
         switch ($role) {

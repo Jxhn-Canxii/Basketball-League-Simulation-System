@@ -516,8 +516,8 @@ class RatingsController extends Controller
     private function comparePerformanceBetweenSeasons($playerId)
     {
         // Get the latest season ID and the previous season ID
-        $latestSeasonId = $this->getLatestSeasonId();
-        $previousSeasonId = $this->getPreviousSeasonId($latestSeasonId);
+        $latestSeasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id();
 
         // Fetch player's role for the upcoming season from the players table
         $upcomingSeasonRole = Player::where('id', $playerId)
@@ -606,7 +606,7 @@ class RatingsController extends Controller
     private function getPreviousSeasonId($latestSeasonId)
     {
         // Fetch the latest season from the database
-        $latestSeason = Seasons::find($latestSeasonId);
+        // $latestSeason = get_current_season_id();
 
         // Assuming that seasons have a 'year' or an incremental 'id'
         // We will fetch the previous season by looking for the one that is closest to but less than the latest season
@@ -619,16 +619,4 @@ class RatingsController extends Controller
     }
 
     // Example method to get the current season ID
-    private function getLatestSeasonId()
-    {
-        // Fetch the latest season ID based on descending order of IDs
-        $latestSeasonId = Seasons::orderBy('id', 'desc')->pluck('id')->first();
-
-        if ($latestSeasonId) {
-            return $latestSeasonId;
-        }
-
-        // Handle the case where no seasons are found
-        throw new \Exception('No seasons found.');
-    }
 }

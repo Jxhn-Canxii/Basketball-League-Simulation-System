@@ -86,6 +86,7 @@ class SeasonsController extends Controller
         // If you need the result as a Collection again, you can convert it back
         $teamIdsCollection = collect($teamIds);
         // Create the response array
+
         $response = [
             'seasons' => $seasons,
             'total_pages' => $totalPages,
@@ -93,6 +94,8 @@ class SeasonsController extends Controller
             'total_count' => $totalCount,
             'is_new_season' => $isNewSeason,
             'team_ids' => $teamIdsCollection, // Include team count in the response
+            'current_season' =>  get_current_season_id(),
+            'previous_season' =>  get_previous_season_id(),
         ];
 
         // Return the seasons data along with pagination information as a JSON response

@@ -888,15 +888,11 @@ class TeamsController extends Controller
         $teamId = $request->team_id;
         
         // Get the most recent season (the latest season by id)
-        $latestSeason = DB::table('seasons')
-            ->orderBy('id', 'desc')  // Assuming `id` is auto-incremented and represents the season order
-            ->first();
+        $latestSeasonId = get_current_season_id();
     
         // If season_id is greater than 0, override the latest season with the provided season_id
         if ((int) $request->season_id > 0) {
             $latestSeasonId = (int) $request->season_id;  // Make sure this is an integer
-        } else {
-            $latestSeasonId = $latestSeason->id;  // Use the id of the latest season from DB
         }
     
         if (!$latestSeasonId) {

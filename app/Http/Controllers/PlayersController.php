@@ -650,7 +650,7 @@ class PlayersController extends Controller
             'country' => 'required|string',
         ]);
 
-        $latestSeasonId = DB::table('seasons')->max('id');
+        $latestSeasonId = get_current_season_id();
         $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
 
         // Check if player already exists
@@ -781,20 +781,9 @@ class PlayersController extends Controller
      *
      * @return array
      */
-    private function getLatestSeasonId()
-    {
-        // Fetch the latest season ID based on descending order of IDs
-        $latestSeasonId = Seasons::orderBy('id', 'desc')->pluck('id')->first();
-
-        if ($latestSeasonId) {
-            return $latestSeasonId;
-        }
-
-        // Handle the case where no seasons are found
-    }
     private function getRandomArchetypeAndAttributes()
     {
-        $seasonId = $this->getLatestSeasonId();  // Get latest season
+        $seasonId = get_current_season_id();  // Get latest season
         
         // Define archetypes with expanded attributes
         $archetypes = [

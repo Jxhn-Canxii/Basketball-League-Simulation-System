@@ -295,7 +295,7 @@ class TransactionsController extends Controller
     public function assignremainingfreeagents()
     {
 
-        $seasonId = $this->getLatestSeasonId();
+        $seasonId = get_current_season_id();
         $currentseasonId = $seasonId + 1;
         // Fetch teams with fewer than 15 players
         $teamsWithFewMembers = DB::table('teams')
@@ -478,7 +478,7 @@ class TransactionsController extends Controller
 
     private function updateTeamRolesBasedOnStatsByRating()
     {
-        $seasonId = $this->getLatestSeasonId();
+        $seasonId = get_current_season_id();
         $teams = DB::table('teams')->pluck('id');
 
         foreach ($teams as $teamId) {
@@ -587,20 +587,6 @@ class TransactionsController extends Controller
             default:
                 return 1;
         }
-    }
-    private function getLatestSeasonId()
-    {
-        // Fetch the latest season ID based on descending order of IDs
-        $latestSeasonId = Seasons::orderBy('id', 'desc')->pluck('id')->first();
-
-        if ($latestSeasonId) {
-            return $latestSeasonId;
-        } else {
-            return 0;
-        }
-
-        // Handle the case where no seasons are found
-        throw new \Exception('No seasons found.');
     }
     private function getFreeAgentsByCompositeScore($currentSeasonId)
     {

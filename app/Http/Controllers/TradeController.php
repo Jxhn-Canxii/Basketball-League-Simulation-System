@@ -10,7 +10,7 @@ class TradeController extends Controller
 {
     public function getPendingTradeProposals()
     {
-        $latestSeasonId = DB::table('player_season_stats')->max('season_id') + 1;
+        $latestSeasonId = get_current_season_id() + 1;
     
         $proposals = DB::table('trade_proposals')
             ->leftJoin('teams as team_from', 'trade_proposals.team_from_id', '=', 'team_from.id')
@@ -82,7 +82,7 @@ class TradeController extends Controller
     }
     public function automatedTradeDecision()
     {
-        $latestSeasonId = DB::table('seasons')->max('id') + 1;
+        $latestSeasonId = get_current_season_id() + 1;
         
         // Fetch all trade proposals for the current season
         $proposals = DB::table('trade_proposals')
@@ -252,7 +252,7 @@ class TradeController extends Controller
     }
     
     public function endTradeWindow(){
-        $latestSeasonId = DB::table('seasons')->max('id');
+        $latestSeasonId = get_current_season_id();
 
         DB::table('seasons')
         ->where('id',  $latestSeasonId)
@@ -308,7 +308,7 @@ class TradeController extends Controller
     }
     private function logTrade($teamId, $opponentId, $playerId, $tradePlayerId,$message = 'Trade proposal accepted.')
     {
-        $latestSeasonId = DB::table('seasons')->max('id');
+        $latestSeasonId = get_current_season_id();
     
         // Fetch player details in a single query (avoiding multiple DB calls)
         $player = DB::table('players')->select('name', 'role')->where('id', $playerId)->first();
@@ -352,7 +352,7 @@ class TradeController extends Controller
     
     public function generateTradeProposals()
     {
-        $latestSeasonId = DB::table('seasons')->max('id') + 1;
+        $latestSeasonId = get_current_season_id() + 1;
         $teams = DB::table('teams')->pluck('id');
         $tradeProposals = [];
         $tradeablePlayers = [];
@@ -447,8 +447,8 @@ class TradeController extends Controller
 
     private function findUnderperformingPlayers($teamId)
     {
-        $latestSeasonId = DB::table('seasons')->max('id');
-        $previousSeasonId = $latestSeasonId - 1; // Assuming seasons are sequential
+        $latestSeasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id(); // Assuming seasons are sequential
     
         $latestStats = DB::table('player_season_stats')
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
@@ -494,7 +494,7 @@ class TradeController extends Controller
     
     private function findUnhappyStars()
     {
-        $latestSeasonId = DB::table('seasons')->max('id');
+        $latestSeasonId = get_current_season_id();
 
         $starPlayers = DB::table('players')
             ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
@@ -527,7 +527,7 @@ class TradeController extends Controller
     
     private function getPlayerStats($playerId)
     {
-        $latestSeasonId = DB::table('seasons')->max('id');
+        $latestSeasonId = get_current_season_id();
         
         return DB::table('player_season_stats')
             ->where('player_id', $playerId)

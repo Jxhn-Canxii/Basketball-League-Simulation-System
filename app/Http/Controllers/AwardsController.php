@@ -28,7 +28,7 @@ class AwardsController extends Controller
     public static function storeallplayerseasonstats()
     {
         // Get the latest season ID or set it to 12 if it doesn’t exist
-        $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 1;
+        $latestSeasonId = get_current_season_id() ?? 1;
 
         // Get all players from the team
         $players = DB::table('players')
@@ -339,7 +339,7 @@ class AwardsController extends Controller
     {
         try {
             // Get the latest season ID or default to 1 if none exists
-            $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 1;
+            $latestSeasonId = get_current_season_id() ?? 1;
     
             // Fetch the specified player from the team
             $player = DB::table('players')
@@ -489,7 +489,7 @@ class AwardsController extends Controller
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
-            $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 0;
+            $latestSeasonId = get_current_season_id() ?? 0;
             $nextSeasonId = $latestSeasonId + 1;
     
             // Fetch the player
@@ -579,7 +579,7 @@ class AwardsController extends Controller
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
-            $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id') ?? 0;
+            $latestSeasonId = get_current_season_id() ?? 0;
     
             // Fetch the player
             $player = DB::table('players')
@@ -769,7 +769,7 @@ class AwardsController extends Controller
     public function storeseasonawards()
     {
         // Get the latest season ID
-        $latestSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id');
+        $latestSeasonId = get_current_season_id() ?? 0;
 
         // Clear existing awards for the latest season
         DB::table('season_awards')->where('season_id', $latestSeasonId)->delete();
@@ -804,7 +804,7 @@ class AwardsController extends Controller
         })->take(5);
 
         // Get previous season's stats for comparison
-        $previousSeasonId = DB::table('seasons')->where('id', '<', $latestSeasonId)->orderBy('id', 'desc')->value('id');
+        $previousSeasonId = get_previous_season_id() ?? 0;
         $previousSeasonStats = DB::table('player_season_stats')->where('season_id', $previousSeasonId)->pluck('avg_points_per_game', 'player_id');
 
         // Exclude rookies from the Most Improved Player award
@@ -966,7 +966,7 @@ class AwardsController extends Controller
             })->take(5);
 
             // Get previous season's stats for comparison
-            $previousSeasonId = DB::table('seasons')->where('id', '<', $latestSeasonId)->orderBy('id', 'desc')->value('id');
+            $previousSeasonId = get_previous_season_id();
             $previousSeasonStats = DB::table('player_season_stats')->where('season_id', $previousSeasonId)->pluck('avg_points_per_game', 'player_id');
 
             // Exclude rookies from the Most Improved Player award

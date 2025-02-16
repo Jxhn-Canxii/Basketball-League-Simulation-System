@@ -157,7 +157,7 @@ class AnalyticsController extends Controller
     {
         // Determine the leader type and season ID
         $leaderType = $request->input('leader_type', 'mvp_leaders');
-        $seasonId = $request->input('season_id', $this->getLatestSeasonId());
+        $seasonId = $request->input('season_id', get_current_season_id());
 
         // Ensure season ID is valid
         if (empty($seasonId)) {
@@ -331,18 +331,4 @@ class AnalyticsController extends Controller
         return response()->json($statistics);
     }
 
-    private function getLatestSeasonId()
-    {
-        // Fetch the latest season ID based on descending order of IDs
-        $latestSeasonId = Seasons::orderBy('id', 'desc')->pluck('id')->first();
-
-        if ($latestSeasonId) {
-            return $latestSeasonId;
-        } else {
-            return 0;
-        }
-
-        // Handle the case where no seasons are found
-        throw new \Exception('No seasons found.');
-    }
 }
