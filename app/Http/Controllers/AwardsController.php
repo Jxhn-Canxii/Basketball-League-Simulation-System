@@ -857,7 +857,7 @@ class AwardsController extends Controller
 
         // Determine the 6th Man of the Year award
         $rolePlayers = $eligiblePlayerStats->filter(function ($stats) {
-            return $stats->role !== 'star player' && $stats->role !== 'starter';
+            return $stats->role !== 'star player' && $stats->role !== 'all star' && $stats->role !== 'starter';
         });
 
         $sixthManOfTheYear = $rolePlayers->sort(function ($a, $b) {

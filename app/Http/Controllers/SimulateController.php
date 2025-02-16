@@ -30,8 +30,15 @@ class SimulateController extends Controller
                 'steals' => rand(1, 20),
                 'blocks' => rand(1, 20),
             ],
+            'all star' => [
+                'points' => rand(1, 70),
+                'rebounds' => rand(1, 30),
+                'assists' => rand(1, 25),
+                'steals' => rand(1, 15),
+                'blocks' => rand(1, 15),
+            ],
             'starter' => [
-                'points' => rand(1, 50),
+                'points' => rand(1, 40),
                 'rebounds' => rand(1, 30),
                 'assists' => rand(1, 25),
                 'steals' => rand(1, 15),
@@ -1966,13 +1973,15 @@ class SimulateController extends Controller
                 // Assign roles
                 $roles = [
                     'star player' => 1,
-                    'starter' => 4,
+                    'all star' => 2,
+                    'starter' => 2,
                     'role player' => 5,
                     'bench' => 5,
                 ];
     
                 $roleCounts = [
                     'star player' => 0,
+                    'all star' => 0,
                     'starter' => 0,
                     'role player' => 0,
                     'bench' => 0,
@@ -1983,6 +1992,8 @@ class SimulateController extends Controller
     
                     if ($roleCounts['star player'] < $roles['star player']) {
                         $role = 'star player';
+                    } elseif ($roleCounts['all star'] < $roles['all star']) {
+                        $role = 'all star';
                     } elseif ($roleCounts['starter'] < $roles['starter']) {
                         $role = 'starter';
                     } elseif ($roleCounts['role player'] < $roles['role player']) {
@@ -2118,6 +2129,7 @@ class SimulateController extends Controller
         
         $roleMultipliers = [
             'star player' => 1.2,
+            'all star' => 1.1,
             'starter' => 1.0,
             'role player' => 0.8,
             'bench' => 0.6

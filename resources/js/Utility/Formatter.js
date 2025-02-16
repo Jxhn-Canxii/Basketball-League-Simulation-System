@@ -278,6 +278,8 @@ export const roleClasses = (role) => {
     switch (role) {
         case "starter":
             return "bg-blue-100 text-blue-800";
+        case "all star":
+            return "bg-red-100 text-red-800";
         case "star player":
             return "bg-yellow-100 text-yellow-800";
         case "role player":

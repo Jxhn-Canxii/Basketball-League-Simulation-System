@@ -91,12 +91,14 @@ class RatingsController extends Controller
                     $roleModifier = 1;
                     if ($stat->role === 'star player') {
                         $roleModifier = 1.2;  // Star players get a boost
-                    } else if ($stat->role === 'starter') {
+                    } else if ($stat->role === 'all star') {
                         $roleModifier = 1.1;  // Starters get a smaller boost
+                    } else if ($stat->role === 'starter') {
+                        $roleModifier = 1.05;  // Starters get a smaller boost
                     } else if ($stat->role === 'role player') {
-                        $roleModifier = 1.05;  // Role players get a small bonus
+                        $roleModifier = 0.9;  // Role players get a small bonus
                     } else if ($stat->role === 'bench') {
-                        $roleModifier = 0.9;  // Bench players are slightly penalized in ranking
+                        $roleModifier = 0.7;  // Bench players are slightly penalized in ranking
                     }
 
                     // Normalize score based on games played (to account for incomplete seasons)
@@ -109,15 +111,18 @@ class RatingsController extends Controller
             // Rank players and assign roles
             $rankedPlayers = $stats->values();
            // Assign the top 3 players as "star player"
-            $rankedPlayers->take(3)->each(function ($playerStat) {
+            $rankedPlayers->take(1)->each(function ($playerStat) {
                 Player::where('id', $playerStat->player_id)->update(['role' => 'star player']);
+            });
+             // Assign the next 2 players as "all star"
+             $rankedPlayers->slice(1, 2)->each(function ($playerStat) {
+                Player::where('id', $playerStat->player_id)->update(['role' => 'all star']);
             });
 
             // Assign the next 2 players as "starter"
             $rankedPlayers->slice(3, 2)->each(function ($playerStat) {
                 Player::where('id', $playerStat->player_id)->update(['role' => 'starter']);
             });
-
 
             // Assign the next 5 players as "role players"
             foreach ($rankedPlayers->slice(5, 5) as $playerStat) {
@@ -205,6 +210,7 @@ class RatingsController extends Controller
                     // Determine if the player re-signs
                     $reSignChance = match ($player->role) {
                         'star player' => 70,
+                        'all star' => 60,
                         'starter' => 50,
                         'role player' => 30,
                         'bench' => 10,
@@ -422,13 +428,15 @@ class RatingsController extends Controller
         switch ($role) {
             case 'star player':
                 return mt_rand(1, 7);
-            case 'starter':
+            case 'all star':
                 return mt_rand(1, 5);
-            case 'role player':
+            case 'starter':
                 return mt_rand(1, 4);
+            case 'role player':
+                return mt_rand(1, 3);
             case 'bench':
             default:
-                return mt_rand(1, 3);
+                return mt_rand(1, 2);
         }
     }
 
@@ -436,12 +444,14 @@ class RatingsController extends Controller
     // Define role priority (lower number = higher priority)
     protected $rolePriority = [
         'star player' => 1,
+        'all star' => 2,
         'starter' => 2,
         'role player' => 3,
         'bench' => 4,
     ];
     protected $roleThresholds = [
-        'star player' => 85,  // Star players should maintain at least 85 overall rating
+        'star player' => 90,  // Star players should maintain at least 90 overall rating
+        'all star' => 85,      // Starters should maintain at least 85 overall rating
         'starter' => 75,      // Starters should maintain at least 75 overall rating
         'role player' => 60,  // Role players should maintain at least 60 overall rating
         'bench' => 40,        // Bench players should maintain at least 40 overall rating
@@ -530,9 +540,10 @@ class RatingsController extends Controller
         // Define role-based adjustments
         $roleAdjustments = [
             'star player' => ['shooting' => 1.2, 'defense' => 1.2, 'passing' => 1.2, 'rebounding' => 1.2],
-            'starter' => ['shooting' => 1.1, 'defense' => 1.1, 'passing' => 1.1, 'rebounding' => 1.1],
-            'role player' => ['shooting' => 1.0, 'defense' => 1.0, 'passing' => 1.0, 'rebounding' => 1.0],
-            'bench' => ['shooting' => 0.9, 'defense' => 0.9, 'passing' => 0.9, 'rebounding' => 0.9],
+            'all star' => ['shooting' => 1.1, 'defense' => 1.1, 'passing' => 1.1, 'rebounding' => 1.1],
+            'starter' => ['shooting' => 1.0, 'defense' => 1.0, 'passing' => 1.0, 'rebounding' => 1.0],
+            'role player' => ['shooting' => 0.9, 'defense' => 0.9, 'passing' => 0.9, 'rebounding' => 0.9],
+            'bench' => ['shooting' => 0.7, 'defense' => 0.7, 'passing' => 0.7, 'rebounding' => 0.7],
         ];
 
         // Get role adjustment factors for both roles

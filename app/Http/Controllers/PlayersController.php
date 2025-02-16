@@ -106,12 +106,14 @@ class PlayersController extends Controller
                     $roleModifier = 1;
                     if ($stats->role === 'star player') {
                         $roleModifier = 1.2;  // Star players get a boost
-                    } else if ($stats->role === 'starter') {
+                    } else if ($stats->role === 'all star') {
                         $roleModifier = 1.1;  // Starters get a smaller boost
+                    } else if ($stats->role === 'starter') {
+                        $roleModifier = 1.05;  // Starters get a smaller boost
                     } else if ($stats->role === 'role player') {
-                        $roleModifier = 1.05;  // Role players get a small bonus
+                        $roleModifier = 0.9;  // Role players get a small bonus
                     } else if ($stats->role === 'bench') {
-                        $roleModifier = 0.9;  // Bench players are slightly penalized in ranking
+                        $roleModifier = 0.7;  // Bench players are slightly penalized in ranking
                     }
 
                     // Normalize score based on games played (to account for incomplete seasons)
@@ -344,7 +346,7 @@ class PlayersController extends Controller
         $query->orderByRaw("
             LENGTH(awards) DESC,
             is_finals_mvp DESC,
-            FIELD(role, 'star player', 'starter', 'role player', 'bench')
+            FIELD(role, 'star player','all star', 'starter', 'role player', 'bench')
         ");
 
         // Get total number of records
@@ -427,7 +429,7 @@ class PlayersController extends Controller
 
         // Add sorting by is_active status, then by role priority
         $query->orderBy('players.is_active', 'desc') // Active players first
-            ->orderByRaw("FIELD(players.role, 'star player', 'starter', 'role player', 'bench')");
+            ->orderByRaw("FIELD(players.role, 'star player','all star', 'starter', 'role player', 'bench')");
 
         // Get total number of records
         $total = $query->count();
@@ -486,7 +488,7 @@ class PlayersController extends Controller
         $contractYears = rand(1, 5); // Random contract years between 1 and 5
 
         // Randomize player role
-        $roles = ['starter', 'star player', 'role player', 'bench'];
+        $roles = ['starter','all star', 'star player', 'role player', 'bench'];
         $role = $roles[array_rand($roles)];
 
         // Randomize player ratings
@@ -710,6 +712,8 @@ class PlayersController extends Controller
         // Determine role based on overall rating
         if ($overallRating >= 90) {
             $role = 'star player';
+        } elseif ($overallRating >= 85) {
+            $role = 'all star';
         } elseif ($overallRating >= 75) {
             $role = 'starter';
         } elseif ($overallRating >= 60) {

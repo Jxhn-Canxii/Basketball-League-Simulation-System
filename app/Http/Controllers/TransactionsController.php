@@ -266,6 +266,9 @@ class TransactionsController extends Controller
             case 'star player':
                 $contractYears = 5;
                 break;
+            case 'all star':
+                $contractYears = 3;
+                break;
             case 'starter':
                 $contractYears = 3;
                 break;
@@ -490,6 +493,7 @@ class TransactionsController extends Controller
 
                 // Initialize arrays for assigning roles
                 $starPlayers = [];
+                $allStars = [];
                 $starters = [];
                 $rolePlayers = [];
                 $benchPlayers = [];
@@ -501,7 +505,9 @@ class TransactionsController extends Controller
 
                     if (count($starPlayers) < 1) {
                         $starPlayers[] = $player->id;
-                    } elseif (count($starters) < 4) {
+                    } if (count($allStars) < 2) {
+                        $allStars[] = $player->id;
+                    }elseif (count($starters) < 2) {
                         $starters[] = $player->id;
                     } elseif (count($rolePlayers) < 5) {
                         $rolePlayers[] = $player->id;
@@ -512,6 +518,7 @@ class TransactionsController extends Controller
 
                 // Update each player's role in the database
                 DB::table('players')->whereIn('id', $starPlayers)->update(['role' => 'star player']);
+                DB::table('players')->whereIn('id', $allStars)->update(['role' => 'all star']);
                 DB::table('players')->whereIn('id', $starters)->update(['role' => 'starter']);
                 DB::table('players')->whereIn('id', $rolePlayers)->update(['role' => 'role player']);
                 DB::table('players')->whereIn('id', $benchPlayers)->update(['role' => 'bench']);
@@ -569,6 +576,8 @@ class TransactionsController extends Controller
         switch ($role) {
             case 'star player':
                 return rand(3, 7);
+            case 'all star':
+                return rand(3, 5);
             case 'starter':
                 return rand(1, 5);
             case 'role player':

@@ -325,9 +325,10 @@ class DraftController extends Controller
         // Define role priorities
         $rolePriorities = [
             'star player' => 1,
+            'all star' => 2,
             'starter' => 2,
-            'role player' => 3,
-            'bench' => 4,
+            'role player' => 5,
+            'bench' => 5,
         ];
 
         // Build the query with optional search filter
@@ -343,7 +344,7 @@ class DraftController extends Controller
 
         // Add role priority sorting
         $query->orderByRaw(
-            "FIELD(role, 'star player', 'starter', 'role player', 'bench')"
+            "FIELD(role, 'star player','all star', 'starter', 'role player', 'bench')"
         );
 
         // Get total number of records
@@ -603,6 +604,8 @@ class DraftController extends Controller
         switch ($role) {
             case 'star player':
                 return rand(3, 7);
+            case 'all star':
+                    return rand(3, 5);
             case 'starter':
                 return rand(1, 5);
             case 'role player':

@@ -70,45 +70,46 @@
                     :class="['px-4 py-2', currentTab === 'info' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                     @click="currentTab = 'info'"
                 >
-                    Team Info
+                    <i class="fas fa-users mr-2"></i> Team Info
                 </button>
                 <button
                     :class="['px-4 py-2', currentTab === 'history' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                     @click="currentTab = 'history'"
                 >
-                    Team Season History
+                    <i class="fas fa-trophy mr-2"></i> Team Season History
                 </button>
                 <button
                     :class="['px-4 py-2', currentTab === 'roster' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                     @click="currentTab = 'roster'"
                 >
-                    Team Roster
+                    <i class="fas fa-users-cog mr-2"></i> Team Roster
                 </button>
                 <button
                     :class="['px-4 py-2', currentTab === 'transactions' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                     @click="currentTab = 'transactions'"
                 >
-                    Team Transactions
+                    <i class="fas fa-exchange-alt mr-2"></i> Team Transactions
                 </button>
                 <button
                     :class="['px-4 py-2', currentTab === 'stars' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                     @click="currentTab = 'stars'"
                 >
-                    Stars
+                    <i class="fas fa-star mr-2"></i> Stars
                 </button>
                 <button
                     :class="['px-4 py-2', currentTab === 'timeline' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                     @click="currentTab = 'timeline'"
                 >
-                    Season Timeline
+                    <i class="fas fa-clock mr-2"></i> Season Timeline
                 </button>
                 <button
-                :class="['px-4 py-2', currentTab === 'legend' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
-                @click="currentTab = 'legend'"
-            >
-                Top 15 Players
-            </button>
+                    :class="['px-4 py-2', currentTab === 'legend' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    @click="currentTab = 'legend'"
+                >
+                    <i class="fas fa-clipboard-list mr-2"></i> Top 15 Players
+                </button>
             </div>
+
             <div class="mt-4">
                 <TeamInfo :key="props.team_id" v-if="currentTab === 'info'" :team_id="props.team_id" />
                 <TeamHistory :key="props.team_id"  v-if="currentTab === 'history'" :team_id="props.team_id" />
