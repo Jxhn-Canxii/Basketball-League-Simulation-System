@@ -107,9 +107,9 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('analytics/')->group(function(){
         Route::get('', [AnalyticsController::class, 'index'])->name('analytics.index');
-        Route::post('get-all-standings', [AnalyticsController::class, 'get_all_standings'])->name('analytics.standings');
-        Route::get('player-stats', [AnalyticsController::class, 'count_players'])->name('analytics.player.count');
-        Route::post('current-season-leaders', [AnalyticsController::class, 'getseasonleaders'])->name('players.season.leaders');
+        Route::post('get-all-standings', [AnalyticsController::class, 'getAllStandings'])->name('analytics.standings');
+        Route::get('player-stats', [AnalyticsController::class, 'countPlayers'])->name('analytics.player.count');
+        Route::post('current-season-leaders', [AnalyticsController::class, 'getSeasonLeaders'])->name('players.season.leaders');
         Route::get('draft-statistics', [AnalyticsController::class, 'getDraftPlayerStatistics'])->name('draft.statistics');
         Route::get('alltime-game-records', [AnalyticsController::class, 'getAllStatistics'])->name('alltime.game.records');
     });

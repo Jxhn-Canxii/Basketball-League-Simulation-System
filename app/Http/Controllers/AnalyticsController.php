@@ -19,7 +19,7 @@ class AnalyticsController extends Controller
         ]);
     }
 
-    public function get_all_standings(Request $request)
+    public function getAllStandings(Request $request)
     {
         $request->validate([
             'conference_id' => 'required|integer',
@@ -99,7 +99,7 @@ class AnalyticsController extends Controller
     }
 
 
-    public function count_players()
+    public function countPlayers()
     {
         // Count total players
         $totalPlayers = DB::table('players')->count();
