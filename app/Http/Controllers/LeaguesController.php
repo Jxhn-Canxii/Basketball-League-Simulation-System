@@ -107,7 +107,7 @@ class LeaguesController extends Controller
             'injury_histories',
             'players',
             'player_game_stats',
-            'play_off_appearances',
+            'player_playoff_appearances',
             'player_ratings',
             'player_season_stats',
             'schedules',
