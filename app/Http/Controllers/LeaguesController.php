@@ -127,7 +127,7 @@ class LeaguesController extends Controller
 
         DB::statement('SET FOREIGN_KEY_CHECKS=1;'); // Re-enable foreign key checks
 
-        return response()->json(['message' => 'Tables truncated successfully']);
+        return response()->json(['message' => 'Tables reseted successfully']);
     }
 
 }
