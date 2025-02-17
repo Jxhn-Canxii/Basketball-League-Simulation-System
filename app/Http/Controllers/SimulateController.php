@@ -2101,7 +2101,8 @@ class SimulateController extends Controller
     
                 foreach ($rankedPlayers as $index => $playerStat) {
                     $role = 'bench'; // Default role
-    
+                
+                    // Determine the role for the player
                     if ($roleCounts['star player'] < $roles['star player']) {
                         $role = 'star player';
                     } elseif ($roleCounts['all star'] < $roles['all star']) {
@@ -2111,10 +2112,31 @@ class SimulateController extends Controller
                     } elseif ($roleCounts['role player'] < $roles['role player']) {
                         $role = 'role player';
                     }
-    
+                
+                    // Increment role count
                     $roleCounts[$role]++;
-                    
-                    if($playerStat->role != $role){
+                
+                    // Get the most recent role change transaction for the player in the current season
+                    $lastTransaction = DB::table('transactions')
+                        ->where('player_id', $playerStat->player_id)
+                        ->where('season_id', $seasonId)
+                        ->where('status', 'role change')
+                        ->orderBy('created_at', 'desc') // Order by the most recent transaction
+                        ->first();
+                
+                    // Check if the last recorded role change is the same as the new role
+                    if ($lastTransaction && $lastTransaction->details) {
+                        // Extract the old role from the 'details' column (example: "Has moved from starter to all star")
+                        preg_match('/moved from (\w+) to (\w+)/', $lastTransaction->details, $matches);
+                
+                        if (!empty($matches) && $matches[2] == $role) {
+                            // If the last recorded role change is the same as the new role, skip the transaction
+                            continue;
+                        }
+                    }
+                
+                    // If role has changed, insert a new transaction
+                    if ($playerStat->role != $role) {
                         DB::table('transactions')->insert([
                             'player_id' => $playerStat->player_id,
                             'season_id' => $seasonId,
@@ -2124,17 +2146,19 @@ class SimulateController extends Controller
                             'status' => 'role change',
                         ]);
                     }
-
+                
+                    // Update the player's role in the database
                     Player::where('id', $playerStat->player_id)->update(['role' => $role]);
-                    
+                
+                    // Update player season stats
                     DB::table('player_season_stats')
                         ->where('player_id', $playerStat->player_id)
                         ->where('season_id', $seasonId)
                         ->update([
                             'role' => $role,  // Update the player's role for this season
                         ]);
-
                 }
+                
     
                 DB::commit();
             } catch (\Exception $e) {
