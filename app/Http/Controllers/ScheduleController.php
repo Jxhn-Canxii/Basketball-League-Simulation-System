@@ -34,7 +34,7 @@ class ScheduleController extends Controller
 
         return response()->json($seasons);
     }
-    public function createseasonandschedule(Request $request)
+    public function createSeasonandSchedule(Request $request)
     {
         $request->validate([
             'season_name' => 'required|unique:seasons,name',
@@ -269,7 +269,7 @@ class ScheduleController extends Controller
         }
     }
     //start playoff algo
-    public static function playoffschedule(Request $request)
+    public static function playoffSchedule(Request $request)
     {
         // Retrieve inputs
         $seasonId = $request->season_id;
@@ -319,7 +319,7 @@ class ScheduleController extends Controller
         }
     }
     
-    private static function playoffschedulebyrank($request)
+    private static function playoffScheduleByRank($request)
     {
         // Retrieve inputs
         $seasonId = $request->season_id;
@@ -397,7 +397,7 @@ class ScheduleController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
         }
     }
-    private static function playoffschedulebyconference($request)
+    private static function playoffScheduleByConference($request)
     {
         // Retrieve inputs
         $seasonId = $request->season_id;

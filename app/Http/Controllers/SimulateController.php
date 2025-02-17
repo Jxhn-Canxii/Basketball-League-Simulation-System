@@ -61,7 +61,7 @@ class SimulateController extends Controller
         ];
     }
 
-    public function simulateplayoff(Request $request)
+    public function simulatePlayoff(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -499,7 +499,7 @@ class SimulateController extends Controller
             'schedule' => $schedule
         ]);
     }
-    public function simulateregular(Request $request)
+    public function simulateRegular(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -1093,7 +1093,7 @@ class SimulateController extends Controller
 
         return $overtimeStats;
     }
-    public function getscheduleids(Request $request)
+    public function getScheduleIds(Request $request)
     {
         // Validate the request data
         $request->validate([
@@ -1167,107 +1167,6 @@ class SimulateController extends Controller
         ]);
     }
 
-    private function distributeMinutesV1($playersArray, $totalMinutes, $gameId)
-    {
-        // Define role-based priorities and their minute allocation limits
-        $rolePriority = [
-            'star player' => 1,   // Highest priority
-            'all star' => 2,   // Highest priority
-            'starter' => 3,       // Second highest priority
-            'role player' => 4,   // Lower priority
-            'bench' => 5,         // Lowest priority
-        ];
-
-        // Convert Eloquent collection to array
-        // $playersArray = $playersArray->toArray();
-
-        // Sort players based on their role priority (higher priority first)
-        $sortedPlayers = collect($playersArray)->sortBy(function ($player) use ($rolePriority) {
-            return $rolePriority[$player['role']] ?? 5; // Default to lowest priority if role not found
-        })->values();
-
-        $minutes = [];
-        $assignedMinutes = 0;
-
-        // Allocate minutes based on priority roles
-        
-        foreach ($sortedPlayers as $player) {
-            if (rand(1, 100) >= $player['injury_prone_percentage']) {
-                // Player is injured and should get zero minutes
-                $minutes[$player['id']] = 0;
-            } else {
-                // Define initial minute ranges based on role priority
-                switch ($rolePriority[$player['role']] ?? 5) {
-                    case 1: // Star player
-                        $assignedMinutesForRole = rand(5, 30); // Star players get the most minutes
-                        break;
-                    case 2: // All Star
-                        $assignedMinutesForRole = rand(5, 30); // Starters get slightly fewer minutes
-                        break;
-                    case 3: // Starter
-                        $assignedMinutesForRole = rand(5, 30); // Starters get slightly fewer minutes
-                        break;
-                    case 4: // Role player
-                        $assignedMinutesForRole = rand(0, 25); // Role players get fewer minutes
-                        break;
-                    case 5: // Bench
-                        $assignedMinutesForRole = rand(0, 20);  // Bench players get the least minutes
-                        break;
-                    default:
-                        $assignedMinutesForRole = 0;
-                        break;
-                }
-
-                $minutes[$player['id']] = $assignedMinutesForRole;
-                $assignedMinutes += $assignedMinutesForRole;
-            }
- 
-            // Track and update fatigue for each player
-            // $playersArray = $playersArray->toArray();
-           
-            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
-        }
-
-        // Calculate remaining minutes to reach the target
-        $remainingMinutes = $totalMinutes - $assignedMinutes;
-
-        // Get players who were not assigned any minutes (injured or otherwise)
-        $availablePlayers = array_filter($sortedPlayers->toArray(), function ($player) use ($minutes) {
-            return !isset($minutes[$player['id']]) || $minutes[$player['id']] === 0;
-        });
-
-        // Count the number of available players
-        $numAvailablePlayers = count($availablePlayers);
-
-        // Distribute remaining minutes based on role priority (higher priority roles get more of the remaining minutes)
-        if ($numAvailablePlayers > 0) {
-            // First, calculate how much "weight" each player should get based on role priority
-            $totalWeight = array_sum(array_map(function ($player) use ($rolePriority) {
-                return 1 / $rolePriority[$player['role']] ?? 5;
-            }, $availablePlayers));
-
-            // Now, distribute the remaining minutes according to weight
-            foreach ($availablePlayers as $player) {
-                $playerWeight = 1 / ($rolePriority[$player['role']] ?? 5);  // Lower priority roles get more weight
-                $allocatedMinutes = ($playerWeight / $totalWeight) * $remainingMinutes;  // Proportional allocation
-                $minutes[$player['id']] += $allocatedMinutes;
-            }
-        }
-
-        // Ensure total minutes match the target (adjust if necessary)
-        $totalAssignedMinutes = array_sum($minutes);
-
-        if ($totalAssignedMinutes !== $totalMinutes) {
-            // If there is a discrepancy, adjust the last few players' minutes (either add or subtract)
-            $difference = $totalMinutes - $totalAssignedMinutes;
-            foreach ($minutes as $id => &$minute) {
-                // Add or subtract the difference proportionally
-                $minute += ($difference / count($minutes)); // Simple proportional adjustment
-            }
-        }
-
-        return $minutes;
-    }
     private function distributeMinutes($playersArray, $totalMinutes, $gameId)
     {
         // Define role-based priorities and their minute allocation limits
@@ -1524,7 +1423,7 @@ class SimulateController extends Controller
 
                             $storeStats = new AwardsController;
                             //store initial player season stats
-                            $storeStats->storeplayercurrentseasonstats( $player->team_id, $randomPlayer->id);
+                            $storeStats->storePlayerCurrentSeasonStats( $player->team_id, $randomPlayer->id);
                         }
                     } else {
                         // Optionally log or handle the case where the player is not waived
@@ -1595,7 +1494,7 @@ class SimulateController extends Controller
     
                              $storeStats = new AwardsController;
                              //store initial player season stats
-                             $storeStats->storeplayercurrentseasonstats( $player->team_id, $randomPlayer->id);
+                             $storeStats->storePlayerCurrentSeasonStats( $player->team_id, $randomPlayer->id);
                          }
                     }
                 }
@@ -1631,7 +1530,6 @@ class SimulateController extends Controller
         }
     }
 
-    
     private function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
@@ -2294,7 +2192,7 @@ class SimulateController extends Controller
                 // Update Player Season Stats (Incrementing Leader Fields)
                 Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
                 $storeStats = new AwardsController;
-                $storeStats->storeplayerseasonstats($stats['team_id'], $stats['player_id']);
+                $storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
                 
                 DB::table('player_season_stats')->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],

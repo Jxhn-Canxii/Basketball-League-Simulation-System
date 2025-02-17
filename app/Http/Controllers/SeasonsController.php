@@ -79,7 +79,7 @@ class SeasonsController extends Controller
                          ->select('seasons.*', 'winner_conference.name as winner_conference_name', 'loser_conference.name as loser_conference_name', 'weakest_conference.name as weakest_conference_name', 'champion_conference.name as champion_conference_name')
                          ->get();
 
-        $isNewSeason = $this->is_new_season();
+        $isNewSeason = $this->isNewSeason();
 
         $teamIds = DB::table('teams')->pluck('id')->toArray();
 
@@ -101,7 +101,7 @@ class SeasonsController extends Controller
         // Return the seasons data along with pagination information as a JSON response
         return response()->json($response);
     }
-    private function is_new_season() {
+    private function isNewSeason() {
         // Get the total count of seasons
         $totalSeasons = DB::table('seasons')->count();
 
@@ -137,7 +137,7 @@ class SeasonsController extends Controller
     }
 
 
-    public function seasonsperleague(Request $request)
+    public function seasonsPerLeague(Request $request)
     {
         // Validate the incoming request
         $request->validate([
@@ -149,7 +149,7 @@ class SeasonsController extends Controller
 
         return response()->json($seasons);
     }
-    public function seasonsperleaguepaginate(Request $request)
+    public function seasonsPerLeaguePaginate(Request $request)
     {
         // Validate the incoming request
         $request->validate([
@@ -194,7 +194,7 @@ class SeasonsController extends Controller
         ]);
     }
 
-    public function seasoninfo(Request $request)
+    public function seasonInfo(Request $request)
     {
         // Retrieve the season_id from the request
         $seasonId = $request->season_id;
@@ -214,7 +214,8 @@ class SeasonsController extends Controller
             'conference_count' => $totalConference
         ]);
     }
-    private function allconference($seasonId)
+
+    private function allConference($seasonId)
     {
         $conferences = DB::table('conferences')
             ->join('seasons', 'conferences.league_id', '=', 'seasons.league_id')
@@ -247,7 +248,8 @@ class SeasonsController extends Controller
 
         return $conferenceChampions;
     }
-    private function championsperconference($conference_id)
+
+    private function championsPerConference($conference_id)
     {
         $result = DB::table('teams')
                 ->join('seasons', 'teams.id', '=', 'seasons.finals_winner_id')
@@ -257,7 +259,7 @@ class SeasonsController extends Controller
         return $result;
     }
 
-    public function seasonstandings(Request $request)
+    public function seasonStandings(Request $request)
     {
         // Retrieve the season_id from the request
         $seasonId = $request->season_id;
@@ -274,7 +276,7 @@ class SeasonsController extends Controller
         ]);
     }
 
-    public function seasonsplayoffs(Request $request)
+    public function seasonsPlayoffs(Request $request)
     {
         // Retrieve the season_id from the request
         $seasonId = $request->season_id;
@@ -286,7 +288,8 @@ class SeasonsController extends Controller
             'playoffs' => $playoffs,
         ]);
     }
-    public function getseasonsdropdown ()
+
+    public function getSeasonsDropdown ()
     {
         // Fetch all seasons with their id and name, ordered by the latest season_id
         $seasons = DB::table('seasons')
@@ -298,8 +301,7 @@ class SeasonsController extends Controller
         return response()->json($seasons);
     }
 
-
-    public function seasonschedules(Request $request)
+    public function seasonSchedules(Request $request)
     {
         // Retrieve the season_id from the request
         $seasonId = $request->season_id;
@@ -313,6 +315,7 @@ class SeasonsController extends Controller
             'schedules' => $schedules,
         ]);
     }
+    
     private static function playoffTree($seasonId, $status)
     {
         // Define round indices based on status

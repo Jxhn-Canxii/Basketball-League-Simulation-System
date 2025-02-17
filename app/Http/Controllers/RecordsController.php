@@ -81,7 +81,7 @@ class RecordsController extends Controller
             'data' => $recentSchedule,
         ]);
     }
-    public function get_rivalries()
+    public function getRivalries()
     {
         $results = DB::table('head_to_head')
             ->join('teams as team', 'team.id', '=', 'head_to_head.team_id') // Join to get team's name
@@ -118,7 +118,7 @@ class RecordsController extends Controller
             'data' => $records,
         ]);
     }
-    public function playoff_appearances()
+    public function playoffAppearances()
     {
         $teams = DB::table('schedules')
             ->select(
@@ -142,7 +142,7 @@ class RecordsController extends Controller
         ]);
     }
 
-    public function topscorerteams(Request $request)
+    public function topScorerTeams(Request $request)
     {
         // Extracting per_page, current_page, and sort_by from request
         $perPage = $request->input('per_page', 10); // Default per page to 10 if not provided
@@ -209,7 +209,7 @@ class RecordsController extends Controller
         return response()->json($response);
     }
 
-    public function statsleaders(Request $request)
+    public function statsLeaders(Request $request)
     {
         // Extract parameters from request with default values
         $perPage = max(1, (int) $request->input('itemsperpage', 10)); // Default items per page to 10
@@ -279,7 +279,7 @@ class RecordsController extends Controller
         return response()->json($response);
     }
 
-    public function winningestteams(Request $request)
+    public function winningestTeams(Request $request)
     {
         // Extracting per_page and current_page from request
         $perPage = $request->input('per_page', 10); // Default per page to 10 if not provided

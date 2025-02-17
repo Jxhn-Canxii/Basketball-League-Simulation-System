@@ -141,7 +141,7 @@ class TeamsController extends Controller
 
 
 
-    public function teaminfo(Request $request)
+    public function teamInfo(Request $request)
     {
         $teamId = $request->team_id;
 
@@ -161,7 +161,7 @@ class TeamsController extends Controller
             'streaks' => $gameStreaks,
         ]);
     }
-    public function teamseasonfinals(Request $request)
+    public function teamSeasonFinals(Request $request)
     {
         $teamId = $request->team_id;
         $finalsSeasons = self::getFinalsSeasons($teamId);
@@ -172,7 +172,7 @@ class TeamsController extends Controller
             'finalsWinSeasons' => $finalsWinSeasons,
         ]);
     }
-    public function teamseasonstandings(Request $request)
+    public function teamSeasonStandings(Request $request)
     {
         $teamId = $request->team_id;
         $topStandingsSeasons = self::getTopStandingsSeasons($teamId);
@@ -185,7 +185,7 @@ class TeamsController extends Controller
             'playOffAppearance' =>  $playOffAppearance,
         ]);
     }
-    public function teamseasonhistory(Request $request)
+    public function teamSeasonHistory(Request $request)
     {
         $teamId = $request->team_id;
         $page = $request->page_num ?? 1;
@@ -195,7 +195,7 @@ class TeamsController extends Controller
 
         return response()->json($teamSeasonHistory);
     }
-    public function teamstransactionhistory(Request $request)
+    public function teamsTransactionHistory(Request $request)
     {
         $teamId = $request->team_id;
         $page = $request->page_num ?? 1;
@@ -341,8 +341,7 @@ class TeamsController extends Controller
         ];
     }
     
-
-    public function teamlastseason(Request $request)
+    public function teamLastSeason(Request $request)
     {
         $teamId = $request->team_id;
 
@@ -366,7 +365,7 @@ class TeamsController extends Controller
             'lastFinalSeason' => $lastFinalSeason,
         ]);
     }
-    public function teammatches(Request $request)
+    public function teamMatches(Request $request)
     {
         $teamId = $request->team_id;
 
@@ -376,7 +375,7 @@ class TeamsController extends Controller
             'lastTenGames' => $lastTenGames,
         ]);
     }
-    public function teammatchesh2h(Request $request)
+    public function teamMatchesH2H(Request $request)
     {
         $teamId = $request->team_id;
 
@@ -386,7 +385,7 @@ class TeamsController extends Controller
             'headToHeadBattles' => $headToHeadBattles,
         ]);
     }
-    public function teamrivals(Request $request)
+    public function teamRivals(Request $request)
     {
         $teamId = $request->team_id;
 
@@ -420,37 +419,7 @@ class TeamsController extends Controller
             ->selectRaw('SUM(wins) AS all_time_wins, SUM(losses) AS all_time_losses')
             ->first();
     }
-    private function getSeasonHistoryv1($teamId)
-    {
-        // Fetch data from database
-        $seasonHistory = DB::table('standings_view')
-            ->select(
-                'standings_view.*',
-                'seasons.name as season_name',
-                DB::raw('CASE WHEN standings_view.overall_rank <= 16 THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
-                DB::raw('MAX(schedules.id) as last_round_played_id'),
-            )
-            ->join('seasons', 'seasons.id', '=', 'standings_view.season_id')
-            ->leftJoin('schedules', function ($join) use ($teamId) {
-                $join->on('schedules.season_id', '=', 'standings_view.season_id')
-                    ->where(function ($query) use ($teamId) {
-                        $query->where('schedules.home_id', '=', $teamId)
-                            ->orWhere('schedules.away_id', '=', $teamId);
-                    });
-            })
-            ->where('standings_view.team_id', $teamId)
-            ->groupBy('standings_view.season_id', 'seasons.id', 'seasons.name', 'standings_view.overall_rank', 'isPlayoffQualified')
-            ->orderBy('standings_view.season_id', 'desc')
-            ->get();
 
-        // Process the collection and append round information
-        foreach ($seasonHistory as $season) {
-            $roundInfo = $this->getLastRoundPlayed($season->last_round_played_id, $teamId);
-            $season->round_info = $roundInfo;
-        }
-
-        return $seasonHistory;
-    }
     private function getSeasonHistoryCount($teamId, $seasonId)
     {
         // Fetch data from database
@@ -516,47 +485,6 @@ class TeamsController extends Controller
         ];
     }
 
-    private function getLastRoundPlayedv1($lastRoundPlayedId, $teamId)
-    {
-        // Retrieve the round and result information based on last_round_played_id
-        $roundInfo = DB::table('schedules')
-            ->select('round', 'home_score', 'away_score', 'home_id', 'away_id')
-            ->where('id', $lastRoundPlayedId)
-            ->first();
-
-        if (!$roundInfo) {
-            return null; // Handle case where no round info found
-        }
-
-        // Check if the round is finals
-        if ($roundInfo->round == 'finals') {
-            // Determine winner based on team's perspective
-            if ($roundInfo->home_id == $teamId) {
-                // If the team is home and home_score > away_score, they win
-                $teamWon = ($roundInfo->home_score > $roundInfo->away_score);
-            } elseif ($roundInfo->away_id == $teamId) {
-                // If the team is away and away_score > home_score, they win
-                $teamWon = ($roundInfo->away_score > $roundInfo->home_score);
-            } else {
-                // If neither home_id nor away_id matches teamId, consider as not won
-                $teamWon = false;
-            }
-
-            return [
-                'round' => $roundInfo->round,
-                'won' => $teamWon,
-                'score' => ($teamWon ? ($roundInfo->home_id == $teamId ? $roundInfo->home_score : $roundInfo->away_score) : null),
-                'opponent_id' => ($teamWon ? ($roundInfo->home_id == $teamId ? $roundInfo->away_id : $roundInfo->home_id) : null)
-            ];
-        } else {
-            return [
-                'round' => $roundInfo->round,
-                'won' => null, // Not applicable for non-finals rounds
-                'score' => null, // Score not applicable for non-finals rounds
-                'opponent_id' => null // Opponent id not applicable for non-finals rounds
-            ];
-        }
-    }
     private function getLastRoundPlayed($lastRoundPlayedId, $teamId)
     {
         // Retrieve the round and result information based on last_round_played_id

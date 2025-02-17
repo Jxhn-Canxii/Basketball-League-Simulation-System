@@ -501,7 +501,7 @@ class TransactionsController extends Controller
                 // Assign roles based on overall rating
                 foreach ($players as $index => $player) {
                     $storeStats = new AwardsController;
-                    $storeStats->storeplayerseasonstats( $player->team_id, $player->id);
+                    $storeStats->storePlayerSeasonStats( $player->team_id, $player->id);
 
                     if (count($starPlayers) < 1) {
                         $starPlayers[] = $player->id;
@@ -556,7 +556,7 @@ class TransactionsController extends Controller
 
                 foreach ($allPlayersStats as $playerStat) {
                     $storeStats = new AwardsController;
-                    $storeStats->storeplayernextseasonstats($teamId, $playerStat->id);
+                    $storeStats->storePlayerNextSeasonStats($teamId, $playerStat->id);
                 }
 
                 DB::commit();
