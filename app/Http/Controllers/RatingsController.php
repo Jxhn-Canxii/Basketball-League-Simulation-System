@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\DB;
 class RatingsController extends Controller
 {
     //
-    public function updateactiveplayers(Request $request)
+    public function updateActivePlayers(Request $request)
     {
         DB::beginTransaction(); // Start transaction
 
@@ -439,7 +439,6 @@ class RatingsController extends Controller
                 return mt_rand(1, 2);
         }
     }
-
 
     // Define role priority (lower number = higher priority)
     protected $rolePriority = [
