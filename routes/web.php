@@ -202,7 +202,7 @@ Route::middleware('auth')->group(function () {
         Route::get('', [AwardsController::class, 'index'])->name('awards.index');
         Route::post('store-player-stats', [AwardsController::class, 'storePlayerSeasonStats'])->name('store.player.stats');
         Route::get('override-store-player-stats/{season_id}', [AwardsController::class, 'storeAllPlayerSeasonStats'])->name('store.player.stats.override');
-        Route::post('player-awards', [AwardsController::class, 'storeSeasonaAwards'])->name('player.awards');
+        Route::post('player-awards', [AwardsController::class, 'storeSeasonAwards'])->name('player.awards');
         Route::get('player-awards-dropdown', [AwardsController::class, 'getAwardNamesDropdown'])->name('player.awards.dropdown');
         Route::post('player-awards-filter', [AwardsController::class, 'filterAwardsPerSeason'])->name('player.awards.filter');
         Route::post('player-season-awards', [AwardsController::class, 'getSeasonAwards'])->name('player.season.awards');

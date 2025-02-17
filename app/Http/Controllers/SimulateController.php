@@ -1299,24 +1299,7 @@ class SimulateController extends Controller
                 $injuryPercentage = (float) $player->injury_prone_percentage;
 
                 // Generate a random number between 0 and 100, representing the injury risk
-                $injuryRisk = rand(0, 30); // Adjust this to compare with a max of 100
-
-                // Set a base injury chance, which is 20% by default
-                $baseInjuryChance = 20;
-
-                // Calculate the injury chance based on fatigue and injury history
-                // Assume fatigue is between 0 and 100, injury history is a scale of 0-10 (adjust these as needed)
-                $fatigueImpact = $player->fatigue * 0.2;  // Scale fatigue so it's between 0 and 20
-                $injuryHistoryImpact = $player->injury_history * 3; // Scale injury history impact to a max of 30
-
-                // Combine the impacts (you can adjust the weights here)
-                $injuryChance = $baseInjuryChance + $fatigueImpact + $injuryHistoryImpact;
-
-                // Normalize injuryChance to a range between 0 and 100 (don't let it exceed 100)
-                $injuryChance = min($injuryChance, 100);
-
-                // Ensure injuryChance has a minimum threshold (like 20%) to make sure players are not always less likely
-                $injuryChance = max($injuryChance, 20);  // Minimum 20% chance of injury
+                $injuryRisk = rand(0, 100); // Adjust this to compare with a max of 100
 
                 // Now check if the injury risk is lower than the injury chance
                 if ($injuryPercentage > $injuryRisk) {
@@ -2051,7 +2034,7 @@ class SimulateController extends Controller
                     ];
                 }));
     
-                // Calculate composite score considering efficiency per avg_minutes_per_game
+                // Rank players
                 $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
                     $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
                         ? ($stat->avg_points_per_game * 0.4 +
@@ -2061,8 +2044,7 @@ class SimulateController extends Controller
                         $stat->avg_blocks_per_game * 0.1 -
                         $stat->avg_turnovers_per_game * 0.1 -
                         $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
-                        : 0; // Default to 0 if avg_minutes_per_game is 0 or undefined
-
+                        : 0;
     
                     $perGameScore = $stat->avg_points_per_game * 0.3 +
                         $stat->avg_rebounds_per_game * 0.2 +
@@ -2086,82 +2068,55 @@ class SimulateController extends Controller
                 });
     
                 // Assign roles
-                $roles = [
-                    'star player' => 1,
-                    'all star' => 2,
-                    'starter' => 2,
-                    'role player' => 5,
-                    'bench' => 5,
-                ];
+                $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
+                $roleCounts = array_fill_keys(array_keys($roles), 0);
     
-                $roleCounts = [
-                    'star player' => 0,
-                    'all star' => 0,
-                    'starter' => 0,
-                    'role player' => 0,
-                    'bench' => 0,
-                ];
-    
-                foreach ($rankedPlayers as $index => $playerStat) {
-                    $role = 'bench'; // Default role
-                
-                    // Determine the role for the player
-                    if ($roleCounts['star player'] < $roles['star player']) {
-                        $role = 'star player';
-                    } elseif ($roleCounts['all star'] < $roles['all star']) {
-                        $role = 'all star';
-                    } elseif ($roleCounts['starter'] < $roles['starter']) {
-                        $role = 'starter';
-                    } elseif ($roleCounts['role player'] < $roles['role player']) {
-                        $role = 'role player';
+                foreach ($rankedPlayers as $playerStat) {
+                    $role = 'bench';
+                    foreach ($roles as $key => $limit) {
+                        if ($roleCounts[$key] < $limit) {
+                            $role = $key;
+                            break;
+                        }
                     }
-                
-                    // Increment role count
-                    $roleCounts[$role]++;
-                
-                    // Get the most recent role change transaction for the player in the current season
+                    
+                    // Construct new role change message
+                    $newDetails = "Has moved from {$playerStat->role} to $role for the upcoming games.";
+                    
+                    // Get the last role change transaction
                     $lastTransaction = DB::table('transactions')
                         ->where('player_id', $playerStat->player_id)
                         ->where('season_id', $seasonId)
                         ->where('status', 'role change')
-                        ->orderBy('created_at', 'desc') // Order by the most recent transaction
+                        ->orderBy('created_at', 'desc')
                         ->first();
-                
-                    // Check if the last recorded role change is the same as the new role
-                    if ($lastTransaction && $lastTransaction->details) {
-                        // Extract the old role from the 'details' column (example: "Has moved from starter to all star")
-                        preg_match('/moved from (\w+) to (\w+)/', $lastTransaction->details, $matches);
-                
-                        if (!empty($matches) && $matches[2] == $role) {
-                            // If the last recorded role change is the same as the new role, skip the transaction
-                            continue;
-                        }
+    
+                    // Check if the role change message is the same
+                    if ($lastTransaction && $lastTransaction->details === $newDetails) {
+                        continue; // Skip transaction if it's identical to the last one
                     }
-                
-                    // If role has changed, insert a new transaction
-                    if ($playerStat->role != $role) {
+    
+                    // Insert transaction if the role has changed
+                    if ($playerStat->role !== $role) {
                         DB::table('transactions')->insert([
                             'player_id' => $playerStat->player_id,
                             'season_id' => $seasonId,
-                            'details' => 'Has moved from '.$playerStat->role.' to '.$role.' for the upcoming games.',
+                            'details' => $newDetails,
                             'from_team_id' => $playerStat->team_id,
-                            'to_team_id' => $playerStat->team_id, // 0 for free agent pool
+                            'to_team_id' => $playerStat->team_id,
                             'status' => 'role change',
                         ]);
                     }
-                
-                    // Update the player's role in the database
+    
+                    // Update player role
                     Player::where('id', $playerStat->player_id)->update(['role' => $role]);
-                
-                    // Update player season stats
                     DB::table('player_season_stats')
                         ->where('player_id', $playerStat->player_id)
                         ->where('season_id', $seasonId)
-                        ->update([
-                            'role' => $role,  // Update the player's role for this season
-                        ]);
+                        ->update(['role' => $role]);
+                    
+                    $roleCounts[$role]++;
                 }
-                
     
                 DB::commit();
             } catch (\Exception $e) {
@@ -2173,6 +2128,8 @@ class SimulateController extends Controller
     
         return true;
     }
+    
+
     private function updateSeasonStats($playerGameStats)
     {
         if (empty($playerGameStats)) {
