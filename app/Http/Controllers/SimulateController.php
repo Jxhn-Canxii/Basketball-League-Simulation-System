@@ -1299,7 +1299,7 @@ class SimulateController extends Controller
                 $injuryPercentage = (float) $player->injury_prone_percentage;
 
                 // Generate a random number between 0 and 100, representing the injury risk
-                $injuryRisk = rand(0, 100); // Adjust this to compare with a max of 100
+                $injuryRisk = rand(0, 30); // Adjust this to compare with a max of 100
 
                 // Set a base injury chance, which is 20% by default
                 $baseInjuryChance = 20;
