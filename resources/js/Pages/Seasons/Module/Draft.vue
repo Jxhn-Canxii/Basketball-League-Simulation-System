@@ -369,6 +369,7 @@ const addMultiplePlayers = async (count) => {
             const fetchRandomFullName = Math.random() < 0.5 ? fetchRandomFullName1 : fetchRandomFullName2; // 50% chance for each
 
             const randomFullName = await fetchRandomFullName(); // Fetch random full name
+            console.log(randomFullName);
             if (randomFullName != null) {
                 promises.push(addPlayer(randomFullName)); // Add the promise to the array
                 key.value = i;
