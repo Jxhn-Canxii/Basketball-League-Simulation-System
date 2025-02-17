@@ -1319,7 +1319,7 @@ class SimulateController extends Controller
                 $injuryChance = max($injuryChance, 20);  // Minimum 20% chance of injury
 
                 // Now check if the injury risk is lower than the injury chance
-                if ($injuryRisk < $injuryChance) {
+                if ($injuryPercentage > $injuryRisk) {
    
                     // Fetch all injury types from the config
                     $injuryTypes = config('injuries');
