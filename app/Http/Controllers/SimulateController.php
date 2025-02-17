@@ -1298,14 +1298,26 @@ class SimulateController extends Controller
                 // Cast injury_prone_percentage to a float for accurate comparison
                 $injuryPercentage = (float) $player->injury_prone_percentage;
 
-                // Generate a random number between 0 and $injuryPercentage
-                $injuryRisk = rand(0, 100) / 100 * $injuryPercentage;
+                // Generate a random number between 0 and 100, representing the injury risk
+                $injuryRisk = rand(0, 100);
 
-                // Calculate injuryChance based on fatigue and injury history
-                $injuryChance = ($player->fatigue * 0.5) + ($player->injury_history * 10);
+                // Calculate the injury chance based on fatigue and injury history
+                // Assume fatigue is between 0 and 100, injury history is a scale of 0-10 (adjust these as needed)
+                $fatigueImpact = $player->fatigue * 0.2;  // Scale fatigue so it's between 0 and 20
+                $injuryHistoryImpact = $player->injury_history * 3; // Scale injury history impact to a max of 30
 
-                // Check if injury risk is less than the injury chance
+                // Combine the impacts (you can adjust the weights here)
+                $injuryChance = $fatigueImpact + $injuryHistoryImpact;
+
+                // Normalize injuryChance to a range between 0 and 100 (don't let it exceed 100)
+                $injuryChance = min($injuryChance, 100);
+
+                // Ensure injuryChance has a base threshold (like 10%) to make sure players are not always less likely
+                $injuryChance = max($injuryChance, 10);  // Minimum 10% chance of injury
+
+                // Now check if the injury risk is lower than the injury chance
                 if ($injuryRisk < $injuryChance) {
+
                     // Fetch all injury types from the config
                     $injuryTypes = config('injuries');
 
