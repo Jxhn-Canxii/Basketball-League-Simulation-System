@@ -1295,11 +1295,14 @@ class SimulateController extends Controller
 
             // Check for injuries if the player is not already injured
             if (!$player->is_injured) {
-                // Cast injury_prone_percentage to a float for accurate comparison
+               // Cast injury_prone_percentage to a float for accurate comparison
                 $injuryPercentage = (float) $player->injury_prone_percentage;
 
                 // Generate a random number between 0 and 100, representing the injury risk
-                $injuryRisk = rand(0, 100);
+                $injuryRisk = rand(0, 100); // Adjust this to compare with a max of 100
+
+                // Set a base injury chance, which is 20% by default
+                $baseInjuryChance = 20;
 
                 // Calculate the injury chance based on fatigue and injury history
                 // Assume fatigue is between 0 and 100, injury history is a scale of 0-10 (adjust these as needed)
@@ -1307,17 +1310,17 @@ class SimulateController extends Controller
                 $injuryHistoryImpact = $player->injury_history * 3; // Scale injury history impact to a max of 30
 
                 // Combine the impacts (you can adjust the weights here)
-                $injuryChance = $fatigueImpact + $injuryHistoryImpact;
+                $injuryChance = $baseInjuryChance + $fatigueImpact + $injuryHistoryImpact;
 
                 // Normalize injuryChance to a range between 0 and 100 (don't let it exceed 100)
                 $injuryChance = min($injuryChance, 100);
 
-                // Ensure injuryChance has a base threshold (like 10%) to make sure players are not always less likely
-                $injuryChance = max($injuryChance, 10);  // Minimum 10% chance of injury
+                // Ensure injuryChance has a minimum threshold (like 20%) to make sure players are not always less likely
+                $injuryChance = max($injuryChance, 20);  // Minimum 20% chance of injury
 
                 // Now check if the injury risk is lower than the injury chance
                 if ($injuryRisk < $injuryChance) {
-
+   
                     // Fetch all injury types from the config
                     $injuryTypes = config('injuries');
 
