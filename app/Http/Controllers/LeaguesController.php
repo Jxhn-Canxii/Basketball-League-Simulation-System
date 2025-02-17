@@ -99,7 +99,7 @@ class LeaguesController extends Controller
         return response()->json($leagues);
     }
 
-    public function resetleague()
+    public function resetLeague()
     {
         $tables = [
             'drafts',

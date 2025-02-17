@@ -143,6 +143,8 @@ Route::middleware('auth')->group(function () {
         Route::post('update-league', [LeaguesController::class, 'update'])->name('leagues.update');
         Route::post('delete-league', [LeaguesController::class, 'delete'])->name('leagues.delete');
         Route::get('dropdown-league', [LeaguesController::class, 'dropdown'])->name('leagues.dropdown');
+
+        Route::get('reset-league', [LeaguesController::class, 'resetLeague'])->name('leagues.reset');  
     });
 
     Route::prefix('conferences/')->group(function(){
