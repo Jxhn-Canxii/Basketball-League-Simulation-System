@@ -1,7 +1,7 @@
 <template>
     <div
         class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border-b-2 border-dashed"
-        v-if="season_info.seasons && season_info.seasons[0].status > 1"
+        v-if="season_info.seasons && season_info.seasons[0].status > 1 && !loading"
     >
         <div class="md:col-span-4 overflow-y-auto">
             <div class="flex justify-start">
@@ -32,7 +32,7 @@
             </div>
             <div
                 class="flex justify-center text-red-500 pt-4"
-                v-if="season_info.seasons && season_info.seasons[0].status == 2"
+                v-if="season_info.seasons && season_info.seasons[0].status == 2 && !loading"
             >
                 <small>Please click to start play-offs simulation!</small>
             </div>
@@ -312,7 +312,7 @@
     </div>
     <div
         class="flex justify-center min-h-screen items-center border-b-2 border-dashed p-4 bg-gray-100"
-        v-else
+         v-if="season_playoffs.length == 0 && !loading"
     >
         <div
             class="text-center bg-white p-8 rounded-lg shadow-lg border-2 border-red-500"
@@ -334,6 +334,9 @@
                 </a>
             </div>
         </div>
+    </div>
+    <div class="flex justify-center items-center p-4" v-if="loading">
+        <p class="text-red-500 font-bold text-2xl">Loading...</p>
     </div>
     <Modal :show="isTeamComparisonModalOpen" :maxWidth="'6xl'">
         <button
@@ -387,7 +390,7 @@ const isAddModalOpen = ref(false);
 const isTeamModalOpen = ref(false);
 const isTeamComparisonModalOpen = ref(false);
 const isGameResultModalOpen = ref(false);
-const currentTab = ref("history");
+const loading = ref(false);
 const change_key = ref(localStorage.getItem("season-key"));
 const isHide = ref(false);
 const activeIndex = ref(0);
@@ -404,7 +407,7 @@ const comparison = useForm({
 });
 const props = defineProps({
     season_id: {
-        type: Number,
+        type: [Number,String],
         required: true,
     },
 });
@@ -483,6 +486,8 @@ const fetchSeasonInfo = async (id) => {
 };
 const fetchSeasonPlayoffs = async (type) => {
     try {
+        loading.value = true;
+
         let status = season_info.value.seasons[0].status;
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
         const response = await axios.post(route("conferences.playoffs"), {
@@ -514,8 +519,10 @@ const fetchSeasonPlayoffs = async (type) => {
         } else {
             // Simply update season_playoffs.value with response data if type is not 2
             season_playoffs.value = response.data;
+            loading.value = false;
         }
     } catch (error) {
+        loading.value = false;
         console.error("Error fetching season playoffs:", error);
         Swal.fire({
             icon: "error",
