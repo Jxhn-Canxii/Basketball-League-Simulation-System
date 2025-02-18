@@ -71,6 +71,7 @@
                                 >
                             </li>
                             <li
+                                v-if="season_id > 1"
                                 @click="changeTab('Draft')"
                                 :class="{
                                     'text-yellow-500 border-b-2 border-yellow-500':
