@@ -61,8 +61,14 @@ class RatingsController extends Controller
 
             // Fetch player statistics for the current season
             $stats = DB::table('player_season_stats')
-                ->where('season_id', $seasonId)
-                ->where('team_id', $teamId)
+                ->join('players', 'players.id', '=', 'player_season_stats.player_id') // Join on player ID
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.team_id', $teamId)
+                ->select(
+                    'player_season_stats.*', 
+                    'players.name as player_name', 
+                    'players.position' // Add any additional player fields
+                )
                 ->get()
                 ->sortByDesc(function ($stat) {
                     // Define a composite score based on your performance metrics
