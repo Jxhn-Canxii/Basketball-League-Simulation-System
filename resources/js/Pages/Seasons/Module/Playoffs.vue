@@ -486,8 +486,6 @@ const fetchSeasonInfo = async (id) => {
 };
 const fetchSeasonPlayoffs = async (type) => {
     try {
-        loading.value = true;
-
         let status = season_info.value.seasons[0].status;
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
         const response = await axios.post(route("conferences.playoffs"), {
@@ -518,6 +516,7 @@ const fetchSeasonPlayoffs = async (type) => {
             };
         } else {
             // Simply update season_playoffs.value with response data if type is not 2
+            loading.value = true;
             season_playoffs.value = response.data;
             loading.value = false;
         }
