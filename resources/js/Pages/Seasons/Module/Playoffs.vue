@@ -1,7 +1,7 @@
 <template>
     <div
         class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border-b-2 border-dashed"
-        v-if="season_info.seasons && season_info.seasons[0].status > 1 && !loading"
+        v-if="season_info.seasons && season_info.seasons[0].status > 2 && !loading"
     >
         <div class="md:col-span-4 overflow-y-auto">
             <div class="flex justify-start">
@@ -15,7 +15,7 @@
             </div>
             <div
                 class="flex justify-center"
-                v-if="season_info.seasons && season_info.seasons[0].status == 2"
+                v-if="season_info.seasons && season_info.seasons[0].status == 3"
             >
                 <button
                     v-if="!isHide"
@@ -32,7 +32,7 @@
             </div>
             <div
                 class="flex justify-center text-red-500 pt-4"
-                v-if="season_info.seasons && season_info.seasons[0].status == 2 && !loading"
+                v-if="season_info.seasons && season_info.seasons[0].status == 3 && !loading"
             >
                 <small>Please click to start play-offs simulation!</small>
             </div>
@@ -311,8 +311,8 @@
         </div>
     </div>
     <div
-        class="flex justify-center min-h-screen items-center border-b-2 border-dashed p-4 bg-gray-100"
-         v-if="season_playoffs.length == 0 && !loading"
+        class="flex justify-center min-h-screen items-center border-b-2 border-dashed p-4 bg-white"
+         v-if="season_info.seasons && season_info.seasons[0].status < 3 && !loading"
     >
         <div
             class="text-center bg-white p-8 rounded-lg shadow-lg border-2 border-red-500"

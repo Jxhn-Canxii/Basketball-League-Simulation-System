@@ -4,6 +4,7 @@ CREATE TABLE trade_proposals (
     team_to_id INT NOT NULL,
     player_from_id INT NOT NULL,
     player_to_id INT NOT NULL,
+    type VARCHAR(20) NOT NULL,
     status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

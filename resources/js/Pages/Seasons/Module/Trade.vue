@@ -218,7 +218,7 @@ const showProfile = (playerId) => {
 // Fetch trade candidates
 const fetchPendingTradeProposals = async () => {
     try {
-        const response = await axios.get(route("trade.list.pending")); // Update with your API endpoint
+        const response = await axios.post(route("trade.list.pending"),{is_off_season: props.isOffSeason}); // Update with your API endpoint
         proposals.value = response.data.trade_proposals;
         current_season.value = response.data.current_season;
         categorizeProposalsByRole();
@@ -228,7 +228,7 @@ const fetchPendingTradeProposals = async () => {
 };
 const fetchApprovedTradeProposals = async () => {
     try {
-        const response = await axios.get(route("trade.list.approved")); // Update with your API endpoint
+        const response = await axios.post(route("trade.list.approved"),{is_off_season: props.isOffSeason}); // Update with your API endpoint
         approved.value = response.data.trade_proposals;
         current_season.value = response.data.current_season;
         trade_season_end.value = response.data.trade_season_end;
@@ -312,7 +312,7 @@ const autoTrade = async () => {
         }
     });
     try {
-        const response = await axios.get(route("trade.decision.automated"));
+        const response = await axios.post(route("trade.decision.automated"),{is_off_season: props.isOffSeason});
         
         if (response && response.data && response.data.decisions) {
             proposals.value = []; //clear pending proposals
@@ -352,7 +352,7 @@ const generateTradeProposal = async () => {
         });
 
         // Make the API request
-        const response = await axios.get(route("trade.generate")); // Update with your API endpoint
+        const response = await axios.post(route("trade.generate"),{is_off_season: props.isOffSeason}); // Update with your API endpoint
 
         // Close the processing Swal once the API call finishes
         swalProcessing.close();

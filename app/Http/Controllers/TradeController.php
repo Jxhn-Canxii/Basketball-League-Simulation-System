@@ -8,9 +8,15 @@ use Inertia\Inertia;
 
 class TradeController extends Controller
 {
-    public function getPendingTradeProposals()
+    public function getPendingTradeProposals(Request $request)
     {
-        $latestSeasonId = get_current_season_id() + 1;
+        $request->validate([
+            'is_off_season' => 'required|boolean',
+        ]);
+
+        $tradeType = $request->is_off_season ? 'off-season' : 'in-season';
+
+        $latestSeasonId = $request->is_off_season ? get_current_season_id() + 1 : get_current_season_id();
     
         $proposals = DB::table('trade_proposals')
             ->leftJoin('teams as team_from', 'trade_proposals.team_from_id', '=', 'team_from.id')
@@ -19,6 +25,8 @@ class TradeController extends Controller
             ->leftJoin('players as player_to', 'trade_proposals.player_to_id', '=', 'player_to.id')
             ->select(
                 'trade_proposals.id',
+                'trade_proposals.season_id',
+                'trade_proposals.type',
                 'trade_proposals.status',
                 'trade_proposals.created_at',
                 'player_from.name as player_from_name',
@@ -31,18 +39,27 @@ class TradeController extends Controller
                 'team_to.name as to_team'
             )
             ->where('trade_proposals.status', 'pending')
+            ->where('trade_proposals.type', $tradeType)
             ->where('trade_proposals.season_id', $latestSeasonId)
             ->orderBy('trade_proposals.created_at', 'desc')
             ->get();
     
         return response()->json([
             'trade_proposals' => $proposals,
-            'current_season' => $latestSeasonId
+            'current_season' => $latestSeasonId,
+            'trade_type' => $tradeType
         ]);
     }
-    public function getApprovedTradeProposals()
+    public function getApprovedTradeProposals(Request $request)
     {
-        $latestSeasonId = DB::table('player_season_stats')->max('season_id') + 1;
+        $request->validate([
+            'is_off_season' => 'required|boolean',
+        ]);
+
+        $tradeType = $request->is_off_season ? 'off-season' : 'in-season';
+
+        $latestSeasonId = $request->is_off_season ? get_current_season_id() + 1 : get_current_season_id();
+
         $latestSeasonStatus = DB::table('seasons')
         ->where('id', DB::table('seasons')->max('id'))  // Find the latest season by the max ID
         ->value('status');  // Get the status of the latest season
@@ -57,6 +74,8 @@ class TradeController extends Controller
             ->leftJoin('players as player_to', 'trade_proposals.player_to_id', '=', 'player_to.id')
             ->select(
                 'trade_proposals.id',
+                'trade_proposals.season_id',
+                'trade_proposals.type',
                 'trade_proposals.status',
                 'trade_proposals.created_at',
                 'player_from.name as player_from_name',
@@ -69,6 +88,7 @@ class TradeController extends Controller
                 'team_to.name as to_team'
             )
             ->where('trade_proposals.status', 'approved')
+            ->where('trade_proposals.type', $tradeType)
             ->where('trade_proposals.season_id', $latestSeasonId)
             ->orderBy('trade_proposals.created_at', 'desc')
             ->get();
@@ -77,12 +97,19 @@ class TradeController extends Controller
             'trade_proposals' => $proposals,
             'current_season' => $latestSeasonId,
             'trade_season_end' => $tradeSeasonEnd,
-            'current_status' => $latestSeasonStatus
+            'current_status' => $latestSeasonStatus,
+            'trade_type' => $tradeType
         ]);
     }
-    public function automatedTradeDecision()
-    {
-        $latestSeasonId = get_current_season_id() + 1;
+    public function automatedTradeDecision(Request $request)
+    {   
+        $request->validate([
+            'is_off_season' => 'required|boolean',
+        ]);
+
+        $isOffSeason = $request->is_off_season;
+
+        $latestSeasonId = $isOffSeason ? get_current_season_id() + 1 : get_current_season_id();
         
         // Fetch all trade proposals for the current season
         $proposals = DB::table('trade_proposals')
@@ -178,8 +205,8 @@ class TradeController extends Controller
                                 ->where('id', $proposal->id)
                                 ->update(['status' => 'approved', 'updated_at' => now()]);
     
-                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id);
-                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id);
+                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $isOffSeason);
+                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $isOffSeason);
                         });
                     } else {
                         // Reject the trade if the random chance fails
@@ -231,8 +258,8 @@ class TradeController extends Controller
                                 ->where('id', $proposal->id)
                                 ->update(['status' => 'approved', 'updated_at' => now()]);
     
-                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id);
-                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id);
+                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $isOffSeason);
+                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $isOffSeason);
                         });
                     }
                 }
@@ -292,8 +319,8 @@ class TradeController extends Controller
                 ->where('id', $proposal->id)
                 ->update(['status' => 'approved', 'updated_at' => now()]);
             
-            $this->logTrade($proposal->team_to_id, $proposal->team_from_id,$proposal->player_to_id, $proposal->player_from_id);
-            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id);
+            $this->logTrade($proposal->team_to_id, $proposal->team_from_id,$proposal->player_to_id, $proposal->player_from_id, $isOffSeason);
+            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $isOffSeason);
         });
 
         return response()->json(['message' => 'Trade approved successfully.']);
@@ -315,10 +342,10 @@ class TradeController extends Controller
 
         return response()->json(['message' => 'Trade rejected successfully.']);
     }
-    private function logTrade($teamId, $opponentId, $playerId, $tradePlayerId,$message = 'Trade proposal accepted.')
+    private function logTrade($teamId, $opponentId, $playerId, $tradePlayerId,$message = 'Trade proposal accepted.',$isOffSeason)
     {
         $latestSeasonId = get_current_season_id();
-    
+        $tradeType = $isOffSeason ? 'off-season trade' : 'in-season trade';
         // Fetch player details in a single query (avoiding multiple DB calls)
         $player = DB::table('players')->select('name', 'role')->where('id', $playerId)->first();
         $tradePlayer = DB::table('players')->select('name', 'role')->where('id', $tradePlayerId)->first();
@@ -352,16 +379,23 @@ class TradeController extends Controller
                 'details' => "Traded {$player->name} ({$teamFrom}) in exchange for {$tradePlayer->name} ({$teamTo})",
                 'from_team_id' => $teamId,
                 'to_team_id' => $opponentId,
-                'status' => 'trade',
+                'status' => $tradeType,
             ]);
         });
     
         return response()->json(['message' => 'Trade logged successfully.']);
     }
     
-    public function generateTradeProposals()
+    public function generateTradeProposals(Request $request)
     {
-        $latestSeasonId = get_current_season_id() + 1;
+        $request->validate([
+            'is_off_season' => 'required|boolean',
+        ]);
+
+        $isOffSeason = $request->is_off_season;
+        $tradeType =  $isOffSeason ? 'off-season' : 'in-season';
+        $latestSeasonId = $isOffSeason ? get_current_season_id() + 1 : get_current_season_id();
+
         $teams = DB::table('teams')->pluck('id');
         $tradeProposals = [];
         $tradeablePlayers = [];
@@ -410,7 +444,8 @@ class TradeController extends Controller
                     }
                 }
             }
-    
+            
+          
             // Multi-team trade formation
             if (!empty($tradePartners)) {
                 foreach ($tradePartners as $tradePlayer) {
@@ -420,6 +455,7 @@ class TradeController extends Controller
                         'team_to_id' => $tradePlayer['team_id'],
                         'player_from_id' => $bestPlayer['player_id'],
                         'player_to_id' => $tradePlayer['player_id'],
+                        'type' => $tradeType,
                         'status' => 'pending',
                         'created_at' => now(),
                         'updated_at' => now()
