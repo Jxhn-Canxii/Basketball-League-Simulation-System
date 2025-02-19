@@ -1372,7 +1372,7 @@ class SimulateController extends Controller
             }
 
             // Check if the player is a star player or not and adjust recovery games threshold accordingly
-            $requiredRecoveryGames = ($player->role == 'star player') ? 30 : 15;
+            $requiredRecoveryGames = ($player->role == 'star player') ? 15 : 7;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
             // Check if the player's recovery games are greater than or equal to the required threshold
             if ($player->is_injured && $player->injury_recovery_games >= $requiredRecoveryGames) {
