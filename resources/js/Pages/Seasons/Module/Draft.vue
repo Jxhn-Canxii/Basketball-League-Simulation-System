@@ -327,9 +327,9 @@ const fetchRandomFullName2 = async () => {
         const response = await axios.get('https://fakerapi.it/api/v1/persons?_quantity=1&gender=male');
 
         // Extract the first name, last name, city, and country information
-        const person = response.data[0];
-        const first_name = person.first_name;
-        const last_name = person.last_name;
+        const person = response.data.data[0]; // ✅ Correct way
+        const first_name = person.firstname;
+        const last_name = person.lastname;
         const city = person.address.city;
         const country = person.address.country;
 
@@ -358,15 +358,13 @@ const fetchRandomFullName2 = async () => {
     }
 };
 
-
-
 const addMultiplePlayers = async (count) => {
     try {
         const promises = [];
 
         for (let i = 0; i < count; i++) {
             // Randomly choose between fetchRandomFullName1 or fetchRandomFullName2
-            const fetchRandomFullName = Math.random() < 0.5 ? fetchRandomFullName1 : fetchRandomFullName2; // 50% chance for each
+            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName2 : await fetchRandomFullName1; // 50% chance for each
 
             const randomFullName = await fetchRandomFullName(); // Fetch random full name
             console.log(randomFullName);
