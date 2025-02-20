@@ -103,11 +103,12 @@ class TradeController extends Controller
     }
     public function automatedTradeDecision(Request $request)
     {   
+        
         $request->validate([
             'is_off_season' => 'required|boolean',
         ]);
 
-        $isOffSeason = $request->is_off_season;
+        $isOffSeason = (boolean) $request->is_off_season;
 
         $latestSeasonId = $isOffSeason ? get_current_season_id() + 1 : get_current_season_id();
         
@@ -205,8 +206,12 @@ class TradeController extends Controller
                                 ->where('id', $proposal->id)
                                 ->update(['status' => 'approved', 'updated_at' => now()]);
     
-                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $isOffSeason);
-                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $isOffSeason);
+                            $tradeMessage = 'Trade Accepted.';
+
+                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $tradeMessage, $isOffSeason);
+                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $tradeMessage, $isOffSeason);
+                            
+                                
                         });
                     } else {
                         // Reject the trade if the random chance fails
@@ -258,8 +263,11 @@ class TradeController extends Controller
                                 ->where('id', $proposal->id)
                                 ->update(['status' => 'approved', 'updated_at' => now()]);
     
-                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $isOffSeason);
-                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $isOffSeason);
+                            $tradeMessage = 'Trade Accepted.';
+                            
+                            $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $tradeMessage, $isOffSeason);
+                            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $tradeMessage, $isOffSeason);
+                                
                         });
                     }
                 }
@@ -277,7 +285,67 @@ class TradeController extends Controller
             'decisions' => $decisions
         ]);
     }
+    private function logTrade($teamId, $opponentId, $playerId, $tradePlayerId, $message, $offSeason = false)
+    {
+        try {
+            $latestSeasonId = get_current_season_id();
+            $tradeType = $offSeason ? 'off-season trade' : 'in-season trade';
     
+            // Fetch player details in a single query (avoiding multiple DB calls)
+            $player = DB::table('players')->select('name', 'role')->where('id', $playerId)->first();
+            $tradePlayer = DB::table('players')->select('name', 'role')->where('id', $tradePlayerId)->first();
+    
+            // Fetch team names
+            $teamFrom = DB::table('teams')->where('id', $teamId)->value('name');
+            $teamTo = DB::table('teams')->where('id', $opponentId)->value('name');
+    
+            // Ensure all required data exists before proceeding
+            if (!$player || !$tradePlayer || empty($teamFrom) || empty($teamTo)) {
+                Log::error("Trade log failed: Missing player or team data.", [
+                    'player_id' => $playerId,
+                    'trade_player_id' => $tradePlayerId,
+                    'team_from' => $teamFrom,
+                    'team_to' => $teamTo
+                ]);
+                return false; // Exit if required data is missing
+            }
+    
+            // Use a database transaction to ensure consistency
+            DB::transaction(function () use ($latestSeasonId, $teamId, $opponentId, $playerId, $tradePlayerId, $player, $tradePlayer, $message, $teamFrom, $teamTo, $tradeType) {
+                // Insert into trade_logs
+                DB::table('trade_logs')->insert([
+                    'season_id' => $latestSeasonId,
+                    'team_from_id' => $teamId,
+                    'team_to_id' => $opponentId,
+                    'player_id' => $playerId,
+                    'role' => $player->role,
+                    'player_name' => $player->name,
+                    'trade_reason' => $message,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+    
+                // Insert into transactions table with both players and team names in details
+                DB::table('transactions')->insert([
+                    'player_id' => $playerId,
+                    'season_id' => $latestSeasonId,
+                    'details' => "Traded {$player->name} ({$teamFrom}) in exchange for {$tradePlayer->name} ({$teamTo})",
+                    'from_team_id' => $teamId,
+                    'to_team_id' => $opponentId,
+                    'status' => $tradeType,
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ]);
+            });
+    
+            Log::info("Trade logged successfully: {$player->name} ({$teamFrom}) swapped with {$tradePlayer->name} ({$teamTo})");
+    
+            return true; // Indicate successful logging
+        } catch (\Exception $e) {
+            Log::error("Trade Log Error: " . $e->getMessage(), ['exception' => $e]);
+            return false; // Indicate failure
+        }
+    }
     public function endInSeasonTradeWindow(){
         $latestSeasonId = get_current_season_id();
 
@@ -295,97 +363,7 @@ class TradeController extends Controller
         ->update(['status' => config('timeline.off_season_trade')]);
 
         return response()->json(['message' => 'Trade window ended!']);
-    }
-    public function approveTrade(Request $request)
-    {
-        $proposalId = $request->input('proposal_id');
-
-        $proposal = DB::table('trade_proposals')->find($proposalId);
-        
-        if (!$proposal || $proposal->status !== 'pending') {
-            return response()->json(['error' => 'Trade proposal not found or already processed.'], 400);
-        }
-
-        DB::transaction(function () use ($proposal) {
-            DB::table('players')
-                ->where('id', $proposal->player_from_id)
-                ->update(['team_id' => $proposal->team_to_id]);
-            
-            DB::table('players')
-                ->where('id', $proposal->player_to_id)
-                ->update(['team_id' => $proposal->team_from_id]);
-            
-            DB::table('trade_proposals')
-                ->where('id', $proposal->id)
-                ->update(['status' => 'approved', 'updated_at' => now()]);
-            
-            $this->logTrade($proposal->team_to_id, $proposal->team_from_id,$proposal->player_to_id, $proposal->player_from_id, $isOffSeason);
-            $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $isOffSeason);
-        });
-
-        return response()->json(['message' => 'Trade approved successfully.']);
-    }
-
-    public function rejectTrade(Request $request)
-    {
-        $proposalId = $request->input('proposal_id');
-
-        $proposal = DB::table('trade_proposals')->find($proposalId);
-        
-        if (!$proposal || $proposal->status !== 'pending') {
-            return response()->json(['error' => 'Trade proposal not found or already processed.'], 400);
-        }
-
-        DB::table('trade_proposals')
-            ->where('id', $proposalId)
-            ->update(['status' => 'rejected', 'updated_at' => now()]);
-
-        return response()->json(['message' => 'Trade rejected successfully.']);
-    }
-    private function logTrade($teamId, $opponentId, $playerId, $tradePlayerId,$message = 'Trade proposal accepted.',$isOffSeason)
-    {
-        $latestSeasonId = get_current_season_id();
-        $tradeType = $isOffSeason ? 'off-season trade' : 'in-season trade';
-        // Fetch player details in a single query (avoiding multiple DB calls)
-        $player = DB::table('players')->select('name', 'role')->where('id', $playerId)->first();
-        $tradePlayer = DB::table('players')->select('name', 'role')->where('id', $tradePlayerId)->first();
-        
-        // Fetch team names
-        $teamFrom = DB::table('teams')->where('id', $teamId)->value('name');
-        $teamTo = DB::table('teams')->where('id', $opponentId)->value('name');
-    
-        if (!$player || !$tradePlayer || !$teamFrom || !$teamTo) {
-            return response()->json(['error' => 'Player or team not found'], 404);
-        }
-    
-        DB::transaction(function () use ($latestSeasonId, $teamId, $opponentId, $playerId, $tradePlayerId, $player, $tradePlayer, $message, $teamFrom, $teamTo) {
-            // Insert into trade_logs
-            DB::table('trade_logs')->insert([
-                'season_id' => $latestSeasonId,
-                'team_from_id' => $teamId,
-                'team_to_id' => $opponentId,
-                'player_id' => $playerId,
-                'role' => $player->role,
-                'player_name' => $player->name,
-                'trade_reason' => $message,
-                'created_at' => now(),
-                'updated_at' => now()
-            ]);
-    
-            // Insert into transactions table with both players and team names in details
-            DB::table('transactions')->insert([
-                'player_id' => $playerId,
-                'season_id' => $latestSeasonId,
-                'details' => "Traded {$player->name} ({$teamFrom}) in exchange for {$tradePlayer->name} ({$teamTo})",
-                'from_team_id' => $teamId,
-                'to_team_id' => $opponentId,
-                'status' => $tradeType,
-            ]);
-        });
-    
-        return response()->json(['message' => 'Trade logged successfully.']);
-    }
-    
+    } 
     public function generateTradeProposals(Request $request)
     {
         $request->validate([

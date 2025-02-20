@@ -216,8 +216,8 @@ Route::middleware('auth')->group(function () {
         
         Route::post('trade-end-inseason', [TradeController::class, 'endInSeasonTradeWindow'])->name('trade.end.inseason');
         Route::post('trade-end-offseason', [TradeController::class, 'endOffSeasonTradeWindow'])->name('trade.end.offseason');
-        Route::post('trade-approve', [TradeController::class, 'approveTrade'])->name('trade.approve');
-        Route::post('trade-reject', [TradeController::class, 'rejectTrade'])->name('trade.reject');
+        // Route::post('trade-approve', [TradeController::class, 'approveTrade'])->name('trade.approve');
+        // Route::post('trade-reject', [TradeController::class, 'rejectTrade'])->name('trade.reject');
         Route::post('trade-generate', [TradeController::class, 'generateTradeProposals'])->name('trade.generate');
         Route::post('trade-auto-decide', [TradeController::class, 'automatedTradeDecision'])->name('trade.decision.automated');
         
