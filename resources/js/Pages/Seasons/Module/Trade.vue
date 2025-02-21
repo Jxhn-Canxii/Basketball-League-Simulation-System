@@ -3,7 +3,7 @@
         <h2 class="text-xl font-semibold text-gray-800">{{ props.isOffSeason ? 'Off-season' : 'In-season' }}Trade Proposal</h2>
 
         <!-- Show 'Generate Proposal' button if proposals are empty -->
-        <div v-if="proposals.length === 0 && current_season > 1 && !trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
+        <div v-if="proposals.length === 0 && current_season > 0 && !trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
             <button 
                 @click="generateTradeProposal"
                 v-if="!trade_season_end"
@@ -17,7 +17,7 @@
                 End Trade Season
             </button>
         </div>
-        <div v-if="current_season == 1 || proposals.length > 0" class="text-right mb-4 mt-4">
+        <div v-if="current_season > 0 || proposals.length > 0" class="text-right mb-4 mt-4">
             <button 
                 @click="autoTrade" 
                 class="px-4 py-2 bg-green-500 mr-4 text-white rounded hover:bg-red-600">
@@ -25,7 +25,7 @@
             </button>
         </div>
         <!-- Display list of proposals -->
-        <div v-if="proposals.length > 0  && current_season > 1" >
+        <div v-if="proposals.length > 0  && current_season > 0" >
             <!-- Show 'End Trade' button if there are proposals -->
             <!-- Tabs for categorizing proposals by role -->
             <div class="flex mb-4 space-x-4">
@@ -87,7 +87,7 @@
                 <p class="text-center text-gray-500">No trade proposals available for this category.</p>
             </div>
         </div>
-        <div v-if="approved.length > 0  && current_season > 1" >
+        <div v-if="approved.length > 0  && current_season > 0" >
             <!-- Show 'End Trade' button if there are proposals -->
             <!-- Tabs for categorizing proposals by role -->
             <div class="flex mb-4 space-x-4 mt-6">

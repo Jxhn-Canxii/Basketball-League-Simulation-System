@@ -285,7 +285,7 @@ class TradeController extends Controller
             'decisions' => $decisions
         ]);
     }
-    public function logTrade($teamId, $opponentId, $playerId, $tradePlayerId, $message, $isOffSeason)
+    public static function logTrade($teamId, $opponentId, $playerId, $tradePlayerId, $message, $isOffSeason)
     {
         try {
             $latestSeasonId = get_current_season_id();
@@ -318,8 +318,6 @@ class TradeController extends Controller
                 'from_team_id' => $teamId,
                 'to_team_id' => $opponentId,
                 'status' => $tradeType,
-                'created_at' => now(),
-                'updated_at' => now()
             ]);
             
              // Insert into trade_logs
@@ -331,16 +329,14 @@ class TradeController extends Controller
                 'role' => $player->role,
                 'player_name' => $player->name,
                 'trade_reason' => $message,
-                'created_at' => now(),
-                'updated_at' => now()
             ]);
             
             //Log::info("Trade logged successfully: {$player->name} ({$teamFrom}) swapped with {$tradePlayer->name} ({$teamTo})");
     
-            return true; // Indicate successful logging
+            //return true; // Indicate successful logging
         } catch (\Exception $e) {
             //Log::error("Trade Log Error: " . $e->getMessage(), ['exception' => $e]);
-            return false; // Indicate failure
+            //return false; // Indicate failure
         }
     }
     public function endInSeasonTradeWindow(){
