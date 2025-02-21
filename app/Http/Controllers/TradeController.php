@@ -108,7 +108,7 @@ class TradeController extends Controller
             'is_off_season' => 'required|boolean',
         ]);
 
-        $isOffSeason = (boolean) $request->is_off_season;
+        $isOffSeason = $request->is_off_season;
 
         $latestSeasonId = $isOffSeason ? get_current_season_id() + 1 : get_current_season_id();
         
@@ -118,6 +118,8 @@ class TradeController extends Controller
             ->where('status', 'pending')
             ->get();
     
+        $tradeType = $offSeason ? 'off-season' : 'in-season';
+        
         $decisions = [];
     
         foreach ($proposals as $proposal) {
@@ -126,6 +128,7 @@ class TradeController extends Controller
                 $playerFromInApprovedTrade = DB::table('trade_proposals')
                     ->where('season_id', $latestSeasonId)
                     ->where('status', 'approved')
+                    ->where('type',$tradeType)
                     ->where(function($query) use ($proposal) {
                         $query->where('player_from_id', $proposal->player_from_id)
                               ->orWhere('player_to_id', $proposal->player_from_id);
@@ -135,6 +138,7 @@ class TradeController extends Controller
                 $playerToInApprovedTrade = DB::table('trade_proposals')
                     ->where('season_id', $latestSeasonId)
                     ->where('status', 'approved')
+                    ->where('type',$tradeType)
                     ->where(function($query) use ($proposal) {
                         $query->where('player_from_id', $proposal->player_to_id)
                               ->orWhere('player_to_id', $proposal->player_to_id);
@@ -186,14 +190,8 @@ class TradeController extends Controller
                             ->where('id', $proposal->id)
                             ->update(['status' => 'approved', 'updated_at' => now()]);
     
-                        $decisions[] = [
-                            'proposal_id' => $proposal->id,
-                            'status' => 'approved',
-                            'reason' => 'Trade approved with 60% chance for players with no trade history.'
-                        ];
-    
                         // Perform the actual trade
-                        DB::transaction(function () use ($proposal) {
+                        DB::transaction(function () use ($proposal, $isOffSeason) {
                             DB::table('players')
                                 ->where('id', $proposal->player_from_id)
                                 ->update(['team_id' => $proposal->team_to_id]);
@@ -211,7 +209,11 @@ class TradeController extends Controller
                             $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $tradeMessage, $isOffSeason);
                             $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $tradeMessage, $isOffSeason);
                             
-                                
+                            $decisions[] = [
+                                'proposal_id' => $proposal->id,
+                                'status' => 'approved',
+                                'reason' => 'Trade approved with 60% chance for players with no trade history.'
+                            ];  
                         });
                     } else {
                         // Reject the trade if the random chance fails
@@ -243,14 +245,9 @@ class TradeController extends Controller
                             ->where('id', $proposal->id)
                             ->update(['status' => 'approved', 'updated_at' => now()]);
     
-                        $decisions[] = [
-                            'proposal_id' => $proposal->id,
-                            'status' => 'approved',
-                            'reason' => 'Trade balance accepted.'
-                        ];
-    
+                        
                         // Perform the actual trade
-                        DB::transaction(function () use ($proposal) {
+                        DB::transaction(function () use ($proposal, $isOffSeason) {
                             DB::table('players')
                                 ->where('id', $proposal->player_from_id)
                                 ->update(['team_id' => $proposal->team_to_id]);
@@ -267,7 +264,12 @@ class TradeController extends Controller
                             
                             $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $tradeMessage, $isOffSeason);
                             $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $tradeMessage, $isOffSeason);
-                                
+                            
+                            $decisions[] = [
+                                'proposal_id' => $proposal->id,
+                                'status' => 'approved',
+                                'reason' => 'Trade balance accepted.'
+                            ];
                         });
                     }
                 }
@@ -342,8 +344,8 @@ class TradeController extends Controller
     
             return true; // Indicate successful logging
         } catch (\Exception $e) {
-            Log::error("Trade Log Error: " . $e->getMessage(), ['exception' => $e]);
-            return false; // Indicate failure
+            //Log::error("Trade Log Error: " . $e->getMessage(), ['exception' => $e]);
+            return $e; // Indicate failure
         }
     }
     public function endInSeasonTradeWindow(){
