@@ -89,7 +89,7 @@ class DraftController extends Controller
         $draftResults = []; // Store draft results
 
         try {
-            $latestSeasonId = DB::table('standings_view')->max('season_id');
+            $latestSeasonId = get_current_season_id();
             $currentSeasonId = $latestSeasonId + 1;
 
             $teamCount = DB::table('teams')->count();
@@ -285,7 +285,7 @@ class DraftController extends Controller
                     'is_rookie' => 1,
                 ]);
 
-            $this->updatePlayerPlayoffAppearances();
+            ///$this->updatePlayerPlayoffAppearances();
             
             DB::table('seasons')
                 ->where('id', $latestSeasonId)
