@@ -1688,55 +1688,55 @@ class PlayersController extends Controller
     
     public function getPlayerTransactions(Request $request)
     {
-        // Retrieve the player_id from the request
-        $player_id = $request->input('player_id'); // or $request->player_id if it's passed as a query parameter
-
-        // Check if player_id is provided
+        $player_id = $request->input('player_id');
+    
         if (!$player_id) {
             return response()->json(['error' => 'Player ID is required'], 400);
         }
-
-        // Retrieve transactions for the given player_id with player details (name, role)
-        // and team details (from_team and to_team)
+    
         $transactions = DB::table('transactions')
-        // Join with the players table to get player's name
-        ->join('players', 'transactions.player_id', '=', 'players.id')
-        // Join with the teams table to get the "from" team details
-        ->join('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id', 'left')
-        // Join with the teams table to get the "to" team details
-        ->join('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id', 'left')
-        // Join with the player_season_stats table to get the player's role for the specific season
-        ->join('player_season_stats', function ($join) use ($player_id) {
-            $join->on('transactions.player_id', '=', 'player_season_stats.player_id')
-                ->on('transactions.season_id', '=', 'player_season_stats.season_id');
-        })
-        ->where('transactions.player_id', $player_id)
-        ->where('transactions.status','!=','signed')
-        ->select(
-            'transactions.id',
-            'transactions.season_id',
-            'transactions.details',
-            'transactions.from_team_id',
-            'from_team.name as from_team_name',   // Get the name of the "from" team
-            'transactions.to_team_id',
-            'to_team.name as to_team_name',       // Get the name of the "to" team
-            'transactions.status',
-            'players.name',   // Player's name
-            'player_season_stats.role'   // Player's role from player_season_stats table
-        )
-        ->orderByDesc('transactions.id')
-        ->get();
-
-        // Check if transactions are found
+            ->join('players', 'transactions.player_id', '=', 'players.id')
+            ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
+            ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
+            ->leftJoin('player_season_stats', function ($join) {
+                $join->on('transactions.player_id', '=', 'player_season_stats.player_id')
+                     ->on('transactions.season_id', '=', 'player_season_stats.season_id');
+            })
+            ->where('transactions.player_id', $player_id)
+            ->where('transactions.status', '!=', 'transfer')
+            ->select(
+                'transactions.season_id',
+                'transactions.from_team_id',
+                'from_team.name as from_team_name',
+                'transactions.to_team_id',
+                'to_team.name as to_team_name',
+                'transactions.status',
+                'players.name as player_name',
+                 DB::raw('GROUP_CONCAT(DISTINCT player_season_stats.role SEPARATOR ", ") as role'),
+                'transactions.details as merged_details',
+            )
+            ->groupBy(
+                'transactions.season_id',
+                'transactions.details',
+                'transactions.from_team_id',
+                'from_team.name',
+                'transactions.to_team_id',
+                'to_team.name',
+                'transactions.status',
+                'players.name',
+                'players.role',
+                'player_season_stats.role'
+            )
+            ->orderByDesc('transactions.season_id')
+            ->get();
+    
         if ($transactions->isEmpty()) {
             return response()->json(['message' => 'No transactions found for this player.'], 404);
         }
-
-        // Return the transactions with player and team details as JSON response
-        return response()->json([
-            'data' => $transactions,
-        ]);
+    
+        return response()->json(['data' => $transactions]);
     }
+    
 
     public function getPlayerInjuryHistory(Request $request)
     {

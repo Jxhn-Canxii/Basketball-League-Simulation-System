@@ -34,9 +34,9 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     <tr v-for="(transaction, index) in transactions.data" v-if="transactions.data?.length > 0" :key="transaction.id" @click.prevent="isViewModalOpen = transaction.season_id" class="hover:bg-gray-100">
                         <td class="px-2 py-1 text-gray-700">Season {{ transaction.season_id }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.name }}</td>
+                        <td class="px-2 py-1 text-gray-700">{{ transaction.player_name }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ transaction.role }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.details }}</td>
+                        <td class="px-2 py-1 text-gray-700">{{ transaction.merged_details }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ transaction.from_team_name ?? 'Free Agent' }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ transaction.to_team_name ?? 'Free Agent' }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ transaction.status }}</td>

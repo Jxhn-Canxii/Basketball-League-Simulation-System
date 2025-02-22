@@ -49,7 +49,7 @@
                 <tbody class="bg-white divide-y divide-gray-200">
                     <tr v-for="(player, index) in season_logs.player_stats" v-if="season_logs.player_stats?.length > 0" :key="player.player_id" @click.prevent="isGameLogsModalOpen = player.season_id" class="hover:bg-gray-100">
                         <td class="px-2 py-1 whitespace-nowrap border">{{ player.season_name }}</td>
-                        <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_names }}</td>
+                        <td class="px-2 py-1 whitespace-wrap border">{{ player.team_names }}</td>
                         <td class="px-2 py-1 whitespace-nowrap border"><span :class="roleClasses(player.player_role)" class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium">{{ player.player_role }}</span></td>
                         <td class="px-2 py-1 whitespace-nowrap border">{{ player.total_games_played }}</td>
                         <td class="px-2 py-1 whitespace-nowrap border">{{ player.average_points_per_game.toFixed(2) }}</td>
@@ -119,7 +119,7 @@
                         <td class="px-2 py-1 whitespace-nowrap border">
                             {{ player.season_name }}
                         </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
+                        <td class="px-2 py-1 whitespace-wrap border">
                             {{ player.team_name }}
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
