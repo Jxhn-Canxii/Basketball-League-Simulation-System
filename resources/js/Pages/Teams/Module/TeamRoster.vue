@@ -19,6 +19,7 @@
                 <i class="fas fa-users mr-2"></i> All Players
             </button>
             <button
+                v-if="season_id > 1"
                 :class="['px-4 py-2', currentTab === 'new' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                 @click="currentTab = 'new'"
             >
