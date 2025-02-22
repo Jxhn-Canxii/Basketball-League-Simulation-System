@@ -1564,7 +1564,7 @@ class SimulateController extends Controller
                     ->where('status', 'waived-hardship')
                     ->count();
 
-                if($injuredPlayer->injury_recovery_games > 1){
+                if($injuredPlayer->injury_recovery_games > 10){
 
                     $waiveTransaction = DB::table('transactions')->insert([
                         'player_id' => $injuredPlayer->id,
