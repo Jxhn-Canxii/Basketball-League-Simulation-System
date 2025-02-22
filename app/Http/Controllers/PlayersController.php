@@ -554,9 +554,9 @@ class PlayersController extends Controller
                 ->where('type', $attributes['archetype'])
                 ->count();
 
-            $maxGenLimit = ($currentSeasonId % 4 == 0) ? 7 : 4;
+            $maxGenLimit = ($currentSeasonId % 4 == 0) ? 15 : 7;
             if ($generationalCount >= $maxGenLimit) {
-                return response()->json(['error' => 'Maximum limit of 7 generational rookies reached for this season.'], 400);
+                return response()->json(['error' => 'Maximum limit of '.$maxGenLimit.' generational rookies reached for this season.'], 400);
             }
         }
 
@@ -769,7 +769,10 @@ class PlayersController extends Controller
         $clutch = rand($archetypeAttributes['clutch'][0], $archetypeAttributes['clutch'][1]);
         $leadership = rand($archetypeAttributes['leadership'][0], $archetypeAttributes['leadership'][1]);
         $workEthic = rand($archetypeAttributes['work_ethic'][0], $archetypeAttributes['work_ethic'][1]);
-        $healthRating = rand($archetypeAttributes['health_rating'][0], $archetypeAttributes['health_rating'][1]);
+        $healthRating = rand(1, 100) <= 10  
+        ? rand(70, $archetypeAttributes['health_rating'][1])  // 10% chance for 70+  
+        : rand($archetypeAttributes['health_rating'][0], 60); // 90% chance for ≤70  
+    
     
         // Assign position
         if ($passing >= 85) {
