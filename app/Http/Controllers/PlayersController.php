@@ -1705,6 +1705,7 @@ class PlayersController extends Controller
             ->where('transactions.player_id', $player_id)
             ->where('transactions.status', '!=', 'transfer')
             ->select(
+                'transactions.id',
                 'transactions.season_id',
                 'transactions.from_team_id',
                 'from_team.name as from_team_name',
@@ -1716,6 +1717,7 @@ class PlayersController extends Controller
                 'transactions.details as merged_details',
             )
             ->groupBy(
+                'transactions.id',
                 'transactions.season_id',
                 'transactions.details',
                 'transactions.from_team_id',
@@ -1727,7 +1729,7 @@ class PlayersController extends Controller
                 'players.role',
                 'player_season_stats.role'
             )
-            ->orderByDesc('transactions.season_id')
+            ->orderByDesc('transactions.id')
             ->get();
     
         if ($transactions->isEmpty()) {
