@@ -17,7 +17,7 @@
                 End Trade Season
             </button>
         </div>
-        <div v-if="current_season > 0 || proposals.length > 0" class="text-right mb-4 mt-4">
+        <div v-if="current_season > 0 || proposals.length > 0 && !trade_season_end" class="text-right mb-4 mt-4">
             <button 
                 @click="autoTrade" 
                 class="px-4 py-2 bg-green-500 mr-4 text-white rounded hover:bg-red-600">

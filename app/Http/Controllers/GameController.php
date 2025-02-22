@@ -571,30 +571,30 @@ class GameController extends Controller
     private function getTeamRatingsPerSeason($seasonId, $teamId)
     {
         // Get team ratings for the given season using the player_ratings table
-        $teamRatings = \DB::table('player_game_stats')
-            ->join('players as p', 'player_game_stats.player_id', '=', 'p.id')
-            ->join('player_ratings as pr', 'p.id', '=', 'pr.player_id')  // Join with player_ratings table
-            ->join('teams as t', 'player_game_stats.team_id', '=', 't.id')
+        $teamRatings = \DB::table('player_season_stats') // Changed table to player_season_stats
+            ->join('players as p', 'player_season_stats.player_id', '=', 'p.id') // Join with player_ratings table
+            ->join('teams as t', 'player_season_stats.team_id', '=', 't.id')
             ->select(
                 't.id as team_id',
                 't.name as team_name',
-                'player_game_stats.season_id',
-                \DB::raw('ROUND(AVG(pr.defense_rating)) as defense_rating'),
-                \DB::raw('ROUND(AVG(pr.shooting_rating)) as offense_rating'), // Assuming offense is shooting_rating
-                \DB::raw('ROUND(AVG(pr.passing_rating)) as passing_rating'),
-                \DB::raw('ROUND(AVG(pr.rebounding_rating)) as rebounding_rating')
+                'player_season_stats.season_id',
+                \DB::raw('ROUND(AVG(p.defense_rating)) as defense_rating'),
+                \DB::raw('ROUND(AVG(p.shooting_rating)) as offense_rating'), // Assuming offense is shooting_rating
+                \DB::raw('ROUND(AVG(p.passing_rating)) as passing_rating'),
+                \DB::raw('ROUND(AVG(p.rebounding_rating)) as rebounding_rating')
             )
-            ->where('player_game_stats.season_id', $seasonId)  // Filter by season
-            ->where('player_game_stats.team_id', $teamId)  // Filter by team_id (optional)
-            ->groupBy('t.id', 't.name', 'player_game_stats.season_id')
+            ->where('player_season_stats.season_id', $seasonId)  // Filter by season
+            ->where('player_season_stats.team_id', $teamId)  // Filter by team_id (optional)
+            ->groupBy('t.id', 't.name', 'player_season_stats.season_id')
             ->get();
 
         if ($teamRatings->isEmpty()) {
-            return response()->json(['message' => 'No team ratings found for this season'], 404);
+            return response()->json(['message' => 'No team ratings found for this season','season_id' => $seasonId], 404);
         }
 
         return $teamRatings[0];
     }
+
 
 
     /**
