@@ -1,9 +1,9 @@
 <template>
     <div class="draft-board">
-        <h2 class="text-xl font-semibold text-gray-800">{{ props.isOffSeason ? 'Off-season' : 'In-season' }}Trade Proposal</h2>
+        <h2 class="text-xl font-semibold text-gray-800">{{ props.isOffSeason ? 'Off-season' : 'In-season' }} Trade Proposal</h2>
 
         <!-- Show 'Generate Proposal' button if proposals are empty -->
-        <div v-if="proposals.length === 0 && current_season > 0 && !trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
+        <div v-if="!trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
             <button 
                 @click="generateTradeProposal"
                 v-if="!trade_season_end"

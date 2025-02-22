@@ -2,6 +2,7 @@ CREATE TABLE trade_proposals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     season_id INT NOT NULL,
     team_to_id INT NOT NULL,
+    team_from_id INT NOT NULL,
     player_from_id INT NOT NULL,
     player_to_id INT NOT NULL,
     type VARCHAR(20) NOT NULL,
