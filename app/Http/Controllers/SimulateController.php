@@ -117,31 +117,38 @@ class SimulateController extends Controller
         //check if home team is injury depleted
         $homeTeamInjuries = DB::table('players')
         ->where('team_id', $gameData->home_team_id)
-        ->where('is_injured', 1)
+        ->where('is_injured', true)
         ->get();
 
         if ($homeTeamInjuries->count() > 7) {
             //run the fire leoparad rule
-            $this->fireLeopardRule($gameData->home_team_id);
-            return response()->json([
-                'error' => true,
-                'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            ], 400);
+            $initiateFLRule = $this->fireLeopardRule($gameData->home_team_id);
+            // return response()->json([
+            //     'error' => true,
+            //     'fire' =>  $initiateFLRule,
+            //     'injured' => $homeTeamInjuries->count(),
+            //     'team' => $gameData->home_team_id,
+            //     'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+            // ], 400);
         }
 
         $awayTeamInjuries = DB::table('players')
         ->where('team_id', $gameData->away_team_id)
-        ->where('is_injured', 1)
+        ->where('is_injured', true)
         ->get();
 
         if ($awayTeamInjuries->count() > 7) {
             //run the fire leoparad rule
-            $this->fireLeopardRule($gameData->home_team_id);
-            return response()->json([
-                'error' => true,
-                'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            ], 400);
+            $initiateFLRule =  $this->fireLeopardRule($gameData->away_team_id);
+            // return response()->json([
+            //     'error' => true,
+            //     'fire' =>  $initiateFLRule,
+            //     'injured' => $awayTeamInjuries->count(),
+            //     'team' => $gameData->away_team_id,
+            //     'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+            // ], 400);
         }
+
 
         // Fetch current season ID
         $currentSeasonId = $gameData->season_id;
@@ -595,30 +602,36 @@ class SimulateController extends Controller
             //check if home team is injury depleted
             $homeTeamInjuries = DB::table('players')
             ->where('team_id', $gameData->home_team_id)
-            ->where('is_injured', 1)
+            ->where('is_injured', true)
             ->get();
 
             if ($homeTeamInjuries->count() > 7) {
                 //run the fire leoparad rule
-                $this->fireLeopardRule($gameData->home_team_id);
-                return response()->json([
-                    'error' => true,
-                    'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-                ], 400);
+                $initiateFLRule = $this->fireLeopardRule($gameData->home_team_id);
+                // return response()->json([
+                //     'error' => true,
+                //     'fire' =>  $initiateFLRule,
+                //     'injured' => $homeTeamInjuries->count(),
+                //     'team' => $gameData->home_team_id,
+                //     'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+                // ], 400);
             }
 
             $awayTeamInjuries = DB::table('players')
             ->where('team_id', $gameData->away_team_id)
-            ->where('is_injured', 1)
+            ->where('is_injured', true)
             ->get();
 
             if ($awayTeamInjuries->count() > 7) {
                 //run the fire leoparad rule
-                $this->fireLeopardRule($gameData->home_team_id);
-                return response()->json([
-                    'error' => true,
-                    'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-                ], 400);
+                $initiateFLRule =  $this->fireLeopardRule($gameData->away_team_id);
+                // return response()->json([
+                //     'error' => true,
+                //     'fire' =>  $initiateFLRule,
+                //     'injured' => $awayTeamInjuries->count(),
+                //     'team' => $gameData->away_team_id,
+                //     'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+                // ], 400);
             }
 
             $currentSeasonId = $gameData->season_id;
@@ -1534,15 +1547,15 @@ class SimulateController extends Controller
         // new rule applied (Fire Leopard Rule: the team should have at least minimum 7 players active to play in a game)
         $teamInjuries = DB::table('players')
         ->where('team_id', $teamId)
-        ->where('is_injured', 1)
+        ->where('is_injured', true)
         ->get();
 
         $teamInjuryCount = $teamInjuries->count();
 
-        if ($teamInjuryCount->count() > 7) {
+        if ($teamInjuryCount > 7) {
             // Sort players by injury recovery games (worst injuries first)
-            $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take($teamInjuryCount - 3);
-
+            $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take($teamInjuryCount);
+            $signedPlayers = [];
             foreach ($sortedInjuries as $injuredPlayer) {
                 // Waive t$sortedInjurieshe player
                 $forcedWaivedCount = DB::table('transactions')
@@ -1551,9 +1564,9 @@ class SimulateController extends Controller
                     ->where('status', 'waived-hardship')
                     ->count();
 
-                if($forcedWaivedCount <= 5){
+                if($injuredPlayer->injury_recovery_games > 1){
 
-                    DB::table('transactions')->insert([
+                    $waiveTransaction = DB::table('transactions')->insert([
                         'player_id' => $injuredPlayer->id,
                         'season_id' => $seasonId,
                         'details' => 'Waived due to excessive injury recovery time (Fire Leopard Rule)',
@@ -1563,11 +1576,10 @@ class SimulateController extends Controller
                     ]);
 
                     // Update player's contract and team details to reflect they are waived
-                    DB::table('players')->where('id', $injuredPlayer->id)->update([
+                    $updateWaivedPlayer = DB::table('players')->where('id', $injuredPlayer->id)->update([
                         'contract_years' => 0,
                         'team_id' => 0,
                         'is_active' => 1,  // They are still active in the free agent pool
-                        'is_injured' => 1, // Mark the player as no longer injured
                     ]);
 
                     // Try to find a random player with the same role
@@ -1576,13 +1588,13 @@ class SimulateController extends Controller
                     if ($randomPlayer) {
                         $freeAgentStandardContract = $this->getContractYearsBasedOnRole($injuredPlayer->role);
                         // Update the new player with the appropriate contract role
-                        DB::table('players')->where('id', $randomPlayer->id)->update([
+                        $signPlayer = DB::table('players')->where('id', $randomPlayer->player_id)->update([
                             'team_id' => $injuredPlayer->team_id,
                             'contract_years' => $freeAgentStandardContract, // Assign a random contract length
                         ]);
 
-                        DB::table('transactions')->insert([
-                            'player_id' => $randomPlayer->id,
+                        $signPlayerTransactions = DB::table('transactions')->insert([
+                            'player_id' => $randomPlayer->player_id,
                             'season_id' => $seasonId,
                             'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
                             'from_team_id' => 0, // From free agent pool
@@ -1592,18 +1604,35 @@ class SimulateController extends Controller
 
                         $storeStats = new AwardsController;
                         //store initial player season stats
-                        $storeStats->storePlayerCurrentSeasonStats( $injuredPlayer->team_id, $randomPlayer->id);
+                        $storeSeasonStats = $storeStats->storePlayerCurrentSeasonStats($injuredPlayer->team_id, $randomPlayer->player_id);
+
+                        $randomPlayer->update_waived_player_transaction = $updateWaivedPlayer;
+                        $randomPlayer->waive_transaction =  $waiveTransaction;
+                        $randomPlayer->signed_player_transaction = $signPlayerTransactions;
+                        $randomPlayer->signed_player = $signPlayer;
+                        $randomPlayer->store_season_stats = $storeSeasonStats;
+                        $randomPlayer->new_team = $injuredPlayer->team_id;
+                        $randomPlayer->contract = $freeAgentStandardContract;
+                        $randomPlayer->waived_player_id = $injuredPlayer->id;
+                        $randomPlayer->is_random = true;
+                        $signedPlayers[] = $randomPlayer;
                     }
+                }else{
+                    $injuredPlayer->is_random = false;
+                    $signedPlayers[] = $injuredPlayer;
                 }
             }
+
+            return $signedPlayers;
         }
+        return $teamInjuryCount;
     }
     private function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
         DB::table('players')
             ->where('team_id', 0) // Only for free agents (team_id = 0)
-            ->where('is_injured', 1) // Only consider injured players
+            ->where('is_injured', true) // Only consider injured players
             ->where('is_active', 1) // Only consider active players
             ->where('injury_recovery_games', '>', 0) // Only consider players with recovery games left
             ->decrement('injury_recovery_games', 1); // Decrease recovery games by 1
@@ -1611,7 +1640,7 @@ class SimulateController extends Controller
         // After decrementing, check if recovery games is 0, and mark player as not injured
         DB::table('players')
             ->where('team_id', 0) // Only for free agents
-            ->where('is_injured', 1) // Only for injured players
+            ->where('is_injured', true) // Only for injured players
             ->where('injury_recovery_games', 0) // Check if recovery games are 0 after decrement
             ->update([
                 'is_injured' => 0, // Set is_injured to 0 for players with no injury recovery games left
@@ -1624,26 +1653,16 @@ class SimulateController extends Controller
             ->where('players.is_active', 1) // Ensure the player is active
             ->where('players.is_injured', 0) // Ensure the player is not injured
             ->where('players.team_id', 0) // Ensure the player has no team
-            ->whereRaw('(SELECT COUNT(DISTINCT team_id) FROM player_season_stats WHERE player_season_stats.player_id = players.id) < 3') // Ensure player has been with less than 3 teams
             ->select(
                 'players.id',
+                'players.team_id',
                 'players.overall_rating',
                 'players.injury_history',
                 'players.age', // Include age for sorting
                 'player_season_stats.player_id',
-                DB::raw('(
-                    player_season_stats.avg_points_per_game * 1 +
-                    player_season_stats.avg_rebounds_per_game * 0.75 +
-                    player_season_stats.avg_assists_per_game * 0.75 +
-                    player_season_stats.avg_steals_per_game * 1.25 +
-                    player_season_stats.avg_blocks_per_game * 1.25 -
-                    player_season_stats.avg_turnovers_per_game * 0.5 -
-                    player_season_stats.avg_fouls_per_game * 0.3
-                ) AS performance_points')
             )
             // Order by the requested criteria
             ->orderByDesc('players.overall_rating') // Highest overall rating first
-            ->orderByDesc(DB::raw('performance_points')) // Then by performance points
             ->orderBy('players.age') // Younger players first
             ->orderBy('players.injury_history') // Least injury history first
             ->limit(100) // Limit to top 100 based on sorting criteria
