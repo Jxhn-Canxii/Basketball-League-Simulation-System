@@ -1299,7 +1299,7 @@ class SimulateController extends Controller
                 $injuryPercentage = (float) $player->injury_prone_percentage;
 
                 // Generate a random number between 0 and 100, representing the injury risk
-                $injuryRisk = rand(0, 100); // Adjust this to compare with a max of 100
+                $injuryRisk = rand(0, 30); // Adjust this to compare with a max of 100
 
                 // Now check if the injury risk is lower than the injury chance
                 if ($injuryPercentage > $injuryRisk) {
@@ -1379,8 +1379,8 @@ class SimulateController extends Controller
                 // Fetch the current season's status (assuming you want the most recent season)
                 // Ensure the season is active (status = 1) before proceeding
                 if ($seasonStatus == 1) {
-                    // Add 20% chance for the player to be waived
-                    if (rand(1, 100) <= 30) {
+                    // Add 90% chance for the player to be waived
+                    if (rand(1, 100) <= 90) {
                         // Insert transaction for waiving the player
                         DB::table('transactions')->insert([
                             'player_id' => $player->id,
