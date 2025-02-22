@@ -318,7 +318,7 @@ class TransactionsController extends Controller
         if ($teamsCount === 0) {
             // Update the last season's status to 15 if there are no incomplete teams
             // Update player roles based on the last season's stats
-            $update = ($seasonId <= 0) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
+            $update = ($currentseasonId <= 1) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
 
             // $update = true;
             if ($update) {
@@ -346,11 +346,14 @@ class TransactionsController extends Controller
                     'error' => true,
                     'message' => 'All teams have signed 15 players, and roles have been updated based on last season\'s stats.',
                     'team_count' => $teamsCount,
+                    'current_season_id' => $currentseasonId,
+                    'update' => $update
                 ], 401);
             } else {
                 return response()->json([
                     'message' => 'Role assigning error!',
                     'update' => $update,
+                    'current_season_id' => $currentseasonId
                 ], 400);
             }
         } else {
@@ -505,11 +508,11 @@ class TransactionsController extends Controller
 
                     if (count($starPlayers) < 1) {
                         $starPlayers[] = $player->id;
-                    } if (count($allStars) < 2) {
+                    }elseif (count($allStars) < 2) {
                         $allStars[] = $player->id;
                     }elseif (count($starters) < 2) {
                         $starters[] = $player->id;
-                    } elseif (count($rolePlayers) < 5) {
+                    }elseif (count($rolePlayers) < 5) {
                         $rolePlayers[] = $player->id;
                     } else {
                         $benchPlayers[] = $player->id;

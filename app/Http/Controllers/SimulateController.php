@@ -1481,13 +1481,13 @@ class SimulateController extends Controller
                         if ($randomPlayer) {
                             $freeAgentStandardContract = $this->getContractYearsBasedOnRole($player->role);
                             // Update the new player with the appropriate contract role
-                            DB::table('players')->where('id', $randomPlayer->id)->update([
+                            DB::table('players')->where('id', $randomPlayer->player_id)->update([
                                 'team_id' => $player->team_id,
                                 'contract_years' => $freeAgentStandardContract, // Assign a random contract length
                             ]);
 
                             DB::table('transactions')->insert([
-                                'player_id' => $randomPlayer->id,
+                                'player_id' => $randomPlayer->player_id,
                                 'season_id' => $seasonId,
                                 'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
                                 'from_team_id' => 0, // From free agent pool
@@ -1497,7 +1497,7 @@ class SimulateController extends Controller
 
                             $storeStats = new AwardsController;
                             //store initial player season stats
-                            $storeStats->storePlayerCurrentSeasonStats( $player->team_id, $randomPlayer->id);
+                            $storeStats->storePlayerCurrentSeasonStats($player->team_id, $randomPlayer->player_id);
                         }
                     } else {
                         // Optionally log or handle the case where the player is not waived
@@ -2167,19 +2167,6 @@ class SimulateController extends Controller
                     
                     // Construct new role change message
                     $newDetails = "Has moved from {$playerStat->role} to $role for the upcoming games.";
-                    
-                    // Get the last role change transaction
-                    $lastTransaction = DB::table('transactions')
-                        ->where('player_id', $playerStat->player_id)
-                        ->where('season_id', $seasonId)
-                        ->where('status', 'role change')
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-    
-                    // Check if the role change message is the same
-                    if ($lastTransaction && $lastTransaction->details === $newDetails) {
-                        continue; // Skip transaction if it's identical to the last one
-                    }
     
                     // Insert transaction if the role has changed
                     if ($playerStat->role !== $role) {
@@ -2191,14 +2178,14 @@ class SimulateController extends Controller
                             'to_team_id' => $playerStat->team_id,
                             'status' => 'role change',
                         ]);
+
+                         // Update player role
+                        Player::where('id', $playerStat->player_id)->update(['role' => $role]);
+                        DB::table('player_season_stats')
+                            ->where('player_id', $playerStat->player_id)
+                            ->where('season_id', $seasonId)
+                            ->update(['role' => $role]);
                     }
-    
-                    // Update player role
-                    Player::where('id', $playerStat->player_id)->update(['role' => $role]);
-                    DB::table('player_season_stats')
-                        ->where('player_id', $playerStat->player_id)
-                        ->where('season_id', $seasonId)
-                        ->update(['role' => $role]);
                     
                     $roleCounts[$role]++;
                 }
