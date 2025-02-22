@@ -1649,23 +1649,20 @@ class SimulateController extends Controller
     private function getRandomPlayer()
     {
         $randomPlayer = DB::table('players')
-            ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id', 'left') // Join player stats
             ->where('players.is_active', 1) // Ensure the player is active
             ->where('players.is_injured', 0) // Ensure the player is not injured
             ->where('players.team_id', 0) // Ensure the player has no team
             ->select(
-                'players.id',
+                'players.id as player_id',
                 'players.team_id',
                 'players.overall_rating',
                 'players.injury_history',
                 'players.age', // Include age for sorting
-                'player_season_stats.player_id',
             )
             // Order by the requested criteria
             ->orderByDesc('players.overall_rating') // Highest overall rating first
             ->orderBy('players.age') // Younger players first
             ->orderBy('players.injury_history') // Least injury history first
-            ->limit(100) // Limit to top 100 based on sorting criteria
             ->inRandomOrder() // Randomize selection from the top 100
             ->first(); // Get a single random player
 
