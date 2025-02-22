@@ -2065,143 +2065,136 @@ class SimulateController extends Controller
     }
     private function updateTeamRolesBasedOnStats($teamId, $round)
     {
-        // Check if the round is divisible by 5
         if ($round % 5 !== 0) {
-            return true; // Exit the function if the round is not divisible by 5
+            return true;
         }
     
-        $seasonId = get_current_season_id();
-        $teams = DB::table('teams')->pluck('id');
+        DB::beginTransaction();
     
-        foreach ($teams as $teamId) {
-            DB::beginTransaction();
+        try {
+            $seasonId = get_current_season_id();
     
-            try {
-                // Fetch player stats for the previous season
-                $stats = DB::table('player_season_stats')
-                    ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                    ->where('player_season_stats.season_id', $seasonId)
-                    ->where('players.team_id', $teamId)
-                    ->get();
+            // Fetch player stats for previous season
+            $stats = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.team_id', $teamId)
+                ->get();
     
-                // Fetch rookies or players with no stats
-                $playersWithoutStats = DB::table('players')
-                    ->where('team_id', $teamId)
-                    ->whereNotIn('id', $stats->pluck('player_id'))
-                    ->get();
+            // Fetch rookies or players with no stats
+            $playersWithoutStats = DB::table('players')
+                ->where('team_id', $teamId)
+                ->whereNotIn('id', $stats->pluck('player_id'))
+                ->get();
     
-                // Merge all players
-                $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
-                    return (object)[
-                        'player_id' => $player->id,
-                        'role' => 'bench', // Default role
-                        'avg_points_per_game' => 0,
-                        'avg_rebounds_per_game' => 0,
-                        'avg_assists_per_game' => 0,
-                        'avg_steals_per_game' => 0,
-                        'avg_blocks_per_game' => 0,
-                        'avg_turnovers_per_game' => 0,
-                        'avg_fouls_per_game' => 0,
-                        'avg_minutes_per_game' => 1, // Default to 1 to avoid division by zero
-                        'total_points' => 0,
-                        'total_rebounds' => 0,
-                        'total_assists' => 0,
-                        'total_steals' => 0,
-                        'total_blocks' => 0,
-                        'total_turnovers' => 0,
-                        'eff' => 0,
-                        'total_fouls' => 0,
-                        'total_games_played' => 0,
-                        'overall_rating' => $player->overall_rating ?? 50, // Default low rating if missing
-                        'potential_rating' => $player->potential_rating ?? 50, // Use potential for rookies
-                        'injury_prone_percentage' => $player->injury_prone_percentage ?? 50,
-                        'is_rookie' => $player->is_rookie ?? 0, // Identify rookies
-                    ];
-                }));
+            // Merge all players
+            $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
+                return (object)[
+                    'player_id' => $player->id,
+                    'role' => 'bench',
+                    'avg_points_per_game' => 0,
+                    'avg_rebounds_per_game' => 0,
+                    'avg_assists_per_game' => 0,
+                    'avg_steals_per_game' => 0,
+                    'avg_blocks_per_game' => 0,
+                    'avg_turnovers_per_game' => 0,
+                    'avg_fouls_per_game' => 0,
+                    'avg_minutes_per_game' => 1,
+                    'total_points' => 0,
+                    'total_rebounds' => 0,
+                    'total_assists' => 0,
+                    'total_steals' => 0,
+                    'total_blocks' => 0,
+                    'total_turnovers' => 0,
+                    'eff' => 0,
+                    'total_fouls' => 0,
+                    'total_games_played' => 0,
+                    'overall_rating' => $player->overall_rating ?? 50,
+                    'potential_rating' => $player->potential_rating ?? 50,
+                    'injury_prone_percentage' => $player->injury_prone_percentage ?? 50,
+                    'is_rookie' => $player->is_rookie ?? 0,
+                ];
+            }));
     
-                // Rank players
-                $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                    $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
-                        ? ($stat->avg_points_per_game * 0.4 +
-                        $stat->avg_rebounds_per_game * 0.2 +
-                        $stat->avg_assists_per_game * 0.2 +
-                        $stat->avg_steals_per_game * 0.1 +
-                        $stat->avg_blocks_per_game * 0.1 -
-                        $stat->avg_turnovers_per_game * 0.1 -
-                        $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
-                        : 0;
+            // Rank players
+            $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
+                $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
+                    ? ($stat->avg_points_per_game * 0.4 +
+                    $stat->avg_rebounds_per_game * 0.2 +
+                    $stat->avg_assists_per_game * 0.2 +
+                    $stat->avg_steals_per_game * 0.1 +
+                    $stat->avg_blocks_per_game * 0.1 -
+                    $stat->avg_turnovers_per_game * 0.1 -
+                    $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
+                    : 0;
     
-                    $perGameScore = $stat->avg_points_per_game * 0.3 +
-                        $stat->avg_rebounds_per_game * 0.2 +
-                        $stat->avg_assists_per_game * 0.2 +
-                        $stat->avg_steals_per_game * 0.1 +
-                        $stat->avg_blocks_per_game * 0.1 -
-                        $stat->avg_turnovers_per_game * 0.1 -
-                        $stat->avg_fouls_per_game * 0.1;
+                $perGameScore = $stat->avg_points_per_game * 0.3 +
+                    $stat->avg_rebounds_per_game * 0.2 +
+                    $stat->avg_assists_per_game * 0.2 +
+                    $stat->avg_steals_per_game * 0.1 +
+                    $stat->avg_blocks_per_game * 0.1 -
+                    $stat->avg_turnovers_per_game * 0.1 -
+                    $stat->avg_fouls_per_game * 0.1;
     
-                    $totalScore = $stat->total_points * 0.2 +
-                        $stat->total_rebounds * 0.2 +
-                        $stat->total_assists * 0.2 +
-                        $stat->total_steals * 0.15 +
-                        $stat->total_blocks * 0.15 -
-                        $stat->total_turnovers * 0.1 -
-                        $stat->total_fouls * 0.1;
+                $totalScore = $stat->total_points * 0.2 +
+                    $stat->total_rebounds * 0.2 +
+                    $stat->total_assists * 0.2 +
+                    $stat->total_steals * 0.15 +
+                    $stat->total_blocks * 0.15 -
+                    $stat->total_turnovers * 0.1 -
+                    $stat->total_fouls * 0.1;
     
-                    $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
+                $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
     
-                    return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
-                });
+                return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
+            });
     
-                // Assign roles
-                $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
-                $roleCounts = array_fill_keys(array_keys($roles), 0);
+            // Assign roles
+            $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
+            $roleCounts = array_fill_keys(array_keys($roles), 0);
     
-                foreach ($rankedPlayers as $playerStat) {
-                    $role = 'bench';
-                    foreach ($roles as $key => $limit) {
-                        if ($roleCounts[$key] < $limit) {
-                            $role = $key;
-                            break;
-                        }
+            foreach ($rankedPlayers as $playerStat) {
+                $role = 'bench';
+                foreach ($roles as $key => $limit) {
+                    if ($roleCounts[$key] < $limit) {
+                        $role = $key;
+                        break;
                     }
-                    
-                    // Construct new role change message
-                    $newDetails = "Has moved from {$playerStat->role} to $role for the upcoming games.";
-    
-                    // Insert transaction if the role has changed
-                    if ($playerStat->role !== $role) {
-                        DB::table('transactions')->insert([
-                            'player_id' => $playerStat->player_id,
-                            'season_id' => $seasonId,
-                            'details' => $newDetails,
-                            'from_team_id' => $playerStat->team_id,
-                            'to_team_id' => $playerStat->team_id,
-                            'status' => 'role change',
-                        ]);
-
-                         // Update player role
-                        Player::where('id', $playerStat->player_id)->update(['role' => $role]);
-                        DB::table('player_season_stats')
-                            ->where('player_id', $playerStat->player_id)
-                            ->where('season_id', $seasonId)
-                            ->update(['role' => $role]);
-                    }
-                    
-                    $roleCounts[$role]++;
                 }
     
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                \Log::error('Error assigning role for team ' . $teamId . ': ' . $e->getMessage());
-                return false;
+                $playerTeam = DB::table('players')->where('id', $playerStat->player_id)->value('team_id');
+    
+                if ($playerStat->role !== $role) {
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerStat->player_id,
+                        'season_id' => $seasonId,
+                        'details' => "Has moved from {$playerStat->role} to $role for the upcoming games.",
+                        'from_team_id' => $playerTeam,
+                        'to_team_id' => $playerTeam,
+                        'status' => 'role change',
+                    ]);
+    
+                    DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $role]);
+                    DB::table('player_season_stats')
+                        ->where('player_id', $playerStat->player_id)
+                        ->where('season_id', $seasonId)
+                        ->update(['role' => $role]);
+                }
+    
+                $roleCounts[$role]++;
             }
+    
+            \Log::info("Roles updated for team {$teamId}", ['roleCounts' => $roleCounts]);
+    
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error updating roles for team ' . $teamId . ': ' . $e->getMessage());
+            return false;
         }
     
         return true;
     }
-    
-
     private function updateSeasonStats($playerGameStats)
     {
         if (empty($playerGameStats)) {
