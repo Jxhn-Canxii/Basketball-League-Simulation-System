@@ -1554,7 +1554,7 @@ class SimulateController extends Controller
 
         if ($teamInjuryCount > 7) {
             // Sort players by injury recovery games (worst injuries first)
-            $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take($teamInjuryCount);
+            $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(5);
             $signedPlayers = [];
             foreach ($sortedInjuries as $injuredPlayer) {
                 // Waive t$sortedInjurieshe player
