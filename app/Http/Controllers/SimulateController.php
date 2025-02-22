@@ -120,7 +120,7 @@ class SimulateController extends Controller
         ->where('is_injured', true)
         ->get();
 
-        if ($homeTeamInjuries->count() > 7) {
+        if ($homeTeamInjuries->count() > 5) {
             //run the fire leoparad rule
             $initiateFLRule = $this->fireLeopardRule($gameData->home_team_id);
             // return response()->json([
@@ -137,7 +137,7 @@ class SimulateController extends Controller
         ->where('is_injured', true)
         ->get();
 
-        if ($awayTeamInjuries->count() > 7) {
+        if ($awayTeamInjuries->count() > 5) {
             //run the fire leoparad rule
             $initiateFLRule =  $this->fireLeopardRule($gameData->away_team_id);
             // return response()->json([
@@ -605,7 +605,7 @@ class SimulateController extends Controller
             ->where('is_injured', true)
             ->get();
 
-            if ($homeTeamInjuries->count() > 7) {
+            if ($homeTeamInjuries->count() > 5) {
                 //run the fire leoparad rule
                 $initiateFLRule = $this->fireLeopardRule($gameData->home_team_id);
                 // return response()->json([
@@ -622,7 +622,7 @@ class SimulateController extends Controller
             ->where('is_injured', true)
             ->get();
 
-            if ($awayTeamInjuries->count() > 7) {
+            if ($awayTeamInjuries->count() > 5) {
                 //run the fire leoparad rule
                 $initiateFLRule =  $this->fireLeopardRule($gameData->away_team_id);
                 // return response()->json([
@@ -1552,9 +1552,9 @@ class SimulateController extends Controller
 
         $teamInjuryCount = $teamInjuries->count();
 
-        if ($teamInjuryCount > 7) {
+        if ($teamInjuryCount > 5) {
             // Sort players by injury recovery games (worst injuries first)
-            $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(5);
+            $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(3);
             $signedPlayers = [];
             foreach ($sortedInjuries as $injuredPlayer) {
                 // Waive t$sortedInjurieshe player
