@@ -19,15 +19,16 @@
                 </select>
             </div>
             <div>
-                <!-- <button
-                    @click="showAddPlayerModal = true"
-                    class="ml-4 px-4 py-2 bg-green-500 text-white rounded text-sm flex items-center"
+                 <!-- Toggle Button -->
+                <button 
+                    @click="showTransferred = !showTransferred"
+                    class="mb-2 px-4 py-2 bg-blue-500 text-white text-xs rounded"
                 >
-                    <i class="fa fa-user mr-2"></i> Add Player
-                </button> -->
+                    {{ showTransferred ? 'Hide Transferred Players' : 'Show Transferred Players' }}
+                </button>
             </div>
         </div>
-
+       
         <!-- Players Table -->
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 text-xs">
@@ -186,7 +187,7 @@
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     <tr
-                        v-for="(player, index) in team_roster.players"
+                        v-for="(player, index) in filteredPlayers"
                         :key="player.player_id"
                         v-if="team_roster.players?.length > 0"
                         :class="player.is_injured == 1 ? 'bg-red-100' : ''"
@@ -338,7 +339,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -352,6 +353,7 @@ const props = defineProps({
     },
 });
 const showExtendModal = ref(false);
+const showTransferred = ref(false);
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);
 const additionalYears = ref(1);
@@ -374,7 +376,15 @@ onMounted(async () => {
     await fetchTeamInfo(props.team_id);
     await fetchTeamRoster(props.team_id);
 });
+const toggleShowTransferred = () => {
+    showTransferred.value = !showTransferred.value;
+};
 
+const filteredPlayers = computed(() => {
+    return team_roster.value.players.filter(player => 
+        showTransferred.value || player.status !== 2
+    );
+});
 const fetchTeamInfo = async (id) => {
     try {
         const response = await axios.post(route("teams.info"), {
