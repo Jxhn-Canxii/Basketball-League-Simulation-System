@@ -23,21 +23,21 @@
                 @click="currentTab = 'new'"
             >
                 <i class="fas fa-user-plus mr-2"></i> Newly Acquired 
-                <span class="text-red-500 bg-red-200 p-1 rounded-full" v-if="season_id > 1">{{ filteredNewPlayers.length ?? 0 }}</span>
+                <span class="text-red-500 bg-red-200 p-1 rounded-full" v-if="season_id > 1">{{ filteredNewPlayers?.length ?? 0 }}</span>
             </button>
             <button
                 :class="['px-4 py-2', currentTab === 'transferred' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                 @click="currentTab = 'transferred'"
             >
                 <i class="fas fa-exchange-alt mr-2"></i> Transferred
-                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredTransferredPlayers.length ?? 0 }}</span>
+                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredTransferredPlayers?.length ?? 0 }}</span>
             </button>
             <button
                 :class="['px-4 py-2', currentTab === 'injured' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
                 @click="currentTab = 'injured'"
             >
                 <i class="fas fa-procedures mr-2"></i> Injured
-                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredInjuredPlayers.length ?? 0 }}</span>
+                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredInjuredPlayers?.length ?? 0 }}</span>
             </button>
         </div>
 
@@ -1307,25 +1307,25 @@ const toggleShowTransferred = () => {
 };
 
 const filteredPlayers = computed(() => {
-    return team_roster.value.players.filter(player => 
+    return team_roster.value.players?.filter(player => 
         showTransferred.value || player.status !== 2
     );
 });
 
 const filteredTransferredPlayers = computed(() => {
-    return team_roster.value.players.filter(player => 
+    return team_roster.value.players?.filter(player => 
         player.status == 2
     );
 });
 
 const filteredNewPlayers = computed(() => {
-    return team_roster.value.players.filter(player => 
+    return team_roster.value.players?.filter(player => 
         player.seasons_played_with_team == 1
     );
 });
 
 const filteredInjuredPlayers = computed(() => {
-    return team_roster.value.players.filter(player => 
+    return team_roster.value.players?.filter(player => 
         player.is_injured == 1 && player.status != 2
     );
 });

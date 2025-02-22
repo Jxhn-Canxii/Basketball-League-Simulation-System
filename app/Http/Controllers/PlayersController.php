@@ -45,12 +45,12 @@ class PlayersController extends Controller
 
         // Initialize an array to hold player stats
         $playerStats = [];
-        $latestSeasonId = DB::table('seasons')->max('id');
+        $latestSeasonId = get_current_season_id();
         // $currentSeasonId = DB::table('seasons')->max('id');
         // if (is_null($seasonId) || $seasonId == 0) {
         //     $seasonId = $latestSeasonId;
         // }
-
+        
         // Fetch the season status
         $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
