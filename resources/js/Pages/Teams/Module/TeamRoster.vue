@@ -11,905 +11,1241 @@
         </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
+       <div class="flex justify-start mt-5 border-b border-gray-200">
+            <button
+                :class="['px-4 py-2', currentTab === 'all' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                @click="currentTab = 'all'"
+            >
+                <i class="fas fa-users mr-2"></i> All Players
+            </button>
+            <button
+                :class="['px-4 py-2', currentTab === 'new' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                @click="currentTab = 'new'"
+            >
+                <i class="fas fa-user-plus mr-2"></i> Newly Acquired 
+                <span class="text-red-500 bg-red-200 p-1 rounded-full" v-if="season_id > 1">{{ filteredNewPlayers.length ?? 0 }}</span>
+            </button>
+            <button
+                :class="['px-4 py-2', currentTab === 'transferred' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                @click="currentTab = 'transferred'"
+            >
+                <i class="fas fa-exchange-alt mr-2"></i> Transferred
+                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredTransferredPlayers.length ?? 0 }}</span>
+            </button>
+            <button
+                :class="['px-4 py-2', currentTab === 'injured' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                @click="currentTab = 'injured'"
+            >
+                <i class="fas fa-procedures mr-2"></i> Injured
+                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredInjuredPlayers.length ?? 0 }}</span>
+            </button>
+        </div>
 
-        <h3 class="text-gray-700 mt-4 mb-4">All Players</h3>
-        <!-- Add Player Button -->
-        <div class="flex justify-between items-center mb-4">
-            <div>
-                <select v-model="season_id" @change="seasonBehavior()" class="mt-1 block w-full sm:w-auto border-gray-300 rounded-md shadow-sm sm:text-sm">
-                    <option v-for="(season, ss) in seasons" :key="season.season_id" :value="season.season_id">{{ season.name }}</option>
-                </select>
+        <div v-if="currentTab == 'all'">
+            <h3 class="text-gray-700 mt-4 mb-4">All Players</h3>
+            <!-- Add Player Button -->
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <select v-model="season_id" @change="seasonBehavior()" class="mt-1 block w-full sm:w-auto border-gray-300 rounded-md shadow-sm sm:text-sm">
+                        <option v-for="(season, ss) in seasons" :key="season.season_id" :value="season.season_id">{{ season.name }}</option>
+                    </select>
+                </div>
+                <div>
+                    <!-- Toggle Button -->
+                    <button 
+                        @click="showTransferred = !showTransferred"
+                        class="mb-2 px-4 py-2 bg-blue-500 text-white text-xs rounded"
+                    >
+                        {{ showTransferred ? 'Hide Transferred Players' : 'Show Transferred Players' }}
+                    </button>
+                </div>
             </div>
-            <div>
-                 <!-- Toggle Button -->
-                <button 
-                    @click="showTransferred = !showTransferred"
-                    class="mb-2 px-4 py-2 bg-blue-500 text-white text-xs rounded"
-                >
-                    {{ showTransferred ? 'Hide Transferred Players' : 'Show Transferred Players' }}
-                </button>
+
+             <!-- Players Table -->
+            <div class="overflow-x-auto" >
+                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                No.
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                            Draft
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Name
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Pos
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Exp
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Role
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. w/ Team
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. Left
+                            </th>
+
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Overall Ratings"
+                            >
+                                OVR
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Best Player of the Game Count"
+                            >
+                                BPOTG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Total Team Games"
+                            >
+                                GT
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Games Played"
+                            >
+                                GP
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Minutes Per Game"
+                            >
+                                MPG
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Average Field Goal %"
+                            >
+                                AFG
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Points Per Game"
+                            >
+                                PPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Rebounds Per Game"
+                            >
+                                RPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Assist Per Game"
+                            >
+                                APG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Steals Per Game"
+                            >
+                                SPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Blocks Per Game"
+                            >
+                                BPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Turnover Per Game"
+                            >
+                                TOPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                FPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Effeciency"
+                            >
+                                EFF
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Player Effeciency Ratings"
+                            >
+                                PER
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                Ratings
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Legend
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Actions
+                            </th> -->
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr
+                            v-for="(player, index) in filteredPlayers"
+                            :key="player.player_id"
+                            v-if="team_roster.players?.length > 0"
+                            :class="player.is_injured == 1 ? 'bg-red-100' : ''"
+                            @click.prevent="showPlayerProfile(player)"
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ index + 1 }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
+                                {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
+                                {{ player.name }}<sup>{{ player.age }}</sup>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.position }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.total_seasons_played }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <span
+                                    :class="roleClasses(player.role)"
+                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                >
+                                    {{ player.role }}
+                                </span>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <!-- If the player has played more than one season -->
+                                {{ player.seasons_played_with_team }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.contract_years ?? '-' }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.overall_rating ?? '-' }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.bpg_game_leader.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.team_total_games ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.games_played ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_minutes_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
+                                {{ player.average_points_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_rebounds_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_assists_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_steals_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_blocks_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_turnovers_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_fouls_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.per_game_score }}
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.combined_score }}
+                            </td> -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <span
+                                    title="Newly Aquired"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
+                                    v-if="player.seasons_played_with_team == 1">
+                                    <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
+                                </span>
+
+                                <!-- If the player has played more than one season -->
+                                <!-- {{ player.latest_season }}
+                                {{ player.age - (player.latest_season - player.draft_id) }} -->
+                                <span
+                                    title="Less than 3 years left before retirement"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
+                                    v-if="player.age >= player.retirement_age - 1">
+                                    <i class="fas fa-user-times text-red-500 mr-1"></i>
+                                </span>
+                                <span v-if="player.status == 1" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full" title="Active">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </span>
+                                <span v-if="player.status == 0 && (player.latest_season  - player.draft_id != 0)" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full" title="Retired">
+                                    <i class="fas fa-user-slash"></i>
+                                </span>
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                <button
+                                    @click="waivePlayer(player.player_id)"
+                                    class="px-2 py-1 bg-red-500 text-white text-xs rounded-l"
+                                >
+                                    Waive
+                                </button>
+                                <button
+                                    @click="extendContract(player.player_id)"
+                                    class="px-2 py-1 bg-blue-500 text-white rounded-r text-xs"
+                                >
+                                    Extend Contract
+                                </button>
+                            </td> -->
+                        </tr>
+                        <tr
+                            v-else
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
-        <!-- Players Table -->
-        <div class="overflow-x-auto" >
-            <table class="min-w-full divide-y divide-gray-200 text-xs">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            No.
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                           Draft
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Name
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Pos
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Exp
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Role
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
-                            title="Remaining Contract Years"
-                        >
-                            Yrs. w/ Team
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
-                            title="Remaining Contract Years"
-                        >
-                            Yrs. Left
-                        </th>
+        <div v-if="currentTab == 'new'">
+            <h3 class="text-gray-700 mt-4 mb-4" v-if="season_id > 1">Newly Aquired Players</h3>
+            <!-- Players Table -->
+            <div class="overflow-x-auto" v-if="season_id > 1">
+                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                No.
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                            Draft
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Name
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Pos
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Exp
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Role
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. w/ Team
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. Left
+                            </th>
 
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Overall Ratings"
-                        >
-                            OVR
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Best Player of the Game Count"
-                        >
-                            BPOTG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Total Team Games"
-                        >
-                            GT
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Games Played"
-                        >
-                            GP
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Minutes Per Game"
-                        >
-                            MPG
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Average Field Goal %"
-                        >
-                            AFG
-                        </th> -->
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Points Per Game"
-                        >
-                            PPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Rebounds Per Game"
-                        >
-                            RPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Assist Per Game"
-                        >
-                            APG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Steals Per Game"
-                        >
-                            SPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Blocks Per Game"
-                        >
-                            BPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Turnover Per Game"
-                        >
-                            TOPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Fouls Per Game"
-                        >
-                            FPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Effeciency"
-                        >
-                            EFF
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Player Effeciency Ratings"
-                        >
-                            PER
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Fouls Per Game"
-                        >
-                            Ratings
-                        </th> -->
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Legend
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Actions
-                        </th> -->
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <tr
-                        v-for="(player, index) in filteredPlayers"
-                        :key="player.player_id"
-                        v-if="team_roster.players?.length > 0"
-                        :class="player.is_injured == 1 ? 'bg-red-100' : ''"
-                        @click.prevent="showPlayerProfile(player)"
-                        class="hover:bg-gray-100"
-                    >
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ index + 1 }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
-                            {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
-                            {{ player.name }}<sup>{{ player.age }}</sup>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.position }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.total_seasons_played }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <span
-                                :class="roleClasses(player.role)"
-                                class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Overall Ratings"
                             >
-                                {{ player.role }}
-                            </span>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <!-- If the player is new to the team -->
-                            <!-- If the player has played more than one season -->
-                            {{ player.seasons_played_with_team }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.contract_years ?? '-' }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.overall_rating ?? '-' }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.bpg_game_leader.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ Math.round(player.team_total_games ?? 0) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ Math.round(player.games_played ?? 0) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_minutes_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
-                            {{ player.average_points_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_rebounds_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_assists_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_steals_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_blocks_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_turnovers_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_fouls_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.per_game_score }}
-                        </td>
-                        <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.combined_score }}
-                        </td> -->
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <!-- If the player is new to the team -->
-                            <span
-                                title="Newly Aquired"
-                                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
-                                v-if="player.seasons_played_with_team == 1">
-                                <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
-                            </span>
+                                OVR
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Best Player of the Game Count"
+                            >
+                                BPOTG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Total Team Games"
+                            >
+                                GT
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Games Played"
+                            >
+                                GP
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Minutes Per Game"
+                            >
+                                MPG
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Average Field Goal %"
+                            >
+                                AFG
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Points Per Game"
+                            >
+                                PPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Rebounds Per Game"
+                            >
+                                RPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Assist Per Game"
+                            >
+                                APG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Steals Per Game"
+                            >
+                                SPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Blocks Per Game"
+                            >
+                                BPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Turnover Per Game"
+                            >
+                                TOPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                FPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Effeciency"
+                            >
+                                EFF
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Player Effeciency Ratings"
+                            >
+                                PER
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                Ratings
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Legend
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Actions
+                            </th> -->
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr
+                            v-for="(player, index) in filteredNewPlayers"
+                            :key="player.player_id"
+                            v-if="team_roster.players?.length > 0"
+                            :class="player.is_injured == 1 ? 'bg-red-100' : ''"
+                            @click.prevent="showPlayerProfile(player)"
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ index + 1 }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
+                                {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
+                                {{ player.name }}<sup>{{ player.age }}</sup>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.position }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.total_seasons_played }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <span
+                                    :class="roleClasses(player.role)"
+                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                >
+                                    {{ player.role }}
+                                </span>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <!-- If the player has played more than one season -->
+                                {{ player.seasons_played_with_team }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.contract_years ?? '-' }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.overall_rating ?? '-' }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.bpg_game_leader.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.team_total_games ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.games_played ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_minutes_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
+                                {{ player.average_points_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_rebounds_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_assists_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_steals_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_blocks_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_turnovers_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_fouls_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.per_game_score }}
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.combined_score }}
+                            </td> -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <span
+                                    title="Newly Aquired"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
+                                    v-if="player.seasons_played_with_team == 1">
+                                    <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
+                                </span>
 
-                            <!-- If the player has played more than one season -->
-                             <!-- {{ player.latest_season }}
-                             {{ player.age - (player.latest_season - player.draft_id) }} -->
-                            <span
-                                title="Less than 3 years left before retirement"
-                                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
-                                v-if="player.age >= player.retirement_age - 1">
-                                <i class="fas fa-user-times text-red-500 mr-1"></i>
-                            </span>
-                            <span v-if="player.status == 1" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full" title="Active">
-                                <i class="fas fa-check-circle"></i>
-                            </span>
-                            <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
-                                <i class="fas fa-exchange-alt"></i>
-                            </span>
-                            <span v-if="player.status == 0 && (player.latest_season  - player.draft_id != 0)" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full" title="Retired">
-                                <i class="fas fa-user-slash"></i>
-                            </span>
-                        </td>
-                        <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                            <button
-                                @click="waivePlayer(player.player_id)"
-                                class="px-2 py-1 bg-red-500 text-white text-xs rounded-l"
-                            >
-                                Waive
-                            </button>
-                            <button
-                                @click="extendContract(player.player_id)"
-                                class="px-2 py-1 bg-blue-500 text-white rounded-r text-xs"
-                            >
-                                Extend Contract
-                            </button>
-                        </td> -->
-                    </tr>
-                    <tr
-                        v-else
-                        class="hover:bg-gray-100"
-                    >
-                        <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
-                    </tr>
-                </tbody>
-            </table>
+                                <!-- If the player has played more than one season -->
+                                <!-- {{ player.latest_season }}
+                                {{ player.age - (player.latest_season - player.draft_id) }} -->
+                                <span
+                                    title="Less than 3 years left before retirement"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
+                                    v-if="player.age >= player.retirement_age - 1">
+                                    <i class="fas fa-user-times text-red-500 mr-1"></i>
+                                </span>
+                                <span v-if="player.status == 1" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full" title="Active">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </span>
+                                <span v-if="player.status == 0 && (player.latest_season  - player.draft_id != 0)" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full" title="Retired">
+                                    <i class="fas fa-user-slash"></i>
+                                </span>
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                <button
+                                    @click="waivePlayer(player.player_id)"
+                                    class="px-2 py-1 bg-red-500 text-white text-xs rounded-l"
+                                >
+                                    Waive
+                                </button>
+                                <button
+                                    @click="extendContract(player.player_id)"
+                                    class="px-2 py-1 bg-blue-500 text-white rounded-r text-xs"
+                                >
+                                    Extend Contract
+                                </button>
+                            </td> -->
+                        </tr>
+                        <tr
+                            v-else
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+             <div v-else class="flex items-center justify-center">
+                <p>No record...</p>
+            </div>
         </div>
-        <h3 class="text-gray-700 mt-4 mb-4" v-if="season_id > 1">Newly Aquired Players</h3>
-        <!-- Players Table -->
-        <div class="overflow-x-auto" v-if="season_id > 1">
-            <table class="min-w-full divide-y divide-gray-200 text-xs">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            No.
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                           Draft
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Name
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Pos
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Exp
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Role
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
-                            title="Remaining Contract Years"
-                        >
-                            Yrs. w/ Team
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
-                            title="Remaining Contract Years"
-                        >
-                            Yrs. Left
-                        </th>
+        <div v-if="currentTab == 'transferred'">
+            <h3 class="text-gray-700 mt-4 mb-4">Released Players</h3>
+            <!-- Players Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                No.
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                            Draft
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Name
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Pos
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Exp
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Role
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. w/ Team
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. Left
+                            </th>
 
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Overall Ratings"
-                        >
-                            OVR
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Best Player of the Game Count"
-                        >
-                            BPOTG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Total Team Games"
-                        >
-                            GT
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Games Played"
-                        >
-                            GP
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Minutes Per Game"
-                        >
-                            MPG
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Average Field Goal %"
-                        >
-                            AFG
-                        </th> -->
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Points Per Game"
-                        >
-                            PPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Rebounds Per Game"
-                        >
-                            RPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Assist Per Game"
-                        >
-                            APG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Steals Per Game"
-                        >
-                            SPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Blocks Per Game"
-                        >
-                            BPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Turnover Per Game"
-                        >
-                            TOPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Fouls Per Game"
-                        >
-                            FPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Effeciency"
-                        >
-                            EFF
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Player Effeciency Ratings"
-                        >
-                            PER
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Fouls Per Game"
-                        >
-                            Ratings
-                        </th> -->
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Legend
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Actions
-                        </th> -->
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <tr
-                        v-for="(player, index) in filteredNewPlayers"
-                        :key="player.player_id"
-                        v-if="team_roster.players?.length > 0"
-                        :class="player.is_injured == 1 ? 'bg-red-100' : ''"
-                        @click.prevent="showPlayerProfile(player)"
-                        class="hover:bg-gray-100"
-                    >
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ index + 1 }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
-                            {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
-                            {{ player.name }}<sup>{{ player.age }}</sup>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.position }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.total_seasons_played }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <span
-                                :class="roleClasses(player.role)"
-                                class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Overall Ratings"
                             >
-                                {{ player.role }}
-                            </span>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <!-- If the player is new to the team -->
-                            <!-- If the player has played more than one season -->
-                            {{ player.seasons_played_with_team }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.contract_years ?? '-' }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.overall_rating ?? '-' }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.bpg_game_leader.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ Math.round(player.team_total_games ?? 0) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ Math.round(player.games_played ?? 0) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_minutes_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
-                            {{ player.average_points_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_rebounds_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_assists_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_steals_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_blocks_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_turnovers_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_fouls_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.per_game_score }}
-                        </td>
-                        <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.combined_score }}
-                        </td> -->
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <!-- If the player is new to the team -->
-                            <span
-                                title="Newly Aquired"
-                                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
-                                v-if="player.seasons_played_with_team == 1">
-                                <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
-                            </span>
+                                OVR
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Best Player of the Game Count"
+                            >
+                                BPOTG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Total Team Games"
+                            >
+                                GT
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Games Played"
+                            >
+                                GP
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Minutes Per Game"
+                            >
+                                MPG
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Average Field Goal %"
+                            >
+                                AFG
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Points Per Game"
+                            >
+                                PPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Rebounds Per Game"
+                            >
+                                RPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Assist Per Game"
+                            >
+                                APG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Steals Per Game"
+                            >
+                                SPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Blocks Per Game"
+                            >
+                                BPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Turnover Per Game"
+                            >
+                                TOPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                FPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Effeciency"
+                            >
+                                EFF
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Player Effeciency Ratings"
+                            >
+                                PER
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                Ratings
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Legend
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Actions
+                            </th> -->
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr
+                            v-for="(player, index) in filteredTransferredPlayers"
+                            :key="player.player_id"
+                            v-if="team_roster.players?.length > 0"
+                            :class="player.is_injured == 1 ? 'bg-red-100' : ''"
+                            @click.prevent="showPlayerProfile(player)"
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ index + 1 }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
+                                {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
+                                {{ player.name }}<sup>{{ player.age }}</sup>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.position }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.total_seasons_played }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <span
+                                    :class="roleClasses(player.role)"
+                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                >
+                                    {{ player.role }}
+                                </span>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <!-- If the player has played more than one season -->
+                                {{ player.seasons_played_with_team }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.contract_years ?? '-' }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.overall_rating ?? '-' }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.bpg_game_leader.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.team_total_games ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.games_played ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_minutes_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
+                                {{ player.average_points_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_rebounds_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_assists_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_steals_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_blocks_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_turnovers_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_fouls_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.per_game_score }}
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.combined_score }}
+                            </td> -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <span
+                                    title="Newly Aquired"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
+                                    v-if="player.seasons_played_with_team == 1">
+                                    <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
+                                </span>
 
-                            <!-- If the player has played more than one season -->
-                             <!-- {{ player.latest_season }}
-                             {{ player.age - (player.latest_season - player.draft_id) }} -->
-                            <span
-                                title="Less than 3 years left before retirement"
-                                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
-                                v-if="player.age >= player.retirement_age - 1">
-                                <i class="fas fa-user-times text-red-500 mr-1"></i>
-                            </span>
-                            <span v-if="player.status == 1" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full" title="Active">
-                                <i class="fas fa-check-circle"></i>
-                            </span>
-                            <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
-                                <i class="fas fa-exchange-alt"></i>
-                            </span>
-                            <span v-if="player.status == 0 && (player.latest_season  - player.draft_id != 0)" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full" title="Retired">
-                                <i class="fas fa-user-slash"></i>
-                            </span>
-                        </td>
-                        <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                            <button
-                                @click="waivePlayer(player.player_id)"
-                                class="px-2 py-1 bg-red-500 text-white text-xs rounded-l"
-                            >
-                                Waive
-                            </button>
-                            <button
-                                @click="extendContract(player.player_id)"
-                                class="px-2 py-1 bg-blue-500 text-white rounded-r text-xs"
-                            >
-                                Extend Contract
-                            </button>
-                        </td> -->
-                    </tr>
-                    <tr
-                        v-else
-                        class="hover:bg-gray-100"
-                    >
-                        <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
-                    </tr>
-                </tbody>
-            </table>
+                                <!-- If the player has played more than one season -->
+                                <!-- {{ player.latest_season }}
+                                {{ player.age - (player.latest_season - player.draft_id) }} -->
+                                <span
+                                    title="Less than 3 years left before retirement"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
+                                    v-if="player.age >= player.retirement_age - 1">
+                                    <i class="fas fa-user-times text-red-500 mr-1"></i>
+                                </span>
+                                <span v-if="player.status == 1" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full" title="Active">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </span>
+                                <span v-if="player.status == 0 && (player.latest_season  - player.draft_id != 0)" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full" title="Retired">
+                                    <i class="fas fa-user-slash"></i>
+                                </span>
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                <button
+                                    @click="waivePlayer(player.player_id)"
+                                    class="px-2 py-1 bg-red-500 text-white text-xs rounded-l"
+                                >
+                                    Waive
+                                </button>
+                                <button
+                                    @click="extendContract(player.player_id)"
+                                    class="px-2 py-1 bg-blue-500 text-white rounded-r text-xs"
+                                >
+                                    Extend Contract
+                                </button>
+                            </td> -->
+                        </tr>
+                        <tr
+                            v-else
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+           
         </div>
-        <h3 class="text-gray-700 mt-4 mb-4" v-if="season_id > 1">Released Players</h3>
-        <!-- Players Table -->
-        <div class="overflow-x-auto" v-if="season_id > 1">
-            <table class="min-w-full divide-y divide-gray-200 text-xs">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            No.
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                           Draft
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Name
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Pos
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Exp
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Role
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
-                            title="Remaining Contract Years"
-                        >
-                            Yrs. w/ Team
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
-                            title="Remaining Contract Years"
-                        >
-                            Yrs. Left
-                        </th>
+        <div v-if="currentTab == 'injured'">
+            <h3 class="text-gray-700 mt-4 mb-4">Injured Players</h3>
+            <!-- Players Table -->
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                No.
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                            Draft
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Name
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Pos
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Exp
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Role
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. w/ Team
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                title="Remaining Contract Years"
+                            >
+                                Yrs. Left
+                            </th>
 
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Overall Ratings"
-                        >
-                            OVR
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Best Player of the Game Count"
-                        >
-                            BPOTG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Total Team Games"
-                        >
-                            GT
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Games Played"
-                        >
-                            GP
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Minutes Per Game"
-                        >
-                            MPG
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Average Field Goal %"
-                        >
-                            AFG
-                        </th> -->
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Points Per Game"
-                        >
-                            PPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Rebounds Per Game"
-                        >
-                            RPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Assist Per Game"
-                        >
-                            APG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Steals Per Game"
-                        >
-                            SPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Blocks Per Game"
-                        >
-                            BPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Turnover Per Game"
-                        >
-                            TOPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Fouls Per Game"
-                        >
-                            FPG
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Effeciency"
-                        >
-                            EFF
-                        </th>
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Player Effeciency Ratings"
-                        >
-                            PER
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                            title="Fouls Per Game"
-                        >
-                            Ratings
-                        </th> -->
-                        <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Legend
-                        </th>
-                        <!-- <th
-                            class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
-                        >
-                            Actions
-                        </th> -->
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <tr
-                        v-for="(player, index) in filteredTransferredPlayers"
-                        :key="player.player_id"
-                        v-if="team_roster.players?.length > 0"
-                        :class="player.is_injured == 1 ? 'bg-red-100' : ''"
-                        @click.prevent="showPlayerProfile(player)"
-                        class="hover:bg-gray-100"
-                    >
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ index + 1 }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
-                            {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
-                            {{ player.name }}<sup>{{ player.age }}</sup>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.position }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.total_seasons_played }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <span
-                                :class="roleClasses(player.role)"
-                                class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Overall Ratings"
                             >
-                                {{ player.role }}
-                            </span>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <!-- If the player is new to the team -->
-                            <!-- If the player has played more than one season -->
-                            {{ player.seasons_played_with_team }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.contract_years ?? '-' }} yrs.
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.overall_rating ?? '-' }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.bpg_game_leader.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ Math.round(player.team_total_games ?? 0) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ Math.round(player.games_played ?? 0) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_minutes_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
-                            {{ player.average_points_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_rebounds_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_assists_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_steals_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_blocks_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_turnovers_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.average_fouls_per_game.toFixed(1) }}
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.per_game_score }}
-                        </td>
-                        <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.combined_score }}
-                        </td> -->
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <!-- If the player is new to the team -->
-                            <span
-                                title="Newly Aquired"
-                                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
-                                v-if="player.seasons_played_with_team == 1">
-                                <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
-                            </span>
+                                OVR
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Best Player of the Game Count"
+                            >
+                                BPOTG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Total Team Games"
+                            >
+                                GT
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Games Played"
+                            >
+                                GP
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Minutes Per Game"
+                            >
+                                MPG
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Average Field Goal %"
+                            >
+                                AFG
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Points Per Game"
+                            >
+                                PPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Rebounds Per Game"
+                            >
+                                RPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Assist Per Game"
+                            >
+                                APG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Steals Per Game"
+                            >
+                                SPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Blocks Per Game"
+                            >
+                                BPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Turnover Per Game"
+                            >
+                                TOPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                FPG
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Effeciency"
+                            >
+                                EFF
+                            </th>
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Player Effeciency Ratings"
+                            >
+                                PER
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                title="Fouls Per Game"
+                            >
+                                Ratings
+                            </th> -->
+                            <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Legend
+                            </th>
+                            <!-- <th
+                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                            >
+                                Actions
+                            </th> -->
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr
+                            v-for="(player, index) in filteredInjuredPlayers"
+                            :key="player.player_id"
+                            v-if="team_roster.players?.length > 0"
+                            :class="player.is_injured == 1 ? 'bg-red-100' : ''"
+                            @click.prevent="showPlayerProfile(player)"
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ index + 1 }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
+                                {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
+                                {{ player.name }}<sup>{{ player.age }}</sup>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.position }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.total_seasons_played }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <span
+                                    :class="roleClasses(player.role)"
+                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                >
+                                    {{ player.role }}
+                                </span>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <!-- If the player has played more than one season -->
+                                {{ player.seasons_played_with_team }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.contract_years ?? '-' }} yrs.
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.overall_rating ?? '-' }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.bpg_game_leader.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.team_total_games ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ Math.round(player.games_played ?? 0) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_minutes_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :title="`Field Goal ${player.field_goal_percentage} %`">
+                                {{ player.average_points_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_rebounds_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_assists_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_steals_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_blocks_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_turnovers_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.average_fouls_per_game.toFixed(1) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <b :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</b>
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.per_game_score }}
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.combined_score }}
+                            </td> -->
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                <!-- If the player is new to the team -->
+                                <span
+                                    title="Newly Aquired"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
+                                    v-if="player.seasons_played_with_team == 1">
+                                    <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
+                                </span>
 
-                            <!-- If the player has played more than one season -->
-                             <!-- {{ player.latest_season }}
-                             {{ player.age - (player.latest_season - player.draft_id) }} -->
-                            <span
-                                title="Less than 3 years left before retirement"
-                                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
-                                v-if="player.age >= player.retirement_age - 1">
-                                <i class="fas fa-user-times text-red-500 mr-1"></i>
-                            </span>
-                            <span v-if="player.status == 1" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full" title="Active">
-                                <i class="fas fa-check-circle"></i>
-                            </span>
-                            <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
-                                <i class="fas fa-exchange-alt"></i>
-                            </span>
-                            <span v-if="player.status == 0 && (player.latest_season  - player.draft_id != 0)" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full" title="Retired">
-                                <i class="fas fa-user-slash"></i>
-                            </span>
-                        </td>
-                        <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                            <button
-                                @click="waivePlayer(player.player_id)"
-                                class="px-2 py-1 bg-red-500 text-white text-xs rounded-l"
-                            >
-                                Waive
-                            </button>
-                            <button
-                                @click="extendContract(player.player_id)"
-                                class="px-2 py-1 bg-blue-500 text-white rounded-r text-xs"
-                            >
-                                Extend Contract
-                            </button>
-                        </td> -->
-                    </tr>
-                    <tr
-                        v-else
-                        class="hover:bg-gray-100"
-                    >
-                        <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
-                    </tr>
-                </tbody>
-            </table>
+                                <!-- If the player has played more than one season -->
+                                <!-- {{ player.latest_season }}
+                                {{ player.age - (player.latest_season - player.draft_id) }} -->
+                                <span
+                                    title="Less than 3 years left before retirement"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
+                                    v-if="player.age >= player.retirement_age - 1">
+                                    <i class="fas fa-user-times text-red-500 mr-1"></i>
+                                </span>
+                                <span v-if="player.status == 1" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full" title="Active">
+                                    <i class="fas fa-check-circle"></i>
+                                </span>
+                                <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </span>
+                                <span v-if="player.status == 0 && (player.latest_season  - player.draft_id != 0)" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full" title="Retired">
+                                    <i class="fas fa-user-slash"></i>
+                                </span>
+                            </td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
+                                <button
+                                    @click="waivePlayer(player.player_id)"
+                                    class="px-2 py-1 bg-red-500 text-white text-xs rounded-l"
+                                >
+                                    Waive
+                                </button>
+                                <button
+                                    @click="extendContract(player.player_id)"
+                                    class="px-2 py-1 bg-blue-500 text-white rounded-r text-xs"
+                                >
+                                    Extend Contract
+                                </button>
+                            </td> -->
+                        </tr>
+                        <tr
+                            v-else
+                            class="hover:bg-gray-100"
+                        >
+                            <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="23">***No Players Found***</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
         </div>
         <!-- Modal for Player Profile -->
         <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
@@ -943,6 +1279,7 @@ const props = defineProps({
 });
 const showExtendModal = ref(false);
 const showTransferred = ref(false);
+const currentTab = ref('all');
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);
 const additionalYears = ref(1);
@@ -984,6 +1321,12 @@ const filteredTransferredPlayers = computed(() => {
 const filteredNewPlayers = computed(() => {
     return team_roster.value.players.filter(player => 
         player.seasons_played_with_team == 1
+    );
+});
+
+const filteredInjuredPlayers = computed(() => {
+    return team_roster.value.players.filter(player => 
+        player.is_injured == 1 && player.status != 2
     );
 });
 
