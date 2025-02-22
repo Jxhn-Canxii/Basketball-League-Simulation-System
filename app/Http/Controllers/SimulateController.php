@@ -1663,7 +1663,6 @@ class SimulateController extends Controller
             ->orderByDesc('players.overall_rating') // Highest overall rating first
             ->orderBy('players.age') // Younger players first
             ->orderBy('players.injury_history') // Least injury history first
-            ->inRandomOrder() // Randomize selection from the top 100
             ->first(); // Get a single random player
 
         return $randomPlayer;
