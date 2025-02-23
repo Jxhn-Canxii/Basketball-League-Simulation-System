@@ -1280,7 +1280,7 @@ const props = defineProps({
     },
 });
 const showExtendModal = ref(false);
-const showTransferred = ref(false);
+const showTransferred = ref(true);
 const currentTab = ref('all');
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);
