@@ -67,6 +67,7 @@ class RatingsController extends Controller
                 ->select(
                     'player_season_stats.*', 
                     'players.name as player_name', 
+                    'players.hardship_contract as hardship_contract', 
                     'players.position' // Add any additional player fields
                 )
                 ->get()
@@ -160,8 +161,26 @@ class RatingsController extends Controller
                 // ]);
 
             }
-
-
+            foreach ($rankedPlayers as $player) {
+                if ($player && $player->hardship_contract > 0) {
+                    // Hardship contract expired -> Release player back to free agency
+                    DB::table('players')->where('id', $player->player_id)->update([
+                        'team_id' => 0, // Free agent pool
+                        'contract_years' => 0, // Reset contract
+                        'hardship_contract' => 0 // Clear hardship flag
+                    ]);
+        
+                    // Log transaction
+                    DB::table('transactions')->insert([
+                        'player_id' => $player->player_id,
+                        'season_id' =>$player->season_id,
+                        'details' => 'Released to clear roster spot for the next season (hardship-exception player).',
+                        'from_team_id' => $player->team_id,
+                        'to_team_id' => 0, // Free agent pool
+                        'status' => 'released-hardship'
+                    ]);
+                }
+            }
             // Fetch updated players
             $players = $query->get();
 
