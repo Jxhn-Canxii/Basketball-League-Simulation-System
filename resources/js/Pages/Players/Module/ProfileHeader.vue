@@ -148,7 +148,16 @@
                     <strong>Contract Left:</strong>
                     {{
                         main_performance.player_details.contract_years > 0 ? main_performance.player_details.contract_years +
-                            " years left" : "Unsigned"
+                            " years left" : "unsigned"
+                    }}
+                </p>
+            </div>
+             <div class="ml-4">
+                <p>
+                    <strong>Hardship Contract Left:</strong>
+                    {{
+                        main_performance.player_details.hardship_contract > 0 ? main_performance.player_details.hardship_contract +
+                            " games left" : "none"
                     }}
                 </p>
             </div>
