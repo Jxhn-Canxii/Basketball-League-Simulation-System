@@ -1653,9 +1653,9 @@ class SimulateController extends Controller
         // Find free agents for temporary contracts
         $freeAgents = DB::table('players')
             ->where('team_id', 0) // Free agent pool
+            ->orderByDesc('overall_rating') // Then sort by highest overall rating
             ->orderBy('injury_prone_percentage', 'asc') // Lowest injury-prone percentage first
             ->orderBy('age', 'asc') // Then sort by youngest age
-            ->orderByDesc('overall_rating') // Then sort by highest overall rating
             ->take($playersNeeded)
             ->get();
     
