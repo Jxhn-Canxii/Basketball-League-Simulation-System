@@ -302,7 +302,7 @@ const fetchRandomFullName1 = async () => {
         const nationality = response.data.results[0].nat; // Extract first and last name
         const address = `${city}, ${state}, ${country}`; // Extract first and last name
         const name = `${first} ${last}`;
-        const country_formatted = `${country} ,${nationality}`;
+        const country_formatted = `${country}`;
         const data = {
             name: name,
             country: country_formatted,
