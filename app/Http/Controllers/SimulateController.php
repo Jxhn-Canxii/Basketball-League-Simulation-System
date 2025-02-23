@@ -1366,20 +1366,24 @@ class SimulateController extends Controller
             // Check for injuries if the player is not already injured
             if (!$player->is_injured) {
                // Cast injury_prone_percentage to a float for accurate comparison
-               $injuryPercentage = (float) $player->injury_prone_percentage;
+                $injuryPercentage = (float) $player->injury_prone_percentage;
 
-               // Define the base injury chance (20%)
-               $baseInjuryChance = 20;
-               
-               // Adjust the injury risk dynamically (higher injury-prone players have higher risk)
-               $injuryRisk = rand(0, 100); // Use 100 as the scale for probability
-               
-               // Increase injury chance by factoring in the player's injury percentage
-               $finalInjuryChance = $baseInjuryChance + ($injuryPercentage / 5); // Adjust scaling factor as needed
-               
-               // Check if the injury risk is lower than the injury chance
-               if ($injuryRisk < $finalInjuryChance) {
-   
+                // Define the base injury chance (0% minimum, 20% maximum)
+                $maxInjuryChance = 10; // The highest possible injury chance
+                $minInjuryChance = 0;  // The lowest possible injury chance
+
+                // Scale the injury chance based on the player's injury-prone percentage
+                // Example: If injury_prone_percentage is 50, injury chance = 5% (mid-range)
+                // Example: If injury_prone_percentage is 100, injury chance = 10% (max)
+                // Example: If injury_prone_percentage is 0, injury chance = 0% (min)
+                $finalInjuryChance = $minInjuryChance + (($maxInjuryChance - $minInjuryChance) * ($injuryPercentage / 100));
+
+                // Generate a random number between 0 and 99
+                $injuryRisk = rand(0, 99);
+
+                // Player gets injured if the random value falls within the injury chance range
+                if ($injuryRisk < $finalInjuryChance) {
+
                     // Fetch all injury types from the config
                     $injuryTypes = config('injuries');
 
