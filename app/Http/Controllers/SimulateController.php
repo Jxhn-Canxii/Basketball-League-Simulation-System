@@ -1542,7 +1542,7 @@ class SimulateController extends Controller
             ], 500); // Internal server error
         }
     }
-    private function fireLeopardRule($teamId){
+    private function fireLeopardRuleV1($teamId){
         $seasonId = get_current_season_id();
         // new rule applied (Fire Leopard Rule: the team should have at least minimum 7 players active to play in a game)
         $teamInjuries = DB::table('players')
@@ -1627,6 +1627,56 @@ class SimulateController extends Controller
         }
         return $teamInjuryCount;
     }
+    private function fireLeopardRule($teamId)
+    {
+        $seasonId = get_current_season_id();
+
+        // Count the number of active (non-injured) players
+        $activePlayersCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_injured', false)
+            ->count();
+
+        // If the team has at least 7 healthy players, no action is needed
+        if ($activePlayersCount >= 7) {
+            return $activePlayersCount;
+        }
+
+        // Determine how many players need to be added
+        $playersNeeded = 7 - $activePlayersCount;
+        $signedPlayers = [];
+
+        // Find free agents for temporary contracts
+        $freeAgents = DB::table('players')
+            ->where('team_id', 0) // Free agent pool
+            ->orderByDesc('overall_rating') // Prioritize best available players
+            ->take($playersNeeded)
+            ->get();
+
+        foreach ($freeAgents as $freeAgent) {
+            // Assign a temporary hardship contract (10-game contract)
+            DB::table('players')->where('id', $freeAgent->id)->update([
+                'team_id' => $teamId,
+                'contract_years' => 0, // Temporary contract
+                'hardship_contract' => 10, // The player is signed for 10 games only
+            ]);
+
+            // Log transaction
+            DB::table('transactions')->insert([
+                'player_id' => $freeAgent->id,
+                'season_id' => $seasonId,
+                'details' => 'Signed under hardship exception (10-game contract)',
+                'from_team_id' => 0, 
+                'to_team_id' => $teamId,
+                'status' => 'signed-hardship',
+            ]);
+
+            $signedPlayers[] = $freeAgent;
+        }
+
+        return $signedPlayers;
+    }
+
     private function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
@@ -2249,12 +2299,14 @@ class SimulateController extends Controller
             // Mark the Best Player of the Game (BPG)
             foreach ($playerGameStats as &$stats) {
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
-
-                // Update Player Season Stats (Incrementing Leader Fields)
+            
+                // Reset fatigue after a game
                 Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
+            
                 $storeStats = new AwardsController;
                 $storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
-                
+            
+                // Update Player Season Stats (Incrementing Leader Fields)
                 DB::table('player_season_stats')->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
                     [
@@ -2266,8 +2318,38 @@ class SimulateController extends Controller
                         'bpg_game_leader' => DB::raw("bpg_game_leader + {$stats['bpg_game_leader']}"),
                     ]
                 );
+            
+                // Reduce hardship contract games for players on temporary contracts
+                $player = DB::table('players')->where('id', $stats['player_id'])->first();
+            
+                if ($player && $player->hardship_contract > 0) {
+                    $newHardshipGames = $player->hardship_contract - 1;
+            
+                    if ($newHardshipGames > 0) {
+                        // Reduce remaining hardship games
+                        DB::table('players')->where('id', $player->id)->update([
+                            'hardship_contract' => $newHardshipGames
+                        ]);
+                    } else {
+                        // Hardship contract expired -> Release player back to free agency
+                        DB::table('players')->where('id', $player->id)->update([
+                            'team_id' => 0, // Free agent pool
+                            'contract_years' => 0, // Reset contract
+                            'hardship_contract' => 0 // Clear hardship flag
+                        ]);
+            
+                        // Log transaction
+                        DB::table('transactions')->insert([
+                            'player_id' => $player->id,
+                            'season_id' => $stats['season_id'],
+                            'details' => 'Released after hardship contract expired.',
+                            'from_team_id' => $stats['team_id'],
+                            'to_team_id' => 0, // Free agent pool
+                            'status' => 'released-hardship'
+                        ]);
+                    }
+                }
             }
-
             
         } catch (Exception $e) {
             // Log error for debugging
