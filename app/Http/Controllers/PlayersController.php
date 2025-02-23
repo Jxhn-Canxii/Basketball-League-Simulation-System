@@ -769,9 +769,7 @@ class PlayersController extends Controller
         $clutch = rand($archetypeAttributes['clutch'][0], $archetypeAttributes['clutch'][1]);
         $leadership = rand($archetypeAttributes['leadership'][0], $archetypeAttributes['leadership'][1]);
         $workEthic = rand($archetypeAttributes['work_ethic'][0], $archetypeAttributes['work_ethic'][1]);
-        $healthRating = rand(1, 100) <= 10  
-        ? rand(70, $archetypeAttributes['health_rating'][1])  // 10% chance for 70+  
-        : rand($archetypeAttributes['health_rating'][0], 60); // 90% chance for ≤70  
+        $healthRating = $this->generateHealthRating(); // i dont use arhetype health rating property hence i use probability
     
     
         // Assign position
@@ -1783,5 +1781,29 @@ class PlayersController extends Controller
         return $count;
     }
     
+    private function generateHealthRating()
+    {
+        $probabilityRanges = [
+            [90, 100, 2],  // 2% chance
+            [70, 89, 3],   // 3% chance
+            [50, 69, 4],   // 4% chance
+            [30, 49, 4],   // 4% chance
+            [20, 29, 10],  // 10% chance
+            [10, 19, 15],  // 15% chance
+            [0, 9, 70],    // 70% chance
+        ];
 
+        $randomRoll = rand(1, 100);
+        $sum = 0;
+
+        foreach ($probabilityRanges as [$min, $max, $chance]) {
+            $sum += $chance;
+            if ($randomRoll <= $sum) {
+                return rand($min, $max);
+            }
+        }
+
+        return 0; // Fallback (should never happen)
+    }
+    
 }
