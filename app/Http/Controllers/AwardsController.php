@@ -691,6 +691,7 @@ class AwardsController extends Controller
             'awards' => $awards
         ]);
     }
+
     public function getawardnamesdropdown()
     {
         // Fetch distinct award names from the season_awards table
@@ -904,6 +905,7 @@ class AwardsController extends Controller
             $counter++;
         }
 
+        $this->updatePlayerPlayoffAppearances();
         // Update season status
         DB::table('seasons')->where('id', $latestSeasonId)->update(['status' => config('timeline.awards')]);
 
@@ -1164,7 +1166,76 @@ class AwardsController extends Controller
         // Return the data as a JSON response
         return response()->json($mvpList);
     }
+    public function updatePlayerPlayoffAppearances()
+    {
+        // $seasonId = $request->season_id;
+        $seasonId = get_current_season_id();
+        // Retrieve player playoff statistics for the given season
+        $playerData = DB::table('players AS p')
+            ->leftJoin('player_game_stats AS pg', 'p.id', '=', 'pg.player_id')
+            ->leftJoin('schedules AS s', 'pg.game_id', '=', 's.game_id')
+            ->leftJoin('teams AS t', 'pg.team_id', '=', 't.id')
+            ->leftJoin('teams AS t2', 'p.team_id', '=', 't2.id')
+            ->leftJoin(DB::raw('(SELECT DISTINCT player_id, season_id FROM player_game_stats) AS all_s'), 'all_s.player_id', '=', 'p.id')
+            ->leftJoin('player_season_stats AS pss', 'pss.player_id', '=', 'p.id') // Join with player_season_stats to count distinct season_id
+            ->leftJoin('seasons AS ss', 'ss.id', '=', 'all_s.season_id') // Join with player_season_stats to count distinct season_id
+            ->where('all_s.season_id', $seasonId)  // Filter by season_id
+            ->whereIn('s.round', [
+                'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
+                'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
+                'interconference_semi_finals', 'finals'
+            ])
+            ->where('s.season_id', $seasonId) // Ensure we're filtering by the correct season in the schedules table
+            ->select([
+                'p.id AS player_id',
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "play_ins_elims_round_1" THEN s.game_id END) AS play_ins_elims_round_1_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "play_ins_elims_round_2" THEN s.game_id END) AS play_ins_elims_round_2_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "play_ins_finals" THEN s.game_id END) AS play_ins_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "round_of_32" THEN s.game_id END) AS round_of_32_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "round_of_16" THEN s.game_id END) AS round_of_16_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "quarter_finals" THEN s.game_id END) AS quarter_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "semi_finals" THEN s.game_id END) AS semi_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "interconference_semi_finals" THEN s.game_id END) AS interconference_semi_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" THEN s.game_id END) AS finals_appearances'),
+                DB::raw('COUNT(DISTINCT s.game_id) AS total_playoff_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round IN ("play_ins_elims_round_1", "play_ins_elims_round_2", "play_ins_finals", "round_of_32", "round_of_16", "quarter_finals", "semi_finals", "interconference_semi_finals", "finals") THEN s.season_id END) AS seasons_played_in_playoffs'),
+                
+                // Counting distinct seasons from player_season_stats
+                DB::raw('COUNT(DISTINCT pss.season_id) AS total_seasons_played'),
+                
+                // Championship check: Compare pg.team_id with finals_winner_id in the finals round
+                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" AND pg.team_id = ss.finals_winner_id THEN s.game_id END) AS championships_won')
+            ])
+            ->groupBy('p.id', 'all_s.season_id') // Group by both player and season to avoid over-counting
+            ->get();
+
     
+        // Insert or update the data for each player in the player_playoff_appearances table
+        foreach ($playerData as $data) {
+            DB::table('player_playoff_appearances')->updateOrInsert(
+                [
+                    'player_id' => $data->player_id,
+                ],
+                [
+                    'play_ins_elims_round_1_appearances' => DB::raw("IFNULL(play_ins_elims_round_1_appearances, 0) + {$data->play_ins_elims_round_1_appearances}"),
+                    'play_ins_elims_round_2_appearances' => DB::raw("IFNULL(play_ins_elims_round_2_appearances, 0) + {$data->play_ins_elims_round_2_appearances}"),
+                    'play_ins_finals_appearances' => DB::raw("IFNULL(play_ins_finals_appearances, 0) + {$data->play_ins_finals_appearances}"),
+                    'round_of_32_appearances' => DB::raw("IFNULL(round_of_32_appearances, 0) + {$data->round_of_32_appearances}"),
+                    'round_of_16_appearances' => DB::raw("IFNULL(round_of_16_appearances, 0) + {$data->round_of_16_appearances}"),
+                    'quarter_finals_appearances' => DB::raw("IFNULL(quarter_finals_appearances, 0) + {$data->quarter_finals_appearances}"),
+                    'semi_finals_appearances' => DB::raw("IFNULL(semi_finals_appearances, 0) + {$data->semi_finals_appearances}"),
+                    'interconference_semi_finals_appearances' => DB::raw("IFNULL(interconference_semi_finals_appearances, 0) + {$data->interconference_semi_finals_appearances}"),
+                    'finals_appearances' => DB::raw("IFNULL(finals_appearances, 0) + {$data->finals_appearances}"),
+                    'total_playoff_appearances' => DB::raw("IFNULL(total_playoff_appearances, 0) + {$data->total_playoff_appearances}"),
+                    'seasons_played_in_playoffs' => DB::raw("IFNULL(seasons_played_in_playoffs, 0) + {$data->seasons_played_in_playoffs}"),
+                    'total_seasons_played' => $data->total_seasons_played,
+                    'championships_won' => DB::raw("IFNULL(championships_won, 0) + {$data->championships_won}")
+                ]
+            );
+        }
+
+        return response()->json(['message' => 'Success update in season '. $seasonId]);
+    }
     public static function totalRegularSeasonGames($seasonId, $teamId)
     {
         $gamesPlayedCount = DB::table('schedules')

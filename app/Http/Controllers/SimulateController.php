@@ -424,7 +424,7 @@ class SimulateController extends Controller
         // unset($stats);
 
         // Update or insert player game stats
-        $this->updateSeasonStats($playerGameStats);
+        $this->updateSeasonStats($playerGameStats,$gameData,true);
         // foreach ($playerGameStats as $stats) {
 
         //     // Assuming you have a Player model
@@ -904,7 +904,7 @@ class SimulateController extends Controller
 
 
             // Update database records with new stats
-            $this->updateSeasonStats($playerGameStats);
+            $this->updateSeasonStats($playerGameStats,$gameData,false);
             // foreach ($playerGameStats as $stats) {
             //     if (isset($stats['passing_rating'])) {
             //         unset($stats['passing_rating']);
@@ -2254,7 +2254,7 @@ class SimulateController extends Controller
     
         return true;
     }
-    private function updateSeasonStats($playerGameStats)
+    private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
         if (empty($playerGameStats)) {
             throw new Exception("Player game stats are empty. Cannot update season stats.");
@@ -2288,6 +2288,9 @@ class SimulateController extends Controller
                     $stats
                 );
 
+                // if($isPlayoff){
+                //     $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+                // }
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
                             - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
@@ -2359,7 +2362,7 @@ class SimulateController extends Controller
                     }
                 }
             }
-            
+
         } catch (Exception $e) {
             // Log error for debugging
             // Log::error("Error updating season stats: " . $e->getMessage());

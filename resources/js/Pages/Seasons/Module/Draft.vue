@@ -296,7 +296,7 @@ const draftPlayer = async () => {
 const fetchRandomFullName1 = async () => {
     try {
         // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
-        const response = await axios.get(' https://randomuser.me/api/?inc=name,gender,location,nat&gender=male'); // API URL for random male user
+        const response = await axios.get('https://randomuser.me/api/?inc=name,gender,location,nat&gender=male'); // API URL for random male user
         const { first, last } = response.data.results[0].name; // Extract first and last name
         const { city, state, country} = response.data.results[0].location; // Extract first and last name
         const nationality = response.data.results[0].nat; // Extract first and last name
