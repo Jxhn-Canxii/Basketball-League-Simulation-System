@@ -11,46 +11,47 @@
         </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
-       <div class="flex justify-start mt-5 border-b border-gray-200">
-            <button
-                :class="['px-4 py-2', currentTab === 'all' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
-                @click="currentTab = 'all'"
-            >
-                <i class="fas fa-users mr-2"></i> All Players
-            </button>
-            <button
-                v-if="season_id > 1"
-                :class="['px-4 py-2', currentTab === 'new' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
-                @click="currentTab = 'new'"
-            >
-                <i class="fas fa-user-plus mr-2"></i> Newly Acquired 
-                <span class="text-red-500 bg-red-200 p-1 rounded-full" v-if="season_id > 1">{{ filteredNewPlayers?.length ?? 0 }}</span>
-            </button>
-            <button
-                :class="['px-4 py-2', currentTab === 'transferred' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
-                @click="currentTab = 'transferred'"
-            >
-                <i class="fas fa-exchange-alt mr-2"></i> Transferred
-                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredTransferredPlayers?.length ?? 0 }}</span>
-            </button>
-            <button
-                :class="['px-4 py-2', currentTab === 'injured' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
-                @click="currentTab = 'injured'"
-            >
-                <i class="fas fa-procedures mr-2"></i> Injured
-                <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredInjuredPlayers?.length ?? 0 }}</span>
-            </button>
+       <div class="flex justify-between mt-5 border-b border-gray-200 p-2">
+            <div>
+                <button
+                    :class="['px-4 py-2', currentTab === 'all' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    @click="currentTab = 'all'"
+                >
+                    <i class="fas fa-users mr-2"></i> All Players
+                </button>
+                <button
+                    v-if="season_id > 1"
+                    :class="['px-4 py-2', currentTab === 'new' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    @click="currentTab = 'new'"
+                >
+                    <i class="fas fa-user-plus mr-2"></i> Newly Acquired 
+                    <span class="text-red-500 bg-red-200 p-1 rounded-full" v-if="season_id > 1">{{ filteredNewPlayers?.length ?? 0 }}</span>
+                </button>
+                <button
+                    :class="['px-4 py-2', currentTab === 'transferred' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    @click="currentTab = 'transferred'"
+                >
+                    <i class="fas fa-exchange-alt mr-2"></i> Transferred
+                    <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredTransferredPlayers?.length ?? 0 }}</span>
+                </button>
+                <button
+                    :class="['px-4 py-2', currentTab === 'injured' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    @click="currentTab = 'injured'"
+                >
+                    <i class="fas fa-procedures mr-2"></i> Injured
+                    <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredInjuredPlayers?.length ?? 0 }}</span>
+                </button>
+            </div>
+            <div>
+                <select v-model="season_id" @change="seasonBehavior()" class="mt-1 block w-full sm:w-auto border-gray-300 rounded-md shadow-sm sm:text-sm">
+                    <option v-for="(season, ss) in seasons" :key="season.season_id" :value="season.season_id">{{ season.name }}</option>
+                </select>
+            </div>
         </div>
 
         <div v-if="currentTab == 'all'">
-            <h3 class="text-gray-700 mt-4 mb-4">All Players</h3>
-            <!-- Add Player Button -->
             <div class="flex justify-between items-center mb-4">
-                <div>
-                    <select v-model="season_id" @change="seasonBehavior()" class="mt-1 block w-full sm:w-auto border-gray-300 rounded-md shadow-sm sm:text-sm">
-                        <option v-for="(season, ss) in seasons" :key="season.season_id" :value="season.season_id">{{ season.name }}</option>
-                    </select>
-                </div>
+                <h3 class="text-gray-700 mt-4 mb-4">All Players</h3>
                 <div>
                     <!-- Toggle Button -->
                     <button 
