@@ -11,7 +11,7 @@ use Inertia\Inertia;
 class TransactionsController extends Controller
 {
 
-    public function gettransactions(Request $request)
+    public function getTransactions(Request $request)
     {
         $seasonId = $request->season_id;
         $teamId = $request->team_id;
@@ -184,7 +184,7 @@ class TransactionsController extends Controller
     }
 
     // Waive a player (make them inactive)
-    public function waiveplayer(Request $request)
+    public function waivePlayer(Request $request)
     {
         $request->validate([
             'id' => 'required|exists:players,id',
@@ -200,7 +200,7 @@ class TransactionsController extends Controller
     }
 
     // Extend player's contract
-    public function extendcontract(Request $request)
+    public function extendContract(Request $request)
     {
         $request->validate([
             'id' => 'required|exists:players,id',
@@ -225,7 +225,7 @@ class TransactionsController extends Controller
     }
 
 
-    public function assignplayertorandomteam(Request $request)
+    public function assignPlayerToRandomTeam(Request $request)
     {
         $request->validate([
             'player_id' => 'required|exists:players,id',
@@ -292,7 +292,7 @@ class TransactionsController extends Controller
             'team_count' =>  $teamsCount,
         ]);
     }
-    public function assignremainingfreeagents()
+    public function assignRemainingFreeAgents()
     {
 
         $seasonId = get_current_season_id() ?? 0;
@@ -658,6 +658,8 @@ class TransactionsController extends Controller
             ->where('players.team_id', 0)  // Ensure the player is a free agent
             ->where('players.is_active', 1)  // Ensure the player is active
             ->where('players.is_injured', 0)      // Ensure player is not injured
+            ->orderBy('players.injury_prone_percentage', 'asc') // Lowest injury-prone percentage first
+            ->orderBy('players.age', 'asc') // Then sort by youngest age
             ->orderByDesc('total_score')  // Order by total score (composite score + MVP bonus)
             ->get();
 
