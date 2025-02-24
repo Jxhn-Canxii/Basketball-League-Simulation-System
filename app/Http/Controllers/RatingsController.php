@@ -160,6 +160,8 @@ class RatingsController extends Controller
                         'contract_years' => 0,
                         'team_id' => 0,
                     ]);
+                }else{
+                    Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
                 }
 
             }
