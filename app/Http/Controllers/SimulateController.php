@@ -2419,13 +2419,15 @@ class SimulateController extends Controller
         $threePointAccuracy = ($player->three_point_rating / 100) * ($player->basketball_iq_rating / 100) * $fatigueFactor * $injuryFactor;
         $freeThrowAccuracy = ($player->free_throw_rating / 100) * ($player->work_ethic_rating / 100) * $fatigueFactor * $injuryFactor;
         
+        // Calculate potential made shots
         $twoPointMade = round($adjustedTwoPointAttempts * $twoPointAccuracy);
         $threePointMade = round($adjustedThreePointAttempts * $threePointAccuracy);
         $freeThrowMade = round($adjustedFreeThrowAttempts * $freeThrowAccuracy);
 
-        $twoPointMade = rand(0, $twoPointMade);
-        $threePointMade = rand(0, $threePointMade);
-        $freeThrowMade = rand(0, $threePointMade);
+        // Ensure made shots do not exceed attempts
+        $twoPointMade = min(rand(0, $twoPointMade), $adjustedTwoPointAttempts);
+        $threePointMade = min(rand(0, $threePointMade), $adjustedThreePointAttempts);
+        $freeThrowMade = min(rand(0, $freeThrowMade), $adjustedFreeThrowAttempts);
         
         return [
             'two_point_attempts' => $adjustedTwoPointAttempts,
@@ -2436,4 +2438,5 @@ class SimulateController extends Controller
             'free_throw_made' => $freeThrowMade,
         ];
     }
+
 }
