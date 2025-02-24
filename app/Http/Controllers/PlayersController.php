@@ -143,6 +143,8 @@ class PlayersController extends Controller
                         'age' => $player->age,
                         'role' => $stats->role,
                         'is_active' => $player->is_active,
+                        'hardship_contract' => $player->hardship_contract,
+                        'injury_recovery_games' => $player->injury_recovery_games,
                         'is_rookie' => $player->is_rookie,
                         'is_injured' => $player->is_injured,
                         'contract_years' => $player->contract_years,
