@@ -66,7 +66,8 @@ class RatingsController extends Controller
                 ->where('players.team_id', $teamId)
                 ->select(
                     'player_season_stats.*', 
-                    'players.name as player_name', 
+                    'players.name as player_name',
+                    'players.contract_years as contract_years', 
                     'players.hardship_contract as hardship_contract', 
                     'players.position' // Add any additional player fields
                 )
@@ -145,20 +146,21 @@ class RatingsController extends Controller
             foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
                 //Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
                 // Optionally log the waived player transaction if you want to track this
+                if ($player && $player->contract_years <= 1) {
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerStat->player_id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
+                        'from_team_id' => $teamId,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
 
-                DB::table('transactions')->insert([
-                    'player_id' => $playerStat->player_id,
-                    'season_id' => $seasonId,
-                    'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
-                    'from_team_id' => $teamId,
-                    'to_team_id' => 0,
-                    'status' => 'waived',
-                ]);
-
-                DB::table('players')->where('id', $playerStat->player_id)->update([
-                    'contract_years' => 0,
-                    'team_id' => 0,
-                ]);
+                    DB::table('players')->where('id', $playerStat->player_id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                    ]);
+                }
 
             }
             foreach ($rankedPlayers as $player) {
