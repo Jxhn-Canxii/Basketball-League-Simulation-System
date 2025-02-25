@@ -74,7 +74,7 @@ Route::middleware('auth')->group(function () {
         Route::post('team-transaction-history', [TeamsController::class, 'teamsTransactionHistory'])->name('teams.transaction.history');
         Route::post('team-match-history', [TeamsController::class, 'matchHistory'])->name('match.history');
         Route::post('team-recent-season-performance', [TeamsController::class, 'countTeamOnePicksAndCheckChampion'])->name('team.recent.performance');
-        Route::post('team-match-history', [TeamsController::class, 'getTeamsByConference'])->name('conference.team.dropdown');
+        Route::post('team-per-conference', [TeamsController::class, 'getTeamsByConference'])->name('conference.team.dropdown');
         
     });
 
