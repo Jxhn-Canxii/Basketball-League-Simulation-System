@@ -1348,20 +1348,9 @@ class SimulateController extends Controller
     {
         try {
             // Ensure $player is an object, if it's an array, cast it to an object
-            // if (is_array($player)) {
-            //     $player = (object) $player;
-            // }
-            // dd($player->fatigue);
-            // return response()->json([
-            //     'player_id' => $player->id,
-            //     'fatigue' => $player->fatigue,
-            //     'is_injured' => $player->is_injured,
-            //     'injury_type' => $player->injury_type,
-            //     'injury_recovery_games' => $player->injury_recovery_games,
-            //     'injury_history' => $player->injury_history,
-            //     'performance_factor' => $performanceFactor ?? 1, // Ensure performance factor is included
-            //     'message' => 'Fatigue and injury status updated successfully'
-            // ], 400);
+            if (is_array($player)) {
+                $player = (object) $player;
+            }
             
             // Fetch the most recent season id
             $seasonId = get_current_season_id() ?? 1;
@@ -1433,16 +1422,11 @@ class SimulateController extends Controller
                 }
             }
             else{
-                    // Decrement recovery games as each game is played
-                $player->injury_recovery_games = $player->injury_recovery_games - 1; // Decrease recovery games
 
+                $player->injury_recovery_games -= 1;
                     // Check if the player has played enough games to recover
                 if($player->injury_recovery_games <= 0) {
                     // Player is healed
-                    $player->is_injured = false; // Mark player as recovered
-                    $player->injury_type = 'none'; // Clear injury type
-                    $player->injury_recovery_games = 0; // Reset the recovery game counter
-
                     // Update the injury record to set the recovery date in the injury history table
                     $lastInjury = DB::table('injury_histories')
                         ->where('player_id', $player->id)
@@ -1538,11 +1522,16 @@ class SimulateController extends Controller
                     'is_injured' => $player->is_injured,
                     'injury_type' => $player->injury_type,
                     'injury_history' => $player->injury_history,
-                    'injury_recovery_games' => $player->injury_recovery_games,
                     'updated_at' => now(),
                 ]);
             }
 
+            // DB::table('players')
+            // ->where('injury_recovery_games', '>', 0) // Only update players with injury recovery games remaining
+            // ->update([
+            //     'injury_recovery_games' => DB::raw('GREATEST(injury_recovery_games - 1, 0)'),
+            //     'updated_at' => now(),
+            // ]);
 
         } catch (\Exception $e) {
             // Log the error message for debugging
@@ -1698,7 +1687,6 @@ class SimulateController extends Controller
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
         DB::table('players')
-            ->where('team_id', 0) // Only for free agents (team_id = 0)
             ->where('is_injured', true) // Only consider injured players
             ->where('is_active', 1) // Only consider active players
             ->where('injury_recovery_games', '>', 0) // Only consider players with recovery games left
@@ -1706,7 +1694,6 @@ class SimulateController extends Controller
 
         // After decrementing, check if recovery games is 0, and mark player as not injured
         DB::table('players')
-            ->where('team_id', 0) // Only for free agents
             ->where('is_injured', true) // Only for injured players
             ->where('injury_recovery_games', 0) // Check if recovery games are 0 after decrement
             ->update([
