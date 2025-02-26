@@ -2122,30 +2122,30 @@ class SimulateController extends Controller
         if ($round % 5 !== 0) {
             return true;
         }
-    
+
         DB::beginTransaction();
-    
+
         try {
             $seasonId = get_current_season_id();
-    
+
             // Fetch player stats for previous season
             $stats = DB::table('player_season_stats')
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
                 ->where('player_season_stats.season_id', $seasonId)
                 ->where('players.team_id', $teamId)
                 ->get();
-    
+
             // Fetch rookies or players with no stats
             $playersWithoutStats = DB::table('players')
                 ->where('team_id', $teamId)
                 ->whereNotIn('id', $stats->pluck('player_id'))
                 ->get();
-    
+
             // Merge all players
             $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
                 return (object)[
                     'player_id' => $player->id,
-                    'role' => 'bench',
+                    'role' => $player->role ?? 'bench',
                     'avg_points_per_game' => 0,
                     'avg_rebounds_per_game' => 0,
                     'avg_assists_per_game' => 0,
@@ -2169,7 +2169,7 @@ class SimulateController extends Controller
                     'is_rookie' => $player->is_rookie ?? 0,
                 ];
             }));
-    
+
             // Rank players
             $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
                 $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
@@ -2181,7 +2181,7 @@ class SimulateController extends Controller
                     $stat->avg_turnovers_per_game * 0.1 -
                     $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
                     : 0;
-    
+
                 $perGameScore = $stat->avg_points_per_game * 0.3 +
                     $stat->avg_rebounds_per_game * 0.2 +
                     $stat->avg_assists_per_game * 0.2 +
@@ -2189,7 +2189,7 @@ class SimulateController extends Controller
                     $stat->avg_blocks_per_game * 0.1 -
                     $stat->avg_turnovers_per_game * 0.1 -
                     $stat->avg_fouls_per_game * 0.1;
-    
+
                 $totalScore = $stat->total_points * 0.2 +
                     $stat->total_rebounds * 0.2 +
                     $stat->total_assists * 0.2 +
@@ -2197,58 +2197,57 @@ class SimulateController extends Controller
                     $stat->total_blocks * 0.15 -
                     $stat->total_turnovers * 0.1 -
                     $stat->total_fouls * 0.1;
-    
+
                 $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
-    
+
                 return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
             });
-    
+
             // Assign roles
             $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
             $roleCounts = array_fill_keys(array_keys($roles), 0);
-    
+
             foreach ($rankedPlayers as $playerStat) {
-                $role = 'bench';
                 foreach ($roles as $key => $limit) {
                     if ($roleCounts[$key] < $limit) {
-                        $role = $key;
+                        $roleCounts[$key]++;
+                        $newRole = $key;
                         break;
                     }
                 }
-    
-                $playerTeam = DB::table('players')->where('id', $playerStat->player_id)->value('team_id');
-    
-                if ($playerStat->role !== $role) {
+
+                $currentRole = DB::table('players')->where('id', $playerStat->player_id)->value('role');
+
+                if ($currentRole != $newRole) {
                     DB::table('transactions')->insert([
                         'player_id' => $playerStat->player_id,
                         'season_id' => $seasonId,
-                        'details' => "Has moved from {$playerStat->role} to $role for the upcoming games.",
-                        'from_team_id' => $playerTeam,
-                        'to_team_id' => $playerTeam,
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games.",
+                        'from_team_id' => $teamId,
+                        'to_team_id' => $teamId,
                         'status' => 'role change',
                     ]);
-    
-                    DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $role]);
+
+                    DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $newRole]);
                     DB::table('player_season_stats')
                         ->where('player_id', $playerStat->player_id)
                         ->where('season_id', $seasonId)
-                        ->update(['role' => $role]);
+                        ->update(['role' => $newRole]);
                 }
-    
-                $roleCounts[$role]++;
             }
-    
+
             \Log::info("Roles updated for team {$teamId}", ['roleCounts' => $roleCounts]);
-    
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error updating roles for team ' . $teamId . ': ' . $e->getMessage());
             return false;
         }
-    
+
         return true;
     }
+
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
         if (empty($playerGameStats)) {
