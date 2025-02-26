@@ -2131,7 +2131,7 @@ class SimulateController extends Controller
 
         try {
             $seasonId = get_current_season_id();
-            $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
+            $weekName = ($round == 0) ? 1 : ($round / 5);
             // Fetch player stats for previous season
             $stats = DB::table('player_season_stats')
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
