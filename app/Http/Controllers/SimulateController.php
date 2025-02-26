@@ -956,8 +956,8 @@ class SimulateController extends Controller
                 ->where('status', 1)
                 ->doesntExist();
 
-            $this->updateTeamRolesBasedOnStats($gameData->home_id, $gameData->round);
-            $this->updateTeamRolesBasedOnStats($gameData->away_id, $gameData->round);
+            $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
+            $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
             $this->updateInjuryFreeAgents();
             $this->updateAllTeamStreaks();
             $this->updateHeadToHeadResults($gameData->id);
@@ -2119,6 +2119,10 @@ class SimulateController extends Controller
     }
     private function updateTeamRolesBasedOnStats($teamId, $round)
     {
+        if(!$teamId){
+            dd($teamId);
+        }
+        
         if ($round % 5 !== 0) {
             return true;
         }
@@ -2218,7 +2222,7 @@ class SimulateController extends Controller
 
                 $currentRole = DB::table('players')->where('id', $playerStat->player_id)->value('role');
 
-                if ($currentRole != $newRole) {
+                if ($currentRole !== $newRole) {
                     DB::table('transactions')->insert([
                         'player_id' => $playerStat->player_id,
                         'season_id' => $seasonId,
