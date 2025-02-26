@@ -1622,8 +1622,10 @@ class SimulateController extends Controller
             ->where('is_injured', true)
             ->where('is_active', 1)
             ->where('injury_recovery_games', '>', 0)
-            ->decrement('injury_recovery_games', 1);
-
+            ->update([
+                'injury_recovery_games' => DB::raw('GREATEST(injury_recovery_games - 0.25, 0)')
+            ]);
+    
         // Check if any rows were actually updated
         $affectedRows = DB::table('players')
             ->where('is_injured', true)
