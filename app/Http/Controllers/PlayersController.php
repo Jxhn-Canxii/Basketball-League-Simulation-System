@@ -1706,7 +1706,7 @@ class PlayersController extends Controller
                      ->on('transactions.season_id', '=', 'player_season_stats.season_id');
             })
             ->where('transactions.player_id', $player_id)
-            ->whereNotIn('transactions.status', ['transfer', 'role change']) 
+            ->where('transactions.status', '!=', 'transfer')
             ->select(
                 'transactions.id',
                 'transactions.season_id',
