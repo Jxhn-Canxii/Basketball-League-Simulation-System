@@ -2131,7 +2131,7 @@ class SimulateController extends Controller
 
         try {
             $seasonId = get_current_season_id();
-
+            $weekName = $round / 5;
             // Fetch player stats for previous season
             $stats = DB::table('player_season_stats')
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
@@ -2226,7 +2226,7 @@ class SimulateController extends Controller
                     DB::table('transactions')->insert([
                         'player_id' => $playerStat->player_id,
                         'season_id' => $seasonId,
-                        'details' => "Has moved from $currentRole to $newRole for the upcoming games.",
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week(".$weekName.")",
                         'from_team_id' => $teamId,
                         'to_team_id' => $teamId,
                         'status' => 'role change',
