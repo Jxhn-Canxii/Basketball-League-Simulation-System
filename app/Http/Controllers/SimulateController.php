@@ -1445,15 +1445,15 @@ class SimulateController extends Controller
                 }
 
                 // Check if the player is a star player or not and adjust recovery games threshold accordingly
-                $requiredRecoveryGames = ($player->role == 'star player') ? 15 : 7;
+                $requiredRecoveryGames = ($player->role == 'star player') ? 30 : 15;
                 $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
                 // Check if the player's recovery games are greater than or equal to the required threshold
                 if($player->injury_recovery_games >= $requiredRecoveryGames) {
                     // Fetch the current season's status (assuming you want the most recent season)
                     // Ensure the season is active (status = 1) before proceeding
-                    if ($seasonStatus == 900) {
+                    if ($seasonStatus == 1) {
                         // Add 90% chance for the player to be waived
-                        if (rand(1, 100) <= 90) {
+                        if (rand(1, 100) <= 60) {
                             // Insert transaction for waiving the player
                             DB::table('transactions')->insert([
                                 'player_id' => $player->id,
