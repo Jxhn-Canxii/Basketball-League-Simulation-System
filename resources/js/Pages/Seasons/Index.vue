@@ -7,7 +7,7 @@
             <div
                 class="inline-block min-w-full bg-white overflow-auto shadow rounded p-2"
             >
-                <div class="flex justify-between items-center overflow-hidden gap-5 p-2">
+                <div class="flex items-center overflow-hidden gap-5 p-2">
                     <input
                         type="text"
                         v-model="search_seasons.search"
@@ -16,7 +16,7 @@
                         placeholder="Enter season name"
                         class="mt-1 p-2 text-md shadow border rounded-md w-full"
                     />
-                    <div class="flex justify-center items-center space-x-3">
+                    <div class="flex space-x-2 items-center text-nowrap">
                         <button
                             @click.prevent="isPlayerAwardsModalOpen = true"
                             v-if="seasons.is_new_season == 1"
