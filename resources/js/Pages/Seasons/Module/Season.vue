@@ -26,8 +26,7 @@
                         :title="conference.name + ' Conference'"
                     ></i>
                     <span
-                        hidden
-                        class="text-truncate hidden sm:inline md:inline"
+                        class="text-truncate"
                         >{{ conference.name }}
                         {{
                             conference.champions_count > 0

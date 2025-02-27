@@ -5,6 +5,7 @@ CREATE TABLE players (
     address VARCHAR(255),
     team_id BIGINT UNSIGNED,
     contract_years INT DEFAULT 0,
+    hardship_contract INT DEFAULT 0,
     contract_expires_at DATE,
     is_active BOOLEAN DEFAULT TRUE,
     is_rookie BOOLEAN DEFAULT FALSE,

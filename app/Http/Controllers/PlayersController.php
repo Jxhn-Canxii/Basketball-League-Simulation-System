@@ -45,12 +45,12 @@ class PlayersController extends Controller
 
         // Initialize an array to hold player stats
         $playerStats = [];
-        $latestSeasonId = DB::table('seasons')->max('id');
+        $latestSeasonId = get_current_season_id();
         // $currentSeasonId = DB::table('seasons')->max('id');
         // if (is_null($seasonId) || $seasonId == 0) {
         //     $seasonId = $latestSeasonId;
         // }
-
+        
         // Fetch the season status
         $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
@@ -143,6 +143,8 @@ class PlayersController extends Controller
                         'age' => $player->age,
                         'role' => $stats->role,
                         'is_active' => $player->is_active,
+                        'hardship_contract' => $player->hardship_contract,
+                        'injury_recovery_games' => $player->injury_recovery_games,
                         'is_rookie' => $player->is_rookie,
                         'is_injured' => $player->is_injured,
                         'contract_years' => $player->contract_years,
@@ -554,9 +556,9 @@ class PlayersController extends Controller
                 ->where('type', $attributes['archetype'])
                 ->count();
 
-            $maxGenLimit = ($currentSeasonId % 4 == 0) ? 7 : 4;
+            $maxGenLimit = ($currentSeasonId % 4 == 0) ? 15 : 7;
             if ($generationalCount >= $maxGenLimit) {
-                return response()->json(['error' => 'Maximum limit of 7 generational rookies reached for this season.'], 400);
+                return response()->json(['error' => 'Maximum limit of '.$maxGenLimit.' generational rookies reached for this season.'], 400);
             }
         }
 
@@ -769,7 +771,8 @@ class PlayersController extends Controller
         $clutch = rand($archetypeAttributes['clutch'][0], $archetypeAttributes['clutch'][1]);
         $leadership = rand($archetypeAttributes['leadership'][0], $archetypeAttributes['leadership'][1]);
         $workEthic = rand($archetypeAttributes['work_ethic'][0], $archetypeAttributes['work_ethic'][1]);
-        $healthRating = rand($archetypeAttributes['health_rating'][0], $archetypeAttributes['health_rating'][1]);
+        $healthRating = $this->generateHealthRating(); // i dont use arhetype health rating property hence i use probability
+    
     
         // Assign position
         if ($passing >= 85) {
@@ -830,7 +833,7 @@ class PlayersController extends Controller
             'player_ratings.overall_rating',
             'seasons.name as season_name', // Select season name
             \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY teams.name ASC) as team_names'), // Concatenate team names, ordered
-            \DB::raw('MAX(player_season_stats.role) as player_role'), // Get the most recent role
+            \DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
             \DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
             \DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
             \DB::raw('AVG(player_season_stats.avg_assists_per_game) as avg_assists_per_game'),
@@ -862,7 +865,7 @@ class PlayersController extends Controller
         ->where('player_season_stats.player_id', $playerId)
         ->groupBy(
             'players.id', 'players.name', 'player_season_stats.season_id', 
-            'player_ratings.overall_rating', 'seasons.name'
+            'player_ratings.overall_rating', 'seasons.name','player_ratings.role','players.role'
         )
         ->orderBy('player_season_stats.season_id', 'desc') // Sort by season_id in descending order
         ->get();
@@ -1068,7 +1071,7 @@ class PlayersController extends Controller
             ->join('teams as drafted_teams', 'players.drafted_team_id', '=', 'drafted_teams.id', 'left') // Join teams table to get team details
             ->join('seasons', 'players.draft_id', '=', 'seasons.id', 'left')
             ->where('players.id', $playerId)
-            ->select('players.id as player_id','players.type as archetype','players.position as position', 'players.name as player_name','players.injury_prone_percentage', 'players.country as country', 'players.address as address', 'players.age as age', 'players.retirement_age as retirement_age', 'teams.name as team_name', 'players.role', 'players.contract_years', 'players.is_rookie', 'players.overall_rating','players.shooting_rating','players.defense_rating','players.passing_rating','players.rebounding_rating', 'players.type', 'players.draft_status as draft_status', 'seasons.name as draft_class', 'drafted_teams.acronym as drafted_team','players.injury_recovery_games as injury_recovery_game_count')
+            ->select('players.id as player_id','players.type as archetype','players.hardship_contract','players.position as position', 'players.name as player_name','players.injury_prone_percentage', 'players.country as country', 'players.address as address', 'players.age as age', 'players.retirement_age as retirement_age', 'teams.name as team_name', 'players.role', 'players.contract_years', 'players.is_rookie', 'players.overall_rating','players.shooting_rating','players.defense_rating','players.passing_rating','players.rebounding_rating', 'players.type', 'players.draft_status as draft_status', 'seasons.name as draft_class', 'drafted_teams.acronym as drafted_team','players.injury_recovery_games as injury_recovery_game_count')
             ->first();
 
         if (!$playerDetails) {
@@ -1688,55 +1691,57 @@ class PlayersController extends Controller
     
     public function getPlayerTransactions(Request $request)
     {
-        // Retrieve the player_id from the request
-        $player_id = $request->input('player_id'); // or $request->player_id if it's passed as a query parameter
-
-        // Check if player_id is provided
+        $player_id = $request->input('player_id');
+    
         if (!$player_id) {
             return response()->json(['error' => 'Player ID is required'], 400);
         }
-
-        // Retrieve transactions for the given player_id with player details (name, role)
-        // and team details (from_team and to_team)
+    
         $transactions = DB::table('transactions')
-        // Join with the players table to get player's name
-        ->join('players', 'transactions.player_id', '=', 'players.id')
-        // Join with the teams table to get the "from" team details
-        ->join('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id', 'left')
-        // Join with the teams table to get the "to" team details
-        ->join('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id', 'left')
-        // Join with the player_season_stats table to get the player's role for the specific season
-        ->join('player_season_stats', function ($join) use ($player_id) {
-            $join->on('transactions.player_id', '=', 'player_season_stats.player_id')
-                ->on('transactions.season_id', '=', 'player_season_stats.season_id');
-        })
-        ->where('transactions.player_id', $player_id)
-        ->where('transactions.status','!=','signed')
-        ->select(
-            'transactions.id',
-            'transactions.season_id',
-            'transactions.details',
-            'transactions.from_team_id',
-            'from_team.name as from_team_name',   // Get the name of the "from" team
-            'transactions.to_team_id',
-            'to_team.name as to_team_name',       // Get the name of the "to" team
-            'transactions.status',
-            'players.name',   // Player's name
-            'player_season_stats.role'   // Player's role from player_season_stats table
-        )
-        ->orderByDesc('transactions.id')
-        ->get();
-
-        // Check if transactions are found
+            ->join('players', 'transactions.player_id', '=', 'players.id')
+            ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
+            ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
+            ->leftJoin('player_season_stats', function ($join) {
+                $join->on('transactions.player_id', '=', 'player_season_stats.player_id')
+                     ->on('transactions.season_id', '=', 'player_season_stats.season_id');
+            })
+            ->where('transactions.player_id', $player_id)
+            ->where('transactions.status', '!=', 'transfer')
+            ->select(
+                'transactions.id',
+                'transactions.season_id',
+                'transactions.from_team_id',
+                'from_team.name as from_team_name',
+                'transactions.to_team_id',
+                'to_team.name as to_team_name',
+                'transactions.status',
+                'players.name as player_name',
+                 DB::raw('GROUP_CONCAT(DISTINCT player_season_stats.role SEPARATOR ", ") as role'),
+                'transactions.details as merged_details',
+            )
+            ->groupBy(
+                'transactions.id',
+                'transactions.season_id',
+                'transactions.details',
+                'transactions.from_team_id',
+                'from_team.name',
+                'transactions.to_team_id',
+                'to_team.name',
+                'transactions.status',
+                'players.name',
+                'players.role',
+                'player_season_stats.role'
+            )
+            ->orderByDesc('transactions.id')
+            ->get();
+    
         if ($transactions->isEmpty()) {
             return response()->json(['message' => 'No transactions found for this player.'], 404);
         }
-
-        // Return the transactions with player and team details as JSON response
-        return response()->json([
-            'data' => $transactions,
-        ]);
+    
+        return response()->json(['data' => $transactions]);
     }
+    
 
     public function getPlayerInjuryHistory(Request $request)
     {
@@ -1778,5 +1783,29 @@ class PlayersController extends Controller
         return $count;
     }
     
+    private function generateHealthRating()
+    {
+        $probabilityRanges = [
+            [90, 100, 2],  // 2% chance
+            [70, 89, 3],   // 3% chance
+            [50, 69, 4],   // 4% chance
+            [30, 49, 4],   // 4% chance
+            [20, 29, 10],  // 10% chance
+            [10, 19, 15],  // 15% chance
+            [0, 9, 70],    // 70% chance
+        ];
 
+        $randomRoll = rand(1, 100);
+        $sum = 0;
+
+        foreach ($probabilityRanges as [$min, $max, $chance]) {
+            $sum += $chance;
+            if ($randomRoll <= $sum) {
+                return rand($min, $max);
+            }
+        }
+
+        return 0; // Fallback (should never happen)
+    }
+    
 }

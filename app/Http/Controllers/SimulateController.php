@@ -114,6 +114,41 @@ class SimulateController extends Controller
             )
             ->findOrFail($request->schedule_id);
 
+        //check if home team is injury depleted
+        $homeTeamInjuries = DB::table('players')
+        ->where('team_id', $gameData->home_team_id)
+        ->where('is_injured', true)
+        ->get();
+
+        if ($homeTeamInjuries->count() > 5) {
+            //run the fire leoparad rule
+            $initiateFLRule = $this->fireLeopardRule($gameData->home_team_id);
+            // return response()->json([
+            //     'error' => true,
+            //     'fire' =>  $initiateFLRule,
+            //     'injured' => $homeTeamInjuries->count(),
+            //     'team' => $gameData->home_team_id,
+            //     'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+            // ], 400);
+        }
+
+        $awayTeamInjuries = DB::table('players')
+        ->where('team_id', $gameData->away_team_id)
+        ->where('is_injured', true)
+        ->get();
+
+        if ($awayTeamInjuries->count() > 5) {
+            //run the fire leoparad rule
+            $initiateFLRule =  $this->fireLeopardRule($gameData->away_team_id);
+            // return response()->json([
+            //     'error' => true,
+            //     'fire' =>  $initiateFLRule,
+            //     'injured' => $awayTeamInjuries->count(),
+            //     'team' => $gameData->away_team_id,
+            //     'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+            // ], 400);
+        }
+
 
         // Fetch current season ID
         $currentSeasonId = $gameData->season_id;
@@ -389,7 +424,7 @@ class SimulateController extends Controller
         // unset($stats);
 
         // Update or insert player game stats
-        $this->updateSeasonStats($playerGameStats);
+        $this->updateSeasonStats($playerGameStats,$gameData,true);
         // foreach ($playerGameStats as $stats) {
 
         //     // Assuming you have a Player model
@@ -505,7 +540,7 @@ class SimulateController extends Controller
         $request->validate([
             'schedule_id' => 'required|exists:schedules,id',
         ]);
-
+        
         $isGameFinished = DB::table('schedules')
             ->where('id', $request->schedule_id)
             ->where('status', config('timeline.play_offs'))  // Fetch previous round and current round in one query
@@ -562,6 +597,41 @@ class SimulateController extends Controller
                 return response()->json([
                     'message' => 'Game has already been simulated.',
                 ], 400);
+            }
+
+            //check if home team is injury depleted
+            $homeTeamInjuries = DB::table('players')
+            ->where('team_id', $gameData->home_team_id)
+            ->where('is_injured', true)
+            ->get();
+
+            if ($homeTeamInjuries->count() > 5) {
+                //run the fire leoparad rule
+                $initiateFLRule = $this->fireLeopardRule($gameData->home_team_id);
+                // return response()->json([
+                //     'error' => true,
+                //     'fire' =>  $initiateFLRule,
+                //     'injured' => $homeTeamInjuries->count(),
+                //     'team' => $gameData->home_team_id,
+                //     'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+                // ], 400);
+            }
+
+            $awayTeamInjuries = DB::table('players')
+            ->where('team_id', $gameData->away_team_id)
+            ->where('is_injured', true)
+            ->get();
+
+            if ($awayTeamInjuries->count() > 5) {
+                //run the fire leoparad rule
+                $initiateFLRule =  $this->fireLeopardRule($gameData->away_team_id);
+                // return response()->json([
+                //     'error' => true,
+                //     'fire' =>  $initiateFLRule,
+                //     'injured' => $awayTeamInjuries->count(),
+                //     'team' => $gameData->away_team_id,
+                //     'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
+                // ], 400);
             }
 
             $currentSeasonId = $gameData->season_id;
@@ -834,7 +904,7 @@ class SimulateController extends Controller
 
 
             // Update database records with new stats
-            $this->updateSeasonStats($playerGameStats);
+            $this->updateSeasonStats($playerGameStats,$gameData,false);
             // foreach ($playerGameStats as $stats) {
             //     if (isset($stats['passing_rating'])) {
             //         unset($stats['passing_rating']);
@@ -886,8 +956,8 @@ class SimulateController extends Controller
                 ->where('status', 1)
                 ->doesntExist();
 
-            $this->updateTeamRolesBasedOnStats($gameData->home_id, $gameData->round);
-            $this->updateTeamRolesBasedOnStats($gameData->away_id, $gameData->round);
+            $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
+            $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
             $this->updateInjuryFreeAgents();
             $this->updateAllTeamStreaks();
             $this->updateHeadToHeadResults($gameData->id);
@@ -1222,6 +1292,7 @@ class SimulateController extends Controller
             $assignedMinutes += $assignedMinutesForPlayer;
 
             // Update fatigue for the player
+            // dd($minutes[$player['id']]);
             $this->fatigueRate($player, $minutes[$player['id']], $gameId);
         }
 
@@ -1273,311 +1344,319 @@ class SimulateController extends Controller
         return $minutes;
     }
 
-    private function fatigueRate($player, $minutes, $gameId)
+    public function fatigueRate($player, $minutes, $gameId)
     {
         try {
-            // Ensure $player is an object, if it's an array, cast it to an object
             if (is_array($player)) {
                 $player = (object) $player;
             }
 
-            // Fetch the most recent season id
             $seasonId = get_current_season_id() ?? 1;
 
-            // Calculate fatigue increase based on minutes played
-            $fatigueIncrease = $minutes > 0 ? round($minutes * 0.5) : 0;
-            $player->fatigue += $fatigueIncrease;
-            $player->fatigue = min(100, $player->fatigue); // Ensure fatigue does not exceed 100%
+            // **Fatigue Calculation**
+            $fatigueIncrease = ($minutes > 0) ? round($minutes * 0.5) : 0;
+            $newFatigue = min(100, $player->fatigue + $fatigueIncrease);
+            $fatigueFactor = 1 - ($newFatigue / 100);
+            $performanceFactor = (rand(80, 120) / 100) * $fatigueFactor;
 
-            // Adjust performance factor based on fatigue
-            $fatigueFactor = 1 - ($player->fatigue / 100);
-            $performanceFactor = rand(80, 120) / 100 * $fatigueFactor;
-
-            // Check for injuries if the player is not already injured
+            // **Injury Check**
             if (!$player->is_injured) {
-               // Cast injury_prone_percentage to a float for accurate comparison
                 $injuryPercentage = (float) $player->injury_prone_percentage;
+                $finalInjuryChance = 10 * ($injuryPercentage / 100); // Scale to 10%
+                $injuryRisk = rand(0, 99);
 
-                // Generate a random number between 0 and 100, representing the injury risk
-                $injuryRisk = rand(0, 100); // Adjust this to compare with a max of 100
-
-                // Now check if the injury risk is lower than the injury chance
-                if ($injuryPercentage > $injuryRisk) {
-   
-                    // Fetch all injury types from the config
+                if ($injuryRisk < $finalInjuryChance) {
+                    // **Player Gets Injured**
                     $injuryTypes = config('injuries');
 
-                    // Ensure the injuryTypes config is not empty
-                    if (is_array($injuryTypes) && count($injuryTypes) > 0) {
-                        // Randomly select an injury type from the config
+                    if (!empty($injuryTypes)) {
                         $injuryTypeName = array_rand($injuryTypes);
+                        $recoveryGames = $injuryTypes[$injuryTypeName]['recovery_games'];
 
-                        // Mark the player as injured and set the injury details
-                        $player->is_injured = true;
-                        $player->injury_type = $injuryTypeName; // Save the injury type name
-                        $player->injury_history += 1; // Increment injury history
+                        // **Update Injury in Database**
+                        DB::table('players')->where('id', $player->id)->update([
+                            'fatigue' => 100,
+                            'is_injured' => true,
+                            'injury_type' => $injuryTypeName,
+                            'injury_recovery_games' => $recoveryGames,
+                        ]);
 
-                        // Set recovery games based on injury type from the config
-                        $player->injury_recovery_games = $injuryTypes[$injuryTypeName]['recovery_games'];
+                        DB::table('players')->where('id', $player->id)->increment('injury_history', 1);
 
-                        // Insert the injury record into the database using DB::table()
                         DB::table('injury_histories')->insert([
                             'player_id' => $player->id,
                             'game_id' => $gameId,
                             'team_id' => $player->team_id,
                             'season_id' => $seasonId,
                             'injury_type' => $injuryTypeName,
-                            'recovery_games' => $injuryTypes[$injuryTypeName]['recovery_games'],
+                            'recovery_games' => $recoveryGames,
                             'performance_impact' => $injuryTypes[$injuryTypeName]['performance_impact'],
-                            'injury_date' => now(), // Use Carbon's now() for consistent timestamp
-                            'recovery_date' => null, // Recovery date will be null until the player recovers
+                            'injury_date' => now(),
+                            'recovery_date' => null,
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
+
+                        return;
                     } else {
-                        // Log error or handle case where injury types are not defined
-                        Log::error("Injury types are not configured correctly.");
+                        \Log::error("Injury types configuration is missing.");
                     }
                 }
-            }
+            } else {
+                // **Injury Recovery Process**
+                DB::table('players')
+                    ->where('id', $player->id)
+                    ->where('injury_recovery_games', '>', 0)
+                    ->decrement('injury_recovery_games', 1);
 
-            // Handle injury recovery logic based on the number of games
-            if ($player->is_injured) {
-                // Decrement recovery games as each game is played
-                $player->injury_recovery_games -= 1; // Decrease recovery games
-            }
+                // Check if player has fully recovered
+                $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
 
-            // Check if the player has played enough games to recover
-            if ($player->is_injured && $player->injury_recovery_games <= 0) {
-                // Player is healed
-                $player->is_injured = false; // Mark player as recovered
-                $player->injury_type = 'none'; // Clear injury type
-                $player->injury_recovery_games = 0; // Reset the recovery game counter
+                if ($recoveryGamesLeft <= 0) {
+                    DB::table('players')->where('id', $player->id)->update([
+                        'is_injured' => false,
+                        'injury_type' => null,
+                    ]);
 
-                // Update the injury record to set the recovery date in the injury history table
-                $lastInjury = DB::table('injury_histories')
-                    ->where('player_id', $player->id)
-                    ->whereNull('recovery_date') // Only update the most recent injury without recovery date
-                    ->latest()
-                    ->first();
-
-                if ($lastInjury) {
                     DB::table('injury_histories')
-                        ->where('id', $lastInjury->id)
-                        ->update([
-                            'recovery_date' => now(), // Set the recovery date
-                            'updated_at' => now(), // Update the timestamp
-                        ]);
+                        ->where('player_id', $player->id)
+                        ->whereNull('recovery_date')
+                        ->latest()
+                        ->update(['recovery_date' => now(), 'updated_at' => now()]);
                 }
             }
 
-            // Check if the player is a star player or not and adjust recovery games threshold accordingly
-            $requiredRecoveryGames = ($player->role == 'star player') ? 15 : 7;
+            // **Waive Player if Recovery is Too Long**
+            $requiredRecoveryGames = ($player->role == 'star player') ? 30 : 15;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-            // Check if the player's recovery games are greater than or equal to the required threshold
-            if ($player->is_injured && $player->injury_recovery_games >= $requiredRecoveryGames) {
-                // Fetch the current season's status (assuming you want the most recent season)
-                // Ensure the season is active (status = 1) before proceeding
-                if ($seasonStatus == 1) {
-                    // Add 20% chance for the player to be waived
-                    if (rand(1, 100) <= 30) {
-                        // Insert transaction for waiving the player
-                        DB::table('transactions')->insert([
-                            'player_id' => $player->id,
-                            'season_id' => $seasonId,
-                            'details' => 'Waived due to extended injury recovery period',
-                            'from_team_id' => $player->team_id,
-                            'to_team_id' => 0, // 0 for free agent pool
-                            'status' => 'waived',
+
+            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus == 1) {
+                if (rand(1, 100) <= 60) {
+                    DB::table('transactions')->insert([
+                        'player_id' => $player->id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived due to extended injury recovery period',
+                        'from_team_id' => $player->team_id,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
+
+                    DB::table('players')->where('id', $player->id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                        'is_active' => 1,
+                        'is_injured' => 1,
+                    ]);
+
+                    // Try replacing the waived player
+                    $replacement = $this->getRandomPlayer();
+                    if ($replacement) {
+                        $contractYears = $this->getContractYearsBasedOnRole($player->role);
+                        DB::table('players')->where('id', $replacement->player_id)->update([
+                            'team_id' => $player->team_id,
+                            'contract_years' => $contractYears,
                         ]);
-
-                        // Update player's contract and team details to reflect they are waived
-                        DB::table('players')->where('id', $player->id)->update([
-                            'contract_years' => 0,
-                            'team_id' => 0,
-                            'is_active' => 1,  // They are still active in the free agent pool
-                            'is_injured' => 1, // Mark the player as no longer injured
-                        ]);
-
-                        // Try to find a random player with the same role
-                        $randomPlayer = $this->getRandomPlayer();
-
-                        if ($randomPlayer) {
-                            $freeAgentStandardContract = $this->getContractYearsBasedOnRole($player->role);
-                            // Update the new player with the appropriate contract role
-                            DB::table('players')->where('id', $randomPlayer->id)->update([
-                                'team_id' => $player->team_id,
-                                'contract_years' => $freeAgentStandardContract, // Assign a random contract length
-                            ]);
-
-                            DB::table('transactions')->insert([
-                                'player_id' => $randomPlayer->id,
-                                'season_id' => $seasonId,
-                                'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
-                                'from_team_id' => 0, // From free agent pool
-                                'to_team_id' => $player->team_id,
-                                'status' => 'signed',
-                            ]);
-
-                            $storeStats = new AwardsController;
-                            //store initial player season stats
-                            $storeStats->storePlayerCurrentSeasonStats( $player->team_id, $randomPlayer->id);
-                        }
-                    } else {
-                        // Optionally log or handle the case where the player is not waived
-                        \Log::info("Player " . $player->id . " was not waived due to 50% chance.");
-                    }
-                } else {
-                    // Optionally log or handle the case where the season status is not 1
-                    \Log::info("Player " . $player->id . " could not be waived because the season is not active.");
-                }
-            }
-             // Check if the team has 8 active injuries and needs to waive 5 worst injured players
-            // new rule applied (Fire Leopard Rule: the team should have at least minimum 7 players active to play in a game)
-            $teamInjuries = DB::table('players')
-                ->where('team_id', $player->team_id)
-                ->where('is_injured', true)
-                ->get();
-
-            if ($teamInjuries->count() >= 7 && $seasonStatus == 1) {
-                // Sort players by injury recovery games (worst injuries first)
-                $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(5);
-
-                foreach ($sortedInjuries as $injuredPlayer) {
-                    // Waive t$sortedInjurieshe player
-                    $forcedWaivedCount = DB::table('transactions')
-                        ->where( 'season_id', $seasonId)
-                        ->where('team_id', $player->team_id)
-                        ->where('type', 'waived-hardship')
-                        ->count();
-
-                    if($injuredPlayer->injury_recovery_games >= 10 && $forcedWaivedCount > 5){
 
                         DB::table('transactions')->insert([
-                            'player_id' => $injuredPlayer->id,
+                            'player_id' => $replacement->player_id,
                             'season_id' => $seasonId,
-                            'details' => 'Waived due to excessive injury recovery time (Fire Leopard Rule)',
-                            'from_team_id' => $injuredPlayer->team_id,
-                            'to_team_id' => 0, // 0 for free agent pool
-                            'status' => 'waived-hardship',
+                            'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $contractYears,
+                            'from_team_id' => 0,
+                            'to_team_id' => $player->team_id,
+                            'status' => 'signed',
                         ]);
-    
-                        // Update player's contract and team details to reflect they are waived
-                        DB::table('players')->where('id', $injuredPlayer->id)->update([
-                            'contract_years' => 0,
-                            'team_id' => 0,
-                            'is_active' => 1,  // They are still active in the free agent pool
-                            'is_injured' => 1, // Mark the player as no longer injured
-                        ]);
-    
-                         // Try to find a random player with the same role
-                         $randomPlayer = $this->getRandomPlayer();
-    
-                         if ($randomPlayer) {
-                             $freeAgentStandardContract = $this->getContractYearsBasedOnRole($player->role);
-                             // Update the new player with the appropriate contract role
-                             DB::table('players')->where('id', $randomPlayer->id)->update([
-                                 'team_id' => $player->team_id,
-                                 'contract_years' => $freeAgentStandardContract, // Assign a random contract length
-                             ]);
-    
-                             DB::table('transactions')->insert([
-                                 'player_id' => $randomPlayer->id,
-                                 'season_id' => $seasonId,
-                                 'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
-                                 'from_team_id' => 0, // From free agent pool
-                                 'to_team_id' => $player->team_id,
-                                 'status' => 'signed',
-                             ]);
-    
-                             $storeStats = new AwardsController;
-                             //store initial player season stats
-                             $storeStats->storePlayerCurrentSeasonStats( $player->team_id, $randomPlayer->id);
-                         }
+
+                        (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
                     }
                 }
             }
+        } catch (\Exception $e) {
+            \Log::error("Error updating fatigue and injury for player {$player->id}: " . $e->getMessage());
+        }
+    }
 
-            // Apply injury impact on performance
-            if ($player->is_injured) {
-                $injuryType = config('injuries')[$player->injury_type];
+    // private function fireLeopardRuleV1($teamId){
+    //     $seasonId = get_current_season_id();
+    //     // new rule applied (Fire Leopard Rule: the team should have at least minimum 7 players active to play in a game)
+    //     $teamInjuries = DB::table('players')
+    //     ->where('team_id', $teamId)
+    //     ->where('is_injured', true)
+    //     ->get();
 
-                if ($injuryType) {
-                    $performanceFactor *= $injuryType['performance_impact'];
-                }
-            }
+    //     $teamInjuryCount = $teamInjuries->count();
 
-            // Update player data using DB instead of Eloquent's save
-            DB::table('players')->where('id', $player->id)->update([
-                'fatigue' => $player->fatigue,
-                'is_injured' => $player->is_injured,
-                'injury_type' => $player->injury_type,
-                'injury_history' => $player->injury_history,
-                'injury_recovery_games' => $player->injury_recovery_games,
-                'updated_at' => now(),
+    //     if ($teamInjuryCount > 5) {
+    //         // Sort players by injury recovery games (worst injuries first)
+    //         $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(3);
+    //         $signedPlayers = [];
+    //         foreach ($sortedInjuries as $injuredPlayer) {
+    //             // Waive t$sortedInjurieshe player
+    //             $forcedWaivedCount = DB::table('transactions')
+    //                 ->where( 'season_id', $seasonId)
+    //                 ->where('from_team_id', $injuredPlayer->team_id)
+    //                 ->where('status', 'waived-hardship')
+    //                 ->count();
+
+    //             if($injuredPlayer->injury_recovery_games > 1){
+
+    //                 $waiveTransaction = DB::table('transactions')->insert([
+    //                     'player_id' => $injuredPlayer->id,
+    //                     'season_id' => $seasonId,
+    //                     'details' => 'Waived due to excessive injury recovery time (Fire Leopard Rule)',
+    //                     'from_team_id' => $injuredPlayer->team_id,
+    //                     'to_team_id' => 0, // 0 for free agent pool
+    //                     'status' => 'waived-hardship',
+    //                 ]);
+
+    //                 // Update player's contract and team details to reflect they are waived
+    //                 $updateWaivedPlayer = DB::table('players')->where('id', $injuredPlayer->id)->update([
+    //                     'contract_years' => 0,
+    //                     'team_id' => 0,
+    //                     'is_active' => 1,  // They are still active in the free agent pool
+    //                 ]);
+
+    //                 // Try to find a random player with the same role
+    //                 $randomPlayer = $this->getRandomPlayer();
+
+    //                 if ($randomPlayer) {
+    //                     $freeAgentStandardContract = $this->getContractYearsBasedOnRole($injuredPlayer->role);
+    //                     // Update the new player with the appropriate contract role
+    //                     $signPlayer = DB::table('players')->where('id', $randomPlayer->player_id)->update([
+    //                         'team_id' => $injuredPlayer->team_id,
+    //                         'contract_years' => $freeAgentStandardContract, // Assign a random contract length
+    //                     ]);
+
+    //                     $signPlayerTransactions = DB::table('transactions')->insert([
+    //                         'player_id' => $randomPlayer->player_id,
+    //                         'season_id' => $seasonId,
+    //                         'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
+    //                         'from_team_id' => 0, // From free agent pool
+    //                         'to_team_id' => $injuredPlayer->team_id,
+    //                         'status' => 'signed',
+    //                     ]);
+
+    //                     $storeStats = new AwardsController;
+    //                     //store initial player season stats
+    //                     $storeSeasonStats = $storeStats->storePlayerCurrentSeasonStats($injuredPlayer->team_id, $randomPlayer->player_id);
+
+    //                     $randomPlayer->update_waived_player_transaction = $updateWaivedPlayer;
+    //                     $randomPlayer->waive_transaction =  $waiveTransaction;
+    //                     $randomPlayer->signed_player_transaction = $signPlayerTransactions;
+    //                     $randomPlayer->signed_player = $signPlayer;
+    //                     $randomPlayer->store_season_stats = $storeSeasonStats;
+    //                     $randomPlayer->new_team = $injuredPlayer->team_id;
+    //                     $randomPlayer->contract = $freeAgentStandardContract;
+    //                     $randomPlayer->waived_player_id = $injuredPlayer->id;
+    //                     $randomPlayer->is_random = true;
+    //                     $signedPlayers[] = $randomPlayer;
+    //                 }
+    //             }else{
+    //                 $injuredPlayer->is_random = false;
+    //                 $signedPlayers[] = $injuredPlayer;
+    //             }
+    //         }
+
+    //         return $signedPlayers;
+    //     }
+    //     return $teamInjuryCount;
+    // }
+    private function fireLeopardRule($teamId)
+    {
+        $seasonId = get_current_season_id();
+
+        // Count the number of active (non-injured) players
+        $activePlayersCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_injured', false)
+            ->count();
+
+        // If the team has at least 7 healthy players, no action is needed
+        if ($activePlayersCount >= 7) {
+            return $activePlayersCount;
+        }
+
+        // Determine how many players need to be added
+        $playersNeeded = 7 - $activePlayersCount;
+        $signedPlayers = [];
+
+        // Find free agents for temporary contracts
+        $freeAgents = DB::table('players')
+            ->where('team_id', 0) // Free agent pool
+            ->orderByDesc('overall_rating') // Then sort by highest overall rating
+            ->orderBy('injury_prone_percentage', 'asc') // Lowest injury-prone percentage first
+            ->orderBy('age', 'asc') // Then sort by youngest age
+            ->take($playersNeeded)
+            ->get();
+    
+        foreach ($freeAgents as $freeAgent) {
+            // Assign a temporary hardship contract (10-game contract)
+            DB::table('players')->where('id', $freeAgent->id)->update([
+                'team_id' => $teamId,
+                'contract_years' => 0, // Temporary contract
+                'hardship_contract' => 10, // The player is signed for 10 games only
             ]);
 
-        } catch (\Exception $e) {
-            // Log the error message for debugging
-            \Log::error('Error updating fatigue and injury for player ' . $player->id . ': ' . $e->getMessage());
+            // Log transaction
+            DB::table('transactions')->insert([
+                'player_id' => $freeAgent->id,
+                'season_id' => $seasonId,
+                'details' => 'Signed under hardship exception (10-game contract)',
+                'from_team_id' => 0, 
+                'to_team_id' => $teamId,
+                'status' => 'signed-hardship',
+            ]);
 
-            // Return a structured error response
-            return response()->json([
-                'error' => 'Error updating fatigue and injury data: ' . $e->getMessage()
-            ], 500); // Internal server error
+            $storeStats = new AwardsController;
+            $storeStats->storePlayerSeasonStats($teamId, $freeAgent->id);
+
+            $signedPlayers[] = $freeAgent;
         }
+
+        return $signedPlayers;
     }
 
     private function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
-        DB::table('players')
-            ->where('team_id', 0) // Only for free agents (team_id = 0)
-            ->where('is_injured', 1) // Only consider injured players
-            ->where('is_active', 1) // Only consider active players
-            ->where('injury_recovery_games', '>', 0) // Only consider players with recovery games left
-            ->decrement('injury_recovery_games', 1); // Decrease recovery games by 1
-
-        // After decrementing, check if recovery games is 0, and mark player as not injured
-        DB::table('players')
-            ->where('team_id', 0) // Only for free agents
-            ->where('is_injured', 1) // Only for injured players
-            ->where('injury_recovery_games', 0) // Check if recovery games are 0 after decrement
+        $deductInjuryGames = DB::table('players')
+            ->where('is_injured', true)
+            ->where('is_active', 1)
+            ->where('injury_recovery_games', '>', 0)
             ->update([
-                'is_injured' => 0, // Set is_injured to 0 for players with no injury recovery games left
+                'injury_recovery_games' => DB::raw('GREATEST(injury_recovery_games - 0.25, 0)')
             ]);
+    
+        // Check if any rows were actually updated
+        $affectedRows = DB::table('players')
+            ->where('is_injured', true)
+            ->where('injury_recovery_games', 0)
+            ->count(); // Count players whose recovery reached 0
+
+        if ($affectedRows > 0) {
+            DB::table('players')
+                ->where('is_injured', true)
+                ->where('injury_recovery_games', 0)
+                ->update(['is_injured' => 0]);
+        }
+
     }
     private function getRandomPlayer()
     {
         $randomPlayer = DB::table('players')
-            ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id', 'left') // Join player stats
             ->where('players.is_active', 1) // Ensure the player is active
             ->where('players.is_injured', 0) // Ensure the player is not injured
             ->where('players.team_id', 0) // Ensure the player has no team
-            ->whereRaw('(SELECT COUNT(DISTINCT team_id) FROM player_season_stats WHERE player_season_stats.player_id = players.id) < 3') // Ensure player has been with less than 3 teams
             ->select(
-                'players.id',
+                'players.id as player_id',
+                'players.team_id',
                 'players.overall_rating',
                 'players.injury_history',
                 'players.age', // Include age for sorting
-                'player_season_stats.player_id',
-                DB::raw('(
-                    player_season_stats.avg_points_per_game * 1 +
-                    player_season_stats.avg_rebounds_per_game * 0.75 +
-                    player_season_stats.avg_assists_per_game * 0.75 +
-                    player_season_stats.avg_steals_per_game * 1.25 +
-                    player_season_stats.avg_blocks_per_game * 1.25 -
-                    player_season_stats.avg_turnovers_per_game * 0.5 -
-                    player_season_stats.avg_fouls_per_game * 0.3
-                ) AS performance_points')
             )
             // Order by the requested criteria
             ->orderByDesc('players.overall_rating') // Highest overall rating first
-            ->orderByDesc(DB::raw('performance_points')) // Then by performance points
             ->orderBy('players.age') // Younger players first
             ->orderBy('players.injury_history') // Least injury history first
-            ->limit(100) // Limit to top 100 based on sorting criteria
-            ->inRandomOrder() // Randomize selection from the top 100
             ->first(); // Get a single random player
 
         return $randomPlayer;
@@ -1980,157 +2059,140 @@ class SimulateController extends Controller
     }
     private function updateTeamRolesBasedOnStats($teamId, $round)
     {
-        // Check if the round is divisible by 5
-        if ($round % 5 !== 0) {
-            return true; // Exit the function if the round is not divisible by 5
+        if(!$teamId){
+            dd($teamId);
         }
-    
-        $seasonId = get_current_season_id();
-        $teams = DB::table('teams')->pluck('id');
-    
-        foreach ($teams as $teamId) {
-            DB::beginTransaction();
-    
-            try {
-                // Fetch player stats for the previous season
-                $stats = DB::table('player_season_stats')
-                    ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                    ->where('player_season_stats.season_id', $seasonId)
-                    ->where('players.team_id', $teamId)
-                    ->get();
-    
-                // Fetch rookies or players with no stats
-                $playersWithoutStats = DB::table('players')
-                    ->where('team_id', $teamId)
-                    ->whereNotIn('id', $stats->pluck('player_id'))
-                    ->get();
-    
-                // Merge all players
-                $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
-                    return (object)[
-                        'player_id' => $player->id,
-                        'role' => 'bench', // Default role
-                        'avg_points_per_game' => 0,
-                        'avg_rebounds_per_game' => 0,
-                        'avg_assists_per_game' => 0,
-                        'avg_steals_per_game' => 0,
-                        'avg_blocks_per_game' => 0,
-                        'avg_turnovers_per_game' => 0,
-                        'avg_fouls_per_game' => 0,
-                        'avg_minutes_per_game' => 1, // Default to 1 to avoid division by zero
-                        'total_points' => 0,
-                        'total_rebounds' => 0,
-                        'total_assists' => 0,
-                        'total_steals' => 0,
-                        'total_blocks' => 0,
-                        'total_turnovers' => 0,
-                        'eff' => 0,
-                        'total_fouls' => 0,
-                        'total_games_played' => 0,
-                        'overall_rating' => $player->overall_rating ?? 50, // Default low rating if missing
-                        'potential_rating' => $player->potential_rating ?? 50, // Use potential for rookies
-                        'injury_prone_percentage' => $player->injury_prone_percentage ?? 50,
-                        'is_rookie' => $player->is_rookie ?? 0, // Identify rookies
-                    ];
-                }));
-    
-                // Rank players
-                $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                    $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
-                        ? ($stat->avg_points_per_game * 0.4 +
-                        $stat->avg_rebounds_per_game * 0.2 +
-                        $stat->avg_assists_per_game * 0.2 +
-                        $stat->avg_steals_per_game * 0.1 +
-                        $stat->avg_blocks_per_game * 0.1 -
-                        $stat->avg_turnovers_per_game * 0.1 -
-                        $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
-                        : 0;
-    
-                    $perGameScore = $stat->avg_points_per_game * 0.3 +
-                        $stat->avg_rebounds_per_game * 0.2 +
-                        $stat->avg_assists_per_game * 0.2 +
-                        $stat->avg_steals_per_game * 0.1 +
-                        $stat->avg_blocks_per_game * 0.1 -
-                        $stat->avg_turnovers_per_game * 0.1 -
-                        $stat->avg_fouls_per_game * 0.1;
-    
-                    $totalScore = $stat->total_points * 0.2 +
-                        $stat->total_rebounds * 0.2 +
-                        $stat->total_assists * 0.2 +
-                        $stat->total_steals * 0.15 +
-                        $stat->total_blocks * 0.15 -
-                        $stat->total_turnovers * 0.1 -
-                        $stat->total_fouls * 0.1;
-    
-                    $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
-    
-                    return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
-                });
-    
-                // Assign roles
-                $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
-                $roleCounts = array_fill_keys(array_keys($roles), 0);
-    
-                foreach ($rankedPlayers as $playerStat) {
-                    $role = 'bench';
-                    foreach ($roles as $key => $limit) {
-                        if ($roleCounts[$key] < $limit) {
-                            $role = $key;
-                            break;
-                        }
+        
+        if ($round % 5 !== 0) {
+            return true;
+        }
+
+        DB::beginTransaction();
+
+        try {
+            $seasonId = get_current_season_id();
+            $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
+            // Fetch player stats for previous season
+            $stats = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.team_id', $teamId)
+                ->get();
+
+            // Fetch rookies or players with no stats
+            $playersWithoutStats = DB::table('players')
+                ->where('team_id', $teamId)
+                ->whereNotIn('id', $stats->pluck('player_id'))
+                ->get();
+
+            // Merge all players
+            $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
+                return (object)[
+                    'player_id' => $player->id,
+                    'role' => $player->role ?? 'bench',
+                    'avg_points_per_game' => 0,
+                    'avg_rebounds_per_game' => 0,
+                    'avg_assists_per_game' => 0,
+                    'avg_steals_per_game' => 0,
+                    'avg_blocks_per_game' => 0,
+                    'avg_turnovers_per_game' => 0,
+                    'avg_fouls_per_game' => 0,
+                    'avg_minutes_per_game' => 1,
+                    'total_points' => 0,
+                    'total_rebounds' => 0,
+                    'total_assists' => 0,
+                    'total_steals' => 0,
+                    'total_blocks' => 0,
+                    'total_turnovers' => 0,
+                    'eff' => 0,
+                    'total_fouls' => 0,
+                    'total_games_played' => 0,
+                    'overall_rating' => $player->overall_rating ?? 50,
+                    'potential_rating' => $player->potential_rating ?? 50,
+                    'injury_prone_percentage' => $player->injury_prone_percentage ?? 50,
+                    'is_rookie' => $player->is_rookie ?? 0,
+                ];
+            }));
+
+            // Rank players
+            $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
+                $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
+                    ? ($stat->avg_points_per_game * 0.4 +
+                    $stat->avg_rebounds_per_game * 0.2 +
+                    $stat->avg_assists_per_game * 0.2 +
+                    $stat->avg_steals_per_game * 0.1 +
+                    $stat->avg_blocks_per_game * 0.1 -
+                    $stat->avg_turnovers_per_game * 0.1 -
+                    $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
+                    : 0;
+
+                $perGameScore = $stat->avg_points_per_game * 0.3 +
+                    $stat->avg_rebounds_per_game * 0.2 +
+                    $stat->avg_assists_per_game * 0.2 +
+                    $stat->avg_steals_per_game * 0.1 +
+                    $stat->avg_blocks_per_game * 0.1 -
+                    $stat->avg_turnovers_per_game * 0.1 -
+                    $stat->avg_fouls_per_game * 0.1;
+
+                $totalScore = $stat->total_points * 0.2 +
+                    $stat->total_rebounds * 0.2 +
+                    $stat->total_assists * 0.2 +
+                    $stat->total_steals * 0.15 +
+                    $stat->total_blocks * 0.15 -
+                    $stat->total_turnovers * 0.1 -
+                    $stat->total_fouls * 0.1;
+
+                $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
+
+                return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
+            });
+
+            // Assign roles
+            $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
+            $roleCounts = array_fill_keys(array_keys($roles), 0);
+
+            foreach ($rankedPlayers as $playerStat) {
+                foreach ($roles as $key => $limit) {
+                    if ($roleCounts[$key] < $limit) {
+                        $roleCounts[$key]++;
+                        $newRole = $key;
+                        break;
                     }
-                    
-                    // Construct new role change message
-                    $newDetails = "Has moved from {$playerStat->role} to $role for the upcoming games.";
-                    
-                    // Get the last role change transaction
-                    $lastTransaction = DB::table('transactions')
-                        ->where('player_id', $playerStat->player_id)
-                        ->where('season_id', $seasonId)
-                        ->where('status', 'role change')
-                        ->orderBy('created_at', 'desc')
-                        ->first();
-    
-                    // Check if the role change message is the same
-                    if ($lastTransaction && $lastTransaction->details === $newDetails) {
-                        continue; // Skip transaction if it's identical to the last one
-                    }
-    
-                    // Insert transaction if the role has changed
-                    if ($playerStat->role !== $role) {
-                        DB::table('transactions')->insert([
-                            'player_id' => $playerStat->player_id,
-                            'season_id' => $seasonId,
-                            'details' => $newDetails,
-                            'from_team_id' => $playerStat->team_id,
-                            'to_team_id' => $playerStat->team_id,
-                            'status' => 'role change',
-                        ]);
-                    }
-    
-                    // Update player role
-                    Player::where('id', $playerStat->player_id)->update(['role' => $role]);
+                }
+
+                $currentRole = DB::table('players')->where('id', $playerStat->player_id)->value('role');
+
+                if ($currentRole !== $newRole) {
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerStat->player_id,
+                        'season_id' => $seasonId,
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week(".$weekName.")",
+                        'from_team_id' => $teamId,
+                        'to_team_id' => $teamId,
+                        'status' => 'role change',
+                    ]);
+
+                    DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $newRole]);
                     DB::table('player_season_stats')
                         ->where('player_id', $playerStat->player_id)
                         ->where('season_id', $seasonId)
-                        ->update(['role' => $role]);
-                    
-                    $roleCounts[$role]++;
+                        ->update(['role' => $newRole]);
                 }
-    
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                \Log::error('Error assigning role for team ' . $teamId . ': ' . $e->getMessage());
-                return false;
             }
+
+            \Log::info("Roles updated for team {$teamId}", ['roleCounts' => $roleCounts]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error('Error updating roles for team ' . $teamId . ': ' . $e->getMessage());
+            return false;
         }
-    
+
         return true;
     }
-    
 
-    private function updateSeasonStats($playerGameStats)
+    private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
         if (empty($playerGameStats)) {
             throw new Exception("Player game stats are empty. Cannot update season stats.");
@@ -2164,6 +2226,9 @@ class SimulateController extends Controller
                     $stats
                 );
 
+                // if($isPlayoff){
+                //     $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+                // }
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
                             - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
@@ -2184,12 +2249,14 @@ class SimulateController extends Controller
             // Mark the Best Player of the Game (BPG)
             foreach ($playerGameStats as &$stats) {
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
-
-                // Update Player Season Stats (Incrementing Leader Fields)
+            
+                // Reset fatigue after a game
                 Player::where('id', $stats['player_id'])->update(['fatigue' => 0]);
+            
                 $storeStats = new AwardsController;
                 $storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
-                
+            
+                // Update Player Season Stats (Incrementing Leader Fields)
                 DB::table('player_season_stats')->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
                     [
@@ -2201,9 +2268,39 @@ class SimulateController extends Controller
                         'bpg_game_leader' => DB::raw("bpg_game_leader + {$stats['bpg_game_leader']}"),
                     ]
                 );
+            
+                // Reduce hardship contract games for players on temporary contracts
+                $player = DB::table('players')->where('id', $stats['player_id'])->first();
+            
+                if ($player && $player->hardship_contract > 0) {
+                    $newHardshipGames = $player->hardship_contract - 1;
+            
+                    if ($newHardshipGames > 0) {
+                        // Reduce remaining hardship games
+                        DB::table('players')->where('id', $player->id)->update([
+                            'hardship_contract' => $newHardshipGames
+                        ]);
+                    } else {
+                        // Hardship contract expired -> Release player back to free agency
+                        DB::table('players')->where('id', $player->id)->update([
+                            'team_id' => 0, // Free agent pool
+                            'contract_years' => 0, // Reset contract
+                            'hardship_contract' => 0 // Clear hardship flag
+                        ]);
+            
+                        // Log transaction
+                        DB::table('transactions')->insert([
+                            'player_id' => $player->id,
+                            'season_id' => $stats['season_id'],
+                            'details' => 'Released after hardship contract expired.',
+                            'from_team_id' => $stats['team_id'],
+                            'to_team_id' => 0, // Free agent pool
+                            'status' => 'released-hardship'
+                        ]);
+                    }
+                }
             }
 
-            
         } catch (Exception $e) {
             // Log error for debugging
             // Log::error("Error updating season stats: " . $e->getMessage());
@@ -2260,13 +2357,15 @@ class SimulateController extends Controller
         $threePointAccuracy = ($player->three_point_rating / 100) * ($player->basketball_iq_rating / 100) * $fatigueFactor * $injuryFactor;
         $freeThrowAccuracy = ($player->free_throw_rating / 100) * ($player->work_ethic_rating / 100) * $fatigueFactor * $injuryFactor;
         
+        // Calculate potential made shots
         $twoPointMade = round($adjustedTwoPointAttempts * $twoPointAccuracy);
         $threePointMade = round($adjustedThreePointAttempts * $threePointAccuracy);
         $freeThrowMade = round($adjustedFreeThrowAttempts * $freeThrowAccuracy);
 
-        $twoPointMade = rand(0, $twoPointMade);
-        $threePointMade = rand(0, $threePointMade);
-        $freeThrowMade = rand(0, $threePointMade);
+        // Ensure made shots do not exceed attempts
+        $twoPointMade = min(rand(0, $twoPointMade), $adjustedTwoPointAttempts);
+        $threePointMade = min(rand(0, $threePointMade), $adjustedThreePointAttempts);
+        $freeThrowMade = min(rand(0, $freeThrowMade), $adjustedFreeThrowAttempts);
         
         return [
             'two_point_attempts' => $adjustedTwoPointAttempts,
@@ -2277,4 +2376,5 @@ class SimulateController extends Controller
             'free_throw_made' => $freeThrowMade,
         ];
     }
+
 }

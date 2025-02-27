@@ -41,10 +41,32 @@ const props = defineProps({
 
 const showSeasonAwards = async () => {
     try {
-        const response = await axios.post(route('player.season.awards'),{season_id: props.season_id});
+        // Show a loading Swal alert
+        Swal.fire({
+            title: 'Fetching Awards...',
+            text: 'Please wait while we retrieve the season awards.',
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+
+        // Make the API request
+        const response = await axios.post(route('player.season.awards'), { season_id: props.season_id });
+
+        // Close the Swal loading dialog
+        Swal.close();
+
+        // Update the awards data
         awards.value = response.data.awards;
+        
     } catch (error) {
         console.error(error);
+
+        // Close any existing Swal alert
+        Swal.close();
+
+        // Show error alert
         Swal.fire({
             icon: 'error',
             title: 'Error!',
@@ -52,6 +74,7 @@ const showSeasonAwards = async () => {
         });
     }
 };
+
 
 onMounted(() => {
     showSeasonAwards();

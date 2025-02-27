@@ -97,12 +97,20 @@
         </div>
     </div>
     <div class="block" v-else>
-        <div class="flex justify-end mb-2"></div>
-        <h2 class="text-lg font-semibold text-gray-800 mb-2">
-            Schedule and Results ({{
-                season_schedules?.schedules?.length
-            }})
-        </h2>
+        <div class="flex justify-between items-center mb-2">
+            <h2 class="text-lg font-semibold text-gray-800">
+                Schedule and Results ({{ season_schedules?.total_count }})
+            </h2>
+            <select 
+                id="teamFilter" 
+                v-model="search_schedule.team_id" 
+                @change.prevent="fetchConferenceSchedules()" 
+                class="ml-4 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+            >
+                <option value="0">All Teams</option>
+                <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
+            </select>
+        </div>
         <div
             v-if="
                 season_schedules &&
@@ -289,6 +297,7 @@
     const isHide = ref(false);
     const activeConferenceTab = ref(0);
     const loadingSchedules = ref(false);
+    const teams = ref([]);
     const activeGameId = ref(0);
     const emit = defineEmits(["transaction_id", "simulate_next_conference"]);
     const props = defineProps({
@@ -304,6 +313,7 @@
         total: 0,
         search: "",
         conference_id: 0,
+        team_id: 0,
         season_id: 0,
         itemsperpage: 6,
     });
@@ -467,8 +477,16 @@
             });
         }
     };
-  
+    const fetchConferenceTeams = async () => {
+        try {
+            const response = await axios.post(route("conference.team.dropdown", { conference_id: props.conference_id}));
+            teams.value = response.data; // Store fetched standings data
+        } catch (error) {
+            console.error("Error fetching standings:", error);
+        }
+    };
    onMounted(async () => {
+       await fetchConferenceTeams();
        await fetchConferenceSchedules();
    });
 </script>

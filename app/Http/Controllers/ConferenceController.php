@@ -132,14 +132,23 @@ class ConferenceController extends Controller
     {
         // Retrieve the season_id and conference_id from the request
         $seasonId = $request->season_id;
+        $teamId = $request->team_id;
         $conferenceId = $request->conference_id;
         $excludedRounds = config('playoffs');
+        
         // Retrieve schedules excluding certain rounds
         $schedules = DB::table('schedule_view')
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                      ->orWhere('away_id', $teamId);
+                });
+            })
             ->whereNotIn('round', $excludedRounds)
             ->get();
+        
 
         // Check if all non-final rounds are simulated
         $allRoundsSimulated = DB::table('schedule_view')
@@ -176,6 +185,7 @@ class ConferenceController extends Controller
     {
         // Retrieve the season_id and conference_id from the request
         $seasonId = $request->season_id;
+        $teamId = $request->team_id;
         $conferenceId = $request->conference_id;
         $excludedRounds = config('playoffs');
         $itemsPerPage = $request->itemsperpage ?: 10;  // Default to 10 if not provided
@@ -188,12 +198,28 @@ class ConferenceController extends Controller
         $schedules = DB::table('schedule_view')
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                      ->orWhere('away_id', $teamId);
+                });
+            })
             ->whereNotIn('round', $excludedRounds)
             ->orderBy('status','desc')
             ->skip($offset)
             ->take($itemsPerPage)
             ->get()
             ->toArray();
+        
+        // $schedules = DB::table('schedule_view')
+        //     ->where('season_id', $seasonId)
+        //     ->where('conference_id', $conferenceId)
+        //     ->whereNotIn('round', $excludedRounds)
+        //     ->orderBy('status','desc')
+        //     ->skip($offset)
+        //     ->take($itemsPerPage)
+        //     ->get()
+        //     ->toArray();
     
         // Check if all non-final rounds are simulated
         $allRoundsSimulated = DB::table('schedule_view')
@@ -222,6 +248,12 @@ class ConferenceController extends Controller
         $totalSchedules = DB::table('schedule_view')
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                      ->orWhere('away_id', $teamId);
+                });
+            })
             ->whereNotIn('round', $excludedRounds)
             ->count();
     

@@ -296,13 +296,13 @@ const draftPlayer = async () => {
 const fetchRandomFullName1 = async () => {
     try {
         // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
-        const response = await axios.get(' https://randomuser.me/api/?inc=name,gender,location,nat&gender=male'); // API URL for random male user
+        const response = await axios.get('https://randomuser.me/api/?inc=name,gender,location,nat&gender=male'); // API URL for random male user
         const { first, last } = response.data.results[0].name; // Extract first and last name
         const { city, state, country} = response.data.results[0].location; // Extract first and last name
         const nationality = response.data.results[0].nat; // Extract first and last name
         const address = `${city}, ${state}, ${country}`; // Extract first and last name
         const name = `${first} ${last}`;
-        const country_formatted = `${country} ,${nationality}`;
+        const country_formatted = `${country}`;
         const data = {
             name: name,
             country: country_formatted,
@@ -323,40 +323,45 @@ const fetchRandomFullName1 = async () => {
 };
 const fetchRandomFullName2 = async () => {
     try {
-        // Fetch a random user from the Faker API and specify the gender as male
-        const response = await axios.get('https://fakerapi.it/api/v1/persons?_quantity=1&gender=male');
+        let data = null;
+        
+        while (!data) {  // Keep retrying until a valid male name is found
+            const response = await axios.get('https://fakerapi.it/api/v1/persons?_quantity=1&gender=male');
 
-        // Extract the first name, last name, city, and country information
-        const person = response.data.data[0]; // ✅ Correct way
-        const first_name = person.firstname;
-        const last_name = person.lastname;
-        const city = person.address.city;
-        const country = person.address.country;
+            const person = response.data.data[0];
+            const first_name = person.firstname;
+            const last_name = person.lastname;
+            const city = person.address.city;
+            const country = person.address.country;
+            const gender = person.gender.toLowerCase();
 
-        // Format the full name, city, and country information
-        const fullName = `${first_name} ${last_name}`;
-        const addressFormatted = `${city}, ${country}`;
+            if (gender === "male") {  // Ensure we get a male name
+                const fullName = `${first_name} ${last_name}`;
+                const addressFormatted = `${city}, ${country}`;
 
-        const data = {
-            name: fullName,
-            city: city,
-            country: country,
-            address: addressFormatted,  // Combined city and country in address
-        };
+                data = {
+                    name: fullName,
+                    city: city,
+                    country: country,
+                    address: addressFormatted,
+                };
 
-        // Function to check if both first and last names contain only English alphabet letters
-        const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
-
-        if (isEnglishReadable(first_name) && isEnglishReadable(last_name)) {
-            return data; // Return full name if valid
-        } else {
-            return null; // Return null if the name is not valid
+                // Check if both first and last names contain only English alphabet letters
+                const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
+                
+                if (!isEnglishReadable(first_name) || !isEnglishReadable(last_name)) {
+                    data = null; // Reset and retry if the name contains non-English characters
+                }
+            }
         }
+
+        return data;
     } catch (error) {
         console.error("Error fetching random player name:", error);
-        return null; // Return null on error
+        return null; 
     }
 };
+
 
 const addMultiplePlayers = async (count) => {
     try {

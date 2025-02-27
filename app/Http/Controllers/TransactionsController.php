@@ -11,7 +11,7 @@ use Inertia\Inertia;
 class TransactionsController extends Controller
 {
 
-    public function gettransactions(Request $request)
+    public function getTransactions(Request $request)
     {
         $seasonId = $request->season_id;
         $teamId = $request->team_id;
@@ -184,7 +184,7 @@ class TransactionsController extends Controller
     }
 
     // Waive a player (make them inactive)
-    public function waiveplayer(Request $request)
+    public function waivePlayer(Request $request)
     {
         $request->validate([
             'id' => 'required|exists:players,id',
@@ -200,7 +200,7 @@ class TransactionsController extends Controller
     }
 
     // Extend player's contract
-    public function extendcontract(Request $request)
+    public function extendContract(Request $request)
     {
         $request->validate([
             'id' => 'required|exists:players,id',
@@ -225,7 +225,7 @@ class TransactionsController extends Controller
     }
 
 
-    public function assignplayertorandomteam(Request $request)
+    public function assignPlayerToRandomTeam(Request $request)
     {
         $request->validate([
             'player_id' => 'required|exists:players,id',
@@ -292,7 +292,7 @@ class TransactionsController extends Controller
             'team_count' =>  $teamsCount,
         ]);
     }
-    public function assignremainingfreeagents()
+    public function assignRemainingFreeAgents()
     {
 
         $seasonId = get_current_season_id() ?? 0;
@@ -318,7 +318,7 @@ class TransactionsController extends Controller
         if ($teamsCount === 0) {
             // Update the last season's status to 15 if there are no incomplete teams
             // Update player roles based on the last season's stats
-            $update = ($seasonId <= 0) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
+            $update = ($currentseasonId <= 1) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
 
             // $update = true;
             if ($update) {
@@ -346,11 +346,14 @@ class TransactionsController extends Controller
                     'error' => true,
                     'message' => 'All teams have signed 15 players, and roles have been updated based on last season\'s stats.',
                     'team_count' => $teamsCount,
+                    'current_season_id' => $currentseasonId,
+                    'update' => $update
                 ], 401);
             } else {
                 return response()->json([
                     'message' => 'Role assigning error!',
                     'update' => $update,
+                    'current_season_id' => $currentseasonId
                 ], 400);
             }
         } else {
@@ -505,11 +508,11 @@ class TransactionsController extends Controller
 
                     if (count($starPlayers) < 1) {
                         $starPlayers[] = $player->id;
-                    } if (count($allStars) < 2) {
+                    }elseif (count($allStars) < 2) {
                         $allStars[] = $player->id;
                     }elseif (count($starters) < 2) {
                         $starters[] = $player->id;
-                    } elseif (count($rolePlayers) < 5) {
+                    }elseif (count($rolePlayers) < 5) {
                         $rolePlayers[] = $player->id;
                     } else {
                         $benchPlayers[] = $player->id;
@@ -590,75 +593,27 @@ class TransactionsController extends Controller
     }
     private function getFreeAgentsByCompositeScore($currentSeasonId)
     {
-        $freeAgents = DB::table('players')
-            ->leftJoin('player_season_stats', function ($join) use ($currentSeasonId) {
-                $join->on('players.id', '=', 'player_season_stats.player_id')
-                    ->where('player_season_stats.season_id', '=', $currentSeasonId);
-            })
-            // Join with seasons to check for finals MVP
-            ->leftJoin('seasons', function ($join) use ($currentSeasonId) {
-                $join->on('seasons.id', '=', DB::raw("{$currentSeasonId}"))
-                    ->whereRaw('seasons.finals_mvp_id = players.id');
-            })
-            ->selectRaw("
-                players.*,
-                -- Calculate composite score (just once)
-                COALESCE((
-                    (
-                        player_season_stats.avg_points_per_game * 0.3 +
-                        player_season_stats.avg_rebounds_per_game * 0.2 +
-                        player_season_stats.avg_assists_per_game * 0.2 +
-                        player_season_stats.avg_steals_per_game * 0.1 +
-                        player_season_stats.avg_blocks_per_game * 0.1 -
-                        player_season_stats.avg_turnovers_per_game * 0.1 -
-                        player_season_stats.avg_fouls_per_game * 0.1
-                    ) +
-                    (
-                        player_season_stats.total_points * 0.2 +
-                        player_season_stats.total_rebounds * 0.2 +
-                        player_season_stats.total_assists * 0.2 +
-                        player_season_stats.total_steals * 0.15 +
-                        player_season_stats.total_blocks * 0.15 -
-                        player_season_stats.total_turnovers * 0.1 -
-                        player_season_stats.total_fouls * 0.1
-                    )
-                ) * (1 - (COALESCE(players.injury_prone_percentage, 50) / 100)), players.overall_rating * 1.5) as composite_score,
+        $freeAgents = Player::select(
+            'players.*',
+            'teams.acronym as drafted_team',
+            DB::raw("(SELECT GROUP_CONCAT(CONCAT(award_name, ' (Season ', season_id, ')') SEPARATOR ', ') FROM season_awards WHERE season_awards.player_id = players.id) as awards"),
+            DB::raw("(SELECT  CONCAT('Finals MVP (Season ', seasons.id, ')')  FROM seasons WHERE seasons.finals_mvp_id = players.id LIMIT 1) as finals_mvp"),
+            DB::raw("CASE WHEN players.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = players.id) THEN 1 ELSE 0 END as is_finals_mvp"),
+            DB::raw("(SELECT GROUP_CONCAT(seasons.name SEPARATOR ', ') FROM seasons WHERE seasons.finals_mvp_id = players.id) as finals_mvp_seasons")
+        )
+            ->where('players.contract_years', 0)
+            ->where('players.is_active', 1)
+            ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id'); // Join teams on players.drafted_team_id
+        
+        $freeAgents->orderByRaw("
+            LENGTH(awards) DESC,
+            is_finals_mvp DESC,
+            FIELD(role, 'star player','all star', 'starter', 'role player', 'bench')
+        ");
 
-                -- Add finals MVP bonus
-                CASE WHEN seasons.finals_mvp_id = players.id THEN 50 ELSE 0 END as finals_mvp_bonus,
+        return  $freeAgents->get();
 
-                -- Compute total score by summing composite score and finals MVP bonus
-                COALESCE((
-                    (
-                        player_season_stats.avg_points_per_game * 0.3 +
-                        player_season_stats.avg_rebounds_per_game * 0.2 +
-                        player_season_stats.avg_assists_per_game * 0.2 +
-                        player_season_stats.avg_steals_per_game * 0.1 +
-                        player_season_stats.avg_blocks_per_game * 0.1 -
-                        player_season_stats.avg_turnovers_per_game * 0.1 -
-                        player_season_stats.avg_fouls_per_game * 0.1
-                    ) +
-                    (
-                        player_season_stats.total_points * 0.2 +
-                        player_season_stats.total_rebounds * 0.2 +
-                        player_season_stats.total_assists * 0.2 +
-                        player_season_stats.total_steals * 0.15 +
-                        player_season_stats.total_blocks * 0.15 -
-                        player_season_stats.total_turnovers * 0.1 -
-                        player_season_stats.total_fouls * 0.1
-                    )
-                ) * (1 - (COALESCE(players.injury_prone_percentage, 50) / 100)), players.overall_rating * 1.5)
-                +
-                CASE WHEN seasons.finals_mvp_id = players.id THEN 50 ELSE 0 END
-                AS total_score
-            ")
-            ->where('players.team_id', 0)  // Ensure the player is a free agent
-            ->where('players.is_active', 1)  // Ensure the player is active
-            ->where('players.is_injured', 0)      // Ensure player is not injured
-            ->orderByDesc('total_score')  // Order by total score (composite score + MVP bonus)
-            ->get();
 
-        return $freeAgents;
     }
 
 }

@@ -17,6 +17,7 @@ class Player extends Model
         'address',
         'team_id',
         'contract_years',
+        'hardship_contract',
         'contract_expires_at',
         'is_active',
         'is_rookie',

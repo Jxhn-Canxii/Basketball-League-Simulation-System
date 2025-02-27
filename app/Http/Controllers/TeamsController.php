@@ -1024,4 +1024,20 @@ class TeamsController extends Controller
 
         return redirect()->route('teams.index');
     }
+
+    public function getTeamsByConference(Request $request) {
+        $conferenceId = $request->conference_id;
+    
+        // Validate if conference_id is provided
+        if (!$conferenceId) {
+            return response()->json(['error' => 'conference_id is required'], 400);
+        }
+    
+        $teams = DB::table('teams')
+            ->select('id', 'name')
+            ->where('conference_id', $conferenceId)
+            ->get();
+    
+        return response()->json($teams);
+    }
 }

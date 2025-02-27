@@ -74,6 +74,8 @@ Route::middleware('auth')->group(function () {
         Route::post('team-transaction-history', [TeamsController::class, 'teamsTransactionHistory'])->name('teams.transaction.history');
         Route::post('team-match-history', [TeamsController::class, 'matchHistory'])->name('match.history');
         Route::post('team-recent-season-performance', [TeamsController::class, 'countTeamOnePicksAndCheckChampion'])->name('team.recent.performance');
+        Route::post('team-per-conference', [TeamsController::class, 'getTeamsByConference'])->name('conference.team.dropdown');
+        
     });
 
     Route::prefix('simulate/')->group(function(){
@@ -195,7 +197,7 @@ Route::middleware('auth')->group(function () {
         Route::post('waive-player', [TransactionsController::class, 'waivePlayer'])->name('players.waive');
         Route::post('extend-contract-player', [TransactionsController::class, 'extendContract'])->name('players.contract.extend');
         Route::post('player-transactions', [TransactionsController::class, 'getTransactions'])->name('players.transactions');
-
+        // Route::post('freeagent-market', [TransactionsController::class, 'getFreeAgentsByCompositeScore'])->name('players.best.free.agent');
     });
 
     Route::prefix('awards/')->group(function(){

@@ -14,7 +14,7 @@
                 <small v-if="main_performance.player_details.injury_recovery_game_count > 0">
                     <span class="inline-flex items-center justify-center animate-pulse ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-400 text-white">
                         <i class="fa fa-medkit mr-1"></i> 
-                        {{ main_performance.player_details.injury_recovery_game_count ?? "-" }}
+                         {{ Math.round(main_performance.player_details.injury_recovery_game_count) ?? '-' }} {{ Math.round(main_performance.player_details.injury_recovery_game_count) === 1 ? 'Game' : 'Games' }}
                     </span>
                 </small>
             </h3>
@@ -148,7 +148,16 @@
                     <strong>Contract Left:</strong>
                     {{
                         main_performance.player_details.contract_years > 0 ? main_performance.player_details.contract_years +
-                            " years left" : "Unsigned"
+                            " years left" : "unsigned"
+                    }}
+                </p>
+            </div>
+             <div class="ml-4">
+                <p>
+                    <strong>Hardship Contract Left:</strong>
+                    {{
+                        main_performance.player_details.hardship_contract > 0 ? main_performance.player_details.hardship_contract +
+                            " games left" : "none"
                     }}
                 </p>
             </div>
