@@ -1068,7 +1068,7 @@
                                 {{ player.contract_years ?? '-' }} yrs.
                             </td>
                             <td class="px-2 py-1 whitespace-nowrap border">
-                               {{ Math.round(player.injury_recovery_games) ?? '-' }} {{ Math.round(player.injury_recovery_games) === 1 ? 'Game' : 'Games' }}
+                               {{ Math.round(player.injury_recovery_games) ?? '-' }} {{ Math.round(player.injury_recovery_games) === 1 ? 'Day' : 'Days' }}
                             </td>
                             <td class="px-2 py-1 whitespace-nowrap border">
                                 <!-- If the player is new to the team -->

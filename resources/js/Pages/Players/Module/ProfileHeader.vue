@@ -14,7 +14,7 @@
                 <small v-if="main_performance.player_details.injury_recovery_game_count > 0">
                     <span class="inline-flex items-center justify-center animate-pulse ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-400 text-white">
                         <i class="fa fa-medkit mr-1"></i> 
-                         {{ Math.round(main_performance.player_details.injury_recovery_game_count) ?? '-' }} {{ Math.round(main_performance.player_details.injury_recovery_game_count) === 1 ? 'Game' : 'Games' }}
+                         {{ Math.round(main_performance.player_details.injury_recovery_game_count) ?? '-' }} {{ Math.round(main_performance.player_details.injury_recovery_game_count) === 1 ? 'Day' : 'Days' }}
                     </span>
                 </small>
             </h3>
