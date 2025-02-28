@@ -294,7 +294,7 @@ class TeamsController extends Controller
         $offset = ($page - 1) * $itemsPerPage;
     
         // Fetch transaction history related to the team (either from_team_id or to_team_id)
-        $transactionHistory = DB::table('transactions')
+        $transactionQuery = DB::table('transactions')
             ->select(
                 'transactions.id',
                 'transactions.player_id',
@@ -309,25 +309,51 @@ class TeamsController extends Controller
             )
             ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
             ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
-            ->join('players', 'transactions.player_id', '=', 'players.id')
-            ->where(function ($query) use ($teamId) {
-                $query->where('transactions.from_team_id', '=', $teamId) // Team is the source of the transaction
-                    ->orWhere('transactions.to_team_id', '=', $teamId); // Team is the recipient of the transaction
-            })
-            ->where('transactions.status','!=','transfer')
-            ->orderBy('transactions.season_id', 'desc')  // Sort by season_id in descending order
-            ->orderBy('transactions.id', 'desc')  // Sort by id in descending order as secondary sorting
+            ->join('players', 'transactions.player_id', '=', 'players.id');
+        
+        // Apply team filtering based on status
+        $transactionQuery->where(function ($query) use ($teamId) {
+            $query->where('transactions.status', 'signed')
+                ->where('transactions.to_team_id', '=', $teamId)
+                ->orWhere(function ($q) use ($teamId) {
+                    $q->where('transactions.status', '!=', 'signed')
+                    ->where(function ($subQuery) use ($teamId) {
+                        $subQuery->where('transactions.from_team_id', '=', $teamId)
+                                ->orWhere('transactions.to_team_id', '=', $teamId);
+                    });
+                });
+        });
+        
+        // Exclude "transfer" status
+        $transactionQuery->where('transactions.status', '!=', 'transfer');
+        
+        // Sorting
+        $transactionQuery->orderBy('transactions.season_id', 'desc')
+            ->orderBy('transactions.id', 'desc')
             ->offset($offset)
-            ->limit($itemsPerPage)
-            ->get();
-    
+            ->limit($itemsPerPage);
+        
+        $transactionHistory = $transactionQuery->get();
+        
         // Get the total number of transactions for the team
-        $totalItems = DB::table('transactions')
-            ->where(function ($query) use ($teamId) {
-                $query->where('transactions.from_team_id', '=', $teamId)
-                    ->orWhere('transactions.to_team_id', '=', $teamId);
-            })
-            ->count();
+        $totalItemsQuery = DB::table('transactions');
+        
+        $totalItemsQuery->where(function ($query) use ($teamId) {
+            $query->where('transactions.status', 'signed')
+                ->where('transactions.to_team_id', '=', $teamId)
+                ->orWhere(function ($q) use ($teamId) {
+                    $q->where('transactions.status', '!=', 'signed')
+                    ->where(function ($subQuery) use ($teamId) {
+                        $subQuery->where('transactions.from_team_id', '=', $teamId)
+                                ->orWhere('transactions.to_team_id', '=', $teamId);
+                    });
+                });
+        });
+        
+        $totalItemsQuery->where('transactions.status', '!=', 'transfer');
+        
+        $totalItems = $totalItemsQuery->count();
+    
     
         // Calculate the total number of pages
         $totalPages = ceil($totalItems / $itemsPerPage);
