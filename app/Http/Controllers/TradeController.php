@@ -185,11 +185,18 @@ class TradeController extends Controller
                             ->update(['status' => 'approved', 'updated_at' => now()]);
     
                         $tradeMessage = 'Trade Accepted.';
+                        
+                        if($isOffSeason){
+                            $storeStats->storePlayerNextSeasonStats($proposal->team_to_id, $proposal->player_from_id);
+                            $storeStats->storePlayerNextSeasonStats($proposal->team_from_id, $proposal->player_to_id);
+                        }else{
+                            $storeStats->storePlayerCurrentSeasonStats($proposal->team_to_id, $proposal->player_from_id);
+                            $storeStats->storePlayerCurrentSeasonStats($proposal->team_from_id, $proposal->player_to_id);
+                        }
+
                         $this->logTrade($proposal->team_to_id, $proposal->team_from_id, $proposal->player_to_id, $proposal->player_from_id, $tradeMessage, $isOffSeason);
                         $this->logTrade($proposal->team_from_id, $proposal->team_to_id, $proposal->player_from_id, $proposal->player_to_id, $tradeMessage, $isOffSeason);
-    
-                        $storeStats->storePlayerSeasonStats($proposal->team_to_id, $proposal->player_from_id);
-                        $storeStats->storePlayerSeasonStats($proposal->team_from_id, $proposal->player_to_id);
+                        
                     });
     
                     $decisions[] = [
