@@ -1444,8 +1444,6 @@ class SimulateController extends Controller
                     DB::table('players')->where('id', $player->id)->update([
                         'contract_years' => 0,
                         'team_id' => 0,
-                        'is_active' => 1,
-                        'is_injured' => 1,
                     ]);
 
                     // Try replacing the waived player
