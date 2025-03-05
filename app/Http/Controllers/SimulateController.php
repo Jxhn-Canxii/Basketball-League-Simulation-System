@@ -1620,7 +1620,6 @@ class SimulateController extends Controller
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
         $deductInjuryGames = DB::table('players')
             ->where('is_injured', true)
-            ->where('is_active', 1)
             ->where('injury_recovery_games', '>', 0)
             ->update([
                 'injury_recovery_games' => DB::raw('GREATEST(injury_recovery_games - 0.25, 0)')

@@ -315,7 +315,7 @@ class RatingsController extends Controller
                             'status' => 'waived',
                         ]);
 
-                        $player->is_active = 0; // Mark player as waived
+                        $player->team_id = 0; // Set team_id to 0 (free agent)
                         $player->contract_years = 0; // Remove contract
                         \Log::info('Player waived due to injury recovery period', ['player_id' => $player->id]);
                     }
