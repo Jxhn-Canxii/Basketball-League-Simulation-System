@@ -1632,7 +1632,7 @@ class SimulateController extends Controller
         if ($affectedRows > 0) {
             DB::table('players')
                 ->where('is_injured', true)
-                ->where('injury_recovery_games', 0)
+                ->where('injury_recovery_games','<=', 0)
                 ->update(['is_injured' => 0]);
         }
 
