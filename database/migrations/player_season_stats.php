@@ -1,101 +1,84 @@
-CREATE TABLE player_season_stats (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    player_id BIGINT UNSIGNED NOT NULL,
-    team_id BIGINT UNSIGNED NOT NULL,
-    season_id BIGINT UNSIGNED NOT NULL,
-    role VARCHAR(255),
+<?php
 
-    -- Basic Per-Game Averages
-    avg_minutes_per_game DECIMAL(5, 2) DEFAULT 0,
-    avg_points_per_game DECIMAL(5, 2) DEFAULT 0,
-    avg_rebounds_per_game DECIMAL(5, 2) DEFAULT 0,
-    avg_assists_per_game DECIMAL(5, 2) DEFAULT 0,
-    avg_steals_per_game DECIMAL(5, 2) DEFAULT 0,
-    avg_blocks_per_game DECIMAL(5, 2) DEFAULT 0,
-    avg_turnovers_per_game DECIMAL(5, 2) DEFAULT 0,
-    avg_fouls_per_game DECIMAL(5, 2) DEFAULT 0,
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
-    -- Shooting Efficiency
-    total_field_goals_made INT DEFAULT 0,
-    total_field_goal_attempts INT DEFAULT 0,
-    total_two_pointers_made INT DEFAULT 0,
-    total_two_point_attempts INT DEFAULT 0,
-    total_three_pointers_made INT DEFAULT 0,
-    total_three_point_attempts INT DEFAULT 0,
-    total_free_throws_made INT DEFAULT 0,
-    total_free_throw_attempts INT DEFAULT 0,
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('player_season_stats', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('player_id');
+            $table->unsignedBigInteger('team_id');
+            $table->unsignedBigInteger('season_id');
+            $table->string('role');
 
-    -- Totals
-    total_points INT DEFAULT 0,
-    total_rebounds INT DEFAULT 0,
-    total_assists INT DEFAULT 0,
-    total_steals INT DEFAULT 0,
-    total_blocks INT DEFAULT 0,
-    total_turnovers INT DEFAULT 0,
-    total_fouls INT DEFAULT 0,
-    total_minutes_played INT DEFAULT 0,
-    total_games_played INT DEFAULT 0,
-    total_games INT DEFAULT 0,
+            // Basic Per-Game Averages
+            $table->decimal('avg_minutes_per_game', 5, 2)->default(0);
+            $table->decimal('avg_points_per_game', 5, 2)->default(0);
+            $table->decimal('avg_rebounds_per_game', 5, 2)->default(0);
+            $table->decimal('avg_assists_per_game', 5, 2)->default(0);
+            $table->decimal('avg_steals_per_game', 5, 2)->default(0);
+            $table->decimal('avg_blocks_per_game', 5, 2)->default(0);
+            $table->decimal('avg_turnovers_per_game', 5, 2)->default(0);
+            $table->decimal('avg_fouls_per_game', 5, 2)->default(0);
 
-    -- Leader per game counter
-    bpg_game_leader INT DEFAULT 0,
-    points_game_leader INT DEFAULT 0,
-    rebounds_game_leader INT DEFAULT 0,
-    assists_game_leader INT DEFAULT 0,
-    steals_game_leader INT DEFAULT 0,
-    blocks_game_leader INT DEFAULT 0,
+            // Shooting Efficiency
+            $table->integer('total_field_goals_made')->default(0);
+            $table->integer('total_field_goal_attempts')->default(0);
+            $table->integer('total_two_pointers_made')->default(0);
+            $table->integer('total_two_point_attempts')->default(0);
+            $table->integer('total_three_pointers_made')->default(0);
+            $table->integer('total_three_point_attempts')->default(0);
+            $table->integer('total_free_throws_made')->default(0);
+            $table->integer('total_free_throw_attempts')->default(0);
 
-    -- Advanced Metrics (Modified to DECIMAL(6,3) for 'eff')
-    per DECIMAL(5, 3) GENERATED ALWAYS AS (
-        CASE
-            WHEN total_minutes_played = 0 THEN 0
-            ELSE (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts - total_field_goals_made) - total_turnovers) / total_minutes_played
-        END
-    ) STORED,
+            // Totals
+            $table->integer('total_points')->default(0);
+            $table->integer('total_rebounds')->default(0);
+            $table->integer('total_assists')->default(0);
+            $table->integer('total_steals')->default(0);
+            $table->integer('total_blocks')->default(0);
+            $table->integer('total_turnovers')->default(0);
+            $table->integer('total_fouls')->default(0);
+            $table->integer('total_minutes_played')->default(0);
+            $table->integer('total_games_played')->default(0);
+            $table->integer('total_games')->default(0);
 
-    ts_percent DECIMAL(5, 3) GENERATED ALWAYS AS (
-        CASE
-            WHEN (total_field_goal_attempts + (0.44 * total_free_throw_attempts)) = 0 THEN 0
-            ELSE total_points / (2 * (total_field_goal_attempts + (0.44 * total_free_throw_attempts)))
-        END
-    ) STORED,
+            // Leader per game counter
+            $table->integer('bpg_game_leader')->default(0);
+            $table->integer('points_game_leader')->default(0);
+            $table->integer('rebounds_game_leader')->default(0);
+            $table->integer('assists_game_leader')->default(0);
+            $table->integer('steals_game_leader')->default(0);
+            $table->integer('blocks_game_leader')->default(0);
 
-    eff DECIMAL(6, 3) GENERATED ALWAYS AS (
-        CASE
-            WHEN (total_field_goal_attempts + total_free_throw_attempts + total_turnovers) = 0 THEN 0
-            ELSE (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts + total_free_throw_attempts + total_turnovers))
-        END
-    ) STORED,
+            // Advanced Metrics (Modified to DECIMAL(6,3) for 'eff')
+            $table->decimal('per', 5, 3)->storedAs(DB::raw('CASE WHEN total_minutes_played = 0 THEN 0 ELSE (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts - total_field_goals_made) - total_turnovers) / total_minutes_played END'));
+            $table->decimal('ts_percent', 5, 3)->storedAs(DB::raw('CASE WHEN (total_field_goal_attempts + (0.44 * total_free_throw_attempts)) = 0 THEN 0 ELSE total_points / (2 * (total_field_goal_attempts + (0.44 * total_free_throw_attempts))) END'));
+            $table->decimal('eff', 6, 3)->storedAs(DB::raw('CASE WHEN (total_field_goal_attempts + total_free_throw_attempts + total_turnovers) = 0 THEN 0 ELSE (total_points + total_rebounds + total_assists + total_steals + total_blocks - (total_field_goal_attempts + total_free_throw_attempts + total_turnovers)) END'));
 
-    -- Added Stored Columns for Shooting Percentages
-    field_goal_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
-        CASE
-            WHEN total_field_goal_attempts = 0 THEN 0
-            ELSE (total_field_goals_made / total_field_goal_attempts) * 100
-        END
-    ) STORED,
+            // Added Stored Columns for Shooting Percentages
+            $table->decimal('field_goal_percentage', 5, 2)->storedAs(DB::raw('CASE WHEN total_field_goal_attempts = 0 THEN 0 ELSE (total_field_goals_made / total_field_goal_attempts) * 100 END'));
+            $table->decimal('two_point_percentage', 5, 2)->storedAs(DB::raw('CASE WHEN total_two_point_attempts = 0 THEN 0 ELSE (total_two_pointers_made / total_two_point_attempts) * 100 END'));
+            $table->decimal('three_point_percentage', 5, 2)->storedAs(DB::raw('CASE WHEN total_three_point_attempts = 0 THEN 0 ELSE (total_three_pointers_made / total_three_point_attempts) * 100 END'));
+            $table->decimal('free_throw_percentage', 5, 2)->storedAs(DB::raw('CASE WHEN total_free_throw_attempts = 0 THEN 0 ELSE (total_free_throws_made / total_free_throw_attempts) * 100 END'));
 
-    two_point_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
-        CASE
-            WHEN total_two_point_attempts = 0 THEN 0
-            ELSE (total_two_pointers_made / total_two_point_attempts) * 100
-        END
-    ) STORED,
+            $table->timestamps();
+        });
+    }
 
-    three_point_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
-        CASE
-            WHEN total_three_point_attempts = 0 THEN 0
-            ELSE (total_three_pointers_made / total_three_point_attempts) * 100
-        END
-    ) STORED,
-
-    free_throw_percentage DECIMAL(5, 2) GENERATED ALWAYS AS (
-        CASE
-            WHEN total_free_throw_attempts = 0 THEN 0
-            ELSE (total_free_throws_made / total_free_throw_attempts) * 100
-        END
-    ) STORED,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('player_season_stats');
+    }
+};

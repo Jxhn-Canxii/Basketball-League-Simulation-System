@@ -1,72 +1,98 @@
-CREATE TABLE player_game_stats (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    season_id INT NOT NULL DEFAULT 0,  -- Default 0 for season_id
-    game_id VARCHAR(255),    -- Default 0 for game_id
-    player_id INT NOT NULL DEFAULT 0,  -- Default 0 for player_id
-    team_id INT NOT NULL DEFAULT 0,    -- Default 0 for team_id
-    minutes FLOAT NOT NULL DEFAULT 0,  -- Default 0 for minutes
-    points INT NOT NULL DEFAULT 0,     -- Default 0 for points
-    rebounds INT NOT NULL DEFAULT 0,   -- Default 0 for rebounds
-    assists INT NOT NULL DEFAULT 0,    -- Default 0 for assists
-    steals INT NOT NULL DEFAULT 0,     -- Default 0 for steals
-    blocks INT NOT NULL DEFAULT 0,     -- Default 0 for blocks
-    turnovers INT NOT NULL DEFAULT 0,  -- Default 0 for turnovers
-    fouls INT NOT NULL DEFAULT 0,      -- Default 0 for fouls
-    field_goal_attempts INT NOT NULL DEFAULT 0,  -- Default 0 for field_goal_attempts
-    field_goals_made INT NOT NULL DEFAULT 0,     -- Default 0 for field_goals_made
-    three_point_attempts INT NOT NULL DEFAULT 0, -- Default 0 for three_point_attempts
-    three_pointers_made INT NOT NULL DEFAULT 0,  -- Default 0 for three_pointers_made
-    free_throw_attempts INT NOT NULL DEFAULT 0,  -- Default 0 for free_throw_attempts
-    free_throws_made INT NOT NULL DEFAULT 0,     -- Default 0 for free_throws_made
-    
-    -- Two-Point Stats (Manually Input)
-    two_point_attempts INT NOT NULL DEFAULT 0,    -- Default 0 for two_point_attempts
-    two_pointers_made INT NOT NULL DEFAULT 0,      -- Default 0 for two_pointers_made
-    
-    -- Advanced Metrics (Generated Fields)
-    per FLOAT GENERATED ALWAYS AS (
-        (points + rebounds + assists + steals + blocks - (field_goal_attempts - field_goals_made) - turnovers) 
-        / NULLIF(minutes, 0)  -- Avoid division by zero
-    ) STORED,
-    
-    ts_percent FLOAT GENERATED ALWAYS AS (
-        points / NULLIF(2 * (field_goal_attempts + (0.44 * free_throw_attempts)), 0)  -- Avoid division by zero
-    ) STORED,
-    
-    eff FLOAT GENERATED ALWAYS AS (
-        (points + rebounds + assists + steals + blocks - (field_goal_attempts + free_throw_attempts + turnovers))
-    ) STORED,
-    
-    -- Added Stored Columns for Shooting Percentages
-    field_goal_percentage FLOAT GENERATED ALWAYS AS (
-        CASE
-            WHEN field_goal_attempts = 0 THEN 0
-            ELSE (field_goals_made / field_goal_attempts) * 100
-        END
-    ) STORED,
-    
-    three_point_percentage FLOAT GENERATED ALWAYS AS (
-        CASE
-            WHEN three_point_attempts = 0 THEN 0
-            ELSE (three_pointers_made / three_point_attempts) * 100
-        END
-    ) STORED,
-    
-    free_throw_percentage FLOAT GENERATED ALWAYS AS (
-        CASE
-            WHEN free_throw_attempts = 0 THEN 0
-            ELSE (free_throws_made / free_throw_attempts) * 100
-        END
-    ) STORED,
-    
-    -- Added Stored Column for Two-Point Percentage
-    two_point_percentage FLOAT GENERATED ALWAYS AS (
-        CASE
-            WHEN two_point_attempts = 0 THEN 0
-            ELSE (two_pointers_made / two_point_attempts) * 100
-        END
-    ) STORED,
-    
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('player_game_stats', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('season_id')->default(0);
+            $table->string('game_id');
+            $table->foreignId('player_id')->default(0);
+            $table->foreignId('team_id')->default(0);
+            $table->float('minutes')->default(0);
+            $table->integer('points')->default(0);
+            $table->integer('rebounds')->default(0);
+            $table->integer('assists')->default(0);
+            $table->integer('steals')->default(0);
+            $table->integer('blocks')->default(0);
+            $table->integer('turnovers')->default(0);
+            $table->integer('fouls')->default(0);
+            $table->integer('field_goal_attempts')->default(0);
+            $table->integer('field_goals_made')->default(0);
+            $table->integer('three_point_attempts')->default(0);
+            $table->integer('three_pointers_made')->default(0);
+            $table->integer('free_throw_attempts')->default(0);
+            $table->integer('free_throws_made')->default(0);
+            $table->integer('two_point_attempts')->default(0);
+            $table->integer('two_pointers_made')->default(0);
+            $table->timestamps();
+        });
+
+        // Add computed columns using raw SQL since Laravel doesn't support GENERATED columns directly
+        DB::statement('
+            ALTER TABLE player_game_stats ADD per FLOAT GENERATED ALWAYS AS (
+                (points + rebounds + assists + steals + blocks - (field_goal_attempts - field_goals_made) - turnovers) 
+                / NULLIF(minutes, 0)
+            ) STORED
+        ');
+
+        DB::statement('
+            ALTER TABLE player_game_stats ADD ts_percent FLOAT GENERATED ALWAYS AS (
+                points / NULLIF(2 * (field_goal_attempts + (0.44 * free_throw_attempts)), 0)
+            ) STORED
+        ');
+
+        DB::statement('
+            ALTER TABLE player_game_stats ADD eff FLOAT GENERATED ALWAYS AS (
+                (points + rebounds + assists + steals + blocks - (field_goal_attempts + free_throw_attempts + turnovers))
+            ) STORED
+        ');
+
+        DB::statement('
+            ALTER TABLE player_game_stats ADD field_goal_percentage FLOAT GENERATED ALWAYS AS (
+                CASE
+                    WHEN field_goal_attempts = 0 THEN 0
+                    ELSE (field_goals_made / field_goal_attempts) * 100
+                END
+            ) STORED
+        ');
+
+        DB::statement('
+            ALTER TABLE player_game_stats ADD three_point_percentage FLOAT GENERATED ALWAYS AS (
+                CASE
+                    WHEN three_point_attempts = 0 THEN 0
+                    ELSE (three_pointers_made / three_point_attempts) * 100
+                END
+            ) STORED
+        ');
+
+        DB::statement('
+            ALTER TABLE player_game_stats ADD free_throw_percentage FLOAT GENERATED ALWAYS AS (
+                CASE
+                    WHEN free_throw_attempts = 0 THEN 0
+                    ELSE (free_throws_made / free_throw_attempts) * 100
+                END
+            ) STORED
+        ');
+
+        DB::statement('
+            ALTER TABLE player_game_stats ADD two_point_percentage FLOAT GENERATED ALWAYS AS (
+                CASE
+                    WHEN two_point_attempts = 0 THEN 0
+                    ELSE (two_pointers_made / two_point_attempts) * 100
+                END
+            ) STORED
+        ');
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('player_game_stats');
+    }
+};

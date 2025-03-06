@@ -1,12 +1,34 @@
-CREATE TABLE trade_proposals (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    season_id INT NOT NULL,
-    team_to_id INT NOT NULL,
-    team_from_id INT NOT NULL,
-    player_from_id INT NOT NULL,
-    player_to_id INT NOT NULL,
-    type VARCHAR(20) NOT NULL,
-    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('trade_proposals', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('season_id')->constrained();
+            $table->foreignId('team_to_id')->constrained('teams');
+            $table->foreignId('team_from_id')->constrained('teams');
+            $table->foreignId('player_from_id')->constrained('players');
+            $table->foreignId('player_to_id')->constrained('players');
+            $table->string('type', 20);
+            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('trade_proposals');
+    }
+};

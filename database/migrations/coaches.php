@@ -1,22 +1,43 @@
-CREATE TABLE coaches (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    age INT NOT NULL,
-    nationality VARCHAR(100),
-    team_id INT DEFAULT NULL,
-    coaching_style ENUM('defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo') NOT NULL,
-    experience_years INT NOT NULL,
-    offensive_rating INT CHECK (offensive_rating BETWEEN 1 AND 100),
-    defensive_rating INT CHECK (defensive_rating BETWEEN 1 AND 100),
-    development_rating INT CHECK (development_rating BETWEEN 1 AND 100),
-    leadership_rating INT CHECK (leadership_rating BETWEEN 1 AND 100),
-    strategy_rating INT CHECK (strategy_rating BETWEEN 1 AND 100),
-    work_ethic_rating INT CHECK (work_ethic_rating BETWEEN 1 AND 100),
-    preferred_team_composition JSON NOT NULL,
-    is_active BOOLEAN DEFAULT TRUE,
-    contract_years INT DEFAULT 0,
-    contract_expires_at DATE DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL
-);
+s<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('coaches', function (Blueprint $table) {
+            $table->id();
+            $table->string('name');
+            $table->integer('age');
+            $table->string('nationality', 100)->nullable();
+            $table->foreignId('team_id')->nullable()->constrained()->nullOnDelete();
+            $table->enum('coaching_style', ['defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo']);
+            $table->integer('experience_years');
+            $table->integer('offensive_rating')->check('offensive_rating >= 1 AND offensive_rating <= 100');
+            $table->integer('defensive_rating')->check('defensive_rating >= 1 AND defensive_rating <= 100');
+            $table->integer('development_rating')->check('development_rating >= 1 AND development_rating <= 100');
+            $table->integer('leadership_rating')->check('leadership_rating >= 1 AND leadership_rating <= 100');
+            $table->integer('strategy_rating')->check('strategy_rating >= 1 AND strategy_rating <= 100');
+            $table->integer('work_ethic_rating')->check('work_ethic_rating >= 1 AND work_ethic_rating <= 100');
+            $table->json('preferred_team_composition');
+            $table->boolean('is_active')->default(true);
+            $table->integer('contract_years')->default(0);
+            $table->date('contract_expires_at')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('coaches');
+    }
+};

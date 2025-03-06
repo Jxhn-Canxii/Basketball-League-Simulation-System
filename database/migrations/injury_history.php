@@ -1,15 +1,36 @@
-CREATE TABLE `injury_histories` (
-  `id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-  `player_id` INT UNSIGNED NOT NULL,
-  `game_id` INT UNSIGNED NOT NULL,
-  `team_id` INT UNSIGNED NOT NULL,
-  `season_id` INT UNSIGNED NOT NULL,
-  `injury_type` VARCHAR(255) NOT NULL,
-  `recovery_games` INT NOT NULL,
-  `performance_impact` DECIMAL(3,2) NOT NULL,
-  `injury_date` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `recovery_date` TIMESTAMP NULL DEFAULT NULL,
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`player_id`) REFERENCES `players`(`id`) ON DELETE CASCADE
-);
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('injury_histories', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('player_id')->constrained()->onDelete('cascade');
+            $table->foreignId('game_id');
+            $table->foreignId('team_id');
+            $table->foreignId('season_id');
+            $table->string('injury_type');
+            $table->integer('recovery_games');
+            $table->decimal('performance_impact', 3, 2);
+            $table->timestamp('injury_date')->useCurrent();
+            $table->timestamp('recovery_date')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('injury_histories');
+    }
+};

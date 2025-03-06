@@ -1,9 +1,32 @@
-CREATE TABLE season_awards (
-    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    player_id BIGINT UNSIGNED NOT NULL,
-    season_id BIGINT UNSIGNED NOT NULL,
-    award_name VARCHAR(255) NOT NULL,
-    award_description TEXT DEFAULT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-);
+_awards_table.php
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    /**
+     * Run the migrations.
+     */
+    public function up(): void
+    {
+        Schema::create('season_awards', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('player_id')->constrained()->onDelete('cascade');
+            $table->foreignId('season_id')->constrained();
+            $table->string('award_name');
+            $table->text('award_description')->nullable();
+            $table->timestamps();
+        });
+    }
+
+    /**
+     * Reverse the migrations.
+     */
+    public function down(): void
+    {
+        Schema::dropIfExists('season_awards');
+    }
+};
