@@ -58,6 +58,7 @@ class GameController extends Controller
                 'p.is_rookie',
                 'p.draft_status',
                 'p.draft_id',
+                'p.age',
                 'drafted_team.acronym as drafted_team_acro',
                 'player_game_stats.team_id',
                 'player_game_stats.game_id',
@@ -88,7 +89,11 @@ class GameController extends Controller
 
                 // Determine if the player is the Finals MVP for this season
                 DB::raw("CASE WHEN p.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = p.id LIMIT 1) THEN 1 ELSE 0 END as is_finals_mvp"),
-
+                DB::raw("MAX(CASE WHEN sa.award_name = 'Best Defensive Player' THEN 1 ELSE 0 END) AS is_defensive_poy"),
+                DB::raw("MAX(CASE WHEN sa.award_name = 'Sixth Man of the Year' THEN 1 ELSE 0 END) AS is_sixth_man"),
+                DB::raw("MAX(CASE WHEN sa.award_name = 'Rookie of the Season' THEN 1 ELSE 0 END) AS is_rookie_poy"),
+                DB::raw("MAX(CASE WHEN sa.award_name = 'Most Improved Player' THEN 1 ELSE 0 END) AS is_most_improved"),
+                DB::raw("MAX(CASE WHEN sa.award_name = 'Best Overall Player' THEN 1 ELSE 0 END) AS is_season_mvp"),
                 // Return the string for Finals MVP
                 // DB::raw("COALESCE(
                 //     (SELECT CONCAT('Finals MVP (Season ', s.id, ') by ',
@@ -128,6 +133,7 @@ class GameController extends Controller
                 'p.is_rookie',
                 'p.draft_status',
                 'p.draft_id',
+                'p.age',
                 'drafted_team.acronym',
                 'player_game_stats.team_id',
                 'player_game_stats.game_id',
@@ -243,6 +249,7 @@ class GameController extends Controller
             'game_id' => $bestWinningTeamPlayer->game_id,
             'name' => $bestWinningTeamPlayer->player_name,
             'team' => $bestWinningTeamPlayer->team_name,
+            'age' => $bestWinningTeamPlayer->age,
             'points' => $bestWinningTeamPlayer->points,
             'assists' => $bestWinningTeamPlayer->assists,
             'rebounds' => $bestWinningTeamPlayer->rebounds,
@@ -259,6 +266,10 @@ class GameController extends Controller
             'finals_mvp' => $bestWinningTeamPlayer->finals_mvp ?? null,
             'championship_won' => $bestWinningTeamPlayer->championship_won ?? null,
             'is_finals_mvp' => $bestWinningTeamPlayer->is_finals_mvp,
+            'is_season_mvp' => $bestWinningTeamPlayer->is_season_mvp,
+            'is_defensive_poy' => $bestWinningTeamPlayer->is_defensive_poy,
+            'is_rookie_poy' => $bestWinningTeamPlayer->is_rookie_poy,
+            'is_most_improved' => $bestWinningTeamPlayer->is_most_improved,
         ] : null;
 
         $homeTeamStreak = $this->getTeamStreak($game->home_id, $game->id);

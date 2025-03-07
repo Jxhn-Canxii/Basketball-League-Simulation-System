@@ -526,18 +526,38 @@
                             '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color : gameDetails?.away_team.primary_color),
                     }"
                     >
-                        <p class="text-4xl font-extrabold mb-1">
+                        <p class="text-4xl font-extrabold mb-1 relative">
                             {{ playerFormatter(bestPlayer?.name) }}
-                            <sup v-if="bestPlayer?.is_finals_mvp">
-                                <i class="fa fa-star fa-sm text-yellow-500"></i>
+                            <sup class="text-xs absolute top-0" v-if="bestPlayer?.age">
+                               {{ bestPlayer?.age }}
                             </sup>
                         </p>
-                        <span
-                            :class="roleClasses(bestPlayer.role)"
-                            class="inline-flex items-center capitalize px-2.5 mb-2 py-0.5 rounded text-xs font-medium"
-                        >
-                            {{ bestPlayer.role }}
-                        </span>
+                        <div class="flex justify-center">
+                            <span
+                                :class="roleClasses(bestPlayer.role)"
+                                class="inline-flex items-center capitalize px-2.5 mb-2 py-0.5 rounded text-xs font-medium"
+                            >
+                                {{ bestPlayer.role }}
+                            </span>
+                            <sup v-if="bestPlayer?.is_finals_mvp">
+                            <i class="fa fa-trophy text-yellow-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_season_mvp">
+                                <i class="fa fa-star text-yellow-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_defensive_poy">
+                                <i class="fa fa-shield-alt text-blue-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_rookie_poy">
+                                <i class="fa fa-baby text-green-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_most_improved">
+                                <i class="fa fa-chart-line text-purple-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_sixth_man">
+                                <i class="text-gray-500 text-xs text-bold">6</i>
+                            </sup>
+                        </div>
                         <div class="flex w-full justify-center px-0 mx-0"
                         :style="{
                             backgroundColor:
