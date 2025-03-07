@@ -539,24 +539,6 @@
                             >
                                 {{ bestPlayer.role }}
                             </span>
-                            <sup v-if="bestPlayer?.is_finals_mvp">
-                            <i class="fa fa-trophy text-yellow-500 text-xs"></i>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_season_mvp">
-                                <i class="fa fa-star text-yellow-500 text-xs"></i>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_defensive_poy">
-                                <i class="fa fa-shield-alt text-blue-500 text-xs"></i>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_rookie_poy">
-                                <i class="fa fa-baby text-green-500 text-xs"></i>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_most_improved">
-                                <i class="fa fa-chart-line text-purple-500 text-xs"></i>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_sixth_man">
-                                <i class="text-gray-500 text-xs text-bold">6</i>
-                            </sup>
                         </div>
                         <div class="flex w-full justify-center px-0 mx-0"
                         :style="{
@@ -644,10 +626,30 @@
                             {{ bestPlayer?.championship_won }}
                        </p>
                     </div>
-                    <div class="flex justify-center">
+                    <div class="flex justify-between">
                         <sup class="float-center font-bold mt-0 text-red-500">
-                            {{ bestPlayer.draft_status == 'Undrafted' ? 'S'+bestPlayer.draft_id+' '+bestPlayer.draft_status : bestPlayer.draft_status + (bestPlayer.drafted_team_acro ? ' ('+bestPlayer.drafted_team_acro+ ')' : '')}}
+                            <b class="text-gray-400">Draft:</b> {{ bestPlayer.draft_status == 'Undrafted' ? 'S'+bestPlayer.draft_id+' '+bestPlayer.draft_status : bestPlayer.draft_status + (bestPlayer.drafted_team_acro ? ' ('+bestPlayer.drafted_team_acro+ ')' : '')}}
                         </sup>
+                        <div>
+                            <sup v-if="bestPlayer?.is_finals_mvp">
+                                <i class="fa fa-trophy text-yellow-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_season_mvp">
+                                <i class="fa fa-star text-yellow-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_defensive_poy">
+                                <i class="fa fa-shield-alt text-blue-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_rookie_poy">
+                                <i class="fa fa-baby text-green-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_most_improved">
+                                <i class="fa fa-chart-line text-purple-500 text-xs"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_sixth_man">
+                                <i class="text-gray-500 text-xs text-bold">6</i>
+                            </sup>
+                        </div>
                     </div>
                 </div>
             </div>
