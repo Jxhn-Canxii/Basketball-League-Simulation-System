@@ -89,11 +89,11 @@ class GameController extends Controller
 
                 // Determine if the player is the Finals MVP for this season
                 DB::raw("CASE WHEN p.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = p.id LIMIT 1) THEN 1 ELSE 0 END as is_finals_mvp"),
-                DB::raw("MAX(CASE WHEN sa.award_name = 'Best Defensive Player' THEN 1 ELSE 0 END) AS is_defensive_poy"),
-                DB::raw("MAX(CASE WHEN sa.award_name = 'Sixth Man of the Year' THEN 1 ELSE 0 END) AS is_sixth_man"),
-                DB::raw("MAX(CASE WHEN sa.award_name = 'Rookie of the Season' THEN 1 ELSE 0 END) AS is_rookie_poy"),
-                DB::raw("MAX(CASE WHEN sa.award_name = 'Most Improved Player' THEN 1 ELSE 0 END) AS is_most_improved"),
-                DB::raw("MAX(CASE WHEN sa.award_name = 'Best Overall Player' THEN 1 ELSE 0 END) AS is_season_mvp"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Best Defensive Player') THEN 1 ELSE 0 END) AS is_defensive_poy"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Sixth Man of the Year') THEN 1 ELSE 0 END) AS is_sixth_man"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Rookie of the Season') THEN 1 ELSE 0 END) AS is_rookie_poy"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Most Improved Player') THEN 1 ELSE 0 END) AS is_most_improved"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Best Overall Player') THEN 1 ELSE 0 END) AS is_season_mvp"),
                 // Return the string for Finals MVP
                 // DB::raw("COALESCE(
                 //     (SELECT CONCAT('Finals MVP (Season ', s.id, ') by ',
