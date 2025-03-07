@@ -641,13 +641,13 @@
                                 <i class="fa fa-shield-alt text-blue-500 text-lg"></i>
                             </sup>
                             <sup v-if="bestPlayer?.is_rookie_poy" title="Rookie of the Season">
-                                 <i class="text-green-500 text-lg text-bold bg-green-200 rounded-full">R</i>
+                                 <b class="text-green-500 text-lg text-bold bg-green-200 rounded-full p-1 text-center">R</b>
                             </sup>
                             <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
                                 <i class="fa fa-chart-line text-purple-500 text-lg"></i>
                             </sup>
                             <sup v-if="bestPlayer?.is_sixth_man" title="Sixth Man of the Season">
-                                <i class="text-gray-500 text-lg text-bold bg-gray-200 rounded-full">6</i>
+                                <b class="text-gray-500 text-lg text-bold bg-gray-200 rounded-full p-1 text-center">6</b>
                             </sup>
                         </div>
                     </div>
