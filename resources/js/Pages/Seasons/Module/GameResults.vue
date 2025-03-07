@@ -626,28 +626,28 @@
                             {{ bestPlayer?.championship_won }}
                        </p>
                     </div>
-                    <div class="flex justify-between">
+                    <div class="flex justify-between text-nowrap items-center">
                         <sup class="float-center font-bold mt-0 text-red-500">
                             <b class="text-gray-400">Draft:</b> {{ bestPlayer.draft_status == 'Undrafted' ? 'S'+bestPlayer.draft_id+' '+bestPlayer.draft_status : bestPlayer.draft_status + (bestPlayer.drafted_team_acro ? ' ('+bestPlayer.drafted_team_acro+ ')' : '')}}
                         </sup>
-                        <div>
-                            <sup v-if="bestPlayer?.is_finals_mvp">
-                                <i class="fa fa-trophy text-yellow-500 text-xs"></i>
+                        <div class="flex justify-center space-x-3">
+                            <sup v-if="bestPlayer?.is_finals_mvp" title="Finals MVP">
+                                <i class="fa fa-trophy text-yellow-500 text-md"></i>
                             </sup>
-                            <sup v-if="bestPlayer?.is_season_mvp">
-                                <i class="fa fa-star text-yellow-500 text-xs"></i>
+                            <sup v-if="bestPlayer?.is_season_mvp" title="Season MVP">
+                                <i class="fa fa-star text-yellow-500 text-md"></i>
                             </sup>
-                            <sup v-if="bestPlayer?.is_defensive_poy">
-                                <i class="fa fa-shield-alt text-blue-500 text-xs"></i>
+                            <sup v-if="bestPlayer?.is_defensive_poy" title="Defensive Player of the Season">
+                                <i class="fa fa-shield-alt text-blue-500 text-md"></i>
                             </sup>
-                            <sup v-if="bestPlayer?.is_rookie_poy">
-                                <i class="fa fa-baby text-green-500 text-xs"></i>
+                            <sup v-if="bestPlayer?.is_rookie_poy" title="Rookie of the Season">
+                                 <i class="text-green-500 text-md text-bold">R</i>
                             </sup>
-                            <sup v-if="bestPlayer?.is_most_improved">
-                                <i class="fa fa-chart-line text-purple-500 text-xs"></i>
+                            <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
+                                <i class="fa fa-chart-line text-purple-500 text-md"></i>
                             </sup>
-                            <sup v-if="bestPlayer?.is_sixth_man">
-                                <i class="text-gray-500 text-xs text-bold">6</i>
+                            <sup v-if="bestPlayer?.is_sixth_man" title="Sixth Man of the Season">
+                                <i class="text-gray-500 text-md text-bold">6</i>
                             </sup>
                         </div>
                     </div>
