@@ -16,7 +16,7 @@ return new class extends Migration
         Schema::create('seasons', function (Blueprint $table) {
             $table->id(); // auto-incrementing primary key for the id
             $table->string('name'); // name of the season
-            $table->foreignId('league_id')->constrained()->onDelete('cascade'); // foreign key for league_id
+            $table->integer('league_id'); // foreign key for league_id
             $table->integer('type'); // enum for season type
             $table->integer('match_type'); // enum for match type
             $table->integer('start_playoffs'); // boolean flag to indicate if playoffs started
