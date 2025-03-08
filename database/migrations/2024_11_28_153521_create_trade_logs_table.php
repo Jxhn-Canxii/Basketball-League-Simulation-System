@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('trade_logs', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('team_from_id')->constrained('teams');
-            $table->foreignId('team_to_id')->constrained('teams');
-            $table->foreignId('player_id')->constrained('players');
+            $table->foreignId('team_from_id')->integer();
+            $table->foreignId('team_to_id')->integer();
+            $table->foreignId('player_id')->integer();
             $table->string('player_name');
             $table->string('role', 50);
             $table->text('trade_reason')->nullable();

@@ -14,12 +14,12 @@ return new class extends Migration
         Schema::create('all_time_top_stats', function (Blueprint $table) {
             $table->id();
             $table->string('stat_category', 50);  // e.g., 'points', 'rebounds', 'assists', etc.
-            $table->foreignId('player_id')->constrained();
+            $table->integer('player_id');
             $table->string('player_name', 100);   // Stores player name for easy reference
-            $table->foreignId('game_id')->constrained();
-            $table->foreignId('team_id')->constrained();
-            $table->foreignId('opponent_id')->constrained('teams');  // ID of the opposing team
-            $table->foreignId('season_id')->constrained();
+            $table->integer('game_id');
+            $table->integer('team_id');
+            $table->integer('opponent_id');  // ID of the opposing team
+            $table->integer('season_id');
             $table->integer('stat_value');        // Value of the stat (e.g., points scored)
             $table->date('recorded_at');          // Date of the game
             $table->timestamps();

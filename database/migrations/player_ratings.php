@@ -11,18 +11,25 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('player_ratings', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('player_id')->constrained()->onDelete('cascade');
-            $table->foreignId('season_id')->constrained();
-            $table->enum('role', ['star player','all star', 'starter', 'role player', 'bench']);
-            $table->unsignedTinyInteger('shooting_rating');
-            $table->unsignedTinyInteger('defense_rating');
-            $table->unsignedTinyInteger('passing_rating');
-            $table->unsignedTinyInteger('rebounding_rating');
-            $table->unsignedTinyInteger('overall_rating');
-            $table->timestamps();
-        });
+        // Check if the table exists first
+        if (!Schema::hasTable('player_ratings')) {
+            Schema::create('player_ratings', function (Blueprint $table) {
+                $table->id();
+                $table->foreignId('player_id')
+                      ->constrained('players')
+                      ->onDelete('cascade');
+                $table->foreignId('season_id')
+                      ->constrained('seasons')
+                      ->onDelete('cascade');
+                $table->enum('role', ['star player', 'all star', 'starter', 'role player', 'bench']);
+                $table->unsignedTinyInteger('shooting_rating');
+                $table->unsignedTinyInteger('defense_rating');
+                $table->unsignedTinyInteger('passing_rating');
+                $table->unsignedTinyInteger('rebounding_rating');
+                $table->unsignedTinyInteger('overall_rating');
+                $table->timestamps();
+            });
+        }
     }
 
     /**
