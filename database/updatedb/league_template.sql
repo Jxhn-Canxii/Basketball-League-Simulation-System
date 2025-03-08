@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 08, 2025 at 08:47 AM
+-- Generation Time: Mar 08, 2025 at 08:56 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -40,7 +40,7 @@ CREATE TABLE `all_time_top_stats` (
   `recorded_at` date NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -54,7 +54,7 @@ CREATE TABLE `conferences` (
   `league_id` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -85,7 +85,7 @@ CREATE TABLE `failed_jobs` (
   `payload` longtext NOT NULL,
   `exception` longtext NOT NULL,
   `failed_at` timestamp NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -158,7 +158,7 @@ CREATE TABLE `head_to_head` (
   `win_percentage` decimal(5,2) NOT NULL DEFAULT 0.00,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -202,7 +202,7 @@ CREATE TABLE `injury_histories` (
   `recovery_date` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -216,7 +216,7 @@ CREATE TABLE `leagues` (
   `is_conference` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -235,28 +235,28 @@ CREATE TABLE `migrations` (
 --
 
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
-(1, '2014_10_12_000000_create_users_table', 1),
-(2, '2014_10_12_100000_create_password_reset_tokens_table', 1),
-(3, '2019_08_19_000000_create_failed_jobs_table', 1),
-(4, '2019_12_14_000001_create_personal_access_tokens_table', 1),
-(5, '2024_03_25_104443_create_seasons_table', 1),
-(6, '2024_08_15_112322_create_player_ratings_table', 1),
-(7, '2024_11_28_153521_create_trade_logs_table', 1),
-(8, '2025_03_08_073834_create_streaks_table', 1),
-(9, 'create_conferences_table', 1),
-(10, 'create_leagues', 1),
-(11, 'create_player_game_stats', 1),
-(12, 'create_players', 1),
-(13, 'create_schedules_table', 1),
-(14, 'create_teams', 1),
-(15, 'injury_history', 1),
-(16, 'player_ratings', 1),
-(17, 'player_season_stats', 1),
-(18, 'playoff_appearance', 1),
-(19, 'season_awards', 1),
-(20, 'single_stats_records', 1),
-(21, 'trade_proposals', 1),
-(22, 'update_h1h2h', 1);
+(23, '2014_10_12_000000_create_users_table', 1),
+(24, '2014_10_12_100000_create_password_reset_tokens_table', 1),
+(25, '2019_08_19_000000_create_failed_jobs_table', 1),
+(26, '2019_12_14_000001_create_personal_access_tokens_table', 1),
+(27, '2024_03_25_104443_create_seasons_table', 1),
+(28, '2024_08_15_112322_create_player_ratings_table', 1),
+(29, '2024_11_28_153521_create_trade_logs_table', 1),
+(30, '2025_03_08_073834_create_streaks_table', 1),
+(31, 'create_conferences_table', 1),
+(32, 'create_leagues', 1),
+(33, 'create_player_game_stats', 1),
+(34, 'create_players', 1),
+(35, 'create_schedules_table', 1),
+(36, 'create_teams', 1),
+(37, 'injury_history', 1),
+(38, 'player_ratings', 1),
+(39, 'player_season_stats', 1),
+(40, 'playoff_appearance', 1),
+(41, 'season_awards', 1),
+(42, 'single_stats_records', 1),
+(43, 'trade_proposals', 1),
+(44, 'update_h1h2h', 1);
 
 -- --------------------------------------------------------
 
@@ -268,7 +268,7 @@ CREATE TABLE `password_reset_tokens` (
   `email` varchar(255) NOT NULL,
   `token` varchar(255) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -287,7 +287,7 @@ CREATE TABLE `personal_access_tokens` (
   `expires_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -339,7 +339,7 @@ CREATE TABLE `players` (
   `injury_recovery_games` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -435,7 +435,7 @@ CREATE TABLE `player_game_stats` (
   `three_point_percentage` float GENERATED ALWAYS AS (case when `three_point_attempts` = 0 then 0 else `three_pointers_made` / `three_point_attempts` * 100 end) STORED,
   `free_throw_percentage` float GENERATED ALWAYS AS (case when `free_throw_attempts` = 0 then 0 else `free_throws_made` / `free_throw_attempts` * 100 end) STORED,
   `two_point_percentage` float GENERATED ALWAYS AS (case when `two_point_attempts` = 0 then 0 else `two_pointers_made` / `two_point_attempts` * 100 end) STORED
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -461,7 +461,7 @@ CREATE TABLE `player_playoff_appearances` (
   `championships_won` int(11) NOT NULL DEFAULT 0,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -519,7 +519,7 @@ CREATE TABLE `player_ratings` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -574,7 +574,7 @@ CREATE TABLE `player_season_stats` (
   `free_throw_percentage` decimal(5,2) GENERATED ALWAYS AS (case when `total_free_throw_attempts` = 0 then 0 else `total_free_throws_made` / `total_free_throw_attempts` * 100 end) STORED,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -627,7 +627,7 @@ CREATE TABLE `schedules` (
   `status` int(11) NOT NULL DEFAULT 1,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -692,7 +692,7 @@ CREATE TABLE `seasons` (
   `weakest_name` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -708,7 +708,7 @@ CREATE TABLE `season_awards` (
   `award_description` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -719,7 +719,7 @@ CREATE TABLE `season_awards` (
 CREATE TABLE `standings_view` (
 `team_id` bigint(20) unsigned
 ,`team_name` varchar(255)
-,`team_acronym` varchar(3)
+,`team_acronym` varchar(10)
 ,`conference_id` int(11)
 ,`conference_name` varchar(255)
 ,`wins` decimal(22,0)
@@ -795,7 +795,7 @@ CREATE TABLE `streak` (
   `best_losing_streak_end_id` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -830,12 +830,14 @@ CREATE TABLE `streak_view` (
 CREATE TABLE `teams` (
   `id` bigint(20) UNSIGNED NOT NULL,
   `name` varchar(255) NOT NULL,
-  `acronym` varchar(3) NOT NULL,
-  `league_id` int(11) NOT NULL DEFAULT 0,
-  `conference_id` int(11) NOT NULL DEFAULT 0,
+  `acronym` varchar(10) NOT NULL,
+  `primary_color` varchar(8) NOT NULL,
+  `secondary_color` varchar(8) NOT NULL,
+  `league_id` int(11) NOT NULL,
+  `conference_id` int(11) NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -865,7 +867,7 @@ CREATE TABLE `trade_logs` (
   `trade_reason` text DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -884,7 +886,7 @@ CREATE TABLE `trade_proposals` (
   `status` enum('pending','approved','rejected') NOT NULL DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -901,7 +903,7 @@ CREATE TABLE `users` (
   `remember_token` varchar(100) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1171,8 +1173,7 @@ ALTER TABLE `streak`
 -- Indexes for table `teams`
 --
 ALTER TABLE `teams`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `teams_acronym_unique` (`acronym`);
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Indexes for table `trade_logs`
@@ -1236,7 +1237,7 @@ ALTER TABLE `leagues`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=45;
 
 --
 -- AUTO_INCREMENT for table `personal_access_tokens`
