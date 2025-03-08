@@ -107,11 +107,11 @@
             </h3>
             <p>
                 Win Streak:
-                {{ team_info.streaks[0].best_winning_streak ?? 0 }}
+                {{ team_info.streaks[0]?.best_winning_streak ?? 0 }}
             </p>
             <p>
                 Losing Streak:
-                {{ team_info.streaks[0].best_losing_streak ?? 0 }}
+                {{ team_info.streaks[0]?.best_losing_streak ?? 0 }}
             </p>
         </div>
         <div>
