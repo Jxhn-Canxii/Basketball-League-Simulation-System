@@ -120,7 +120,7 @@
                         class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
                     >
                         <p class="text-gray-900 whitespace-nowrap truncate uppercase">
-                            {{ player.current_team }}
+                            {{ player.current_team ?? 'FREE AGENT' }}
                         </p>
                     </td>
                     <td
