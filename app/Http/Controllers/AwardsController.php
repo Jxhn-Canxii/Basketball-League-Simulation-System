@@ -905,7 +905,7 @@ class AwardsController extends Controller
             $counter++;
         }
 
-        $this->updatePlayerPlayoffAppearances();
+        // $this->updatePlayerPlayoffAppearances();
         // Update season status
         DB::table('seasons')->where('id', $latestSeasonId)->update(['status' => config('timeline.awards')]);
 
