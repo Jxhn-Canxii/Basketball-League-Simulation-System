@@ -2110,37 +2110,43 @@ class SimulateController extends Controller
             });
 
             // Assign roles
-            $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
-            $roleCounts = array_fill_keys(array_keys($roles), 0);
-
-            foreach ($rankedPlayers as $playerStat) {
-                foreach ($roles as $key => $limit) {
-                    if ($roleCounts[$key] < $limit) {
-                        $roleCounts[$key]++;
-                        $newRole = $key;
-                        break;
-                    }
+            foreach ($rankedPlayers as $index => $playerStat) {
+                // Determine the player's new role based on their rank
+                if ($index == 0) {
+                    $newRole = 'star player';  // 1st rank
+                } elseif ($index == 1 || $index == 2) {
+                    $newRole = 'all star';  // 2nd and 3rd rank
+                } elseif ($index == 3 || $index == 4) {
+                    $newRole = 'starter';  // 4th and 5th rank
+                } elseif ($index >= 5 && $index <= 9) {
+                    $newRole = 'role player';  // 6th to 10th rank
+                } elseif ($index >= 10 && $index <= 14) {
+                    $newRole = 'bench';  // 11th to 15th rank
                 }
-
+            
+                // Get the current role from the database
                 $currentRole = DB::table('players')->where('id', $playerStat->player_id)->value('role');
-
+            
+                // If the role has changed, log the transaction
                 if ($currentRole !== $newRole) {
                     DB::table('transactions')->insert([
                         'player_id' => $playerStat->player_id,
                         'season_id' => $seasonId,
-                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week(".$weekName.")",
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week($weekName)",
                         'from_team_id' => $teamId,
                         'to_team_id' => $teamId,
                         'status' => 'role change',
                     ]);
                 }
-                
+            
+                // Update the player's role in the players table and player_season_stats table
                 DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $newRole]);
                 DB::table('player_season_stats')
                     ->where('player_id', $playerStat->player_id)
                     ->where('season_id', $seasonId)
                     ->update(['role' => $newRole]);
             }
+            
 
             \Log::info("Roles updated for team {$teamId}", ['roleCounts' => $roleCounts]);
 
