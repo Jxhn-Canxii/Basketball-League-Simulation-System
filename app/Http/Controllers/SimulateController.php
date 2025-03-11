@@ -2111,38 +2111,8 @@ class SimulateController extends Controller
                 ];
             }));
 
-            // Rank players
-            $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
-                    ? ($stat->avg_points_per_game * 0.4 +
-                    $stat->avg_rebounds_per_game * 0.2 +
-                    $stat->avg_assists_per_game * 0.2 +
-                    $stat->avg_steals_per_game * 0.1 +
-                    $stat->avg_blocks_per_game * 0.1 -
-                    $stat->avg_turnovers_per_game * 0.1 -
-                    $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
-                    : 0;
-
-                $perGameScore = $stat->avg_points_per_game * 0.3 +
-                    $stat->avg_rebounds_per_game * 0.2 +
-                    $stat->avg_assists_per_game * 0.2 +
-                    $stat->avg_steals_per_game * 0.1 +
-                    $stat->avg_blocks_per_game * 0.1 -
-                    $stat->avg_turnovers_per_game * 0.1 -
-                    $stat->avg_fouls_per_game * 0.1;
-
-                $totalScore = $stat->total_points * 0.2 +
-                    $stat->total_rebounds * 0.2 +
-                    $stat->total_assists * 0.2 +
-                    $stat->total_steals * 0.15 +
-                    $stat->total_blocks * 0.15 -
-                    $stat->total_turnovers * 0.1 -
-                    $stat->total_fouls * 0.1;
-
-                $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
-
-                return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
-            });
+            // Rank players by highest per
+            $rankedPlayers = $allPlayersStats->sortByDesc('per');
 
             // Assign roles
             $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
