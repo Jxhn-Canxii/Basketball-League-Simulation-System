@@ -2076,43 +2076,8 @@ class SimulateController extends Controller
                 ->where('players.team_id', $teamId)
                 ->get();
 
-            // Fetch rookies or players with no stats
-            $playersWithoutStats = DB::table('players')
-                ->where('team_id', $teamId)
-                ->whereNotIn('id', $stats->pluck('player_id'))
-                ->get();
-
-            // Merge all players
-            $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
-                return (object)[
-                    'player_id' => $player->id,
-                    'role' => $player->role ?? 'bench',
-                    'avg_points_per_game' => 0,
-                    'avg_rebounds_per_game' => 0,
-                    'avg_assists_per_game' => 0,
-                    'avg_steals_per_game' => 0,
-                    'avg_blocks_per_game' => 0,
-                    'avg_turnovers_per_game' => 0,
-                    'avg_fouls_per_game' => 0,
-                    'avg_minutes_per_game' => 1,
-                    'total_points' => 0,
-                    'total_rebounds' => 0,
-                    'total_assists' => 0,
-                    'total_steals' => 0,
-                    'total_blocks' => 0,
-                    'total_turnovers' => 0,
-                    'eff' => 0,
-                    'total_fouls' => 0,
-                    'total_games_played' => 0,
-                    'overall_rating' => $player->overall_rating ?? 50,
-                    'potential_rating' => $player->potential_rating ?? 50,
-                    'injury_prone_percentage' => $player->injury_prone_percentage ?? 50,
-                    'is_rookie' => $player->is_rookie ?? 0,
-                ];
-            }));
-
             // Rank players by highest per
-            $rankedPlayers = $allPlayersStats->sortByDesc('per');
+            $rankedPlayers = $stats->sortByDesc('per');
 
             // Assign roles
             $roles = ['star player' => 1, 'all star' => 2, 'starter' => 2, 'role player' => 5, 'bench' => 5];
@@ -2138,13 +2103,12 @@ class SimulateController extends Controller
                         'to_team_id' => $teamId,
                         'status' => 'role change',
                     ]);
-
-                    DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $newRole]);
-                    DB::table('player_season_stats')
-                        ->where('player_id', $playerStat->player_id)
-                        ->where('season_id', $seasonId)
-                        ->update(['role' => $newRole]);
                 }
+                DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $newRole]);
+                DB::table('player_season_stats')
+                    ->where('player_id', $playerStat->player_id)
+                    ->where('season_id', $seasonId)
+                    ->update(['role' => $newRole]);
             }
 
             \Log::info("Roles updated for team {$teamId}", ['roleCounts' => $roleCounts]);
