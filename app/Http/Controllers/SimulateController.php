@@ -2223,9 +2223,9 @@ class SimulateController extends Controller
                     $stats
                 );
 
-                // if($isPlayoff){
-                //     $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
-                // }
+                if($isPlayoff){
+                    $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+                }
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
                             - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists

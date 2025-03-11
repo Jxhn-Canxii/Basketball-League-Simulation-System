@@ -1624,8 +1624,8 @@ class PlayersController extends Controller
         $starPlayers = DB::table('player_season_stats AS pss')
             ->join('players AS p', 'pss.player_id', '=', 'p.id')
             ->join('seasons AS s', 'pss.season_id', '=', 's.id')
-            ->join('teams AS ct', 'p.team_id', '=', 'ct.id') 
-            ->join('teams AS t', 'pss.team_id', '=', 't.id') // Joining teams to get current team name
+            ->join('teams AS ct', 'p.team_id', '=', 'ct.id','left') 
+            ->join('teams AS t', 'pss.team_id', '=', 't.id','left') // Joining teams to get current team name
             ->where('pss.team_id', $teamId)
             ->where('pss.role', 'star player') // Filtering only star players
             ->orderByDesc('pss.season_id') // Sort by latest season
