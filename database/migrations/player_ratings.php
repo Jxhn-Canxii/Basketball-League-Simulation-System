@@ -15,18 +15,18 @@ return new class extends Migration
         if (!Schema::hasTable('player_ratings')) {
             Schema::create('player_ratings', function (Blueprint $table) {
                 $table->id();
-                $table->foreignId('player_id')
+                $table->integer('player_id')
                       ->constrained('players')
                       ->onDelete('cascade');
-                $table->foreignId('season_id')
+                $table->integer('season_id')
                       ->constrained('seasons')
                       ->onDelete('cascade');
                 $table->enum('role', ['star player', 'all star', 'starter', 'role player', 'bench']);
-                $table->unsignedTinyInteger('shooting_rating');
-                $table->unsignedTinyInteger('defense_rating');
-                $table->unsignedTinyInteger('passing_rating');
-                $table->unsignedTinyInteger('rebounding_rating');
-                $table->unsignedTinyInteger('overall_rating');
+                $table->integer('shooting_rating');
+                $table->integer('defense_rating');
+                $table->integer('passing_rating');
+                $table->integer('rebounding_rating');
+                $table->integer('overall_rating');
                 $table->timestamps();
             });
         }
