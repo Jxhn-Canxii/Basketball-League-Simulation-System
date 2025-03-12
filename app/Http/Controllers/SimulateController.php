@@ -2060,7 +2060,7 @@ class SimulateController extends Controller
             dd($teamId);
         }
 
-        if ($round % 5 !== 0) {
+        if ($round % 2 !== 0) {
             return true;
         }
 
