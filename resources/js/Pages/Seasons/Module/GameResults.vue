@@ -526,7 +526,7 @@
                             '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color : gameDetails?.away_team.primary_color),
                     }"
                     >
-                        <p class="text-4xl font-extrabold mb-1 relative">
+                        <p class="text-4xl font-extrabold mb-1 relative" :title="bestPlayer?.name">
                             {{ playerFormatter(bestPlayer?.name) }}
                             <sup class="text-xs absolute top-0" v-if="bestPlayer?.age">
                                {{ bestPlayer?.age }}
