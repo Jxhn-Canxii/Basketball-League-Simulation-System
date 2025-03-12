@@ -83,6 +83,7 @@ Route::middleware('auth')->group(function () {
         Route::post('game-regular', [SimulateController::class, 'simulateRegular'])->name('game.simulate.regular');
         Route::post('get-round-schedule-ids', [SimulateController::class, 'getScheduleIds'])->name('game.per.round');
         Route::post('game-per-round', [SimulateController::class, 'simulatePerRound'])->name('game.simulate.round');
+        Route::get('overrride-all-team-roles', [SimulateController::class, 'updateRolesForAllTeams'])->name('override-team-roles');
     });
 
     Route::prefix('schedule/')->group(function(){
