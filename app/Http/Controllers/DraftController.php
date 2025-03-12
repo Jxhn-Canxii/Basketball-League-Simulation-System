@@ -127,7 +127,7 @@ class DraftController extends Controller
                     $round = 1;
                     $draftStatus = "S{$currentSeasonId} R{$round} P{$pickNumber}";
 
-                    $contract = $pickNumber <= 10 ? rand(2, 4) : rand(1, 2);
+                    $contract = $pickNumber <= 10 ? rand(3, 5) : rand(1, 4);
 
                     $teamsWithFewMembers = DB::table('teams')
                         ->leftJoin('players', 'teams.id', '=', 'players.team_id')
