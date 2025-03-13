@@ -16,11 +16,14 @@ return new class extends Migration
             Schema::create('player_ratings', function (Blueprint $table) {
                 $table->id();
                 $table->integer('player_id')
-                      ->constrained('players')
-                      ->onDelete('cascade');
+                    ->constrained('players')
+                    ->onDelete('cascade');
                 $table->integer('season_id')
-                      ->constrained('seasons')
-                      ->onDelete('cascade');
+                    ->constrained('seasons')
+                    ->onDelete('cascade');
+                $table->integer('team_id')
+                    ->constrained('teams')
+                    ->onDelete('cascade');
                 $table->enum('role', ['star player', 'all star', 'starter', 'role player', 'bench']);
                 $table->integer('shooting_rating');
                 $table->integer('defense_rating');
