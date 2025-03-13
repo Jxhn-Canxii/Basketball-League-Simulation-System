@@ -160,17 +160,6 @@
                                                     class="text-nowrap text-indigo-600 font-bold text-sm hover:text-indigo-900"
                                                 >
                                                     Simulate Game
-                                                    {{
-                                                        match.home_team.score ==
-                                                            match.away_team
-                                                                .away_score &&
-                                                        match.home_team
-                                                            .home_score != 0 &&
-                                                        match.away_team
-                                                            .away_score != 0
-                                                            ? "(Overtime)"
-                                                            : ""
-                                                    }}
                                                 </button>
                                                 <a
                                                     href="#"
