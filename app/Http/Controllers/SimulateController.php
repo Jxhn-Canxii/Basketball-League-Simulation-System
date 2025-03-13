@@ -2098,28 +2098,9 @@ class SimulateController extends Controller
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
                 ->where('player_season_stats.season_id', $seasonId)
                 ->where('players.team_id', $teamId)
-                ->select('player_season_stats.*', 'players.id as player_id', 'players.role')
+                ->select('player_season_stats.*', 'players.id as player_id', 'players.role as player_role')
+                ->orderByDesc('player_season_stats.per') // Order by highest PER first
                 ->get();
-
-            // Fetch rookies or players with no stats
-            $playersWithoutStats = DB::table('players')
-                ->where('team_id', $teamId)
-                ->whereNotIn('id', $stats->pluck('player_id'))
-                ->get();
-
-            // Merge all players with their stats (or default stats if no stats available)
-            $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
-                return (object)[
-                    'player_id' => $player->id,
-                    'role' => $player->role ?? 'bench',
-                    'per' => 0,  // Default PER for players without stats
-                ];
-            }));
-
-            // Rank players based on the PER value (descending order)
-            $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                return $stat->per;  // Rank by PER value
-            });
 
             // Assign roles to players based on ranking and role limits
             $roles = [
@@ -2133,7 +2114,7 @@ class SimulateController extends Controller
             $roleCounts = array_fill_keys(array_keys($roles), 0);
             $newRoles = [];
 
-            foreach ($rankedPlayers as $playerStat) {
+            foreach ($stats as $playerStat) {
                 foreach ($roles as $role => $limit) {
                     if ($roleCounts[$role] < $limit) {
                         $roleCounts[$role]++;
@@ -2144,11 +2125,11 @@ class SimulateController extends Controller
             }
 
             // Update roles in the database and ensure changes are made for players whose roles have changed
-            foreach ($rankedPlayers as $playerStat) {
+            foreach ($stats as $playerStat) {
                 $newRole = $newRoles[$playerStat->player_id] ?? 'bench'; // Default to 'bench' if no new role
 
                 // Check if the player's role has changed
-                $currentRole = DB::table('players')->where('id', $playerStat->player_id)->value('role');
+                $currentRole = $playerStat->player_role;
 
                 if ($currentRole !== $newRole) {
                     DB::table('transactions')->insert([
