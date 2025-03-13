@@ -18,9 +18,9 @@ return new class extends Migration
             $table->integer('season_id')->constrained()->onDelete('cascade');
             $table->integer('conference_id');
             $table->integer('home_id')->constrained('teams')->onDelete('cascade');
-            $table->integer('home_score')->nullable();
+            $table->integer('home_score')->default(0);
             $table->integer('away_id')->constrained('teams')->onDelete('cascade');
-            $table->integer('away_score')->nullable();
+            $table->integer('away_score')->default(0);
             $table->integer('status')->default(1); // Assuming default status is 'pending'
             $table->timestamps();
         });
