@@ -387,35 +387,110 @@ const addPlayer = async (info) => {
             address: info.address,
             country: info.country,
         });
-
-        key.value = Math.random();
         // return response.data.message; // Return success message for logging
         Swal.fire({
             icon: "success",
             title: info.name + " has added to Draft Pool!",
             text: response.data.message, // Assuming the response contains a 'message' field
         });
+
+        key.value = Math.random();
     } catch (error) {
         console.error("Error adding player:", error.response.data.message);
         throw new Error(error.response.data.message); // Throw error to be caught in Promise.all
     }
 };
 
+const fetchRandomFullName1 = async () => {
+    try {
+        // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
+        const response = await axios.get('https://randomuser.me/api/?inc=name,gender,location,nat&gender=male'); // API URL for random male user
+        const { first, last } = response.data.results[0].name; // Extract first and last name
+        const { city, state, country} = response.data.results[0].location; // Extract first and last name
+        const nationality = response.data.results[0].nat; // Extract first and last name
+        const address = `${city}, ${state}, ${country}`; // Extract first and last name
+        const name = `${first} ${last}`;
+        const country_formatted = `${country}`;
+        const data = {
+            name: name,
+            country: country_formatted,
+            address: address,
+        };
+        // Function to check if a name contains only English alphabet letters
+        const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
+
+        if (isEnglishReadable(first) && isEnglishReadable(last)) {
+            return data; // Return full name if valid
+        } else {
+            return null; // Return null if the name is not valid
+        }
+    } catch (error) {
+        console.error("Error fetching random player name:", error);
+        return null; // Return null on error
+    }
+};
+const fetchRandomFullName2 = async () => {
+    try {
+        let data = null;
+        
+        while (!data) {  // Keep retrying until a valid male name is found
+            const response = await axios.get('https://fakerapi.it/api/v1/persons?_quantity=1&gender=male');
+
+            const person = response.data.data[0];
+            const first_name = person.firstname;
+            const last_name = person.lastname;
+            const city = person.address.city;
+            const country = person.address.country;
+            const gender = person.gender.toLowerCase();
+
+            if (gender === "male") {  // Ensure we get a male name
+                const fullName = `${first_name} ${last_name}`;
+                const addressFormatted = `${city}, ${country}`;
+
+                data = {
+                    name: fullName,
+                    city: city,
+                    country: country,
+                    address: addressFormatted,
+                };
+
+                // Check if both first and last names contain only English alphabet letters
+                const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
+                
+                if (!isEnglishReadable(first_name) || !isEnglishReadable(last_name)) {
+                    data = null; // Reset and retry if the name contains non-English characters
+                }
+            }
+        }
+
+        return data;
+    } catch (error) {
+        console.error("Error fetching random player name:", error);
+        return null; 
+    }
+};
+
+
 const addMultiplePlayers = async (count) => {
     try {
         const promises = [];
 
         for (let i = 0; i < count; i++) {
+            // Randomly choose between fetchRandomFullName1 or fetchRandomFullName2
+            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName2 : await fetchRandomFullName2; // 50% chance for each
+
             const randomFullName = await fetchRandomFullName(); // Fetch random full name
+            console.log(randomFullName);
             if (randomFullName != null) {
                 promises.push(addPlayer(randomFullName)); // Add the promise to the array
             }
         }
 
+
         // Wait for all promises to resolve
         const results = await Promise.all(promises);
-        fetchFreeAgent(); // Refresh free agent list
-
+        fetchAvailablePlayers(); // Refresh free agent list
+         key.value = Math.random();
         // Notify success
         Swal.fire({
             icon: "success",
@@ -427,6 +502,7 @@ const addMultiplePlayers = async (count) => {
         results.forEach((message, index) => {
             console.log(`Player ${index + 1}: ${message}`);
         });
+
     } catch (error) {
         console.error("Error adding multiple players:", error);
         Swal.fire({
@@ -436,7 +512,6 @@ const addMultiplePlayers = async (count) => {
         });
     }
 };
-
 const fetchFreeAgent = async (page = 1) => {
     try {
         const response = await axios.post(

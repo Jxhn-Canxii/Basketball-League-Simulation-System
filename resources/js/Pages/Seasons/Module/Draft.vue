@@ -369,13 +369,12 @@ const addMultiplePlayers = async (count) => {
 
         for (let i = 0; i < count; i++) {
             // Randomly choose between fetchRandomFullName1 or fetchRandomFullName2
-            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName2 : await fetchRandomFullName1; // 50% chance for each
+            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName1 : await fetchRandomFullName2; // 50% chance for each
 
             const randomFullName = await fetchRandomFullName(); // Fetch random full name
             console.log(randomFullName);
             if (randomFullName != null) {
                 promises.push(addPlayer(randomFullName)); // Add the promise to the array
-                key.value = i;
             }
         }
 
@@ -383,6 +382,7 @@ const addMultiplePlayers = async (count) => {
         // Wait for all promises to resolve
         const results = await Promise.all(promises);
         fetchAvailablePlayers(); // Refresh free agent list
+         key.value = Math.random();
         // Notify success
         Swal.fire({
             icon: "success",
@@ -419,7 +419,8 @@ const addPlayer = async (info) => {
             title: info.name + ' has added to Draft Pool!',
             text: response.data.message, // Assuming the response contains a 'message' field
         });
-
+        
+        key.value = Math.random();
     } catch (error) {
         console.error("Error adding player:", error.response.data.message);
         throw new Error(error.response.data.message); // Throw error to be caught in Promise.all
