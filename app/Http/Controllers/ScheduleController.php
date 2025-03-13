@@ -382,15 +382,7 @@ class ScheduleController extends Controller
         }
         // Insert all playoff schedules into the database in a single batch
         try {
-            $insertSchedule = self::insertSchedule($seasonId, $round, $allSchedules);
-
-            if(!$insertSchedule){
-                return response()->json([
-                    'success' => false, 
-                    'message' => 'Schedule inserted successfully',
-                    'error' => $insertSchedule,
-                ],500);
-            }
+            self::insertSchedule($seasonId, $round, $allSchedules);
             // Update the season's status based on the round
             $status = self::roundStatusFormatter($round);
             DB::table('seasons')
@@ -631,15 +623,7 @@ class ScheduleController extends Controller
             // Insert all playoff schedules into the database in a single batch
             
             try {
-                $insertSchedule = self::insertSchedule($seasonId, $round, $allSchedules);
-
-                if(!$insertSchedule){
-                    return response()->json([
-                        'success' => false, 
-                        'message' => 'Schedule inserted successfully',
-                        'error' => $insertSchedule,
-                    ],500);
-                }
+                self::insertSchedule($seasonId, $round, $allSchedules);
                 // Update the season's status based on the round
                 $status = self::roundStatusFormatter($round);
                 DB::table('seasons')
