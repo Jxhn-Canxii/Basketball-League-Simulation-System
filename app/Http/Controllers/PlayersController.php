@@ -556,7 +556,7 @@ class PlayersController extends Controller
                 ->where('type', $attributes['archetype'])
                 ->count();
 
-            $maxGenLimit = ($currentSeasonId % 4 == 0) ? 15 : 7;
+            $maxGenLimit = ($currentSeasonId % 4 == 0) ? 30 : 15;
             if ($generationalCount >= $maxGenLimit) {
                 return response()->json(['error' => 'Maximum limit of '.$maxGenLimit.' generational rookies reached for this season.'], 400);
             }
