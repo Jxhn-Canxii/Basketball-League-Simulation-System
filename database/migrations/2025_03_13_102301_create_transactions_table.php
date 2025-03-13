@@ -17,11 +17,6 @@ class CreateTransactionsTable extends Migration
             $table->integer('to_team_id')->default(0); // the team the player is joining (default 0 for waived)
             $table->string('status'); // the status of the transaction (e.g., "waived")
             $table->timestamps(); // created_at and updated_at timestamps
-            
-            // Optional: Adding foreign key constraints (assuming 'players' and 'teams' tables exist)
-            $table->foreign('player_id')->references('id')->on('players')->onDelete('cascade');
-            $table->foreign('from_team_id')->references('id')->on('teams')->onDelete('cascade');
-            $table->foreign('to_team_id')->references('id')->on('teams')->onDelete('cascade');
         });
     }
 
