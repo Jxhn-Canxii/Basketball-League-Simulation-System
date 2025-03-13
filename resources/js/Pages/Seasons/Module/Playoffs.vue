@@ -32,7 +32,7 @@
             </div>
             <div
                 class="flex justify-center text-red-500 pt-4"
-                v-if="season_info.seasons && season_info.seasons[0].status == 3 && !loading"
+                v-if="season_info.seasons && season_info.seasons[0].status == 3 && !loading && isHide"
             >
                 <small>Please click to start play-offs simulation!</small>
             </div>
