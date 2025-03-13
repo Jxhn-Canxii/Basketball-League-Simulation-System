@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
             $table->string('game_id');
-            $table->integer('round');
+            $table->string('round');
             $table->integer('season_id')->constrained()->onDelete('cascade');
             $table->integer('conference_id');
             $table->integer('home_id')->constrained('teams')->onDelete('cascade');
