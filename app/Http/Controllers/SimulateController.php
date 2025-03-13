@@ -2054,7 +2054,7 @@ class SimulateController extends Controller
 
         return $roundMapping[$round] ?? null; // Return the column name based on the round
     }
-    private function updateTeamRolesBasedOnStatsV1($teamId, $round)
+    private function updateTeamRolesBasedOnStats($teamId, $round)
     {
         if(!$teamId){
             dd($teamId);
@@ -2070,80 +2070,16 @@ class SimulateController extends Controller
             $seasonId = get_current_season_id();
             $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
             
-            // Fetch player stats for the current season
-            $stats = DB::table('player_season_stats')
-                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                ->where('player_season_stats.season_id', $seasonId)
-                ->where('players.team_id', $teamId)
-                ->get();
-
-            // Fetch rookies or players with no stats
-            $playersWithoutStats = DB::table('players')
-                ->where('team_id', $teamId)
-                ->whereNotIn('id', $stats->pluck('player_id'))
-                ->get();
-
-            // Merge all players with their stats (or default stats if no stats available)
-            $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
-                return (object)[
-                    'player_id' => $player->id,
-                    'role' => $player->role ?? 'bench',
-                    'avg_points_per_game' => 0,
-                    'avg_rebounds_per_game' => 0,
-                    'avg_assists_per_game' => 0,
-                    'avg_steals_per_game' => 0,
-                    'avg_blocks_per_game' => 0,
-                    'avg_turnovers_per_game' => 0,
-                    'avg_fouls_per_game' => 0,
-                    'avg_minutes_per_game' => 1,
-                    'total_points' => 0,
-                    'total_rebounds' => 0,
-                    'total_assists' => 0,
-                    'total_steals' => 0,
-                    'total_blocks' => 0,
-                    'total_turnovers' => 0,
-                    'eff' => 0,
-                    'total_fouls' => 0,
-                    'total_games_played' => 0,
-                    'overall_rating' => $player->overall_rating ?? 50,
-                    'potential_rating' => $player->potential_rating ?? 50,
-                    'injury_prone_percentage' => $player->injury_prone_percentage ?? 50,
-                    'is_rookie' => $player->is_rookie ?? 0,
-                ];
-            }));
-
-            // Rank players based on various factors
-            $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                $efficiencyPerMinute = $stat->avg_minutes_per_game > 0
-                    ? ($stat->avg_points_per_game * 0.4 +
-                        $stat->avg_rebounds_per_game * 0.2 +
-                        $stat->avg_assists_per_game * 0.2 +
-                        $stat->avg_steals_per_game * 0.1 +
-                        $stat->avg_blocks_per_game * 0.1 -
-                        $stat->avg_turnovers_per_game * 0.1 -
-                        $stat->avg_fouls_per_game * 0.1) / $stat->avg_minutes_per_game
-                    : 0;
-
-                $perGameScore = $stat->avg_points_per_game * 0.3 +
-                    $stat->avg_rebounds_per_game * 0.2 +
-                    $stat->avg_assists_per_game * 0.2 +
-                    $stat->avg_steals_per_game * 0.1 +
-                    $stat->avg_blocks_per_game * 0.1 -
-                    $stat->avg_turnovers_per_game * 0.1 - 
-                    $stat->avg_fouls_per_game * 0.1;
-
-                $totalScore = $stat->total_points * 0.2 +
-                    $stat->total_rebounds * 0.2 +
-                    $stat->total_assists * 0.2 +
-                    $stat->total_steals * 0.15 +
-                    $stat->total_blocks * 0.15 -
-                    $stat->total_turnovers * 0.1 -
-                    $stat->total_fouls * 0.1;
-
-                $injuryFactor = 1 - ($stat->injury_prone_percentage / 100);
-
-                return ($efficiencyPerMinute + $perGameScore + $totalScore) * $injuryFactor;
-            });
+            // Fetch player stats for the current season, ordered by 'per' descending
+            $stats = DB::table('players')
+                ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id') // Join player_season_stats with players
+                ->where('player_season_stats.season_id', $seasonId) // Filter by the season ID
+                ->where('players.team_id', $teamId) // Filter by the team ID
+                ->where('players.is_active', 1) // Only include active players
+                ->distinct('player_season_stats.player_id')
+                ->select('players.name as player_name','players.is_active as is_active','players.role as player_role','player_season_stats.*')
+                ->orderBy('player_season_stats.per', 'desc') // Order by PER in descending order
+                ->get(); // Retrieve the results        
 
             // Assign roles to players based on ranking and role limits
             $roles = [
@@ -2157,7 +2093,7 @@ class SimulateController extends Controller
             $roleCounts = array_fill_keys(array_keys($roles), 0);
             $newRoles = [];
 
-            foreach ($rankedPlayers as $playerStat) {
+            foreach ($stats as $playerStat) {
                 foreach ($roles as $role => $limit) {
                     if ($roleCounts[$role] < $limit) {
                         $roleCounts[$role]++;
@@ -2172,7 +2108,7 @@ class SimulateController extends Controller
                 $newRole = $newRoles[$playerStat->player_id] ?? 'bench'; // Default to 'bench' if no new role
 
                 // Check if the player's role has changed
-                $currentRole = DB::table('players')->where('id', $playerStat->player_id)->value('role');
+                $currentRole = $playerStat->player_role;
 
                 if ($currentRole !== $newRole) {
                     DB::table('transactions')->insert([
@@ -2183,14 +2119,15 @@ class SimulateController extends Controller
                         'to_team_id' => $teamId,
                         'status' => 'role change',
                     ]);
-
-                    // Update player role
+                     // Update player role
                     DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $newRole]);
                     DB::table('player_season_stats')
                         ->where('player_id', $playerStat->player_id)
                         ->where('season_id', $seasonId)
+                        >where('team_id', $teamId)
                         ->update(['role' => $newRole]);
                 }
+                
             }
 
             \Log::info("Roles updated for team {$teamId}", ['roleCounts' => $roleCounts]);
@@ -2199,7 +2136,7 @@ class SimulateController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error updating roles for team ' . $teamId . ': ' . $e->getMessage());
-            return false;
+            return  $e->getMessage();
         }
 
         return true;
@@ -2214,118 +2151,21 @@ class SimulateController extends Controller
 
             // Update roles for each team
             $round = 30;
+            $updatedTeams = [];
             foreach ($teamIds as $teamId) {
-                $this->updateTeamRolesBasedOnStats($teamId, $round);  // Call the existing function for each team
+                $updateRoles = $this->updateTeamRolesBasedOnStats($teamId, $round);  // Call the existing function for each team
+                $updatedTeams[] =  [
+                    'team_id' => $teamId,
+                    'status' => $updateRoles,
+                ]; 
             }
-
             DB::commit();
+
+            return response()->json($updatedTeams);
+          
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error updating roles for all teams: ' . $e->getMessage());
-            return false;
-        }
-
-        return true;
-    }
-
-    private function updateTeamRolesBasedOnStats($teamId, $round)
-    {
-        if (!$teamId) {
-            dd($teamId);
-        }
-
-        if ($round % 5 !== 0) {
-            return true;
-        }
-
-        DB::beginTransaction();
-
-        try {
-            $seasonId = get_current_season_id();
-            $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
-
-            // Fetch player stats for the current season, including PER
-            $stats = DB::table('player_season_stats')
-                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                ->where('player_season_stats.season_id', $seasonId)
-                ->where('players.team_id', $teamId)
-                ->select('player_season_stats.*', 'players.id as player_id', 'players.role')
-                ->get();
-
-            // Fetch rookies or players with no stats
-            $playersWithoutStats = DB::table('players')
-                ->where('team_id', $teamId)
-                ->whereNotIn('id', $stats->pluck('player_id'))
-                ->get();
-
-            // Merge all players with their stats (or default stats if no stats available)
-            $allPlayersStats = $stats->merge($playersWithoutStats->map(function ($player) {
-                return (object)[
-                    'player_id' => $player->id,
-                    'role' => $player->role ?? 'bench',
-                    'per' => 0,  // Default PER for players without stats
-                ];
-            }));
-
-            // Rank players based on the PER value (descending order)
-            $rankedPlayers = $allPlayersStats->sortByDesc(function ($stat) {
-                return $stat->per;  // Rank by PER value
-            });
-
-            // Assign roles to players based on ranking and role limits
-            $roles = [
-                'star player' => 1,  // Only 1 "star player"
-                'all star' => 2,     // Up to 2 "all stars"
-                'starter' => 2,      // Up to 2 "starters"
-                'role player' => 5,  // Up to 5 "role players"
-                'bench' => 5         // Up to 5 "bench players"
-            ];
-
-            $roleCounts = array_fill_keys(array_keys($roles), 0);
-            $newRoles = [];
-
-            foreach ($rankedPlayers as $playerStat) {
-                foreach ($roles as $role => $limit) {
-                    if ($roleCounts[$role] < $limit) {
-                        $roleCounts[$role]++;
-                        $newRoles[$playerStat->player_id] = $role;
-                        break;
-                    }
-                }
-            }
-
-            // Update roles in the database and ensure changes are made for players whose roles have changed
-            foreach ($rankedPlayers as $playerStat) {
-                $newRole = $newRoles[$playerStat->player_id] ?? 'bench'; // Default to 'bench' if no new role
-
-                // Check if the player's role has changed
-                $currentRole = DB::table('players')->where('id', $playerStat->player_id)->value('role');
-
-                if ($currentRole !== $newRole) {
-                    DB::table('transactions')->insert([
-                        'player_id' => $playerStat->player_id,
-                        'season_id' => $seasonId,
-                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week($weekName)",
-                        'from_team_id' => $teamId,
-                        'to_team_id' => $teamId,
-                        'status' => 'role change',
-                    ]);
-
-                    // Update player role
-                    DB::table('players')->where('id', $playerStat->player_id)->update(['role' => $newRole]);
-                    DB::table('player_season_stats')
-                        ->where('player_id', $playerStat->player_id)
-                        ->where('season_id', $seasonId)
-                        ->update(['role' => $newRole]);
-                }
-            }
-
-            \Log::info("Roles updated for team {$teamId}", ['roleCounts' => $roleCounts]);
-
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error updating roles for team ' . $teamId . ': ' . $e->getMessage());
             return false;
         }
 
