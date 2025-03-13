@@ -16,6 +16,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('player_id')->constrained()->onDelete('cascade');
             $table->foreignId('season_id')->constrained();
+            $table->foreignId('team_id')->constrained();
             $table->string('award_name');
             $table->text('award_description')->nullable();
             $table->timestamps();
