@@ -14,14 +14,15 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('teams', function (Blueprint $table) {
-            $table->id(); // auto-incrementing primary key for the id
+            $table->id(); // Primary key
             $table->string('name'); // Team name
-            $table->string('acronym', 10); // Team acronym, max length of 10
-            $table->string('primary_color', 8); // Primary color of the team (HEX color code)
-            $table->string('secondary_color', 8); // Secondary color of the team (HEX color code)
-            $table->integer('league_id'); // Foreign key for league_id, referencing the 'leagues' table
-            $table->integer('conference_id'); // Foreign key for conference_id, referencing the 'conferences' table
-            $table->timestamps(); // created_at, updated_at
+            $table->string('acronym', 8); // Team acronym (e.g., LAL, GSW)
+            $table->string('primary_color', 8); // HEX color code (e.g., #FF0000)
+            $table->string('secondary_color', 8); // HEX color code
+            $table->unsignedBigInteger('league_id'); // Foreign key for league_id
+            $table->longText('description')->nullable(); // Added long text column
+            $table->string('city',255)->nullable(); // Added long text column for city
+            $table->timestamps();
         });
     }
 

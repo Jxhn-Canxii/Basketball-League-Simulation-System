@@ -427,7 +427,7 @@ class TeamsController extends Controller
     {
         return DB::table('teams')
             ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
-            ->select('teams.name as team_name', 'teams.acronym', 'teams.id','teams.primary_color','teams.secondary_color', 'conferences.name as conference_name')
+            ->select('teams.name as team_name', 'teams.acronym', 'teams.id','teams.city','teams.description','teams.primary_color','teams.secondary_color', 'conferences.name as conference_name')
             ->where('teams.id', $teamId)
             ->get();
     }
