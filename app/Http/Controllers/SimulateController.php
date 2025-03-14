@@ -2098,7 +2098,7 @@ class SimulateController extends Controller
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
                 ->where('player_season_stats.season_id', $seasonId)
                 ->where('players.team_id', $teamId)
-                ->select('player_season_stats.*', 'players.id as player_id', 'players.role as player_role')
+                ->select('player_season_stats.*', 'players.role as player_role')
                 ->orderByDesc('player_season_stats.per') // Order by highest PER first
                 ->get();
 
@@ -2113,19 +2113,19 @@ class SimulateController extends Controller
             foreach ($stats as $index => $player) {
                 // Example role assignment logic (you may change as per your requirements)
                 if (count($starPlayers) < 1) {
-                    $starPlayers[] = $player->id;
+                    $starPlayers[] = $player->player_id;
                     $newRole = 'star player';
                 } elseif (count($allStars) < 2) {
-                    $allStars[] = $player->id;
+                    $allStars[] = $player->player_id;
                     $newRole = 'all star';
                 } elseif (count($starters) < 2) {
-                    $starters[] = $player->id;
+                    $starters[] = $player->player_id;
                     $newRole = 'starter';
                 } elseif (count($rolePlayers) < 5) {
-                    $rolePlayers[] = $player->id;
+                    $rolePlayers[] = $player->player_id;
                     $newRole = 'role player';
                 } else {
-                    $benchPlayers[] = $player->id;
+                    $benchPlayers[] = $player->player_id;
                     $newRole = 'bench';
                 }
 
