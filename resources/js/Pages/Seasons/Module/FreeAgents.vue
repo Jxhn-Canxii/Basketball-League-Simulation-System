@@ -264,7 +264,7 @@
                 </div>
             </div>
         </div>
-        <Modal :show="showAddPlayerModal" :maxWidth="'sm'">
+        <Modal :show="showAddPlayerModal" :maxWidth="'6xl'" title="Add Player" @close="showAddPlayerModal = false">
             <!-- Modal Content -->
             <div class="flex flex-col">
                 <h3 class="text-lg font-medium text-gray-800 mb-4">
@@ -307,13 +307,7 @@
                 </div>
             </div>
         </Modal>
-        <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
-            <button
-                class="flex float-end bg-gray-100 p-3"
-                @click.prevent="showPlayerProfileModal = false"
-            >
-                <i class="fa fa-times text-black-600"></i>
-            </button>
+        <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
             <div class="p-6 block">
                 <!-- Image Section -->
                 <PlayerPerformance :key="showPlayerProfileModal" :player_id="showPlayerProfileModal" />

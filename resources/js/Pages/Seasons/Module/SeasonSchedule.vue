@@ -253,7 +253,7 @@
             />
         </div>
     </div>
-    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'">
+    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'" title="Game Results" @close="isGameResultModalOpen = false">
         <button
             class="flex float-end bg-gray-100 p-3"
             @click.prevent="isGameResultModalOpen = false"
@@ -264,22 +264,14 @@
             <GameResults :game_id="isGameResultModalOpen" />
         </div>
     </Modal>
-    <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'">
-                <button
-                    class="flex float-end bg-gray-100 p-3"
-                    @click.prevent="
-                        isTradeModalOpen = false
-                    "
-                >
-                    <i class="fa fa-times text-black-600"></i>
-                </button>
-                <div class="mt-4 p-3 block">
-                    <Trade
-                        :key="props.conference_id"
-                        :isOffSeason="false"
-                    />
-                </div>
-            </Modal>
+    <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'" title="In Season Trade" @close="isTradeModalOpen = false">
+        <div class="p-3 block">
+            <Trade
+                :key="props.conference_id"
+                :isOffSeason="false"
+            />
+        </div>
+    </Modal>
 </template>
 <script setup>
     import { ref, onMounted } from "vue";

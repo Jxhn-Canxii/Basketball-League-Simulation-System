@@ -1124,13 +1124,7 @@
             </div>
         </div>
         <!-- Modal for Player Profile -->
-        <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
-            <button
-                class="flex float-end bg-gray-100 p-3"
-                @click.prevent="showPlayerProfileModal = false"
-            >
-                <i class="fa fa-times text-black-600"></i>
-            </button>
+        <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
             <div class="p-6 block">
                 <!-- Image Section -->
                 <PlayerPerformance :key="selectedPlayer.player_id" :player_id="selectedPlayer.player_id" />

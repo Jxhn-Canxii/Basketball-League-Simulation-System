@@ -1,17 +1,17 @@
 <template>
     <div class="p-0 m-0">
         <button
-            @click.prevent="isTeamModalOpen = true"
+            @click.prevent="showTeamDetails()"
             v-if="props.showButton == 1"
-            v-bind:class="{
+            :class="{
                 'opacity-25': isTeamModalOpen,
             }"
-            v-bind:disabled="isTeamModalOpen"
+            :disabled="isTeamModalOpen"
             class="px-2 py-2 bg-blue-500 font-bold text-md float-center text-white shadow"
         >
             <i class="fa fa-eye"></i> {{ props.text?? 'View' }}
         </button>
-        <b v-if="props.showButton == 0" class="hover:text-blue-500" @click.prevent="isTeamModalOpen = true">
+        <b v-if="props.showButton == 0" class="hover:text-blue-500" @click.prevent="showTeamDetails()">
             {{ props.text == 'null' ? 'TBD' : props.text }}
             <sup v-if="props.showInfo" class="space-x-1">
                <!-- Defending Conference Champion (CC) -->
@@ -42,7 +42,7 @@
                 <b v-if="data.prev_conference_rank && props.current_conference_rank > 0" :class="{
                     'text-green-500': props.current_conference_rank < data.prev_conference_rank, 
                     'text-red-500': props.current_conference_rank > data.prev_conference_rank, 
-                    'text-gray-500': props.current_conference_rank === data.prev_conference_rank
+                    'text-white': props.current_conference_rank === data.prev_conference_rank
                 }" title="Overall Rank Comparison" class="text-xs">
                     {{ data.prev_conference_rank - props.current_conference_rank }}
                     <span v-if="props.current_conference_rank < data.prev_conference_rank" class="text-green-500">
@@ -51,63 +51,69 @@
                     <span v-if="props.current_conference_rank > data.prev_conference_rank" class="text-red-500">
                         <i class="fa fa-arrow-down"></i>
                     </span>
-                    <span v-if="props.current_conference_rank === data.prev_conference_rank" class="text-gray-500">
+                    <span v-if="props.current_conference_rank === data.prev_conference_rank" class="text-white">
                         <i class="fa fa-minus"></i>
                     </span>
 
                 </b>
             </sup>
         </b>
-        <Modal :show="isTeamModalOpen" :maxWidth="'fullscreen'">
-            <button
-                class="flex float-end bg-gray-100 p-3"
-                @click.prevent="isTeamModalOpen = false"
+        <Modal :show="isTeamModalOpen" :maxWidth="'fullscreen'" title="Team Information" @close="isTeamModalOpen = false">
+            <div 
+                class="flex justify-start" 
+                :style="{ backgroundColor: '#' + team_info.teams.primary_color, color: 'white' }"
+                v-if="team_info?.teams"
             >
-                <i class="fa fa-times text-black-600"></i>
-            </button>
-            <div class="flex justify-start mt-5 border-b border-gray-200">
                 <button
-                    :class="['px-4 py-2', currentTab === 'info' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'info' ? 'text-white' : 'text-white hover:text-gray-700']"
+                    :style="currentTab === 'info' ? { backgroundColor: '#' + team_info.teams.secondary_color } : {}"
                     @click="currentTab = 'info'"
                 >
-                    <i class="fas fa-users mr-2"></i> Team Info
+                    <i class="fas fa-info-circle mr-1"></i> Team Info
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'history' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'history' ? 'text-white' : 'text-white hover:text-gray-700']"
+                    :style="currentTab === 'history' ? { backgroundColor: '#' + team_info.teams.secondary_color } : {}"
                     @click="currentTab = 'history'"
                 >
-                    <i class="fas fa-trophy mr-2"></i> Team Season History
+                    <i class="fas fa-history mr-1"></i> Team History
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'roster' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'roster' ? ` text-white` : 'text-white hover:text-gray-700']"
+                    :style="currentTab === 'roster' ? { backgroundColor: '#' + team_info.teams.secondary_color } : {}"
                     @click="currentTab = 'roster'"
                 >
-                    <i class="fas fa-users-cog mr-2"></i> Team Roster
+                    <i class="fas fa-users-cog mr-1"></i> Team Roster
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'transactions' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'transactions' ? ` text-white` : 'text-white hover:text-gray-700']"
+                    :style="currentTab === 'transactions' ? { backgroundColor: '#' + team_info.teams.secondary_color } : {}"
                     @click="currentTab = 'transactions'"
                 >
-                    <i class="fas fa-exchange-alt mr-2"></i> Team Transactions
+                    <i class="fas fa-exchange-alt mr-1"></i> Team Transactions
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'stars' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'stars' ? ` text-white` : 'text-white hover:text-gray-700']"
+                    :style="currentTab === 'stars' ? { backgroundColor: '#' + team_info.teams.secondary_color } : {}"
                     @click="currentTab = 'stars'"
                 >
-                    <i class="fas fa-star mr-2"></i> Stars
+                    <i class="fas fa-star mr-1"></i> Team Stars
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'timeline' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'timeline' ? ` text-white` : 'text-white hover:text-gray-700']"
+                    :style="currentTab === 'timeline' ? { backgroundColor: '#' + team_info.teams.secondary_color } : {}"
                     @click="currentTab = 'timeline'"
                 >
-                    <i class="fas fa-clock mr-2"></i> Season Timeline
+                    <i class="fas fa-clock mr-1"></i> Season Timeline
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'legend' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'legend' ? ` text-white` : 'text-white hover:text-gray-700']"
+                    :style="currentTab === 'legend' ? { backgroundColor: '#' + team_info.teams.secondary_color } : {}"
                     @click="currentTab = 'legend'"
                 >
-                    <i class="fas fa-clipboard-list mr-2"></i> Top 15 Players
+                    <i class="fas fa-trophy mr-1"></i> Top 15 Players
                 </button>
+
             </div>
 
             <div class="mt-0">
@@ -137,6 +143,8 @@ import Stars from "./Stars.vue";
 
 const isTeamModalOpen = ref(false);
 const currentTab  = ref('info');
+const team_info = ref(false);
+const loading = ref(false);
 const data = ref({
     is_conference_champion: false,
     is_defending_champion: false,
@@ -167,11 +175,30 @@ const props = defineProps({
 
 onMounted(() => {
     if (props.showInfo) {
-        fetchTeamInfo(); // Only fetch data if showInfo is true
+        fetchTeamRecentPerFormance(); // Only fetch data if showInfo is true
     }
 });
 
+const showTeamDetails = async () => {
+    await fetchTeamInfo();
+    isTeamModalOpen.value = true;
+}
 const fetchTeamInfo = async () => {
+    try {
+        loading.value = true;
+        team_info.value = false;
+        const response = await axios.post(route("teams.info"), {
+            team_id: props.team_id,
+        });
+        team_info.value = response.data;
+        loading.value = false;
+    } catch (error) {
+        loading.value = false;
+        console.error("Error fetching team info:", error);
+    }
+};
+
+const fetchTeamRecentPerFormance = async () => {
     try {
         const response = await axios.post(route("team.recent.performance"), {
             team_id: props.team_id,

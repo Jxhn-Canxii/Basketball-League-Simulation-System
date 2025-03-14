@@ -9,7 +9,7 @@
     >
         <i class="fa fa-calendar-plus"></i> New Season
     </button>
-    <Modal :show="isAddModalOpen" :maxWidth="'2xl'">
+    <Modal :show="isAddModalOpen" :maxWidth="'2xl'" title="New Season" @close="isAddModalOpen = false">
         <div
             v-if="isProcessing"
             class="fixed inset-0 bg-black top-50 left-50 text-white text-center text-sm bg-opacity-50 z-40"

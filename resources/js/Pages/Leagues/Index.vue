@@ -67,12 +67,8 @@
                     />
                 </div>
             </div>
-            <Modal :show="isAddModalOpen" :maxWidth="'2xl'">
-                <button class="flex float-end bg-gray-100 p-3" @click.prevent="isAddModalOpen = false">
-                    <i class="fa fa-times text-black-600"></i>
-                </button>
+            <Modal :show="isAddModalOpen" :maxWidth="'2xl'" title="Add League" @close="isAddModalOpen = false">
                 <div class="grid grid-cols-1 gap-6 p-6">
-                    <h2 class="text-lg font-semibold text-gray-800">Add League</h2>
                     <form class="mt-4" @submit.prevent="Add()">
                         <div class="mb-4">
                             <label for="LeagueName" class="block text-sm font-medium text-gray-700">Name</label>
@@ -88,12 +84,8 @@
                     </form>
                 </div>
             </Modal>
-            <Modal :show="isEditModalOpen" :maxWidth="'2xl'">
-                <button class="flex float-end bg-gray-100 p-3" @click.prevent="isEditModalOpen = false">
-                    <i class="fa fa-times text-black-600"></i>
-                </button>
+            <Modal :show="isEditModalOpen" :maxWidth="'2xl'" title="Edit League" @close="isEditModalOpen = false">
                 <div class="grid grid-cols-1 gap-6 p-6">
-                    <h2 class="text-lg font-semibold text-gray-800">Edit League Information</h2>
                     <form class="mt-4" @submit.prevent="Update()">
                         <div class="mb-4">
                             <label for="LeagueName" class="block text-sm font-medium text-gray-700">League Name</label>

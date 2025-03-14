@@ -10,17 +10,8 @@
         >
             <i class="fa fa-edit"></i> Edit
         </button>
-        <Modal :show="isEditModalOpen" :maxWidth="'2xl'">
-            <button
-                class="flex float-end bg-gray-100 p-3"
-                @click.prevent="isEditModalOpen = false"
-            >
-                <i class="fa fa-times text-black-600"></i>
-            </button>
+        <Modal :show="isEditModalOpen" :maxWidth="'2xl'" title="Edit Team" @close="isEditModalOpen = false">
             <div class="grid grid-cols-1 gap-6 p-6">
-                <h2 class="text-lg font-semibold text-gray-800">
-                    Add Team
-                </h2>
                 <form class="mt-4" @submit.prevent="Update()">
                     <div class="mb-4">
                         <label

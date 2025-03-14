@@ -165,13 +165,7 @@
             </table>
         </div>
     </div>
-    <Modal :show="isGameLogsModalOpen" :maxWidth="'fullscreen'">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isGameLogsModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
+        <Modal :show="isGameLogsModalOpen" :maxWidth="'fullscreen'" title="Player Game Logs" @close="isGameLogsModalOpen = false">
         <div class="mt-4 p-3 block">
             <PlayerGameLogs
                 :key="props.player_id"

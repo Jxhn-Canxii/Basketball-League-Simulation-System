@@ -8,17 +8,8 @@
             >
                 <i class="fa fa-plus"></i> Add Team
             </button>
-            <Modal :show="isAddModalOpen" :maxWidth="'2xl'">
-                <button
-                    class="flex float-end bg-gray-100 p-3"
-                    @click.prevent="isAddModalOpen = false"
-                >
-                    <i class="fa fa-times text-black-600"></i>
-                </button>
+            <Modal :show="isAddModalOpen" :maxWidth="'2xl'" title="Add Team" @close="isAddModalOpen = false">
                 <div class="grid grid-cols-1 gap-6 p-6">
-                    <h2 class="text-lg font-semibold text-gray-800">
-                        Add Team
-                    </h2>
                     <form class="mt-4" @submit.prevent="Add()">
                         <div class="mb-4">
                             <label

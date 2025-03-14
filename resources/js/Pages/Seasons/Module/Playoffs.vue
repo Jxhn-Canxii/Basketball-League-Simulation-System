@@ -338,7 +338,7 @@
     <div class="flex justify-center items-center p-4" v-if="loading">
         <p class="text-red-500 font-bold text-2xl">Loading...</p>
     </div>
-    <Modal :show="isTeamComparisonModalOpen" :maxWidth="'6xl'">
+    <Modal :show="isTeamComparisonModalOpen" :maxWidth="'6xl'" title="Team Comparison" @close="isTeamComparisonModalOpen = false">
         <button
             class="flex float-end bg-gray-100 p-3"
             @click.prevent="isTeamComparisonModalOpen = false"
@@ -354,7 +354,7 @@
             />
         </div>
     </Modal>
-    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'">
+   <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'" title="Game Results" @close="isGameResultModalOpen = false">
         <button
             class="flex float-end bg-gray-100 p-3"
             @click.prevent="isGameResultModalOpen = false"

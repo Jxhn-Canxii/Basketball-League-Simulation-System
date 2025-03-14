@@ -24,7 +24,7 @@
     </div>
 
     <!-- Modal for Game Results -->
-    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'">
+    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'" title="Game Result" @close="isGameResultModalOpen = false">
         <button
             class="flex float-end bg-gray-100 p-3"
             @click.prevent="isGameResultModalOpen = false"

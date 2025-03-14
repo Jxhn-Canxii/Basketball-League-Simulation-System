@@ -152,7 +152,7 @@
     </div>
 
     <!-- Modal for Player Profile -->
-    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'">
+    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
         <button
             class="flex float-end bg-gray-100 p-3"
             @click.prevent="showPlayerProfileModal = false"
