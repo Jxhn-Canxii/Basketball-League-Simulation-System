@@ -1,9 +1,10 @@
 <template>
     <!-- Top 10 players module -->
     <div
-        class=" inline-block min-w-full overflow-hidden rounded p-4"
+        class="inline-block min-w-full min-h-screen overflow-hidden rounded p-4"
+        v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
     >
-        <h2 class="text-xl font-semibold text-gray-800" v-if="team_info.teams">
+        <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
             {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
         </h2>
         <span
@@ -14,87 +15,87 @@
         </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
-        <h3 class="text-md font-semibold text-gray-800 mb-6">
+        <h3 class="text-md font-semibold text-gray-800 mb-4">
             Top 15 Players All-time
         </h3>
 
         <table class="w-full text-xs">
-            <thead>
+            <thead :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: 'white' }">
                 <tr
-                    class="border-b bg-gray-50 text-left text-nowrap text-xs font-semibold uppercase tracking-wide text-gray-500"
+                    class="border-b text-left text-nowrap text-xs font-semibold uppercase tracking-wide"
                 >
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Rank
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Player
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Status
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Current Team
                     </th>
                     <!-- <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Teams Played
                     </th> -->
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         MVP
                     </th>
                     <!-- <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Championships
                     </th> -->
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Awards
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Total Points
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Total Assist
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Total Rebound
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Total Blocks
                     </th>
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Total Steals
                     </th>
                     <!-- <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Total Turnovers
                     </th> -->
                     <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
+                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                     >
                         Statistical Points
                     </th>
@@ -301,8 +302,5 @@ th,
 td {
     border: 1px solid #ddd;
     padding: 0.5rem;
-}
-th {
-    background-color: #f4f4f4;
 }
 </style>

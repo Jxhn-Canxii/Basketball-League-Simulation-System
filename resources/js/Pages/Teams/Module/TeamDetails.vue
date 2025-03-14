@@ -115,7 +115,7 @@
                 <TeamHistory :key="props.team_id"  v-if="currentTab === 'history'" :team_id="props.team_id" />
                 <TeamRoster :key="props.team_id" v-if="currentTab === 'roster'" :team_id="props.team_id" />
                 <TeamTransactions :key="props.team_id" v-if="currentTab === 'transactions'" :team_id="props.team_id" />
-                <Top10Player :key="props.team_id" v-if="currentTab === 'legend'" :team_id="props.team_id" />
+                <Top15Player :key="props.team_id" v-if="currentTab === 'legend'" :team_id="props.team_id" />
                 <Stars :key="props.team_id" v-if="currentTab === 'stars'" :team_id="props.team_id" />
                 <SeasonTimeLine :key="props.team_id" v-if="currentTab === 'timeline'" :teamId="props.team_id" />
             </div>
@@ -130,7 +130,7 @@ import axios from 'axios';
 import TeamInfo from "./TeamInfo.vue";
 import TeamHistory from "./TeamHistory.vue";
 import TeamRoster from "./TeamRoster.vue";
-import Top10Player from "./Top10Player.vue";
+import Top15Player from "./Top15Player.vue";
 import SeasonTimeLine from "@/Pages/Analytics/Module/SeasonTimeLine.vue";
 import TeamTransactions from "./TeamTransactions.vue";
 import Stars from "./Stars.vue";

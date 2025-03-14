@@ -1,6 +1,6 @@
 <template>
-    <div class="team-roster p-4">
-        <h2 class="text-xl font-semibold text-gray-800" v-if="team_info.teams">
+    <div class="team-roster p-4 min-h-screen" v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
             {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
         </h2>
         <span
@@ -11,31 +11,31 @@
         </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
-       <div class="flex justify-between mt-5 border-b border-gray-200 p-2">
+       <div class="flex justify-between mt-5 border-b border-gray-200 p-2" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }">
             <div>
                 <button
-                    :class="['px-4 py-2', currentTab === 'all' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'all' ? 'border-b-2 border-blue-500 text-white' : ' hover:text-white font-bold']"
                     @click="currentTab = 'all'"
                 >
                     <i class="fas fa-users mr-2"></i> All Players
                 </button>
                 <button
                     v-if="season_id > 1"
-                    :class="['px-4 py-2', currentTab === 'new' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'new' ? 'border-b-2 border-blue-500 text-white' : ' hover:text-white font-bold']"
                     @click="currentTab = 'new'"
                 >
                     <i class="fas fa-user-plus mr-2"></i> Newly Acquired 
                     <span class="text-red-500 bg-red-200 p-1 rounded-full" v-if="season_id > 1">{{ filteredNewPlayers?.length ?? 0 }}</span>
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'transferred' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'transferred' ? 'border-b-2 border-blue-500 text-white' : ' hover:text-white font-bold']"
                     @click="currentTab = 'transferred'"
                 >
                     <i class="fas fa-exchange-alt mr-2"></i> Transferred
                     <span class="text-red-500 bg-red-200 p-1 rounded-full">{{ filteredTransferredPlayers?.length ?? 0 }}</span>
                 </button>
                 <button
-                    :class="['px-4 py-2', currentTab === 'injured' ? 'border-b-2 border-blue-500 text-blue-500' : 'text-gray-500 hover:text-gray-700']"
+                    :class="['px-4 py-2', currentTab === 'injured' ? 'border-b-2 border-blue-500 text-white' : ' hover:text-white font-bold']"
                     @click="currentTab = 'injured'"
                 >
                     <i class="fas fa-procedures mr-2"></i> Injured
@@ -49,9 +49,9 @@
             </div>
         </div>
 
-        <div v-if="currentTab == 'all'">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-gray-700 mt-4 mb-4">All Players</h3>
+        <div v-if="currentTab == 'all'" class="bg-white py-4 px-4">
+            <div class="flex justify-between items-center">
+                <h3 class="text-black font-bold mt-4 mb-4">All Players</h3>
                 <div>
                     <!-- Toggle Button -->
                     <button 
@@ -66,154 +66,154 @@
              <!-- Players Table -->
             <div class="overflow-x-auto" >
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-50">
+                    <thead :style="{ backgroundColor: '#'+team_info.teams.primary_color,color : 'white' }">
                         <tr>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 No.
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                             Draft
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Name
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Pos
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Exp
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Role
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. w/ Team
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. Left
                             </th>
 
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Overall Ratings"
                             >
                                 OVR
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Best Player of the Game Count"
                             >
                                 BPOTG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Total Team Games"
                             >
                                 GT
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Games Played"
                             >
                                 GP
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Minutes Per Game"
                             >
                                 MPG
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Average Field Goal %"
                             >
                                 AFG
                             </th> -->
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Points Per Game"
                             >
                                 PPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Rebounds Per Game"
                             >
                                 RPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Assist Per Game"
                             >
                                 APG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Steals Per Game"
                             >
                                 SPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Blocks Per Game"
                             >
                                 BPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Turnover Per Game"
                             >
                                 TOPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Fouls Per Game"
                             >
                                 FPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Effeciency"
                             >
                                 EFF
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Player Effeciency Ratings"
                             >
                                 PER
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Fouls Per Game"
                             >
                                 Ratings
                             </th> -->
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Legend
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Actions
                             </th> -->
@@ -223,7 +223,7 @@
                         <tr
                             v-for="(player, index) in filteredPlayers"
                             :key="player.player_id"
-                            v-if="team_roster.players?.length > 0"
+                            v-if="filteredPlayers?.length > 0"
                             :class="player.is_injured == 1 ? 'bg-red-100' : ''"
                             @click.prevent="showPlayerProfile(player)"
                             class="hover:bg-gray-100"
@@ -360,159 +360,159 @@
                 </table>
             </div>
         </div>
-        <div v-if="currentTab == 'new'">
-            <h3 class="text-gray-700 mt-4 mb-4" v-if="season_id > 1">Newly Aquired Players</h3>
+        <div v-if="currentTab == 'new'" class="bg-white py-4 px-4">
+            <h3 class="text-black font-bold mt-4 mb-4" v-if="season_id > 1">Newly Aquired Players</h3>
             <!-- Players Table -->
             <div class="overflow-x-auto" v-if="season_id > 1">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-50">
+                    <thead :style="{ backgroundColor: '#'+team_info.teams.primary_color,color : 'white' }">
                         <tr>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 No.
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                             Draft
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Name
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Pos
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Exp
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Role
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. w/ Team
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. Left
                             </th>
 
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Overall Ratings"
                             >
                                 OVR
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Best Player of the Game Count"
                             >
                                 BPOTG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Total Team Games"
                             >
                                 GT
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Games Played"
                             >
                                 GP
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Minutes Per Game"
                             >
                                 MPG
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Average Field Goal %"
                             >
                                 AFG
                             </th> -->
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Points Per Game"
                             >
                                 PPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Rebounds Per Game"
                             >
                                 RPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Assist Per Game"
                             >
                                 APG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Steals Per Game"
                             >
                                 SPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Blocks Per Game"
                             >
                                 BPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Turnover Per Game"
                             >
                                 TOPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Fouls Per Game"
                             >
                                 FPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Effeciency"
                             >
                                 EFF
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Player Effeciency Ratings"
                             >
                                 PER
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Fouls Per Game"
                             >
                                 Ratings
                             </th> -->
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Legend
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Actions
                             </th> -->
@@ -662,159 +662,159 @@
                 <p>No record...</p>
             </div>
         </div>
-        <div v-if="currentTab == 'transferred'">
-            <h3 class="text-gray-700 mt-4 mb-4">Released Players</h3>
+        <div v-if="currentTab == 'transferred'" class="bg-white py-4 px-4">
+            <h3 class="text-black font-bold mt-4 mb-4">Released Players</h3>
             <!-- Players Table -->
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-50">
+                    <thead :style="{ backgroundColor: '#'+team_info.teams.primary_color,color : 'white' }">
                         <tr>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 No.
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                             Draft
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Name
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Pos
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Exp
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Role
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. w/ Team
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. Left
                             </th>
 
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Overall Ratings"
                             >
                                 OVR
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Best Player of the Game Count"
                             >
                                 BPOTG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Total Team Games"
                             >
                                 GT
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Games Played"
                             >
                                 GP
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Minutes Per Game"
                             >
                                 MPG
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Average Field Goal %"
                             >
                                 AFG
                             </th> -->
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Points Per Game"
                             >
                                 PPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Rebounds Per Game"
                             >
                                 RPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Assist Per Game"
                             >
                                 APG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Steals Per Game"
                             >
                                 SPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Blocks Per Game"
                             >
                                 BPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Turnover Per Game"
                             >
                                 TOPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Fouls Per Game"
                             >
                                 FPG
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Effeciency"
                             >
                                 EFF
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Player Effeciency Ratings"
                             >
                                 PER
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Fouls Per Game"
                             >
                                 Ratings
                             </th> -->
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Legend
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Actions
                             </th> -->
@@ -824,7 +824,7 @@
                         <tr
                             v-for="(player, index) in filteredTransferredPlayers"
                             :key="player.player_id"
-                            v-if="team_roster.players?.length > 0"
+                            v-if="filteredTransferredPlayers?.length > 0"
                             :class="player.is_injured == 1 ? 'bg-red-100' : ''"
                             @click.prevent="showPlayerProfile(player)"
                             class="hover:bg-gray-100"
@@ -959,69 +959,69 @@
             </div>
            
         </div>
-        <div v-if="currentTab == 'injured'">
-            <h3 class="text-gray-700 mt-4 mb-4">Injured Players</h3>
+        <div v-if="currentTab == 'injured'" class="bg-white py-4 px-4">
+            <h3 class="text-black font-bold mt-4 mb-4">Injured Players</h3>
             <!-- Players Table -->
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-50">
+                    <thead :style="{ backgroundColor: '#'+team_info.teams.primary_color,color : 'white' }">
                         <tr>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 No.
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                             Draft
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Name
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Pos
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Exp
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Role
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. w/ Team
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 text-wrap uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
                                 title="Remaining Contract Years"
                             >
                                 Yrs. Left
                             </th>
 
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                 title="Estimated time of absence"
                             >
                                 ETA
                             </th>
                             <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Legend
                             </th>
                             <!-- <th
-                                class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                             >
                                 Actions
                             </th> -->
@@ -1031,7 +1031,7 @@
                         <tr
                             v-for="(player, index) in filteredInjuredPlayers"
                             :key="player.player_id"
-                            v-if="team_roster.players?.length > 0"
+                            v-if="filteredInjuredPlayers?.length > 0"
                             :class="player.is_injured == 1 ? 'bg-red-100' : ''"
                             @click.prevent="showPlayerProfile(player)"
                             class="hover:bg-gray-100"

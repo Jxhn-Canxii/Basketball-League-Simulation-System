@@ -379,11 +379,8 @@ import {
     roundStatusFormatter,
 } from "@/Utility/Formatter.js";
 
-import TeamHistory from "@/Pages/Teams/Module/TeamHistory.vue";
-import TeamInfo from "@/Pages/Teams/Module/TeamInfo.vue";
 import TeamComparison from "@/Pages/Teams/Module/TeamComparison.vue";
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
-import Top10Player from "@/Pages/Teams/Module/Top10Player.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 
 const isAddModalOpen = ref(false);

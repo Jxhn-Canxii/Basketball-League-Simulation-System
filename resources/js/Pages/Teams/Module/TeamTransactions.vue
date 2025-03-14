@@ -1,6 +1,6 @@
 <template>
-    <div class="team-info p-4">
-        <h2 class="text-xl font-semibold text-gray-800" v-if="team_info.teams">
+    <div class="team-info p-4" v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
             {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
         </h2>
         <span
@@ -12,14 +12,14 @@
         <hr class="my-4 border-t border-gray-200" />
         <div class="gap-4 max-h-100">
             <table class="min-w-full divide-y divide-gray-200 p-2">
-                <thead class="bg-gray-50 text-nowrap">
+                <thead class="text-nowrap" :style="{ backgroundColor: '#'+team_info.teams.primary_color,color: 'white' }">
                     <tr>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Season</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">From Team</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">To Team</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium  uppercase tracking-wider">Season</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium  uppercase tracking-wider">Player</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium  uppercase tracking-wider">From Team</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium  uppercase tracking-wider">To Team</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium  uppercase tracking-wider">Details</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium  uppercase tracking-wider">Status</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">

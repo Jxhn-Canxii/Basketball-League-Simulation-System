@@ -1,23 +1,29 @@
 <template>
-    <div class="team-info p-4">
-        <!-- <h2 class="text-xl font-semibold text-gray-800" v-if="team_history.history">
-            {{ team_history.history[0].team_name ?? "-" }} ({{ team_history.history[0].team_acronym ?? "-" }})
-        </h2> -->
+    <div class="team-info p-4 min-h-screen" v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
+            {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
+        </h2>
+        <span
+            v-if="team_info.teams"
+            class="inline-flex items-center px-2.5 py-0.5 bg-green-300 text-green-600 rounded text-xs font-medium"
+        >
+            {{ team_info.teams.conference_name ?? "-" }}
+        </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
         <div class="gap-4 max-h-100">
             <table class="min-w-full divide-y divide-gray-200 p-2">
-                <thead class="bg-gray-50 text-nowrap">
+                <thead class="text-nowrap text-white" :style="{ backgroundColor: '#'+team_info.teams.primary_color }">
                     <tr>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Season</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Wins</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Losses</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Conference Rank</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conference Champions</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">National Rank</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">National Champions</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Round Played</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">National Finals</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Season</th>
+                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Wins</th>
+                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Losses</th>
+                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Conference Rank</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Conference Champions</th>
+                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">National Rank</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Champions</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Round Played</th>
+                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Finals</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
@@ -120,7 +126,7 @@ const props = defineProps({
 });
 const showTooltip = ref(false);
 const team_history = ref([]);
-
+const team_info = ref([]);
 const search = ref({
     page_num: 1,
     search: "",
@@ -129,7 +135,18 @@ const search = ref({
 ;
 onMounted(() => {
     fetchTeamHistory();
+    fetchTeamInfo();
 });
+const fetchTeamInfo = async (id) => {
+    try {
+        const response = await axios.post(route("teams.info"), {
+            team_id: props.team_id,
+        });
+        team_info.value = response.data;
+    } catch (error) {
+        console.error("Error fetching team info:", error);
+    }
+};
 const fetchTeamHistory = async () => {
     try {
         search.value.team_id = props.team_id;
