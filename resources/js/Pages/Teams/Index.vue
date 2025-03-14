@@ -4,9 +4,7 @@
 
         <AuthenticatedLayout>
             <template #header> Teams </template>
-            <div
-                class="inline-block min-w-full bg-white overflow-hidden rounded shadow p-2"
-            >
+            <div class="inline-block min-w-full bg-white overflow-hidden rounded shadow p-2">
                 <Add @transaction_id="handleTransaction()" />
                 <input
                     type="text"
@@ -18,64 +16,53 @@
                 />
                 <table class="w-full whitespace-no-wrap">
                     <thead>
-                        <tr
-                            class="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500"
-                        >
-                            <th
-                                class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                            >
+                        <tr class="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                            <th class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                                 Team Name
                             </th>
-                            <th
-                                class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                            >
+                            <th class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                                 League
                             </th>
-                            <th
-                                class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                            >
+                            <th class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                                 Conference
                             </th>
-                            <th
-                                class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
-                            >
+                            <th class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                                Colors
+                            </th>
+                            <th class="border-b-2 border-gray-200 bg-gray-100 px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                                 Action
                             </th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr
-                            v-for="team in teams.teams"
-                            v-if="teams.total_pages"
-                            :key="team.id"
-                            class="text-gray-700"
-                        >
-                            <td
-                                class="border-b border-gray-200 bg-white px-5 py-5 text-sm"
-                            >
-                                <p
-                                    class="text-gray-900 whitespace-no-wrap uppercase"
-                                >
-                                    {{ team.name }} ({{ team.acronym }})
-                                </p>
+                        <tr v-for="team in teams.teams" v-if="teams.total_pages" :key="team.id" class="text-gray-700">
+                            <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm">
+                                <TeamDetails
+                                :team_id="team.id" 
+                                :key="team.id"
+                                :showInfo="false"
+                                :current_conference_rank="0"
+                                :season_id="teams.current_season"
+                                :showButton="0" 
+                                :text="`${team.name} (${team.acronym})`" />
                             </td>
-                            <td
-                                class="border-b border-gray-200 bg-white px-5 py-5 text-sm"
-                            >
+                            <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm">
                                 <p class="text-gray-900 whitespace-no-wrap">
                                     {{ team.league_name }}
                                 </p>
                             </td>
-                            <td
-                                class="border-b border-gray-200 bg-white px-5 py-5 text-sm"
-                            >
+                            <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm">
                                 <p class="text-gray-900 whitespace-no-wrap">
                                     {{ team.conference_name }} Conference
                                 </p>
                             </td>
-                            <td
-                                class="border-b border-gray-200 bg-white px-5 py-5 text-sm"
-                            >
+                            <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm">
+                                <div class="flex items-center space-x-2">
+                                    <span class="w-5 h-5 rounded-full border" :style="{ backgroundColor: '#'+team.primary_color }"></span>
+                                    <span class="w-5 h-5 rounded-full border" :style="{ backgroundColor: '#'+team.secondary_color }"></span>
+                                </div>
+                            </td>
+                            <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm">
                                 <div class="flex">
                                     <TeamDetails :team_id="team.id" :key="team.id" :showButton="1" text="View" />
                                     <Edit :key="team.id" :data="team" @transaction_id="handleTransaction()" />
@@ -84,10 +71,7 @@
                             </td>
                         </tr>
                         <tr v-else>
-                            <td
-                                colspan="4"
-                                class="border-b text-center font-bold text-lg border-gray-200 bg-white px-5 py-5"
-                            >
+                            <td colspan="5" class="border-b text-center font-bold text-lg border-gray-200 bg-white px-5 py-5">
                                 <p class="text-red-500 whitespace-no-wrap">
                                     No Data Found!
                                 </p>

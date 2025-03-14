@@ -1,18 +1,21 @@
 <template>
-<div class="team-info p-4">
-    <h2
-        class="text-xl font-semibold text-gray-800"
-        v-if="team_info"
+<div class="team-info px-0 px-4 text-white min-h-screen" v-if="team_info && team_info.teams"  :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+    <div class="flex justify-start p-3 border-b border-gray-200 rounded" 
+    :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
     >
-        {{ team_info.teams.team_name ?? "-" }} (
-        {{ team_info.teams.acronym ?? "-" }})
-    </h2>
-    <!-- Divider -->
-    <hr class="my-4 border-t border-gray-200" />
-
-    <div class="mt-4 grid md:grid-cols-5 grid-cols-1 gap-4" v-if="team_info">
+        <h2
+            class="text-xl font-semibold"
+        >
+            {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
+        </h2>
+        <div class="flex items-center space-x-1 px-4">
+            <span class="w-5 h-5 rounded-full border" :style="{ background: '#'+team_info.teams.primary_color }"></span>
+            <span class="w-5 h-5 rounded-full border" :style="{ backgroundColor: '#'+team_info.teams.secondary_color }"></span>
+        </div>
+    </div>
+    <div class="mt-4 grid md:grid-cols-5 grid-cols-1 gap-4 p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }" v-if="team_info">
         <div>
-            <h3 class="text-md font-semibold text-gray-800">
+            <h3 class="text-md font-semibold text-white">
                 All-Time Stats
             </h3>
             <p>
@@ -68,7 +71,7 @@
             </p>
         </div>
         <div>
-            <h3 class="text-md font-semibold text-gray-800">
+            <h3 class="text-md font-semibold text-white">
                 Finals Stats
             </h3>
             <p>
@@ -85,7 +88,7 @@
             </p>
         </div>
         <div >
-            <h3 class="text-md font-semibold text-gray-800">
+            <h3 class="text-md font-semibold text-white">
                 Playoff Stats
             </h3>
             <p>
@@ -102,7 +105,7 @@
             </p>
         </div>
         <div >
-            <h3 class="text-md font-semibold text-gray-800">
+            <h3 class="text-md font-semibold text-white">
                Game Streaks
             </h3>
             <p>
@@ -115,7 +118,7 @@
             </p>
         </div>
         <div>
-            <h3 class="text-md font-semibold text-gray-800">
+            <h3 class="text-md font-semibold text-white">
                 Playoff Round Appearance
             </h3>
             <p>
@@ -137,50 +140,48 @@
         </div>
     </div>
     <div class="mt-4 grid grid-cols-4 gap-4" v-else>
-        <p class="text-red-500">No Team Info</p>
+        <p class="text-white">No Team Info</p>
     </div>
     <!-- Divider -->
-    <hr class="my-4 border-t border-gray-200" />
-
     <div
         class="mt-4 grid grid-cols-7 gap-4"
         v-if="team_last_season"
     >
-    <div>
-        <h3 class="text-xs text-nowrap font-semibold text-gray-800">
-            Last Play-ins Round 1
-        </h3>
-        <p class="text-sm">
-            {{
-                team_last_season.lastPlayInsRound1Season ??
-                "n/a"
-            }}
-        </p>
-    </div>
-    <div>
-        <h3 class="text-xs text-nowrap font-semibold text-gray-800">
-            Last Play-ins Round 2
-        </h3>
-        <p class="text-sm">
-            {{
-                team_last_season.lastPlayInsRound2Season ??
-                "n/a"
-            }}
-        </p>
-    </div>
-    <div>
-        <h3 class="text-xs text-nowrap font-semibold text-gray-800">
-            Last Play-ins Round Finals
-        </h3>
-        <p class="text-sm">
-            {{
-                team_last_season.lastPlayInsFinalsSeason ??
-                "n/a"
-            }}
-        </p>
-    </div>
-        <div>
-            <h3 class="text-xs text-nowrap font-semibold text-gray-800">
+        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+            <h3 class="text-xs text-nowrap font-semibold text-white">
+                Last Play-ins Round 1
+            </h3>
+            <p class="text-sm">
+                {{
+                    team_last_season.lastPlayInsRound1Season ??
+                    "n/a"
+                }}
+            </p>
+        </div>
+        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }">
+            <h3 class="text-xs text-nowrap font-semibold text-white">
+                Last Play-ins Round 2
+            </h3>
+            <p class="text-sm">
+                {{
+                    team_last_season.lastPlayInsRound2Season ??
+                    "n/a"
+                }}
+            </p>
+        </div>
+        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+            <h3 class="text-xs text-nowrap font-semibold text-white">
+                Last Play-ins Round Finals
+            </h3>
+            <p class="text-sm">
+                {{
+                    team_last_season.lastPlayInsFinalsSeason ??
+                    "n/a"
+                }}
+            </p>
+        </div>
+        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }">
+            <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Round of 16
             </h3>
             <p class="text-sm">
@@ -190,8 +191,8 @@
                 }}
             </p>
         </div>
-        <div>
-            <h3 class="text-xs text-nowrap font-semibold text-gray-800">
+        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+            <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Quarter Final
             </h3>
             <p class="text-sm">
@@ -201,8 +202,8 @@
                 }}
             </p>
         </div>
-        <div>
-            <h3 class="text-xs text-nowrap font-semibold text-gray-800">
+        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }">
+            <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Semi Final
             </h3>
             <p class="text-sm">
@@ -212,8 +213,8 @@
                 }}
             </p>
         </div>
-        <div>
-            <h3 class="text-xs text-nowrap font-semibold text-gray-800">
+        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+            <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Final
             </h3>
             <p class="text-sm">
@@ -222,148 +223,145 @@
         </div>
     </div>
 
-        <!-- Divider -->
-        <hr class="my-4 border-t border-gray-200" />
-
-        <div class="mt-4 grid grid-cols-5 gap-4">
-            <div
-                v-if="
-                    team_season_finals &&
-                    team_season_finals.finalsWinSeasons.length > 0
-                "
-            >
-                <h3 class="text-md font-semibold text-gray-800">
-                    Champions Seasons
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <span
-                        v-for="(
-                            season, index
-                        ) in team_season_finals.finalsWinSeasons"
-                        :key="index"
-                        class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
-                        >{{ season }}</span
-                    >
-                </div>
-            </div>
-            <div
-                class="mt-4 grid grid-cols-1 gap-4 text-center"
-                v-else
-            >
-                <p class="text-red-500">No Champions Season</p>
-            </div>
-            <div
-                v-if="
-                    team_season_finals &&
-                    team_season_finals.finalsSeasons.length > 0
-                "
-            >
-                <h3 class="text-md font-semibold text-gray-800">
-                    Finals Appearance
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <span
-                        v-for="(
-                            season, index
-                        ) in team_season_finals.finalsSeasons"
-                        :key="index"
-                        class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
-                        >{{ season }}</span
-                    >
-                </div>
-            </div>
-            <div
-                class="mt-4 grid grid-cols-1 gap-4 text-center"
-                v-else
-            >
-                <p class="text-red-500">No Finals Season</p>
-            </div>
-            <div
-                v-if="
-                    team_season_standings &&
-                    team_season_standings.topStandingsSeasons
-                        .length > 0
-                "
-            >
-                <h3 class="text-md font-semibold text-gray-800">
-                    Top Seasons
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <span
-                        v-for="(
-                            season, index
-                        ) in team_season_standings.topStandingsSeasons"
-                        :key="index"
-                        class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
-                        >{{ season }}</span
-                    >
-                </div>
-            </div>
-            <div
-                class="mt-4 grid grid-cols-1 gap-4 text-center"
-                v-else
-            >
-                <p class="text-red-500">No Top Season</p>
-            </div>
-            <div
-                v-if="
-                    team_season_standings &&
-                    team_season_standings.playOffAppearance
-                        .length > 0
-                "
-            >
-                <h3 class="text-md font-semibold text-gray-800">
-                Play-offs Appearance
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <span
-                        v-for="(
-                            season, index
-                        ) in team_season_standings.playOffAppearance"
-                        :key="index"
-                        class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
-                        >{{ season }}</span
-                    >
-                </div>
-            </div>
-            <div
-                class="mt-4 grid grid-cols-1 gap-4 text-center"
-                v-else
-            >
-                <p class="text-red-500">No Play-offs Appearance</p>
-            </div>
-            <div
-                v-if="
-                    team_season_standings &&
-                    team_season_standings.bottomStandingsSeasons
-                        .length > 0
-                "
-            >
-                <h3 class="text-md font-semibold text-gray-800">
-                    Worst Seasons
-                </h3>
-                <div class="flex flex-wrap gap-2">
-                    <span
-                        v-for="(
-                            season, index
-                        ) in team_season_standings.bottomStandingsSeasons"
-                        :key="index"
-                        class="inline-block bg-red-500 text-white px-2 py-1 rounded-md text-sm"
-                        >{{ season }}</span
-                    >
-                </div>
-            </div>
-            <div
-                class="mt-4 grid grid-cols-1 gap-4 text-center"
-                v-else
-            >
-                <p class="text-red-500">No Worst Season</p>
+       
+    <div class="mt-4 grid grid-cols-5 gap-4 p-4 text-lg" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <div
+            v-if="
+                team_season_finals &&
+                team_season_finals.finalsWinSeasons.length > 0
+            "
+        >
+            <h3 class="text-md font-semibold text-white">
+                Champions Seasons
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <span
+                    v-for="(
+                        season, index
+                    ) in team_season_finals.finalsWinSeasons"
+                    :key="index"
+                    class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
+                    >{{ season }}</span
+                >
             </div>
         </div>
-        <hr class="my-4 border-t border-gray-200" />
+        <div
+            class="mt-4 grid grid-cols-1 gap-4 text-center"
+            v-else
+        >
+            <p class="text-white">No Champions Season</p>
+        </div>
+        <div
+            v-if="
+                team_season_finals &&
+                team_season_finals.finalsSeasons.length > 0
+            "
+        >
+            <h3 class="text-md font-semibold text-white">
+                Finals Appearance
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <span
+                    v-for="(
+                        season, index
+                    ) in team_season_finals.finalsSeasons"
+                    :key="index"
+                    class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
+                    >{{ season }}</span
+                >
+            </div>
+        </div>
+        <div
+            class="mt-4 grid grid-cols-1 gap-4 text-center"
+            v-else
+        >
+            <p class="text-white">No Finals Season</p>
+        </div>
+        <div
+            v-if="
+                team_season_standings &&
+                team_season_standings.topStandingsSeasons
+                    .length > 0
+            "
+        >
+            <h3 class="text-md font-semibold text-white">
+                Top Seasons
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <span
+                    v-for="(
+                        season, index
+                    ) in team_season_standings.topStandingsSeasons"
+                    :key="index"
+                    class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
+                    >{{ season }}</span
+                >
+            </div>
+        </div>
+        <div
+            class="mt-4 grid grid-cols-1 gap-4 text-center"
+            v-else
+        >
+            <p class="text-white">No Top Season</p>
+        </div>
+        <div
+            v-if="
+                team_season_standings &&
+                team_season_standings.playOffAppearance
+                    .length > 0
+            "
+        >
+            <h3 class="text-md font-semibold text-white">
+            Play-offs Appearance
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <span
+                    v-for="(
+                        season, index
+                    ) in team_season_standings.playOffAppearance"
+                    :key="index"
+                    class="inline-block bg-green-500 text-white px-2 py-1 rounded-md text-sm"
+                    >{{ season }}</span
+                >
+            </div>
+        </div>
+        <div
+            class="mt-4 grid grid-cols-1 gap-4 text-center"
+            v-else
+        >
+            <p class="text-white">No Play-offs Appearance</p>
+        </div>
+        <div
+            v-if="
+                team_season_standings &&
+                team_season_standings.bottomStandingsSeasons
+                    .length > 0
+            "
+        >
+            <h3 class="text-md font-semibold text-white">
+                Worst Seasons
+            </h3>
+            <div class="flex flex-wrap gap-2">
+                <span
+                    v-for="(
+                        season, index
+                    ) in team_season_standings.bottomStandingsSeasons"
+                    :key="index"
+                    class="inline-block bg-red-500 text-white px-2 py-1 rounded-md text-sm"
+                    >{{ season }}</span
+                >
+            </div>
+        </div>
+        <div
+            class="mt-4 grid grid-cols-1 gap-4 text-center"
+            v-else
+        >
+            <p class="text-white">No Worst Season</p>
+        </div>
+    </div>
 
-    <div class="mt-4" v-if="team_rivals && team_rivals.top_rivals.length > 0">
-        <h3 class="text-md font-semibold text-gray-800">
+    <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }" v-if="team_rivals && team_rivals.top_rivals.length > 0">
+        <h3 class="text-md font-semibold text-white">
             Rivals
         </h3>
         <div
@@ -379,7 +377,7 @@
                 >
                     <div class="px-4 py-5 sm:px-6">
                         <h3
-                            class="text-xs font-bold text-nowrap uppercase leading-6 text-gray-800"
+                            class="text-xs font-bold text-nowrap uppercase leading-6 text-white"
                         >
                             {{ team.opponent_name }}
                         </h3>
@@ -437,16 +435,14 @@
             </div>
         </div>
     </div>
-    <div class="mt-4 grid grid-cols-1 gap-4 text-center" v-else>
-        <p class="text-red-500">
+    <div class="mt-4 grid grid-cols-1 gap-4 text-center p-4" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }" v-else>
+        <p class="text-white">
             No Rivals Information
         </p>
     </div>
-    <!-- Divider -->
-    <hr class="my-4 border-t border-gray-200" />
 
-    <div class="mt-4" v-if="team_matches && team_matches.lastTenGames.length > 0">
-        <h3 class="text-md font-semibold text-gray-800">
+    <div class="mt-4 p-4  rounded"  :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }" v-if="team_matches && team_matches.lastTenGames.length > 0">
+        <h3 class="text-md font-semibold text-white">
             Last Ten Games ({{
                 calculateRecord(team_matches.lastTenGames)
             }})
@@ -464,7 +460,7 @@
                 >
                     <div class="px-4 py-5 sm:px-6">
                         <h3
-                            class="text-xs font-bold text-nowrap uppercase leading-6 text-gray-800"
+                            class="text-xs font-bold text-nowrap uppercase leading-6 text-white"
                         >
                             {{ game.home_team_name }} vs
                             {{ game.away_team_name }}
@@ -486,7 +482,7 @@
                             <dd
                                 :class="[
                                     game.status === 'Loss'
-                                        ? 'font-bold text-red-500'
+                                        ? 'font-bold text-white'
                                         : '',
                                     game.away_score <
                                     game.home_score
@@ -518,7 +514,7 @@
                             <dd
                                 :class="[
                                     game.status === 'Loss'
-                                        ? 'font-bold text-red-500'
+                                        ? 'font-bold text-white'
                                         : '',
                                     game.away_score >
                                     game.home_score
@@ -545,20 +541,18 @@
             </div>
         </div>
     </div>
-    <div class="mt-4 grid grid-cols-1 gap-4 text-center" v-else>
-        <p class="text-red-500">No Recent Matches Available</p>
+    <div class="mt-4 grid grid-cols-1 gap-4 text-center p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }" v-else>
+        <p class="text-white">No Recent Matches Available</p>
     </div>
-    <!-- Divider -->
-    <hr class="my-4 border-t border-gray-200" />
 
     <div
-        class="mt-4"
+       class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }"
         v-if="
             team_head_2_head &&
             team_head_2_head.headToHeadBattles.length > 0
         "
     >
-        <h3 class="text-md font-semibold text-gray-800">
+        <h3 class="text-md font-semibold text-white">
             Head-to-Head Battles
         </h3>
         <div class="mt-4 overflow-auto">
@@ -615,8 +609,8 @@
             </table>
         </div>
     </div>
-    <div class="mt-4 grid grid-cols-1 gap-4 text-center" v-else>
-        <p class="text-red-500">
+    <div class="mt-4 grid grid-cols-1 gap-4 text-center p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }" v-else>
+        <p class="text-white">
             No Head to Head Battle Information
         </p>
     </div>

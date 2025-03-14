@@ -54,12 +54,14 @@ class TeamsController extends Controller
             ->limit($perPage)
             ->get();
 
+        $latestSeason = get_current_season_id();
         return response()->json([
             'teams' => $teams,
             'total_pages' => $totalPages,
             'current_page' => $currentPage,
             'total_count' => $totalCount,
             'search' => $searchQuery,
+            'current_season' => $latestSeason,
         ]);
     }
 
@@ -425,7 +427,7 @@ class TeamsController extends Controller
     {
         return DB::table('teams')
             ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
-            ->select('teams.name as team_name', 'teams.acronym', 'teams.id', 'conferences.name as conference_name')
+            ->select('teams.name as team_name', 'teams.acronym', 'teams.id','teams.primary_color','teams.secondary_color', 'conferences.name as conference_name')
             ->where('teams.id', $teamId)
             ->get();
     }

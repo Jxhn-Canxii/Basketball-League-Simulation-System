@@ -151,7 +151,6 @@ const form = useForm({
 });
 
 onMounted(() => {
-    leagueDropdown();
 });
 
 const leagueDropdown = async () => {

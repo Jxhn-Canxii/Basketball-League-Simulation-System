@@ -110,7 +110,7 @@
                 </button>
             </div>
 
-            <div class="mt-4">
+            <div class="mt-0">
                 <TeamInfo :key="props.team_id" v-if="currentTab === 'info'" :team_id="props.team_id" />
                 <TeamHistory :key="props.team_id"  v-if="currentTab === 'history'" :team_id="props.team_id" />
                 <TeamRoster :key="props.team_id" v-if="currentTab === 'roster'" :team_id="props.team_id" />
