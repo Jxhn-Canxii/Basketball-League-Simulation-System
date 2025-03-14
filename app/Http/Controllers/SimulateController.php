@@ -2176,8 +2176,7 @@ class SimulateController extends Controller
 
         return true;
     }
-
-
+    
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
         if (empty($playerGameStats)) {
