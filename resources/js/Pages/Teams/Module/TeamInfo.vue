@@ -152,7 +152,7 @@
         class="mt-4 grid grid-cols-7 gap-4"
         v-if="team_last_season"
     >
-        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <div class="p-4 border rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
             <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Play-ins Round 1
             </h3>
@@ -174,7 +174,7 @@
                 }}
             </p>
         </div>
-        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <div class="p-4 border rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
             <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Play-ins Round Finals
             </h3>
@@ -196,7 +196,7 @@
                 }}
             </p>
         </div>
-        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <div class="p-4 border rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
             <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Quarter Final
             </h3>
@@ -218,7 +218,7 @@
                 }}
             </p>
         </div>
-        <div class="p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+        <div class="p-4 border rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
             <h3 class="text-xs text-nowrap font-semibold text-white">
                 Last Final
             </h3>
@@ -382,7 +382,7 @@
                 >
                     <div class="px-4 py-5 sm:px-6">
                         <h3
-                            class="text-xs font-bold text-nowrap uppercase leading-6 text-white"
+                            class="text-xs font-bold text-nowrap uppercase leading-6"
                         >
                             {{ team.opponent_name }}
                         </h3>
@@ -446,7 +446,7 @@
         </p>
     </div>
 
-    <div class="mt-4 p-4  rounded"  :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }" v-if="team_matches && team_matches.lastTenGames.length > 0">
+    <div class="mt-4 p-4  rounded"  :style="{ backgroundColor: '#'+team_info.teams.secondary_color,color: '#'+team_info.teams.primary_color }" v-if="team_matches && team_matches.lastTenGames.length > 0">
         <h3 class="text-md font-semibold text-white">
             Last Ten Games ({{
                 calculateRecord(team_matches.lastTenGames)
@@ -465,7 +465,7 @@
                 >
                     <div class="px-4 py-5 sm:px-6">
                         <h3
-                            class="text-xs font-bold text-nowrap uppercase leading-6 text-white"
+                            class="text-xs font-bold text-nowrap uppercase leading-6"
                         >
                             {{ game.home_team_name }} vs
                             {{ game.away_team_name }}
@@ -487,7 +487,7 @@
                             <dd
                                 :class="[
                                     game.status === 'Loss'
-                                        ? 'font-bold text-white'
+                                        ? 'font-bold'
                                         : '',
                                     game.away_score <
                                     game.home_score
@@ -519,7 +519,7 @@
                             <dd
                                 :class="[
                                     game.status === 'Loss'
-                                        ? 'font-bold text-white'
+                                        ? 'font-bold'
                                         : '',
                                     game.away_score >
                                     game.home_score
