@@ -307,12 +307,6 @@
                 </div>
             </Modal>
             <Modal :show="isDraftModalOpen" :maxWidth="'6xl'" title="Draft Rookie Players" @close="isDraftModalOpen = false">
-                <button
-                    class="flex float-end bg-gray-100 p-3"
-                    @click.prevent="isDraftModalOpen = false"
-                >
-                    <i class="fa fa-times text-black-600"></i>
-                </button>
                 <div class="p-3 block">
                     <Draft @newSeason="handleNewSeason" />
                 </div>
@@ -326,14 +320,6 @@
                 </div>
             </Modal>
             <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'" title="Trade Plyers" @close="isTradeModalOpen = false">
-                <button
-                    class="flex float-end bg-gray-100 p-3"
-                    @click.prevent="
-                        isTradeModalOpen = false
-                    "
-                >
-                    <i class="fa fa-times text-black-600"></i>
-                </button>
                 <div class="mt-4 p-3 block">
                     <Trade
                         @newSeason="handleTradeSeason"
