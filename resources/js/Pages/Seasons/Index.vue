@@ -317,7 +317,7 @@
                     <Draft @newSeason="handleNewSeason" />
                 </div>
             </Modal>
-            <Modal :show="isPlayerAwardsModalOpen" :maxWidth="'6xl'" title="Season Awards" @close="isPlayerAwardsModalOpen = false">
+            <Modal :show="isPlayerAwardsModalOpen" :maxWidth="'6xl'" title="Season Awards" @close="closeAwardsModal()">
                 <div class="p-3 block">
                     <Awards
                         @newSeason="handleNewSeason"
@@ -663,6 +663,11 @@ const seasonsDropdown = async () => {
 const changeTab = (tab) => {
     currentTab.value = tab;
 };
+
+const closeAwardsModal = async () => {
+    await fetchSeasons();
+    isPlayerAwardsModalOpen.value = false;
+}
 onMounted(() => {
     fetchSeasons();
     leagueDropdown();
