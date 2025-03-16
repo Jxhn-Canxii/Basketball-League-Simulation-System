@@ -1580,11 +1580,14 @@ class SimulateController extends Controller
         // Find free agents for temporary contracts
         $freeAgents = DB::table('players')
             ->where('team_id', 0) // Free agent pool
-            ->orderByDesc('overall_rating') // Then sort by highest overall rating
+            ->where('is_injured', 0) // Not injured
+            ->where('role', '!=', 'star player') // Exclude star players
+            ->orderByDesc('overall_rating') // Sort by highest overall rating
             ->orderBy('injury_prone_percentage', 'asc') // Lowest injury-prone percentage first
             ->orderBy('age', 'asc') // Then sort by youngest age
             ->take($playersNeeded)
             ->get();
+
     
         foreach ($freeAgents as $freeAgent) {
             // Assign a temporary hardship contract (10-game contract)
