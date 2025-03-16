@@ -1359,6 +1359,10 @@ class SimulateController extends Controller
             $fatigueFactor = 1 - ($newFatigue / 100);
             $performanceFactor = (rand(80, 120) / 100) * $fatigueFactor;
 
+            // **Waive Player if Recovery is Too Long**
+            $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
+            $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
+         
             // **Injury Check**
             if (!$player->is_injured) {
                 $injuryPercentage = (float) $player->injury_prone_percentage;
@@ -1426,12 +1430,8 @@ class SimulateController extends Controller
                 }
             }
 
-            // **Waive Player if Recovery is Too Long**
-            $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
-            $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-
             if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
-                if (rand(1, 100) <= 50) {
+                if (rand(1, 100) <= 80) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
                         'season_id' => $seasonId,
