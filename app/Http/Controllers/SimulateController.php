@@ -1361,7 +1361,7 @@ class SimulateController extends Controller
 
             // **Waive Player if Recovery is Too Long**
             $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
-            $requiredRecoveryGames = 1;
+            // $requiredRecoveryGames = 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
             // **Injury Check**
             if (!$player->is_injured) {
