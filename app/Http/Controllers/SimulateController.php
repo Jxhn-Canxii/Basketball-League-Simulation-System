@@ -1464,7 +1464,7 @@ class SimulateController extends Controller
                             'status' => 'signed',
                         ]);
 
-                        (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
+                        // (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
                     }
                 }
             }
