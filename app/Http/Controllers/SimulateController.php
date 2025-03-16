@@ -2152,16 +2152,6 @@ class SimulateController extends Controller
                 // Log the transaction (this is an optional log for role change)
                 if($player->player_role != $newRole){
                    
-                    DB::table('players')
-                        ->where('id', $player->player_id)
-                        ->update(['role' => $newRole]);
-                        // Force update the player's role (even if the role is the same)
-                    DB::table('player_season_stats')
-                        ->where('player_id', $player->player_id)
-                        ->where('season_id', $seasonId)
-                        ->where('team_id', $teamId)
-                        ->update(['role' => $newRole]);
-                    
                     DB::table('transactions')->insert([
                         'player_id' => $player->player_id,
                         'season_id' => $seasonId,
@@ -2171,6 +2161,16 @@ class SimulateController extends Controller
                         'status' => 'role change',
                     ]); 
                 }
+
+                DB::table('players')
+                        ->where('id', $player->player_id)
+                        ->update(['role' => $newRole]);
+                        // Force update the player's role (even if the role is the same)
+                DB::table('player_season_stats')
+                    ->where('player_id', $player->player_id)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
             
             }
             
