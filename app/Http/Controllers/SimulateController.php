@@ -1353,7 +1353,6 @@ class SimulateController extends Controller
 
             $seasonId = get_current_season_id() ?? 1;
 
-            
             // **Fatigue Calculation**
             $fatigueIncrease = ($minutes > 0) ? round($minutes * 0.5) : 0;
             $newFatigue = min(100, $player->fatigue + $fatigueIncrease);
