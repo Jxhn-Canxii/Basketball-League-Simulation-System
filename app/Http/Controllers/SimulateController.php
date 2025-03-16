@@ -1353,6 +1353,7 @@ class SimulateController extends Controller
 
             $seasonId = get_current_season_id() ?? 1;
 
+            
             // **Fatigue Calculation**
             $fatigueIncrease = ($minutes > 0) ? round($minutes * 0.5) : 0;
             $newFatigue = min(100, $player->fatigue + $fatigueIncrease);
@@ -1407,15 +1408,15 @@ class SimulateController extends Controller
                     }
                 }
             } else {
-                // **Injury Recovery Process**
-                DB::table('players')
-                    ->where('id', $player->id)
-                    ->where('injury_recovery_games', '>', 0)
-                    ->decrement('injury_recovery_games', 1);
-
+                // // **Injury Recovery Process**
+                // DB::table('players')
+                //     ->where('id', $player->id)
+                //     ->where('injury_recovery_games', '>', 0)
+                //     ->decrement('injury_recovery_games', 1);
+               
                 // Check if player has fully recovered
                 $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
-
+                // return response()->json(['message' => $recoveryGamesLeft],500);
                 if ($recoveryGamesLeft <= 0) {
                     DB::table('players')->where('id', $player->id)->update([
                         'is_injured' => false,
@@ -1431,7 +1432,7 @@ class SimulateController extends Controller
             }
 
             if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus < 3) {
-                if (rand(1, 100) <= 70) {
+                if (rand(1, 100) <= 10) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
                         'season_id' => $seasonId,
