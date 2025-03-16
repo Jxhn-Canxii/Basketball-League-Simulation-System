@@ -1467,11 +1467,14 @@ class SimulateController extends Controller
                         ]);
 
                         // (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
+                    }else{
+                        return false;
                     }
                 }
             }
         } catch (\Exception $e) {
             \Log::error("Error updating fatigue and injury for player {$player->id}: " . $e->getMessage());
+            return false;
         }
     }
 
