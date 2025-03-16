@@ -1293,7 +1293,7 @@ class SimulateController extends Controller
 
             // Update fatigue for the player
             // dd($minutes[$player['id']]);
-            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+            return $this->fatigueRate($player, $minutes[$player['id']], $gameId);
         }
 
         // Ensure total minutes match the required total
@@ -1501,7 +1501,7 @@ class SimulateController extends Controller
                         DB::commit();
             
                         // Return success response (or whatever response you prefer)
-                        return response()->json(['message' => 'Player waived and replacement signed successfully.'], 200);
+                        return true;
             
                     } catch (\Exception $e) {
                         // Rollback the transaction if any error occurs
