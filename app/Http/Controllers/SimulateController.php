@@ -1204,7 +1204,7 @@ class SimulateController extends Controller
             ->get();
 
              // Check if half of the rounds are simulated
-        $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) - 1 && $latestSeasonStatus == 1;
+        $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) - 2 && $latestSeasonStatus == 1;
 
         // Group by conference_id
         $groupedByConference = $schedules->groupBy('conference_id');
