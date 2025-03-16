@@ -1361,6 +1361,7 @@ class SimulateController extends Controller
 
             // **Waive Player if Recovery is Too Long**
             $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
+            $requiredRecoveryGames = 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
          
             // **Injury Check**
@@ -1431,7 +1432,7 @@ class SimulateController extends Controller
             }
 
             if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
-                if (rand(1, 100) <= 80) {
+                if (rand(1, 100) <= 70) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
                         'season_id' => $seasonId,
@@ -1581,6 +1582,7 @@ class SimulateController extends Controller
         $freeAgents = DB::table('players')
             ->where('team_id', 0) // Free agent pool
             ->where('is_injured', 0) // Not injured
+            ->where('is_active', 1) // Ensure the player is active
             ->where('role', '!=', 'star player') // Exclude star players
             ->orderByDesc('overall_rating') // Sort by highest overall rating
             ->orderBy('injury_prone_percentage', 'asc') // Lowest injury-prone percentage first
