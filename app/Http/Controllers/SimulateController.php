@@ -2082,17 +2082,17 @@ class SimulateController extends Controller
         if (!$teamId) {
             dd($teamId);
         }
-
+    
         if ($round % 5 !== 0) {
             return true;
         }
-
+    
         DB::beginTransaction();
-
+    
         try {
             $seasonId = get_current_season_id();
             $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
-
+    
             // Fetch player stats for the current season, including PER
             $stats = DB::table('player_season_stats')
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
@@ -2101,64 +2101,63 @@ class SimulateController extends Controller
                 ->select('player_season_stats.*', 'players.role as player_role')
                 ->orderByDesc('player_season_stats.per') // Order by highest PER first
                 ->get();
-
-            // Initialize arrays for assigning roles
+    
+            // Initialize arrays for each role
             $starPlayers = [];
             $allStars = [];
             $starters = [];
             $rolePlayers = [];
             $benchPlayers = [];
-
-            // Assign roles based on overall rating
+    
+            // Assign roles based on PER, highest first
             foreach ($stats as $index => $player) {
-                // Example role assignment logic (you may change as per your requirements)
                 if (count($starPlayers) < 1) {
+                    // Highest PER player gets 'star player'
                     $starPlayers[] = $player->player_id;
                     $newRole = 'star player';
                 } elseif (count($allStars) < 2) {
+                    // Next two highest PER players get 'all star'
                     $allStars[] = $player->player_id;
                     $newRole = 'all star';
                 } elseif (count($starters) < 2) {
+                    // Next two highest PER players get 'starter'
                     $starters[] = $player->player_id;
                     $newRole = 'starter';
                 } elseif (count($rolePlayers) < 5) {
+                    // Next five highest PER players get 'role player'
                     $rolePlayers[] = $player->player_id;
                     $newRole = 'role player';
                 } else {
+                    // Remaining players get 'bench'
                     $benchPlayers[] = $player->player_id;
                     $newRole = 'bench';
                 }
-
-                // Check if the player's role has changed
-                $currentRole = $player->player_role; // Corrected to use $player, not $playerStat
-
-                // If the role has changed, log the transaction
-                if ($currentRole !== $newRole) {
-                    DB::table('transactions')->insert([
-                        'player_id' => $player->player_id, // Use $player->player_id
-                        'season_id' => $seasonId,
-                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week($weekName)",
-                        'from_team_id' => $teamId,
-                        'to_team_id' => $teamId,
-                        'status' => 'role change',
-                    ]);
-
-                    // Update player role
-                    DB::table('player_season_stats')
-                        ->where('player_id', $player->player_id) // Use $player->player_id
-                        ->where('season_id', $seasonId)
-                        ->where('team_id', $teamId)
-                        ->update(['role' => $newRole]);
-                }
+    
+                // Log the transaction (this is an optional log for role change)
+                DB::table('transactions')->insert([
+                    'player_id' => $player->player_id,
+                    'season_id' => $seasonId,
+                    'details' => "Has moved to $newRole for the upcoming games. Week($weekName)",
+                    'from_team_id' => $teamId,
+                    'to_team_id' => $teamId,
+                    'status' => 'role change',
+                ]);
+    
+                // Force update the player's role (even if the role is the same)
+                DB::table('player_season_stats')
+                    ->where('player_id', $player->player_id)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
             }
-
-            // Update each player's role in the database
+    
+            // Update each player's role in the database (for actual players table)
             DB::table('players')->whereIn('id', $starPlayers)->update(['role' => 'star player']);
             DB::table('players')->whereIn('id', $allStars)->update(['role' => 'all star']);
             DB::table('players')->whereIn('id', $starters)->update(['role' => 'starter']);
             DB::table('players')->whereIn('id', $rolePlayers)->update(['role' => 'role player']);
             DB::table('players')->whereIn('id', $benchPlayers)->update(['role' => 'bench']);
-
+    
             \Log::info("Roles updated for team {$teamId}", [
                 'starPlayers' => count($starPlayers),
                 'allStars' => count($allStars),
@@ -2166,16 +2165,17 @@ class SimulateController extends Controller
                 'rolePlayers' => count($rolePlayers),
                 'benchPlayers' => count($benchPlayers)
             ]);
-
+    
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Error updating roles for team ' . $teamId . ': ' . $e->getMessage());
             return false;
         }
-
+    
         return true;
     }
+    
     
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
