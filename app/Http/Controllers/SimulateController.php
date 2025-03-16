@@ -2096,17 +2096,18 @@ class SimulateController extends Controller
             $seasonId = get_current_season_id();
             $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
     
-            // Fetch player stats for the current season, including PER
+           // Fetch player stats for the current season, including PER
             $stats = DB::table('player_season_stats')
                 ->join('players', function ($join) use ($seasonId, $teamId) {
                     $join->on('player_season_stats.player_id', '=', 'players.id')
                         ->where('player_season_stats.team_id', '=', $teamId); // Add team_id as part of the join condition
                 })
-                ->where('players.contract_years',' > ', 0) // Ensure we are filtering by players contract years greater than 0
                 ->where('player_season_stats.season_id', $seasonId) // Ensure we are filtering by season_id as well
-                ->select('player_season_stats.*','players.role as player_role', 'players.team_id as player_team_id')
+                ->where('players.contract_years', '>', 0) // Ensure we are filtering by players with contract years > 0
+                ->select('player_season_stats.*', 'players.role as player_role', 'players.team_id as player_team_id')
                 ->orderByDesc('player_season_stats.per') // Order by highest PER first
                 ->get();
+
 
             // Initialize arrays for each role
             $starPlayers = [];
