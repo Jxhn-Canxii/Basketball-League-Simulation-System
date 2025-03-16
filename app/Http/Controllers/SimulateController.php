@@ -1427,10 +1427,10 @@ class SimulateController extends Controller
             }
 
             // **Waive Player if Recovery is Too Long**
-            $requiredRecoveryGames = ($player->role == 'star player') ? 30 : 15;
+            $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
-            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus == 1) {
+            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
                 if (rand(1, 100) <= 60) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
