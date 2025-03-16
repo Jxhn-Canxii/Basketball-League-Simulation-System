@@ -1409,10 +1409,10 @@ class SimulateController extends Controller
                 }
             } else {
                 // **Injury Recovery Process**
-                DB::table('players')
-                    ->where('id', $player->id)
-                    ->where('injury_recovery_games', '>', 0)
-                    ->decrement('injury_recovery_games', 1);
+                // DB::table('players')
+                //     ->where('id', $player->id)
+                //     ->where('injury_recovery_games', '>', 0)
+                //     ->decrement('injury_recovery_games', 1);
 
                 // Check if player has fully recovered
                 $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
