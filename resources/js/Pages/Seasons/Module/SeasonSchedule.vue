@@ -254,12 +254,6 @@
         </div>
     </div>
     <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'" title="Game Results" @close="isGameResultModalOpen = false">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isGameResultModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
         <div class="mt-4">
             <GameResults :game_id="isGameResultModalOpen" />
         </div>
