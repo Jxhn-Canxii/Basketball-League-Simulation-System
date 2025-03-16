@@ -415,6 +415,7 @@ class TradeController extends Controller
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->where('players.team_id', $teamId)
             ->where('players.contract_years','<=', 2)
+            ->where('players.is_injured',0)
             ->where('player_season_stats.season_id', $latestSeasonId)
             ->select(
                 'players.id as player_id',
