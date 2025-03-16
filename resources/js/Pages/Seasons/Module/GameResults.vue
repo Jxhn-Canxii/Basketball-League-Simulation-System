@@ -818,7 +818,7 @@
             </div>
         </div>
     </div>
-    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">>
+    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
         <div class="p-6 block">
             <PlayerPerformance
                 :key="showPlayerProfileModal.player_id"
