@@ -995,6 +995,7 @@ class SimulateController extends Controller
     private function createInactivePlayerStats($player, $gameData, $seasonId)
     {
         return [
+            'id' => $player->id,
             'player_id' => $player->id,
             'game_id' => $gameData->game_id,
             'season_id' => $seasonId,
@@ -1293,7 +1294,7 @@ class SimulateController extends Controller
 
             // Update fatigue for the player
             // dd($minutes[$player['id']]);
-            return $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
         }
 
         // Ensure total minutes match the required total
@@ -1363,7 +1364,7 @@ class SimulateController extends Controller
             $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
             $requiredRecoveryGames = 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-            
+         
             // **Injury Check**
             if (!$player->is_injured) {
                 $injuryPercentage = (float) $player->injury_prone_percentage;
@@ -1433,89 +1434,45 @@ class SimulateController extends Controller
             // }
 
             if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
-                if (rand(1, 100) <= 70) { // 70% chance to waive the player
-                    DB::beginTransaction(); // Start a transaction to ensure all database operations succeed or fail together
-                    try {
-                        // Insert transaction record for waiving the player
-                        $waiveTransaction = DB::table('transactions')->insert([
-                            'player_id' => $player->id,
+                if (rand(1, 100) <= 70) {
+                    DB::table('transactions')->insert([
+                        'player_id' => $player->id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived due to extended injury recovery period',
+                        'from_team_id' => $player->team_id,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
+
+                    DB::table('players')->where('id', $player->id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                    ]);
+
+                    // Try replacing the waived player
+                    $replacement = $this->getRandomPlayer();
+                    if ($replacement) {
+                        $contractYears = $this->getContractYearsBasedOnRole($player->role);
+                        DB::table('players')->where('id', $replacement->player_id)->update([
+                            'team_id' => $player->team_id,
+                            'contract_years' => $contractYears,
+                        ]);
+
+                        DB::table('transactions')->insert([
+                            'player_id' => $replacement->player_id,
                             'season_id' => $seasonId,
-                            'details' => 'Waived due to extended injury recovery period',
-                            'from_team_id' => $player->team_id,
-                            'to_team_id' => 0,
-                            'status' => 'waived',
+                            'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $contractYears,
+                            'from_team_id' => 0,
+                            'to_team_id' => $player->team_id,
+                            'status' => 'signed',
                         ]);
-            
-                        if (!$waiveTransaction) {
-                            throw new \Exception("Failed to insert waive transaction for player ID {$player->id}");
-                        }
-            
-                        // Update player's contract and team to indicate they have been waived
-                        $updatePlayer = DB::table('players')->where('id', $player->id)->update([
-                            'contract_years' => 0,
-                            'team_id' => 0,
-                        ]);
-            
-                        if ($updatePlayer === 0) { // Check if no rows were affected
-                            throw new \Exception("Failed to update player ID {$player->id} to waived status.");
-                        }
-            
-                        // Try replacing the waived player with a random free agent
-                        $replacement = $this->getRandomPlayer();
-                        if ($replacement) {
-                            // Ensure the replacement player is valid before proceeding
-                            $contractYears = $this->getContractYearsBasedOnRole($player->role);
-            
-                            // Update replacement player with new team and contract details
-                            $updateReplacement = DB::table('players')->where('id', $replacement->player_id)->update([
-                                'team_id' => $player->team_id,
-                                'contract_years' => $contractYears,
-                            ]);
-            
-                            if ($updateReplacement === 0) {
-                                throw new \Exception("Failed to update replacement player ID {$replacement->player_id}.");
-                            }
-            
-                            // Insert transaction record for signing the replacement player
-                            $signTransaction = DB::table('transactions')->insert([
-                                'player_id' => $replacement->player_id,
-                                'season_id' => $seasonId,
-                                'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $contractYears,
-                                'from_team_id' => 0,
-                                'to_team_id' => $player->team_id,
-                                'status' => 'signed',
-                            ]);
-            
-                            if (!$signTransaction) {
-                                throw new \Exception("Failed to insert transaction for signing replacement player ID {$replacement->player_id}");
-                            }
-            
-                            // Store stats for the replacement player for the current season
-                            (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
-                        } else {
-                            // Handle case where no replacement player is available
-                            throw new \Exception("No replacement player found for player ID {$player->id}");
-                        }
-            
-                        // Commit the transaction if all operations are successful
-                        DB::commit();
-            
-                        // Return success response (or whatever response you prefer)
-                        return true;
-            
-                    } catch (\Exception $e) {
-                        // Rollback the transaction if any error occurs
-                        DB::rollBack();
-            
-                        // Return error response with the exception message
-                        return response()->json(['error' => $e->getMessage()], 500);
+
+                        (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
                     }
                 }
             }
-            
         } catch (\Exception $e) {
             \Log::error("Error updating fatigue and injury for player {$player->id}: " . $e->getMessage());
-            
         }
     }
 
