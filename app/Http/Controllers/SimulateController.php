@@ -1361,10 +1361,11 @@ class SimulateController extends Controller
 
             // **Waive Player if Recovery is Too Long**
             $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
-            // $requiredRecoveryGames = 1;
+            $requiredRecoveryGames = 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
+         
             // **Injury Check**
-            if ($player->is_injured == 0) {
+            if (!$player->is_injured) {
                 $injuryPercentage = (float) $player->injury_prone_percentage;
                 $finalInjuryChance = 10 * ($injuryPercentage / 100); // Scale to 10%
                 $injuryRisk = rand(0, 99);
@@ -1406,25 +1407,32 @@ class SimulateController extends Controller
                         \Log::error("Injury types configuration is missing.");
                     }
                 }
-            }
-            
-            $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
-            // return response()->json(['message' => $recoveryGamesLeft],500);
-            if ($recoveryGamesLeft <= 0) {
-                DB::table('players')->where('id', $player->id)->update([
-                    'is_injured' => false,
-                    'injury_type' => null,
-                ]);
+            } else {
+                // **Injury Recovery Process**
+                DB::table('players')
+                    ->where('id', $player->id)
+                    ->where('injury_recovery_games', '>', 0)
+                    ->decrement('injury_recovery_games', 1);
 
-                DB::table('injury_histories')
-                    ->where('player_id', $player->id)
-                    ->whereNull('recovery_date')
-                    ->latest()
-                    ->update(['recovery_date' => now(), 'updated_at' => now()]);
+                // Check if player has fully recovered
+                $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
+
+                if ($recoveryGamesLeft <= 0) {
+                    DB::table('players')->where('id', $player->id)->update([
+                        'is_injured' => false,
+                        'injury_type' => null,
+                    ]);
+
+                    DB::table('injury_histories')
+                        ->where('player_id', $player->id)
+                        ->whereNull('recovery_date')
+                        ->latest()
+                        ->update(['recovery_date' => now(), 'updated_at' => now()]);
+                }
             }
-           
-            if ($recoveryGamesLeft >= $requiredRecoveryGames && $seasonStatus < 3) {
-                if (rand(1, 100) <= 90) {
+
+            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
+                if (rand(1, 100) <= 70) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
                         'season_id' => $seasonId,
@@ -1461,7 +1469,6 @@ class SimulateController extends Controller
                     }
                 }
             }
-
         } catch (\Exception $e) {
             \Log::error("Error updating fatigue and injury for player {$player->id}: " . $e->getMessage());
         }
