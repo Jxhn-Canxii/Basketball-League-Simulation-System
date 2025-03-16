@@ -1363,7 +1363,6 @@ class SimulateController extends Controller
             $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
             $requiredRecoveryGames = 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-         
             // **Injury Check**
             if (!$player->is_injured) {
                 $injuryPercentage = (float) $player->injury_prone_percentage;
@@ -1431,7 +1430,7 @@ class SimulateController extends Controller
                 }
             }
 
-            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
+            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus < 3) {
                 if (rand(1, 100) <= 70) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
