@@ -1431,7 +1431,7 @@ class SimulateController extends Controller
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
             if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
-                if (rand(1, 100) <= 60) {
+                if (rand(1, 100) <= 50) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
                         'season_id' => $seasonId,
