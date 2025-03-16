@@ -1363,7 +1363,7 @@ class SimulateController extends Controller
             $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
             $requiredRecoveryGames = 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-         
+            
             // **Injury Check**
             if (!$player->is_injured) {
                 $injuryPercentage = (float) $player->injury_prone_percentage;
@@ -1407,29 +1407,30 @@ class SimulateController extends Controller
                         \Log::error("Injury types configuration is missing.");
                     }
                 }
-            } else {
-                // **Injury Recovery Process**
-                // DB::table('players')
-                //     ->where('id', $player->id)
-                //     ->where('injury_recovery_games', '>', 0)
-                //     ->decrement('injury_recovery_games', 1);
+            } 
+            // else {
+            //     // **Injury Recovery Process**
+            //     // DB::table('players')
+            //     //     ->where('id', $player->id)
+            //     //     ->where('injury_recovery_games', '>', 0)
+            //     //     ->decrement('injury_recovery_games', 1);
 
-                // Check if player has fully recovered
-                $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
+            //     // Check if player has fully recovered
+            //     $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
 
-                if ($recoveryGamesLeft <= 0) {
-                    DB::table('players')->where('id', $player->id)->update([
-                        'is_injured' => false,
-                        'injury_type' => null,
-                    ]);
+            //     if ($recoveryGamesLeft <= 0) {
+            //         DB::table('players')->where('id', $player->id)->update([
+            //             'is_injured' => false,
+            //             'injury_type' => null,
+            //         ]);
 
-                    DB::table('injury_histories')
-                        ->where('player_id', $player->id)
-                        ->whereNull('recovery_date')
-                        ->latest()
-                        ->update(['recovery_date' => now(), 'updated_at' => now()]);
-                }
-            }
+            //         DB::table('injury_histories')
+            //             ->where('player_id', $player->id)
+            //             ->whereNull('recovery_date')
+            //             ->latest()
+            //             ->update(['recovery_date' => now(), 'updated_at' => now()]);
+            //     }
+            // }
 
             if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
                 if (rand(1, 100) <= 70) {
