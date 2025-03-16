@@ -16,16 +16,7 @@
         >
             Preparing Schedule...
         </div>
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isAddModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
         <div class="relative grid grid-cols-1 gap-6 p-6">
-            <h2 class="text-lg font-semibold text-gray-800">
-                New Seasons
-            </h2>
             <form class="mt-4" @submit.prevent="createNewSeason()">
                 <div class="mb-4">
                     <label
