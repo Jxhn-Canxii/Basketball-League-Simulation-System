@@ -2102,6 +2102,7 @@ class SimulateController extends Controller
                     $join->on('player_season_stats.player_id', '=', 'players.id')
                         ->where('player_season_stats.team_id', '=', $teamId); // Add team_id as part of the join condition
                 })
+                ->where('players.contract_years',' > ', 0) // Ensure we are filtering by players contract years greater than 0
                 ->where('player_season_stats.season_id', $seasonId) // Ensure we are filtering by season_id as well
                 ->select('player_season_stats.*','players.role as player_role', 'players.team_id as player_team_id')
                 ->orderByDesc('player_season_stats.per') // Order by highest PER first
