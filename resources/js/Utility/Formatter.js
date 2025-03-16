@@ -285,7 +285,7 @@ export const roleClasses = (role) => {
         case "role player":
             return "bg-green-100 text-green-800";
         case "bench":
-            return "bg-gray-100 text-gray-800";
+            return "bg-purple-100 text-gray-800";
         default:
             return "bg-gray-200 text-gray-800"; // Default case
     }
@@ -302,7 +302,7 @@ export const roleBadgeClass = (role) => {
       case 'role player':
         return 'bg-green-500 text-white rounded-full px-2 py-1 text-xs';
       case 'bench':
-        return 'bg-gray-500 text-white rounded-full px-2 py-1 text-xs';
+        return 'bg-purple-500 text-white rounded-full px-2 py-1 text-xs';
       default:
         return 'bg-gray-300 text-gray-800 rounded-full px-2 py-1 text-xs';
     }
