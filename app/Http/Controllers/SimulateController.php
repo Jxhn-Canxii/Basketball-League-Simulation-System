@@ -2086,15 +2086,15 @@ class SimulateController extends Controller
             dd($teamId);
         }
     
-        if ($round % 5 !== 0) {
+        if ($round % 5 !== 0 || $round == 1) {
             return true;
         }
     
         DB::beginTransaction();
     
         try {
-            $seasonId = get_current_season_id();
-            $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
+            $seasonId = ($round == 1) ? get_previous_season_id() : get_current_season_id();
+            $weekName = (($round / 5) + 1) ?? 1;
     
             // Fetch player stats for the current season, including PER
             $stats = DB::table('player_season_stats')
