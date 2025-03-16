@@ -995,7 +995,6 @@ class SimulateController extends Controller
     private function createInactivePlayerStats($player, $gameData, $seasonId)
     {
         return [
-            'id' => $player->id,
             'player_id' => $player->id,
             'game_id' => $gameData->game_id,
             'season_id' => $seasonId,
@@ -1433,7 +1432,7 @@ class SimulateController extends Controller
             //     }
             // }
 
-            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2) {
+            if ((float) $player->injury_recovery_games >= (float) $requiredRecoveryGames && $seasonStatus <= 2) {
                 if (rand(1, 100) <= 70) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
