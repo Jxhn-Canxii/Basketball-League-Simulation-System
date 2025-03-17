@@ -21,4 +21,4 @@ FROM injury_histories i
 JOIN players p ON i.player_id = p.id
 LEFT JOIN teams t ON i.team_id = t.id  -- Team at the time of injury
 LEFT JOIN teams ct ON ct.id = p.team_id  -- Player's current team
-ORDER BY p.injury_recovery_games DESC, i.id;
+ORDER BY i.id;
