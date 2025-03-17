@@ -15,19 +15,12 @@
                 <h3 class="text-md font-semibold text-gray-800">
                     Free Agents List
                 </h3>
-                <input
-                    type="text"
-                    v-model="search.search"
-                    @input="fetchFreeAgent()"
-                    id="LeagueName"
-                    placeholder="Enter Player name"
-                    class="mt-1 mb-2 p-2 border rounded w-full"
-                />
-                <div class="flex justify-between" v-if="props.showControls">
+               
+                <div class="flex justify-between mt-4" v-if="props.showControls">
                     <div>
                         <button
                             @click="assignTeamsAuto()"
-                            class="px-4 py-2 bg-rose-500 text-white rounded mb-4 text-sm"
+                            class="px-4 py-2 bg-rose-500 text-white rounded mb-2 text-sm"
                         >
                             <i class="fa fa-users"></i> Distribute Free Agents
                         </button>
@@ -48,6 +41,14 @@
                         </button>
                     </div>
                 </div>
+                 <input
+                    type="text"
+                    v-model="search.search"
+                    @input="fetchFreeAgent()"
+                    id="LeagueName"
+                    placeholder="Enter Player name"
+                    class="mb-2 p-2 border rounded w-full"
+                />
                 <div
                     v-if="data.free_agents?.length === 0"
                     class="text-center text-gray-500"
