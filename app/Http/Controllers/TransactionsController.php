@@ -526,10 +526,8 @@ class TransactionsController extends Controller
                         ->where('id', $player->id)
                         ->update(['role' => $newRole]);
     
-                    if ($updateRole) {
-                        // Store player stats for the next season
-                        $storeStats->storePlayerNextSeasonStats($teamId, $player->id);
-                    }
+                    // Store player stats for the next season
+                    $storeStats->storePlayerNextSeasonStats($teamId, $player->id);
                 }
     
                 // Commit the transaction for this team
