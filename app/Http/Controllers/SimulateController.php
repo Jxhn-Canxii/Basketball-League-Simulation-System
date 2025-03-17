@@ -1524,7 +1524,7 @@ class SimulateController extends Controller
     private function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
-        $totalGamesPerDay = 16;
+        $totalGamesPerDay = 32;
         $deductionPerGame = 1 / $totalGamesPerDay; // 0.03125
         
         $deductInjuryGames = DB::table('players')
