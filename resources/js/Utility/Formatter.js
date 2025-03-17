@@ -277,32 +277,32 @@ export const playerExpStatusText = (experience) => {
 export const roleClasses = (role) => {
     switch (role) {
         case "star player":
-            return "bg-yellow-500 text-white";
+            return "bg-yellow-500 text-white uppercase";
         case "all star":
-            return "bg-red-500 text-white";
+            return "bg-red-500 text-white uppercase";
         case "starter":
-            return "bg-blue-500 text-white";
+            return "bg-blue-500 text-white uppercase";
         case "role player":
-            return "bg-green-500 text-white";
+            return "bg-green-500 text-white uppercase";
         case "bench":
-            return "bg-gray-400 text-white";
+            return "bg-gray-400 text-white uppercase";
         default:
-            return "bg-gray-300 text-white"; // Default case
+            return "bg-gray-300 text-white uppercase"; // Default case
     }
 };
   // Function to determine badge class based on role
   export const roleBadgeClass = (role) => {
     switch(role) {
       case 'star player':
-        return 'bg-yellow-500 text-white rounded-full px-2 py-1 text-xs'; // Yellow, often associated with high impact
+        return 'bg-yellow-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Yellow, often associated with high impact
       case 'all star':
-        return 'bg-red-500 text-white rounded-full px-2 py-1 text-xs'; // Pink/Red, for standout or elite players
+        return 'bg-red-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Pink/Red, for standout or elite players
       case 'starter':
-        return 'bg-blue-500 text-white rounded-full px-2 py-1 text-xs'; // Blue, common for core team members
+        return 'bg-blue-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Blue, common for core team members
       case 'role player':
-        return 'bg-green-500 text-white rounded-full px-2 py-1 text-xs'; // Green, denoting support or versatile roles
+        return 'bg-green-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Green, denoting support or versatile roles
       case 'bench':
-        return 'bg-gray-400 text-white rounded-full px-2 py-1 text-xs'; // Gray, for players not in the active rotation
+        return 'bg-gray-400 text-white uppercase rounded-full px-2 py-1 text-xs'; // Gray, for players not in the active rotation
       default:
         return 'bg-gray-300 text-gray-800 rounded-full px-2 py-1 text-xs'; // Default color for unrecognized roles
     }

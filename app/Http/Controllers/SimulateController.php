@@ -2013,7 +2013,7 @@ class SimulateController extends Controller
                 ->where('player_season_stats.season_id', $seasonId) // Ensure we are filtering by season_id as well
                 ->where('players.contract_years', '>', 0) // Ensure we are filtering by players with contract years > 0
                 ->select('player_season_stats.*', 'players.role as player_role', 'players.team_id as player_team_id')
-                ->orderByDesc('player_season_stats.per') // Order by highest PER first
+                ->orderByDesc('player_season_stats.eff') // Order by highest EFF first
                 ->get();
 
 
