@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('primary_color', 8); // HEX color code (e.g., #FF0000)
             $table->string('secondary_color', 8); // HEX color code
             $table->unsignedBigInteger('league_id'); // Foreign key for league_id
+            $table->unsignedBigInteger('conference_id'); // Foreign key for league_id
             $table->longText('description')->nullable(); // Added long text column
             $table->string('city',255)->nullable(); // Added long text column for city
             $table->timestamps();

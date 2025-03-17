@@ -9,9 +9,9 @@ return new class extends Migration {
     {
         Schema::create('drafts', function (Blueprint $table) {
             $table->id(); // Auto-increment primary key
-            $table->foreignId('team_id')->constrained('teams')->onDelete('cascade');
-            $table->foreignId('player_id')->constrained('players')->onDelete('cascade');
-            $table->foreignId('season_id')->constrained('seasons')->onDelete('cascade');
+            $table->integer('team_id');
+            $table->integer('player_id');
+            $table->integer('season_id');
             $table->integer('round');
             $table->integer('pick_number');
             $table->string('draft_status', 255);
