@@ -82,46 +82,9 @@ class PlayersController extends Controller
                         continue; // Skip the rest of the logic for this player
                     }
 
-                    // Calculate Per-Game Score
-                    $perGameScore = $stats->avg_points_per_game * 0.3 +
-                        $stats->avg_rebounds_per_game * 0.2 +
-                        $stats->avg_assists_per_game * 0.2 +
-                        $stats->avg_steals_per_game * 0.1 +
-                        $stats->avg_blocks_per_game * 0.1 -
-                        $stats->avg_turnovers_per_game * 0.1 -
-                        $stats->avg_fouls_per_game * 0.1;
+                    // Assuming 30 minutes is the average threshold
 
-                    // Calculate Total Score (Overall contribution across the season)
-                    $totalScore = $stats->total_points * 0.2 +
-                        $stats->total_rebounds * 0.2 +
-                        $stats->total_assists * 0.2 +
-                        $stats->total_steals * 0.15 +
-                        $stats->total_blocks * 0.15 -
-                        $stats->total_turnovers * 0.1 -
-                        $stats->total_fouls * 0.1;
-
-                    $efficiencyFactor = 1 + ($stats->avg_minutes_per_game / 30);  // Assuming 30 minutes is the average threshold
-
-                    // Adjust for role: Apply a modifier based on player role
-                    $roleModifier = 1;
-                    if ($stats->role === 'star player') {
-                        $roleModifier = 1.2;  // Star players get a boost
-                    } else if ($stats->role === 'all star') {
-                        $roleModifier = 1.1;  // Starters get a smaller boost
-                    } else if ($stats->role === 'starter') {
-                        $roleModifier = 1.05;  // Starters get a smaller boost
-                    } else if ($stats->role === 'role player') {
-                        $roleModifier = 0.9;  // Role players get a small bonus
-                    } else if ($stats->role === 'bench') {
-                        $roleModifier = 0.7;  // Bench players are slightly penalized in ranking
-                    }
-
-                    // Normalize score based on games played (to account for incomplete seasons)
-                    $gamesPlayedModifier = max(1, log($stats->total_games_played + 1) * 0.1);  // log to adjust scale
-
-                    // Return a combined score
-                    $combinedScore = ($perGameScore + $totalScore) * $gamesPlayedModifier * $roleModifier * $efficiencyFactor;
-
+                   
                     $seasonsPlayedWithTeam = DB::table('player_season_stats')
                         ->where('player_id', $player->id)
                         ->where('team_id', $teamId)
@@ -168,12 +131,13 @@ class PlayersController extends Controller
                         'field_goal_percentage' => (float)$stats->field_goal_percentage,
                         'team_total_games' => (float)$stats->total_games,
                         'games_played' => (float)$stats->total_games_played,
-                        'per_game_score' => number_format($perGameScore, 2),
-                        'total_score' => number_format($totalScore, 2),
-                        'combined_score' => number_format($combinedScore, 2),
+                        'per_game_score' => (float)$stats->per,
+                        'total_score' => 0,
+                        'combined_score' => 0,
                         'seasons_played_with_team' => $seasonsPlayedWithTeam,
                         'total_seasons_played' => $totalSeasonsPlayed,
                         'latest_season' => $latestSeasonId,
+                        'status' => 'season-ongoing'
                     ];
                 }
             }
@@ -298,6 +262,7 @@ class PlayersController extends Controller
                         'team_total_games' => (float)$totalSeasonGameSchedule,
                         'total_seasons_played' => $totalSeasonsPlayed + 1,
                         'latest_season' => $latestSeasonId,
+                        'status' => 'new-season'
                     ];
                 }
             }

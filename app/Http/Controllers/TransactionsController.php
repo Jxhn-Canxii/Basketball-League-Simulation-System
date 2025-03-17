@@ -310,7 +310,7 @@ class TransactionsController extends Controller
         //     ->where('is_active', 1)
         //     ->orderBy("overall_rating", "desc")
         //     ->get();
-
+        
         $freeAgents = $this->getFreeAgentsByCompositeScore($seasonId);
         $remainingFreeAgents = $freeAgents->count();
         $teamsCount = $teamsWithFewMembers->count();
@@ -318,12 +318,11 @@ class TransactionsController extends Controller
         if ($teamsCount === 0) {
             // Update the last season's status to 15 if there are no incomplete teams
             // Update player roles based on the last season's stats
-            $update = ($currentseasonId <= 1) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
-
+            $update = ($currentseasonId == 1) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
             // $update = true;
+
             if ($update) {
                 // After drafting logic but before DB::commit()
-
                 if($seasonId == 0) {
                     
                     DB::table('players')
@@ -354,7 +353,7 @@ class TransactionsController extends Controller
                     'message' => 'Role assigning error!',
                     'update' => $update,
                     'current_season_id' => $currentseasonId
-                ], 400);
+                ], 200);
             }
         } else {
             if ($remainingFreeAgents === 0) {
@@ -483,63 +482,71 @@ class TransactionsController extends Controller
     {
         $seasonId = get_current_season_id();
         $teams = DB::table('teams')->pluck('id');
-
+        $storeStats = new AwardsController; // Instantiate once outside the loop
+    
         foreach ($teams as $teamId) {
             DB::beginTransaction();
-
+    
             try {
                 // Fetch all players on the team, ordered by overall rating (veterans and rookies combined)
                 $players = DB::table('players')
                     ->where('team_id', $teamId)
                     ->orderByDesc('overall_rating')
                     ->get();
-
-                // Initialize arrays for assigning roles
-                $starPlayers = [];
-                $allStars = [];
-                $starters = [];
-                $rolePlayers = [];
-                $benchPlayers = [];
-
+    
                 // Assign roles based on overall rating
+                $starCount = 0;
+                $allStarCount = 0;
+                $starterCount = 0;
+                $rolePlayerCount = 0;
+    
                 foreach ($players as $index => $player) {
-                    $storeStats = new AwardsController;
-                    $storeStats->storePlayerSeasonStats( $player->team_id, $player->id);
-
-                    if (count($starPlayers) < 1) {
-                        $starPlayers[] = $player->id;
-                    }elseif (count($allStars) < 2) {
-                        $allStars[] = $player->id;
-                    }elseif (count($starters) < 2) {
-                        $starters[] = $player->id;
-                    }elseif (count($rolePlayers) < 5) {
-                        $rolePlayers[] = $player->id;
+                    if ($starCount < 1) {
+                        // Highest PER player gets 'star player'
+                        $newRole = 'star player';
+                        $starCount++;
+                    } elseif ($allStarCount < 2) {
+                        // Next two highest PER players get 'all star'
+                        $newRole = 'all star';
+                        $allStarCount++;
+                    } elseif ($starterCount < 2) {
+                        // Next two highest PER players get 'starter'
+                        $newRole = 'starter';
+                        $starterCount++;
+                    } elseif ($rolePlayerCount < 5) {
+                        // Next five highest PER players get 'role player'
+                        $newRole = 'role player';
+                        $rolePlayerCount++;
                     } else {
-                        $benchPlayers[] = $player->id;
+                        // Remaining players get 'bench'
+                        $newRole = 'bench';
+                    }
+    
+                    $updateRole = DB::table('players')
+                        ->where('id', $player->id)
+                        ->update(['role' => $newRole]);
+    
+                    if ($updateRole) {
+                        // Store player stats for the next season
+                        $storeStats->storePlayerNextSeasonStats($teamId, $player->id);
                     }
                 }
-
-                // Update each player's role in the database
-                DB::table('players')->whereIn('id', $starPlayers)->update(['role' => 'star player']);
-                DB::table('players')->whereIn('id', $allStars)->update(['role' => 'all star']);
-                DB::table('players')->whereIn('id', $starters)->update(['role' => 'starter']);
-                DB::table('players')->whereIn('id', $rolePlayers)->update(['role' => 'role player']);
-                DB::table('players')->whereIn('id', $benchPlayers)->update(['role' => 'bench']);
-
-                //official registration in player season stats table
+    
+                // Commit the transaction for this team
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-
-                // Log the error message and stack trace for debugging
+    
+                // Log the error message with more details
                 \Log::error('Error assigning role for team ' . $teamId . ': ' . $e->getMessage());
-
+    
                 return false; // Return false if an error occurs during the update
             }
         }
-
+    
         return true; // Return true if all updates succeed
     }
+    
 
     private function storeNextSeasonStatsPerTeam()
     {

@@ -27,7 +27,7 @@ SET time_zone = "+00:00";
 -- Table structure for table `players`
 --
 
-CREATE TABLE `players` (
+CREATE OR REPLACE TABLE `players` (
   `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` varchar(255) NOT NULL,
   `country` varchar(100) DEFAULT NULL,
