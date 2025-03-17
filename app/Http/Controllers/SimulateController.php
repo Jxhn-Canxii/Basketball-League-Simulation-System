@@ -156,25 +156,19 @@ class SimulateController extends Controller
         // Define role-based priority and maximum points
         $rolePriority = [
             'star player' => 1,
+            'all star' => 2,
             'starter' => 2,
-            'role player' => 3,
-            'bench' => 4,
+            'role player' => 5,
+            'bench' => 5,
         ];
 
         // Define total minutes available for each team
         $totalMinutes = 240;
 
 
-        // Fetch and prioritize players for home and away teams
-        $homeTeamPlayers = Player::where('team_id', $gameData->home_team_id)->get()
-            ->sortBy(function ($player) use ($rolePriority) {
-                return $rolePriority[$player->role] ?? 5; // Default to a lower priority if role not found
-            })->values();
-
-        $awayTeamPlayers = Player::where('team_id', $gameData->away_team_id)->get()
-            ->sortBy(function ($player) use ($rolePriority) {
-                return $rolePriority[$player->role] ?? 5; // Default to a lower priority if role not found
-            })->values();
+        // Fetching sorted active players for both teams
+        $homeTeamPlayers = $this->getActivePlayersSorted($gameData->home_team_id, $rolePriority);
+        $awayTeamPlayers = $this->getActivePlayersSorted($gameData->away_team_id, $rolePriority);
 
         // Initialize arrays to hold player game stats and minutes
         $playerGameStats = [];
@@ -637,32 +631,16 @@ class SimulateController extends Controller
             $currentSeasonId = $gameData->season_id;
             $rolePriority = [
                 'star player' => 1,
+                'all star' => 2,
                 'starter' => 2,
-                'role player' => 3,
-                'bench' => 4,
+                'role player' => 5,
+                'bench' => 5,
             ];
             $totalMinutes = 240;
 
-            // Fetch 15 active, non-injured players sorted by role
-            $homeTeamPlayers = Player::where('team_id', $gameData->home_team_id)
-                ->where('is_active', 1)
-                ->where('is_injured', 0)
-                ->get()
-                ->sortBy(function ($player) use ($rolePriority) {
-                    return $rolePriority[$player->role] ?? 5;
-                })
-                ->take(15)
-                ->values();
-
-            $awayTeamPlayers = Player::where('team_id', $gameData->away_team_id)
-                ->where('is_active', 1)
-                ->where('is_injured', 0)
-                ->get()
-                ->sortBy(function ($player) use ($rolePriority) {
-                    return $rolePriority[$player->role] ?? 5;
-                })
-                ->take(15)
-                ->values();
+            // Fetching sorted active players for both teams
+            $homeTeamPlayers = $this->getActivePlayersSorted($gameData->home_team_id, $rolePriority);
+            $awayTeamPlayers = $this->getActivePlayersSorted($gameData->away_team_id, $rolePriority);
 
             $playerGameStats = [];
             $homeMinutes = $this->distributeMinutes($homeTeamPlayers, $totalMinutes, $request->schedule_id);
@@ -1476,6 +1454,13 @@ class SimulateController extends Controller
         }
     }
 
+    public function getActivePlayersSorted($teamId, $rolePriority)
+    {
+        return Player::where('team_id', $teamId)
+            ->where('is_active', 1)
+            ->orderByRaw("FIELD(role, 'star player', 'all star', 'starter','role player', 'bench')")  // Example of a custom ordering
+            ->get();
+    }
 
     private function fireLeopardRule($teamId)
     {
