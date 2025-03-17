@@ -1361,9 +1361,8 @@ class SimulateController extends Controller
 
             // **Waive Player if Recovery is Too Long**
             $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
-            $requiredRecoveryGames = 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-         
+        
             // **Injury Check**
             if (!$player->is_injured) {
                 $injuryPercentage = (float) $player->injury_prone_percentage;
@@ -1408,32 +1407,34 @@ class SimulateController extends Controller
                     }
                 }
             } 
-            // else {
-            //     // **Injury Recovery Process**
-            //     // DB::table('players')
-            //     //     ->where('id', $player->id)
-            //     //     ->where('injury_recovery_games', '>', 0)
-            //     //     ->decrement('injury_recovery_games', 1);
+            else {
+                // **Injury Recovery Process**
+                // DB::table('players')
+                //     ->where('id', $player->id)
+                //     ->where('injury_recovery_games', '>', 0)
+                //     ->decrement('injury_recovery_games', 1);
 
-            //     // Check if player has fully recovered
-            //     $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
+                // Check if player has fully recovered
+                $recoveryGamesLeft = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
 
-            //     if ($recoveryGamesLeft <= 0) {
-            //         DB::table('players')->where('id', $player->id)->update([
-            //             'is_injured' => false,
-            //             'injury_type' => null,
-            //         ]);
+                if ($recoveryGamesLeft <= 0) {
+                    DB::table('players')->where('id', $player->id)->update([
+                        'is_injured' => false,
+                        'injury_type' => null,
+                    ]);
 
-            //         DB::table('injury_histories')
-            //             ->where('player_id', $player->id)
-            //             ->whereNull('recovery_date')
-            //             ->latest()
-            //             ->update(['recovery_date' => now(), 'updated_at' => now()]);
-            //     }
-            // }
+                    DB::table('injury_histories')
+                        ->where('player_id', $player->id)
+                        ->whereNull('recovery_date')
+                        ->latest()
+                        ->update(['recovery_date' => now(), 'updated_at' => now()]);
+                }
+            }
 
+            // **Waive Player with 60% Chance if Injury Recovery is Too Long**
             if ((float) $player->injury_recovery_games >= (float) $requiredRecoveryGames && $seasonStatus <= 2) {
-                if (rand(1, 100) <= 70) {
+                // Set the random chance to waive the player to 60%
+                if (rand(1, 100) <= 60) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
                         'season_id' => $seasonId,
@@ -1475,91 +1476,7 @@ class SimulateController extends Controller
         }
     }
 
-    // private function fireLeopardRuleV1($teamId){
-    //     $seasonId = get_current_season_id();
-    //     // new rule applied (Fire Leopard Rule: the team should have at least minimum 7 players active to play in a game)
-    //     $teamInjuries = DB::table('players')
-    //     ->where('team_id', $teamId)
-    //     ->where('is_injured', true)
-    //     ->get();
 
-    //     $teamInjuryCount = $teamInjuries->count();
-
-    //     if ($teamInjuryCount > 5) {
-    //         // Sort players by injury recovery games (worst injuries first)
-    //         $sortedInjuries = $teamInjuries->sortByDesc('injury_recovery_games')->take(3);
-    //         $signedPlayers = [];
-    //         foreach ($sortedInjuries as $injuredPlayer) {
-    //             // Waive t$sortedInjurieshe player
-    //             $forcedWaivedCount = DB::table('transactions')
-    //                 ->where( 'season_id', $seasonId)
-    //                 ->where('from_team_id', $injuredPlayer->team_id)
-    //                 ->where('status', 'waived-hardship')
-    //                 ->count();
-
-    //             if($injuredPlayer->injury_recovery_games > 1){
-
-    //                 $waiveTransaction = DB::table('transactions')->insert([
-    //                     'player_id' => $injuredPlayer->id,
-    //                     'season_id' => $seasonId,
-    //                     'details' => 'Waived due to excessive injury recovery time (Fire Leopard Rule)',
-    //                     'from_team_id' => $injuredPlayer->team_id,
-    //                     'to_team_id' => 0, // 0 for free agent pool
-    //                     'status' => 'waived-hardship',
-    //                 ]);
-
-    //                 // Update player's contract and team details to reflect they are waived
-    //                 $updateWaivedPlayer = DB::table('players')->where('id', $injuredPlayer->id)->update([
-    //                     'contract_years' => 0,
-    //                     'team_id' => 0,
-    //                     'is_active' => 1,  // They are still active in the free agent pool
-    //                 ]);
-
-    //                 // Try to find a random player with the same role
-    //                 $randomPlayer = $this->getRandomPlayer();
-
-    //                 if ($randomPlayer) {
-    //                     $freeAgentStandardContract = $this->getContractYearsBasedOnRole($injuredPlayer->role);
-    //                     // Update the new player with the appropriate contract role
-    //                     $signPlayer = DB::table('players')->where('id', $randomPlayer->player_id)->update([
-    //                         'team_id' => $injuredPlayer->team_id,
-    //                         'contract_years' => $freeAgentStandardContract, // Assign a random contract length
-    //                     ]);
-
-    //                     $signPlayerTransactions = DB::table('transactions')->insert([
-    //                         'player_id' => $randomPlayer->player_id,
-    //                         'season_id' => $seasonId,
-    //                         'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $freeAgentStandardContract,
-    //                         'from_team_id' => 0, // From free agent pool
-    //                         'to_team_id' => $injuredPlayer->team_id,
-    //                         'status' => 'signed',
-    //                     ]);
-
-    //                     $storeStats = new AwardsController;
-    //                     //store initial player season stats
-    //                     $storeSeasonStats = $storeStats->storePlayerCurrentSeasonStats($injuredPlayer->team_id, $randomPlayer->player_id);
-
-    //                     $randomPlayer->update_waived_player_transaction = $updateWaivedPlayer;
-    //                     $randomPlayer->waive_transaction =  $waiveTransaction;
-    //                     $randomPlayer->signed_player_transaction = $signPlayerTransactions;
-    //                     $randomPlayer->signed_player = $signPlayer;
-    //                     $randomPlayer->store_season_stats = $storeSeasonStats;
-    //                     $randomPlayer->new_team = $injuredPlayer->team_id;
-    //                     $randomPlayer->contract = $freeAgentStandardContract;
-    //                     $randomPlayer->waived_player_id = $injuredPlayer->id;
-    //                     $randomPlayer->is_random = true;
-    //                     $signedPlayers[] = $randomPlayer;
-    //                 }
-    //             }else{
-    //                 $injuredPlayer->is_random = false;
-    //                 $signedPlayers[] = $injuredPlayer;
-    //             }
-    //         }
-
-    //         return $signedPlayers;
-    //     }
-    //     return $teamInjuryCount;
-    // }
     private function fireLeopardRule($teamId)
     {
         $seasonId = get_current_season_id();
