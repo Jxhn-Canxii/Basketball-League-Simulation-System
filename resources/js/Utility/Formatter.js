@@ -276,37 +276,38 @@ export const playerExpStatusText = (experience) => {
 // Helper functions
 export const roleClasses = (role) => {
     switch (role) {
-        case "starter":
-            return "bg-blue-100 text-blue-800";
-        case "all star":
-            return "bg-red-100 text-red-800";
         case "star player":
-            return "bg-yellow-100 text-yellow-800";
+            return "bg-yellow-500 text-white";
+        case "all star":
+            return "bg-red-500 text-white";
+        case "starter":
+            return "bg-blue-500 text-white";
         case "role player":
-            return "bg-green-100 text-green-800";
+            return "bg-green-500 text-white";
         case "bench":
-            return "bg-purple-100 text-gray-800";
+            return "bg-gray-400 text-white";
         default:
-            return "bg-gray-200 text-gray-800"; // Default case
+            return "bg-gray-300 text-white"; // Default case
     }
 };
   // Function to determine badge class based on role
-export const roleBadgeClass = (role) => {
+  export const roleBadgeClass = (role) => {
     switch(role) {
       case 'star player':
-        return 'bg-yellow-500 text-white rounded-full px-2 py-1 text-xs';
-    case 'all star':
-        return 'bg-red-500 text-white rounded-full px-2 py-1 text-xs';
+        return 'bg-yellow-500 text-white rounded-full px-2 py-1 text-xs'; // Yellow, often associated with high impact
+      case 'all star':
+        return 'bg-red-500 text-white rounded-full px-2 py-1 text-xs'; // Pink/Red, for standout or elite players
       case 'starter':
-        return 'bg-blue-500 text-white rounded-full px-2 py-1 text-xs';
+        return 'bg-blue-500 text-white rounded-full px-2 py-1 text-xs'; // Blue, common for core team members
       case 'role player':
-        return 'bg-green-500 text-white rounded-full px-2 py-1 text-xs';
+        return 'bg-green-500 text-white rounded-full px-2 py-1 text-xs'; // Green, denoting support or versatile roles
       case 'bench':
-        return 'bg-purple-500 text-white rounded-full px-2 py-1 text-xs';
+        return 'bg-gray-400 text-white rounded-full px-2 py-1 text-xs'; // Gray, for players not in the active rotation
       default:
-        return 'bg-gray-300 text-gray-800 rounded-full px-2 py-1 text-xs';
+        return 'bg-gray-300 text-gray-800 rounded-full px-2 py-1 text-xs'; // Default color for unrecognized roles
     }
-  };
+};
+
 export const playerFormatter = (name) => {
     const nameParts = name.split(" "); // Split the name into parts
 

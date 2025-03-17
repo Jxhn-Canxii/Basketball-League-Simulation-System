@@ -80,12 +80,11 @@
                 </p>
                 <p>
                     <strong>Role:</strong>
-                    <span
-                        :class="roleClasses(main_performance.player_details.role)"
-                        class="p-1 mx-2 rounded-full uppercase border-2"
+                    <label
+                        :class="roleBadgeClass(main_performance.player_details.role)"
                     >
                         {{ main_performance.player_details.role }}
-                    </span>
+                    </label>
                 </p>
                 <p>
                     <strong>Position:</strong>
@@ -450,6 +449,7 @@ import { ref, onMounted, watch } from "vue";
 import axios from "axios";
 import {
     roleClasses,
+    roleBadgeClass,
     playerExpStatusClass,
     playerExpStatusText,
 } from "@/Utility/Formatter";

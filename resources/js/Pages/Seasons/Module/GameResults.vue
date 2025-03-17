@@ -532,10 +532,9 @@
                                {{ bestPlayer?.age }}
                             </sup>
                         </p>
-                        <div class="flex justify-center">
+                        <div class="flex justify-center p-2">
                             <span
-                                :class="roleClasses(bestPlayer.role)"
-                                class="inline-flex items-center capitalize px-2.5 mb-2 py-0.5 rounded text-xs font-medium"
+                                :class="roleBadgeClass(bestPlayer.role)"
                             >
                                 {{ bestPlayer.role }}
                             </span>

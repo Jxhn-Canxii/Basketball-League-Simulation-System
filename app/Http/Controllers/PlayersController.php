@@ -137,7 +137,7 @@ class PlayersController extends Controller
                         'seasons_played_with_team' => $seasonsPlayedWithTeam,
                         'total_seasons_played' => $totalSeasonsPlayed,
                         'latest_season' => $latestSeasonId,
-                        'status' => 'season-ongoing'
+                        // 'status' => 'season-ongoing'
                     ];
                 }
             }
@@ -262,7 +262,7 @@ class PlayersController extends Controller
                         'team_total_games' => (float)$totalSeasonGameSchedule,
                         'total_seasons_played' => $totalSeasonsPlayed + 1,
                         'latest_season' => $latestSeasonId,
-                        'status' => 'new-season'
+                        // 'status' => 'new-season'
                     ];
                 }
             }
