@@ -17,7 +17,8 @@ SET @sql = CONCAT(
     JOIN teams t ON ps.team_id = t.id
     JOIN players p ON ps.player_id = p.id
     WHERE ps.role = ''star player''
-    GROUP BY ps.season_id;'
+    GROUP BY ps.season_id
+    ORDER BY ps.season_id DESC;'
 );
 
 PREPARE stmt FROM @sql;
