@@ -339,13 +339,6 @@
         <p class="text-red-500 font-bold text-2xl">Loading...</p>
     </div>
     <Modal :show="isTeamComparisonModalOpen" :maxWidth="'6xl'" title="Team Comparison" @close="isTeamComparisonModalOpen = false">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isTeamComparisonModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
-
         <div class="mt-4">
             <TeamComparison
                 :home_id="comparison.home_id"
