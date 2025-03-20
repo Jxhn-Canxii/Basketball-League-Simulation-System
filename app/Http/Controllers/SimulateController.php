@@ -1338,7 +1338,7 @@ class SimulateController extends Controller
             $performanceFactor = (rand(80, 120) / 100) * $fatigueFactor;
 
             // **Waive Player if Recovery is Too Long**
-            $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 20 : 10;
+            $requiredRecoveryGames = ($player->role == 'star player' || $player->role == 'all star') ? 50 : 30;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
         
             // **Injury Check**
