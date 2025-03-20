@@ -11,86 +11,88 @@
         </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
-        <div class="gap-4 max-h-100">
-            <table class="min-w-full divide-y divide-gray-200 p-2">
-                <thead class="text-nowrap text-white" :style="{ backgroundColor: '#'+team_info.teams.primary_color }">
-                    <tr>
-                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Season</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Wins</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Losses</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Conference Rank</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Conference Champions</th>
-                        <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">National Rank</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Champions</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Round Played</th>
-                        <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Finals</th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="(season, index) in team_history.history" :key="season.season" @click.enter.prevent="showTooltip = season.round_info" class="hover:bg-gray-200">
-                        <td class="px-2 py-3 whitespace-nowrap border">{{ season.season_name }}</td>
-                        <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.wins }}</td>
-                        <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.losses }}</td>
-                        <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.conference_rank }}</td>
-                        <td class="px-2 py-3 whitespace-nowrap border">
-                            <span v-if="season.conference_rank == 1" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-600">
-                                Conference Champions
-                            </span>
-                            <span v-else-if="season.conference_rank == 2" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                                Conference Runner Up
-                            </span>
-                            <span v-else-if="season.conference_rank == 3" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-900">
-                                Conference Third Place
-                            </span>
-                            <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                No Awards
-                            </span>
-                        </td>
-                        <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.overall_rank }}</td>
-                        <td class="px-2 py-3 whitespace-nowrap border">
-                            <span v-if="season.overall_rank == 1" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-600">
-                                National Champions
-                            </span>
-                            <span v-else-if="season.overall_rank == 2" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
-                                National Runner Up
-                            </span>
-                            <span v-else-if="season.overall_rank == 3" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-900">
-                                National Third Place
-                            </span>
-                            <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                No Awards
-                            </span>
-                        </td>
-                        <td class="px-2 py-3 whitespace-nowrap border">
-                            <span v-if="isNumberChecker(season.round_info.round)" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
-                                Conference Qualifier
-                            </span>
-                            <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                {{ roundNameFormatter(season.round_info.round) }}
-                            </span>
-                        </td>
-                        <td class="px-2 py-3 whitespace-nowrap border">
-                            <span v-if="season.round_info.won && season.round_info.round == 'finals'" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
-                                National Finals Champion
-                            </span>
-                            <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
-                                No Awards
-                            </span>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="p-4 bg-white shadow-lg rounded min-h-screen">
+                <div class="gap-4 max-h-100">
+                    <table class="min-w-full divide-y divide-gray-200 p-2">
+                        <thead class="text-nowrap text-white" :style="{ backgroundColor: '#'+team_info.teams.primary_color }">
+                            <tr>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Season</th>
+                                <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Wins</th>
+                                <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Losses</th>
+                                <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">Conference Rank</th>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Conference Champions</th>
+                                <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">National Rank</th>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Champions</th>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Round Played</th>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Finals</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr v-for="(season, index) in team_history.history" :key="season.season" @click.enter.prevent="showTooltip = season.round_info" class="hover:bg-gray-200">
+                                <td class="px-2 py-3 whitespace-nowrap border">{{ season.season_name }}</td>
+                                <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.wins }}</td>
+                                <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.losses }}</td>
+                                <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.conference_rank }}</td>
+                                <td class="px-2 py-3 whitespace-nowrap border">
+                                    <span v-if="season.conference_rank == 1" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-600">
+                                        Conference Champions
+                                    </span>
+                                    <span v-else-if="season.conference_rank == 2" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                        Conference Runner Up
+                                    </span>
+                                    <span v-else-if="season.conference_rank == 3" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-900">
+                                        Conference Third Place
+                                    </span>
+                                    <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        No Awards
+                                    </span>
+                                </td>
+                                <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.overall_rank }}</td>
+                                <td class="px-2 py-3 whitespace-nowrap border">
+                                    <span v-if="season.overall_rank == 1" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-600">
+                                        National Champions
+                                    </span>
+                                    <span v-else-if="season.overall_rank == 2" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600">
+                                        National Runner Up
+                                    </span>
+                                    <span v-else-if="season.overall_rank == 3" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-900">
+                                        National Third Place
+                                    </span>
+                                    <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        No Awards
+                                    </span>
+                                </td>
+                                <td class="px-2 py-3 whitespace-nowrap border">
+                                    <span v-if="isNumberChecker(season.round_info.round)" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
+                                        Conference Qualifier
+                                    </span>
+                                    <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        {{ roundNameFormatter(season.round_info.round) }}
+                                    </span>
+                                </td>
+                                <td class="px-2 py-3 whitespace-nowrap border">
+                                    <span v-if="season.round_info.won && season.round_info.round == 'finals'" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
+                                        National Finals Champion
+                                    </span>
+                                    <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">
+                                        No Awards
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <!-- Pagination Controls -->
+                <div class="flex w-full overflow-auto">
+                    <Paginator
+                        v-if="team_history.total_items"
+                        :page_number="search.page_num"
+                        :total_rows="team_history.total_items ?? 0"
+                        :itemsperpage="search.itemsperpage"
+                        @page_num="handlePagination"
+                    />
+                </div>
         </div>
-        <!-- Pagination Controls -->
-        <div class="flex w-full overflow-auto">
-            <Paginator
-              v-if="team_history.total_items"
-              :page_number="search.page_num"
-              :total_rows="team_history.total_items ?? 0"
-              :itemsperpage="search.itemsperpage"
-              @page_num="handlePagination"
-            />
-          </div>
         <Modal :show="showTooltip" :maxWidth="'sm'">
             <button class="flex float-end bg-gray-100 p-3" @click.prevent="showTooltip = false">
                 <i class="fa fa-times text-black-600"></i>

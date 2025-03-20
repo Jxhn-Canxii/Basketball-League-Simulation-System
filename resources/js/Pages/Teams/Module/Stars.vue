@@ -15,194 +15,197 @@
         </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
-        <h3 class="text-md font-semibold text-gray-800 mb-4">
-           Star Players Per Season
-        </h3>
+        
+        <div class="p-4 bg-white shadow-lg rounded min-h-screen">
+            <h3 class="text-md font-semibold text-gray-800 mb-4">
+            Star Players Per Season
+            </h3>
 
-        <table class="w-full text-xs">
-            <thead  :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: 'white' }">
-                <tr
-                    class="border-b text-left text-nowrap text-xs font-semibold uppercase tracking-wide"
-                >
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+            <table class="w-full text-xs">
+                <thead  :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: 'white' }">
+                    <tr
+                        class="border-b text-left text-nowrap text-xs font-semibold uppercase tracking-wide"
                     >
-                        Rank
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Rank
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Player
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Current Role
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Current Team
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                        FG %
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                            Avg. Points
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                            Avg. Assist
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                            Avg. Rebound
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                            Avg. Blocks
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                            Avg. Steals
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                            PER
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
+                        >
+                            EFF
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        v-for="(player,ii) in players"
+                        v-if="players.length > 0 && !loading"
+                        :key="ii"
+                        class="text-gray-700"
+                        @click.enter.prevent="showPlayerProfileModal = player.player_id"
+                        :class="player.season_team != player.current_team ? 'bg-red-50' : 'bg-green-50'"
                     >
-                        Player
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Current Role
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Current Team
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                       FG %
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                        Avg. Points
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                        Avg. Assist
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                        Avg. Rebound
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                        Avg. Blocks
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                        Avg. Steals
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                        PER
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-right font-semibold uppercase"
-                    >
-                        EFF
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr
-                    v-for="(player,ii) in players"
-                    v-if="players.length > 0 && !loading"
-                    :key="ii"
-                    class="text-gray-700"
-                    @click.enter.prevent="showPlayerProfileModal = player.player_id"
-                    :class="player.season_team != player.current_team ? 'bg-red-50' : 'bg-green-50'"
-                >
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.season_name }}
-                        </p>
-                    </td>
-                    <td
-                        :title="player.draft_status == 'Special Draft' || player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status"
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate uppercase font-bold">
-                            {{ player.player_name }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate uppercase">
-                            {{ player.current_role }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate uppercase">
-                            {{ player.current_team ?? 'FREE AGENT' }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.field_goal_percentage }} %
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.avg_points_per_game }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.avg_assists_per_game }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.avg_rebounds_per_game }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.avg_blocks_per_game }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.avg_steals_per_game }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ parseFloat(player.per ?? 0).toFixed(2) }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ parseFloat(player.eff ?? 0).toFixed(2) }}
-                        </p>
-                    </td>
-                </tr>
-                <tr  v-if="players.length == 0 && !loading">
-                    <td colspan="13" class="border-b text-center font-bold text-lg border-gray-200  px-3 py-3">
-                        <p class="text-red-500 whitespace-no-wrap">No Data Found!</p>
-                    </td>
-                </tr>
-                <tr  v-if="loading">
-                    <td colspan="13" class="border-b text-center font-bold text-lg border-gray-200  px-3 py-3">
-                        <p class="text-red-500 whitespace-no-wrap">Loading Data...</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.season_name }}
+                            </p>
+                        </td>
+                        <td
+                            :title="player.draft_status == 'Special Draft' || player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status"
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate uppercase font-bold">
+                                {{ player.player_name }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate uppercase">
+                                {{ player.current_role }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate uppercase">
+                                {{ player.current_team ?? 'FREE AGENT' }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.field_goal_percentage }} %
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.avg_points_per_game }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.avg_assists_per_game }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.avg_rebounds_per_game }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.avg_blocks_per_game }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.avg_steals_per_game }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ parseFloat(player.per ?? 0).toFixed(2) }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-right text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ parseFloat(player.eff ?? 0).toFixed(2) }}
+                            </p>
+                        </td>
+                    </tr>
+                    <tr  v-if="players.length == 0 && !loading">
+                        <td colspan="13" class="border-b text-center font-bold text-lg border-gray-200  px-3 py-3">
+                            <p class="text-red-500 whitespace-no-wrap">No Data Found!</p>
+                        </td>
+                    </tr>
+                    <tr  v-if="loading">
+                        <td colspan="13" class="border-b text-center font-bold text-lg border-gray-200  px-3 py-3">
+                            <p class="text-red-500 whitespace-no-wrap">Loading Data...</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
-        <!-- <div class="flex w-full overflow-auto mt-2">
-            <Paginator
-                v-if="players.total"
-                :page_number="search_filters.page_num"
-                :total_rows="players.total ?? 0"
-                :itemsperpage="search_filters.itemsperpage"
-                @page_num="handlePagination"
-            />
-        </div> -->
+            <!-- <div class="flex w-full overflow-auto mt-2">
+                <Paginator
+                    v-if="players.total"
+                    :page_number="search_filters.page_num"
+                    :total_rows="players.total ?? 0"
+                    :itemsperpage="search_filters.itemsperpage"
+                    @page_num="handlePagination"
+                />
+            </div> -->
+        </div>
     </div>
    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
         <div class="p-6 block">

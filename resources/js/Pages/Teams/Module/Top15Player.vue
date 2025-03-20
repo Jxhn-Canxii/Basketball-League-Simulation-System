@@ -15,235 +15,237 @@
         </span>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
-        <h3 class="text-md font-semibold text-gray-800 mb-4">
-            Top 15 Players All-time
-        </h3>
+        <div class="p-4 bg-white shadow-lg rounded min-h-screen">
+            <h3 class="text-md font-semibold text-gray-800 mb-4">
+                Top 15 Players All-time
+            </h3>
 
-        <table class="w-full text-xs">
-            <thead :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: 'white' }">
-                <tr
-                    class="border-b text-left text-nowrap text-xs font-semibold uppercase tracking-wide"
-                >
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+            <table class="w-full text-xs">
+                <thead :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: 'white' }">
+                    <tr
+                        class="border-b text-left text-nowrap text-xs font-semibold uppercase tracking-wide"
                     >
-                        Rank
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Player
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Status
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Current Team
-                    </th>
-                    <!-- <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Teams Played
-                    </th> -->
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        MVP
-                    </th>
-                    <!-- <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Championships
-                    </th> -->
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Awards
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Total Points
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Total Assist
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Total Rebound
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Total Blocks
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Total Steals
-                    </th>
-                    <!-- <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Total Turnovers
-                    </th> -->
-                    <th
-                        class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
-                    >
-                        Statistical Points
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr
-                    v-for="(player,ii) in players"
-                    v-if="players.length > 0"
-                    :key="player.player_id"
-                    class="text-gray-700"
-                    :class="team_info.teams.id != player.current_team_id ? 'bg-red-50' : 'bg-green-50'"
-                >
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ ii + 1 }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.player_name }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden text-nowrap"
-                    >
-                        <!-- Display "Retired" if player is not active and retirement age is greater than or equal to their age -->
-                        <span
-                            v-if="!player.is_active"
-                            class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
-                            >Retired</span
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                         >
-
-                        <!-- Display "Active" if player is active and retirement age is less than their age -->
-                        <span
-                            v-else
-                            class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
-                            >Active</span
+                            Rank
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
                         >
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                            Player
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Status
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Current Team
+                        </th>
+                        <!-- <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Teams Played
+                        </th> -->
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            MVP
+                        </th>
+                        <!-- <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Championships
+                        </th> -->
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Awards
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Total Points
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Total Assist
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Total Rebound
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Total Blocks
+                        </th>
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Total Steals
+                        </th>
+                        <!-- <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Total Turnovers
+                        </th> -->
+                        <th
+                            class="border-b-2 border-gray-200 py-2 px-2 text-left font-semibold uppercase"
+                        >
+                            Statistical Points
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr
+                        v-for="(player,ii) in players"
+                        v-if="players.length > 0"
+                        :key="player.player_id"
+                        class="text-gray-700"
+                        :class="team_info.teams.id != player.current_team_id ? 'bg-red-50' : 'bg-green-50'"
                     >
-                        <p class="text-gray-900 whitespace-nowrap truncate" v-if="player.is_active">
-                            {{ player.current_team_name ?? "Free Agent" }}
-                        </p>
-                        <p class="text-gray-900 whitespace-nowrap truncate" v-else>
-                            -
-                        </p>
-                    </td>
-                    <!-- <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-normal break-words">
-                            {{ player.teams_played ?? "-" }}
-                        </p>
-                    </td> -->
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.finals_mvp_count }}
-                        </p>
-                    </td>
-                    <!-- <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.championships_won }}
-                        </p>
-                    </td> -->
-                    <td
-                        class="border-b border-gray-200  text-wrap px-2 py-2"
-                    >
-                        <p class="text-gray-900">
-                            {{ player.all_awards }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_points }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_assists }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_rebounds }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_blocks }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_steals }}
-                        </p>
-                    </td>
-                    <!-- <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_turnovers }}
-                        </p>
-                    </td> -->
-                    <td
-                        class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.base_statistical_points }}
-                        </p>
-                    </td>
-                </tr>
-                <tr v-else>
-                    <td colspan="12" class="border-b text-center font-bold text-lg border-gray-200  px-3 py-3">
-                        <p class="text-red-500 whitespace-no-wrap">No Data Found!</p>
-                    </td>
-                </tr>
-            </tbody>
-        </table>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ ii + 1 }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.player_name }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden text-nowrap"
+                        >
+                            <!-- Display "Retired" if player is not active and retirement age is greater than or equal to their age -->
+                            <span
+                                v-if="!player.is_active"
+                                class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
+                                >Retired</span
+                            >
 
-        <div class="flex w-full overflow-auto mt-2">
-            <Paginator
-                v-if="players.total"
-                :page_number="search_filters.page_num"
-                :total_rows="players.total ?? 0"
-                :itemsperpage="search_filters.itemsperpage"
-                @page_num="handlePagination"
-            />
+                            <!-- Display "Active" if player is active and retirement age is less than their age -->
+                            <span
+                                v-else
+                                class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                                >Active</span
+                            >
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate" v-if="player.is_active">
+                                {{ player.current_team_name ?? "Free Agent" }}
+                            </p>
+                            <p class="text-gray-900 whitespace-nowrap truncate" v-else>
+                                -
+                            </p>
+                        </td>
+                        <!-- <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-normal break-words">
+                                {{ player.teams_played ?? "-" }}
+                            </p>
+                        </td> -->
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.finals_mvp_count }}
+                            </p>
+                        </td>
+                        <!-- <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.championships_won }}
+                            </p>
+                        </td> -->
+                        <td
+                            class="border-b border-gray-200  text-wrap px-2 py-2"
+                        >
+                            <p class="text-gray-900">
+                                {{ player.all_awards }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.total_points }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.total_assists }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.total_rebounds }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.total_blocks }}
+                            </p>
+                        </td>
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.total_steals }}
+                            </p>
+                        </td>
+                        <!-- <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.total_turnovers }}
+                            </p>
+                        </td> -->
+                        <td
+                            class="border-b border-gray-200  px-2 py-2 text-ellipsis overflow-hidden"
+                        >
+                            <p class="text-gray-900 whitespace-nowrap truncate">
+                                {{ player.base_statistical_points }}
+                            </p>
+                        </td>
+                    </tr>
+                    <tr v-else>
+                        <td colspan="12" class="border-b text-center font-bold text-lg border-gray-200  px-3 py-3">
+                            <p class="text-red-500 whitespace-no-wrap">No Data Found!</p>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <!-- <div class="flex w-full overflow-auto mt-2">
+                <Paginator
+                    v-if="players.total"
+                    :page_number="search_filters.page_num"
+                    :total_rows="players.total ?? 0"
+                    :itemsperpage="search_filters.itemsperpage"
+                    @page_num="handlePagination"
+                />
+            </div> -->
         </div>
     </div>
 </template>
