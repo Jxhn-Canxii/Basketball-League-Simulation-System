@@ -429,7 +429,6 @@ class TradeController extends Controller
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->where('players.team_id', $teamId)
             ->whereNotIn('players.id', $starPlayers) // Exclude stars and all-stars
-            ->where('players.contract_years', '<=', 2)
             ->where('players.is_injured', 0)
             ->where('player_season_stats.season_id', $latestSeasonId)
             ->select(
@@ -457,14 +456,23 @@ class TradeController extends Controller
                 ->where('player_id', $playerStats->player_id)
                 ->where('season_id', $previousSeasonId)
                 ->first();
-    
+        
             $latestScore = $this->calculatePerformanceScore($playerStats);
             $previousScore = $previousStats ? $this->calculatePerformanceScore($previousStats) : 0;
-    
+        
+            if ($previousScore > 0) {
+                $declinePercentage = (($previousScore - $latestScore) / $previousScore) * 100;
+                
+                if ($declinePercentage >= 20) { // Threshold for a **super decline** (e.g., 20% drop)
+                    $playerStats->super_decline = true;
+                }
+            }
+        
             if ($latestScore < $previousScore) {
                 $underperformingPlayers[] = (array) $playerStats;
             }
         }
+        
     
         return $underperformingPlayers;
     }
