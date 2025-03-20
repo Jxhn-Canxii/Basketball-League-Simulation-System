@@ -611,7 +611,9 @@
                                     v-if="player.seasons_played_with_team == 1">
                                     <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
                                 </span>
-
+                                <span v-if="player.status == 2" class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full" title="Transferred">
+                                    <i class="fas fa-exchange-alt"></i>
+                                </span>
                                 <!-- If the player has played more than one season -->
                                 <!-- {{ player.latest_season }}
                                 {{ player.age - (player.latest_season - player.draft_id) }} -->
@@ -907,12 +909,12 @@
                             </td> -->
                             <td class="px-2 py-1 whitespace-nowrap border">
                                 <!-- If the player is new to the team -->
-                                <span
+                                <!-- <span
                                     title="Newly Aquired"
                                     class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
                                     v-if="player.seasons_played_with_team == 1">
                                     <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
-                                </span>
+                                </span> -->
 
                                 <!-- If the player has played more than one season -->
                                 <!-- {{ player.latest_season }}
