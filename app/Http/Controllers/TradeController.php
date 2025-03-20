@@ -405,17 +405,37 @@ class TradeController extends Controller
     }
 
 
-
     private function findUnderperformingPlayers($teamId)
     {
         $latestSeasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // Assuming seasons are sequential
     
+        // Get top 5 teams per conference
+        $topTeams = DB::table('standings_view')
+            ->where('season_id', $latestSeasonId)
+            ->where('conference_rank', '<=', 5) // Top 5 teams per conference
+            ->pluck('team_id')
+            ->toArray();
+    
+        // Get star players and all-stars from top 5 teams in each conference
+        $starPlayers = DB::table('players')
+            ->whereIn('team_id', $topTeams)
+            ->whereIn('players.role', ['star player', 'all star']) // Filter by role
+            ->pluck('players.id')
+            ->toArray();
+
+    
+        // Define roles that should be evaluated for underperformance
+        $evaluatedRoles = ['starter', 'bench', 'rotation']; // Exclude stars and all-stars
+    
+        // Fetch latest player stats, excluding star players and all-stars from top 5 teams
         $latestStats = DB::table('player_season_stats')
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->where('players.team_id', $teamId)
-            ->where('players.contract_years','<=', 2)
-            ->where('players.is_injured',0)
+            ->whereNotIn('players.id', $starPlayers) // Exclude stars and all-stars
+            ->whereIn('players.role', $evaluatedRoles) // Only check selected roles
+            ->where('players.contract_years', '<=', 2)
+            ->where('players.is_injured', 0)
             ->where('player_season_stats.season_id', $latestSeasonId)
             ->select(
                 'players.id as player_id',
@@ -453,6 +473,7 @@ class TradeController extends Controller
     
         return $underperformingPlayers;
     }
+    
     
     private function findUnhappyStars()
     {
