@@ -798,7 +798,7 @@ class PlayersController extends Controller
             'player_ratings.overall_rating',
             'seasons.name as season_name', // Select season name
             \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY teams.name ASC) as team_names'), // Concatenate team names, ordered
-            \DB::raw('COALESCE(player_season_stats.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
+            \DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
             \DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
             \DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
             \DB::raw('AVG(player_season_stats.avg_assists_per_game) as avg_assists_per_game'),
@@ -830,7 +830,7 @@ class PlayersController extends Controller
         ->where('player_season_stats.player_id', $playerId)
         ->groupBy(
             'players.id', 'players.name', 'player_season_stats.season_id', 
-            'player_ratings.overall_rating', 'seasons.name','player_season_stats.role','players.role'
+            'player_ratings.overall_rating', 'seasons.name','player_ratings.role','players.role'
         )
         ->orderBy('player_season_stats.season_id', 'desc') // Sort by season_id in descending order
         ->get();

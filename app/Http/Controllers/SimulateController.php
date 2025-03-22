@@ -2211,6 +2211,7 @@ class SimulateController extends Controller
                 }
     
                 DB::table('players')->where('id', $playerId)->update(['role' => $newRole]);
+                
                 DB::table('player_season_stats')
                     ->where('player_id', $playerId)
                     ->where('season_id', $seasonId)
