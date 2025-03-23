@@ -224,7 +224,10 @@
                             v-for="(player, index) in filteredPlayers"
                             :key="player.player_id"
                             v-if="filteredPlayers?.length > 0"
-                            :class="player.is_injured == 1 ? 'bg-red-100' : ''"
+                            :class="[
+                                player.is_injured == 1 ? 'bg-red-100' : '',
+                                index >= 15 ? 'bg-gray-100' : ''
+                            ]"
                             @click.prevent="showPlayerProfile(player)"
                             class="hover:bg-gray-100"
                         >
