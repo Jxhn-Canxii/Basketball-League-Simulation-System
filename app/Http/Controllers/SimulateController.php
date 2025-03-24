@@ -1215,7 +1215,7 @@ class SimulateController extends Controller
         ]);
     }
 
-    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    private function distributeMinutesV1($playersArray, $totalMinutes, $gameId)
     {
         // Define role-based priorities and their minute allocation limits
         $rolePriority = [
@@ -1319,6 +1319,79 @@ class SimulateController extends Controller
             
         }
         //unset($minute); // Avoid reference issues
+        return $minutes;
+    }
+
+    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    {
+        $rolePriority = [
+            'star player' => 1,
+            'all star'    => 2,
+            'starter'     => 3,
+            'role player' => 4,
+            'bench'       => 5,
+        ];
+
+        $roleMinuteLimits = [
+            'star player' => [30, 42],
+            'all star'    => [28, 40],
+            'starter'     => [25, 38],
+            'role player' => [10, 28],
+            'bench'       => [5, 15],
+        ];
+
+        $sortedPlayers = collect($playersArray)->sortBy(fn($player) => $rolePriority[$player['role']] ?? 5)->values();
+        $minutes = [];
+        $assignedMinutes = 0;
+
+        foreach ($sortedPlayers as $player) {
+            if (rand(1, 100) <= $player['injury_prone_percentage']) {
+                $minutes[$player['id']] = 0;
+                continue;
+            }
+
+            $role = $player['role'];
+            $minMinutes = $roleMinuteLimits[$role][0] ?? 0;
+            $maxMinutes = $roleMinuteLimits[$role][1] ?? 15;
+
+            $assignedMinutesForPlayer = rand($minMinutes, $maxMinutes);
+            $assignedMinutesForPlayer = min($assignedMinutesForPlayer, 48);
+
+            $minutes[$player['id']] = $assignedMinutesForPlayer;
+            $assignedMinutes += $assignedMinutesForPlayer;
+
+            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+        }
+
+        $remainingMinutes = $totalMinutes - $assignedMinutes;
+
+        if ($remainingMinutes > 0) {
+            $availablePlayers = $sortedPlayers->reject(fn($player) => $minutes[$player['id']] === 0 || $minutes[$player['id']] >= 48);
+            $numAvailablePlayers = $availablePlayers->count();
+
+            if ($numAvailablePlayers > 0) {
+                $totalWeight = $availablePlayers->sum(fn($player) => 1 / ($rolePriority[$player['role']] ?? 5));
+
+                foreach ($availablePlayers as $player) {
+                    $playerWeight = 1 / ($rolePriority[$player['role']] ?? 5);
+                    $extraMinutes = round(($playerWeight / $totalWeight) * $remainingMinutes);
+                    $minutes[$player['id']] = min($minutes[$player['id']] + $extraMinutes, 48);
+                }
+            }
+        }
+
+        // Final Adjustment to Match `totalMinutes`
+        $totalAssignedMinutes = array_sum($minutes);
+        $difference = $totalMinutes - $totalAssignedMinutes;
+
+        if ($difference !== 0) {
+            foreach ($minutes as $id => &$minute) {
+                $adjustment = ($difference / count($minutes));
+                $minute = max(0, min(48, round($minute + $adjustment)));
+            }
+            unset($minute);
+        }
+
         return $minutes;
     }
 
