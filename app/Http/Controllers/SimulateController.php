@@ -1484,8 +1484,8 @@ class SimulateController extends Controller
 
             // **Waive Player with 60% Chance if Injury Recovery is Too Long**
             if ((float) $player->injury_recovery_games >= (float) $requiredRecoveryGames && $seasonStatus <= 2) {
-                // Set the random chance to waive the player to 60%
-                if (rand(1, 100) <= 60) {
+                // Set the random chance to waive the player to 20%
+                if (rand(1, 100) <= 20) {
                     DB::table('transactions')->insert([
                         'player_id' => $player->id,
                         'season_id' => $seasonId,
