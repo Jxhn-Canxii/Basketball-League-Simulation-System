@@ -144,6 +144,14 @@
                             >
                                 {{ team.conference_1_rank }}
                             </span>
+
+                            <span
+                                v-if="team.is_grandslam > 0"
+                                class="flex items-center justify-center w-5 h-5 bg-yellow-500 text-black text-sm rounded-full"
+                                title="Grand Slam Champion"
+                            >
+                                {{ team.is_grandslam }}
+                            </span>
                         </div>
 
                     </td>
