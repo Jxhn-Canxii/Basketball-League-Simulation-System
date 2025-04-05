@@ -15,10 +15,11 @@
             <button
                 @click.prevent="simulateAll()"
                 :disabled="isHide"
+                v-if="!isHide"
                 :class="isHide ? 'opacity-50' : ''"
                 class="text-indigo-600 bg-orange-400 shadow rounded-full p-2 font-bold text-md text-nowrap hover:text-indigo-900"
             >
-                <span class="text-end">{{ isHide ? 'Getting results...' : 'Simulate All Season' }}</span>
+                <span class="text-end">Simulate All Season</span>
             </button>
         </div>
         <div v-else>
