@@ -1,65 +1,72 @@
-INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`, `league_id`, `conference_id`, `created_at`, `updated_at`) VALUES
-(1, 'Lions', 'LIO', 'FFB612', '563512', 1, 1, NULL, NULL),        -- Gold/Brown
-(2, 'Tigers', 'TIG', 'FA4616', '2D2926', 1, 1, NULL, NULL),     -- Orange/Black
-(3, 'Bears', 'BEA', '0B162A', 'C83803', 1, 1, NULL, NULL),      -- Navy/Orange
-(4, 'Wolves', 'WOL', '2F4F4F', '696969', 1, 1, NULL, NULL),     -- Slate Gray/Dim Gray
-(5, 'Eagles', 'EAG', '004C54', 'A5ACAF', 1, 1, NULL, NULL),     -- Green/Silver
-(6, 'Falcons', 'FAL', 'A71930', '2D2926', 1, 1, NULL, NULL),   -- Red/Black
-(7, 'Hawks', 'HAW', 'E03A3E', 'FFD700', 1, 1, NULL, NULL),     -- Red/Gold
-(8, 'Panthers', 'PAN', '0085CA', '101820', 1, 1, NULL, NULL),  -- Blue/Black
-(9, 'Athletics', 'ATH', '003831', 'EFB21E', 1, 1, NULL, NULL), -- Green/Gold
-(10, 'Vipers', 'VIP', '4B5320', '8A9A5B', 1, 1, NULL, NULL),    -- Military Green/Olive
-(11, 'Jaguars', 'JAG', '006778', 'D7A22A', 1, 1, NULL, NULL),   -- Teal/Gold
-(12, 'Dolphins', 'DOL', '008E97', 'FC4C02', 1, 1, NULL, NULL),  -- Aqua/Orange
-(13, 'Rockets', 'RCK', 'CE1141', '808080', 1, 1, NULL, NULL),   -- Red/Gray
-(14, 'Braves', 'BRV', '13274F', 'BA0C2F', 1, 1, NULL, NULL),    -- Navy/Red
-(15, 'Blazers', 'BLZ', 'E03A3E', '2D2926', 1, 1, NULL, NULL),  -- Red/Black
-(16, 'Kings', 'KIN', '5A2D81', '8C7B6D', 1, 1, NULL, NULL),     -- Purple/Taupe
-(17, 'Titans', 'TIT', '0C2340', '418FDE', 1, 2, NULL, NULL),    -- Navy/Sky Blue
-(18, 'Spartans', 'SPA', '18453B', '897A68', 1, 2, NULL, NULL),  -- Green/Bronze
-(19, 'Trojans', 'TRO', '990000', 'FFD100', 1, 2, NULL, NULL),   -- Cardinal/Gold
-(20, 'Saints', 'SNT', 'D3BC8D', '654321', 1, 2, NULL, NULL),    -- Gold/Saddle Brown
-(21, 'Aliens', 'ALN', '75E4B3', '2D2926', 1, 2, NULL, NULL),    -- Mint/Black
-(22, 'Leopards', 'LEO', 'FDB827', '8B4513', 1, 2, NULL, NULL),  -- Yellow/Brown
-(23, 'Sabertooths', 'SAB', 'FF5910', '654321', 1, 2, NULL, NULL),-- Orange/Brown
-(24, 'Spiders', 'SPD', '363636', '8B0000', 1, 2, NULL, NULL),   -- Black/Dark Red
-(25, 'Vikings', 'VIK', '4F2683', 'FFC62F', 1, 2, NULL, NULL),   -- Purple/Gold
-(26, 'Crows', 'CRW', '2D2926', '708090', 1, 2, NULL, NULL),     -- Black/Slate
-(27, 'Royals', 'RYL', '004687', 'BA8B02', 1, 2, NULL, NULL),    -- Navy/Old Gold
-(28, 'Thunders', 'THN', 'F05133', '002D62', 1, 2, NULL, NULL),  -- Orange/Navy
-(29, 'Warriors', 'WAR', '1D428A', 'FF9E1B', 1, 2, NULL, NULL),  -- Blue/Orange
-(30, 'Hellhounds', 'HH', 'BB0000', '4B0000', 1, 2, NULL, NULL), -- Red/Dark Red
-(31, 'Red Fox', 'RF', 'CC092F', '654321', 1, 2, NULL, NULL),    -- Red/Brown
-(32, 'Cougars', 'CGR', '512888', '897A68', 1, 2, NULL, NULL),   -- Purple/Bronze
-(33, 'Waves', 'WAV', '004785', 'FFD700', 1, 3, NULL, NULL),     -- Navy/Gold
-(34, 'Predators', 'PRD', 'CEB888', '002E5D', 1, 3, NULL, NULL), -- Gold/Blue
-(35, 'Trilogy', 'TRI', '702F8A', '4B0082', 1, 3, NULL, NULL),   -- Purple/Indigo
-(36, 'Monarchs', 'MON', 'FF671F', '002F6C', 1, 3, NULL, NULL),  -- Orange/Navy
-(37, 'Krakens', 'KRK', '001628', '5F9EA0', 1, 3, NULL, NULL),   -- Navy/Cadet Blue
-(38, 'Jets', 'JET', '0038A8', '808080', 1, 3, NULL, NULL),      -- Blue/Gray
-(39, 'Northern Stars', 'NS', '00205B', '4682B4', 1, 3, NULL, NULL), -- Navy/Steel Blue
-(40, 'Ninjas', 'NIN', '2D2926', '8B0000', 1, 3, NULL, NULL),     -- Black/Dark Red
-(41, 'Dragons', 'DRA', '862633', 'D4AF37', 1, 3, NULL, NULL),   -- Burgundy/Metallic Gold
-(42, 'Phoenix', 'PHO', 'E56020', '8B0000', 1, 3, NULL, NULL),    -- Orange/Dark Red
-(43, 'Sharks', 'SHA', '006272', '4B5320', 1, 3, NULL, NULL),    -- Teal/Military Green
-(44, 'Giants', 'GNT', 'FD5A1E', '2D2926', 1, 3, NULL, NULL),    -- Orange/Black
-(45, 'Fire', 'FRE', 'C8102E', 'FF8C00', 1, 3, NULL, NULL),      -- Red/Dark Orange
-(46, 'Patriots', 'PAT', '002244', 'BA0C2F', 1, 3, NULL, NULL),   -- Navy/Red
-(47, 'Aces', 'ACE', '2D2926', '708090', 1, 3, NULL, NULL),       -- Black/Slate
-(48, 'Monsters', 'MNT', 'DD0000', '00008B', 1, 3, NULL, NULL),   -- Red/Dark Blue
-(49, 'Pirates', 'PIR', '27251F', 'D4AF37', 1, 4, NULL, NULL),    -- Black/Gold
-(50, 'Scorpions', 'SCR', 'AF1E2D', '2D2926', 1, 4, NULL, NULL),  -- Red/Black
-(51, 'Enemies', 'ENM', '8A8D8F', '454545', 1, 4, NULL, NULL),    -- Silver/Dark Gray
-(52, 'Reapers', 'RPR', '43459B', '301934', 1, 4, NULL, NULL),    -- Indigo/Dark Purple
-(53, 'Raiders', 'RAI', '2D2926', '808080', 1, 4, NULL, NULL),    -- Black/Gray
-(54, 'Whales', 'WH', '00A9E0', '000080', 1, 4, NULL, NULL),      -- Sky Blue/Navy
-(55, 'Poseidons', 'POS', '005C5C', '1E90FF', 1, 4, NULL, NULL),  -- Teal/Dodger Blue
-(56, 'Cyclones', 'CYC', 'BA0C2F', '2D2926', 1, 4, NULL, NULL),   -- Red/Black
-(57, 'Force', 'FRC', '00843D', '9B870C', 1, 4, NULL, NULL),      -- Green/Olive
-(58, 'Astronauts', 'AST', '0B3D91', '808080', 1, 4, NULL, NULL), -- Navy/Gray
-(59, 'Demons', 'DMN', '660000', '450000', 1, 4, NULL, NULL),     -- Dark Red/Darker Red
-(60, 'Devils', 'DVL', 'CE1126', '2D2926', 1, 4, NULL, NULL),     -- Red/Black
-(61, 'Bulldogs', 'BD', 'BA0C2F', '8B0000', 1, 4, NULL, NULL),    -- Red/Dark Red
-(62, 'Hornets', 'HRN', '1D1160', '00788C', 1, 4, NULL, NULL),   -- Purple/Teal
-(63, 'Rebels', 'RBL', '454545', '800000', 1, 4, NULL, NULL),     -- Dark Gray/Maroon
-(64, 'Owls', 'OWL', '8F9779', '454B1B', 1, 4, NULL, NULL);       -- Sage/Dark Olive
+INSERT INTO `teams` 
+(`id`, `name`, `acronym`, `primary_color`, `secondary_color`, `league_id`, `conference_id`, `city`, `description`, `created_at`, `updated_at`) 
+VALUES
+(1, 'Lions', 'LIO', 'FFB612', '563512', 1, 1, 'Savannah Heights', 'Founded in 1960, the Lions roared to early fame with their unmatched ground game.', NOW(), NOW()),
+(2, 'Tigers', 'TIG', 'FA4616', '2D2926', 1, 1, 'Jungle Ridge', 'The Tigers began their journey in 1972, known for their ferocious defensive line.', NOW(), NOW()),
+(3, 'Bears', 'BEA', '0B162A', 'C83803', 1, 1, 'Grizzly Peak', 'A cold-weather powerhouse, the Bears are famed for their brute strength and tradition.', NOW(), NOW()),
+(4, 'Wolves', 'WOL', '2F4F4F', '696969', 1, 1, 'Moonlight Valley', 'Formed in 1985, the Wolves hunt in packs and are notorious for clutch comebacks.', NOW(), NOW()),
+(5, 'Eagles', 'EAG', '004C54', 'A5ACAF', 1, 1, 'Liberty City', 'Taking flight in the late 80s, the Eagles have soared to multiple championships.', NOW(), NOW()),
+(6, 'Falcons', 'FAL', 'A71930', '2D2926', 1, 1, 'Skyhold', 'An aerial threat since 1990, the Falcons dominate the skies with swift precision.', NOW(), NOW()),
+(7, 'Hawks', 'HAW', 'E03A3E', 'FFD700', 1, 1, 'Golden Nest', 'Renowned for their sharp vision and offense, the Hawks are always playoff contenders.', NOW(), NOW()),
+(8, 'Panthers', 'PAN', '0085CA', '101820', 1, 1, 'Midnight Bay', 'Sleek and silent, the Panthers emerged as a dominant force in the early 2000s.', NOW(), NOW()),
+(9, 'Athletics', 'ATH', '003831', 'EFB21E', 1, 1, 'Champion Hills', 'An all-around squad with deep roots in sports tradition.', NOW(), NOW()),
+(10, 'Vipers', 'VIP', '4B5320', '8A9A5B', 1, 1, 'Venom Creek', 'Fast and lethal, the Vipers strike quickly and unpredictably.', NOW(), NOW()),
+(11, 'Jaguars', 'JAG', '006778', 'D7A22A', 1, 1, 'Jungleton', 'Silent hunters on the gridiron, the Jaguars are feared for their agility.', NOW(), NOW()),
+(12, 'Dolphins', 'DOL', '008E97', 'FC4C02', 1, 1, 'Oceanview', 'Masters of the open field, the Dolphins thrive on speed and coordination.', NOW(), NOW()),
+(13, 'Rockets', 'RCK', 'CE1141', '808080', 1, 1, 'Launch City', 'Blasting onto the scene in 1995, the Rockets are built for high-impact plays.', NOW(), NOW()),
+(14, 'Braves', 'BRV', '13274F', 'BA0C2F', 1, 1, 'Valor Town', 'Built on courage and resilience, the Braves carry a legacy of perseverance.', NOW(), NOW()),
+(15, 'Blazers', 'BLZ', 'E03A3E', '2D2926', 1, 1, 'Torch City', 'Blazing a trail of innovation and style since 2002.', NOW(), NOW()),
+(16, 'Kings', 'KIN', '5A2D81', '8C7B6D', 1, 1, 'Royal Heights', 'A regal franchise with championship pedigree.', NOW(), NOW()),
+(17, 'Titans', 'TIT', '0C2340', '418FDE', 1, 2, 'Olympus Bay', 'Giants among men, the Titans have ruled the gridiron since the 80s.', NOW(), NOW()),
+(18, 'Spartans', 'SPA', '18453B', '897A68', 1, 2, 'Ironfields', 'Discipline, strength, and heritage define the warrior culture of the Spartans.', NOW(), NOW()),
+(19, 'Trojans', 'TRO', '990000', 'FFD100', 1, 2, 'Shield Haven', 'A legacy of honor and attack, the Trojans are battle-tested and bold.', NOW(), NOW()),
+(20, 'Saints', 'SNT', 'D3BC8D', '654321', 1, 2, 'Saintsville', 'With grace and power, the Saints emerged from humble beginnings to elite status.', NOW(), NOW()),
+(21, 'Aliens', 'ALN', '75E4B3', '2D2926', 1, 2, 'Area 7', 'Out-of-this-world strategies and cosmic talent define the Aliens.', NOW(), NOW()),
+(22, 'Leopards', 'LEO', 'FDB827', '8B4513', 1, 2, 'Spotted Hills', 'Agile and aggressive, the Leopards are known for striking from the shadows.', NOW(), NOW()),
+(23, 'Sabertooths', 'SAB', 'FF5910', '654321', 1, 2, 'Fang Ridge', 'An ancient force reborn in the modern game.', NOW(), NOW()),
+(24, 'Spiders', 'SPD', '363636', '8B0000', 1, 2, 'Web City', 'Tricky, sticky, and strategic – the Spiders trap opponents in their game.', NOW(), NOW()),
+(25, 'Vikings', 'VIK', '4F2683', 'FFC62F', 1, 2, 'Nordheim', 'Fearless raiders from the north with unshakable resolve.', NOW(), NOW()),
+(26, 'Crows', 'CRW', '2D2926', '708090', 1, 2, 'Murkland', 'Dark, mysterious, and cunning – the Crows always outsmart their prey.', NOW(), NOW()),
+(27, 'Royals', 'RYL', '004687', 'BA8B02', 1, 2, 'Crown Point', 'Royal bloodlines run deep in this disciplined and classy franchise.', NOW(), NOW()),
+(28, 'Thunders', 'THN', 'F05133', '002D62', 1, 2, 'Stormvale', 'Their entrance always shakes the stadium. Unpredictable and explosive.', NOW(), NOW()),
+(29, 'Warriors', 'WAR', '1D428A', 'FF9E1B', 1, 2, 'Shieldgate', 'Built on grit and glory, the Warriors never back down.', NOW(), NOW()),
+(30, 'Hellhounds', 'HH', 'BB0000', '4B0000', 1, 2, 'Inferno Town', 'Feared and fierce, the Hellhounds unleash chaos with every game.', NOW(), NOW()),
+(31, 'Red Fox', 'RF', 'CC092F', '654321', 1, 2, 'Foxborough', 'Clever and quick, the Red Foxes are specialists in tight finishes.', NOW(), NOW()),
+(32, 'Cougars', 'CGR', '512888', '897A68', 1, 2, 'Mount Claw', 'A proud legacy of power and precision, the Cougars strike with elegance.', NOW(), NOW());
+
+
+INSERT INTO `teams` 
+(`id`, `name`, `acronym`, `primary_color`, `secondary_color`, `league_id`, `conference_id`, `city`, `description`, `created_at`, `updated_at`) 
+VALUES
+(33, 'Waves', 'WAV', '004785', 'FFD700', 1, 3, 'Seabreeze', 'Known for their fluid offense, the Waves crash through defenses effortlessly.', NULL, NULL),
+(34, 'Predators', 'PRD', 'CEB888', '002E5D', 1, 3, 'Hunter\'s Hollow', 'Since their founding, the Predators have stalked the playoffs with ruthless consistency.', NULL, NULL),
+(35, 'Trilogy', 'TRI', '702F8A', '4B0082', 1, 3, 'Tri-City', 'Representing past, present, and future, Trilogy plays with a unique three-phase dominance.', NULL, NULL),
+(36, 'Monarchs', 'MON', 'FF671F', '002F6C', 1, 3, 'Crown City', 'A team of regality and resilience, the Monarchs lead with poise under pressure.', NULL, NULL),
+(37, 'Krakens', 'KRK', '001628', '5F9EA0', 1, 3, 'Deepwater Port', 'Emerging from the abyss, the Krakens unleash chaos on their opponents.', NULL, NULL),
+(38, 'Jets', 'JET', '0038A8', '808080', 1, 3, 'Flight City', 'With speed and power, the Jets have soared through the competition since day one.', NULL, NULL),
+(39, 'Northern Stars', 'NS', '00205B', '4682B4', 1, 3, 'Polaris Bay', 'Guided by destiny, the Northern Stars shine brightest in clutch moments.', NULL, NULL),
+(40, 'Ninjas', 'NIN', '2D2926', '8B0000', 1, 3, 'Shadow Falls', 'Stealth and strategy define the silent success of the Ninjas.', NULL, NULL),
+(41, 'Dragons', 'DRA', '862633', 'D4AF37', 1, 3, 'Flameforge', 'With fiery determination, the Dragons scorch their path to victory.', NULL, NULL),
+(42, 'Phoenix', 'PHO', 'E56020', '8B0000', 1, 3, 'Ashrise', 'Reborn from setbacks, the Phoenix rises to dominate the field.', NULL, NULL),
+(43, 'Sharks', 'SHA', '006272', '4B5320', 1, 3, 'Tide Bay', 'Ruthless in their pursuits, the Sharks are a terror in the trenches.', NULL, NULL),
+(44, 'Giants', 'GNT', 'FD5A1E', '2D2926', 1, 3, 'Colossal City', 'Standing tall in stature and gameplay, the Giants are a historic powerhouse.', NULL, NULL),
+(45, 'Fire', 'FRE', 'C8102E', 'FF8C00', 1, 3, 'Blazeborough', 'Fueled by passion, the Fire have ignited unforgettable rivalries.', NULL, NULL),
+(46, 'Patriots', 'PAT', '002244', 'BA0C2F', 1, 3, 'Freedom Plains', 'Defenders of the home turf, the Patriots pride themselves on discipline and strength.', NULL, NULL),
+(47, 'Aces', 'ACE', '2D2926', '708090', 1, 3, 'High Stakes City', 'Always playing to win, the Aces bet big and deliver bigger.', NULL, NULL),
+(48, 'Monsters', 'MNT', 'DD0000', '00008B', 1, 3, 'Nightmare Gorge', 'Their fierce reputation and tenacity make the Monsters a fright to face.', NULL, NULL),
+(49, 'Pirates', 'PIR', '27251F', 'D4AF37', 1, 4, 'Skull Bay', 'Sailing through seasons with bold ambition, the Pirates are relentless raiders.', NULL, NULL),
+(50, 'Scorpions', 'SCR', 'AF1E2D', '2D2926', 1, 4, 'Sandspire', 'Venomous on defense, the Scorpions strike with unexpected speed.', NULL, NULL),
+(51, 'Enemies', 'ENM', '8A8D8F', '454545', 1, 4, 'Conflict Point', 'Feared by all, the Enemies thrive on high-pressure battles and rivalries.', NULL, NULL),
+(52, 'Reapers', 'RPR', '43459B', '301934', 1, 4, 'Soulhaven', 'The Reapers have a chilling presence and an unmatched defensive unit.', NULL, NULL),
+(53, 'Raiders', 'RAI', '2D2926', '808080', 1, 4, 'Steel Shores', 'With a legacy of pillaging victories, the Raiders are feared on the road.', NULL, NULL),
+(54, 'Whales', 'WH', '00A9E0', '000080', 1, 4, 'Blue Crest', 'Graceful yet powerful, the Whales glide through opponents with finesse.', NULL, NULL),
+(55, 'Poseidons', 'POS', '005C5C', '1E90FF', 1, 4, 'Trident Coast', 'Masters of the ocean turf, the Poseidons command with strength and wisdom.', NULL, NULL),
+(56, 'Cyclones', 'CYC', 'BA0C2F', '2D2926', 1, 4, 'Stormvale', 'Spinning with chaos and speed, the Cyclones are a whirlwind of talent.', NULL, NULL),
+(57, 'Force', 'FRC', '00843D', '9B870C', 1, 4, 'Powerline City', 'Unyielding and steady, the Force controls the field with discipline.', NULL, NULL),
+(58, 'Astronauts', 'AST', '0B3D91', '808080', 1, 4, 'Orbit Town', 'Shooting for the stars, the Astronauts play with futuristic precision.', NULL, NULL),
+(59, 'Demons', 'DMN', '660000', '450000', 1, 4, 'Inferno Hills', 'Dark and determined, the Demons burn with unstoppable ambition.', NULL, NULL),
+(60, 'Devils', 'DVL', 'CE1126', '2D2926', 1, 4, 'Red Hollow', 'Cunning and ruthless, the Devils have scorched their name into the league.', NULL, NULL),
+(61, 'Bulldogs', 'BD', 'BA0C2F', '8B0000', 1, 4, 'Iron Borough', 'Built like tanks, the Bulldogs push through any opposition.', NULL, NULL),
+(62, 'Hornets', 'HRN', '1D1160', '00788C', 1, 4, 'Hive City', 'Fast and aggressive, the Hornets sting with every possession.', NULL, NULL),
+(63, 'Rebels', 'RBL', '454545', '800000', 1, 4, 'Outlaw County', 'Never backing down, the Rebels have a reputation for shaking up the system.', NULL, NULL),
+(64, 'Owls', 'OWL', '8F9779', '454B1B', 1, 4, 'Wisdom Hills', 'Wise and patient, the Owls strike at the perfect moment every time.', NULL, NULL);
