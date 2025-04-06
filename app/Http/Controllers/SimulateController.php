@@ -2219,7 +2219,7 @@ class SimulateController extends Controller
         DB::beginTransaction();
         try {
             $seasonId = get_current_season_id();
-            $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
+            $weekName = ($round == 2) ? 1 : ($round / 5) + 1;
     
             // Fetch player season stats, merging by player_id and summing their EFF
             $stats = DB::table('player_season_stats')
