@@ -2192,8 +2192,8 @@ class SimulateController extends Controller
             return false;
         }
     
-        // Update only every 2 rounds
-        if ($round % 2 !== 0) {
+        // Update only every 5 rounds and round 2
+        if ($round % 5 !== 0 && $round != 2) {
             return true;
         }
         
