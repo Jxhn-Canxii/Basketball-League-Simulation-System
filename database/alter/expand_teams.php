@@ -15,11 +15,11 @@ INSERT INTO `teams` (
 ('Cowboys', 'CBY', 'Taoyuan', 'Airport city riders with aerospace determination', 'A0522D', 'FFD700', 1, 2, NOW(), NOW()),
 
 -- Conference 3 (Thailand, Indonesia, Malaysia, Vietnam)
-('Bad Boyz', 'BBZ', 'Medan', 'Sumatra rebels with volcanic attitude', '111111', 'FF0000', 1, 3, NOW(), NOW()),
 ('Strikers', 'STR', 'Hat Yai', 'Southern Thai attackers with rubber city bounce', 'FF4500', '008000', 1, 3, NOW(), NOW()),
 ('Storms', 'STM', 'Kota Kinabalu', 'Borneo tempest with Mount Kinabalu strength', '0000FF', 'B0C4DE', 1, 3, NOW(), NOW()),
+('Devil Bats', 'DBT', 'Matsuyama', 'Shikoku winged terrors with castle town spirit', '8B0000', '000000', 1, 3, NOW(), NOW()),
 
 -- Conference 4 (Japan and Korea)
 ('Marlins', 'MRL', 'Sendai', 'Tohoku sea hunters with samurai spirit', '4682B4', 'FF69B4', 1, 4, NOW(), NOW()),
 ('Robots', 'RBT', 'Ulsan', 'Industrial automatons with shipyard strength', '808080', '2E8B57', 1, 4, NOW(), NOW()),
-('Freeze', 'FRZ', 'Saitama', 'Super Arena ice warriors with suburban power', 'ADD8E6', '00008B', 1, 4, NOW(), NOW());
+('Black Bulls', 'BBL', 'Mandalay', 'Upper Myanmar chargers with ancient kingdom strength', '000000', 'B8860B', 1, 4, NOW(), NOW());
