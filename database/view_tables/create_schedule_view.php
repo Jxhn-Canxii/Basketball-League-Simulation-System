@@ -1,8 +1,10 @@
-CREATE VIEW schedule_view AS
+CREATE OR REPLACE VIEW schedule_view AS
             SELECT
                 s.*,
                 t_home.name AS home_team_name,
                 t_away.name AS away_team_name,
+                t_home.city AS home_team_city,
+                t_away.city AS away_team_city,
                 se.name AS season_name,
                 l.name AS league_name,
                 se.type AS league_type
