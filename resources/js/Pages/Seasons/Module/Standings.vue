@@ -73,7 +73,7 @@
                         :current_conference_rank="team.conference_rank"
                         :season_id="team.season_id"
                         :showButton="0" 
-                        :text="`${team.team_name}`" />
+                        :text="`${team.team_city} ${team.team_name}`" />
                     </td>
                     <td
                         class="px-2 py-2 whitespace-nowrap text-nowrap text-sm"

@@ -51,7 +51,7 @@
                             '#' + gameDetails?.home_team.secondary_color,
                     }"
                 >
-                    <TeamDetails :team_id="gameDetails?.home_team.team_id" :key="gameDetails?.home_team.team_id" :showButton="0" :text="`${gameDetails?.home_team.name} (${ gameDetails?.home_team.streak })`" />
+                    <TeamDetails :team_id="gameDetails?.home_team.team_id" :key="gameDetails?.home_team.team_id" :showButton="0" :text="`${gameDetails?.home_team.city} ${gameDetails?.home_team.name} (${ gameDetails?.home_team.streak })`" />
                 </p>
                 <div class="flex justify-center" v-if="!props.showBoxScore">
                     <ul class="flex space-x-2 mt-2">
@@ -161,7 +161,7 @@
                             '#' + gameDetails?.away_team.secondary_color,
                     }"
                 >
-                    <TeamDetails :team_id="gameDetails?.away_team.team_id" :key="gameDetails?.away_team.team_id" :showButton="0" :text="`${gameDetails?.away_team.name} (${ gameDetails?.away_team.streak })`" />
+                    <TeamDetails :team_id="gameDetails?.away_team.team_id" :key="gameDetails?.away_team.team_id" :showButton="0" :text="`${gameDetails?.away_team.city} ${gameDetails?.away_team.name} (${ gameDetails?.away_team.streak })`" />
                 </p>
                 <div class="flex justify-center" v-if="!props.showBoxScore">
                     <ul class="flex space-x-2 mt-2">
