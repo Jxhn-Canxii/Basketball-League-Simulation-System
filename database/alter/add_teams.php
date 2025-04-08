@@ -18,6 +18,8 @@ VALUES
 (14, 'Braves', 'BRV', '13274F', 'BA0C2F', 1, 1, 'General Santos', 'Tuna capital warriors with knockout power', NOW(), NOW()),
 (15, 'Blazers', 'BLZ', 'E03A3E', '2D2926', 1, 1, 'Lucena', 'Quezon province torches lighting up coconut country', NOW(), NOW()),
 (16, 'Kings', 'KIN', '5A2D81', '8C7B6D', 1, 1, 'Laoag', 'Ilocos Norte rulers commanding ancestral glory', NOW(), NOW()),
+
+-- Conference 1 (China and Taiwan)
 (17, 'Titans', 'TIT', '0C2340', '418FDE', 1, 2, 'Beijing', 'Capital city giants dominating the Forbidden City courts', NOW(), NOW()),
 (18, 'Spartans', 'SPA', '18453B', '897A68', 1, 2, 'Shanghai', 'Pearl of the Orient warriors with Pudong skyline strength', NOW(), NOW()),
 (19, 'Trojans', 'TRO', '990000', 'FFD100', 1, 2, 'Guangzhou', 'Canton champions with Pearl River Delta tactics', NOW(), NOW()),
