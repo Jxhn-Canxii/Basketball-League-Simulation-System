@@ -1414,7 +1414,7 @@ class SimulateController extends Controller
             $performanceFactor = (rand(80, 120) / 100) * $fatigueFactor;
 
             // **Waive Player if Recovery is Too Long**
-            $isUntradeable = ($player->role == 'star player' || $player->role == 'all star');
+            $unWaivable = ($player->role == 'star player' || $player->role == 'all star');
             $requiredRecoveryGames = ($player->role == 'starter') ? 25 : 15;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
         
@@ -1486,8 +1486,8 @@ class SimulateController extends Controller
                 }
             }
 
-            // **Waive Player with 60% Chance if Injury Recovery is Too Long and Not Untradeable**
-            if ((float) $player->injury_recovery_games >= (float) $requiredRecoveryGames && $seasonStatus <= 2 && !$isUntradeable) {
+            // **Waive Player with 60% Chance if Injury Recovery is Too Long and Not unWaivable**
+            if ((float) $player->injury_recovery_games >= (float) $requiredRecoveryGames && $seasonStatus <= 2 && !$unWaivable) {
                 // Set the random chance to waive the player to 20%
                 if (rand(1, 100) <= 20) {
                     DB::table('transactions')->insert([
