@@ -12,7 +12,7 @@ INSERT INTO `teams` (
 
 -- Conference 2 (Luzon) - Original Luzon teams updated
 ('Ghosts', 'GHS', 'Balanga', 'Bataan spectral figures haunting the peninsula\'s history', 'A9A9A9', '777777', 1, 2, NOW(), NOW()),
-('Sonics', 'SNC', 'San Fernando (LU)', 'La Union sound warriors riding the surf\'s rhythm', '1E90FF', '003366', 1, 2, NOW(), NOW()),
+('Sonics', 'SNC', 'La Union', 'La Union sound warriors riding the surf\'s rhythm', '1E90FF', '003366', 1, 2, NOW(), NOW()),
 
 -- Conference 3 (Visayas) - Updated with new cities
 ('Storms', 'STM', 'Sipalay', 'Negros tempestuous squalls sweeping sugar fields', '0000FF', 'B0C4DE', 1, 3, NOW(), NOW()),
