@@ -1112,20 +1112,66 @@ class AwardsController extends Controller
     private function insertAward($playerStats, $awardName, $awardDescription, $seasonId)
     {
         if ($playerStats) {
-            DB::table('season_awards')->updateOrInsert(
-                [
+            try {
+                DB::beginTransaction();
+    
+                // Insert award
+                DB::table('season_awards')->updateOrInsert(
+                    [
+                        'player_id' => $playerStats->player_id,
+                        'team_id' => $playerStats->team_id,
+                        'season_id' => $seasonId,
+                        'award_name' => $awardName,
+                    ],
+                    [
+                        'award_description' => $awardDescription,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+    
+                // Update player contract and add transaction record
+                $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
+    
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                \Log::error('Error in insertAward:', [
+                    'error' => $e->getMessage(),
                     'player_id' => $playerStats->player_id,
-                    'team_id' => $playerStats->team_id,
-                    'season_id' => $seasonId,
-                    'award_name' => $awardName,
-                ],
-                [
-                    'award_description' => $awardDescription,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]
-            );
+                    'award' => $awardName
+                ]);
+            }
         }
+    }
+    
+    private function processAwardContractExtension($playerStats, $awardName, $seasonId)
+    {
+        // Determine contract extension years based on award
+        $extensionYears = match($awardName) {
+            'Best Overall Player', 'Best Defensive Player' => 3,
+            default => 1
+        };
+    
+        // Add years to player's contract
+        DB::table('players')
+            ->where('id', $playerStats->player_id)
+            ->update([
+                'contract_years' => DB::raw("contract_years + $extensionYears"),
+                'updated_at' => now()
+            ]);
+    
+        // Record contract extension transaction
+        DB::table('transactions')->insert([
+            'player_id' => $playerStats->player_id,
+            'season_id' => $seasonId,
+            'details' => "Contract extended by {$extensionYears} year(s) for winning {$awardName}",
+            'from_team_id' => $playerStats->team_id,
+            'to_team_id' => $playerStats->team_id,
+            'status' => 'extension',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
     }
     public function getFinalsMVPList()
     {
