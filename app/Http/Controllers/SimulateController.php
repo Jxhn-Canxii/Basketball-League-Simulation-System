@@ -1554,8 +1554,12 @@ class SimulateController extends Controller
             // Determine the additional contract years based on the player's role
             $additionalContractYears = 0;
             if ($player->role == 'star player') {
-                $additionalContractYears = rand(1, 3);  // 1 to 3 years for star players
-            } else {
+                $additionalContractYears = rand(2, 3);  // 2 to 3 years for star players
+            } 
+            if ($player->role == 'all star') {
+                $additionalContractYears = rand(1, 3);  // 1 to 3 years for all star players
+            }
+            else {
                 $additionalContractYears = rand(1, 2);  // 1 to 2 years for other players
             }
     
@@ -1667,7 +1671,7 @@ class SimulateController extends Controller
         $finalsMVP = $mvpPlayer ? $mvpPlayer->mvp_name : ''; // Use the player's name from the 'mvp_name' alias
         $finalsMVPId = $mvpPlayer ? $mvpPlayer->player_id : '';
 
-
+        $this->updateFinalsBonusContract($winnerId, $gameData->season_id, $finalsMVPId);
         // Update the season's finals information
         DB::table('seasons')
             ->where('id', $gameData->season_id)
@@ -1683,7 +1687,29 @@ class SimulateController extends Controller
             ]);
     }
 
-
+    private function updateFinalsMVPBonusContract($winnerId, $seasonId, $finalsMVPId) {
+        $extensionYears = 3; // Number of years to extend the contract for the Finals MVP
+        $awardName = 'Finals MVP'; // Name of the award
+        // Add years to player's contract
+        DB::table('players')
+            ->where('id', $finalsMVPId)
+            ->update([
+                'contract_years' => DB::raw("contract_years + $extensionYears"),
+                'updated_at' => now()
+            ]);
+    
+        // Record contract extension transaction
+        DB::table('transactions')->insert([
+            'player_id' => $$finalsMVPId,
+            'season_id' => $seasonId,
+            'details' => "Contract extended by {$extensionYears} year(s) for winning {$awardName}",
+            'from_team_id' => $winnerId,
+            'to_team_id' => $winnerId,
+            'status' => 'extension',
+            'created_at' => now(),
+            'updated_at' => now()
+        ]);
+    }
     private function updateAllTeamStreaks()
     {
         // Fetch all games from the earliest to the latest
