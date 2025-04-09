@@ -10,15 +10,6 @@ use Inertia\Inertia;
 
 class DraftController extends Controller
 {
-    private const DRAFT_ROUNDS = 2;
-    private const LOTTERY_TEAMS = 4; // Number of teams in draft lottery
-    private const LOTTERY_ODDS = [
-        1 => 35.0, // Worst team has 35% chance
-        2 => 25.0,
-        3 => 15.0,
-        4 => 10.0,
-    ];
-
     public function index()
     {
         return Inertia::render('Draft/Index', [
@@ -34,156 +25,59 @@ class DraftController extends Controller
      */
     public function draftOrder()
     {
-        $latestSeasonId = get_current_season_id();
-        
-        // Get teams ordered by worst record first
-        $standings = DB::table('standings_view')
+        // Get the latest season_id from the standings_view
+        $latestSeasonId = DB::table('standings_view')->max('season_id');
+
+        // Fetch standings for the latest season, sorted by overall rank, including team name
+        $draftOrder = DB::table('standings_view')
             ->select('team_id', 'team_name', 'wins', 'losses', 'overall_rank')
             ->where('season_id', $latestSeasonId)
             ->orderBy('overall_rank', 'desc')
             ->get();
 
-        // Perform draft lottery for bottom 4 teams
-        $lotteryTeams = $standings->take(self::LOTTERY_TEAMS);
-        $lotteryResults = $this->conductDraftLottery($lotteryTeams);
-        
-        // Merge lottery results with remaining teams
-        $draftOrder = collect($lotteryResults)
-            ->concat($standings->slice(self::LOTTERY_TEAMS));
+        // Prepare the draft order for two rounds
+        $twoRoundDraftOrder = [];
+        $totalTeams = $draftOrder->count();
 
-        // Generate two round draft order
-        $fullDraftOrder = [];
-        foreach (range(1, self::DRAFT_ROUNDS) as $round) {
-            foreach ($draftOrder as $index => $team) {
-                $fullDraftOrder[] = [
-                    'round' => $round,
-                    'pick' => $index + 1,
-                    'team_id' => $team->team_id,
-                    'team_name' => $team->team_name,
-                    'wins' => $team->wins ?? null,
-                    'losses' => $team->losses ?? null,
-                    'original_rank' => $team->overall_rank ?? null,
-                    'lottery_winner' => $team->lottery_winner ?? false
-                ];
-            }
+        foreach ($draftOrder as $index => $team) {
+            // First round
+            $twoRoundDraftOrder[] = [
+                'round' => 1,
+                'pick' => $index + 1, // Pick number starts at 1
+                'team_id' => $team->team_id,
+                'team_name' => $team->team_name,
+                'wins' => $team->wins,
+                'losses' => $team->losses,
+                'overall_rank' => $team->overall_rank,
+            ];
+
+            // Second round (reverse order)
+            $twoRoundDraftOrder[] = [
+                'round' => 2,
+                'pick' => $index + 1, // Pick number starts at 1
+                'team_id' => $team->team_id,
+                'team_name' => $team->team_name,
+                'wins' => $team->wins,
+                'losses' => $team->losses,
+                'overall_rank' => $team->overall_rank,
+            ];
         }
 
+        // Sort by round and then by pick number
+        usort($twoRoundDraftOrder, function ($a, $b) {
+            if ($a['round'] === $b['round']) {
+                return $a['pick'] <=> $b['pick'];
+            }
+            return $a['round'] <=> $b['round'];
+        });
+
+        // Return JSON response
         return response()->json([
             'season_id' => $latestSeasonId,
-            'draft_order' => $fullDraftOrder
+            'draft_order' => $twoRoundDraftOrder,
         ]);
     }
 
-    private function conductDraftLottery($teams)
-    {
-        $results = [];
-        $remainingTeams = $teams->toArray();
-        $remainingOdds = self::LOTTERY_ODDS;
-
-        // Determine top 4 picks through lottery
-        for ($pick = 1; $pick <= self::LOTTERY_TEAMS; $pick++) {
-            $winningNumber = mt_rand(1, 1000) / 10; // Generate number between 0.1 and 100.0
-            $cumulative = 0;
-            
-            foreach ($remainingOdds as $position => $odds) {
-                $cumulative += $odds;
-                if ($winningNumber <= $cumulative) {
-                    $winner = $remainingTeams[$position - 1];
-                    $winner->lottery_winner = true;
-                    $results[] = $winner;
-                    
-                    // Remove winner from remaining teams and redistribute odds
-                    unset($remainingTeams[$position - 1]);
-                    unset($remainingOdds[$position]);
-                    $remainingTeams = array_values($remainingTeams);
-                    $totalRemaining = array_sum($remainingOdds);
-                    if ($totalRemaining > 0) {
-                        foreach ($remainingOdds as &$odd) {
-                            $odd = ($odd / $totalRemaining) * 100;
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-
-        return $results;
-    }
-
-    public function draftPlayers()
-    {
-        DB::beginTransaction();
-
-        try {
-            $latestSeasonId = get_current_season_id();
-            $currentSeasonId = $latestSeasonId + 1;
-            $draftOrder = $this->getDraftOrder($currentSeasonId);
-            $availablePlayers = $this->getAvailablePlayers($currentSeasonId);
-
-            // Validate draft requirements
-            $this->validateDraftRequirements($draftOrder, $availablePlayers);
-
-            $draftResults = [];
-            
-            // Conduct draft rounds
-            foreach (range(1, self::DRAFT_ROUNDS) as $round) {
-                foreach ($draftOrder as $pick => $team) {
-                    $draftResults[] = $this->processDraftPick(
-                        $team,
-                        $availablePlayers,
-                        $round,
-                        $pick + 1,
-                        $currentSeasonId
-                    );
-                }
-            }
-
-            // Handle undrafted players
-            $this->handleUndraftedPlayers($currentSeasonId);
-            
-            // Update season status
-            $this->updateSeasonStatus($latestSeasonId);
-
-            DB::commit();
-
-            return response()->json([
-                'error' => false,
-                'season_id' => $currentSeasonId,
-                'draft_results' => $draftResults,
-                'message' => 'Draft completed successfully!'
-            ]);
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Draft failed', ['exception' => $e]);
-            return response()->json([
-                'error' => true,
-                'message' => 'Draft failed: ' . $e->getMessage()
-            ], 500);
-        }
-    }
-
-    private function determineContractYears($pickNumber, $playerRating)
-    {
-        // First round picks (1-32)
-        if ($pickNumber <= 32) {
-            if ($playerRating >= 85) return 4; // High potential rookie contract
-            if ($playerRating >= 75) return 3;
-            return 2;
-        }
-        
-        // Second round picks
-        return 1; // Non-guaranteed contract
-    }
-
-    private function validateDraftRequirements($draftOrder, $availablePlayers) 
-    {
-        $requiredPlayers = count($draftOrder) * self::DRAFT_ROUNDS;
-        
-        if ($availablePlayers->count() < $requiredPlayers) {
-            throw new \Exception("Insufficient eligible players for draft");
-        }
-    }
 
     //  DB::table('seasons')
     //  ->where('id', $this->getLatestSeasonId())
