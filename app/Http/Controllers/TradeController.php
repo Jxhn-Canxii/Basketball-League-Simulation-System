@@ -413,14 +413,14 @@ class TradeController extends Controller
         // Get top 5 teams per conference
         $topTeams = DB::table('standings_view')
             ->where('season_id', $latestSeasonId)
-            ->where('conference_rank', '<=', 5) // Top 5 teams per conference
+            ->where('conference_rank', '<=', 6) // Top 6 teams per conference
             ->pluck('team_id')
             ->toArray();
     
-        // Get star players and all-stars from top 5 teams in each conference
+        // Get star players and all-stars from top 6 teams in each conference
         $starPlayers = DB::table('players')
             ->whereIn('team_id', $topTeams)
-            ->whereIn('players.role', ['star player', 'all star']) // Filter by role
+            ->whereIn('players.role', ['star player', 'all star','starter']) // Filter by role
             ->pluck('players.id')
             ->toArray();
  
