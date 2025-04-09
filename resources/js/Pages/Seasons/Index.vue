@@ -107,22 +107,22 @@
                                 <th
                                     class="border-b-2 border-gray-200 bg-gray-100 px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
                                 >
-                                    West
+                                    NCR
                                 </th>
                                 <th
                                     class="border-b-2 border-gray-200 bg-gray-100 px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
                                 >
-                                    East
+                                    Luzon
                                 </th>
                                 <th
                                     class="border-b-2 border-gray-200 bg-gray-100 px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
                                 >
-                                    North
+                                    Visayas
                                 </th>
                                 <th
                                     class="border-b-2 border-gray-200 bg-gray-100 px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
                                 >
-                                    South
+                                    Mindanao
                                 </th>
                                 <th
                                     class="border-b-2 border-gray-200 bg-gray-100 px-1 py-1 text-left text-xs font-semibold uppercase tracking-wider text-gray-600"
