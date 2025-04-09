@@ -485,7 +485,10 @@ class SimulateController extends Controller
         if ($gameData->round === 'finals') {
             // Find the MVP of the winning team
             $this->updateFinalsWinner($gameData, $winnerId, $homeScore, $awayScore);
-            $this->updateChampionsContract($winnerId, $gameData->season_id,$winnerName);
+
+            // Update the finals contract
+            $this->updateFinalsBonusContract($gameData->home_team_id, $gameData->season_id,$gameData->home_team_name);
+            $this->updateFinalsBonusContract($gameData->away_team_id, $gameData->season_id,$gameData->away_team_name);
         }
 
         // Update the seasons table if there are updates
@@ -1644,7 +1647,7 @@ class SimulateController extends Controller
         return $randomPlayer;
     }
 
-    private function updateChampionsContract($teamId, $seasonId, $teamName) {
+    private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
         // Retrieve all active players for the specified team
         $players = Player::where('is_active', 1)
                         ->where('team_id', $teamId)
@@ -1668,7 +1671,7 @@ class SimulateController extends Controller
             DB::table('transactions')->insert([
                 'player_id' => $player->id,
                 'season_id' => $seasonId,
-                'details' => 'Re-signed with ' . $teamName . ' for a contract extension(Champions Bonus) of ' . $additionalContractYears . ' years',
+                'details' => 'Re-signed with ' . $teamName . ' for a contract extension(Finals Bonus) of ' . $additionalContractYears . ' years',
                 'from_team_id' => $player->team_id,
                 'to_team_id' => $player->team_id,
                 'status' => 'resigned',
