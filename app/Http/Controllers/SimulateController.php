@@ -1608,25 +1608,25 @@ class SimulateController extends Controller
 
         // Check the conference and set the champion ID and name columns
         switch ($conferenceName) {
-            case 'East':
+            case 'Luzon':
                 $columnsToUpdate = [
                     'east_champion_id' => $winnerId,
                     'east_champion_name' => $winnerName,
                 ];
                 break;
-            case 'West':
+            case 'NCR':
                 $columnsToUpdate = [
                     'west_champion_id' => $winnerId,
                     'west_champion_name' => $winnerName,
                 ];
                 break;
-            case 'North':
+            case 'Visayas':
                 $columnsToUpdate = [
                     'north_champion_id' => $winnerId,
                     'north_champion_name' => $winnerName,
                 ];
                 break;
-            case 'South':
+            case 'Mindanao':
                 $columnsToUpdate = [
                     'south_champion_id' => $winnerId,
                     'south_champion_name' => $winnerName,
