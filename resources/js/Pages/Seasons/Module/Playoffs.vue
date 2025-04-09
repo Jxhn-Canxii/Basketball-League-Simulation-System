@@ -625,10 +625,10 @@ const simulateGame = async (id, game_id, type, index, round) => {
 const getConferenceClass = (home_conference, away_conference) => {
     // Define Tailwind classes for each conference
     const conferenceClasses = {
-        North: "bg-blue-100",
-        South: "bg-green-100",
-        East: "bg-yellow-100",
-        West: "bg-red-100",
+        NCR: "bg-blue-100",
+        Luzon: "bg-green-100",
+        Visayas: "bg-yellow-100",
+        Mindanao: "bg-red-100",
     };
 
     // Check if the home and away conferences are different
