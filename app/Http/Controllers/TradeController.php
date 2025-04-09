@@ -430,6 +430,7 @@ class TradeController extends Controller
             ->where('players.team_id', $teamId)
             ->whereNotIn('players.id', $starPlayers) // Exclude stars and all-stars
             ->where('players.is_injured', 0)
+            ->where('players.contract_years','<=', 2)
             ->where('player_season_stats.season_id', $latestSeasonId)
             ->select(
                 'players.id as player_id',
