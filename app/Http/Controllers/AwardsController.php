@@ -1149,7 +1149,7 @@ class AwardsController extends Controller
     {
         // Determine contract extension years based on award
         $extensionYears = match($awardName) {
-            'Best Overall Player', 'Best Defensive Player' => 3,
+            'Best Overall Player', 'Best Defensive Player', 'Rookie of the Season' => 3,
             default => 1
         };
     
