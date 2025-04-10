@@ -44,7 +44,7 @@
                                 :current_conference_rank="0"
                                 :season_id="teams.current_season"
                                 :showButton="0" 
-                                :text="`${team.name} (${team.acronym})`" />
+                                :text="`${team.city} ${team.name} (${team.acronym})`" />
                             </td>
                             <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm">
                                 <p class="text-gray-900 whitespace-no-wrap">
