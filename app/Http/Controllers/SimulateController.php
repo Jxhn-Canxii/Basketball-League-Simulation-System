@@ -1700,7 +1700,7 @@ class SimulateController extends Controller
     
         // Record contract extension transaction
         DB::table('transactions')->insert([
-            'player_id' => $$finalsMVPId,
+            'player_id' => $finalsMVPId,
             'season_id' => $seasonId,
             'details' => "Contract extended by {$extensionYears} year(s) for winning {$awardName}",
             'from_team_id' => $winnerId,
