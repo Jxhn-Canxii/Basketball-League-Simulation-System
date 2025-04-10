@@ -31,7 +31,7 @@ VALUES
 (26, 'Crows', 'CRW', '2D2926', '708090', 1, 2, 'Batangas City', 'Heritage scavengers with refinery strength', NOW(), NOW()),
 (27, 'Royals', 'RYL', '004687', 'BA8B02', 1, 2, 'Naga', 'Bicolano kings with fiery river spirit', NOW(), NOW()),
 (28, 'Thunders', 'THN', 'F05133', '002D62', 1, 2, 'Calapan', 'Oriental lightning strikers with island storm bursts', NOW(), NOW()),
-(29, 'Warriors', 'WAR', '1D428A', 'FF9E1B', 1, 2, 'Tabuk', 'Kalinga fighters charging with highland pride', NOW(), NOW()),
+(29, 'Warriors', 'WAR', '1D428A', 'FF9E1B', 1, 2, 'Kalinga', 'Kalinga fighters charging with highland pride', NOW(), NOW()),
 (30, 'Hellhounds', 'HH', 'BB0000', '4B0000', 1, 2, 'Sorsogon', 'Bicolano guardians unleashing underworld ferocity', NOW(), NOW()),
 (31, 'Red Fox', 'RF', 'CC092F', '654321', 1, 2, 'Tuguegarao', 'Cagayan tricksters darting through valley winds', NOW(), NOW()),
 (32, 'Cougars', 'CGR', '512888', '897A68', 1, 2, 'Puerto Princesa', 'Palawan prowlers guarding nature’s sanctuary', NOW(), NOW()),
