@@ -261,8 +261,8 @@ class RatingsController extends Controller
                     \Log::info('Injury penalty applied', ['player_id' => $player->id]);
                 }
 
-                // Check if the player has recovered from injury for over 30 games, may be waived
-                if ($injury && $injury->injury_recovery_games > 10) {
+                // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
+                if ($injury && $injury->injury_recovery_games > 10 && $player->contract_years <= 4) {
                     $waiveChance = rand(1, 100); // Random chance for waiving the player
                     if ($waiveChance <= 60) { // 50% chance to waive
                         DB::table('transactions')->insert([
