@@ -27,7 +27,7 @@ VALUES
 (22, 'Leopards', 'LEO', 'FDB827', '8B4513', 1, 2, 'Legazpi', 'Mayon hunters striking with volcanic elegance', NOW(), NOW()),
 (23, 'Sabertooths', 'SAB', 'FF5910', '654321', 1, 2, 'Lucena', 'Quezon predators slicing through coconut groves', NOW(), NOW()),
 (24, 'Spiders', 'SPD', '363636', '8B0000', 1, 2, 'Cabanatuan', 'Nueva Ecija web-weavers with farmer precision', NOW(), NOW()),
-(25, 'Vikings', 'VIK', '4F2683', 'FFC62F', 1, 2, 'San Fernando', 'Pampanga raiders with culinary carnage', NOW(), NOW()),
+(25, 'Vikings', 'VIK', '4F2683', 'FFC62F', 1, 2, 'Pampanga', 'Pampanga raiders with culinary carnage', NOW(), NOW()),
 (26, 'Crows', 'CRW', '2D2926', '708090', 1, 2, 'Batangas City', 'Heritage scavengers with refinery strength', NOW(), NOW()),
 (27, 'Royals', 'RYL', '004687', 'BA8B02', 1, 2, 'Naga', 'Bicolano kings with fiery river spirit', NOW(), NOW()),
 (28, 'Thunders', 'THN', 'F05133', '002D62', 1, 2, 'Calapan', 'Oriental lightning strikers with island storm bursts', NOW(), NOW()),
@@ -67,5 +67,5 @@ VALUES
 (60, 'Devils', 'DVL', 'FD5A1E', '2D2926', 1, 4, 'Malaybalay', 'Bukidnon tempters rising from pine-kissed plateaus', NOW(), NOW()),
 (61, 'Bulldogs', 'BD', 'C8102E', 'FF8C00', 1, 4, 'Kidapawan', 'Volcano guards bulldozing with hot spring grit', NOW(), NOW()),
 (62, 'Hornets', 'HRN', '002244', 'BA0C2F', 1, 4, 'Digos', 'Southern stingers buzzing past banana lines', NOW(), NOW()),
-(63, 'Rebels', 'RBL', '2D2926', '708090', 1, 4, 'Panabo', 'Agri city insurgents defending with fearless crops', NOW(), NOW()),
+(63, 'Rebels', 'RBL', '2D2926', '708090', 1, 4, 'Panabo City', 'Agri city insurgents defending with fearless crops', NOW(), NOW()),
 (64, 'Owls', 'OWL', 'DD0000', '00008B', 1, 4, 'Tandag', 'Midnight wisdom flying from the coastal dark', NOW(), NOW());
