@@ -40,23 +40,23 @@
                 </div>
                 <div class="mb-4">
                     <label
-                        for="FloorNo"
+                        for="Type"
                         class="block text-sm font-medium text-gray-700"
                         >Type</label
                     >
                     <select
                         name=""
                         id=""
-                        class="mt-1 p-2 border rounded-md w-full bg-gray-200"
+                        class="mt-1 p-2 border rounded-md w-full"
                         v-model="form.type"
-                        disabled
                     >
                         <option value="0">Select Type</option>
                         <option value="1" disabled>
-                            Single Elimination
+                            Single Elimination (Coming Soon)
                         </option>
                         <option value="2">Single Round Robin</option>
                         <option value="3">Double Round Robin</option>
+                        <option value="4">Double Round Robin + Inter Conference</option>
                     </select>
                     <InputError
                         class="mt-2"
