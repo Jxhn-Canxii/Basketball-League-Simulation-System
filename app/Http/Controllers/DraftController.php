@@ -26,8 +26,8 @@ class DraftController extends Controller
     public function draftOrder()
     {
         // Get the latest season_id from the standings_view
-        $latestSeasonId = DB::table('standings_view')->max('season_id');
-
+        $latestSeasonId = get_current_season_id();
+        $currentSeasonId = $latestSeasonId + 1;
         // Fetch standings for the latest season, sorted by overall rank, including team name
         $draftOrder = DB::table('standings_view')
             ->select('team_id', 'team_name', 'wins', 'losses', 'overall_rank')
@@ -51,6 +51,14 @@ class DraftController extends Controller
                 'overall_rank' => $team->overall_rank,
             ];
 
+            DB::table('drafts')->insert([
+                'team_id' => $team->team_id,
+                'player_id' => 0,
+                'season_id' => $currentSeasonId,
+                'round' => $round,
+                'pick_number' => $pickNumber,
+                'draft_status' => $draftStatus,
+            ]);
             // Second round (reverse order)
             $twoRoundDraftOrder[] = [
                 'round' => 2,

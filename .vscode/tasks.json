@@ -1,0 +1,46 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "Live Preview",
+			"workspacePath": "c:\\Users\\John The Great\\Desktop\\Projects\\LARAVEL\\LIGA2",
+			"problemMatcher": [],
+			"label": "Live Preview: Run Server",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "Start Laravel Server",
+			"type": "shell",
+			"command": "php artisan serve --port=8080",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start NPM Dev",
+			"type": "shell",
+			"command": "npm run dev -- --port=3000",
+			"isBackground": true,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Laravel Dev",
+			"type": "shell",
+			"command": "Start-Process cmd -ArgumentList '/k','php artisan serve'; Start-Process cmd -ArgumentList '/k','npm run dev'",
+			"isBackground": true,
+			"problemMatcher": [],
+			"presentation": {
+				"reveal": "always",
+				"panel": "new"
+			}
+		}
+	],
+	"compounds": [
+		{
+			"name": "Start All",
+			"dependsOn": ["Start Laravel Server", "Start NPM Dev"]
+		}
+	]
+}
