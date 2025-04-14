@@ -67,7 +67,20 @@ class ScheduleController extends Controller
             ]);
 
             // Create the double round robin schedule by conference
-            $this->createDoubleRoundRobinScheduleByConference($season->id, $request->league_id);
+            if($request->match_type == 2){
+                $this->createSingleRoundRobinScheduleByConference($season->id, $request->league_id);
+            } elseif ($request->match_type == 3) {
+                $this->createDoubleRoundRobinScheduleByConference($season->id, $request->league_id);
+            }
+            elseif ($request->match_type == 4) {
+                $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
+            }
+            
+            else {
+                return response()->json([
+                    'message' => 'Invalid match type.',
+                ], 400);
+            }
 
             DB::commit();
 
@@ -85,6 +98,7 @@ class ScheduleController extends Controller
             ], 500);
         }
     }
+
     private function createDoubleRoundRobinScheduleByConference($seasonId, $leagueId)
     {
         DB::beginTransaction(); // Start transaction
@@ -97,7 +111,6 @@ class ScheduleController extends Controller
                 return $conferenceTeams->shuffle();
             });
 
-            $doubleRound = true;
             // Generate matches for each conference
             foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
                 $roundCounter = 0; // Initialize round counter
@@ -137,126 +150,45 @@ class ScheduleController extends Controller
                     }
                     $roundCounter++; // Increment round number after each round
                 }
-                if($doubleRound){
-                    // Generate matches for each round 2nd leg
-                    for ($round = 0; $round < ($numTeams - 1); $round++) {
-                        for ($i = 0; $i < $numTeams / 2; $i++) {
-                            $homeIndex = ($round + $i) % ($numTeams - 1);
-                            $awayIndex = ($numTeams - 1 - $i + $round) % ($numTeams - 1);
+              
+                // Generate matches for each round 2nd leg
+                for ($round = 0; $round < ($numTeams - 1); $round++) {
+                    for ($i = 0; $i < $numTeams / 2; $i++) {
+                        $homeIndex = ($round + $i) % ($numTeams - 1);
+                        $awayIndex = ($numTeams - 1 - $i + $round) % ($numTeams - 1);
 
-                            if ($i == 0) {
-                                $awayIndex = $numTeams - 1;
-                            }
-
-                            $homeTeam = $conferenceTeams[$homeIndex];
-                            $awayTeam = $conferenceTeams[$awayIndex];
-
-                            // Ensure both teams are not null (bye team)
-                            if ($homeTeam->id != $awayTeam->id) {
-                                // First leg match
-                                $gameId = $seasonId . '-' . ($roundCounter + 1) . '-' . $conferenceId . '-' . $gameIdCounter;
-                                $matches[] = [
-                                    'season_id' => $seasonId,
-                                    'game_id' => $gameId,
-                                    'round' => $roundCounter + 1, // Continue round number
-                                    'conference_id' => $conferenceId,
-                                    'home_id' => $awayTeam->id,
-                                    'away_id' => $homeTeam->id,
-                                    'home_score' => 0, // Initialize with default score
-                                    'away_score' => 0, // Initialize with default score
-                                ];
-                                $gameIdCounter++;
-                            }
+                        if ($i == 0) {
+                            $awayIndex = $numTeams - 1;
                         }
-                        $roundCounter++; // Increment round number after each round
+
+                        $homeTeam = $conferenceTeams[$homeIndex];
+                        $awayTeam = $conferenceTeams[$awayIndex];
+
+                        // Ensure both teams are not null (bye team)
+                        if ($homeTeam->id != $awayTeam->id) {
+                            // First leg match
+                            $gameId = $seasonId . '-' . ($roundCounter + 1) . '-' . $conferenceId . '-' . $gameIdCounter;
+                            $matches[] = [
+                                'season_id' => $seasonId,
+                                'game_id' => $gameId,
+                                'round' => $roundCounter + 1, // Continue round number
+                                'conference_id' => $conferenceId,
+                                'home_id' => $awayTeam->id,
+                                'away_id' => $homeTeam->id,
+                                'home_score' => 0, // Initialize with default score
+                                'away_score' => 0, // Initialize with default score
+                            ];
+                            $gameIdCounter++;
+                        }
                     }
+                    $roundCounter++; // Increment round number after each round
                 }
-                // Generate matches for each round 3rd leg
-                // for ($round = 0; $round < ($numTeams - 1); $round++) {
-                //     for ($i = 0; $i < $numTeams / 2; $i++) {
-                //         $homeIndex = ($round + $i) % ($numTeams - 1);
-                //         $awayIndex = ($numTeams - 1 - $i + $round) % ($numTeams - 1);
-
-                //         if ($i == 0) {
-                //             $awayIndex = $numTeams - 1;
-                //         }
-
-                //         $homeTeam = $conferenceTeams[$homeIndex];
-                //         $awayTeam = $conferenceTeams[$awayIndex];
-
-                //         // Ensure both teams are not null (bye team)
-                //         if ($homeTeam->id != $awayTeam->id) {
-                //             // First leg match
-                //             $gameId = $seasonId . '-' . ($roundCounter + 1) . '-' . $conferenceId . '-' . $gameIdCounter;
-                //             $matches[] = [
-                //                 'season_id' => $seasonId,
-                //                 'game_id' => $gameId,
-                //                 'round' => $roundCounter + 1, // Continue round number
-                //                 'conference_id' => $conferenceId,
-                //                 'home_id' => $homeTeam->id,
-                //                 'away_id' => $awayTeam->id,
-                //                 'home_score' => 0, // Initialize with default score
-                //                 'away_score' => 0, // Initialize with default score
-                //             ];
-                //             $gameIdCounter++;
-                //         }
-                //     }
-                //     $roundCounter++; // Increment round number after each round
-                // }
+                
+                
                 // Save matches to the database
                 Schedules::insert($matches);
                 
-                // // Create player game stats for each game
-                // if ($matches) {
-                //     foreach ($matches as $match) {
-                //         $homeTeamPlayers = Player::where('team_id', $match['home_id'])->get();
-                //         $awayTeamPlayers = Player::where('team_id', $match['away_id'])->get();
-
-                //         foreach ($homeTeamPlayers as $homePlayer) {
-                //             if ($homePlayer->team_id == $match['home_id']) {
-                //                 PlayerGameStats::updateOrCreate(
-                //                     [
-                //                         'season_id' => $seasonId,
-                //                         'game_id' => $match['game_id'],
-                //                         'player_id' => $homePlayer->id,
-                //                         'team_id' => $match['home_id'],
-                //                     ],
-                //                     [
-                //                         'points' => 0,
-                //                         'rebounds' => 0,
-                //                         'assists' => 0,
-                //                         'steals' => 0,
-                //                         'blocks' => 0,
-                //                         'turnovers' => 0,
-                //                         'fouls' => 0,
-                //                     ]
-                //                 );
-                //             }
-                //         }
-
-                //         foreach ($awayTeamPlayers as $awayPlayer) {
-                //             if ($awayPlayer->team_id == $match['away_id']) {
-                //                 PlayerGameStats::updateOrCreate(
-                //                     [
-                //                         'season_id' => $seasonId,
-                //                         'game_id' => $match['game_id'],
-                //                         'player_id' => $awayPlayer->id,
-                //                         'team_id' => $match['away_id'],
-                //                     ],
-                //                     [
-                //                         'points' => 0,
-                //                         'rebounds' => 0,
-                //                         'assists' => 0,
-                //                         'steals' => 0,
-                //                         'blocks' => 0,
-                //                         'turnovers' => 0,
-                //                         'fouls' => 0,
-                //                     ]
-                //                 );
-                //             }
-                //         }
-                //     }
-                // }
+                
             }
 
             DB::commit(); // Commit transaction if all operations succeed
@@ -268,6 +200,260 @@ class ScheduleController extends Controller
             throw $e;
         }
     }
+    private function createSingleRoundRobinScheduleByConference($seasonId, $leagueId)
+    {
+        DB::beginTransaction(); // Start transaction
+        try {
+            // Retrieve teams based on league_id
+            $teams = Teams::where('league_id', $leagueId)->get();
+
+            // Group teams by conference_id and shuffle each conference's teams
+            $teamsByConference = $teams->groupBy('conference_id')->map(function ($conferenceTeams) {
+                return $conferenceTeams->shuffle();
+            });
+
+            // Generate matches for each conference
+            foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
+                $roundCounter = 0; // Initialize round counter
+                $numTeams = count($conferenceTeams);
+                $gameIdCounter = 1; // Initialize game ID counter
+                $matches = [];
+
+                // Generate matches for each round 1st leg
+                for ($round = 0; $round < ($numTeams - 1); $round++) {
+                    for ($i = 0; $i < $numTeams / 2; $i++) {
+                        $homeIndex = ($round + $i) % ($numTeams - 1);
+                        $awayIndex = ($numTeams - 1 - $i + $round) % ($numTeams - 1);
+
+                        if ($i == 0) {
+                            $awayIndex = $numTeams - 1;
+                        }
+
+                        $homeTeam = $conferenceTeams[$homeIndex];
+                        $awayTeam = $conferenceTeams[$awayIndex];
+
+                        // Ensure both teams are not null (bye team)
+                        if ($homeTeam->id != $awayTeam->id) {
+                            // First leg match
+                            $gameId = $seasonId . '-' . ($roundCounter + 1) . '-' . $conferenceId . '-' . $gameIdCounter;
+                            $matches[] = [
+                                'season_id' => $seasonId,
+                                'game_id' => $gameId,
+                                'round' => $roundCounter + 1, // Continue round number
+                                'conference_id' => $conferenceId,
+                                'home_id' => $homeTeam->id,
+                                'away_id' => $awayTeam->id,
+                                'home_score' => 0, // Initialize with default score
+                                'away_score' => 0, // Initialize with default score
+                            ];
+                            $gameIdCounter++;
+                        }
+                    }
+                    $roundCounter++; // Increment round number after each round
+                }
+                
+                // Save matches to the database
+                Schedules::insert($matches);
+                
+                
+            }
+
+            DB::commit(); // Commit transaction if all operations succeed
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback all changes on error
+            // Log the error for debugging
+
+            // Optionally, you can throw the exception again or return a custom error message
+            throw $e;
+        }
+    }
+    private function createHybridRoundRobinSchedule($seasonId, $leagueId) 
+    {
+        DB::beginTransaction(); // Start transaction
+        try {
+            // Step 1: Get teams grouped by conference
+            $teams = Teams::where('league_id', $leagueId)->get();
+            $teamsByConference = $teams->groupBy('conference_id')->map(function ($conferenceTeams) {
+                return $conferenceTeams->shuffle()->values(); // ensure indexed array
+            });
+
+            $doubleRound = true;
+            $allMatches = [];
+            $globalRoundCounter = 1;
+
+            // STEP 2: INTRA-CONFERENCE DOUBLE ROUND ROBIN
+            foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
+                $numTeams = count($conferenceTeams);
+                $gameIdCounter = 1;
+
+                for ($leg = 1; $leg <= ($doubleRound ? 2 : 1); $leg++) {
+                    for ($round = 0; $round < ($numTeams - 1); $round++) {
+                        for ($i = 0; $i < $numTeams / 2; $i++) {
+                            $homeIndex = ($round + $i) % ($numTeams - 1);
+                            $awayIndex = ($numTeams - 1 - $i + $round) % ($numTeams - 1);
+                            if ($i == 0) $awayIndex = $numTeams - 1;
+
+                            $homeTeam = $conferenceTeams[$homeIndex];
+                            $awayTeam = $conferenceTeams[$awayIndex];
+
+                            if ($homeTeam->id != $awayTeam->id) {
+                                $match = [
+                                    'season_id' => $seasonId,
+                                    'game_id' => $seasonId . '-' . $conferenceId . '-' . $gameIdCounter++,
+                                    'round' => $globalRoundCounter++,
+                                    'conference_id' => $conferenceId,
+                                    'home_id' => $leg === 1 ? $homeTeam->id : $awayTeam->id,
+                                    'away_id' => $leg === 1 ? $awayTeam->id : $homeTeam->id,
+                                    'home_score' => 0,
+                                    'away_score' => 0,
+                                ];
+                                $allMatches[] = $match;
+                            }
+                        }
+                    }
+                }
+            }
+
+            // STEP 3: INTER-CONFERENCE MATCHUPS (6 games per team - equally distributed)
+            $conferenceIds = $teamsByConference->keys();
+            if ($conferenceIds->count() < 2) {
+                throw new \Exception("At least 2 conferences required for inter-conference scheduling.");
+            }
+
+            // Track how many inter-conference games each team has
+            $interGamesCount = [];
+            $usedPairs = [];
+            $interconferenceMatches = [];
+
+            $conferenceTeamIds = $teamsByConference->map(function ($teams) {
+                return $teams->pluck('id')->shuffle()->values();
+            });
+
+            // Create all possible inter-conference pairs (each team vs all from other conferences)
+            $interPairs = [];
+
+            foreach ($conferenceIds as $confA) {
+                foreach ($conferenceIds as $confB) {
+                    if ($confA >= $confB) continue;
+
+                    $teamsA = $conferenceTeamIds[$confA];
+                    $teamsB = $conferenceTeamIds[$confB];
+
+                    foreach ($teamsA as $teamA) {
+                        foreach ($teamsB as $teamB) {
+                            $interPairs[] = [$teamA, $teamB];
+                        }
+                    }
+                }
+            }
+
+            // Shuffle the pairs to randomize scheduling
+            shuffle($interPairs);
+
+            // Assign matches while ensuring each team gets exactly 6 inter-conference games
+            foreach ($interPairs as [$teamA, $teamB]) {
+                $countA = $interGamesCount[$teamA] ?? 0;
+                $countB = $interGamesCount[$teamB] ?? 0;
+
+                if ($countA < 6 && $countB < 6) {
+                    $pairKey = collect([$teamA, $teamB])->sort()->implode('-');
+                    if (!isset($usedPairs[$pairKey])) {
+                        $usedPairs[$pairKey] = true;
+                        $interGamesCount[$teamA] = $countA + 1;
+                        $interGamesCount[$teamB] = $countB + 1;
+
+                        $homeFirst = rand(0, 1) === 0;
+                        $homeId = $homeFirst ? $teamA : $teamB;
+                        $awayId = $homeFirst ? $teamB : $teamA;
+
+                        $interconferenceMatches[] = [
+                            'season_id' => $seasonId,
+                            'game_id' => $seasonId . '-inter-' . $globalRoundCounter,
+                            'round' => $globalRoundCounter++,
+                            'conference_id' => null,
+                            'home_id' => $homeId,
+                            'away_id' => $awayId,
+                            'home_score' => 0,
+                            'away_score' => 0,
+                        ];
+                    }
+                }
+
+                // Stop early if all teams reached 6 games
+                if (count($interGamesCount) === $teams->count() && min($interGamesCount) === 6) {
+                    break;
+                }
+            }
+
+            // Final validation
+            foreach ($teams as $team) {
+                $teamId = $team->id;
+                if (($interGamesCount[$teamId] ?? 0) !== 6) {
+                    throw new \Exception("Team ID $teamId does not have exactly 6 inter-conference games.");
+                }
+            }
+
+            // Merge all matches (intra + inter)
+            $allMatches = array_merge($allMatches, $interconferenceMatches);
+
+            // STEP 4: INSERT INTO SCHEDULES
+            Schedules::insert($allMatches);
+
+            // Optional STEP 5: Create player game stats (commented out for now)
+            /*
+            foreach ($allMatches as $match) {
+                $homePlayers = Player::where('team_id', $match['home_id'])->get();
+                $awayPlayers = Player::where('team_id', $match['away_id'])->get();
+
+                foreach ($homePlayers as $player) {
+                    PlayerGameStats::updateOrCreate(
+                        [
+                            'season_id' => $seasonId,
+                            'game_id' => $match['game_id'],
+                            'player_id' => $player->id,
+                            'team_id' => $match['home_id'],
+                        ],
+                        [
+                            'points' => 0,
+                            'rebounds' => 0,
+                            'assists' => 0,
+                            'steals' => 0,
+                            'blocks' => 0,
+                            'turnovers' => 0,
+                            'fouls' => 0,
+                        ]
+                    );
+                }
+
+                foreach ($awayPlayers as $player) {
+                    PlayerGameStats::updateOrCreate(
+                        [
+                            'season_id' => $seasonId,
+                            'game_id' => $match['game_id'],
+                            'player_id' => $player->id,
+                            'team_id' => $match['away_id'],
+                        ],
+                        [
+                            'points' => 0,
+                            'rebounds' => 0,
+                            'assists' => 0,
+                            'steals' => 0,
+                            'blocks' => 0,
+                            'turnovers' => 0,
+                            'fouls' => 0,
+                        ]
+                    );
+                }
+            }
+            */
+
+            DB::commit(); // Finalize everything
+        } catch (\Exception $e) {
+            DB::rollBack(); // Undo if any error
+            throw $e;
+        }
+    }
+
     //start playoff algo
     public static function playoffSchedule(Request $request)
     {
