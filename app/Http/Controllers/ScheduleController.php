@@ -34,6 +34,7 @@ class ScheduleController extends Controller
 
         return response()->json($seasons);
     }
+    
     public function createSeasonandSchedule(Request $request)
     {
         $request->validate([
@@ -75,7 +76,7 @@ class ScheduleController extends Controller
             elseif ($request->match_type == 4) {
                 $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
             }
-            
+
             else {
                 return response()->json([
                     'message' => 'Invalid match type.',
@@ -200,6 +201,7 @@ class ScheduleController extends Controller
             throw $e;
         }
     }
+
     private function createSingleRoundRobinScheduleByConference($seasonId, $leagueId)
     {
         DB::beginTransaction(); // Start transaction
@@ -267,6 +269,7 @@ class ScheduleController extends Controller
             throw $e;
         }
     }
+
     private function createHybridRoundRobinSchedule($seasonId, $leagueId) 
     {
         DB::beginTransaction(); // Start transaction
@@ -582,6 +585,7 @@ class ScheduleController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
         }
     }
+
     private static function playoffScheduleByConference($request)
     {
         // Retrieve inputs
@@ -829,6 +833,7 @@ class ScheduleController extends Controller
             
         }
     }
+
     private static function getPlayInEliminationTeams($seasonId, $conferenceId)
     {
         // Get the results of the Play-In Elimination Rounds and Finals
@@ -934,6 +939,7 @@ class ScheduleController extends Controller
                 break;
         }
     }
+
     // Function to generate pairings for playoff matches based on the round
     private static function generatePairingsOneConference($seasonId, $conferenceId, $round)
     {
@@ -962,6 +968,7 @@ class ScheduleController extends Controller
 
         return $pairings;
     }
+
     private static function generatePairings16($seasonId, $conferenceId, $round)
     {
         // Initialize pairings array
@@ -1050,6 +1057,7 @@ class ScheduleController extends Controller
 
         return $pairings;
     }
+
     // Function to create schedule for a round of playoff matches
     private static function createSchedule($pairings, $seasonId, $round, $conferenceId)
     {
