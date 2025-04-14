@@ -58,7 +58,7 @@
                             {{ player.round }}
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
-                            {{ player.pick }}
+                            {{ player.pick ?? player.pick_number }}
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
                             {{ player.team_name }}
