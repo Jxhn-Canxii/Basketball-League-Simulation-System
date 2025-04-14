@@ -256,8 +256,7 @@ class ScheduleController extends Controller
                 
                 // Save matches to the database
                 Schedules::insert($matches);
-                
-                
+            
             }
 
             DB::commit(); // Commit transaction if all operations succeed
