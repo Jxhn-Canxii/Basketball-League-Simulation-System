@@ -34,7 +34,7 @@ class ScheduleController extends Controller
 
         return response()->json($seasons);
     }
-    
+
     public function createSeasonandSchedule(Request $request)
     {
         $request->validate([
@@ -401,54 +401,6 @@ class ScheduleController extends Controller
 
             // STEP 4: INSERT INTO SCHEDULES
             Schedules::insert($allMatches);
-
-            // Optional STEP 5: Create player game stats (commented out for now)
-            /*
-            foreach ($allMatches as $match) {
-                $homePlayers = Player::where('team_id', $match['home_id'])->get();
-                $awayPlayers = Player::where('team_id', $match['away_id'])->get();
-
-                foreach ($homePlayers as $player) {
-                    PlayerGameStats::updateOrCreate(
-                        [
-                            'season_id' => $seasonId,
-                            'game_id' => $match['game_id'],
-                            'player_id' => $player->id,
-                            'team_id' => $match['home_id'],
-                        ],
-                        [
-                            'points' => 0,
-                            'rebounds' => 0,
-                            'assists' => 0,
-                            'steals' => 0,
-                            'blocks' => 0,
-                            'turnovers' => 0,
-                            'fouls' => 0,
-                        ]
-                    );
-                }
-
-                foreach ($awayPlayers as $player) {
-                    PlayerGameStats::updateOrCreate(
-                        [
-                            'season_id' => $seasonId,
-                            'game_id' => $match['game_id'],
-                            'player_id' => $player->id,
-                            'team_id' => $match['away_id'],
-                        ],
-                        [
-                            'points' => 0,
-                            'rebounds' => 0,
-                            'assists' => 0,
-                            'steals' => 0,
-                            'blocks' => 0,
-                            'turnovers' => 0,
-                            'fouls' => 0,
-                        ]
-                    );
-                }
-            }
-            */
 
             DB::commit(); // Finalize everything
         } catch (\Exception $e) {
