@@ -26,8 +26,9 @@
             <p class="text-end"></p>
         </div>
     </div>
-    <div class="block" v-if="isHide">
+    <div class="block pt-4" v-if="isHide">
         <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
+        <RecentTransactions  v-if="activeGameId != 0" :key="activeGameId"/>
         <div
             v-if="activeGameId != 0"
             class="w-full flex min-w-full overflow-x-auto border-b-2"
@@ -276,8 +277,9 @@
     import Paginator from "@/Components/Paginator.vue";
     import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
     import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
-    import Trade from "./Trade.vue";
-    
+    import Trade from "@/Pages/Seasons/Module/Trade.vue";
+    import RecentTransactions from "@/Pages/Seasons/Module/RecentTransactions.vue";
+
     const season_schedules = ref(false);
     const isTradeModalOpen = ref(false);
     const isGameResultModalOpen = ref(false);

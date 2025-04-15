@@ -2,29 +2,23 @@
     <div class="p-4 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg max-w-7xl mx-auto" v-if="!gameDetails">
         <!-- Skeleton Loader -->
         <div class="flex justify-center items-center h-full">
-            <!-- Centered Loader -->
+            <!-- Centered Loader with Timer -->
             <div class="flex flex-col items-center space-y-6">
-                <!-- Placeholder for Home Team Name -->
+                <!-- Timer Display -->
+                <div class="text-white text-xl text-center font-mono mb-4">
+                    <h2>Liga Pilipinas</h2>
+                    <small>#{{ props.game_id }}</small>
+                </div> 
+
+                <!-- Existing skeleton loader content -->
                 <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
-
-                <!-- Placeholder for Home Team Score -->
                 <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
-
-                <!-- Placeholder for "VS" Text -->
                 <div class="text-white text-xl font-semibold">
-                    <span class="animate-pulse">VS</span>
+                   <span class="animate-pulse">Loading Game Data: {{ formatTime(time) }}</span>
                 </div>
-
-                <!-- Placeholder for Away Team Score -->
                 <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
-
-                <!-- Placeholder for Away Team Name -->
                 <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
-
-                <!-- Placeholder for Round or Game Status -->
                 <div class="w-48 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
-
-                <!-- Placeholder for Matchup Record -->
                 <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
             </div>
         </div>
@@ -806,10 +800,10 @@
                         <small>Injury Report</small>
                         <div class="flex justify-between items-start">
                             <div class="block text-nowrap overflow-x-auto">
-                            <marquee class="text-red-600 font-semibold">
-                                <!-- Comma separated list of player names and their team names -->
-                                {{ formatInjuredPlayers(injuredPlayers) }}
-                            </marquee>
+                                <marquee class="text-red-600 font-semibold">
+                                    <!-- Comma separated list of player names and their team names -->
+                                    {{ formatInjuredPlayers(injuredPlayers) }}
+                                </marquee>
                             </div>
                         </div>
                     </div>
@@ -825,10 +819,16 @@
             />
         </div>
     </Modal>
+    <!-- <div class="fixed bg-gray-900 text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
+        <div class="flex items-center space-x-2">
+            <i class="fas fa-clock"></i>
+            <span class="font-mono">{{ formatTime(time) }}</span>
+        </div>
+    </div> -->
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from "vue";
+import { ref, computed, onMounted, onUnmounted } from "vue";
 import axios from "axios"; 
 import { roundNameFormatter, roleBadgeClass, roleClasses, playerFormatter } from "@/Utility/Formatter";
 import Modal from "@/Components/Modal.vue";
@@ -901,12 +901,15 @@ const fetchBoxScore = async () => {
         injuredPlayers.value = data.injury;
         seasonLeaders.value = data.league_leaders;
         gameFinished.value = true;
-        stopTimer(); // Stop the timer when the game finishes
+        // stopTimer(); // Stop the timer when the game finishes
     } catch (error) {
         console.error("Error fetching box score:", error);
     }
 };
 
+onUnmounted(() => {
+    stopTimer();
+});
 
 // Sort players by points and get top 5 players
 const sortedHomePlayers = computed(() => {
@@ -989,5 +992,13 @@ td {
 
 tbody tr:hover {
     background-color: rgba(255, 255, 255, 0.1); /* Light hover effect */
+}
+
+.fixed {
+    transition: opacity 0.3s ease-in-out;
+}
+
+.fixed:hover {
+    opacity: 0.8;
 }
 </style>

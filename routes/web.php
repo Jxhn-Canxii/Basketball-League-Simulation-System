@@ -200,6 +200,8 @@ Route::middleware('auth')->group(function () {
         Route::post('waive-player', [TransactionsController::class, 'waivePlayer'])->name('players.waive');
         Route::post('extend-contract-player', [TransactionsController::class, 'extendContract'])->name('players.contract.extend');
         Route::post('player-transactions', [TransactionsController::class, 'getTransactions'])->name('players.transactions');
+        Route::post('recent-transactions', [TransactionsController::class, 'getRecentNonTransferTransactions'])->name('recent.transactions');
+        
         // Route::post('freeagent-market', [TransactionsController::class, 'getFreeAgentsByCompositeScore'])->name('players.best.free.agent');
     });
 

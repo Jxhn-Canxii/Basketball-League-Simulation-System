@@ -11,6 +11,40 @@ use Inertia\Inertia;
 class TransactionsController extends Controller
 {
 
+    public function getRecentNonTransferTransactions()
+    {
+        $transactions = DB::table('transactions')
+            ->select(
+                'transactions.id',
+                'transactions.player_id',
+                'players.name as player_name',
+                'players.age as age',
+                'transactions.season_id',
+                'seasons.name as season_name',
+                'transactions.details',
+                'transactions.from_team_id',
+                DB::raw("CASE WHEN transactions.from_team_id = 0 THEN 'Free Agent' ELSE from_teams.name END as from_team_name"),
+                'transactions.to_team_id',
+                DB::raw("CASE WHEN transactions.to_team_id = 0 THEN 'Free Agent' ELSE to_teams.name END as to_team_name"),
+                'transactions.status',
+                'transactions.created_at',
+                'transactions.updated_at'
+            )
+            ->join('players', 'transactions.player_id', '=', 'players.id')
+            ->join('seasons', 'transactions.season_id', '=', 'seasons.id')
+            ->leftJoin('teams as from_teams', 'transactions.from_team_id', '=', 'from_teams.id')
+            ->leftJoin('teams as to_teams', 'transactions.to_team_id', '=', 'to_teams.id')
+            ->whereNotIn('transactions.status', ['transfer', 'role change'])
+            ->orderBy('transactions.id', 'desc')
+            ->limit(5)
+            ->get();
+    
+        return response()->json([
+            'transactions' => $transactions
+        ]);
+    }
+
+
     public function getTransactions(Request $request)
     {
         $seasonId = $request->season_id;
