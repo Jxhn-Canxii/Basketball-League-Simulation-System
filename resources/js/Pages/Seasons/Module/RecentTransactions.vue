@@ -11,7 +11,7 @@
     </div>
 
     <!-- Actual Content -->
-    <div v-else class="whitespace-nowrap animate-marquee flex space-x-10 text-sm text-gray-800">
+    <div v-else class="whitespace-nowrap animate-marquee flex space-x-5 text-sm text-gray-800">
       <div
         v-for="transaction in transactions"
         :key="transaction.id"
