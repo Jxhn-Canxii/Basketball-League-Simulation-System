@@ -9,7 +9,11 @@
         :key="transaction.id"
         class="flex-shrink-0 inline-block"
       >
-        <p>
+        <p v-if="transaction.status == 'star player change'">
+            <b>{{ transaction.player_name }}</b> <a class="first-letter:lower">&nbsp;{{ transaction.details }}</a>
+            <span class="text-blue-500">&nbsp; Source: {{ transaction.from_team_name }}.com</span>
+        </p>
+        <p v-else>
           <b>{{ transaction.player_name }}</b> <a class="first-letter:lower">&nbsp;{{ transaction.details }}</a>
           [{{transaction.from_team_name}} <i class="fa fa-arrow-right"></i> {{ transaction.to_team_name }}]
           <span class="text-blue-500">&nbsp; Source: {{ transaction.status == 'waived' || transaction.status == 'released' ? transaction.from_team_name : transaction.to_team_name }}.com</span>
