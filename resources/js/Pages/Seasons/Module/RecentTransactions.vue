@@ -61,7 +61,7 @@ onMounted(() => {
 
 .animate-marquee {
   display: inline-block;
-  animation: marquee 80s linear infinite;
+  animation: marquee 70s linear infinite;
 }
 
 /* Add these new styles for skeleton animation */

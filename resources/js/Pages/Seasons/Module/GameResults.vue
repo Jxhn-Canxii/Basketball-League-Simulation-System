@@ -810,6 +810,12 @@
                 </div>
             </div>
         </div>
+        <div class="fixed bottom-0 right-24 bg-gray-900 text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-clock"></i>
+                <span class="font-mono">{{ formatTime(time) }}</span>
+            </div>
+        </div>
     </div>
     <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
         <div class="p-6 block">
@@ -819,12 +825,7 @@
             />
         </div>
     </Modal>
-    <!-- <div class="fixed bg-gray-900 text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
-        <div class="flex items-center space-x-2">
-            <i class="fas fa-clock"></i>
-            <span class="font-mono">{{ formatTime(time) }}</span>
-        </div>
-    </div> -->
+   
 </template>
 
 <script setup>
