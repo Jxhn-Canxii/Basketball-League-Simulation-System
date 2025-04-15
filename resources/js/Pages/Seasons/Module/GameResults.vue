@@ -797,9 +797,26 @@
                         </li>
                     </ul>
                     <div class="p-0 flex-grow mt-2" v-if="injuredPlayers?.length > 0">
-                        <small>Injury Report</small>
-                        <div class="whitespace-nowrap animate-marquee flex space-x-5 text-sm text-gray-800">
-                            {{ formatInjuredPlayers(injuredPlayers) }}
+                        <div class="bg-red-100 border-l-4 border-red-500 h-16 overflow-hidden">
+                            <div class="flex items-center h-6 px-2">
+                                <span class="animate-pulse flex items-center">
+                                    <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
+                                    <span class="font-bold text-red-500 text-sm">BREAKING NEWS:</span>
+                                </span>
+                            </div>
+                            <div class="h-10 overflow-hidden px-2">
+                                <div class="whitespace-nowrap animate-marquee flex text-xs text-gray-800">
+                                    <div class="flex items-center">
+                                        <div
+                                            v-for="injury in injuredPlayers"
+                                            :key="injury.id"
+                                            class="flex-shrink-0 inline-block"
+                                        >
+                                            {{ formatInjuredPlayers(injury) }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -808,6 +825,7 @@
         <div class="fixed bottom-0 right-24 bg-gray-900 text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
             <div class="flex items-center space-x-2">
                 <i class="fas fa-clock"></i>
+                
                 <span class="font-mono">{{ formatTime(time) }}</span>
             </div>
         </div>
@@ -924,41 +942,24 @@ const top5AwayPlayers = computed(() => {
     return sortedAwayPlayers.value.slice(0, 5).map((player) => player.name);
 });
 
-const formatInjuredPlayers = (players) => {
-  const injuryMessages = [
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} has suffered a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `${player.team_when_injured}'s ${player.player_name} (${player.role}) is sidelined with a ${player.injury_type.replaceAll('_', ' ')} for the next ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} is dealing with a ${player.injury_type.replaceAll('_', ' ')} and will be out for ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} is out due to ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `Injury alert: ${player.player_name} (${player.role}) of the ${player.team_when_injured} has a ${player.injury_type.replaceAll('_', ' ')} and will be unavailable for the next ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) of ${player.team_when_injured} will be out for ${player.recovery_games} games after suffering a ${player.injury_type.replaceAll('_', ' ')}.`,
-    (player) => `${player.role} ${player.player_name} from ${player.team_when_injured} is out due to a ${player.injury_type.replaceAll('_', ' ')} and will be sidelined for ${player.recovery_games} games.`,
-    (player) => `The ${player.team_when_injured}'s ${player.role} ${player.player_name} has suffered a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    // More dynamic and varied messages
-    (player) => `Breaking news: ${player.player_name} (${player.role}) from ${player.team_when_injured} is out for ${player.recovery_games} games due to a ${player.injury_type.replaceAll('_', ' ')}.`,
-    (player) => `${player.player_name} (${player.role}), a key player for ${player.team_when_injured}, has been injured with a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `Injury update: ${player.player_name} from ${player.team_when_injured} has been sidelined with a ${player.injury_type.replaceAll('_', ' ')} and will be unavailable for the next ${player.recovery_games} games.`,
-    (player) => `Sad news for ${player.team_when_injured}: ${player.player_name} (${player.role}) is out with a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} will be taking a break due to a ${player.injury_type.replaceAll('_', ' ')} for the next ${player.recovery_games} games.`,
-    (player) => `${player.player_name} of ${player.team_when_injured} will be out due to ${player.injury_type.replaceAll('_', ' ')}. He is expected to miss ${player.recovery_games} games.`,
-    (player) => `${player.team_when_injured} has announced that ${player.player_name} (${player.role}) will be sidelined with a ${player.injury_type.replaceAll('_', ' ')} for ${player.recovery_games} games.`,
-    (player) => `Injury update: ${player.player_name} (${player.role}) from ${player.team_when_injured} is expected to miss ${player.recovery_games} games with a ${player.injury_type.replaceAll('_', ' ')}.`,
-    (player) => `${player.player_name} of ${player.team_when_injured} has a ${player.injury_type.replaceAll('_', ' ')} and will miss the next ${player.recovery_games} games due to recovery.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} will miss ${player.recovery_games} games after suffering a ${player.injury_type.replaceAll('_', ' ')}. Get well soon!`,
-    (player) => `${player.player_name} from ${player.team_when_injured} is recovering from a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `Devastating news for ${player.team_when_injured}: ${player.player_name} (${player.role}) has suffered a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `${player.team_when_injured} will have to make adjustments as ${player.player_name} (${player.role}) is out with a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `A tough blow for ${player.team_when_injured}: ${player.player_name} (${player.role}) is injured and will miss ${player.recovery_games} games due to a ${player.injury_type.replaceAll('_', ' ')}.`,
-    (player) => `${player.player_name} from ${player.team_when_injured} will miss ${player.recovery_games} games after sustaining a ${player.injury_type.replaceAll('_', ' ')}. Get well soon, ${player.player_name}!`
-  ];
+const messageMap = new Map(); // Store message format for each player
 
-  return players
-    .map((player) => {
-      // Randomly pick one of the injury messages
-      const randomMessage = injuryMessages[Math.floor(Math.random() * injuryMessages.length)];
-      return randomMessage(player);
-    })
-    .join(', ');
+const formatInjuredPlayers = (player) => {
+    // If player already has a message format, use it
+    if (!messageMap.has(player.player_id)) {
+        const messages = [
+            `🚨 ${player.player_name} (${player.team_when_injured}) - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`,
+            `⚠️ ${player.team_when_injured}'s ${player.player_name} - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`,
+            `🏥 ${player.player_name} (${player.team_when_injured}) - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`,
+            `⛔ ${player.team_when_injured} loses ${player.player_name} - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`
+        ];
+
+        // Pick a random message format
+        const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+        messageMap.set(player.player_id, randomMessage); // Store the message format
+    }
+
+    return messageMap.get(player.player_id) + ' • '; // Add bullet point separator
 };
 
 onMounted(() => {
@@ -1009,7 +1010,7 @@ tbody tr:hover {
 
 .animate-marquee {
   display: inline-block;
-  animation: marquee 80s linear infinite;
+  animation: marquee 30s linear infinite;
 }
 
 /* Add these new styles for skeleton animation */
@@ -1024,5 +1025,13 @@ tbody tr:hover {
   50% {
     opacity: .5;
   }
+}
+
+/* Add these new styles */
+.truncate {
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>
