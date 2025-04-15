@@ -55,7 +55,7 @@ class ScheduleController extends Controller
         DB::beginTransaction();
 
         try {
-            // Create a new season
+            // Create a new seasons
 
             $season = Seasons::create([
                 'name' => $request->season_name,
