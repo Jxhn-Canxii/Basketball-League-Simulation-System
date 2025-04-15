@@ -798,13 +798,8 @@
                     </ul>
                     <div class="p-0 flex-grow mt-2" v-if="injuredPlayers?.length > 0">
                         <small>Injury Report</small>
-                        <div class="flex justify-between items-start">
-                            <div class="block text-nowrap overflow-x-auto">
-                                <marquee class="text-red-600 font-semibold">
-                                    <!-- Comma separated list of player names and their team names -->
-                                    {{ formatInjuredPlayers(injuredPlayers) }}
-                                </marquee>
-                            </div>
+                        <div class="whitespace-nowrap animate-marquee flex space-x-5 text-sm text-gray-800">
+                            {{ formatInjuredPlayers(injuredPlayers) }}
                         </div>
                     </div>
                 </div>
@@ -931,30 +926,30 @@ const top5AwayPlayers = computed(() => {
 
 const formatInjuredPlayers = (players) => {
   const injuryMessages = [
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} has suffered a ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `${player.team_when_injured}'s ${player.player_name} (${player.role}) is sidelined with a ${player.injury_type.replace('_', ' ')} for the next ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} is dealing with a ${player.injury_type.replace('_', ' ')} and will be out for ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} is out due to ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `Injury alert: ${player.player_name} (${player.role}) of the ${player.team_when_injured} has a ${player.injury_type.replace('_', ' ')} and will be unavailable for the next ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) of ${player.team_when_injured} will be out for ${player.recovery_games} games after suffering a ${player.injury_type.replace('_', ' ')}.`,
-    (player) => `${player.role} ${player.player_name} from ${player.team_when_injured} is out due to a ${player.injury_type.replace('_', ' ')} and will be sidelined for ${player.recovery_games} games.`,
-    (player) => `The ${player.team_when_injured}'s ${player.role} ${player.player_name} has suffered a ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} has suffered a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `${player.team_when_injured}'s ${player.player_name} (${player.role}) is sidelined with a ${player.injury_type.replaceAll('_', ' ')} for the next ${player.recovery_games} games.`,
+    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} is dealing with a ${player.injury_type.replaceAll('_', ' ')} and will be out for ${player.recovery_games} games.`,
+    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} is out due to ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `Injury alert: ${player.player_name} (${player.role}) of the ${player.team_when_injured} has a ${player.injury_type.replaceAll('_', ' ')} and will be unavailable for the next ${player.recovery_games} games.`,
+    (player) => `${player.player_name} (${player.role}) of ${player.team_when_injured} will be out for ${player.recovery_games} games after suffering a ${player.injury_type.replaceAll('_', ' ')}.`,
+    (player) => `${player.role} ${player.player_name} from ${player.team_when_injured} is out due to a ${player.injury_type.replaceAll('_', ' ')} and will be sidelined for ${player.recovery_games} games.`,
+    (player) => `The ${player.team_when_injured}'s ${player.role} ${player.player_name} has suffered a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
     // More dynamic and varied messages
-    (player) => `Breaking news: ${player.player_name} (${player.role}) from ${player.team_when_injured} is out for ${player.recovery_games} games due to a ${player.injury_type.replace('_', ' ')}.`,
-    (player) => `${player.player_name} (${player.role}), a key player for ${player.team_when_injured}, has been injured with a ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `Injury update: ${player.player_name} from ${player.team_when_injured} has been sidelined with a ${player.injury_type.replace('_', ' ')} and will be unavailable for the next ${player.recovery_games} games.`,
-    (player) => `Sad news for ${player.team_when_injured}: ${player.player_name} (${player.role}) is out with a ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} will be taking a break due to a ${player.injury_type.replace('_', ' ')} for the next ${player.recovery_games} games.`,
-    (player) => `${player.player_name} of ${player.team_when_injured} will be out due to ${player.injury_type.replace('_', ' ')}. He is expected to miss ${player.recovery_games} games.`,
-    (player) => `${player.team_when_injured} has announced that ${player.player_name} (${player.role}) will be sidelined with a ${player.injury_type.replace('_', ' ')} for ${player.recovery_games} games.`,
-    (player) => `Injury update: ${player.player_name} (${player.role}) from ${player.team_when_injured} is expected to miss ${player.recovery_games} games with a ${player.injury_type.replace('_', ' ')}.`,
-    (player) => `${player.player_name} of ${player.team_when_injured} has a ${player.injury_type.replace('_', ' ')} and will miss the next ${player.recovery_games} games due to recovery.`,
-    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} will miss ${player.recovery_games} games after suffering a ${player.injury_type.replace('_', ' ')}. Get well soon!`,
-    (player) => `${player.player_name} from ${player.team_when_injured} is recovering from a ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `Devastating news for ${player.team_when_injured}: ${player.player_name} (${player.role}) has suffered a ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `${player.team_when_injured} will have to make adjustments as ${player.player_name} (${player.role}) is out with a ${player.injury_type.replace('_', ' ')} and will miss ${player.recovery_games} games.`,
-    (player) => `A tough blow for ${player.team_when_injured}: ${player.player_name} (${player.role}) is injured and will miss ${player.recovery_games} games due to a ${player.injury_type.replace('_', ' ')}.`,
-    (player) => `${player.player_name} from ${player.team_when_injured} will miss ${player.recovery_games} games after sustaining a ${player.injury_type.replace('_', ' ')}. Get well soon, ${player.player_name}!`
+    (player) => `Breaking news: ${player.player_name} (${player.role}) from ${player.team_when_injured} is out for ${player.recovery_games} games due to a ${player.injury_type.replaceAll('_', ' ')}.`,
+    (player) => `${player.player_name} (${player.role}), a key player for ${player.team_when_injured}, has been injured with a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `Injury update: ${player.player_name} from ${player.team_when_injured} has been sidelined with a ${player.injury_type.replaceAll('_', ' ')} and will be unavailable for the next ${player.recovery_games} games.`,
+    (player) => `Sad news for ${player.team_when_injured}: ${player.player_name} (${player.role}) is out with a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} will be taking a break due to a ${player.injury_type.replaceAll('_', ' ')} for the next ${player.recovery_games} games.`,
+    (player) => `${player.player_name} of ${player.team_when_injured} will be out due to ${player.injury_type.replaceAll('_', ' ')}. He is expected to miss ${player.recovery_games} games.`,
+    (player) => `${player.team_when_injured} has announced that ${player.player_name} (${player.role}) will be sidelined with a ${player.injury_type.replaceAll('_', ' ')} for ${player.recovery_games} games.`,
+    (player) => `Injury update: ${player.player_name} (${player.role}) from ${player.team_when_injured} is expected to miss ${player.recovery_games} games with a ${player.injury_type.replaceAll('_', ' ')}.`,
+    (player) => `${player.player_name} of ${player.team_when_injured} has a ${player.injury_type.replaceAll('_', ' ')} and will miss the next ${player.recovery_games} games due to recovery.`,
+    (player) => `${player.player_name} (${player.role}) from ${player.team_when_injured} will miss ${player.recovery_games} games after suffering a ${player.injury_type.replaceAll('_', ' ')}. Get well soon!`,
+    (player) => `${player.player_name} from ${player.team_when_injured} is recovering from a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `Devastating news for ${player.team_when_injured}: ${player.player_name} (${player.role}) has suffered a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `${player.team_when_injured} will have to make adjustments as ${player.player_name} (${player.role}) is out with a ${player.injury_type.replaceAll('_', ' ')} and will miss ${player.recovery_games} games.`,
+    (player) => `A tough blow for ${player.team_when_injured}: ${player.player_name} (${player.role}) is injured and will miss ${player.recovery_games} games due to a ${player.injury_type.replaceAll('_', ' ')}.`,
+    (player) => `${player.player_name} from ${player.team_when_injured} will miss ${player.recovery_games} games after sustaining a ${player.injury_type.replaceAll('_', ' ')}. Get well soon, ${player.player_name}!`
   ];
 
   return players
@@ -1001,5 +996,33 @@ tbody tr:hover {
 
 .fixed:hover {
     opacity: 0.8;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 80s linear infinite;
+}
+
+/* Add these new styles for skeleton animation */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
 }
 </style>
