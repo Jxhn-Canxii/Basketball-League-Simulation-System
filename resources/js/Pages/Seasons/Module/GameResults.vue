@@ -797,7 +797,7 @@
                         </li>
                     </ul>
                     <div class="p-0 flex-grow mt-2" v-if="injuredPlayers?.length > 0">
-                        <div class="bg-red-100 border-l-4 border-red-500 h-16 overflow-hidden">
+                        <div class="border-l-4 border-red-500 h-full overflow-hidden">
                             <div class="flex items-center h-6 px-2">
                                 <span class="animate-pulse flex items-center">
                                     <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
