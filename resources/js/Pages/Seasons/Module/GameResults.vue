@@ -1010,7 +1010,7 @@ tbody tr:hover {
 
 .animate-marquee {
   display: inline-block;
-  animation: marquee 30s linear infinite;
+  animation: marquee 10s linear infinite;
 }
 
 /* Add these new styles for skeleton animation */
