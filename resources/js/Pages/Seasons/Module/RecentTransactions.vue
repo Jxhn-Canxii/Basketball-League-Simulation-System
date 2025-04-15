@@ -3,7 +3,7 @@
     <h2 class="text-md font-bold mb-1 text-red-600">📰 Recent Transactions</h2>
     
     <!-- Skeleton Loader -->
-    <div v-if="loading" class="whitespace-nowrap flex space-x-10 text-sm">
+    <div v-if="transactions.length == 0" class="whitespace-nowrap flex space-x-10 text-sm">
       <div v-for="n in 3" :key="n" class="flex-shrink-0 inline-block animate-pulse">
         <div class="h-6 bg-gray-200 rounded w-96 mb-2"></div>
         <div class="h-4 bg-gray-100 rounded w-64"></div>

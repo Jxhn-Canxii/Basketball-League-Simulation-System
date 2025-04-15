@@ -31,7 +31,7 @@
         <RecentTransactions  v-if="activeGameId != 0" :key="activeGameId"/>
         <div
             v-if="activeGameId != 0"
-            class="w-full flex min-w-full overflow-x-auto border-b-2"
+            class="w-full flex min-w-full overflow-x-auto border-b-2 text-xs"
         >
             <ul class="flex flex-wrap">
                 <li
