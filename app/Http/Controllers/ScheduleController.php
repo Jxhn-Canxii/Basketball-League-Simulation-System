@@ -46,7 +46,7 @@ class ScheduleController extends Controller
         ]);
 
         // Check if the match type is valid for double round robin by conference
-        if ($request->type != 3 || $request->match_type != 1) {
+        if ($request->match_type != 1) {
             return response()->json([
                 'message' => 'Invalid match type or season type for double round robin by conference.',
             ], 400);
@@ -71,7 +71,7 @@ class ScheduleController extends Controller
             if($request->match_type == 1){
                 if($request->type == 1){
                     DB::rollBack();
-                    
+
                     return response()->json([
                         'message' => 'Single Elimination not available for this season type.',
                     ], 400);
