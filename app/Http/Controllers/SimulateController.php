@@ -2198,13 +2198,15 @@ class SimulateController extends Controller
                 $currentRole = collect($stats)->firstWhere('player_id', $playerId)->role;
     
                 if ($currentRole !== $newRole) {
+                    $roleStatus = ($newRole == 'star player') ? 'star player change' : 'role change';
+                    
                     DB::table('transactions')->insert([
                         'player_id' => $playerId,
                         'season_id' => $seasonId,
                         'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week($weekName)",
                         'from_team_id' => $teamId,
                         'to_team_id' => $teamId,
-                        'status' => 'role change',
+                        'status' => $roleStatus,
                     ]);
                 }
     
