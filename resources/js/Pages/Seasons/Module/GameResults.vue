@@ -13,8 +13,8 @@
                 <!-- Existing skeleton loader content -->
                 <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
                 <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
-                <div class="text-white text-xl font-semibold">
-                   <span class="animate-pulse">Loading Game Data: {{ formatTime(time) }}</span>
+                <div class="text-white text-md font-semibold">
+                   <span class="animate-pulse font-mono">Loading Game Data: {{ formatTime(time) }}</span>
                 </div>
                 <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
                 <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>

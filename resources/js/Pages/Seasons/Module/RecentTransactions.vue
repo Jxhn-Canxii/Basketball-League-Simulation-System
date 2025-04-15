@@ -1,17 +1,9 @@
 <template>
-  <div class="relative overflow-hidden bg-white shadow-md rounded-xl p-2">
+  <div class="relative overflow-hidden bg-white shadow-sm rounded p-2">
     <h2 class="text-md font-bold mb-1 text-red-600">📰 Recent Transactions</h2>
-    
-    <!-- Skeleton Loader -->
-    <div v-if="transactions.length == 0" class="whitespace-nowrap flex space-x-10 text-sm">
-      <div v-for="n in 3" :key="n" class="flex-shrink-0 inline-block animate-pulse">
-        <div class="h-6 bg-gray-200 rounded w-96 mb-2"></div>
-        <div class="h-4 bg-gray-100 rounded w-64"></div>
-      </div>
-    </div>
 
     <!-- Actual Content -->
-    <div v-else class="whitespace-nowrap animate-marquee flex space-x-5 text-sm text-gray-800">
+    <div class="whitespace-nowrap animate-marquee flex space-x-5 text-sm text-gray-800">
       <div
         v-for="transaction in transactions"
         :key="transaction.id"
@@ -38,7 +30,6 @@ const loading = ref(true);
 const showRecentTransactions = async () => {
   try {
     loading.value = true;
-    transactions.value = []; // Reset transactions before fetching new data
     const response = await axios.post(route('recent.transactions'));
     transactions.value = response.data.transactions;
   } catch (error) {
