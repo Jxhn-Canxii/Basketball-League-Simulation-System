@@ -805,7 +805,7 @@
                                 </span>
                             </div>
                             <div class="h-10 overflow-hidden px-2">
-                                <div class="whitespace-nowrap animate-marquee flex text-xs text-gray-800">
+                                <div class="whitespace-nowrap animate-marquee flex text-sm text-gray-800">
                                     <div class="flex items-center">
                                         <div
                                             v-for="injury in injuredPlayers"
