@@ -39,7 +39,7 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'season_name' => 'required|unique:seasons,name',
-            'type' => 'required|in:1,2,3',
+            'type' => 'required|in:1,2,3,4',
             'start' => 'required',
             'league_id' => 'required|exists:leagues,id',
             'match_type' => 'required|in:1,2',
@@ -68,18 +68,25 @@ class ScheduleController extends Controller
             ]);
 
             // Create the double round robin schedule by conference
-            if($request->match_type == 2){
-                $this->createSingleRoundRobinScheduleByConference($season->id, $request->league_id);
-            } elseif ($request->match_type == 3) {
-                $this->createDoubleRoundRobinScheduleByConference($season->id, $request->league_id);
-            }
-            elseif ($request->match_type == 4) {
-                $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
-            }
-
-            else {
+            if($request->match_type == 1){
+                if($request->type == 1){
+                    return response()->json([
+                        'message' => 'Single Elimination not available for this season type.',
+                    ], 400);
+                } elseif($request->type == 2){
+                    $this->createSingleRoundRobinScheduleByConference($season->id, $request->league_id);
+                } elseif ($request->type == 3) {
+                    $this->createDoubleRoundRobinScheduleByConference($season->id, $request->league_id);
+                } elseif ($request->type == 4) {
+                    $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
+                } else {
+                    return response()->json([
+                        'message' => 'Invalid match type.',
+                    ], 400);
+                }
+            }else{
                 return response()->json([
-                    'message' => 'Invalid match type.',
+                    'message' => 'Match type not available for this season type.',
                 ], 400);
             }
 
@@ -100,6 +107,7 @@ class ScheduleController extends Controller
         }
     }
 
+    ///per conference match schedule
     private function createDoubleRoundRobinScheduleByConference($seasonId, $leagueId)
     {
         DB::beginTransaction(); // Start transaction
