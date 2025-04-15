@@ -70,6 +70,8 @@ class ScheduleController extends Controller
             // Create the double round robin schedule by conference
             if($request->match_type == 1){
                 if($request->type == 1){
+                    DB::rollBack();
+                    
                     return response()->json([
                         'message' => 'Single Elimination not available for this season type.',
                     ], 400);
@@ -80,11 +82,15 @@ class ScheduleController extends Controller
                 } elseif ($request->type == 4) {
                     $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
                 } else {
+                    DB::rollBack();
+
                     return response()->json([
                         'message' => 'Invalid match type.',
                     ], 400);
                 }
             }else{
+                DB::rollBack();
+
                 return response()->json([
                     'message' => 'Match type not available for this season type.',
                 ], 400);
