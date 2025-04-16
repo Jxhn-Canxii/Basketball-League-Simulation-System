@@ -15,11 +15,11 @@ const props = defineProps({
 });
 
 const typeClasses = {
-  championship: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
-  conference: 'bg-gray-100 text-gray-800 border border-gray-300',
-  overall: 'bg-blue-100 text-blue-800 border border-blue-300',
-  conference_best: 'bg-green-100 text-green-800 border border-green-300',
-  grandslam: 'bg-purple-100 text-purple-800 border border-purple-300'
+  championship: 'bg-yellow-300 text-yellow-800 border border-yellow-300',
+  conference: 'bg-gray-300 text-gray-800 border border-gray-300',
+  overall: 'bg-blue-300 text-blue-800 border border-blue-300',
+  conference_best: 'bg-green-300 text-green-800 border border-green-300',
+  grandslam: 'bg-purple-300 text-purple-800 border border-purple-300'
 };
 
 const typeLabels = {
