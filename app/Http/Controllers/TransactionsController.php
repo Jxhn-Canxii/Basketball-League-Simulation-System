@@ -19,6 +19,9 @@ class TransactionsController extends Controller
                 'transactions.player_id',
                 'players.name as player_name',
                 'players.role as player_role',
+                'players.draft_status as draft_status',
+                'players.draft_id as draft_season_id',
+                DB::raw("CASE WHEN players.drafted_team_id = 0 THEN 'Undrafted' ELSE drafted_team.acronym END as drafted_team_abbre"),
                 'players.age as age',
                 'transactions.season_id',
                 'seasons.name as season_name',
@@ -49,6 +52,7 @@ class TransactionsController extends Controller
             )
             ->join('players', 'transactions.player_id', '=', 'players.id')
             ->join('seasons', 'transactions.season_id', '=', 'seasons.id')
+            ->leftJoin('teams as drafted_team', 'players.drafted_team_id', '=', 'drafted_team.id')
             ->leftJoin('teams as from_teams', 'transactions.from_team_id', '=', 'from_teams.id')
             ->leftJoin('teams as to_teams', 'transactions.to_team_id', '=', 'to_teams.id')
             ->whereNotIn('transactions.status', ['transfer', 'role change'])

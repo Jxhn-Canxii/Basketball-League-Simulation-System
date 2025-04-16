@@ -46,6 +46,9 @@
                         <span :class="getStatusBadgeClass(transaction.status)">
                             {{ formatStatus(transaction.status) }}
                         </span>
+                        <span :class="statusBadgeClass('active','xs')">
+                          S{{ transaction.draft_season_id}} {{ transaction.draft_status }} ({{ transaction.drafted_team_abbre }})
+                        </span>
                     </div>
 
                     <p class="text-sm text-gray-600 mt-1">
@@ -108,6 +111,7 @@ import {
     roleBadgeClass,
     getTransactionIcon,
     getStatusBadgeClass,
+    statusBadgeClass,
     formatStatus
 } from "@/Utility/Formatter";
 
