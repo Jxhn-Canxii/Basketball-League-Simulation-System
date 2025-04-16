@@ -55,7 +55,7 @@
 
             <!-- Source -->
             <div class="text-xs text-gray-500 mt-1">
-              Source: {{ getSourceTeam(transaction) }}.com
+              Source: <i class="text-blue-500">{{ getSourceTeam(transaction) }}</i>
             </div>
           </div>
         </div>
@@ -133,9 +133,11 @@ const formatStatus = (status) => {
 };
 
 const getSourceTeam = (transaction) => {
-  return transaction.status === 'waived' || transaction.status === 'released'
+  const teamName = transaction.status === 'waived' || transaction.status === 'released'
     ? transaction.from_team_name
     : transaction.to_team_name;
+
+    return `${teamName.replaceAll(' ','.').toLowerCase()}.com`;
 };
 
 onMounted(() => {
