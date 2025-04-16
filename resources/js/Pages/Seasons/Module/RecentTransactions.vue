@@ -46,7 +46,7 @@
                         <span :class="getStatusBadgeClass(transaction.status)">
                             {{ formatStatus(transaction.status) }}
                         </span>
-                        <span :class="statusBadgeClass('active','xs')">
+                        <span :class="statusBadgeClass('asshole','xs')">
                           S{{ transaction.draft_season_id}} {{ transaction.draft_status }} ({{ transaction.drafted_team_abbre }})
                         </span>
                     </div>
