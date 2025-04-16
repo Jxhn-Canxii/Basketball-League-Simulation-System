@@ -1271,14 +1271,6 @@ class AwardsController extends Controller
                     ->sortByDesc('per')
                     ->first(),
         
-                // Perfect Attendance Award
-                'Perfect Attendance Award' => $eligiblePlayerStats
-                    ->filter(function ($stats) {
-                        return $stats->total_games_played === $stats->total_games;
-                    })
-                    ->sortByDesc('total_minutes_played')
-                    ->first(),
-        
                 // Best All-Around Player (Based on EFF)
                 'Most Versatile Player' => $eligiblePlayerStats
                     ->sortByDesc('eff')
@@ -1328,7 +1320,6 @@ class AwardsController extends Controller
                         'Triple-Double Machine' => 'Player averaging triple-double for the season',
                         'Shooting Efficiency Leader' => 'Player with highest true shooting percentage (min. 300 attempts)',
                         'Player Efficiency Leader' => 'Player with highest Player Efficiency Rating (PER)',
-                        'Perfect Attendance Award' => 'Player who played all games with most minutes',
                         'Most Versatile Player' => 'Player with highest efficiency rating',
                         'Points Game Leader' => 'Player with most points in a single game',
                         'Rebounds Game Leader' => 'Player with most rebounds in a single game',

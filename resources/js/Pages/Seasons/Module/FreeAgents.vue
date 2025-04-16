@@ -183,8 +183,7 @@
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap border">
                                     <span
-                                        :class="roleClasses(player.role)"
-                                        class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium"
+                                        :class="roleBadgeClass(player.role)"
                                     >
                                         {{ player.role }}
                                     </span>
@@ -325,7 +324,7 @@ import axios from "axios"; // Ensure axios is imported
 import Swal from "sweetalert2";
 import Modal from "@/Components/Modal.vue";
 import Paginator from "@/Components/Paginator.vue";
-import { roleClasses } from "@/Utility/Formatter";
+import { roleBadgeClass } from "@/Utility/Formatter";
 import TopStatistics from "@/Pages/Analytics/Module/TopStatistics.vue";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 const showAddPlayerModal = ref(false);
