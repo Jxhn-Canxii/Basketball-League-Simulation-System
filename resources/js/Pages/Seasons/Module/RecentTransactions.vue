@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-    <div class="p-4 border-b border-gray-200">
+    <div class="px-4 pb-2 border-b border-gray-200">
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-bold text-gray-800 flex items-center">
           <i class="fas fa-exchange-alt text-red-500 mr-2"></i>
