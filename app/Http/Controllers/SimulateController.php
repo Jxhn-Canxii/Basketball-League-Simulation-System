@@ -2030,6 +2030,7 @@ class SimulateController extends Controller
     
         try {
             $seasonId = get_current_season_id();
+            
             $weekName = match(true) {
                 $round == 2 => 'Early Season Adjustments',
                 $round == $this->getLastRoundNumber() => 'Playoff Preparation',
@@ -2168,7 +2169,11 @@ class SimulateController extends Controller
         DB::beginTransaction();
         try {
             $seasonId = get_current_season_id();
-            $weekName = ($round == 2) ? 1 : ($round / 5) + 1;
+            $weekName = match(true) {
+                $round == 2 => 'Early Season Adjustments',
+                $round == $this->getLastRoundNumber() => 'Playoff Preparation',
+                default => (($round / 5) + 1),
+            };
     
             // Fetch player season stats, merging by player_id and summing their EFF
             $stats = DB::table('player_season_stats')

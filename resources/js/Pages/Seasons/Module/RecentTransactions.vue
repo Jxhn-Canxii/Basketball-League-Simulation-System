@@ -1,6 +1,6 @@
 <template>
   <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-    <div class="px-4 pb-2 border-b border-gray-200">
+    <div class="px-4 pb-2 border-b border-gray-200" v-if="props.showTitle">
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-bold text-gray-800 flex items-center">
           <i class="fas fa-exchange-alt text-red-500 mr-2"></i>
@@ -32,56 +32,66 @@
           </div>
 
           <!-- Transaction Content -->
-          <div class="flex-grow">
-            <div class="flex items-center gap-2">
-                <div class="relative group" @click="togglePlayerCard(transaction.id)">
-                    <div class="flip-card" :class="{ 'is-flipped': flippedCards[transaction.id] }">
-                        <!-- Front of card -->
-                        <div class="flip-card-front">
-                            <span class="font-semibold text-gray-900 cursor-pointer">
-                                {{ transaction.player_name }}, {{ transaction.age }}
+          <div class="flex-grow relative">
+            <div class="flip-card-container" :class="{ 'is-flipped': flippedCards[transaction.id] }">
+                <!-- Front Side (Transaction Info) -->
+                <div class="flip-card-front p-2">
+                    <div class="flex items-center gap-2">
+                        <span class="font-semibold text-gray-900 cursor-pointer" @click="togglePlayerCard(transaction.id)">
+                            {{ transaction.player_name }}, {{ transaction.age }}
+                        </span>
+                        <span :class="roleBadgeClass(transaction.player_role)">
+                            {{ transaction.player_role }}
+                        </span>
+                        <span :class="getStatusBadgeClass(transaction.status)">
+                            {{ formatStatus(transaction.status) }}
+                        </span>
+                    </div>
+
+                    <p class="text-sm text-gray-600 mt-1">
+                        {{ transaction.details }}
+                        <template v-if="transaction.status !== 'star player change' && transaction.status !== 'role change'">
+                            <span class="text-gray-400 mx-1">•</span>
+                            {{ transaction.from_team_name }}
+                            <i class="fas fa-arrow-right text-xs mx-1 text-gray-400"></i>
+                            {{ transaction.to_team_name }}
+                        </template>
+                    </p>
+
+                    <div class="text-xs text-gray-500 mt-1">
+                        Source: <i class="text-blue-500">{{ getSourceTeam(transaction) }}</i>
+                    </div>
+                </div>
+
+                <!-- Back Side (Awards Info) -->
+                <div class="flip-card-back p-2 bg-gray-50">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-semibold text-gray-700">
+                                {{ transaction.player_name }}'s Achievements
                             </span>
+                            <button @click="togglePlayerCard(transaction.id)" 
+                                    class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-times"></i>
+                            </button>
                         </div>
-                        
-                        <!-- Back of card (Awards) -->
-                        <div class="flip-card-back">
-                            <div class="flex flex-wrap gap-1">
-                                <template v-if="transaction.awards_info">
-                                    <span v-for="(award, index) in parseAwards(transaction.awards_info)"
-                                          :key="index"
-                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs"
-                                          :class="getAwardBadgeClass(award)">
-                                        <i :class="getAwardIcon(award)" class="mr-1"></i>
-                                        {{ award }}
-                                    </span>
-                                </template>
-                                <span v-else class="text-xs text-gray-500">No awards yet</span>
-                            </div>
+
+                        <div class="flex flex-wrap gap-1.5">
+                            <template v-if="transaction.awards_info">
+                                <span v-for="(award, index) in parseAwards(transaction.awards_info)"
+                                      :key="index"
+                                      class="inline-flex items-center px-2 py-1 rounded-full text-xs"
+                                      :class="getAwardBadgeClass(award)">
+                                    <i :class="getAwardIcon(award)" class="mr-1"></i>
+                                    {{ formatAwardText(award) }}
+                                </span>
+                            </template>
+                            <span v-else class="text-xs text-gray-500 italic">
+                                No awards yet in career
+                            </span>
                         </div>
                     </div>
                 </div>
-                <span :class="roleBadgeClass(transaction.player_role)">
-                    {{ transaction.player_role }}
-                </span>
-                <span :class="getStatusBadgeClass(transaction.status)">
-                    {{ formatStatus(transaction.status) }}
-                </span>
-            </div>
-
-            <!-- Transaction Details -->
-            <p class="text-sm text-gray-600 mt-1">
-              {{ transaction.details }}
-              <template v-if="transaction.status !== 'star player change'">
-                <span class="text-gray-400 mx-1">•</span>
-                {{ transaction.from_team_name }}
-                <i class="fas fa-arrow-right text-xs mx-1 text-gray-400"></i>
-                {{ transaction.to_team_name }}
-              </template>
-            </p>
-
-            <!-- Source -->
-            <div class="text-xs text-gray-500 mt-1">
-              Source: <i class="text-blue-500">{{ getSourceTeam(transaction) }}</i>
             </div>
           </div>
         </div>
@@ -100,6 +110,13 @@ import {
     getStatusBadgeClass,
     formatStatus
 } from "@/Utility/Formatter";
+
+const props = defineProps({
+    showTitle: {
+        type: Boolean,
+        default: true,
+    }
+});
 
 const transactions = ref([]);
 const loading = ref(true);

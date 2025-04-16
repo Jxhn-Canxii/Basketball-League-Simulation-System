@@ -26,6 +26,31 @@
             <p class="text-end"></p>
         </div>
     </div>
+    <div v-if="!isHide" class="mb-4">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                <button
+                    @click.prevent="showTransactions = !showTransactions"
+                    class="flex items-center px-1 py-2 text-sm font-medium"
+                    :class="[
+                        showTransactions 
+                            ? 'border-b-2 border-orange-500 text-orange-600'
+                            : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    ]"
+                >
+                    <i class="fas fa-exchange-alt mr-2"></i>
+                    Recent Transactions
+                </button>
+            </nav>
+        </div>
+
+        <!-- Transactions Panel -->
+        <transition name="fade" mode="out-in">
+            <div v-if="showTransactions" class="mt-4">
+                <RecentTransactions :key="showTransactions" :showTitle="!showTransactions" />
+            </div>
+        </transition>
+    </div>
     <div class="block px-2" v-if="isHide">
         <transition name="fade" mode="out-in">
             <div v-if="showGameResults && activeGameId != 0" :key="'game-' + activeGameId">
@@ -104,7 +129,7 @@
             </div>
         </div>
     </div>
-    <div class="block" v-else>
+    <div class="block" v-if="!isHide && !showTransactions">
         <div class="flex justify-between items-center mb-2">
             <h2 class="text-lg font-semibold text-gray-800">
                 Schedule and Results ({{ season_schedules?.total_count }})
@@ -289,6 +314,7 @@
     const season_schedules = ref(false);
     const isTradeModalOpen = ref(false);
     const isGameResultModalOpen = ref(false);
+    const showTransactions = ref(false);
     const isHide = ref(false);
     const activeConferenceTab = ref(0);
     const loadingSchedules = ref(false);
@@ -526,5 +552,16 @@
 .flip-enter-to,
 .flip-leave-from {
     transform: rotateX(0deg);
+}
+
+/* Add to your existing styles */
+.fade-enter-active,
+.fade-leave-active {
+    transition: opacity 0.3s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+    opacity: 0;
 }
 </style>

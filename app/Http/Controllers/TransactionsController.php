@@ -51,7 +51,7 @@ class TransactionsController extends Controller
             ->join('seasons', 'transactions.season_id', '=', 'seasons.id')
             ->leftJoin('teams as from_teams', 'transactions.from_team_id', '=', 'from_teams.id')
             ->leftJoin('teams as to_teams', 'transactions.to_team_id', '=', 'to_teams.id')
-            ->whereNotIn('transactions.status', ['transfer'])
+            ->whereNotIn('transactions.status', ['transfer', 'role change'])
             ->orderBy('transactions.id', 'desc')
             ->limit(10)
             ->get();
