@@ -37,11 +37,11 @@
                 <span class="font-semibold text-gray-900">
                     {{ transaction.player_name }} ,{{ transaction.age }}
                 </span>
-                <span :class="getStatusBadgeClass(transaction.status)">
-                    {{ formatStatus(transaction.status) }}
-                </span>
                 <span :class="roleBadgeClass(transaction.player_role)">
                     {{ transaction.player_role }}
+                </span>
+                <span :class="getStatusBadgeClass(transaction.status)">
+                    {{ formatStatus(transaction.status) }}
                 </span>
             </div>
 

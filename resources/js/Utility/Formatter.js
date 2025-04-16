@@ -362,19 +362,19 @@ export const playerFormatter = (name) => {
 export const getTransactionIcon = (status) => {
     switch (status) {
       case 'star player change':
-        return 'fas fa-star text-yellow-500';
+        return 'fas fa-star text-yellow-500'; // Star icon for star player changes
       case 'waived':
-        return 'fas fa-ban text-red-500';
+        return 'fas fa-user-minus text-red-500'; // User minus for waived players
       case 'released':
-        return 'fas fa-times text-gray-500';
-      case 'transferred':
-        return 'fas fa-exchange-alt text-blue-500';
+        return 'fas fa-door-open text-gray-500'; // Door icon for released players
       case 'signed':
-        return 'fas fa-file-contract text-yellow-500';
+        return 'fas fa-file-signature text-green-500'; // Contract signing for new signings
+      case 'transferred':
+        return 'fas fa-exchange-alt text-blue-500'; // Exchange icon for transfers
       default:
-        return 'fas fa-question-mark-circle text-gray-500';
+        return 'fas fa-circle-info text-gray-500'; // Info icon for unknown status
     }
-  };
+};
   
 export const getStatusBadgeClass = (status) => {
     switch (status) {
@@ -384,10 +384,14 @@ export const getStatusBadgeClass = (status) => {
         return 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs';
       case 'released':
         return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
+      case 'signed':
+        return 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs'; // Changed to green
+      case 'transferred':
+        return 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs'; // Matches the blue icon
       default:
-        return 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs';
+        return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
     }
-  };
+};
   
 export const formatStatus = (status) => {
     switch (status) {
