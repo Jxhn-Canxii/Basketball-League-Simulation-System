@@ -34,9 +34,32 @@
           <!-- Transaction Content -->
           <div class="flex-grow">
             <div class="flex items-center gap-2">
-                <span class="font-semibold text-gray-900">
-                    {{ transaction.player_name }} ,{{ transaction.age }}
-                </span>
+                <div class="relative group" @click="togglePlayerCard(transaction.id)">
+                    <div class="flip-card" :class="{ 'is-flipped': flippedCards[transaction.id] }">
+                        <!-- Front of card -->
+                        <div class="flip-card-front">
+                            <span class="font-semibold text-gray-900 cursor-pointer">
+                                {{ transaction.player_name }}, {{ transaction.age }}
+                            </span>
+                        </div>
+                        
+                        <!-- Back of card (Awards) -->
+                        <div class="flip-card-back">
+                            <div class="flex flex-wrap gap-1">
+                                <template v-if="transaction.awards_info">
+                                    <span v-for="(award, index) in parseAwards(transaction.awards_info)"
+                                          :key="index"
+                                          class="inline-flex items-center px-2 py-0.5 rounded-full text-xs"
+                                          :class="getAwardBadgeClass(award)">
+                                        <i :class="getAwardIcon(award)" class="mr-1"></i>
+                                        {{ award }}
+                                    </span>
+                                </template>
+                                <span v-else class="text-xs text-gray-500">No awards yet</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <span :class="roleBadgeClass(transaction.player_role)">
                     {{ transaction.player_role }}
                 </span>
@@ -80,6 +103,7 @@ import {
 
 const transactions = ref([]);
 const loading = ref(true);
+const flippedCards = ref({});
 
 const showRecentTransactions = async () => {
   try {
@@ -102,14 +126,20 @@ const sortedTransactions = computed(() => {
   return transactions.value.sort((a, b) => new Date(b.date) - new Date(a.date));
 });
 
-
-
 const getSourceTeam = (transaction) => {
   const teamName = transaction.status === 'waived' || transaction.status === 'released'
     ? transaction.from_team_name
     : transaction.to_team_name;
 
     return `${teamName.replaceAll(' ','-').toLowerCase()}.com`;
+};
+
+const togglePlayerCard = (id) => {
+  flippedCards.value[id] = !flippedCards.value[id];
+};
+
+const parseAwards = (awardsInfo) => {
+  return awardsInfo.split(',');
 };
 
 onMounted(() => {
@@ -144,5 +174,36 @@ onMounted(() => {
   50% {
     opacity: .5;
   }
+}
+
+/* Add styles for flip card */
+.flip-card {
+  perspective: 1000px;
+}
+
+.flip-card-front, .flip-card-back {
+  backface-visibility: hidden;
+  transition: transform 0.6s;
+}
+
+.flip-card-front {
+  transform: rotateY(0deg);
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.is-flipped .flip-card-front {
+  transform: rotateY(-180deg);
+}
+
+.is-flipped .flip-card-back {
+  transform: rotateY(0deg);
 }
 </style>

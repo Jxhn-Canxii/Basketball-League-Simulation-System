@@ -29,7 +29,23 @@ class TransactionsController extends Controller
                 DB::raw("CASE WHEN transactions.to_team_id = 0 THEN 'Free Agent' ELSE to_teams.name END as to_team_name"),
                 'transactions.status',
                 'transactions.created_at',
-                'transactions.updated_at'
+                'transactions.updated_at',
+                // Add award information
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT award_name SEPARATOR ', ') 
+                    FROM season_awards 
+                    WHERE season_awards.player_id = transactions.player_id) as awards"),
+                // Check if player is Finals MVP
+                DB::raw("CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM seasons 
+                        WHERE seasons.finals_mvp_id = transactions.player_id
+                    ) THEN 'Finals MVP'
+                    ELSE NULL 
+                END as finals_mvp_status"),
+                // Get Finals MVP seasons
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT seasons.name) 
+                    FROM seasons 
+                    WHERE seasons.finals_mvp_id = transactions.player_id) as finals_mvp_seasons")
             )
             ->join('players', 'transactions.player_id', '=', 'players.id')
             ->join('seasons', 'transactions.season_id', '=', 'seasons.id')
@@ -39,7 +55,32 @@ class TransactionsController extends Controller
             ->orderBy('transactions.id', 'desc')
             ->limit(10)
             ->get();
-    
+
+        // Format the response data
+        $transactions = $transactions->map(function ($transaction) {
+            $awardsInfo = [];
+            
+            // Add regular awards if any
+            if ($transaction->awards) {
+                $awardsInfo[] = $transaction->awards;
+            }
+            
+            // Add Finals MVP information if applicable
+            if ($transaction->finals_mvp_status) {
+                $awardsInfo[] = "Finals MVP (" . $transaction->finals_mvp_seasons . ")";
+            }
+            
+            // Add awards information to transaction
+            $transaction->awards_info = !empty($awardsInfo) ? implode(', ', $awardsInfo) : null;
+            
+            // Remove raw fields
+            unset($transaction->awards);
+            unset($transaction->finals_mvp_status);
+            unset($transaction->finals_mvp_seasons);
+            
+            return $transaction;
+        });
+
         return response()->json([
             'transactions' => $transactions
         ]);

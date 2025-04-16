@@ -2445,7 +2445,11 @@ class SimulateController extends Controller
         return DB::table('schedules')
             ->where('season_id', get_current_season_id())
             ->whereNotIn('round', config('playoffs'))
-            ->max('round');
+            ->where(function($query) {
+                $query->whereRaw('round REGEXP \'^[0-9]+$\'')  // Only get numeric rounds
+                      ->orWhereRaw('CAST(round AS UNSIGNED) > 0');  // Ensure it can be cast to number
+            })
+            ->max(DB::raw('CAST(round AS UNSIGNED)'));  // Convert to number before finding max
     }
 
 }
