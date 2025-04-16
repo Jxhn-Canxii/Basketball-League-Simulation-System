@@ -1528,6 +1528,7 @@ class SimulateController extends Controller
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
+            ->where('players.role', $role)
             ->select(
                 'players.id as player_id',
                 'players.team_id',
