@@ -362,20 +362,20 @@ export const playerFormatter = (name) => {
 export const getTransactionIcon = (status) => {
     switch (status) {
       case 'star player change':
-        return 'fas fa-star text-yellow-500'; // Star icon for star player changes
+        return 'fas fa-star text-yellow-500';
       case 'waived':
-        return 'fas fa-user-minus text-red-500'; // User minus for waived players
+        return 'fas fa-user-minus text-red-500';
       case 'released':
-        return 'fas fa-door-open text-gray-500'; // Door icon for released players
+        return 'fas fa-door-open text-gray-500';
       case 'signed':
-        return 'fas fa-file-signature text-green-500'; // Contract signing for new signings
+        return 'fas fa-file-signature text-green-500';
       case 'transferred':
-        return 'fas fa-exchange-alt text-blue-500'; // Exchange icon for transfers
+        return 'fas fa-exchange-alt text-blue-500';
       default:
-        return 'fas fa-circle-info text-gray-500'; // Info icon for unknown status
+        return 'fas fa-circle-info text-gray-500';
     }
 };
-  
+
 export const getStatusBadgeClass = (status) => {
     switch (status) {
       case 'star player change':
@@ -385,14 +385,14 @@ export const getStatusBadgeClass = (status) => {
       case 'released':
         return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
       case 'signed':
-        return 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs'; // Changed to green
+        return 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs';
       case 'transferred':
-        return 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs'; // Matches the blue icon
+        return 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs';
       default:
         return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
     }
 };
-  
+
 export const formatStatus = (status) => {
     switch (status) {
       case 'star player change':
@@ -401,7 +401,11 @@ export const formatStatus = (status) => {
         return 'Waived';
       case 'released':
         return 'Released';
-      default:
+      case 'signed':
+        return 'Signed';
+      case 'transferred':
         return 'Transferred';
+      default:
+        return status.charAt(0).toUpperCase() + status.slice(1);
     }
-  };
+};
