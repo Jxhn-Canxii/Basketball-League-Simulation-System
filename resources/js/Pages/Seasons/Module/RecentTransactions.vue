@@ -137,7 +137,7 @@ const getSourceTeam = (transaction) => {
     ? transaction.from_team_name
     : transaction.to_team_name;
 
-    return `${teamName.replaceAll(' ','.').toLowerCase()}.com`;
+    return `${teamName.replaceAll(' ','-').toLowerCase()}.com`;
 };
 
 onMounted(() => {
