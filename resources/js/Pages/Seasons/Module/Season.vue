@@ -45,7 +45,7 @@
             <!-- Standings UI (Left Side) -->
             <div class="md:col-span-2 sm:col-span-1 overflow-y-auto">
                 <Standings v-if="updateKey" :key="updateKey" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
-                <small class="text-gray-500">Transaction ID:{{ updateKey }}</small>   
+                <!-- <small class="text-gray-500">Transaction ID:{{ updateKey }}</small>    -->
             </div>
             <!-- Schedule and Results UI (Right Side) -->
             <div class="md:col-span-3 sm:col-span-1 overflow-y-auto pt-3">

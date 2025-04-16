@@ -26,12 +26,18 @@
             <p class="text-end"></p>
         </div>
     </div>
-    <div class="block pt-4" v-if="isHide">
-        <GameResults v-if="activeGameId != 0" :key="activeGameId" :game_id="activeGameId" :showBoxScore="false" />
-        <RecentTransactions  v-if="activeGameId != 0" :key="activeGameId"/>
+    <div class="block px-2" v-if="isHide">
+        <transition name="fade" mode="out-in">
+            <div v-if="showGameResults && activeGameId != 0" :key="'game-' + activeGameId">
+                <GameResults :game_id="activeGameId" :showBoxScore="false" />
+            </div>
+            <div v-else-if="!showGameResults && activeGameId != 0" :key="'transactions-' + activeGameId">
+                <RecentTransactions :key="activeGameId"/>
+            </div>
+        </transition>
         <div
             v-if="activeGameId != 0"
-            class="w-full flex min-w-full overflow-x-auto border-b-2 text-xs"
+            class="w-full flex min-w-full overflow-x-auto border-b-2 text-md"
         >
             <ul class="flex flex-wrap">
                 <li
@@ -270,7 +276,7 @@
     </Modal>
 </template>
 <script setup>
-    import { ref, onMounted } from "vue";
+    import { ref, onMounted, onUnmounted } from "vue";
     import Swal from "sweetalert2";
     import axios from "axios";
     import Modal from "@/Components/Modal.vue";
@@ -437,7 +443,13 @@
             });
 
             activeGameId.value = response.data.game_id ?? 0;
-            // isGameResultModalOpen.value = response.data.game_id; // Open game results modal
+            showGameResults.value = true; // Show game results first
+
+            // Start flipping between views
+            if (flipTimer.value) clearInterval(flipTimer.value);
+            flipTimer.value = setInterval(() => {
+                showGameResults.value = !showGameResults.value;
+            }, 4000);
 
             // Show a toast notification
             Swal.fire({
@@ -453,10 +465,17 @@
             // Wait for the user to view results before moving to the next game
             activeConferenceTab.value = conference_id;
             emit('transaction_id',conference_id);
-            await new Promise((resolve) => setTimeout(resolve, 3000)); // Allow time for UI to update
+            await new Promise((resolve) => setTimeout(resolve, 6000)); // Allow two flips
+
+            // Clear the interval when moving to next game
+            if (flipTimer.value) {
+                clearInterval(flipTimer.value);
+                flipTimer.value = null;
+            }
 
         } catch (error) {
             console.error("Error simulating game:", error);
+            if (flipTimer.value) clearInterval(flipTimer.value);
             Swal.fire({
                 icon: "error",
                 title: "Error!",
@@ -466,6 +485,7 @@
             });
         }
     };
+
     const fetchConferenceTeams = async () => {
         try {
             const response = await axios.post(route("conference.team.dropdown", { conference_id: props.conference_id}));
@@ -474,9 +494,37 @@
             console.error("Error fetching standings:", error);
         }
     };
-   onMounted(async () => {
-       await fetchConferenceTeams();
-       await fetchConferenceSchedules();
-   });
+
+    const showGameResults = ref(true);
+    const flipTimer = ref(null);
+
+    onMounted(async () => {
+        await fetchConferenceTeams();
+        await fetchConferenceSchedules();
+    });
+
+    // Clean up on component unmount
+    onUnmounted(() => {
+        if (flipTimer.value) {
+            clearInterval(flipTimer.value);
+            flipTimer.value = null;
+        }
+    });
 </script>
-   
+<style>
+.flip-enter-active,
+.flip-leave-active {
+    transition: transform 0.5s;
+    transform-style: preserve-3d;
+}
+
+.flip-enter-from,
+.flip-leave-to {
+    transform: rotateX(180deg);
+}
+
+.flip-enter-to,
+.flip-leave-from {
+    transform: rotateX(0deg);
+}
+</style>

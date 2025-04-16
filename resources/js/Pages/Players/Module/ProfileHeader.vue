@@ -430,7 +430,7 @@
                 <p>No awards data available.</p>
             </div>
         </div>
-        <div class="career-highs flex-1">
+        <div class="career-highs flex-1" v-if="main_performance.player_details">
             <PlayerRadarChart v-if="main_performance.player_details" :key="main_performance.player_details.player_id" :playerRatings="main_performance.player_details" />
         </div>
     </div>

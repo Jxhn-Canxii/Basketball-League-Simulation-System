@@ -36,7 +36,7 @@ class TransactionsController extends Controller
             ->leftJoin('teams as to_teams', 'transactions.to_team_id', '=', 'to_teams.id')
             ->whereNotIn('transactions.status', ['transfer', 'role change'])
             ->orderBy('transactions.id', 'desc')
-            ->limit(5)
+            ->limit(10)
             ->get();
     
         return response()->json([
