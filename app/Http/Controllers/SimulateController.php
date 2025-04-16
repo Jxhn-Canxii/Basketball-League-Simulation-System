@@ -1400,7 +1400,7 @@ class SimulateController extends Controller
                     ]);
 
                     // Try replacing the waived player
-                    $replacement = $this->getRandomPlayer();
+                    $replacement = $this->getBestFreeAgentAvailable($player->role);
                     if ($replacement) {
                         $contractYears = $this->getContractYearsBasedOnRole($player->role);
                         DB::table('players')->where('id', $replacement->player_id)->update([
@@ -1411,7 +1411,7 @@ class SimulateController extends Controller
                         DB::table('transactions')->insert([
                             'player_id' => $replacement->player_id,
                             'season_id' => $seasonId,
-                            'details' => 'Signed as free agent to replace injured player. Contract Years: ' . $contractYears,
+                            'details' => 'Signed as injury replacement for '.$player->name.'. Contract Years: ' . $contractYears,
                             'from_team_id' => 0,
                             'to_team_id' => $player->team_id,
                             'status' => 'signed',
@@ -1521,26 +1521,46 @@ class SimulateController extends Controller
         }
 
     }
-    private function getRandomPlayer()
+    private function getBestFreeAgentAvailable($role)
     {
-        $randomPlayer = DB::table('players')
-            ->where('players.is_active', 1) // Ensure the player is active
-            ->where('players.is_injured', 0) // Ensure the player is not injured
-            ->where('players.team_id', 0) // Ensure the player has no team
+        // First try to get player with specified role
+        $bestPlayer = DB::table('players')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where('players.role', $role)
             ->select(
                 'players.id as player_id',
                 'players.team_id',
-                'players.overall_rating',
+                'players.overall_rating', 
                 'players.injury_history',
-                'players.age', // Include age for sorting
+                'players.age',
+                'players.role'
             )
-            // Order by the requested criteria
-            ->orderByDesc('players.overall_rating') // Highest overall rating first
-            ->orderBy('players.age') // Younger players first
-            ->orderBy('players.injury_history') // Least injury history first
-            ->first(); // Get a single random player
+            ->orderByDesc('players.overall_rating')
+            ->orderBy('players.age')
+            ->orderBy('players.injury_history')
+            ->first();
 
-        return $randomPlayer;
+        // If no player found with specified role, get random available player
+        if (!$bestPlayer) {
+            $bestPlayer = DB::table('players')
+                ->where('players.is_active', 1)
+                ->where('players.is_injured', 0) 
+                ->where('players.team_id', 0)
+                ->select(
+                    'players.id as player_id',
+                    'players.team_id',
+                    'players.overall_rating',
+                    'players.injury_history', 
+                    'players.age',
+                    'players.role'
+                )
+                ->inRandomOrder() // Pick random player
+                ->first();
+        }
+
+        return $bestPlayer;
     }
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
