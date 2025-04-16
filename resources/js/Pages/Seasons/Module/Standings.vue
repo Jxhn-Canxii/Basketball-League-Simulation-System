@@ -150,8 +150,8 @@ onMounted(() => {
 });
 
 const getTeamRowClass = (index) => {
-  if (index <= 5) return 'bg-gradient-to-r from-orange-200 via-orange-400 to-orange-500';
-  if (index >= 6 && index <= 9) return 'bg-gradient-to-r from-blue-200 via-blue-400 to-blue-500';
-  return 'bg-gradient-to-r from-red-200 via-red-400 to-red-500';
+  if (index <= 5) return 'bg-gradient-to-r from-orange-300 via-orange-400 to-orange-500';
+  if (index >= 6 && index <= 9) return 'bg-gradient-to-r from-blue-300 via-blue-400 to-blue-500';
+  return 'bg-gradient-to-r from-red-300 via-red-400 to-red-500';
 };
 </script>
