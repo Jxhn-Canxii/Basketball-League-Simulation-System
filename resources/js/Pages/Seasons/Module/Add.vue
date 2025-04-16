@@ -166,7 +166,7 @@ const isAddModalOpen = ref(false);
 const leagues_dropdown = ref([]);
 const isProcessing = ref(false);
 const form = useForm({
-    type: 2,
+    type: 3,
     start: 16,
     league_id: 1,
     seasons_id: 0,
