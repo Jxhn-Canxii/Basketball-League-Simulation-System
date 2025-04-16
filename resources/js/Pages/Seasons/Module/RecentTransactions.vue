@@ -40,8 +40,8 @@
                 <span :class="getStatusBadgeClass(transaction.status)">
                     {{ formatStatus(transaction.status) }}
                 </span>
-                <span :class="roleBadgeClass(transaction.role)">
-                    {{ transaction.role }}
+                <span :class="roleBadgeClass(transaction.player_role)">
+                    {{ transaction.player_role }}
                 </span>
             </div>
 
@@ -72,7 +72,6 @@ import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
 import {
-    roleClasses,
     roleBadgeClass,
     getTransactionIcon,
     getStatusBadgeClass,

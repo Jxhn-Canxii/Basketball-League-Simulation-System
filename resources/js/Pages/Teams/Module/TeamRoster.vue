@@ -248,8 +248,8 @@
                             </td>
                             <td class="px-2 py-1 whitespace-nowrap border">
                                 <span
-                                    :class="roleClasses(player.role)"
-                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                    :class="roleBadgeClass(player.role)"
+                                   
                                 >
                                     {{ player.role }}
                                 </span>
@@ -547,8 +547,8 @@
                             </td>
                             <td class="px-2 py-1 whitespace-nowrap border">
                                 <span
-                                    :class="roleClasses(player.role)"
-                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                    :class="roleBadgeClass(player.role)"
+                                   
                                 >
                                     {{ player.role }}
                                 </span>
@@ -851,8 +851,8 @@
                             </td>
                             <td class="px-2 py-1 whitespace-nowrap border">
                                 <span
-                                    :class="roleClasses(player.role)"
-                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                    :class="roleBadgeClass(player.role)"
+                                   
                                 >
                                     {{ player.role }}
                                 </span>
@@ -1058,8 +1058,8 @@
                             </td>
                             <td class="px-2 py-1 whitespace-nowrap border">
                                 <span
-                                    :class="roleClasses(player.role)"
-                                    class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
+                                    :class="roleBadgeClass(player.role)"
+                                   
                                 >
                                     {{ player.role }}
                                 </span>
@@ -1143,7 +1143,7 @@ import { ref, onMounted, watch, computed } from "vue";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { roleClasses } from "@/Utility/Formatter";
+import { roleBadgeClass } from "@/Utility/Formatter";
 import PlayerPerformance from "../../Players/Module/PlayerPerformance.vue";
 
 const props = defineProps({

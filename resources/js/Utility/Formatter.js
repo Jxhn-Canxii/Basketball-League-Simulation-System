@@ -273,39 +273,72 @@ export const playerExpStatusText = (experience) => {
     }
 };
 
-// Helper functions
-export const roleClasses = (role) => {
-    switch (role) {
-        case "star player":
-            return "bg-yellow-500 text-white uppercase";
-        case "all star":
-            return "bg-red-500 text-white uppercase";
-        case "starter":
-            return "bg-blue-500 text-white uppercase";
-        case "role player":
-            return "bg-green-500 text-white uppercase";
-        case "bench":
-            return "bg-gray-400 text-white uppercase";
-        default:
-            return "bg-gray-300 text-white uppercase"; // Default case
+// Remove roleClasses and update roleBadgeClass
+export const roleBadgeClass = (role) => {
+  const baseClasses = 'rounded-full px-2 py-0.5 text-xs font-medium capitalize shadow-sm';
+  
+  const roleStyles = {
+    'star player': {
+      background: 'bg-yellow-500',
+      text: 'text-white',
+      border: 'border border-yellow-400',
+      hover: 'hover:bg-yellow-600'
+    },
+    'all star': {
+      background: 'bg-red-500',
+      text: 'text-white',
+      border: 'border border-red-400',
+      hover: 'hover:bg-red-600'
+    },
+    'starter': {
+      background: 'bg-blue-500',
+      text: 'text-white',
+      border: 'border border-blue-400',
+      hover: 'hover:bg-blue-600'
+    },
+    'role player': {
+      background: 'bg-green-500',
+      text: 'text-white',
+      border: 'border border-green-400',
+      hover: 'hover:bg-green-600'
+    },
+    'bench': {
+      background: 'bg-gray-400',
+      text: 'text-white',
+      border: 'border border-gray-300',
+      hover: 'hover:bg-gray-500'
     }
+  };
+
+  const style = roleStyles[role.toLowerCase()] || {
+    background: 'bg-gray-300',
+    text: 'text-gray-700',
+    border: 'border border-gray-200',
+    hover: 'hover:bg-gray-400'
+  };
+
+  return `${baseClasses} ${style.background} ${style.text} ${style.hover} transition-colors duration-150`;
 };
-  // Function to determine badge class based on role
-  export const roleBadgeClass = (role) => {
-    switch(role) {
-      case 'star player':
-        return 'bg-yellow-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Yellow, often associated with high impact
-      case 'all star':
-        return 'bg-red-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Pink/Red, for standout or elite players
-      case 'starter':
-        return 'bg-blue-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Blue, common for core team members
-      case 'role player':
-        return 'bg-green-500 text-white uppercase rounded-full px-2 py-1 text-xs'; // Green, denoting support or versatile roles
-      case 'bench':
-        return 'bg-gray-400 text-white uppercase rounded-full px-2 py-1 text-xs'; // Gray, for players not in the active rotation
-      default:
-        return 'bg-gray-300 text-gray-800 rounded-full px-2 py-1 text-xs'; // Default color for unrecognized roles
-    }
+
+// Add new badge classes for different states
+export const statusBadgeClass = (status, size = 'sm') => {
+  const sizes = {
+    'xs': 'px-1.5 py-0.5 text-xs',
+    'sm': 'px-2 py-1 text-sm',
+    'md': 'px-3 py-1.5 text-base'
+  };
+
+  const baseClasses = `inline-flex items-center rounded-full font-medium ${sizes[size]}`;
+  
+  const statusStyles = {
+    'active': 'bg-green-100 text-green-800 border border-green-200',
+    'inactive': 'bg-red-100 text-red-800 border border-red-200',
+    'pending': 'bg-yellow-100 text-yellow-800 border border-yellow-200',
+    'injured': 'bg-orange-100 text-orange-800 border border-orange-200',
+    'suspended': 'bg-purple-100 text-purple-800 border border-purple-200'
+  };
+
+  return `${baseClasses} ${statusStyles[status] || 'bg-gray-100 text-gray-800 border border-gray-200'}`;
 };
 
 export const playerFormatter = (name) => {

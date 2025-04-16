@@ -844,7 +844,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import axios from "axios"; 
-import { roundNameFormatter, roleBadgeClass, roleClasses, playerFormatter } from "@/Utility/Formatter";
+import { roundNameFormatter, roleBadgeClass, playerFormatter } from "@/Utility/Formatter";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";

@@ -18,6 +18,7 @@ class TransactionsController extends Controller
                 'transactions.id',
                 'transactions.player_id',
                 'players.name as player_name',
+                'players.role as player_role',
                 'players.age as age',
                 'transactions.season_id',
                 'seasons.name as season_name',

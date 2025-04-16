@@ -64,7 +64,7 @@
                         </td>
                         <td class="px-2 py-1 whitespace-nowrap border">
                             <span
-                                :class="roleClasses(transaction.role)"
+                                :class="roleBadgeClass(transaction.role)"
                                 class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
                             >
                                 {{ transaction.role }}
@@ -115,7 +115,7 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 import Paginator from "@/Components/Paginator.vue";
-import { roleClasses } from "@/Utility/Formatter";
+import { roleBadgeClass } from "@/Utility/Formatter";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 import Modal from "@/Components/Modal.vue";
 
