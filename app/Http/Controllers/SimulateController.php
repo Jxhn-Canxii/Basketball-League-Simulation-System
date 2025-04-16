@@ -2030,7 +2030,11 @@ class SimulateController extends Controller
     
         try {
             $seasonId = get_current_season_id();
-            $weekName = ($round == 0) ? 1 : ($round / 5) + 1;
+            $weekName = match(true) {
+                $round == 2 => 'Early Season Adjustments',
+                $round == $this->getLastRoundNumber() => 'Playoff Preparation',
+                default => 'Week ' . floor($round / 5)
+            };
     
            // Fetch player stats for the current season, including PER
             $stats = DB::table('player_season_stats')
@@ -2126,7 +2130,7 @@ class SimulateController extends Controller
         $teamId = 43;
         $round = 5;
         
-        return  response()->json($this->updateTeamRolesBasedOnStatsV2($teamId, $round));
+        return  response()->json($this->updateTeamRolesBasedOnStatsV1($teamId, $round));
 
     }
     //relaksdlkajsdlkajsdlk
@@ -2137,8 +2141,8 @@ class SimulateController extends Controller
             return false;
         }
     
-        // Update only every 5 rounds and round 2
-        if ($round % 5 !== 0 && $round != 2) {
+        // Update only every 5 rounds, round 2, and last round of the season
+        if ($round % 5 !== 0 && $round != 2 && $round != $this->getLastRoundNumber()) {
             return true;
         }
         
@@ -2433,6 +2437,15 @@ class SimulateController extends Controller
             'free_throw_attempts' => $adjustedFreeThrowAttempts,
             'free_throw_made' => $freeThrowMade,
         ];
+    }
+
+    // Add this helper method to get the last round number
+    private function getLastRoundNumber()
+    {
+        return DB::table('schedules')
+            ->where('season_id', get_current_season_id())
+            ->whereNotIn('round', config('playoffs'))
+            ->max('round');
     }
 
 }
