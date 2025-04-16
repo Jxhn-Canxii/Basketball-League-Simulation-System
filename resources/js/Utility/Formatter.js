@@ -409,3 +409,101 @@ export const formatStatus = (status) => {
         return status.charAt(0).toUpperCase() + status.slice(1);
     }
 };
+
+// Add after the existing formatStatus function
+
+export const getAwardBadgeClass = (award) => {
+    const baseClasses = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium';
+    
+    // Championship awards
+    if (award.includes('Finals MVP')) {
+        return `${baseClasses} bg-purple-100 text-purple-800 border border-purple-200`;
+    }
+    if (award.includes('Championship') || award.includes('Champion')) {
+        return `${baseClasses} bg-yellow-100 text-yellow-800 border border-yellow-200`;
+    }
+    
+    // Individual awards
+    if (award.includes('MVP')) {
+        return `${baseClasses} bg-orange-100 text-orange-800 border border-orange-200`;
+    }
+    if (award.includes('Best') || award.includes('Top')) {
+        return `${baseClasses} bg-green-100 text-green-800 border border-green-200`;
+    }
+    if (award.includes('Most Improved') || award.includes('Rookie')) {
+        return `${baseClasses} bg-blue-100 text-blue-800 border border-blue-200`;
+    }
+    
+    // Default style
+    return `${baseClasses} bg-gray-100 text-gray-800 border border-gray-200`;
+};
+
+export const getAwardIcon = (award) => {
+    // Championship icons
+    if (award.includes('Finals MVP')) {
+        return 'fas fa-crown text-purple-500';
+    }
+    if (award.includes('Championship') || award.includes('Champion')) {
+        return 'fas fa-trophy text-yellow-500';
+    }
+    
+    // Individual achievement icons
+    if (award.includes('MVP')) {
+        return 'fas fa-star text-orange-500';
+    }
+    if (award.includes('Best') || award.includes('Top')) {
+        return 'fas fa-medal text-green-500';
+    }
+    if (award.includes('Most Improved')) {
+        return 'fas fa-chart-line text-blue-500';
+    }
+    if (award.includes('Rookie')) {
+        return 'fas fa-certificate text-blue-500';
+    }
+    
+    // Default icon
+    return 'fas fa-award text-gray-500';
+};
+
+export const formatAwardText = (award) => {
+    if (!award) return '';
+
+    // Remove extra spaces and trim
+    let formattedText = award.trim().replace(/\s+/g, ' ');
+
+    // Handle season/year in parentheses
+    formattedText = formattedText.replace(/\((\d{4})\)/, ' $1');
+
+    // Handle special cases
+    if (formattedText.includes('Finals MVP')) {
+        return formattedText.replace('Finals MVP', '🏆 Finals MVP');
+    }
+    if (formattedText.includes('Championship')) {
+        return formattedText.replace('Championship', '🏆 Championship');
+    }
+    if (formattedText.includes('Best Overall')) {
+        return formattedText.replace('Best Overall', '⭐ MVP');
+    }
+    if (formattedText.includes('Rookie of the Season')) {
+        return formattedText.replace('Rookie of the Season', '🌟 ROY');
+    }
+    if (formattedText.includes('Most Improved')) {
+        return formattedText.replace('Most Improved Player', 'MIP');
+    }
+    
+    // Shorten common phrases
+    const shortenPhrases = {
+        'Player of the': 'P/',
+        'Defensive Player': 'DPOY',
+        'Top Scorer': 'Scoring',
+        'Top Rebounder': 'Rebounding',
+        'Top Playmaker': 'Assists',
+        'Best Defender': 'Defense'
+    };
+
+    Object.entries(shortenPhrases).forEach(([phrase, replacement]) => {
+        formattedText = formattedText.replace(phrase, replacement);
+    });
+
+    return formattedText;
+};

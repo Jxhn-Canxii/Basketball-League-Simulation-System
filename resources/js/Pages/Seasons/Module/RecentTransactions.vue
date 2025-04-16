@@ -35,9 +35,9 @@
           <div class="flex-grow relative">
             <div class="flip-card-container" :class="{ 'is-flipped': flippedCards[transaction.id] }">
                 <!-- Front Side (Transaction Info) -->
-                <div class="flip-card-front p-2">
+                <div class="flip-card-front p-2" @click="togglePlayerCard(transaction.id)">
                     <div class="flex items-center gap-2">
-                        <span class="font-semibold text-gray-900 cursor-pointer" @click="togglePlayerCard(transaction.id)">
+                        <span class="font-semibold text-gray-900 cursor-pointer">
                             {{ transaction.player_name }}, {{ transaction.age }}
                         </span>
                         <span :class="roleBadgeClass(transaction.player_role)">
@@ -46,9 +46,14 @@
                         <span :class="getStatusBadgeClass(transaction.status)">
                             {{ formatStatus(transaction.status) }}
                         </span>
+                        <!-- draft status badge -->
                         <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
                           S{{ transaction.draft_season_id}} {{ transaction.draft_status }} {{ transaction.drafted_team_abbre == 'Undrafted' ? '' : `(${transaction.drafted_team_abbre})` }}
                         </span>
+                        <i v-if="transaction.awards_info" 
+                          class="fas fa-award text-yellow-500 hover:text-yellow-600 cursor-pointer"
+                          :title="`${transaction.player_name} has ${parseAwards(transaction.awards_info).length} awards`">
+                        </i>
                     </div>
 
                     <p class="text-sm text-gray-600 mt-1">
@@ -67,16 +72,12 @@
                 </div>
 
                 <!-- Back Side (Awards Info) -->
-                <div class="flip-card-back p-2 bg-gray-50">
+                <div class="flip-card-back p-2 bg-gray-50" @click="togglePlayerCard(transaction.id)">
                     <div class="flex flex-col gap-2">
                         <div class="flex justify-between items-center">
                             <span class="text-sm font-semibold text-gray-700">
                                 {{ transaction.player_name }}'s Achievements
                             </span>
-                            <button @click="togglePlayerCard(transaction.id)" 
-                                    class="text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-times"></i>
-                            </button>
                         </div>
 
                         <div class="flex flex-wrap gap-1.5">
@@ -112,7 +113,10 @@ import {
     getTransactionIcon,
     getStatusBadgeClass,
     statusBadgeClass,
-    formatStatus
+    getAwardBadgeClass,
+    getAwardIcon,
+    formatStatus,
+    formatAwardText 
 } from "@/Utility/Formatter";
 
 const props = defineProps({
