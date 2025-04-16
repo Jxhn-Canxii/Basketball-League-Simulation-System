@@ -47,8 +47,9 @@
                     <select
                         name=""
                         id=""
-                        class="mt-1 p-2 border rounded-md w-full"
+                        class="mt-1 p-2 border rounded-md w-full bg-gray-200"
                         v-model="form.type"
+                        disabled
                     >
                         <option value="0">Select Type</option>
                         <option value="1" disabled>
@@ -165,7 +166,7 @@ const isAddModalOpen = ref(false);
 const leagues_dropdown = ref([]);
 const isProcessing = ref(false);
 const form = useForm({
-    type: 3,
+    type: 2,
     start: 16,
     league_id: 1,
     seasons_id: 0,

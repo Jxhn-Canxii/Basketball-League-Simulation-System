@@ -871,7 +871,39 @@ class AwardsController extends Controller
             return $bStats <=> $aStats;
         })->first();
 
-        // Insert awards into season_awards table if not already present
+        // Add these new awards before the insert awards section
+        // Iron Man Award
+        $ironMan = $eligiblePlayerStats->sortByDesc('total_minutes_played')->first();
+
+        // Most Efficient Player (highest FG%)
+        $mostEfficient = $eligiblePlayerStats->filter(function ($stats) {
+            return $stats->total_field_goal_attempts > 200; // Minimum attempts threshold
+        })->sortByDesc(function ($stats) {
+            return ($stats->total_field_goals_made / $stats->total_field_goal_attempts) * 100;
+        })->first();
+
+        // Free Throw King (highest FT%)
+        $freeThrowKing = $eligiblePlayerStats->filter(function ($stats) {
+            return $stats->total_free_throw_attempts > 100; // Minimum attempts threshold
+        })->sortByDesc(function ($stats) {
+            return ($stats->total_free_throws_made / $stats->total_free_throw_attempts) * 100;
+        })->first();
+
+        // Three-Point Specialist (most 3pts made)
+        $threePointKing = $eligiblePlayerStats->filter(function ($stats) {
+            return $stats->total_three_point_attempts > 100; // Minimum attempts threshold
+        })->sortByDesc('total_three_pointers_made')->first();
+
+        // Double-Double Machine (most double-doubles)
+        $doubleDoubleMachine = $eligiblePlayerStats->sortByDesc(function ($stats) {
+            // Calculate approximate double-doubles based on averages
+            $pointsDouble = $stats->avg_points_per_game >= 10 ? 1 : 0;
+            $reboundsDouble = $stats->avg_rebounds_per_game >= 10 ? 1 : 0;
+            $assistsDouble = $stats->avg_assists_per_game >= 10 ? 1 : 0;
+            return $pointsDouble + $reboundsDouble + $assistsDouble;
+        })->first();
+
+        // Insert core awards that are always given
         $this->insertAward($topScorer, 'Top Scorer', 'Player with the highest average points per game', $latestSeasonId);
         $this->insertAward($topRebounder, 'Top Rebounder', 'Player with the highest average rebounds per game', $latestSeasonId);
         $this->insertAward($topPlaymaker, 'Top Playmaker', 'Player with the highest average assists per game', $latestSeasonId);
@@ -879,33 +911,137 @@ class AwardsController extends Controller
         $this->insertAward($topBlocker, 'Top Blocker', 'Player with the highest average blocks per game', $latestSeasonId);
         $this->insertAward($bestDefender, 'Best Defensive Player', 'Player with the highest combined average steals and blocks per game', $latestSeasonId);
         $this->insertAward($mvp, 'Best Overall Player', 'Player with the best overall performance score', $latestSeasonId);
-        $this->insertAward($mostImprovedPlayer, 'Most Improved Player', 'Player with the highest increase in average points per game from the previous season', $latestSeasonId);
 
-        // Insert the Rookie of the Season award
-        if ($rookieOfTheYear) {
-            $this->insertAward($rookieOfTheYear, 'Rookie of the Season', 'Best rookie player of the season', $latestSeasonId);
+        // Only insert these awards if it's not season 1
+        if ($latestSeasonId > 1) {
+            // Most Improved Player (needs previous season stats)
+            $this->insertAward($mostImprovedPlayer, 'Most Improved Player', 'Player with the highest increase in average points per game from the previous season', $latestSeasonId);
+
+            // Rookie of the Year (not applicable in season 1)
+            if ($rookieOfTheYear) {
+                $this->insertAward($rookieOfTheYear, 'Rookie of the Season', 'Best rookie player of the season', $latestSeasonId);
+            }
+
+            // Sixth Man of the Year
+            if ($sixthManOfTheYear) {
+                $this->insertAward($sixthManOfTheYear, 'Sixth Man of the Year', 'Best player coming off the bench', $latestSeasonId);
+            }
         }
 
-        // Insert the Sixth Man award
-        if ($sixthManOfTheYear) {
-            $this->insertAward($sixthManOfTheYear, 'Sixth Man of the Year', 'Best player coming off the bench', $latestSeasonId);
-        }
-
-        // Insert Top 5 Offensive Players awards
+        // Insert Top 5 Players awards (these are given every season)
         $counter = 1;
         foreach ($topOffensivePlayers as $player) {
             $this->insertAward($player, 'Top ' . $counter . ' Offensive Player', 'Player ranked ' . $counter . ' in average points per game', $latestSeasonId);
             $counter++;
         }
 
-        // Insert Top 5 Defensive Players awards
         $counter = 1;
         foreach ($topDefensivePlayers as $player) {
             $this->insertAward($player, 'Top ' . $counter . ' Defensive Player', 'Player ranked ' . $counter . ' in combined average steals and blocks per game', $latestSeasonId);
             $counter++;
         }
 
-        // $this->updatePlayerPlayoffAppearances();
+        // Add these to your existing awards insertion section
+        $this->insertAward($ironMan, 'Iron Man of the Year', 'Player with most minutes played in the season', $latestSeasonId);
+        $this->insertAward($mostEfficient, 'Most Efficient Player', 'Player with highest field goal percentage (min. 200 attempts)', $latestSeasonId);
+        $this->insertAward($freeThrowKing, 'Free Throw King', 'Player with highest free throw percentage (min. 100 attempts)', $latestSeasonId);
+        $this->insertAward($threePointKing, 'Three-Point Specialist', 'Player with most three-pointers made (min. 100 attempts)', $latestSeasonId);
+        $this->insertAward($doubleDoubleMachine, 'Double-Double Machine', 'Player with most double-double combinations', $latestSeasonId);
+
+        // Add these new award calculations before the insertion section
+        // Advanced Statistical Awards
+        $advancedAwards = [
+            // Most Complete Player (Triple-Double Machine)
+            'Triple-Double Machine' => $eligiblePlayerStats->filter(function ($stats) {
+                return $stats->avg_points_per_game >= 10 && 
+                       $stats->avg_rebounds_per_game >= 10 && 
+                       $stats->avg_assists_per_game >= 10;
+            })->first(),
+    
+            // Best Shooter (True Shooting Percentage Leader)
+            'Shooting Efficiency Leader' => $eligiblePlayerStats
+                ->filter(function ($stats) {
+                    return $stats->total_field_goal_attempts >= 300;
+                })
+                ->sortByDesc('ts_percent')
+                ->first(),
+    
+            // Most Efficient Player (PER Leader)
+            'Player Efficiency Leader' => $eligiblePlayerStats
+                ->sortByDesc('per')
+                ->first(),
+    
+            // Perfect Attendance Award
+            'Perfect Attendance Award' => $eligiblePlayerStats
+                ->filter(function ($stats) {
+                    return $stats->total_games_played === $stats->total_games;
+                })
+                ->sortByDesc('total_minutes_played')
+                ->first(),
+    
+            // Best All-Around Player (Based on EFF)
+            'Most Versatile Player' => $eligiblePlayerStats
+                ->sortByDesc('eff')
+                ->first(),
+    
+            // Game Leaders Awards
+            'Points Game Leader' => $eligiblePlayerStats
+                ->filter(function ($stats) {
+                    return $stats->points_game_leader > 0;
+                })
+                ->sortByDesc('points_game_leader')
+                ->first(),
+    
+            'Rebounds Game Leader' => $eligiblePlayerStats
+                ->filter(function ($stats) {
+                    return $stats->rebounds_game_leader > 0;
+                })
+                ->sortByDesc('rebounds_game_leader')
+                ->first(),
+    
+            'Assists Game Leader' => $eligiblePlayerStats
+                ->filter(function ($stats) {
+                    return $stats->assists_game_leader > 0;
+                })
+                ->sortByDesc('assists_game_leader')
+                ->first(),
+    
+            'Blocks Game Leader' => $eligiblePlayerStats
+                ->filter(function ($stats) {
+                    return $stats->blocks_game_leader > 0;
+                })
+                ->sortByDesc('blocks_game_leader')
+                ->first(),
+    
+            'Steals Game Leader' => $eligiblePlayerStats
+                ->filter(function ($stats) {
+                    return $stats->steals_game_leader > 0;
+                })
+                ->sortByDesc('steals_game_leader')
+                ->first(),
+        ];
+    
+        // Insert advanced awards
+        foreach ($advancedAwards as $awardName => $player) {
+            if ($player) {
+                $description = match($awardName) {
+                    'Triple-Double Machine' => 'Player averaging triple-double for the season',
+                    'Shooting Efficiency Leader' => 'Player with highest true shooting percentage (min. 300 attempts)',
+                    'Player Efficiency Leader' => 'Player with highest Player Efficiency Rating (PER)',
+                    'Perfect Attendance Award' => 'Player who played all games with most minutes',
+                    'Most Versatile Player' => 'Player with highest efficiency rating',
+                    'Points Game Leader' => 'Player with most points in a single game',
+                    'Rebounds Game Leader' => 'Player with most rebounds in a single game',
+                    'Assists Game Leader' => 'Player with most assists in a single game',
+                    'Blocks Game Leader' => 'Player with most blocks in a single game',
+                    'Steals Game Leader' => 'Player with most steals in a single game',
+                    default => 'Outstanding statistical achievement'
+                };
+                
+                $this->insertAward($player, $awardName, $description, $latestSeasonId);
+            }
+        }
+
         // Update season status
         DB::table('seasons')->where('id', $latestSeasonId)->update(['status' => config('timeline.awards')]);
 
@@ -1037,6 +1173,38 @@ class AwardsController extends Controller
                 return $bStats <=> $aStats;
             })->first();
 
+            // Add these new awards before the insert awards section
+            // Iron Man Award
+            $ironMan = $eligiblePlayerStats->sortByDesc('total_minutes_played')->first();
+
+            // Most Efficient Player (highest FG%)
+            $mostEfficient = $eligiblePlayerStats->filter(function ($stats) {
+                return $stats->total_field_goal_attempts > 200; // Minimum attempts threshold
+            })->sortByDesc(function ($stats) {
+                return ($stats->total_field_goals_made / $stats->total_field_goal_attempts) * 100;
+            })->first();
+
+            // Free Throw King (highest FT%)
+            $freeThrowKing = $eligiblePlayerStats->filter(function ($stats) {
+                return $stats->total_free_throw_attempts > 100; // Minimum attempts threshold
+            })->sortByDesc(function ($stats) {
+                return ($stats->total_free_throws_made / $stats->total_free_throw_attempts) * 100;
+            })->first();
+
+            // Three-Point Specialist (most 3pts made)
+            $threePointKing = $eligiblePlayerStats->filter(function ($stats) {
+                return $stats->total_three_point_attempts > 100; // Minimum attempts threshold
+            })->sortByDesc('total_three_pointers_made')->first();
+
+            // Double-Double Machine (most double-doubles)
+            $doubleDoubleMachine = $eligiblePlayerStats->sortByDesc(function ($stats) {
+                // Calculate approximate double-doubles based on averages
+                $pointsDouble = $stats->avg_points_per_game >= 10 ? 1 : 0;
+                $reboundsDouble = $stats->avg_rebounds_per_game >= 10 ? 1 : 0;
+                $assistsDouble = $stats->avg_assists_per_game >= 10 ? 1 : 0;
+                return $pointsDouble + $reboundsDouble + $assistsDouble;
+            })->first();
+
             // Insert awards into season_awards table if not already present
             $this->insertAward($topScorer, 'Top Scorer', 'Player with the highest average points per game', $latestSeasonId);
             $this->insertAward($topRebounder, 'Top Rebounder', 'Player with the highest average rebounds per game', $latestSeasonId);
@@ -1071,6 +1239,107 @@ class AwardsController extends Controller
                 if ($counter > 5) break;
                 $this->insertAward($player, 'Top ' . $counter . ' Defensive Player', 'Player ranked ' . $counter . ' in combined average steals and blocks per game', $latestSeasonId);
                 $counter++;
+            }
+
+            // Add these to your existing awards insertion section
+            $this->insertAward($ironMan, 'Iron Man of the Year', 'Player with most minutes played in the season', $latestSeasonId);
+            $this->insertAward($mostEfficient, 'Most Efficient Player', 'Player with highest field goal percentage (min. 200 attempts)', $latestSeasonId);
+            $this->insertAward($freeThrowKing, 'Free Throw King', 'Player with highest free throw percentage (min. 100 attempts)', $latestSeasonId);
+            $this->insertAward($threePointKing, 'Three-Point Specialist', 'Player with most three-pointers made (min. 100 attempts)', $latestSeasonId);
+            $this->insertAward($doubleDoubleMachine, 'Double-Double Machine', 'Player with most double-double combinations', $latestSeasonId);
+
+            // Add these new award calculations before the insertion section
+            // Advanced Statistical Awards
+            $advancedAwards = [
+                // Most Complete Player (Triple-Double Machine)
+                'Triple-Double Machine' => $eligiblePlayerStats->filter(function ($stats) {
+                    return $stats->avg_points_per_game >= 10 && 
+                           $stats->avg_rebounds_per_game >= 10 && 
+                           $stats->avg_assists_per_game >= 10;
+                })->first(),
+        
+                // Best Shooter (True Shooting Percentage Leader)
+                'Shooting Efficiency Leader' => $eligiblePlayerStats
+                    ->filter(function ($stats) {
+                        return $stats->total_field_goal_attempts >= 300;
+                    })
+                    ->sortByDesc('ts_percent')
+                    ->first(),
+        
+                // Most Efficient Player (PER Leader)
+                'Player Efficiency Leader' => $eligiblePlayerStats
+                    ->sortByDesc('per')
+                    ->first(),
+        
+                // Perfect Attendance Award
+                'Perfect Attendance Award' => $eligiblePlayerStats
+                    ->filter(function ($stats) {
+                        return $stats->total_games_played === $stats->total_games;
+                    })
+                    ->sortByDesc('total_minutes_played')
+                    ->first(),
+        
+                // Best All-Around Player (Based on EFF)
+                'Most Versatile Player' => $eligiblePlayerStats
+                    ->sortByDesc('eff')
+                    ->first(),
+        
+                // Game Leaders Awards
+                'Points Game Leader' => $eligiblePlayerStats
+                    ->filter(function ($stats) {
+                        return $stats->points_game_leader > 0;
+                    })
+                    ->sortByDesc('points_game_leader')
+                    ->first(),
+        
+                'Rebounds Game Leader' => $eligiblePlayerStats
+                    ->filter(function ($stats) {
+                        return $stats->rebounds_game_leader > 0;
+                    })
+                    ->sortByDesc('rebounds_game_leader')
+                    ->first(),
+        
+                'Assists Game Leader' => $eligiblePlayerStats
+                    ->filter(function ($stats) {
+                        return $stats->assists_game_leader > 0;
+                    })
+                    ->sortByDesc('assists_game_leader')
+                    ->first(),
+        
+                'Blocks Game Leader' => $eligiblePlayerStats
+                    ->filter(function ($stats) {
+                        return $stats->blocks_game_leader > 0;
+                    })
+                    ->sortByDesc('blocks_game_leader')
+                    ->first(),
+        
+                'Steals Game Leader' => $eligiblePlayerStats
+                    ->filter(function ($stats) {
+                        return $stats->steals_game_leader > 0;
+                    })
+                    ->sortByDesc('steals_game_leader')
+                    ->first(),
+            ];
+        
+            // Insert advanced awards
+            foreach ($advancedAwards as $awardName => $player) {
+                if ($player) {
+                    $description = match($awardName) {
+                        'Triple-Double Machine' => 'Player averaging triple-double for the season',
+                        'Shooting Efficiency Leader' => 'Player with highest true shooting percentage (min. 300 attempts)',
+                        'Player Efficiency Leader' => 'Player with highest Player Efficiency Rating (PER)',
+                        'Perfect Attendance Award' => 'Player who played all games with most minutes',
+                        'Most Versatile Player' => 'Player with highest efficiency rating',
+                        'Points Game Leader' => 'Player with most points in a single game',
+                        'Rebounds Game Leader' => 'Player with most rebounds in a single game',
+                        'Assists Game Leader' => 'Player with most assists in a single game',
+                        'Blocks Game Leader' => 'Player with most blocks in a single game',
+                        'Steals Game Leader' => 'Player with most steals in a single game',
+                        default => 'Outstanding statistical achievement'
+                    };
+                    
+                    $this->insertAward($player, $awardName, $description, $latestSeasonId);
+                }
             }
 
             // Update season status
