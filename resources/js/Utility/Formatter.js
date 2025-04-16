@@ -369,7 +369,7 @@ export const getTransactionIcon = (status) => {
         return 'fas fa-door-open text-gray-500';
       case 'signed':
         return 'fas fa-file-signature text-green-500';
-      case 'transferred':
+      case 'role change':
         return 'fas fa-exchange-alt text-blue-500';
       default:
         return 'fas fa-circle-info text-gray-500';
@@ -386,7 +386,7 @@ export const getStatusBadgeClass = (status) => {
         return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
       case 'signed':
         return 'bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs';
-      case 'transferred':
+      case 'role change':
         return 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs';
       default:
         return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
