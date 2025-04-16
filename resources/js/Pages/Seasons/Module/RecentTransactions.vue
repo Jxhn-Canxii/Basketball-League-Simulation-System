@@ -47,7 +47,7 @@
                             {{ formatStatus(transaction.status) }}
                         </span>
                         <span :class="statusBadgeClass('asshole','xs')">
-                          S{{ transaction.draft_season_id}} {{ transaction.draft_status }} ({{ transaction.drafted_team_abbre }})
+                          S{{ transaction.draft_season_id}} {{ transaction.draft_status }} {{ transaction.drafted_team_abbre == 'Undrafted' ? '' : `(${transaction.drafted_team_abbre})` }}
                         </span>
                     </div>
 
