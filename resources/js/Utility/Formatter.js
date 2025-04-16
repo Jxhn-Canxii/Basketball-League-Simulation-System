@@ -325,3 +325,46 @@ export const playerFormatter = (name) => {
         return name; // Return the name as is if the surname is not too long
     }
 };
+
+export const getTransactionIcon = (status) => {
+    switch (status) {
+      case 'star player change':
+        return 'fas fa-star text-yellow-500';
+      case 'waived':
+        return 'fas fa-ban text-red-500';
+      case 'released':
+        return 'fas fa-times text-gray-500';
+      case 'transferred':
+        return 'fas fa-exchange-alt text-blue-500';
+      case 'signed':
+        return 'fas fa-file-contract text-yellow-500';
+      default:
+        return 'fas fa-question-mark-circle text-gray-500';
+    }
+  };
+  
+export const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case 'star player change':
+        return 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs';
+      case 'waived':
+        return 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs';
+      case 'released':
+        return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
+      default:
+        return 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs';
+    }
+  };
+  
+export const formatStatus = (status) => {
+    switch (status) {
+      case 'star player change':
+        return 'Star Player Change';
+      case 'waived':
+        return 'Waived';
+      case 'released':
+        return 'Released';
+      default:
+        return 'Transferred';
+    }
+  };

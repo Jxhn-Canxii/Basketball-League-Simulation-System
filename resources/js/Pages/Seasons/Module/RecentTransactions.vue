@@ -34,12 +34,15 @@
           <!-- Transaction Content -->
           <div class="flex-grow">
             <div class="flex items-center gap-2">
-              <span class="font-semibold text-gray-900">
-                {{ transaction.player_name }}
-              </span>
-              <span :class="getStatusBadgeClass(transaction.status)">
-                {{ formatStatus(transaction.status) }}
-              </span>
+                <span class="font-semibold text-gray-900">
+                    {{ transaction.player_name }} ,{{ transaction.age }}
+                </span>
+                <span :class="getStatusBadgeClass(transaction.status)">
+                    {{ formatStatus(transaction.status) }}
+                </span>
+                <span :class="roleBadgeClass(transaction.role)">
+                    {{ transaction.role }}
+                </span>
             </div>
 
             <!-- Transaction Details -->
@@ -68,6 +71,13 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import {
+    roleClasses,
+    roleBadgeClass,
+    getTransactionIcon,
+    getStatusBadgeClass,
+    formatStatus
+} from "@/Utility/Formatter";
 
 const transactions = ref([]);
 const loading = ref(true);
@@ -93,44 +103,7 @@ const sortedTransactions = computed(() => {
   return transactions.value.sort((a, b) => new Date(b.date) - new Date(a.date));
 });
 
-const getTransactionIcon = (status) => {
-  switch (status) {
-    case 'star player change':
-      return 'fas fa-star text-yellow-500';
-    case 'waived':
-      return 'fas fa-ban text-red-500';
-    case 'released':
-      return 'fas fa-times text-gray-500';
-    default:
-      return 'fas fa-exchange-alt text-blue-500';
-  }
-};
 
-const getStatusBadgeClass = (status) => {
-  switch (status) {
-    case 'star player change':
-      return 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs';
-    case 'waived':
-      return 'bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs';
-    case 'released':
-      return 'bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs';
-    default:
-      return 'bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs';
-  }
-};
-
-const formatStatus = (status) => {
-  switch (status) {
-    case 'star player change':
-      return 'Star Player Change';
-    case 'waived':
-      return 'Waived';
-    case 'released':
-      return 'Released';
-    default:
-      return 'Transferred';
-  }
-};
 
 const getSourceTeam = (transaction) => {
   const teamName = transaction.status === 'waived' || transaction.status === 'released'
