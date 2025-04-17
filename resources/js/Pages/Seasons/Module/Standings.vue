@@ -19,7 +19,7 @@
       <table class="min-w-full divide-y divide-gray-200 text-nowrap">
         <thead class="bg-gray-50">
           <tr>
-            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RANK</th>
+            <!-- <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RANK</th> -->
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
             <th scope="col" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
             <th scope="col" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
@@ -32,9 +32,9 @@
           <tr v-for="(team, index) in season_standings.standings" 
               :key="index"
               :class="getTeamRowClass(index)">
-            <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
+            <!-- <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
               {{ team.conference_rank }}
-            </td>
+            </td> -->
             <td class="px-4 py-2 whitespace-nowrap">
               <TeamDetails
                 :title="'Playoff Appearances: ' + team.playoff_appearances"
