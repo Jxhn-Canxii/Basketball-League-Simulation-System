@@ -402,7 +402,7 @@
                 }
                 while (gameIds.length > 0) {
                     for (const gameId of gameIds) {
-                        console.log(`Simulating Game ID: ${gameId}`);
+                        console.log(`Simulating Game ID: ${gameId.id}`);
 
                         try {
                             await simulateGameWithResults(gameId.id,gameId.conference_id);
@@ -471,19 +471,13 @@
             activeGameId.value = response.data.game_id ?? 0;
             showGameResults.value = true; // Show game results first
 
-            // Clear any existing timer
-            if (flipTimer.value) clearTimeout(flipTimer.value);
-
-            // Hide after 3 seconds
-            flipTimer.value = setTimeout(() => {
-                showGameResults.value = false;
-
-                // Then show again after another 4 seconds
-                flipTimer.value = setTimeout(() => {
-                    showGameResults.value = true;
-                }, 4000);
-            }, 3000);
-
+            // Start flipping between views
+            if (flipTimer.value) clearInterval(flipTimer.value);
+            flipTimer.value = setInterval(() => {
+                showGameResults.value = !showGameResults.value;
+                console.log(showGameResults.value ? 'Showing results!' : 'Showing Recent Transactions!');
+            }, 4000);
+            
             // Show a toast notification
             Swal.fire({
                 icon: "success",
