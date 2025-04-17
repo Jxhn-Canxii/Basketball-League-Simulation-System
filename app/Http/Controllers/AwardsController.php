@@ -1407,12 +1407,29 @@ class AwardsController extends Controller
     
     private function processAwardContractExtension($playerStats, $awardName, $seasonId)
     {
+        // List of awards that don't get contract extensions
+        $noContractAwards = [
+            'Shooting Efficiency Leader',
+            'Player Efficiency Leader',
+            'Most Versatile Player',
+            'Points Game Leader',
+            'Rebounds Game Leader',
+            'Assists Game Leader',
+            'Blocks Game Leader',
+            'Steals Game Leader'
+        ];
+
+        // Skip contract extension if award is in the exclusion list
+        if (in_array($awardName, $noContractAwards)) {
+            return;
+        }
+
         // Determine contract extension years based on award
         $extensionYears = match($awardName) {
             'Best Overall Player', 'Best Defensive Player', 'Rookie of the Season' => 3,
             default => 1
         };
-    
+
         // Add years to player's contract
         DB::table('players')
             ->where('id', $playerStats->player_id)
@@ -1420,7 +1437,7 @@ class AwardsController extends Controller
                 'contract_years' => DB::raw("contract_years + $extensionYears"),
                 'updated_at' => now()
             ]);
-    
+
         // Record contract extension transaction
         DB::table('transactions')->insert([
             'player_id' => $playerStats->player_id,
