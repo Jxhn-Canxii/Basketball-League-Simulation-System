@@ -24,7 +24,7 @@
             <th scope="col" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
             <th scope="col" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th>
-            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
+            <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Legacy</th>
           </tr>
         </thead>
@@ -49,8 +49,8 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-xs">{{ ((parseFloat(team.home_ppg ?? 0) + parseFloat(team.away_ppg ?? 0)) / 2).toFixed(2) }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.overall_rank }}</td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm">{{ ((parseFloat(team.home_ppg ?? 0) + parseFloat(team.away_ppg ?? 0)) / 2).toFixed(2) }}</td>
+            <td class="px-4 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="flex space-x-1.5">
                 <Achievement v-if="team.championships > 0" 
