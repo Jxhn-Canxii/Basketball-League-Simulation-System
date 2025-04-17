@@ -162,7 +162,7 @@ const getSourceTeam = (transaction) => {
 
   const domain = `${teamSlug}.com`; // e.g. valenzuela-dolphins.com
 
-  return `https://${domain}/news/${playerSlug}-${teamSlug}-${statusSlug}`;
+  return `https://${domain}/news/${transaction.season_id ?? 0}/${playerSlug}-${teamSlug}-${statusSlug}`;
 };
 
 
