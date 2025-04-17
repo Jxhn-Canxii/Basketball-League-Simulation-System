@@ -118,163 +118,184 @@
     </div>
   </div>
 </template>
-
 <script setup>
-  import { ref, onMounted } from "vue";
-  import Swal from "sweetalert2";
-  import axios from "axios";
-  import Modal from "@/Components/Modal.vue";
-  import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
-  import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
-  import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";
+import { ref, onMounted } from "vue";
+import Swal from "sweetalert2";
+import axios from "axios";
+import Modal from "@/Components/Modal.vue";
+import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
+import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
+import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";
 
-  const season_standings = ref(false);
-  const loadingStandings = ref(false);
-  const season_info = ref([]);
-  const previousStandings = ref([]);
-  
-  const props = defineProps({
-    showLegend: {
-      type: Boolean,
-      default: false,
-    },
-    season_id: {
-      type: [Number, String],
-      required: true,
-    },
-    conference_id: {
-      type: [Number, String],
-      required: true,
-    },
-    season_data: Object,
-  });
+const season_standings = ref(false);
+const loadingStandings = ref(false);
+const season_info = ref([]);
+const previousStandings = ref([]);
+const props = defineProps({
+  showLegend: {
+    type: Boolean,
+    default: false,
+  },
+  season_id: {
+    type: [Number, String],
+    required: true,
+  },
+  conference_id: {
+    type: [Number, String],
+    required: true,
+  },
+  season_data: Object,
+});
 
-  onMounted(() => {
-    getStandingsInfo();
-  });
+onMounted(() => {
+  getStandingsInfo();
+});
 
-  const getStandingsInfo = () => {
-    season_info.value = props.season_data;
-    fetchConferenceStandings();
-  };
+const getStandingsInfo = () => {
+  season_info.value = props.season_data;
+  fetchConferenceStandings();
+};
 
-  const fetchConferenceStandings = async () => {
-    try {
-      const storageKey = `previousStandings_${props.conference_id}`;
-      const saved = localStorage.getItem(storageKey);
+const fetchConferenceStandings = async () => {
+  try {
+    const standingsKey = `previousStandings_${props.conference_id}`;
+    const historyKey = `rankHistory_${props.conference_id}`;
+    const saved = localStorage.getItem(standingsKey);
+    const savedHistory = localStorage.getItem(historyKey);
 
-      if (saved) {
-        previousStandings.value = JSON.parse(saved);
-      }
+    if (saved) previousStandings.value = JSON.parse(saved);
 
-      loadingStandings.value = true;
-      season_standings.value = [];
+    let rankHistory = savedHistory ? JSON.parse(savedHistory) : {};
 
-      const response = await axios.post(route("conferences.standings"), {
-        season_id: props.season_id,
-        conference_id: props.conference_id,
+    loadingStandings.value = true;
+    season_standings.value = [];
+
+    const response = await axios.post(route("conferences.standings"), {
+      season_id: props.season_id,
+      conference_id: props.conference_id,
+    });
+
+    season_standings.value = response.data;
+
+    // Save current standings and update rank history
+    if (response.data?.standings) {
+      response.data.standings.forEach(team => {
+        const teamId = team.team_id;
+        const currentRank = team.conference_rank;
+
+        if (!rankHistory[teamId]) {
+          rankHistory[teamId] = [];
+        }
+
+        const history = rankHistory[teamId];
+        const lastRank = history[history.length - 1];
+
+        if (lastRank !== currentRank) {
+          history.push(currentRank);
+
+          // Limit to last 10 entries
+          if (history.length > 10) history.shift();
+        }
       });
 
-      season_standings.value = response.data;
-
-      // Save current standings to localStorage
-      if (response.data?.standings) {
-        localStorage.setItem(storageKey, JSON.stringify(response.data.standings));
-      }
-
-      loadingStandings.value = false;
-    } catch (error) {
-      console.error("Error fetching season standings:", error);
+      localStorage.setItem(standingsKey, JSON.stringify(response.data.standings));
+      localStorage.setItem(historyKey, JSON.stringify(rankHistory));
     }
+
+    loadingStandings.value = false;
+  } catch (error) {
+    console.error("Error fetching season standings:", error);
+  }
+};
+
+// GSAP animations
+const beforeEnter = (el) => {
+  el.style.opacity = 0;
+  el.style.transform = "translateY(20px)";
+};
+const enter = (el, done) => {
+  gsap.to(el, {
+    duration: 0.5,
+    y: 0,
+    opacity: 1,
+    ease: "power2.out",
+    onComplete: done,
+  });
+};
+const leave = (el, done) => {
+  gsap.to(el, {
+    duration: 0.3,
+    y: -20,
+    opacity: 0,
+    ease: "power2.in",
+    onComplete: done,
+  });
+};
+
+// Helpers using previous standings (optional if still needed)
+const getPreviousRank = (teamId) => {
+  const prevTeam = previousStandings.value?.find(t => t.team_id === teamId);
+  return prevTeam ? prevTeam.conference_rank : null;
+};
+
+const showRankChange = (teamId) => {
+  const trend = getRankTrend(teamId);
+  return trend && trend.symbol !== "-";
+};
+
+// 🚀 New helpers using rankHistory
+const getRankTrend = (teamId) => {
+  const historyKey = `rankHistory_${props.conference_id}`;
+  const history = JSON.parse(localStorage.getItem(historyKey) || "{}");
+  const ranks = history[teamId] || [];
+
+  if (ranks.length < 2) return null;
+
+  const prev = ranks[ranks.length - 2];
+  const current = ranks[ranks.length - 1];
+  const diff = prev - current;
+
+  return {
+    symbol: diff > 0 ? `↑${diff}` : diff < 0 ? `↓${Math.abs(diff)}` : "-",
+    color: diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500"
   };
+};
 
-  const beforeEnter = (el) => {
-    el.style.opacity = 0;
-    el.style.transform = "translateY(20px)";
-  };
+const getChangeSymbol = (teamId) => getRankTrend(teamId)?.symbol || "";
+const getChangeColor = (teamId) => getRankTrend(teamId)?.color || "";
 
-  const enter = (el, done) => {
-    gsap.to(el, {
-      duration: 0.5,
-      y: 0,
-      opacity: 1,
-      ease: "power2.out",
-      onComplete: done,
-    });
-  };
+const getMovementClass = (teamId) => {
+  const trend = getRankTrend(teamId);
+  if (!trend || trend.symbol === "-") return "";
+  return trend.symbol.startsWith("↑") ? "animate-rise" : "animate-fall";
+};
 
-  const leave = (el, done) => {
-    gsap.to(el, {
-      duration: 0.3,
-      y: -20,
-      opacity: 0,
-      ease: "power2.in",
-      onComplete: done,
-    });
-  };
+const getTeamRowClass = (index) => {
+  const baseClass =
+    index <= 5
+      ? 'bg-orange-50 hover:bg-orange-200'
+      : index <= 9
+      ? 'bg-blue-50 hover:bg-blue-200'
+      : 'bg-red-50 hover:bg-red-200';
 
-  const getPreviousRank = (teamId) => {
-    const prevTeam = previousStandings.value?.find(t => t.team_id === teamId);
-    return prevTeam ? prevTeam.conference_rank : null;
-  };
+  const baseBorder =
+    index <= 5
+      ? 'border-l-4 border-orange-500'
+      : index <= 9
+      ? 'border-l-4 border-blue-500'
+      : 'border-l-4 border-red-500';
 
-  const showRankChange = (teamId) => {
-    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
-    const prevRank = getPreviousRank(teamId);
-    return prevRank && currentRank !== prevRank;
-  };
+  const topBorder =
+    index === 6
+      ? 'border-t-2 border-t-orange-500 border-dashed'
+      : index === 10
+      ? 'border-t-2 border-t-blue-500 border-dashed'
+      : '';
 
-  const getChangeSymbol = (teamId) => {
-    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
-    const prevRank = getPreviousRank(teamId);
-    const diff = prevRank - currentRank;
-    if (diff > 0) return `↑${diff}`;
-    if (diff < 0) return `↓${Math.abs(diff)}`;
-    return "";
-  };
+  const borderStyleFix = (index === 6 || index === 10) ? 'border-l-solid' : '';
 
-  const getChangeColor = (teamId) => {
-    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
-    const prevRank = getPreviousRank(teamId);
-    return currentRank < prevRank ? 'text-green-600' : 'text-red-600';
-  };
-
-  const getMovementClass = (teamId) => {
-    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
-    const prevRank = getPreviousRank(teamId);
-    if (!prevRank) return '';
-    return currentRank < prevRank ? 'animate-rise' : 'animate-fall';
-  };
-
-  const getTeamRowClass = (index) => {
-    // Background and hover colors
-    const baseClass =
-      index <= 5
-        ? 'bg-orange-50 hover:bg-orange-200'
-        : index <= 9
-        ? 'bg-blue-50 hover:bg-blue-200'
-        : 'bg-red-50 hover:bg-red-200';
-
-    // Left border (solid)
-    const baseBorder =
-      index <= 5
-        ? 'border-l-4 border-orange-500'
-        : index <= 9
-        ? 'border-l-4 border-blue-500'
-        : 'border-l-4 border-red-500';
-
-    // Top border (dashed)
-    const topBorder =
-      index === 6
-        ? 'border-t-2 border-t-orange-500 border-dashed'
-        : index === 10
-        ? 'border-t-2 border-t-blue-500 border-dashed'
-        : '';
-
-    const borderStyleFix = (index === 6 || index === 10) ? 'border-l-solid' : '';
-
-    return `${baseClass} ${baseBorder} ${topBorder} ${borderStyleFix}`.trim();
-  };
+  return `${baseClass} ${baseBorder} ${topBorder} ${borderStyleFix}`.trim();
+};
 </script>
 
 <style>

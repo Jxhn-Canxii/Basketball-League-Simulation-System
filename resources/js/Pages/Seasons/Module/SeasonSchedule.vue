@@ -402,7 +402,7 @@
                 }
                 while (gameIds.length > 0) {
                     for (const gameId of gameIds) {
-                        console.log(`Simulating Game ID: ${gameId}`);
+                        console.log(`Simulating Game ID: ${gameId.id}`);
 
                         try {
                             await simulateGameWithResults(gameId.id,gameId.conference_id);
