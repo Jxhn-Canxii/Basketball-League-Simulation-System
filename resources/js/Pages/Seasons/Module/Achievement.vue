@@ -11,7 +11,7 @@
 <script setup>
 const props = defineProps({
   type: String,
-  count: Number
+  count: [String,Number]
 });
 
 const typeClasses = {

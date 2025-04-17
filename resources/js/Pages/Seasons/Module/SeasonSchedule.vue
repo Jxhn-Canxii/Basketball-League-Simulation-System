@@ -402,7 +402,7 @@
                 }
                 while (gameIds.length > 0) {
                     for (const gameId of gameIds) {
-                        console.log(`Simulating Game ID: ${gameId.id}`);
+                        console.log(`Simulating Game ID: ${gameId}`);
 
                         try {
                             await simulateGameWithResults(gameId.id,gameId.conference_id);
@@ -467,18 +467,8 @@
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id,
             });
-
-            activeGameId.value = response.data.game_id ?? 0;
-            showGameResults.value = true; // Show game results first
-
-            // Start flipping between views
-            if (flipTimer.value) clearInterval(flipTimer.value);
-            flipTimer.value = setInterval(() => {
-                showGameResults.value = !showGameResults.value;
-                console.log(showGameResults.value ? 'Showing results!' : 'Showing Recent Transactions!');
-            }, 4000);
             
-            // Show a toast notification
+             // Show a toast notification
             Swal.fire({
                 icon: "success",
                 title: "Game Simulated!",
@@ -488,17 +478,28 @@
                 toast: true,
                 position: "top-end",
             });
+            
+            activeGameId.value = response.data.game_id ?? 0;
+            showGameResults.value = true; // Show game results first
 
-            // Wait for the user to view results before moving to the next game
-            activeConferenceTab.value = conference_id;
-            emit('transaction_id',conference_id);
-            await new Promise((resolve) => setTimeout(resolve, 6000)); // Allow two flips
+            // Start flipping between views
+            if (flipTimer.value) clearInterval(flipTimer.value);
+            flipTimer.value = setInterval(() => {
+                showGameResults.value = !showGameResults.value;
+            }, 4000);
+    
+            await new Promise((resolve) => setTimeout(resolve, 8000)); // Allow 3 flips
 
             // Clear the interval when moving to next game
             if (flipTimer.value) {
                 clearInterval(flipTimer.value);
                 flipTimer.value = null;
             }
+
+            // Wait for the user to view results before moving to the next game
+            activeConferenceTab.value = conference_id;
+            emit('transaction_id',conference_id);
+
 
         } catch (error) {
             console.error("Error simulating game:", error);
