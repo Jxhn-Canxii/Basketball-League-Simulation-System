@@ -19,16 +19,16 @@
       <table class="min-w-full divide-y divide-gray-200 text-nowrap">
         <thead class="bg-gray-50">
           <tr>
-            <th scope="col"  width="10%" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-            <th scope="col"  width="25%" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-            <th scope="col"  width="10%" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
-            <th scope="col"  width="10%" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
-            <th scope="col"  width="10%" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th>
-            <th scope="col" width="10%" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
-            <th scope="col"  width="25%" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Legacy</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RANK</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Legacy</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
+        <tbody class="bg-white">
           <tr v-for="(team, index) in season_standings.standings" 
               :key="index"
               :class="getTeamRowClass(index)">
@@ -42,7 +42,7 @@
                 :showInfo="props.showLegend"
                 :current_conference_rank="team.conference_rank"
                 :season_id="team.season_id"
-                class="text-sm text-black shadow-lg"
+                class="text-sm text-black"
                 :showButton="0"
                 :text="`${team.team_city} ${team.team_name}`"
               />
@@ -152,8 +152,35 @@ onMounted(() => {
 });
 
 const getTeamRowClass = (index) => {
-  if (index <= 5) return 'bg-gradient-to-l from-orange-500 via-orange-200 via-orange-400 to-orange-500';
-  if (index >= 6 && index <= 9) return 'bg-gradient-to-l from-blue-500 via-orange-200 via-blue-400 to-blue-500';
-  return 'bg-gradient-to-l from-red-500 via-orange-200 via-red-400 to-red-500';
+  // Background and hover colors
+  const baseClass =
+    index <= 5
+      ? 'bg-orange-50 hover:bg-orange-200'
+      : index <= 9
+      ? 'bg-blue-50 hover:bg-blue-200'
+      : 'bg-red-50 hover:bg-red-200';
+
+  // Left border (solid)
+  const baseBorder =
+    index <= 5
+      ? 'border-l-4 border-orange-500' // solid is default
+      : index <= 9
+      ? 'border-l-4 border-blue-500'
+      : 'border-l-4 border-red-500';
+
+  // Top border (dashed)
+  const topBorder =
+    index === 6
+      ? 'border-t-2 border-t-orange-500 border-dashed' // Applies dashed to all borders
+      : index === 10
+      ? 'border-t-2 border-t-blue-500 border-dashed'
+      : '';
+
+  // Reset left border style to solid if needed
+  const borderStyleFix = (index === 6 || index === 10) ? 'border-l-solid' : '';
+
+  return `${baseClass} ${baseBorder} ${topBorder} ${borderStyleFix}`.trim();
 };
+
+
 </script>
