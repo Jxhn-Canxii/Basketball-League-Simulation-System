@@ -21,8 +21,8 @@
           <tr>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W</th>
-            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Legacy</th>
@@ -152,8 +152,8 @@ onMounted(() => {
 });
 
 const getTeamRowClass = (index) => {
-  if (index <= 5) return 'bg-gradient-to-l from-orange-300 via-orange-400 to-orange-500';
-  if (index >= 6 && index <= 9) return 'bg-gradient-to-l from-blue-300 via-blue-400 to-blue-500';
-  return 'bg-gradient-to-r from-red-300 via-red-400 to-red-500';
+  if (index <= 5) return 'bg-gradient-to-l from-orange-500 via-orange-200 via-orange-400 to-orange-500';
+  if (index >= 6 && index <= 9) return 'bg-gradient-to-l from-blue-500 via-orange-200 via-blue-400 to-blue-500';
+  return 'bg-gradient-to-l from-red-500 via-orange-200 via-red-400 to-red-500';
 };
 </script>
