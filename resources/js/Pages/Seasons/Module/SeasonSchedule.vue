@@ -482,6 +482,10 @@
             activeGameId.value = response.data.game_id ?? 0;
             showGameResults.value = true; // Show game results first
 
+            // Wait for the user to view results before moving to the next game
+            activeConferenceTab.value = conference_id;
+            emit('transaction_id',conference_id);
+
             // Start flipping between views
             if (flipTimer.value) clearInterval(flipTimer.value);
             flipTimer.value = setInterval(() => {
@@ -496,10 +500,7 @@
                 flipTimer.value = null;
             }
 
-            // Wait for the user to view results before moving to the next game
-            activeConferenceTab.value = conference_id;
-            emit('transaction_id',conference_id);
-
+           
 
         } catch (error) {
             console.error("Error simulating game:", error);
