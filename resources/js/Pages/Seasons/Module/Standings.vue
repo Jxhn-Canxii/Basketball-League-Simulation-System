@@ -66,7 +66,7 @@
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">
-              {{ ((parseFloat(team.home_ppg ?? 0) + parseFloat(team.away_ppg ?? 0)) / 2).toFixed(2) }}
+              {{ ((parseFloat(team.total_home_score ?? 0) + parseFloat(team.total_away_score ?? 0)) / (team.wins + team.losses)).toFixed(2) }}
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
             <td class="px-4 py-2 whitespace-nowrap">
