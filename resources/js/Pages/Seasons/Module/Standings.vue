@@ -19,7 +19,6 @@
       <table class="min-w-full divide-y divide-gray-200 text-nowrap">
         <thead class="bg-gray-50">
           <tr>
-            <!-- <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RANK</th> -->
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
             <th scope="col" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
             <th scope="col" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
@@ -28,31 +27,51 @@
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Legacy</th>
           </tr>
         </thead>
-        <tbody class="bg-white">
-          <tr v-for="(team, index) in season_standings.standings" 
-              :key="index"
-              :class="getTeamRowClass(index)">
-            <!-- <td class="px-4 py-2 whitespace-nowrap text-sm font-medium">
-              {{ team.conference_rank }}
-            </td> -->
+        <transition-group 
+          tag="tbody"
+          name="rank-change"
+          class="bg-white relative"
+          @before-enter="beforeEnter"
+          @enter="enter"
+          @leave="leave"
+        >
+          <tr 
+            v-for="(team, index) in season_standings.standings" 
+            :key="team.team_id"
+            :class="[getTeamRowClass(index), getMovementClass(team.team_id)]"
+            :data-prev-rank="getPreviousRank(team.team_id)"
+            class="transition-all duration-500 ease-in-out"
+          >
             <td class="px-4 py-2 whitespace-nowrap">
-              <TeamDetails
-                :title="'Playoff Appearances: ' + team.playoff_appearances"
-                :team_id="team.team_id"
-                :showInfo="props.showLegend"
-                :current_conference_rank="team.conference_rank"
-                :season_id="team.season_id"
-                class="text-sm text-black"
-                :showButton="0"
-                :text="`${team.team_city} ${team.team_name}`"
-              />
+              <div class="flex items-center">
+                <TeamDetails
+                  :title="'Playoff Appearances: ' + team.playoff_appearances"
+                  :team_id="team.team_id"
+                  :showInfo="props.showLegend"
+                  :current_conference_rank="team.conference_rank"
+                  :season_id="team.season_id"
+                  class="text-sm text-black"
+                  :showButton="0"
+                  :text="`${team.team_city} ${team.team_name}`"
+                />
+                <span 
+                  v-if="showRankChange(team.team_id)"
+                  class="ml-2 text-sm font-medium"
+                  :class="getChangeColor(team.team_id)"
+                >
+                  {{ getChangeSymbol(team.team_id) }}
+                </span>
+              </div>
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm">{{ ((parseFloat(team.home_ppg ?? 0) + parseFloat(team.away_ppg ?? 0)) / 2).toFixed(2) }}</td>
+            <td class="px-4 py-2 whitespace-nowrap text-sm">
+              {{ ((parseFloat(team.home_ppg ?? 0) + parseFloat(team.away_ppg ?? 0)) / 2).toFixed(2) }}
+            </td>
             <td class="px-4 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="flex space-x-1.5">
+                <!-- Achievement components -->
                 <Achievement v-if="team.championships > 0" 
                            type="championship" 
                            :count="team.championships" />
@@ -71,7 +90,7 @@
               </div>
             </td>
           </tr>
-        </tbody>
+        </transition-group>
       </table>
     </div>
 
@@ -101,86 +120,199 @@
 </template>
 
 <script setup>
-import { useForm } from "@inertiajs/vue3";
-import { ref, onMounted, watch, computed } from "vue";
-import Swal from "sweetalert2";
-import axios from "axios";
-import Modal from "@/Components/Modal.vue";
+  import { ref, onMounted } from "vue";
+  import Swal from "sweetalert2";
+  import axios from "axios";
+  import Modal from "@/Components/Modal.vue";
+  import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
+  import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
+  import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";
 
-import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
-import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
-import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";
-
-const season_standings = ref(false);
-const loadingStandings = ref(false);
-const season_info = ref([]);
-const props = defineProps({
+  const season_standings = ref(false);
+  const loadingStandings = ref(false);
+  const season_info = ref([]);
+  const previousStandings = ref([]);
+  
+  const props = defineProps({
     showLegend: {
-        type: Boolean,
-        default: false,
+      type: Boolean,
+      default: false,
     },
     season_id: {
-        type: [Number,String],
-        required: true,
+      type: [Number, String],
+      required: true,
     },
     conference_id: {
-        type: [Number,String],
-        required: true,
+      type: [Number, String],
+      required: true,
     },
     season_data: Object,
-});
-const fetchConferenceStandings = async () => {
-    try {
-        season_standings.value = [];
-        loadingStandings.value = true;
-        const response = await axios.post(route("conferences.standings"), {
-            season_id: props.season_id,
-            conference_id: props.conference_id,
-        });
-        season_standings.value = response.data;
-        loadingStandings.value = false;
-    } catch (error) {
-        console.error("Error fetching season standings:", error);
-    }
-};
-const  getStandingsInfo = () => {
+  });
+
+  onMounted(() => {
+    getStandingsInfo();
+  });
+
+  const getStandingsInfo = () => {
     season_info.value = props.season_data;
     fetchConferenceStandings();
-}
-onMounted(() => {
-    getStandingsInfo();
-});
+  };
 
-const getTeamRowClass = (index) => {
-  // Background and hover colors
-  const baseClass =
-    index <= 5
-      ? 'bg-orange-50 hover:bg-orange-200'
-      : index <= 9
-      ? 'bg-blue-50 hover:bg-blue-200'
-      : 'bg-red-50 hover:bg-red-200';
+  const fetchConferenceStandings = async () => {
+    try {
+      const storageKey = `previousStandings_${props.conference_id}`;
+      const saved = localStorage.getItem(storageKey);
 
-  // Left border (solid)
-  const baseBorder =
-    index <= 5
-      ? 'border-l-4 border-orange-500' // solid is default
-      : index <= 9
-      ? 'border-l-4 border-blue-500'
-      : 'border-l-4 border-red-500';
+      if (saved) {
+        previousStandings.value = JSON.parse(saved);
+      }
 
-  // Top border (dashed)
-  const topBorder =
-    index === 6
-      ? 'border-t-2 border-t-orange-500 border-dashed' // Applies dashed to all borders
-      : index === 10
-      ? 'border-t-2 border-t-blue-500 border-dashed'
-      : '';
+      loadingStandings.value = true;
+      season_standings.value = [];
 
-  // Reset left border style to solid if needed
-  const borderStyleFix = (index === 6 || index === 10) ? 'border-l-solid' : '';
+      const response = await axios.post(route("conferences.standings"), {
+        season_id: props.season_id,
+        conference_id: props.conference_id,
+      });
 
-  return `${baseClass} ${baseBorder} ${topBorder} ${borderStyleFix}`.trim();
-};
+      season_standings.value = response.data;
 
+      // Save current standings to localStorage
+      if (response.data?.standings) {
+        localStorage.setItem(storageKey, JSON.stringify(response.data.standings));
+      }
 
+      loadingStandings.value = false;
+    } catch (error) {
+      console.error("Error fetching season standings:", error);
+    }
+  };
+
+  const beforeEnter = (el) => {
+    el.style.opacity = 0;
+    el.style.transform = "translateY(20px)";
+  };
+
+  const enter = (el, done) => {
+    gsap.to(el, {
+      duration: 0.5,
+      y: 0,
+      opacity: 1,
+      ease: "power2.out",
+      onComplete: done,
+    });
+  };
+
+  const leave = (el, done) => {
+    gsap.to(el, {
+      duration: 0.3,
+      y: -20,
+      opacity: 0,
+      ease: "power2.in",
+      onComplete: done,
+    });
+  };
+
+  const getPreviousRank = (teamId) => {
+    const prevTeam = previousStandings.value?.find(t => t.team_id === teamId);
+    return prevTeam ? prevTeam.conference_rank : null;
+  };
+
+  const showRankChange = (teamId) => {
+    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
+    const prevRank = getPreviousRank(teamId);
+    return prevRank && currentRank !== prevRank;
+  };
+
+  const getChangeSymbol = (teamId) => {
+    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
+    const prevRank = getPreviousRank(teamId);
+    const diff = prevRank - currentRank;
+    if (diff > 0) return `↑${diff}`;
+    if (diff < 0) return `↓${Math.abs(diff)}`;
+    return "";
+  };
+
+  const getChangeColor = (teamId) => {
+    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
+    const prevRank = getPreviousRank(teamId);
+    return currentRank < prevRank ? 'text-green-600' : 'text-red-600';
+  };
+
+  const getMovementClass = (teamId) => {
+    const currentRank = season_standings.value.standings?.find(t => t.team_id === teamId)?.conference_rank;
+    const prevRank = getPreviousRank(teamId);
+    if (!prevRank) return '';
+    return currentRank < prevRank ? 'animate-rise' : 'animate-fall';
+  };
+
+  const getTeamRowClass = (index) => {
+    // Background and hover colors
+    const baseClass =
+      index <= 5
+        ? 'bg-orange-50 hover:bg-orange-200'
+        : index <= 9
+        ? 'bg-blue-50 hover:bg-blue-200'
+        : 'bg-red-50 hover:bg-red-200';
+
+    // Left border (solid)
+    const baseBorder =
+      index <= 5
+        ? 'border-l-4 border-orange-500'
+        : index <= 9
+        ? 'border-l-4 border-blue-500'
+        : 'border-l-4 border-red-500';
+
+    // Top border (dashed)
+    const topBorder =
+      index === 6
+        ? 'border-t-2 border-t-orange-500 border-dashed'
+        : index === 10
+        ? 'border-t-2 border-t-blue-500 border-dashed'
+        : '';
+
+    const borderStyleFix = (index === 6 || index === 10) ? 'border-l-solid' : '';
+
+    return `${baseClass} ${baseBorder} ${topBorder} ${borderStyleFix}`.trim();
+  };
 </script>
+
+<style>
+  .rank-change-move {
+    transition: all 0.5s ease-in-out;
+  }
+
+  @keyframes rise {
+    from {
+      transform: translateY(20px);
+      opacity: 0;
+      background-color: rgba(72, 187, 120, 0.1);
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+      background-color: transparent;
+    }
+  }
+
+  @keyframes fall {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+      background-color: rgba(248, 113, 113, 0.1);
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+      background-color: transparent;
+    }
+  }
+
+  .animate-rise {
+    animation: rise 0.5s ease-out;
+  }
+
+  .animate-fall {
+    animation: fall 0.5s ease-out;
+  }
+</style>
