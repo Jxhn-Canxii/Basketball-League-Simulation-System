@@ -152,12 +152,20 @@ const sortedTransactions = computed(() => {
 });
 
 const getSourceTeam = (transaction) => {
-  const teamName = transaction.status === 'waived' || transaction.status === 'released'
-    ? transaction.from_team_name
-    : transaction.to_team_name;
+  const playerSlug = transaction.player_name.replace(/\s+/g, '-').toLowerCase();
 
-    return `${teamName.replaceAll(' ','-').toLowerCase()}.com`;
+  const teamCity = transaction.to_team_city === 'None' ? 'free-agent' : transaction.to_team_city;
+  const teamName = transaction.to_team_name === 'Free Agent' ? '' : transaction.to_team_name;
+
+  const teamSlug = `${teamCity} ${teamName}`.trim().replace(/\s+/g, '-').toLowerCase();
+  const statusSlug = transaction.status.replace(/\s+/g, '-').toLowerCase();
+
+  const domain = `${teamSlug}.com`; // e.g. valenzuela-dolphins.com
+
+  return `https://${domain}/news/${playerSlug}-${teamSlug}-${statusSlug}`;
 };
+
+
 
 const togglePlayerCard = (id) => {
   flippedCards.value[id] = !flippedCards.value[id];

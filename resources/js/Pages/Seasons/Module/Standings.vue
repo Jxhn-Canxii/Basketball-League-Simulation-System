@@ -16,13 +16,14 @@
 
     <!-- Standings Table -->
     <div v-else class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
+      <table class="min-w-full divide-y divide-gray-200 text-nowrap">
         <thead class="bg-gray-50">
           <tr>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">W</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">L</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rank</th>
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Legacy</th>
           </tr>
@@ -48,6 +49,7 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
+            <td class="px-4 py-2 whitespace-nowrap text-xs">{{ ((parseFloat(team.home_ppg ?? 0) + parseFloat(team.away_ppg ?? 0)) / 2).toFixed(2) }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.overall_rank }}</td>
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="flex space-x-1.5">
