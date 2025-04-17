@@ -406,7 +406,7 @@
 
                         try {
                             await simulateGameWithResults(gameId.id,gameId.conference_id);
-                            await new Promise((resolve) => setTimeout(resolve, 16000)); // 3 flipbacks = 16 seconds
+                            await new Promise((resolve) => setTimeout(resolve, 2000));
 
                             // Remove successfully simulated game from failedGames if it exists
                             failedGames.delete(gameId);
@@ -471,11 +471,18 @@
             activeGameId.value = response.data.game_id ?? 0;
             showGameResults.value = true; // Show game results first
 
-            // Start flipping between views
-            if (flipTimer.value) clearInterval(flipTimer.value);
-            flipTimer.value = setInterval(() => {
-                showGameResults.value = !showGameResults.value;
-            }, 4000);
+            // Clear any existing timer
+            if (flipTimer.value) clearTimeout(flipTimer.value);
+
+            // Hide after 3 seconds
+            flipTimer.value = setTimeout(() => {
+                showGameResults.value = false;
+
+                // Then show again after another 4 seconds
+                flipTimer.value = setTimeout(() => {
+                    showGameResults.value = true;
+                }, 4000);
+            }, 3000);
 
             // Show a toast notification
             Swal.fire({
