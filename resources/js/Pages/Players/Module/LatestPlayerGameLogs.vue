@@ -1,18 +1,7 @@
 <template>
     <div class="team-roster p-3">
-        <!-- Loading State -->
-        <!-- Main Content -->
         <div>
-            <!-- Divider -->
-            <hr class="my-4 border-t border-gray-200" />
-
-            <!-- Player Profile and Playoff Performance in One Row -->
-            <!-- <ProfileHeader :player_id="player_id" /> -->
-            <!-- <h3 v-if="game_logs">{{ game_logs.player_name.player_name }} ({{ game_logs.player_name.team_name ?? 'Free Agent' }})</h3> -->
-
-            <!-- Divider -->
-            <hr class="my-4 border-t border-gray-200" />
-
+            
             <!-- Season Performance Table -->
             <h2 class="text-sm font-semibold text-gray-800">
                 Last 5 Game Performance
@@ -23,14 +12,16 @@
                 }}
             </h2>
 
+            <!-- Divider -->
+            <hr class="my-4 border-t border-gray-200" />
             <div class="overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
                     <thead class="bg-gray-50 text-nowrap">
                         <tr>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Season</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Opp</th>
+                            <!-- <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round</th> -->
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Result</th>
                         </tr>
                     </thead>
@@ -44,12 +35,13 @@
                                 'bg-red-200': player.game_result === 'Loss' && player.minutes > 0,
                                 'bg-slate-200': player.minutes === 0,
                             }"
+                            :title="roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round))"
                             class="hover:bg-gray-100"
                         >
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.season_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.opponent_team_name }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}</td>
+                            <!-- <td class="px-2 py-1 whitespace-nowrap border">{{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}</td> -->
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_result }}</td>
                         </tr>
                         <tr v-else class="hover:bg-gray-100">

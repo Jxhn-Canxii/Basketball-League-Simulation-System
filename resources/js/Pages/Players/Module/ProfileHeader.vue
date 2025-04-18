@@ -163,14 +163,14 @@
         </div>
 
         <!-- Playoff Performance Section -->
-        <div class="playoff-performance mb-6 flex-1">
+        <div class="playoff-performance mb-6 flex-2">
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 flex items-center"
             >
                 <i class="fa fa-network-wired text-purple-500 mr-2"></i>
                 Playoff
             </h3>
-            <div v-if="main_performance.playoff_performance" class="ml-4">
+            <div v-if="main_performance.playoff_performance" class="ml-4 text-sm text-nowrap">
                 <p>
                     <strong>Conf. Playins:</strong>
                     {{ main_performance.playoff_performance.play_ins_elims_round_1_appearances + main_performance.playoff_performance.play_ins_elims_round_2_appearances + main_performance.playoff_performance.play_ins_finals_appearances  ?? 0 }}
