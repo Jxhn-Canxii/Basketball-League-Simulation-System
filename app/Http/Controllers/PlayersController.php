@@ -769,16 +769,43 @@ class PlayersController extends Controller
     
         // Assign position
         if ($passing >= 85) {
-            $position = ($shooting >= 80) ? 'PG/SG' : 'PG';
+            if ($shooting >= 80) {
+                $position = 'PG/SG';
+            } elseif ($defense >= 80) {
+                $position = 'PG/SF'; // crafty, defensive-minded PG
+            } else {
+                $position = 'PG';
+            }
         } elseif ($shooting >= 85) {
-            $position = ($defense >= 70) ? 'SG/SF' : 'SG';
+            if ($defense >= 75) {
+                $position = 'SG/SF';
+            } elseif ($rebounding >= 70) {
+                $position = 'SG/PF'; // aggressive shooting forward
+            } else {
+                $position = 'SG';
+            }
         } elseif ($defense >= 85) {
-            $position = ($rebounding >= 75) ? 'SF/PF' : 'SF';
+            if ($rebounding >= 75) {
+                $position = 'SF/PF';
+            } elseif ($passing >= 70) {
+                $position = 'SF/PG'; // defensive wing who can handle
+            } else {
+                $position = 'SF';
+            }
         } elseif ($rebounding >= 85) {
-            $position = ($defense >= 75) ? 'PF/C' : 'C';
+            if ($defense >= 75) {
+                $position = 'PF/C';
+            } elseif ($passing >= 75) {
+                $position = 'PF/PG'; // rare playmaking forward
+            } else {
+                $position = 'C';
+            }
         } else {
-            $position = ['PG', 'SG', 'SF', 'PF', 'C'][array_rand(['PG', 'SG', 'SF', 'PF', 'C'])];
+            // Fallback for balanced or undeveloped players
+            $hybrids = ['PG', 'SG', 'SF', 'PF', 'C', 'PG/SG', 'SG/SF', 'SF/PF', 'PF/C', 'SG/PF', 'SF/C', 'PG/SF'];
+            $position = $hybrids[array_rand($hybrids)];
         }
+        
     
         return [
             'archetype' => $selectedArchetype,

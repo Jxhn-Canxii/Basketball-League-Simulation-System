@@ -1293,19 +1293,6 @@ class SimulateController extends Controller
 
     private function distributeMinutes($playersArray, $totalMinutes, $gameId)
     {
-        // Define positional groups for each role
-        $positionGroups = [
-            'PG'   => 1,
-            'SG'   => 1,
-            'SF'   => 1,
-            'PF'   => 1,
-            'C'    => 1,
-            'PF/C' => 1,
-            'SG/SF'=> 1,
-            'PG/SG'=> 1,
-        ];
-
-        // Define role priorities based on usage
         $rolePriority = [
             'star player' => 1,
             'all star'    => 2,
@@ -1313,93 +1300,114 @@ class SimulateController extends Controller
             'role player' => 4,
             'bench'       => 5,
         ];
-
-        // Define minute limits for each role
-        $roleMinuteLimits = [
-            'star player' => [30, 42],
-            'all star'    => [28, 40],
-            'starter'     => [25, 38],
-            'role player' => [10, 28],
-            'bench'       => [5, 15],
+    
+        $roleMinuteRanges = [
+            'star player' => [36, 42],
+            'all star'    => [32, 38],
+            'starter'     => [28, 34],
+            'role player' => [15, 24],
+            'bench'       => [0, 12],
         ];
-
-        // Sort players by role priority
-        $sortedPlayers = collect($playersArray)
-            ->sortBy(fn($player) => $rolePriority[$player['role']] ?? 5)
+    
+        // Target minutes per position
+        $positionTargets = [
+            'PG' => 48,
+            'SG' => 48,
+            'SF' => 48,
+            'PF' => 48,
+            'C'  => 48,
+        ];
+    
+        // Step 1: Sort players by role priority
+        $sorted = collect($playersArray)
+            ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
-
-        // Determine players that will be out (injured or coach's decision)
-        $injuredOrReservePlayers = $sortedPlayers->filter(function ($player) {
-            return rand(1, 100) <= $player['injury_prone_percentage'] || $player['role'] === 'bench';
-        })->take(2);
-
-        // Set 0 minutes for injured or reserve players
+    
+        // Step 2: Sit 3 players (injury or coach decision)
+        $dnpPlayers = $sorted->filter(fn($p) => rand(1, 100) <= $p['injury_prone_percentage'])->take(2);
+        $additionalDNP = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']))->shuffle()->take(1);
+        $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+    
         $minutes = [];
-        foreach ($injuredOrReservePlayers as $player) {
-            $minutes[$player['id']] = 0;
+    
+        foreach ($dnpPlayers as $p) {
+            $minutes[$p['id']] = 0;
         }
-
-        // Assign minutes to remaining players, avoiding exceeding 48 minutes
-        $assignedMinutes = 0;
-        foreach ($sortedPlayers as $player) {
-            // Skip players that have been set to 0 minutes
-            if (isset($minutes[$player['id']])) continue;
-
-            // Get the player's role and position
+    
+        // Step 3: Assign minutes with positional fill logic
+        $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
+        $assignedTotal = 0;
+    
+        foreach ($rotation as $player) {
             $role = $player['role'];
-            $minMinutes = $roleMinuteLimits[$role][0] ?? 0;
-            $maxMinutes = $roleMinuteLimits[$role][1] ?? 15;
-
-            // Calculate the base assigned minutes for this player
-            $assignedMinutesForPlayer = ($minMinutes + $maxMinutes) / 2;
-            $assignedMinutesForPlayer = min($assignedMinutesForPlayer, 48);
-
-            // Adjust based on positional needs
-            $position = $player['position'];
-            $positionPriority = $positionGroups[$position] ?? 1;
-
-            // Calculate the final assigned minutes, considering positional usage
-            $assignedMinutesForPlayer = round($assignedMinutesForPlayer * $positionPriority);
-            $assignedMinutesForPlayer = min($assignedMinutesForPlayer, 48);
-
-            // Store the assigned minutes and update the total assigned minutes
-            $minutes[$player['id']] = $assignedMinutesForPlayer;
-            $assignedMinutes += $assignedMinutesForPlayer;
-
-            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
-        }
-
-        // Ensure total minutes are distributed correctly
-        $remainingMinutes = $totalMinutes - $assignedMinutes;
-        if ($remainingMinutes > 0) {
-            $availablePlayers = collect($playersArray)->reject(fn($player) => isset($minutes[$player['id']]));
-            $numAvailablePlayers = $availablePlayers->count();
-
-            if ($numAvailablePlayers > 0) {
-                $totalWeight = $availablePlayers->sum(fn($player) => 1 / ($rolePriority[$player['role']] ?? 5));
-
-                foreach ($availablePlayers as $player) {
-                    $playerWeight = 1 / ($rolePriority[$player['role']] ?? 5);
-                    $extraMinutes = round(($playerWeight / $totalWeight) * $remainingMinutes);
-                    $minutes[$player['id']] = min($minutes[$player['id']] + $extraMinutes, 48);
+            $range = $roleMinuteRanges[$role] ?? [5, 15];
+            $baseMinutes = rand($range[0], $range[1]);
+    
+            // Split player position (handle hybrid)
+            $positions = explode('/', $player['position']);
+            $positionAssigned = false;
+    
+            foreach ($positions as $pos) {
+                if (($positionTargets[$pos] ?? 0) > 0) {
+                    $assigned = min($baseMinutes, $positionTargets[$pos]);
+                    $minutes[$player['id']] = $assigned;
+                    $positionTargets[$pos] -= $assigned;
+                    $assignedTotal += $assigned;
+                    $positionAssigned = true;
+                    break;
                 }
             }
-        }
-
-        // Final Adjustment to Match `totalMinutes`
-        $totalAssignedMinutes = array_sum($minutes);
-        $difference = $totalMinutes - $totalAssignedMinutes;
-
-        if ($difference !== 0) {
-            foreach ($minutes as $id => &$minute) {
-                $adjustment = ($difference / count($minutes));
-                $minute = max(0, min(48, round($minute + $adjustment)));
+    
+            // If no match, assign anywhere we can
+            if (!$positionAssigned) {
+                foreach ($positions as $pos) {
+                    if (isset($positionTargets[$pos])) {
+                        $assigned = min($baseMinutes, $positionTargets[$pos]);
+                        $minutes[$player['id']] = $assigned;
+                        $positionTargets[$pos] -= $assigned;
+                        $assignedTotal += $assigned;
+                        break;
+                    }
+                }
             }
-            unset($minute);
+    
+            if (!isset($minutes[$player['id']])) {
+                $minutes[$player['id']] = 0;
+            }
+    
+            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
         }
-
+    
+        // Step 4: Normalize to total minutes (usually 240)
+        $difference = $totalMinutes - array_sum($minutes);
+    
+        if (abs($difference) > 0) {
+            $eligible = $rotation->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)->values();
+            $i = 0;
+    
+            while ($difference !== 0 && $eligible->isNotEmpty()) {
+                $player = $eligible[$i % $eligible->count()];
+                $id = $player['id'];
+    
+                if (!isset($minutes[$id])) {
+                    $minutes[$id] = 0;
+                }
+    
+                if ($difference > 0 && $minutes[$id] < 48) {
+                    $minutes[$id]++;
+                    $difference--;
+                } elseif ($difference < 0 && $minutes[$id] > 0) {
+                    $minutes[$id]--;
+                    $difference++;
+                }
+    
+                $i++;
+            }
+        }
+    
         return $minutes;
     }
+    
 
     public function fatigueRate($player, $minutes, $gameId)
     {
@@ -2144,7 +2152,7 @@ class SimulateController extends Controller
     }
     
     //relaksdlkajsdlkajsdlk
-    private function updateTeamRolesBasedOnStats($teamId, $round)
+    private function updateTeamRolesBasedOnStatsV2($teamId, $round)
     {
         
         if (!$teamId) {
@@ -2267,6 +2275,139 @@ class SimulateController extends Controller
         return true;
     }
     
+    //includes primary position
+    private function updateTeamRolesBasedOnStats($teamId, $round)
+    {
+        if (!$teamId) {
+            return false;
+        }
+
+        // Update only every 5 rounds, round 2, and last round of the season
+        if ($round % 5 !== 0 && $round != 2 && $round != $this->getLastRoundNumber()) {
+            return true;
+        }
+
+        DB::beginTransaction();
+        try {
+            $seasonId = get_current_season_id();
+            $weekName = match(true) {
+                $round == 2 => 'Early Season Adjustments',
+                $round == $this->getLastRoundNumber() => 'Playoff Preparation',
+                default => (($round / 5) + 1),
+            };
+
+            // Fetch player season stats, merging by player_id and summing their EFF
+            $stats = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.contract_years', '>', 0) // Only active contracts
+                ->where('players.team_id', $teamId) // Filter by team
+                ->selectRaw('
+                    players.id as player_id,
+                    players.role,
+                    players.position,
+                    SUM(player_season_stats.eff) as total_eff
+                ')
+                ->groupBy('players.id', 'players.role', 'players.position') // Use 'players.role' directly
+                ->orderByDesc('total_eff') // Rank by total efficiency
+                ->get();
+
+            // Map for positional requirement (starting 5)
+            $positionRequirement = [
+                'PG' => 1,
+                'SG' => 1,
+                'SF' => 1,
+                'PF' => 1,
+                'C'  => 1,
+            ];
+
+            // Role slots (Ensure 1 star player, 2 all stars, 2 starters)
+            $roleSlots = [
+                'star player' => 1,
+                'all star'    => 2,
+                'starter'     => 2,
+            ];
+
+            $assigned = [];
+            $positionCounters = array_fill_keys(array_keys($positionRequirement), 0);
+            $roleCounters = array_fill_keys(array_keys($roleSlots), 0);
+
+            // 1. First assign the positions
+            foreach ($stats as $player) {
+                $position = $this->primaryPosition($player->player_id);  // Get the primary position
+
+                // Skip if the position doesn't match the requirement
+                if (!isset($positionRequirement[$position])) {
+                    continue;
+                }
+
+                if ($positionCounters[$position] < $positionRequirement[$position]) {
+                    // Assign role (star player, all star, starter) while respecting position requirements
+                    foreach ($roleSlots as $role => $limit) {
+                        if ($roleCounters[$role] < $limit) {
+                            $assigned[$player->player_id] = $role;
+                            $roleCounters[$role]++;
+                            $positionCounters[$position]++;
+                            break; // Move to the next player
+                        }
+                    }
+                }
+            }
+
+            // 2. Now assign remaining players as role players or bench
+            foreach ($stats as $player) {
+                if (!isset($assigned[$player->player_id])) {
+                    $assigned[$player->player_id] = 'bench';  // Default to bench if no role assigned yet
+                }
+            }
+
+            // Apply the role assignments and update the database
+            foreach ($assigned as $playerId => $newRole) {
+                $currentRole = collect($stats)->firstWhere('player_id', $playerId)->role;
+
+                if ($currentRole !== $newRole) {
+                    // Log the transaction if role has changed
+                    $roleStatus = ($newRole == 'star player') ? 'star player change' : 'role change';
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerId,
+                        'season_id' => $seasonId,
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Week($weekName)",
+                        'from_team_id' => $teamId,
+                        'to_team_id' => $teamId,
+                        'status' => $roleStatus,
+                    ]);
+                }
+
+                // Update the player's role
+                DB::table('players')->where('id', $playerId)->update(['role' => $newRole]);
+
+                // Update player stats
+                DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error updating team $teamId roles: " . $e->getMessage());
+            return false;
+        }
+
+        return true;
+    }
+    private function primaryPosition($playerId)
+    {
+        $player = DB::table('players')->where('id', $playerId)->first();
+        $position = $player->position ?? 'SG';  // Default to SG if no position exists
+
+        // Get the primary position (first in the array if multiple positions exist)
+        $split = explode('/', $position);
+        return $split[0];  // Assume first position is primary
+    }
 
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
