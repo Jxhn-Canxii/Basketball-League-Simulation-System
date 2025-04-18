@@ -579,7 +579,9 @@ class GameController extends Controller
     }
     
     private function getIngameInjury($gameId) {
-        return DB::table('injured_players_view')
+        return DB::table('injured_players_view as i')
+            ->select('i.*','p.role','p.position')
+            ->join('players as p', 'i.player_id', '=', 'p.id') // Join with player_ratings table
             ->where('game_id', $gameId)
             ->get();
     }
