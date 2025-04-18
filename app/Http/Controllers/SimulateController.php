@@ -2281,12 +2281,12 @@ class SimulateController extends Controller
         if (!$teamId) {
             return false;
         }
-
+    
         // Update only every 5 rounds, round 2, and last round of the season
         if ($round % 5 !== 0 && $round != 2 && $round != $this->getLastRoundNumber()) {
             return true;
         }
-
+    
         DB::beginTransaction();
         try {
             $seasonId = get_current_season_id();
@@ -2295,7 +2295,7 @@ class SimulateController extends Controller
                 $round == $this->getLastRoundNumber() => 'Playoff Preparation',
                 default => (($round / 5) + 1),
             };
-
+    
             // Fetch player season stats, merging by player_id and summing their EFF
             $stats = DB::table('player_season_stats')
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
@@ -2305,70 +2305,117 @@ class SimulateController extends Controller
                 ->selectRaw('
                     players.id as player_id,
                     players.role,
-                    players.position,
-                    SUM(player_season_stats.eff) as total_eff
+                    SUM(player_season_stats.eff) as total_eff,
+                    players.passing, 
+                    players.shooting,
+                    players.defense,
+                    players.rebounding
                 ')
-                ->groupBy('players.id', 'players.role', 'players.position') // Use 'players.role' directly
+                ->groupBy('players.id', 'players.role') // Use 'players.role' directly, no alias
                 ->orderByDesc('total_eff') // Rank by total efficiency
                 ->get();
-
-            // Map for positional requirement (starting 5)
-            $positionRequirement = [
-                'PG' => 1,
-                'SG' => 1,
-                'SF' => 1,
-                'PF' => 1,
-                'C'  => 1,
-            ];
-
-            // Role slots (Ensure 1 star player, 2 all stars, 2 starters)
-            $roleSlots = [
+    
+            // Define role slots
+            $roleDistribution = [
                 'star player' => 1,
-                'all star'    => 2,
-                'starter'     => 2,
+                'all star' => 2,
+                'starter' => 2,
+                'role player' => 5,
             ];
-
-            $assigned = [];
-            $positionCounters = array_fill_keys(array_keys($positionRequirement), 0);
-            $roleCounters = array_fill_keys(array_keys($roleSlots), 0);
-
-            // 1. First assign the positions
+    
+            // Initialize role allocations
+            $newRoles = [];
+            $roleCounters = [
+                'star player' => 0,
+                'all star' => 0,
+                'starter' => 0,
+                'role player' => 0,
+                'bench' => 0, // Remaining players
+            ];
+    
             foreach ($stats as $player) {
-                $position = $this->primaryPosition($player->player_id);  // Get the primary position
-
-                // Skip if the position doesn't match the requirement
-                if (!isset($positionRequirement[$position])) {
-                    continue;
-                }
-
-                if ($positionCounters[$position] < $positionRequirement[$position]) {
-                    // Assign role (star player, all star, starter) while respecting position requirements
-                    foreach ($roleSlots as $role => $limit) {
-                        if ($roleCounters[$role] < $limit) {
-                            $assigned[$player->player_id] = $role;
-                            $roleCounters[$role]++;
-                            $positionCounters[$position]++;
-                            break; // Move to the next player
+                // If player has a hybrid role, decide which position to assign
+                if (in_array($player->role, [
+                    'PG/SG', 'SG/SF', 'SF/PF', 'PF/C', 
+                    'PG/SF', 'SG/PF', 'PG/PF', 'PG/C', 
+                    'SG/C', 'SF/C', 
+                    'PG/SG/SF', 'SG/SF/PF', 'SF/PF/C', 
+                    'PG/SF/PF', 'PG/SG/PF', 'SG/PF/C'
+                ])) {
+                    // Determine the best position for hybrid roles based on player skills
+    
+                    // PG/SG can either be PG or SG based on passing and shooting
+                    if ($player->role == 'PG/SG') {
+                        if ($player->passing >= 80 && $player->shooting >= 75) {
+                            $newRoles[$player->player_id] = 'PG';
+                        } else if ($player->shooting >= 80) {
+                            $newRoles[$player->player_id] = 'SG';
                         }
                     }
+                    // SG/SF can either be SG or SF based on shooting and defense
+                    elseif ($player->role == 'SG/SF') {
+                        if ($player->shooting >= 80 && $player->defense >= 70) {
+                            $newRoles[$player->player_id] = 'SG';
+                        } else if ($player->shooting >= 75) {
+                            $newRoles[$player->player_id] = 'SF';
+                        }
+                    }
+                    // SF/PF can either be SF or PF based on defense and rebounding
+                    elseif ($player->role == 'SF/PF') {
+                        if ($player->defense >= 75 && $player->rebounding >= 75) {
+                            $newRoles[$player->player_id] = 'PF';
+                        } else {
+                            $newRoles[$player->player_id] = 'SF';
+                        }
+                    }
+                    // PF/C can either be PF or C based on defense and rebounding
+                    elseif ($player->role == 'PF/C') {
+                        if ($player->defense >= 80 && $player->rebounding >= 80) {
+                            $newRoles[$player->player_id] = 'PF';
+                        } else {
+                            $newRoles[$player->player_id] = 'C';
+                        }
+                    }
+                    // Other hybrid positions handled in a similar fashion...
+                    // e.g., PG/SF, SG/PF, PG/PF, etc.
+    
+                    elseif ($player->role == 'PG/SF') {
+                        if ($player->passing >= 80 && $player->shooting >= 75) {
+                            $newRoles[$player->player_id] = 'PG';
+                        } else {
+                            $newRoles[$player->player_id] = 'SF';
+                        }
+                    }
+                    elseif ($player->role == 'SG/PF') {
+                        if ($player->shooting >= 80 && $player->rebounding >= 75) {
+                            $newRoles[$player->player_id] = 'SG';
+                        } else {
+                            $newRoles[$player->player_id] = 'PF';
+                        }
+                    }
+                    // Add more hybrid positions...
+                } else {
+                    // Regular player role assignment based on efficiency
+                    foreach ($roleDistribution as $role => $maxCount) {
+                        if ($roleCounters[$role] < $maxCount) {
+                            $newRoles[$player->player_id] = $role;
+                            $roleCounters[$role]++;
+                            continue 2;
+                        }
+                    }
+                    // Assign remaining players to "bench"
+                    $newRoles[$player->player_id] = 'bench';
+                    $roleCounters['bench']++;
                 }
             }
-
-            // 2. Now assign remaining players as role players or bench
-            foreach ($stats as $player) {
-                if (!isset($assigned[$player->player_id])) {
-                    $assigned[$player->player_id] = 'bench';  // Default to bench if no role assigned yet
-                }
-            }
-
-            // Apply the role assignments and update the database
-            foreach ($assigned as $playerId => $newRole) {
+    
+            // Apply updates to player roles
+            foreach ($newRoles as $playerId => $newRole) {
                 $currentRole = collect($stats)->firstWhere('player_id', $playerId)->role;
-
+    
                 if ($currentRole !== $newRole) {
-                    // Log the transaction if role has changed
                     $roleStatus = ($newRole == 'star player') ? 'star player change' : 'role change';
-
+    
                     DB::table('transactions')->insert([
                         'player_id' => $playerId,
                         'season_id' => $seasonId,
@@ -2378,37 +2425,26 @@ class SimulateController extends Controller
                         'status' => $roleStatus,
                     ]);
                 }
-
-                // Update the player's role
+    
+                // Update player role in the database
                 DB::table('players')->where('id', $playerId)->update(['role' => $newRole]);
-
-                // Update player stats
                 DB::table('player_season_stats')
                     ->where('player_id', $playerId)
                     ->where('season_id', $seasonId)
                     ->where('team_id', $teamId)
                     ->update(['role' => $newRole]);
             }
-
+    
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error("Error updating team $teamId roles: " . $e->getMessage());
             return false;
         }
-
+    
         return true;
     }
-    private function primaryPosition($playerId)
-    {
-        $player = DB::table('players')->where('id', $playerId)->first();
-        $position = $player->position ?? 'SG';  // Default to SG if no position exists
-
-        // Get the primary position (first in the array if multiple positions exist)
-        $split = explode('/', $position);
-        return $split[0];  // Assume first position is primary
-    }
-
+    
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
         if (empty($playerGameStats)) {
