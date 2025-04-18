@@ -487,8 +487,8 @@ class SimulateController extends Controller
             $this->updateFinalsWinner($gameData, $winnerId, $homeScore, $awayScore);
 
             // Update the finals contract
-            // $this->updateFinalsBonusContract($gameData->home_team_id, $gameData->season_id,$gameData->home_team_name);
-            // $this->updateFinalsBonusContract($gameData->away_team_id, $gameData->season_id,$gameData->away_team_name);
+            $this->updateFinalsBonusContract($gameData->home_team_id, $gameData->season_id,$gameData->home_team_name);
+            $this->updateFinalsBonusContract($gameData->away_team_id, $gameData->season_id,$gameData->away_team_name);
         }
 
         // Update the seasons table if there are updates
@@ -1704,23 +1704,26 @@ class SimulateController extends Controller
             if ($player->role == 'all star') {
                 $additionalContractYears = rand(1, 3);  // 1 to 3 years for all star players
             }
-            else {
-                $additionalContractYears = rand(1, 2);  // 1 to 2 years for other players
+            if ($player->role == 'starter') {
+                $additionalContractYears = rand(0, 2);  // 1 to 3 years for all star players
             }
-    
-            // Update the player's contract years
-            $player->contract_years += $additionalContractYears;
-            $player->save();
-    
-            // Insert transaction log
-            DB::table('transactions')->insert([
-                'player_id' => $player->id,
-                'season_id' => $seasonId,
-                'details' => 'Re-signed with ' . $teamName . ' for a contract extension(Finals Bonus) of ' . $additionalContractYears . ' years',
-                'from_team_id' => $player->team_id,
-                'to_team_id' => $player->team_id,
-                'status' => 'resigned',
-            ]);
+            
+            //only core players will have a bonus
+            if($additionalContractYears > 0){
+                // Update the player's contract years
+                $player->contract_years += $additionalContractYears;
+                $player->save();
+        
+                // Insert transaction log
+                DB::table('transactions')->insert([
+                    'player_id' => $player->id,
+                    'season_id' => $seasonId,
+                    'details' => 'Re-signed with ' . $teamName . ' for a contract extension(Finals Bonus) of ' . $additionalContractYears . ' years',
+                    'from_team_id' => $player->team_id,
+                    'to_team_id' => $player->team_id,
+                    'status' => 'resigned',
+                ]);
+            }
         }
     }
     
