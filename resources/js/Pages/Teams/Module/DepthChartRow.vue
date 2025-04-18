@@ -86,6 +86,7 @@
           >
             <span>{{ player.name }}</span>
             <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
+            <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
             <span v-if="player.is_injured" class="text-red-500" title="Injured">🚑</span>
           </div>
         </div>
