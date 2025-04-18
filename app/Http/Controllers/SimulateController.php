@@ -2306,10 +2306,10 @@ class SimulateController extends Controller
                     players.id as player_id,
                     players.role,
                     SUM(player_season_stats.eff) as total_eff,
-                    players.passing, 
-                    players.shooting,
-                    players.defense,
-                    players.rebounding
+                    players.passing_rating as passing, 
+                    players.shooting_rating as shooting,
+                    players.defense_rating as defense,
+                    players.rebounding_rating as rebounding
                 ')
                 ->groupBy('players.id', 'players.role') // Use 'players.role' directly, no alias
                 ->orderByDesc('total_eff') // Rank by total efficiency
