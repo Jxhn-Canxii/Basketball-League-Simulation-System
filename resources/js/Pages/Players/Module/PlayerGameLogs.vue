@@ -1,20 +1,10 @@
 <template>
     <div class="team-roster p-3">
-        <!-- Loading State -->
-        <!-- Main Content -->
         <div>
-            <!-- Divider -->
-            <hr class="my-4 border-t border-gray-200" />
-
-            <!-- Player Profile and Playoff Performance in One Row -->
-            <!-- <ProfileHeader :player_id="player_id" /> -->
-            <!-- <h3 v-if="game_logs">{{ game_logs.player_name.player_name }} ({{ game_logs.player_name.team_name ?? 'Free Agent' }})</h3> -->
-
-            <!-- Divider -->
-            <hr class="my-4 border-t border-gray-200" />
+           
 
             <!-- Season Performance Table -->
-            <h2 class="text-sm font-semibold text-gray-800">
+            <h2 class="text-md font-semibold text-gray-800">
                 Regular Season Logs
                 {{
                     game_logs.total > 0
@@ -23,8 +13,10 @@
                 }}
             </h2>
 
+            <!-- Divider -->
+            <hr class="my-4 border-t border-gray-200" />
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <table class="min-w-full divide-y divide-gray-200 text-md">
                     <thead class="bg-gray-50 text-nowrap">
                         <tr>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Season</th>
