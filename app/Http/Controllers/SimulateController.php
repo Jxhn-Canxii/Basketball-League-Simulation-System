@@ -1638,7 +1638,7 @@ class SimulateController extends Controller
         $positions = explode('/', $position);
 
         // Start building the query for players
-        $query = DB::table('players')
+        $bestPlayer = DB::table('players')
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)

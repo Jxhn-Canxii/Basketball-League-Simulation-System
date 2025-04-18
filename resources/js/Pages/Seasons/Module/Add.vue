@@ -217,6 +217,8 @@ const createNewSeason = async () => {
                 title: "Error!",
                 text: error.response.data.message,
             });
+        } finally{
+            isProcessing.value = false;
         }
     }
 };
