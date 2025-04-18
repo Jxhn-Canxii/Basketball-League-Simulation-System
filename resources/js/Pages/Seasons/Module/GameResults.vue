@@ -948,10 +948,10 @@ const formatInjuredPlayers = (player) => {
     // If player already has a message format, use it
     if (!messageMap.has(player.player_id)) {
         const messages = [
-            `🚨 ${player.player_name} (${player.team_when_injured}) - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`,
-            `⚠️ ${player.team_when_injured}'s ${player.player_name} - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`,
-            `🏥 ${player.player_name} (${player.team_when_injured}) - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`,
-            `⛔ ${player.team_when_injured} loses ${player.player_name} - ${player.injury_type.replaceAll('_', ' ')} | ${player.recovery_games}G`
+            `🚨 ${player.player_name} ${player.position} (${player.team_when_injured}) - ${player.injury_type.replaceAll('_', ' ')} | ${player.role} | ${player.recovery_games} days`,
+            `⚠️ ${player.team_when_injured}'s ${player.player_name} ${player.position} - ${player.injury_type.replaceAll('_', ' ')} | ${player.role} | ${player.recovery_games} days`,
+            `🏥 ${player.player_name} ${player.position} (${player.team_when_injured}) - ${player.injury_type.replaceAll('_', ' ')} | ${player.role} | ${player.recovery_games} days`,
+            `⛔ ${player.team_when_injured} loses ${player.player_name} ${player.position} - ${player.injury_type.replaceAll('_', ' ')} | ${player.role} | ${player.recovery_games} days`
         ];
 
         // Pick a random message format
