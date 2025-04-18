@@ -405,7 +405,7 @@
                 <i class="fa fa-medal text-yellow-500 mr-2"></i>
                 Awards
             </h3>
-            <div v-if="main_performance.awards?.length > 0" class="ml-4">
+            <div v-if="main_performance.awards?.length > 0" class="ml-4 max-h-[35vh] overflow-y-scroll">
                 <h4 class="text-sm font-semibold text-gray-600 mb-2">
                     Awards
                     {{
@@ -432,6 +432,11 @@
         </div>
         <div class="career-highs flex-1" v-if="main_performance.player_details">
             <PlayerRadarChart v-if="main_performance.player_details" :key="main_performance.player_details.player_id" :playerRatings="main_performance.player_details" />
+            <LatestPlayerGameLogs
+                :key="main_performance.player_details.player_id"
+                :player_id="main_performance.player_details.player_id"
+                :season_id="main_performance.current_season_id"
+            />
         </div>
     </div>
     <div class="flex" v-else>
@@ -453,6 +458,7 @@ import {
     playerExpStatusText,
 } from "@/Utility/Formatter";
 import PlayerRadarChart from './PlayerRadarChart.vue';
+import LatestPlayerGameLogs from "./LatestPlayerGameLogs.vue";
 const props = defineProps({
     player_id: {
         type: Number,

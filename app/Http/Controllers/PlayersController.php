@@ -1259,6 +1259,7 @@ class PlayersController extends Controller
             ]);
         
         
+        $latestSeasonId = get_current_season_id();
 
         return response()->json([
             'player_details' => $playerDetails,
@@ -1273,6 +1274,7 @@ class PlayersController extends Controller
             'season_count' => $seasonCount,
             'awards' => $awardsData,
             'playoff_count' => $playoffCount,
+            'current_season_id' => $latestSeasonId,
         ]);
     }
 
@@ -1359,6 +1361,86 @@ class PlayersController extends Controller
         ]);
     }
 
+    public function getPlayerLatestGameLogs(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+            'season_id' => 'required|exists:seasons,id',
+            'page_num' => 'required|integer|min:1',
+            'itemsperpage' => 'required|integer|min:1',
+        ]);
+
+        $playerId = $request->player_id;
+        $seasonId = $request->season_id;
+        $page = $request->page_num;
+        $perPage = $request->itemsperpage;
+
+        // Calculate offset
+        $offset = ($page - 1) * $perPage;
+
+        $playerName = DB::table('players')
+            ->join('teams', 'players.team_id', '=', 'teams.id','left')
+            ->where('players.id', $playerId)
+            ->select('players.name as player_name', 'teams.name as team_name') // Select player name and team name
+            ->first();
+    
+
+        // Fetch player game logs for the given player and season with pagination
+        $playerGameLogs = \DB::table('player_game_stats')
+            ->join('players', 'player_game_stats.player_id', '=', 'players.id')
+            ->join('teams as player_team', 'player_game_stats.team_id', '=', 'player_team.id') // Join with player's team to get team name
+            ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
+            ->join('seasons', 'schedules.season_id', '=', 'seasons.id') // Join with seasons table
+            ->leftJoin('teams as home_team', 'schedules.home_id', '=', 'home_team.id') // Join with home team
+            ->leftJoin('teams as away_team', 'schedules.away_id', '=', 'away_team.id') // Join with away team
+            ->select(
+                'player_game_stats.id as stat_id', // Include player_game_stats.id in the select
+                'player_game_stats.game_id',
+                'player_team.name as team_name', // Player's team name
+                \DB::raw('CASE
+                WHEN player_game_stats.team_id = schedules.home_id THEN away_team.name
+                ELSE home_team.name
+            END as opponent_team_name'), // Determine opponent team name
+                'schedules.round as round', // Add round info
+                'seasons.name as season_name', // Include season name
+                'player_game_stats.*',
+                \DB::raw('(CASE
+                WHEN player_game_stats.team_id = schedules.home_id THEN
+                    (CASE WHEN schedules.home_score > schedules.away_score THEN "Win" ELSE "Loss" END)
+                ELSE
+                    (CASE WHEN schedules.away_score > schedules.home_score THEN "Win" ELSE "Loss" END)
+            END) as game_result'), // Determine win/loss
+            )
+            ->where('player_game_stats.player_id', $playerId)
+            ->orderBy('player_game_stats.id', 'desc') // Order by player_game_stats.id in descending order
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+
+        // Fetch total count of records for pagination info
+        $totalRecords = \DB::table('player_game_stats')
+            ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
+            ->where('player_game_stats.player_id', $playerId)
+            ->count();
+
+        // Prepare pagination metadata
+        $totalPages = ceil($totalRecords / $perPage);
+
+        // Calculate shooting percentages for each game and format the response
+        $formattedGameLogs = $playerGameLogs->map(function ($log) {
+            return $log;
+        });
+
+        // Prepare response
+        return response()->json([
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'total_records' => $totalRecords,
+            'game_logs' => $formattedGameLogs,
+            'player_name' => $playerName,
+        ]);
+    }
     public function getPlayersWithFilters(Request $request)
     {
         $sortColumn = $request->input('sort_by');

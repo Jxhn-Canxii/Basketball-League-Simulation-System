@@ -186,6 +186,7 @@ Route::middleware('auth')->group(function () {
         Route::post('player-injury', [PlayersController::class, 'getPlayerInjuryHistory'])->name('players.season.injury');
 
         Route::post('player-game-logs', [PlayersController::class, 'getPlayerGameLogs'])->name('players.game.logs');
+        Route::post('player-game-logs', [PlayersController::class, 'getPlayerLatestGameLogs'])->name('players.latest.game.logs');
         Route::post('players-playoff-filters', [PlayersController::class, 'getPlayersWithFilters'])->name('filter.playoffs.player');
 
         Route::get('player-best-alltime', [PlayersController::class, 'getTop20PlayersAllTime'])->name('best.players.alltime');
