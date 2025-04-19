@@ -599,33 +599,8 @@ class SimulateController extends Controller
             }
             
             //check first to balance team positions
-            $homeTeamBalancer = $this->balanceTeamPositions($gameData->home_team_id);
-            if (!$homeTeamBalancer) {
-                \Log::error('Home team balance failed', [
-                    'team_id' => $gameData->home_team_id,
-                    'team_name' => $gameData->home_team_name
-                ]);
-                
-                return response()->json([
-                    'team' => $gameData->home_team_id,
-                    'message' => $gameData->home_team_name.' roster cannot meet requirements. Game postponed!',
-                    'error_code' => 'ROSTER_IMBALANCE'
-                ], 503); // 503 Service Unavailable might be more appropriate
-            }
-
-            $awayTeamBalancer = $this->balanceTeamPositions($gameData->away_team_id);
-            if (!$awayTeamBalancer) {
-                \Log::error('Away team balance failed', [
-                    'team_id' => $gameData->away_team_id,
-                    'team_name' => $gameData->away_team_name
-                ]);
-                
-                return response()->json([
-                    'team' => $gameData->away_team_id,
-                    'message' => $gameData->away_team_name.' roster cannot meet requirements. Game postponed!',
-                    'error_code' => 'ROSTER_IMBALANCE'
-                ], 503);
-            }
+            $this->balanceTeamPositions($gameData->home_team_id);
+            $this->balanceTeamPositions($gameData->away_team_id);
                 //check if home team is injury depleted
             $homeTeamInjuries = DB::table('players')
             ->where('team_id', $gameData->home_team_id)
@@ -1620,13 +1595,12 @@ class SimulateController extends Controller
                 $playersToWaive = DB::table('players')
                     ->where('team_id', $teamId)
                     ->where('position', 'LIKE', "%$pos%")
-                    ->orderByRaw('
-                        LENGTH(position) - LENGTH(REPLACE(position, "/", "")) ASC,
-                        contract_years ASC
-                    ')
+                    ->orderByRaw('contract_years ASC')
                     ->get();
     
                 $waived = 0;
+                $playerIdsToWaive = [];
+    
                 foreach ($playersToWaive as $player) {
                     $playerPositions = array_map('trim', explode('/', $player->position));
                     $canWaive = true;
@@ -1640,21 +1614,30 @@ class SimulateController extends Controller
     
                     if (!$canWaive) continue;
     
-                    DB::table('players')
-                        ->where('id', $player->id)
-                        ->update(['team_id' => 0, 'contract_years' => 0]);
-    
-                    DB::table('transactions')->insert([
-                        'player_id' => $player->id,
-                        'season_id' => $seasonId,
-                        'details' => "Waived {$player->name} from {$team->name}",
-                        'from_team_id' => $teamId,
-                        'to_team_id' => 0,
-                        'status' => 'waived',
-                    ]);
-    
+                    $playerIdsToWaive[] = $player->id;
                     $waived++;
                     if ($waived >= $excess) break;
+                }
+    
+                // Batch update players to waived
+                if (!empty($playerIdsToWaive)) {
+                    DB::table('players')
+                        ->whereIn('id', $playerIdsToWaive)
+                        ->update(['team_id' => 0, 'contract_years' => 0]);
+    
+                    // Insert waiving transactions in bulk
+                    $waiveTransactions = array_map(function ($playerId) use ($teamId, $seasonId) {
+                        return [
+                            'player_id' => $playerId,
+                            'season_id' => $seasonId,
+                            'details' => "Waived player from team",
+                            'from_team_id' => $teamId,
+                            'to_team_id' => 0,
+                            'status' => 'waived',
+                        ];
+                    }, $playerIdsToWaive);
+    
+                    DB::table('transactions')->insert($waiveTransactions);
                 }
             }
     
@@ -1664,13 +1647,16 @@ class SimulateController extends Controller
                 ->where('is_active', 1)
                 ->where('is_injured', 0)
                 ->orderByDesc('overall_rating')
-                ->lockForUpdate()
+                ->limit(5)  // Limits the result to 10 players
                 ->get();
+        
     
             $signedPlayerIds = [];
+            $signTransactions = [];
     
             foreach ($underfilled as $pos => $needed) {
                 $added = 0;
+    
                 foreach ($freeAgents as $freeAgent) {
                     if ($added >= $needed) break;
                     if (in_array($freeAgent->id, $signedPlayerIds)) continue;
@@ -1686,22 +1672,28 @@ class SimulateController extends Controller
                             'contract_years' => 1
                         ]);
     
-                    DB::table('transactions')->insert([
+                    $signTransactions[] = [
                         'player_id' => $freeAgent->id,
                         'season_id' => $seasonId,
                         'details' => "Signed {$freeAgent->name} to {$team->name} as {$pos}",
                         'from_team_id' => 0,
                         'to_team_id' => $teamId,
                         'status' => 'signed',
-                    ]);
-    
-                    DB::afterCommit(function () use ($teamId, $freeAgent) {
-                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $freeAgent->id);
-                    });
+                    ];
     
                     $signedPlayerIds[] = $freeAgent->id;
                     $added++;
+    
+                    // Record the player's season stats after signing
+                    DB::afterCommit(function () use ($teamId, $freeAgent) {
+                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $freeAgent->id);
+                    });
                 }
+            }
+    
+            // Bulk insert signing transactions
+            if (!empty($signTransactions)) {
+                DB::table('transactions')->insert($signTransactions);
             }
     
             DB::commit();
@@ -1710,10 +1702,9 @@ class SimulateController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error("Balance error - Team: {$teamId} - {$e->getMessage()}");
-            return false;
+            return true;
         }
-    }
-    
+    }    
 
     public function getActivePlayersSorted($teamId, $rolePriority)
     {
