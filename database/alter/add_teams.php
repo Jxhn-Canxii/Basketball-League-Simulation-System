@@ -48,7 +48,7 @@ VALUES
 (40, 'Ninjas', 'NIN', '000000', 'FF671F', 1, 3, 'Ormoc', 'Leyte shadows striking silently from the west', NOW(), NOW()), -- San Jose Sharks Inspired
 (41, 'Dragons', 'DRA', 'FF5910', '000000', 1, 3, 'Kalibo', 'Ati-atihan serpents blazing through Panay winds', NOW(), NOW()), -- Drexel Dragons (NCAA)
 (42, 'Phoenix', 'PHO', '862633', '000000', 1, 3, 'Catarman', 'Northern Samar flames rising from island ashes', NOW(), NOW()), -- Elon Phoenix (NCAA)
-(43, 'Sharks', 'SHA', '006272', 'EAE6DE', 1, 3, 'San Jose de Buenavista', 'Antique predators circling with quiet fury', NOW(), NOW()), -- Miami Sharks (NHL Retro)
+(43, 'Sharks', 'SHA', '006272', 'EAE6DE', 1, 3, 'San Jose', 'Antique predators circling with quiet fury', NOW(), NOW()), -- Miami Sharks (NHL Retro)
 (44, 'Giants', 'GNT', '0B2265', 'A71930', 1, 3, 'Baybay', 'Southern Leyte titans grounded in historic soil', NOW(), NOW()), -- New York Giants (NFL)
 (45, 'Fire', 'FRE', 'CE1141', '000000', 1, 3, 'Maasin', 'Fiery defenders igniting island battles', NOW(), NOW()), -- Chicago Fire (MLS)
 (46, 'Patriots', 'PAT', 'C60C30', '0033A0', 1, 3, 'Cadiz', 'Negros patriots blazing with sugarland pride', NOW(), NOW()), -- New England Patriots (NFL)
