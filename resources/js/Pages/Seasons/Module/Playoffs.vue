@@ -613,6 +613,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
         // Close the simulating status alert if there's an error
         Swal.close();
 
+        isHide.value = false;
         // Show error message using Swal2
         Swal.fire({
             icon: "error",
