@@ -2178,10 +2178,10 @@ class SimulateController extends Controller
                 ->selectRaw('
                     players.id as player_id,
                     players.role,
-                    SUM(player_season_stats.eff) as total_eff
+                    SUM(player_season_stats.per) as total_per
                 ')
                 ->groupBy('players.id', 'players.role') // Use 'players.role' directly, no alias
-                ->orderByDesc('total_eff') // Rank by total efficiency
+                ->orderByDesc('total_per') // Rank by total per
                 ->get();
             
             // return $stats;
