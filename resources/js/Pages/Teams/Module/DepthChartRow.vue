@@ -17,8 +17,8 @@
             @click="selectedPlayer = player"
             class="cursor-pointer text-center flex items-center justify-center gap-1"
           >
-            <span>{{ player.name }}</span>
-
+            <span :class="{ 'line-through': player.status === 2 }">{{ player.name }}</span>
+            
             <!-- Role Icons -->
             <span v-if="player.role === 'star player'" title="Star Player">
               <i class="fas fa-star text-yellow-400"></i>
