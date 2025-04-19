@@ -2,91 +2,32 @@
   <div class="space-y-4">
     <!-- Position list -->
     <div class="flex gap-6">
-      <!-- PG Depth Chart -->
-      <div class="w-1/5">
-        <h3 class="text-lg font-semibold text-center">Point Guard (PG)</h3>
+      <div
+        v-for="position in positions"
+        :key="position.code"
+        class="w-1/5"
+      >
+        <h3 class="text-lg font-semibold text-center">
+          {{ position.label }} ({{ position.code }})
+        </h3>
         <div class="flex flex-col gap-3">
           <div
-            v-for="player in sortedByPosition('PG')"
+            v-for="player in sortedByPosition(position.code)"
             :key="player.id"
             @click="selectedPlayer = player"
             class="cursor-pointer text-center flex items-center justify-center gap-1"
           >
             <span>{{ player.name }}</span>
-            <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
-            <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
-            <span v-if="player.is_injured" class="text-red-500" title="Injured">🚑</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- SG Depth Chart -->
-      <div class="w-1/5">
-        <h3 class="text-lg font-semibold text-center">Shooting Guard (SG)</h3>
-        <div class="flex flex-col gap-3">
-          <div
-            v-for="player in sortedByPosition('SG')"
-            :key="player.id"
-            @click="selectedPlayer = player"
-            class="cursor-pointer text-center flex items-center justify-center gap-1"
-          >
-            <span>{{ player.name }}</span>
+            <!-- Role Icons -->
             <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
-            <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
-            <span v-if="player.is_injured" class="text-red-500" title="Injured">🚑</span>
-          </div>
-        </div>
-      </div>
+            <span v-else-if="player.role === 'starter'" title="Starter">🔰</span>
+            <span v-else-if="player.role === 'all star'" title="All-Star">🌟</span>
 
-      <!-- SF Depth Chart -->
-      <div class="w-1/5">
-        <h3 class="text-lg font-semibold text-center">Small Forward (SF)</h3>
-        <div class="flex flex-col gap-3">
-          <div
-            v-for="player in sortedByPosition('SF')"
-            :key="player.id"
-            @click="selectedPlayer = player"
-            class="cursor-pointer text-center flex items-center justify-center gap-1"
-          >
-            <span>{{ player.name }}</span>
-            <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
+            <!-- Rookie -->
             <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
-            <span v-if="player.is_injured" class="text-red-500" title="Injured">🚑</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- PF Depth Chart -->
-      <div class="w-1/5">
-        <h3 class="text-lg font-semibold text-center">Power Forward (PF)</h3>
-        <div class="flex flex-col gap-3">
-          <div
-            v-for="player in sortedByPosition('PF')"
-            :key="player.id"
-            @click="selectedPlayer = player"
-            class="cursor-pointer text-center flex items-center justify-center gap-1"
-          >
-            <span>{{ player.name }}</span>
-            <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
-            <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
-            <span v-if="player.is_injured" class="text-red-500" title="Injured">🚑</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- C Depth Chart -->
-      <div class="w-1/5">
-        <h3 class="text-lg font-semibold text-center">Center (C)</h3>
-        <div class="flex flex-col gap-3">
-          <div
-            v-for="player in sortedByPosition('C')"
-            :key="player.id"
-            @click="selectedPlayer = player"
-            class="cursor-pointer text-center flex items-center justify-center gap-1"
-          >
-            <span>{{ player.name }}</span>
-            <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
-            <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
+            <!-- Injured -->
             <span v-if="player.is_injured" class="text-red-500" title="Injured">🚑</span>
           </div>
         </div>
@@ -101,7 +42,6 @@
     </Modal>
   </div>
 </template>
-
 <script setup>
 import { ref } from "vue";
 import Modal from "@/Components/Modal.vue";
@@ -120,15 +60,18 @@ const props = defineProps({
 
 const selectedPlayer = ref(null);
 
+// Position code and labels
+const positions = [
+  { code: 'PG', label: 'Point Guard' },
+  { code: 'SG', label: 'Shooting Guard' },
+  { code: 'SF', label: 'Small Forward' },
+  { code: 'PF', label: 'Power Forward' },
+  { code: 'C', label: 'Center' }
+];
+
 const sortedByPosition = (position) => {
-  return props.players?.filter(player => {
-    return player.position.split('/').includes(position);
-  });
+  return props.players?.filter(player =>
+    player.position.split('/').includes(position)
+  );
 }
 </script>
-
-<style scoped>
-.cursor-pointer:hover {
-  text-decoration: underline;
-}
-</style>
