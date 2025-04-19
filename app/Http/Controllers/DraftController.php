@@ -324,39 +324,47 @@ class DraftController extends Controller
     
     private function getTeamPositionNeeds($teamId)
     {
-        $idealCount = [
-            'PG' => 2,
-            'SG' => 2,
+        // Minimum required count for each main position
+        $required = [
+            'PG' => 3,
+            'SG' => 3,
             'SF' => 3,
             'PF' => 3,
-            'C' => 3,
-            'PG/SG' => 1,
-            'SG/SF' => 1,
-            'SF/PF' => 1,
-            'PF/C' => 1,
+            'C'  => 3,
         ];
     
+        // Initialize counters
+        $positionCount = [
+            'PG' => 0,
+            'SG' => 0,
+            'SF' => 0,
+            'PF' => 0,
+            'C'  => 0,
+        ];
+    
+        // Fetch players on the team
         $roster = DB::table('players')->where('team_id', $teamId)->get();
     
         foreach ($roster as $player) {
             $positions = explode('/', $player->position);
-            if (count($positions) === 2) {
-                $dual = implode('/', $positions);
-                if (isset($idealCount[$dual]) && $idealCount[$dual] > 0) {
-                    $idealCount[$dual]--;
-                }
-            }
-    
             foreach ($positions as $pos) {
-                if (isset($idealCount[$pos]) && $idealCount[$pos] > 0) {
-                    $idealCount[$pos]--;
+                if (isset($positionCount[$pos])) {
+                    $positionCount[$pos]++;
                 }
             }
         }
     
-        // Return only positions still needed
-        return array_filter($idealCount, fn($count) => $count > 0);
+        // Find unmet needs
+        $needs = [];
+        foreach ($required as $pos => $minCount) {
+            if ($positionCount[$pos] < $minCount) {
+                $needs[$pos] = $minCount - $positionCount[$pos];
+            }
+        }
+    
+        return $needs; // returns ['PG' => 1, 'C' => 2] etc.
     }
+    
 
     private function updateTeamPositionNeeds($currentNeeds, $playerPosition)
     {
