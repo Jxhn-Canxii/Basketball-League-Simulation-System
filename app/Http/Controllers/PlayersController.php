@@ -578,6 +578,7 @@ class PlayersController extends Controller
                         ->orWhere('position', 'like', '%/' . $corePos . '/%');
                 })
                 ->where('is_active', 1)
+                ->where('is_injured', 0)
                 ->count();
 
             if ($count < $requiredPlayersPerPosition) {
