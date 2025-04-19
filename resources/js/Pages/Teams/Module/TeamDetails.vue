@@ -11,7 +11,7 @@
         >
             <i class="fa fa-eye"></i> {{ props.text ?? 'View' }}
         </button>
-        <div  v-if="props.showButton == 0" class="flex items-center space-x-1 px-2">
+        <div  v-if="props.showButton == 0" class="flex items-center justify-center space-x-1 px-2">
             <div
                 v-if="props.hexPrimaryColor && props.hexSecondaryColor"
                 class="w-5 h-5 border"
