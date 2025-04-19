@@ -539,8 +539,8 @@
                     >
                         <p class="text-4xl font-extrabold mb-1 relative" :title="bestPlayer?.name">
                             {{ playerFormatter(bestPlayer?.name) }}
-                            <sup class="text-xs absolute top-0" v-if="bestPlayer?.age">
-                               {{ bestPlayer?.age }}
+                            <sup class="text-xs absolute top-0 ml-2 mt-2 text-nowrap" v-if="bestPlayer?.age">
+                               {{ bestPlayer?.age }} | {{ bestPlayer?.position }}
                             </sup>
                         </p>
                         <div class="flex justify-center p-2">

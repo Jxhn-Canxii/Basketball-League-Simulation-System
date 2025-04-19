@@ -254,6 +254,7 @@ class GameController extends Controller
             'name' => $bestWinningTeamPlayer->player_name,
             'team' => $bestWinningTeamPlayer->team_name,
             'age' => $bestWinningTeamPlayer->age,
+            'position' => $bestWinningTeamPlayer->position,
             'points' => $bestWinningTeamPlayer->points,
             'assists' => $bestWinningTeamPlayer->assists,
             'rebounds' => $bestWinningTeamPlayer->rebounds,
