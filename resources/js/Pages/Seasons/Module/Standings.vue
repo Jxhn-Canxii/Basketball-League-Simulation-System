@@ -51,6 +51,8 @@
                   :current_conference_rank="team.conference_rank"
                   :season_id="team.season_id"
                   class="text-sm text-black"
+                  :hexPrimaryColor="team.primary_color"
+                  :hexSecondaryColor="team.secondary_color"
                   :showButton="0"
                   :text="`${team.team_city} ${team.team_name}`"
                 />

@@ -11,53 +11,62 @@
         >
             <i class="fa fa-eye"></i> {{ props.text ?? 'View' }}
         </button>
-        <b v-if="props.showButton == 0" class="hover:text-blue-500" @click.prevent="showTeamDetails()">
-            {{ props.text == 'null' ? 'TBD' : props.text }}
-            <sup v-if="props.showInfo" class="space-x-1">
-               <!-- Defending Conference Champion (CC) -->
-                <i v-if="data.is_conference_champion" class="fas fa-trophy text-blue-500" title="Defending Conference Champion"></i>
+        <div  v-if="props.showButton == 0" class="flex items-center space-x-1 px-2">
+            <div
+                v-if="props.hexPrimaryColor && props.hexSecondaryColor"
+                class="w-5 h-5 border"
+                :style="{
+                    background: 'linear-gradient(135deg, #' + props.hexPrimaryColor + ' 50%, #' + props.hexSecondaryColor + ' 50%)'
+                }"
+            ></div>
+            <b v-if="props.showButton == 0"  :style="{ color: '#' + props.hexPrimaryColor }" class="hover:text-blue-500" @click.prevent="showTeamDetails()">
+                {{ props.text == 'null' ? 'TBD' : props.text }}
+                <sup v-if="props.showInfo" class="space-x-1">
+                <!-- Defending Conference Champion (CC) -->
+                    <i v-if="data.is_conference_champion" class="fas fa-trophy text-blue-500" title="Defending Conference Champion"></i>
 
-                <!-- Defending Overall Champion (OC) -->
-                <i v-if="data.is_defending_champion" class="fas fa-crown text-yellow-500" title="Defending Overall Champion"></i>
+                    <!-- Defending Overall Champion (OC) -->
+                    <i v-if="data.is_defending_champion" class="fas fa-crown text-yellow-500" title="Defending Overall Champion"></i>
 
-                <!-- Defending National Champion (NC) -->
-                <i v-if="data.is_finals_champion" class="fas fa-globe-americas text-green-500" title="Defending National Champion"></i>
+                    <!-- Defending National Champion (NC) -->
+                    <i v-if="data.is_finals_champion" class="fas fa-globe-americas text-green-500" title="Defending National Champion"></i>
 
-                <!-- Last Season Finalist (NF) -->
-                <i v-if="data.is_finalist" class="fas fa-star text-purple-500" title="Last Season Finalist"></i>
+                    <!-- Last Season Finalist (NF) -->
+                    <i v-if="data.is_finalist" class="fas fa-star text-purple-500" title="Last Season Finalist"></i>
 
-                <!-- Finals MVP Count -->
-                <b v-if="data.finals_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-orange-500" title="# of Finals MVP in A Roster Count">{{ data.finals_mvp_count }}</b>
+                    <!-- Finals MVP Count -->
+                    <b v-if="data.finals_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-orange-500" title="# of Finals MVP in A Roster Count">{{ data.finals_mvp_count }}</b>
 
-                <!-- Regular Season MVP Count -->
-                <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-green-500" title="# of Best Player of the Season in A Roster Count">{{ data.overall_mvp_count }}</b>
+                    <!-- Regular Season MVP Count -->
+                    <b v-if="data.overall_mvp_count > 0" class="text-white p-1 rounded-full text-xs bg-green-500" title="# of Best Player of the Season in A Roster Count">{{ data.overall_mvp_count }}</b>
 
-                <!-- Regular Season MVP Count -->
-                <b v-if="data.dpos_count > 0" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Defensive Player of the Season in A Roster Count">{{ data.dpos_count }}</b>
+                    <!-- Regular Season MVP Count -->
+                    <b v-if="data.dpos_count > 0" class="text-white p-1 rounded-full text-xs bg-purple-500" title="# of Defensive Player of the Season in A Roster Count">{{ data.dpos_count }}</b>
 
-                 <!-- # of Finals MVP in A Roster Count -->
-                 <b v-if="data.ros_count > 0" class="text-white p-1 rounded-full text-xs bg-red-500" title="# of Rookie of The Season in A Roster Count">{{ data.ros_count }}</b>
+                    <!-- # of Finals MVP in A Roster Count -->
+                    <b v-if="data.ros_count > 0" class="text-white p-1 rounded-full text-xs bg-red-500" title="# of Rookie of The Season in A Roster Count">{{ data.ros_count }}</b>
 
-                <!-- Overall Rank and Arrow Comparison -->
-                <b v-if="data.prev_conference_rank && props.current_conference_rank > 0" :class="{
-                    'text-green-500': props.current_conference_rank < data.prev_conference_rank, 
-                    'text-red-500': props.current_conference_rank > data.prev_conference_rank, 
-                    'text-white': props.current_conference_rank === data.prev_conference_rank
-                }" title="Overall Rank Comparison" class="text-xs">
-                    {{ data.prev_conference_rank - props.current_conference_rank }}
-                    <span v-if="props.current_conference_rank < data.prev_conference_rank" class="text-green-500">
-                        <i class="fa fa-arrow-up"></i>
-                    </span>
-                    <span v-if="props.current_conference_rank > data.prev_conference_rank" class="text-red-500">
-                        <i class="fa fa-arrow-down"></i>
-                    </span>
-                    <span v-if="props.current_conference_rank === data.prev_conference_rank" class="text-white">
-                        <i class="fa fa-minus"></i>
-                    </span>
+                    <!-- Overall Rank and Arrow Comparison -->
+                    <b v-if="data.prev_conference_rank && props.current_conference_rank > 0" :class="{
+                        'text-green-500': props.current_conference_rank < data.prev_conference_rank, 
+                        'text-red-500': props.current_conference_rank > data.prev_conference_rank, 
+                        'text-white': props.current_conference_rank === data.prev_conference_rank
+                    }" title="Overall Rank Comparison" class="text-xs">
+                        {{ data.prev_conference_rank - props.current_conference_rank }}
+                        <span v-if="props.current_conference_rank < data.prev_conference_rank" class="text-green-500">
+                            <i class="fa fa-arrow-up"></i>
+                        </span>
+                        <span v-if="props.current_conference_rank > data.prev_conference_rank" class="text-red-500">
+                            <i class="fa fa-arrow-down"></i>
+                        </span>
+                        <span v-if="props.current_conference_rank === data.prev_conference_rank" class="text-white">
+                            <i class="fa fa-minus"></i>
+                        </span>
 
-                </b>
-            </sup>
-        </b>
+                    </b>
+                </sup>
+            </b>
+        </div>
         <Modal :show="isTeamModalOpen" :maxWidth="'fullscreen'" title="Team Information" @close="isTeamModalOpen = false">
             <div 
                 class="flex justify-start" 
@@ -167,6 +176,14 @@ const props = defineProps({
         default: 0,
     },
     text: String,
+    hexPrimaryColor: {
+        type: String,
+        default: false,
+    },
+    hexSecondaryColor: {
+        type: String,
+        default: false,
+    },
     showInfo: {
         type: Boolean,
         default: false, // Default to false if not explicitly set

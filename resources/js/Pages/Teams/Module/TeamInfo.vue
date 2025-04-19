@@ -3,16 +3,19 @@
     <div class="flex justify-between p-3 border-b border-gray-200 rounded" 
     :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
     >
-        <div class="flex">
+        <div class="flex space-x-2 items-center">
+            <div
+                v-if="team_info.teams.primary_color && team_info.teams.secondary_color"
+                class="w-5 h-5 border border-white"
+                :style="{
+                    background: 'linear-gradient(135deg, #' + team_info.teams.primary_color + ' 50%, #' + team_info.teams.secondary_color + ' 50%)'
+                }"
+            ></div>
             <h2
                 class="text-xl font-semibold"
             >
                {{ team_info.teams.city ?? "-" }} {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
             </h2>
-            <div class="flex items-center space-x-1 px-4">
-                <span class="w-5 h-5 rounded-full border" :style="{ background: '#'+team_info.teams.primary_color }"></span>
-                <span class="w-5 h-5 rounded-full border" :style="{ backgroundColor: '#'+team_info.teams.secondary_color }"></span>
-            </div>
         </div>
         <div class="flex justify-end">
             {{ team_info.teams.description ?? "-" }}

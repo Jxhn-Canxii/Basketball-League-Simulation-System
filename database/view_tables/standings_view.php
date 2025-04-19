@@ -4,6 +4,8 @@ WITH team_games AS (
         teams.id AS team_id,
         teams.name AS team_name,
         teams.city AS team_city,
+        teams.primary_color as primary_color,
+        teams.secondary_color as secondary_color,
         teams.acronym AS team_acronym,
         teams.conference_id AS conference_id,
         conferences.name AS conference_name,
@@ -72,6 +74,8 @@ team_rankings AS (
         teams.name AS team_name,
         teams.city AS team_city,
         teams.acronym AS team_acronym,
+        teams.primary_color AS primary_color,
+        teams.secondary_color AS secondary_color,
         teams.conference_id AS conference_id,
         conferences.name AS conference_name,
         COALESCE(SUM(CASE
@@ -105,13 +109,15 @@ team_rankings AS (
     WHERE
         schedules.round NOT IN ('play_ins_elims_round_1','play_ins_elims_round_2','play_ins_finals','round_of_32','round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals', 'finals')
     GROUP BY
-        teams.id, teams.name,teams.city, teams.acronym, teams.conference_id, conferences.name, schedules.season_id
+        teams.id, teams.name,teams.city, teams.acronym, teams.conference_id,teams.primary_color, teams.secondary_color, conferences.name, schedules.season_id
 ),
 ranked_team_rankings AS (
     SELECT
         team_id,
         team_name,
         team_city,
+        primary_color,
+        secondary_color,
         team_acronym,
         conference_id,
         conference_name,
