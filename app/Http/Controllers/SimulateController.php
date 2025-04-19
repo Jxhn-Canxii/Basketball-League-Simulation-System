@@ -114,6 +114,35 @@ class SimulateController extends Controller
             )
             ->findOrFail($request->schedule_id);
 
+        //check first to balance team positions
+        $homeTeamBalancer = $this->balanceTeamPositions($gameData->home_team_id);
+        if (!$homeTeamBalancer) {
+            \Log::error('Home team balance failed', [
+                'team_id' => $gameData->home_team_id,
+                'team_name' => $gameData->home_team_name
+            ]);
+            
+            return response()->json([
+                'team' => $gameData->home_team_id,
+                'message' => $gameData->home_team_name.' roster cannot meet requirements. Game postponed!',
+                'error_code' => 'ROSTER_IMBALANCE'
+            ], 503); // 503 Service Unavailable might be more appropriate
+        }
+
+        $awayTeamBalancer = $this->balanceTeamPositions($gameData->away_team_id);
+        if (!$awayTeamBalancer) {
+            \Log::error('Away team balance failed', [
+                'team_id' => $gameData->away_team_id,
+                'team_name' => $gameData->away_team_name
+            ]);
+            
+            return response()->json([
+                'team' => $gameData->away_team_id,
+                'message' => $gameData->away_team_name.' roster cannot meet requirements. Game postponed!',
+                'error_code' => 'ROSTER_IMBALANCE'
+            ], 503);
+        }
+
         //check if home team is injury depleted
         $homeTeamInjuries = DB::table('players')
         ->where('team_id', $gameData->home_team_id)
@@ -1543,6 +1572,119 @@ class SimulateController extends Controller
             }
         } catch (\Exception $e) {
             \Log::error("Error updating fatigue and injury for player {$player->id}: " . $e->getMessage());
+        }
+    }
+    
+    public function balanceTeamPositions($teamId)
+    {
+        DB::beginTransaction();
+        try {
+            $seasonId = get_current_season_id();
+            
+            // Get REAL-TIME counts using a fresh query
+            $positionCounts = DB::table('players')
+                ->where('team_id', $teamId)
+                ->selectRaw('
+                    COUNT(CASE WHEN position LIKE "%PG%" THEN 1 END) as PG,
+                    COUNT(CASE WHEN position LIKE "%SG%" THEN 1 END) as SG,
+                    COUNT(CASE WHEN position LIKE "%SF%" THEN 1 END) as SF,
+                    COUNT(CASE WHEN position LIKE "%PF%" THEN 1 END) as PF,
+                    COUNT(CASE WHEN position LIKE "%C%" THEN 1 END) as C
+                ')
+                ->first();
+
+            $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+            
+            // Step 1: Check under/overfilled positions
+            $underfilled = [];
+            $overfilled = [];
+            
+            foreach ($positions as $position) {
+                $count = $positionCounts->$position;
+                if ($count < 3) {
+                    $underfilled[$position] = $count;
+                } elseif ($count > 3) {
+                    $overfilled[$position] = $count;
+                }
+            }
+
+            if (empty($underfilled)) {
+                DB::commit();
+                return true;
+            }
+
+            // Step 2: Waive players
+            if (!empty($overfilled)) {
+                arsort($overfilled);
+                $waiveFrom = array_key_first($overfilled);
+
+                $playerToWaive = DB::table('players')
+                    ->where('team_id', $teamId)
+                    ->where('position', 'like', "%$waiveFrom%")
+                    ->orderBy('contract_years', 'asc')
+                    ->first();
+
+                if ($playerToWaive) {
+                    // Remove from team
+                    DB::table('players')
+                        ->where('id', $playerToWaive->id)
+                        ->update(['team_id' => 0, 'contract_years' => 0]);
+
+                    // Log transaction
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerToWaive->id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived by ' . DB::table('teams')->find($teamId)->name,
+                        'from_team_id' => $teamId,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
+                }
+            }
+
+            // Step 3: Sign free agents with FRESH LOOKUPS
+            foreach ($underfilled as $position => $currentCount) {
+                $needed = 3 - $currentCount;
+
+                for ($i = 0; $i < $needed; $i++) {
+                    $freeAgent = DB::table('players')
+                        ->where('team_id', 0)
+                        ->where('position', 'like', "%$position%")
+                        ->orderBy('overall_rating', 'desc')
+                        ->lockForUpdate() // Prevent race conditions
+                        ->first();
+
+                    if ($freeAgent) {
+                        // Update player
+                        DB::table('players')
+                            ->where('id', $freeAgent->id)
+                            ->update([
+                                'team_id' => $teamId,
+                                'contract_years' => rand(1,3)
+                            ]);
+
+                        // Log transaction
+                        DB::table('transactions')->insert([
+                            'player_id' => $freeAgent->id,
+                            'season_id' => $seasonId,
+                            'details' => "{$freeAgent->name} signed to " . DB::table('teams')->find($teamId)->name.' to fill lacking position.',
+                            'from_team_id' => 0,
+                            'to_team_id' => $teamId,
+                            'status' => 'signed',
+                        ]);
+
+                        // Update stats
+                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $freeAgent->id);
+                    }
+                }
+            }
+
+            DB::commit();
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Balance failed for team $teamId: " . $e->getMessage());
+            return false;
         }
     }
 
