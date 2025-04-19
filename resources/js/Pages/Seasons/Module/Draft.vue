@@ -416,7 +416,7 @@ const addPlayer = async (info) => {
         // return response.data.message; // Return success message for logging
         Swal.fire({
             icon: "success",
-            title: info.name + ' has added to Draft Pool!',
+            title:`${ response.data.player.name } | ${ response.data.player.age } | ${ response.data.player.position } has added to Draft Pool!`,
             text: response.data.message, // Assuming the response contains a 'message' field
         });
         
