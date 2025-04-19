@@ -54,7 +54,7 @@
       <div><strong>FT%:</strong> {{ player.free_throw_percentage }}%</div>
       <div><strong>EFF:</strong> <span :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</span></div>
       <div><strong>Minutes:</strong> {{ adjustedMinutes(player) }} MPG</div>
-      <div><strong>Status:</strong> <span :class="player.isInjured ? 'text-red-500' : 'text-green-600'">{{ player.isInjured ? 'Injured' : 'Healthy' }}</span></div>
+      <div><strong>Status:</strong> <span :class="player.is_injured ? 'text-red-500' : 'text-green-600'">{{ player.is_injured ? 'Injured' : 'Healthy' }}</span></div>
     </div>
      <LatestPlayerGameLogs
         :key="player.player_id"
