@@ -30,6 +30,10 @@
               <i class="fas fa-shield-alt text-green-500"></i>
             </span>
 
+            <span v-if="player.is_rookie" title="Rookie">
+              <i class="fas fa-user-graduate text-blue-400"></i>
+            </span>
+
             <!-- Newly Acquired -->
             <span
               title="Newly Acquired"
