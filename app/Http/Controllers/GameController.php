@@ -449,6 +449,7 @@ class GameController extends Controller
             'stat_leaders' => $statLeaders,
             'best_player' => $bestWinningTeamPlayerDetails,
             'total_players_played' => $playerStats->count(),
+            'current_season' => get_current_season_id(),
         ];
 
         return response()->json([

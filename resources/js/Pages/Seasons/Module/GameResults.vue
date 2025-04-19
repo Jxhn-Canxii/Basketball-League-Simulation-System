@@ -216,54 +216,56 @@
                     backgroundColor: '#' + gameDetails?.home_team.primary_color,
                 }"
             >
-            <div class="flex justify-between">
-                <h4 class="text-lg font-semibold flex items-center mb-1">
-                    {{ gameDetails?.home_team.name }} Player Stats
-                </h4>
-                <ul class="flex space-x-2">
-                    <li class="flex flex-col items-center">
-                        <span
-                            class="flex-shrink-0 w-10 h-10 p-2 bg-blue-600 rounded-full flex items-center justify-center"
+                <div class="flex justify-between">
+                    <h4 class="text-lg font-semibold flex items-center mb-1">
+                        {{ gameDetails?.home_team.name }} Player Stats &nbsp;
+                        <i class="fas fa-chart-bar text-white" @click.prevent="showHomeDepthChart = !showHomeDepthChart"></i>
+                    </h4>
+                    <ul class="flex space-x-2">
+                        <li class="flex flex-col items-center">
+                            <span
+                                class="flex-shrink-0 w-10 h-10 p-2 bg-blue-600 rounded-full flex items-center justify-center"
+                            >
+                                <span class="text-sm font-bold text-white">{{
+                                    gameDetails?.home_team.ratings.offense_rating
+                                }}</span>
+                            </span>
+                            <p class="text-xs text-gray-900 font-bold">OFF</p>
+                        </li>
+                        <li class="flex flex-col items-center">
+                            <span
+                            class="flex-shrink-0 w-10 h-10 p-2 bg-red-600 rounded-full flex items-center justify-center"
                         >
                             <span class="text-sm font-bold text-white">{{
-                                gameDetails?.home_team.ratings.offense_rating
-                            }}</span>
-                        </span>
-                        <p class="text-xs text-gray-900 font-bold">OFF</p>
-                    </li>
-                    <li class="flex flex-col items-center">
-                        <span
-                        class="flex-shrink-0 w-10 h-10 p-2 bg-red-600 rounded-full flex items-center justify-center"
-                    >
-                        <span class="text-sm font-bold text-white">{{
-                                gameDetails?.home_team.ratings.defense_rating
-                            }}</span>
-                        </span>
-                        <p class="text-xs text-gray-900 font-bold">DEF</p>
-                    </li>
-                    <li class="flex flex-col items-center">
-                        <span
-                        class="flex-shrink-0 w-10 h-10 p-2 bg-violet-600 rounded-full flex items-center justify-center"
-                    >
-                        <span class="text-sm font-bold text-white">{{
-                                gameDetails?.home_team.ratings.passing_rating
-                            }}</span>
-                        </span>
-                        <p class="text-xs text-gray-900 font-bold">PASS</p>
-                    </li>
-                    <li class="flex flex-col items-center">
-                        <span
-                        class="flex-shrink-0 w-10 h-10 p-2 bg-yellow-600 rounded-full flex items-center justify-center"
-                    >
-                        <span class="text-sm font-bold text-white">{{
-                                gameDetails?.home_team.ratings.rebounding_rating
-                            }}</span>
-                        </span>
-                        <p class="text-xs text-gray-900 font-bold">REB</p>
-                    </li>
-                </ul>
-            </div>
+                                    gameDetails?.home_team.ratings.defense_rating
+                                }}</span>
+                            </span>
+                            <p class="text-xs text-gray-900 font-bold">DEF</p>
+                        </li>
+                        <li class="flex flex-col items-center">
+                            <span
+                            class="flex-shrink-0 w-10 h-10 p-2 bg-violet-600 rounded-full flex items-center justify-center"
+                        >
+                            <span class="text-sm font-bold text-white">{{
+                                    gameDetails?.home_team.ratings.passing_rating
+                                }}</span>
+                            </span>
+                            <p class="text-xs text-gray-900 font-bold">PASS</p>
+                        </li>
+                        <li class="flex flex-col items-center">
+                            <span
+                            class="flex-shrink-0 w-10 h-10 p-2 bg-yellow-600 rounded-full flex items-center justify-center"
+                        >
+                            <span class="text-sm font-bold text-white">{{
+                                    gameDetails?.home_team.ratings.rebounding_rating
+                                }}</span>
+                            </span>
+                            <p class="text-xs text-gray-900 font-bold">REB</p>
+                        </li>
+                    </ul>
+                </div>
                 <table
+                    v-if="!showHomeDepthChart"
                     class="min-w-full bg-gray-800 rounded-lg overflow-hidden text-sm"
                 >
                     <thead>
@@ -358,6 +360,9 @@
                         </tr>
                     </tbody>
                 </table>
+                <div class="text-wrap text-sm pt-3" v-if="gameDetails?.home_team.team_id && showHomeDepthChart">
+                    <DepthChartRow :key="gameDetails?.home_team.team_id" :players="sortedHomePlayers" :season_id="gameDetails?.current_season"/>
+                </div>
             </div>
 
             <!-- Away Team Player Stats -->
@@ -369,7 +374,8 @@
             >
                 <div class="flex justify-between">
                     <h4 class="text-lg font-semibold flex items-center mb-1">
-                        {{ gameDetails?.away_team.name }} Player Stats
+                        {{ gameDetails?.away_team.name }} Player Stats &nbsp;
+                        <i class="fas fa-chart-bar text-white" @click.prevent="showAwayDepthChart = !showAwayDepthChart"></i>
                     </h4>
                     <ul class="flex space-x-2">
                         <li class="flex flex-col items-center">
@@ -416,6 +422,7 @@
                 </div>
 
                 <table
+                    v-if="!showAwayDepthChart"
                     class="min-w-full bg-gray-800 rounded-lg overflow-hidden text-sm"
                 >
                     <thead>
@@ -510,9 +517,11 @@
                         </tr>
                     </tbody>
                 </table>
+                <div class="text-wrap text-sm pt-3" v-if="gameDetails?.away_team.team_id && showAwayDepthChart" >
+                    <DepthChartRow :key="gameDetails?.away_team.team_id" :players="sortedAwayPlayers" :season_id="gameDetails?.current_season"/>
+                </div>
             </div>
         </div>
-
         <!-- Best Player of the Game -->
         <div class="block md:flex bg-white rounded">
             <!-- Best Player Section: 1/4 Width -->
@@ -857,7 +866,7 @@ import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
-
+import DepthChartRow from "@/Pages/Teams/Module/DepthChartRow.vue";
 const props = defineProps({
     game_id: {
         type: String,
@@ -876,6 +885,8 @@ const bestPlayer = ref(null);
 const statLeaders = ref([]);
 const injuredPlayers =ref([]);
 const seasonLeaders = ref([]);
+const showAwayDepthChart = ref(false);
+const showHomeDepthChart = ref(false);
 // Fetch the box score data
 const time = ref(0); // Timer in seconds
 const interval = ref(null); // Stores interval ID
