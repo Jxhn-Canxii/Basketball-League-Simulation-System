@@ -304,7 +304,7 @@ class PlayersController extends Controller
                 }
         
                 // If roles are the same, sort by efficiency (descending order)
-                return $b['effeciency'] <=> $a['effeciency'];
+                return $b['per_game_score'] <=> $a['per_game_score'];
             });
         }
         
