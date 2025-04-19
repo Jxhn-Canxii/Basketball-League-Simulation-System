@@ -154,114 +154,94 @@
             <div
                 v-for="(game, index) in season_schedules.schedules"
                 :key="index"
-                class="bg-white shadow overflow-hidden sm:rounded-lg"
+                :style="{
+                background: `
+                        linear-gradient(45deg, 
+                            #${game.home_secondary_color} 0%, 
+                            #${game.home_secondary_color} 50%, 
+                            #${game.home_primary_color} 50%, 
+                            #${game.home_primary_color} 100%
+                        ),
+                        linear-gradient(-45deg, 
+                            #${game.away_primary_color} 0%, 
+                            #${game.away_primary_color} 50%, 
+                            #${game.away_secondary_color} 50%, 
+                            #${game.away_secondary_color} 100%
+                        )`,
+                    backgroundSize: '50% 100%',
+                    backgroundPosition: 'left, right',
+                    backgroundRepeat: 'no-repeat'
+                }"
+                class="rounded"
             >
-                <div class="px-4 py-5 sm:px-6">
-                    <h3
-                        class="text-xs flex font-extrabold text-nowrap leading-6 space-x-2 uppercase text-gray-900"
-                    >
+                <div
+                    class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
+                >
+                    <div>
+                        <h3>
+                            {{ game.home_score }}
+                        </h3>
+                    </div>
+                    <div>
+                        <h3>
+                            {{ game.away_score }}
+                        </h3>
+                    </div>
+                </div>
+                <div
+                    class="px-1 py-2 flex justify-between items-center"
+                >
+                    <h3>
                         <TeamDetails
                             :team_id="game.home_team_id" 
-                            :key="game.home_team_id" 
-                            :showButton="0" 
+                            :key="game.home_team_id"
+                            class="text-white text-xl uppercase text-wrap text-left"
+                            :showButton="0"
                             :text="`${game.home_team_name}`" />
-                        <br />
-                        <small class="text-red-500">vs</small>
-                        <br />
+                    </h3>
+                    <h3>
                         <TeamDetails
                             :team_id="game.away_team_id" 
-                            :key="game.away_team_id" 
+                            :key="game.away_team_id"
+                            class="text-white text-xl uppercase text-wrap text-right" 
                             :showButton="0" 
                             :text="`${game.away_team_name}`" />
                     </h3>
-                    <p
-                        class="mt-1 max-w-2xl text-xs uppercase text-gray-500"
+                    </div>
+                    <div
+                        class="px-4 text-nowrap text-xs py-0"
                     >
-                        {{ "Round #" + (parseFloat(game.round) + 1) }}
-                    </p>
-                    <code class="mt-1 max-w-2xl text-xs text-gray-300">
-                        #R{{ game.round }}-{{ game.game_id }}
-                    </code>
-                </div>
-                <div class="border-t border-gray-200">
-                    <dl>
-                        <template
-                            v-if="
-                                game.home_score === 0 &&
-                                game.away_score === 0
-                            "
+                        <span class="px-2 text-lg text-white py-1 rounded  flex justify-center">
+                            {{ "Round #" + (parseFloat(game.round) + 1) }}
+                        </span>
+                        <small class="flex justify-center text-white"> #R{{ game.round }}-{{ game.game_id }}</small>
+                    </div>
+                    <div class="p-0 mt-2 flex justify-center items-center">
+                        <div
+                            v-if="!isHide"
                         >
-                            <div
-                                v-if="!isHide"
-                                class="bg-white px-4 py-5 sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
+                            <a
+                                href="#"
+                                class="text-xs text-blue-500 underline font-bold rounded-t bg-white p-2"
+                                @click.prevent="
+                                    isGameResultModalOpen =
+                                        game.game_id
+                                "
+                                >View Result
+                            </a>
+                        </div>
+                        <div
+                            v-else
+                            class="text-center"
+                        >
+                            <p
+                               class="text-sm text-blue-500 underline font-bold rounded bg-white p-2"
                             >
-                                <a
-                                    href="#"
-                                    class="text-sm text-blue-500 underline font-bold"
-                                    @click.prevent="
-                                        isGameResultModalOpen =
-                                            game.game_id
-                                    "
-                                    >View Result</a
-                                >
-                            </div>
-                            <div
-                                v-else
-                                class="bg-white px-4 py-3 text-center sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
-                            >
-                                <p
-                                    class="text-red-500 animate-pulse text-xs text-nowrap"
-                                >
-                                    Getting results
-                                </p>
-                            </div>
-                        </template>
-                        <template v-else>
-                            <div
-                                class="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
-                            >
-                                <dt
-                                    class="text-sm font-medium text-gray-500"
-                                >
-                                    Home
-                                </dt>
-                                <dd
-                                    class="mt-1 text-sm text-gray-900 sm:col-span-2"
-                                >
-                                    {{ game.home_score }}
-                                </dd>
-                            </div>
-                            <div
-                                class="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
-                            >
-                                <dt
-                                    class="text-sm font-medium text-gray-500"
-                                >
-                                    Away
-                                </dt>
-                                <dd
-                                    class="mt-1 text-sm text-gray-900 sm:col-span-2"
-                                >
-                                    {{ game.away_score }}
-                                </dd>
-                            </div>
-                            <div
-                                class="bg-gray-200 px-4 py-1 flex justify-end sm:gap-4 sm:px-6"
-                            >
-                                <a
-                                    href="#"
-                                    class="text-sm text-blue-500 underline font-bold"
-                                    @click.prevent="
-                                        isGameResultModalOpen =
-                                            game.game_id
-                                    "
-                                    >View Result</a
-                                >
-                            </div>
-                        </template>
-                    </dl>
+                                Getting results
+                            </p>
+                        </div>
+                    </div>
                 </div>
-            </div>
         </div>
         <div v-if="loadingSchedules">
             <p class="text-gray-500">Loading Schedules.</p>

@@ -128,59 +128,6 @@ class ConferenceController extends Controller
             'previous_round_results' => $previousRoundResults,
         ]);
     }
-    public function seasonSchedulesV1(Request $request)
-    {
-        // Retrieve the season_id and conference_id from the request
-        $seasonId = $request->season_id;
-        $teamId = $request->team_id;
-        $conferenceId = $request->conference_id;
-        $excludedRounds = config('playoffs');
-        
-        // Retrieve schedules excluding certain rounds
-        $schedules = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->when($teamId != 0, function ($query) use ($teamId) {
-                return $query->where(function ($q) use ($teamId) {
-                    $q->where('home_id', $teamId)
-                      ->orWhere('away_id', $teamId);
-                });
-            })
-            ->whereNotIn('round', $excludedRounds)
-            ->get();
-        
-
-        // Check if all non-final rounds are simulated
-        $allRoundsSimulated = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->whereNotIn('round', $excludedRounds)
-            ->where('status', 1)
-            ->doesntExist(); // Use doesntExist() to check if no records match
-
-        // Count distinct rounds
-        $distinctRoundsCount = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->whereNotIn('round', $excludedRounds)
-            ->distinct('round')
-            ->count('round');
-
-        // Retrieve distinct rounds
-        $rounds = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->whereNotIn('round', $excludedRounds)
-            ->distinct('round')
-            ->pluck('round'); // Get a list of distinct rounds
-
-        return response()->json([
-            'schedules' => $schedules,
-            'is_simulated' => $allRoundsSimulated,
-            'distinct_rounds_count' => $distinctRoundsCount,
-            'rounds' => $rounds, // Include the list of rounds in the response
-        ]);
-    }
     public function seasonschedules(Request $request)
     {
         // Retrieve the season_id and conference_id from the request
@@ -536,7 +483,7 @@ class ConferenceController extends Controller
                         'primary_color' => isset($standingsData[$game->away_id]->primary_color) ? $standingsData[$game->away_id]->primary_color : '00000',
                         'secondary_color' => isset($standingsData[$game->away_id]->secondary_color) ? $standingsData[$game->away_id]->secondary_color : '00000'
                     ],
-                    'winner' => $game->home_score > $game->away_score ? $game->home_id : ($game->home_score < $game->away_score ? $game->away_id : null), // Set winner_id based on score comparison
+                    'winner' => $game->home_score > $game->away_score ? $game->home_id : ($game->home_score < $game->away_score ? $game->away_id : 0), // Set winner_id based on score comparison
                     'season_id' => $seasonId // Include season_id
                 ];
 

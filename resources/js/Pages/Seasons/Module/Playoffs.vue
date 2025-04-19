@@ -88,14 +88,28 @@
                                 }"
                                 class="shadow-md rounded-md overflow-hidden">
                                     <div
-                                        class="px-1 py-4 flex justify-between items-center"
+                                        class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
+                                    >
+                                        <div>
+                                            <h3>
+                                                {{ match.home_team.home_score }}
+                                            </h3>
+                                        </div>
+                                        <div>
+                                            <h3>
+                                                {{ match.away_team.away_score }}
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <div
+                                        class="px-1 py-1 flex justify-between items-center"
                                     >
                                         <h3>
                                             <TeamDetails
                                             :team_id="match.home_team.id" 
                                             :key="match.home_team.id" 
                                             :showButton="0"
-                                            :showInfo="true"
+                                            :showInfo="false"
                                             class="text-white text-md uppercase text-wrap text-left"
                                             :current_conference_rank="match.home_team.conference_rank"
                                             :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
@@ -106,18 +120,11 @@
                                                 :team_id="match.away_team.id" 
                                                 :key="match.away_team.id" 
                                                 :showButton="0"
-                                                :showInfo="true"
+                                                :showInfo="false"
                                                 class="text-white text-md uppercase text-wrap text-right"
                                                 :current_conference_rank="match.away_team.conference_rank"
                                                 :text="`#${match.away_team.overall_rank ?? 'TBD'} ${match.away_team.name ?? 'TBD'}`" />
                                         </h3>
-                                    </div>
-                                     <div
-                                        class="px-1 text-nowrap text-xs py-0 flex justify-center"
-                                    >
-                                        <span class="px-2 text-lg text-white py-1 rounded">
-                                            VS
-                                        </span>
                                     </div>
                                     <div
                                         class="px-4 text-nowrap text-xs py-0 flex justify-center"
@@ -127,10 +134,10 @@
                                         </span>
                                     </div>
                                     <div
-                                        class="border-gray-200 flex justify-between"
+                                        class="border-gray-200 flex justify-between mt-4 mb-4 bg-white"
                                     >
                                         <div
-                                            class="px-4 text-nowrap text-xs py-3"
+                                            class="px-2 text-nowrap text-xs py-3"
                                         >
                                             <span 
                                             :class="getConferenceClass(match.home_team.conference,match.away_team.conference)"
@@ -145,7 +152,7 @@
                                            
                                         </div>
                                         <div
-                                            class="px-4 text-nowrap text-red-600 text-xs py-3 flex items-center"
+                                            class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
                                         >
                                             <button
                                                 class="text-white bg-orange-500 rounded-full px-2 py-1"
@@ -164,141 +171,36 @@
                                             </button>
                                         </div>
                                     </div>
-                                    <div class="border-t border-gray-200">
-                                        <dl
-                                            v-if="
-                                                (match.home_team.home_score === 0 &&
-                                                    match.away_team.away_score ===
-                                                        0) ||
-                                                match.home_team.home_score ==
-                                                    match.away_team.away_score
+                                    <div class="border-gray-200 flex justify-center">
+                                        <button
+                                            v-if="!isHide && match.winner == 0"
+                                            @click.prevent="
+                                                simulateGame(
+                                                    match.id,
+                                                    match.game_id,
+                                                    2,
+                                                    mm,
+                                                    roundName
+                                                )
                                             "
-                                        >
-                                            <div
-                                                v-if="!isHide || activeIndex != mm"
-                                                class="bg-white px-4 py-3 flex justify-between sm:gap-4 sm:px-6"
+                                            class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
                                             >
-                                                <button
-                                                    @click="
-                                                        simulateGame(
-                                                            match.id,
-                                                            match.game_id,
-                                                            2,
-                                                            mm,
-                                                            roundName
-                                                        )
-                                                    "
-                                                    class="text-nowrap text-indigo-600 font-bold text-sm hover:text-indigo-900"
-                                                >
-                                                    Simulate Game
-                                                    {{
-                                                        match.home_team.score ==
-                                                            match.away_team
-                                                                .away_score &&
-                                                        match.home_team
-                                                            .home_score != 0 &&
-                                                        match.away_team
-                                                            .away_score != 0
-                                                            ? "(Overtime)"
-                                                            : ""
-                                                    }}
-                                                </button>
-                                                <a
-                                                    href="#"
-                                                    class="text-sm text-green-500 underline font-bold"
-                                                    @click.prevent="
-                                                        isGameResultModalOpen =
-                                                            match.game_id
-                                                    "
-                                                    >View Result</a
-                                                >
-                                            </div>
-                                            <div
-                                                v-else
-                                                class="bg-white px-4 py-3 text-center text-nowrap sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
+                                                Simulate Game
+                                            </button>
+                                            <a
+                                            href="#"
+                                            v-if="!isHide && match.winner != 0"
+                                            class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
+                                            @click.prevent="
+                                                isGameResultModalOpen =
+                                                    match.game_id
+                                            "
                                             >
-                                                <p
-                                                    class="text-red-500 animate-pulse text-xs"
-                                                >
-                                                    Getting results
-                                                </p>
-                                            </div>
-                                        </dl>
-                                        <dl v-else>
-                                            <div
-                                                class="bg-gray-100 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
-                                            >
-                                                <dt
-                                                    class="text-sm font-medium text-gray-500"
-                                                >
-                                                    Home
-                                                </dt>
-                                                <dd
-                                                    class="mt-1 text-sm text-gray-900 sm:col-span-2"
-                                                    :class="
-                                                        match.home_team.id ==
-                                                        match.winner
-                                                            ? 'font-bold'
-                                                            : ''
-                                                    "
-                                                >
-                                                    {{ match.home_team.home_score }}
-                                                    <!-- Medal icon for winner -->
-                                                    <span
-                                                        v-if="
-                                                            match.home_team.id ==
-                                                            match.winner
-                                                        "
-                                                        class="ml-2 text-yellow-500"
-                                                    >
-                                                        <i class="fas fa-medal"></i>
-                                                    </span>
-                                                </dd>
-                                            </div>
-                                            <div
-                                                class="bg-gray-200 px-4 py-3 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6"
-                                            >
-                                                <dt
-                                                    class="text-sm font-medium text-gray-500"
-                                                >
-                                                    Away
-                                                </dt>
-                                                <dd
-                                                    class="mt-1 text-sm text-gray-900 sm:col-span-2"
-                                                    :class="
-                                                        match.away_team.id ==
-                                                        match.winner
-                                                            ? 'font-bold'
-                                                            : ''
-                                                    "
-                                                >
-                                                    {{ match.away_team.away_score }}
-                                                    <!-- Medal icon for winner -->
-                                                    <span
-                                                        v-if="
-                                                            match.away_team.id ==
-                                                            match.winner
-                                                        "
-                                                        class="ml-2 text-yellow-500"
-                                                    >
-                                                        <i class="fas fa-medal"></i>
-                                                    </span>
-                                                </dd>
-                                            </div>
-                                            <div
-                                                class="bg-white px-4 py-3 text-center text-nowrap sm:grid sm:grid-cols-1 sm:gap-4 sm:px-6"
-                                            >
-                                                <a
-                                                    href="#"
-                                                    class="text-sm text-green-500 underline font-bold"
-                                                    @click.prevent="
-                                                        isGameResultModalOpen =
-                                                            match.game_id
-                                                    "
-                                                    >View Result</a
-                                                >
-                                            </div>
-                                        </dl>
+                                                View Result
+                                            </a>
+                                            <p  v-if="isHide" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
+                                                Simulating...
+                                            </p>
                                     </div>
                                 </div>
                             </div>
