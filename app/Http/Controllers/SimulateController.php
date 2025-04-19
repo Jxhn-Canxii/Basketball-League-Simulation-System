@@ -1661,6 +1661,8 @@ class SimulateController extends Controller
             // Smart signing logic
             $freeAgents = DB::table('players')
                 ->where('team_id', 0)
+                ->where('is_active', 1)
+                ->where('is_injured', 0)
                 ->orderByDesc('overall_rating')
                 ->lockForUpdate()
                 ->get();
