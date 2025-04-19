@@ -183,6 +183,7 @@ Route::middleware('auth')->group(function () {
         Route::post('player-play-off-performance', [PlayersController::class, 'getPlayerPlayoffperformance'])->name('players.playoff.performance');
         Route::post('player-main-performance', [PlayersController::class, 'getPlayerMainPerformance'])->name('players.main.performance');
         Route::post('player-transactions', [PlayersController::class, 'getPlayerTransactions'])->name('players.season.transactions');
+        Route::post('player-role-history', [PlayersController::class, 'getRoleChangeHistory'])->name('players.role.history');
         Route::post('player-injury', [PlayersController::class, 'getPlayerInjuryHistory'])->name('players.season.injury');
 
         Route::post('player-game-logs', [PlayersController::class, 'getPlayerGameLogs'])->name('players.game.logs');

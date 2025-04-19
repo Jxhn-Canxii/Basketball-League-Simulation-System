@@ -1,66 +1,69 @@
 <template>
     <div class="team-roster p-3">
         <div>
-            
-            <!-- Season Performance Table -->
             <h2 class="text-sm font-semibold text-gray-800">
                 Last 5 Game Performance
-                {{
-                    game_logs.total > 0
-                        ? "(" + game_logs.total + ")"
-                        : ""
-                }}
+                {{ game_logs.total > 0 ? "(" + game_logs.total + ")" : "" }}
             </h2>
 
-            <!-- Divider -->
             <hr class="my-4 border-t border-gray-200" />
+
             <div class="overflow-x-auto">
-                <table class="min-w-full divide-y divide-gray-200 text-xs">
+                <table class="min-w-full divide-y divide-gray-200 text-sm">
                     <thead class="bg-gray-50 text-nowrap">
                         <tr>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Season</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Opp</th>
-                            <!-- <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round</th> -->
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Result</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Min</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pts</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Reb</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Ast</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Stl</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Blk</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">TO</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Fouls</th>
+                            <th v-if="props.full" class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">PER</th>
+                            <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">EFF</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         <tr
                             v-for="(player, index) in game_logs.game_logs"
-                            v-if="game_logs.game_logs?.length > 0"
                             :key="index"
+                            :title="!props.full ? roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) : ''"
                             :class="{
                                 'bg-green-200': player.game_result === 'Win' && player.minutes > 0,
                                 'bg-red-200': player.game_result === 'Loss' && player.minutes > 0,
                                 'bg-slate-200': player.minutes === 0,
                             }"
-                            :title="roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round))"
                             class="hover:bg-gray-100"
                         >
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.season_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.opponent_team_name }}</td>
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">{{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}</td> -->
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.game_result }}</td>
-                        </tr>
-                        <tr v-else class="hover:bg-gray-100">
-                         <td colspan="5" class="px-2 py-1 whitespace-nowrap text-center text-red-500 border">***No record***</td>
+                            <td  v-if="props.full" class="px-2 py-1 whitespace-nowrap border">
+                                {{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}
+                            </td>
+                            <td class="px-2 py-1 whitespace-nowrap border">
+                                {{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}
+                            </td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.rebounds.toFixed(1) }}</td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.assists.toFixed(1) }}</td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.steals.toFixed(1) }}</td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.blocks.toFixed(1) }}</td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border text-right">{{ parseFloat(player.per ?? 0).toFixed(2) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border text-right">
+                                <b :class="player.eff <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.eff }}</b>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-
-
-            <!-- <div class="flex w-full overflow-auto">
-                <Paginator
-                    v-if="game_logs.total_records"
-                    :page_number="search.page_num"
-                    :total_rows="game_logs.total_records ?? 0"
-                    :itemsperpage="search.itemsperpage"
-                    @page_num="handlePagination"
-                />
-            </div> -->
         </div>
     </div>
 </template>
@@ -72,13 +75,11 @@ import { roundNameFormatter } from "@/Utility/Formatter";
 import Paginator from "@/Components/Paginator.vue";
 import ProfileHeader from "./ProfileHeader.vue";
 const props = defineProps({
-    player_id: {
-        type: Number,
-        required: true,
-    },
-    season_id: {
-        type: Number,
-        required: true,
+    player_id: Number,
+    season_id: Number,
+    full: {
+        type: Boolean,
+        default: true,
     },
 });
 

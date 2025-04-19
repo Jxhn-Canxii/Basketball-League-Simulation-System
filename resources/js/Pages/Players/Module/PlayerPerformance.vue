@@ -24,6 +24,13 @@
                 <i class="fas fa-exchange-alt"></i> Player Transactions
             </button>
             <button
+                 class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
+                :class="activeTab === 'role_history' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
+                @click="setActiveTab('role_history')"
+            >
+                <i class="fas fa-list-check"></i> Role History
+            </button>
+            <button
                 class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
                 :class="activeTab === 'injury' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
                 @click="setActiveTab('injury')"
@@ -44,7 +51,9 @@
         <div v-if="activeTab === 'transactions'">
             <PlayerTransactions :key="props.player_id" :player_id="props.player_id" />
         </div>
-
+        <div v-if="activeTab === 'role_history'">
+            <PlayerRoleHistory :key="props.player_id" :player_id="props.player_id" />
+        </div>
         <div v-if="activeTab === 'injury'">
             <PlayerInjury :key="props.player_id" :player_id="props.player_id" />
         </div>
@@ -68,6 +77,7 @@ import ProfileHeader from "./ProfileHeader.vue";
 import PlayerInjury from "./PlayerInjury.vue";
 import PlayerTransactions from "./PlayerTransactions.vue";
 import PlayerSeasonStats from "./PlayerSeasonStats.vue";
+import PlayerRoleHistory from "./PlayerRoleHistory.vue";
 import PlayerGameLogs from "./PlayerGameLogs.vue";
 const props = defineProps({
     player_id: {

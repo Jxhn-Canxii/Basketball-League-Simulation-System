@@ -518,7 +518,7 @@ class PlayersController extends Controller
         ]);
     }
     
-    public function addFreeAgentPlayer(Request $request)
+    public function addFreeAgentPlayerV1(Request $request)
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:players,name',
@@ -608,6 +608,170 @@ class PlayersController extends Controller
         $retirementAge = rand($minRetirementAge, $maxRetirementAge);
 
         // Create player
+        $player = Player::create([
+            'name' => $request->name,
+            'address' => $request->address,
+            'country' => $request->country,
+            'team_id' => 0,
+            'age' => $age,
+            'retirement_age' => $retirementAge,
+            'injury_prone_percentage' => $injuryPercentage,
+            'contract_years' => 0,
+            'contract_expires_at' => $contractExpiresAt,
+            'is_active' => true,
+            'role' => $role,
+            'position' => $position,
+            'type' => $selectedArchetype, 
+            'shooting_rating' => $shootingRating,
+            'defense_rating' => $defenseRating,
+            'passing_rating' => $passingRating,
+            'rebounding_rating' => $reboundingRating,
+            'athleticism_rating' => $athleticism,
+            'basketball_iq_rating' => $basketballIq,
+            'strength_rating' => $strength,
+            'stamina_rating' => $stamina,
+            'clutch_rating' => $clutch,
+            'leadership_rating' => $leadership,
+            'work_ethic_rating' => $workEthic,
+            'two_point_rating' => $twoPointRating,
+            'three_point_rating' => $threePointRating,
+            'free_throw_rating' => $freeThrowRating,
+            'overall_rating' => $overallRating,
+            'draft_id' => $currentSeasonId,
+            'draft_order' => 0,
+            'drafted_team_id' => 0,
+            'is_drafted' => 0,
+            'draft_status' => 'Undrafted',
+            'is_rookie' => true,
+        ]);
+
+        return response()->json([
+            'error' => false,
+            'message' => 'Player added successfully',
+            'player' => $player,
+        ]);
+    }
+
+    public function addFreeAgentPlayer(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:players,name',
+            'address' => 'required|string|max:255',
+            'country' => 'required|string',
+        ]);
+
+        $latestSeasonId = get_current_season_id();
+        $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
+
+        // Check if player already exists
+        $existingPlayer = Player::where('name', $request->name)->first();
+        if ($existingPlayer) {
+            return response()->json([
+                'error' => true,
+                'message' => 'A player with this name already exists in another team.',
+            ], 400);
+        }
+
+        // Generate player attributes
+        $age = rand(18, 25);
+        $contractYears = rand(1, 5);
+        $attributes = $this->getRandomArchetypeAndAttributes();
+
+        // Check generational limit
+        if ($attributes['archetype'] === 'generational') {
+            $generationalCount = Player::where('is_rookie', true)
+                ->where('type', $attributes['archetype'])
+                ->count();
+
+            $maxGenLimit = ($currentSeasonId % 4 == 0) ? 30 : 15;
+            if ($generationalCount >= $maxGenLimit) {
+                return response()->json(['error' => 'Maximum limit of '.$maxGenLimit.' generational rookies reached for this season.'], 400);
+            }
+        }
+
+        // 📌 Check and prioritize underfilled positions (including hybrids)
+        $totalTeams = DB::table('teams')->count();
+        $requiredPlayersPerPosition = $totalTeams * 5;
+
+        $corePositions = ['PG', 'SG', 'SF', 'PF', 'C'];
+        $underfilledPositions = [];
+
+        foreach ($corePositions as $corePos) {
+            $count = DB::table('players')
+                ->where(function ($query) use ($corePos) {
+                    $query->where('position', 'like', $corePos)
+                        ->orWhere('position', 'like', $corePos . '/%')
+                        ->orWhere('position', 'like', '%/' . $corePos)
+                        ->orWhere('position', 'like', '%/' . $corePos . '/%');
+                })
+                ->where('is_active', 1)
+                ->count();
+
+            if ($count < $requiredPlayersPerPosition) {
+                $underfilledPositions[] = $corePos;
+            }
+        }
+
+        // Assign position based on need
+        if (!empty($underfilledPositions)) {
+            $forcedCore = $underfilledPositions[array_rand($underfilledPositions)];
+            $possibleHybrids = [
+                'PG' => ['PG', 'PG/SG'],
+                'SG' => ['SG', 'SG/SF', 'PG/SG'],
+                'SF' => ['SF', 'SF/PF', 'SG/SF'],
+                'PF' => ['PF', 'PF/C', 'SF/PF'],
+                'C'  => ['C', 'PF/C'],
+            ];
+            $position = $possibleHybrids[$forcedCore][array_rand($possibleHybrids[$forcedCore])];
+        } else {
+            $position = $attributes['position'];
+        }
+
+        // Assign other attributes
+        $selectedArchetype = $attributes['archetype'];
+        $shootingRating = $attributes['shooting_rating'];
+        $defenseRating = $attributes['defense_rating'];
+        $passingRating = $attributes['passing_rating'];
+        $reboundingRating = $attributes['rebounding_rating'];
+        $athleticism = $attributes['athleticism_rating'];
+        $basketballIq = $attributes['basketball_iq_rating'];
+        $strength = $attributes['strength_rating'];
+        $stamina = $attributes['stamina_rating'];
+        $clutch = $attributes['clutch_rating'];
+        $leadership = $attributes['leadership_rating'];
+        $workEthic = $attributes['work_ethic_rating'];
+        $twoPointRating = $attributes['two_point_rating'];
+        $threePointRating = $attributes['three_point_rating'];
+        $freeThrowRating = $attributes['free_throw_rating'];
+        $injuryPercentage = $attributes['health_rating'];
+        $healthRatings = 99 - $injuryPercentage;
+
+        $overallRating = round((
+            $defenseRating + $passingRating + $reboundingRating + 
+            $athleticism + $basketballIq + $strength + $stamina + 
+            $clutch + $leadership + $workEthic + $healthRatings +
+            $twoPointRating + $threePointRating + $freeThrowRating
+        ) / 14, 2);
+
+        if ($overallRating >= 90) {
+            $role = 'star player';
+        } elseif ($overallRating >= 85) {
+            $role = 'all star';
+        } elseif ($overallRating >= 75) {
+            $role = 'starter';
+        } elseif ($overallRating >= 60) {
+            $role = 'role player';
+        } else {
+            $role = 'bench';
+        }
+
+        $contractExpiresAt = Carbon::now()->addYears($contractYears);
+        $minRetirementAge = max($age + 1, 35);
+        $maxRetirementAge = 45 - (int)((99 - $healthRatings) / 5);
+        $maxRetirementAge = max($minRetirementAge, $maxRetirementAge);
+        $retirementAge = rand($minRetirementAge, $maxRetirementAge);
+
+        // Save the player
         $player = Player::create([
             'name' => $request->name,
             'address' => $request->address,
@@ -1814,7 +1978,7 @@ class PlayersController extends Controller
             }
         )
         ->where('transactions.player_id', $player_id)
-        ->where('transactions.status', '!=', 'transfer')
+        ->whereNotIn('transactions.status', ['transfer','role change'])
         ->select(
             'transactions.id',
             'transactions.season_id',
@@ -1848,7 +2012,63 @@ class PlayersController extends Controller
         return response()->json($transactions);
     
     }
+    public function getRoleChangeHistory(Request $request)
+    {
+        $player_id = $request->input('player_id');
     
+        if (!$player_id) {
+            return response()->json(['error' => 'Player ID is required'], 400);
+        }
+    
+        $transactions = DB::table('transactions')
+        ->join('players', 'transactions.player_id', '=', 'players.id')
+        ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
+        ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
+        ->leftJoinSub(
+            DB::table('player_season_stats as pss')
+                ->select('pss.player_id', 'pss.season_id', 'pss.role')
+                ->whereRaw('pss.id = (SELECT id FROM player_season_stats WHERE player_id = pss.player_id AND season_id = pss.season_id ORDER BY id DESC LIMIT 1)'), // Get latest role
+            'latest_stats',
+            function ($join) {
+                $join->on('transactions.player_id', '=', 'latest_stats.player_id')
+                     ->on('transactions.season_id', '=', 'latest_stats.season_id');
+            }
+        )
+        ->where('transactions.player_id', $player_id)
+        ->whereIn('transactions.status', ['transfer', 'star player change', 'role change'])
+        ->select(
+            'transactions.id',
+            'transactions.season_id',
+            'transactions.from_team_id',
+            'from_team.name as from_team_name',
+            'transactions.to_team_id',
+            'to_team.name as to_team_name',
+            'transactions.status',
+            'players.name as player_name',
+            DB::raw('COALESCE(latest_stats.role, "Unknown") as latest_role'), // Get latest role per season
+            DB::raw('GROUP_CONCAT(DISTINCT transactions.details ORDER BY transactions.details SEPARATOR ", ") as merged_details') // Merge duplicate transactions
+        )
+        ->groupBy(
+            'transactions.id',
+            'transactions.season_id',
+            'transactions.from_team_id',
+            'from_team.name',
+            'transactions.to_team_id',
+            'to_team.name',
+            'transactions.status',
+            'players.name',
+            'latest_stats.role'
+        )
+        ->orderByDesc('transactions.id')
+        ->get();
+    
+        if ($transactions->isEmpty()) {
+            return response()->json(['message' => 'No transactions found for this player.'], 404);
+        }
+        
+        return response()->json($transactions);
+    
+    }
 
     public function getPlayerInjuryHistory(Request $request)
     {

@@ -357,7 +357,7 @@ class DraftController extends Controller
         // Return only positions still needed
         return array_filter($idealCount, fn($count) => $count > 0);
     }
-    
+
     private function updateTeamPositionNeeds($currentNeeds, $playerPosition)
     {
         $positions = explode('/', $playerPosition);

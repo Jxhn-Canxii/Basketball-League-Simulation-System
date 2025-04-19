@@ -436,6 +436,7 @@
                 :key="main_performance.player_details.player_id"
                 :player_id="main_performance.player_details.player_id"
                 :season_id="main_performance.current_season_id"
+                :full="false"
             />
         </div>
     </div>

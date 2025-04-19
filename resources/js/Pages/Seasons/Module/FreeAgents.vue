@@ -567,6 +567,7 @@ const assignTeams = async (player_id) => {
         });
     }
 };
+
 const assignTeamsAuto = async () => {
     try {
         // Show confirmation dialog
@@ -581,14 +582,23 @@ const assignTeamsAuto = async () => {
         });
 
         if (result.isConfirmed) {
-            // Proceed with the request if confirmed
-            const response = await axios.post(
-                route("auto.assign.freeagent.teams")
-            );
+            // Show loading/swipe dialog
+            const loadingSwal = Swal.fire({
+                title: "Processing...",
+                text: "Assigning free agents to teams. Please wait.",
+                icon: "info",
+                showConfirmButton: false,
+                willOpen: () => {
+                    Swal.showLoading();  // Show the loading animation
+                }
+            });
 
+            // Proceed with the request if confirmed
+            const response = await axios.post(route("auto.assign.freeagent.teams"));
             const data = response.data;
             let message = "";
             console.log(data.message);
+
             if (data.message === "All teams have signed 12 players.") {
                 message = `<p>${data.message}</p>`;
             } else if (data.message === "No free agents available.") {
@@ -614,6 +624,9 @@ const assignTeamsAuto = async () => {
                 }
             }
 
+            // Close loading animation and show result message
+            loadingSwal.close();
+
             Swal.fire({
                 icon: "success",
                 title: "Success!",
@@ -638,6 +651,10 @@ const assignTeamsAuto = async () => {
         }
     } catch (error) {
         console.error("Error assigning teams:", error);
+
+        // Close any ongoing loading spinner if an error happens
+        Swal.close();
+
         Swal.fire({
             icon: "warning",
             title: "Error!",
@@ -650,6 +667,7 @@ const assignTeamsAuto = async () => {
         emits("newSeason", true);
     }
 };
+
 
 onMounted(() => {
     fetchFreeAgent();
