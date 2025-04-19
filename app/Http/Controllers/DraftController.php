@@ -201,13 +201,26 @@ class DraftController extends Controller
                 $team = DB::table('teams')->where('id', $teamId)->first();
     
                 // Get the team’s needed position from the position needs array
-                $neededPosition = $teamPositionNeeds[$teamId] ?? null;
-    
-                // Get the best available player for the needed position
-                $selectedPlayer = $availablePlayers->first(function ($player) use ($neededPosition) {
-                    // Match player with needed position (e.g., 'PG', 'SG', 'C', etc.)
-                    return strpos($player->position, $neededPosition) !== false;
+                $neededPositions = array_keys($teamPositionNeeds[$teamId] ?? []);
+
+                $selectedPlayer = $availablePlayers->first(function ($player) use ($neededPositions) {
+                    foreach ($neededPositions as $pos) {
+                        if (strpos($player->position, $pos) !== false) {
+                            return true;
+                        }
+                    }
+                    return false;
                 });
+
+                // If no player matched need, get best available
+                if (!$selectedPlayer) {
+                    $selectedPlayer = $availablePlayers->shift();
+                } else {
+                    // Remove the selected player manually from availablePlayers
+                    $availablePlayers = $availablePlayers->reject(fn($p) => $p->id === $selectedPlayer->id)->values();
+                }
+
+
     
                 // If no player matches the exact need, select the best available player
                 if (!$selectedPlayer) {
