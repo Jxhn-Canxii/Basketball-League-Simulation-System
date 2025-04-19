@@ -565,7 +565,7 @@ class PlayersController extends Controller
         // 📌 Check and prioritize underfilled positions (including hybrids)
         $totalTeams = DB::table('teams')->count();
         $requiredPlayersPerPosition = $totalTeams * 5;
-        $requiredPlayersPerPosition = $currentSeasonId == 1 ? $requiredPlayersPerPosition : $totalTeams * 2;
+        // $requiredPlayersPerPosition = $currentSeasonId == 1 ? $requiredPlayersPerPosition : $totalTeams * 2;
 
         $corePositions = ['PG', 'SG', 'SF', 'PF', 'C'];
         $underfilledPositions = [];
@@ -578,7 +578,6 @@ class PlayersController extends Controller
                         ->orWhere('position', 'like', '%/' . $corePos)
                         ->orWhere('position', 'like', '%/' . $corePos . '/%');
                 })
-                ->where('draft_id', $currentSeasonId)
                 ->where('is_active', 1)
                 ->where('is_injured', 0)
                 ->count();
