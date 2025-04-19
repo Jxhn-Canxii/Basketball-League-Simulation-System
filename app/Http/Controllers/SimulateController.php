@@ -501,6 +501,8 @@ class SimulateController extends Controller
         $this->updateAllTeamStreaks();
         $this->updateHeadToHeadResults($gameData->id);
         $this->updateInjuryFreeAgents();
+        $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
+        $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
         // Prepare the schedule response data
         $schedule = [
             'id' => $gameData->id,
@@ -2238,11 +2240,12 @@ class SimulateController extends Controller
     
                 if ($currentRole !== $newRole) {
                     $roleStatus = ($newRole == 'star player') ? 'star player change' : 'role change';
-    
+                    $roundName = is_numeric($round) ? "Round $round" : "Playoffs";
+
                     DB::table('transactions')->insert([
                         'player_id' => $playerId,
                         'season_id' => $seasonId,
-                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. Round $round",
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. $roundName",
                         'from_team_id' => $teamId,
                         'to_team_id' => $teamId,
                         'status' => $roleStatus,
