@@ -45,6 +45,7 @@
                     :key="roundName"
                     class="block"
                     
+                    
                 >
                     <div v-if="season_playoffs.playoffs[roundName].length > 0">
                         <h3
@@ -63,61 +64,91 @@
                                 :key="match.game_id"
                                 class="col-span-1"
                             >
-                                <div class="shadow-md rounded-md overflow-hidden">
+                             <!-- :style="{
+                                    background: 'linear-gradient(135deg, #' + match.home_team.primary_color + ' 50%, #' + props.match.away_team.primary_color + ' 50%)'
+                                }" -->
+                                <div 
+                                :style="{
+                                    background: `
+                                        linear-gradient(45deg, 
+                                            #${match?.home_team?.secondary_color} 0%, 
+                                            #${match?.home_team?.secondary_color} 50%, 
+                                            #${match?.home_team?.primary_color} 50%, 
+                                            #${match?.home_team?.primary_color} 100%
+                                        ),
+                                        linear-gradient(-45deg, 
+                                            #${match?.away_team?.primary_color} 0%, 
+                                            #${match?.away_team?.primary_color} 50%, 
+                                            #${match?.away_team?.secondary_color} 50%, 
+                                            #${match?.away_team?.secondary_color} 100%
+                                        )`,
+                                    backgroundSize: '50% 100%',
+                                    backgroundPosition: 'left, right',
+                                    backgroundRepeat: 'no-repeat'
+                                }"
+                                class="shadow-md rounded-md overflow-hidden">
                                     <div
-                                        :class="
-                                            getConferenceClass(
-                                                match.home_team.conference,
-                                                match.away_team.conference
-                                            )
-                                        "
-                                        class="px-4 py-5 sm:px-6"
+                                        class="px-1 py-4 flex justify-between items-center"
                                     >
-                                        <h3
-                                            class="text-xs font-extrabold flex text-nowrap space-x-4 uppercase leading-6 text-gray-800"
-                                        >
+                                        <h3>
                                             <TeamDetails
                                             :team_id="match.home_team.id" 
                                             :key="match.home_team.id" 
                                             :showButton="0"
                                             :showInfo="true"
+                                            class="text-white text-md uppercase text-wrap text-left"
                                             :current_conference_rank="match.home_team.conference_rank"
-                                            :text="`#${match.home_team.overall_rank} ${match.home_team.name ?? 'TBD'}`"/>
-
-                                            <small class="text-red-500">vs</small>
-
+                                            :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
+                                        </h3>
+                                            <!-- <small class="text-red-500 font-bold shadow-b-lg bg-white rounded p-2 text-lg">vs</small> -->
+                                        <h3>
                                             <TeamDetails
                                                 :team_id="match.away_team.id" 
                                                 :key="match.away_team.id" 
                                                 :showButton="0"
                                                 :showInfo="true"
+                                                class="text-white text-md uppercase text-wrap text-right"
                                                 :current_conference_rank="match.away_team.conference_rank"
-                                                :text="`#${match.away_team.overall_rank} ${match.away_team.name ?? 'TBD'}`" />
+                                                :text="`#${match.away_team.overall_rank ?? 'TBD'} ${match.away_team.name ?? 'TBD'}`" />
                                         </h3>
-                                        <p
-                                            class="mt-1 text-xs uppercase text-gray-500"
-                                        >
+                                    </div>
+                                     <div
+                                        class="px-1 text-nowrap text-xs py-0 flex justify-center"
+                                    >
+                                        <span class="px-2 text-lg text-white py-1 rounded">
+                                            VS
+                                        </span>
+                                    </div>
+                                    <div
+                                        class="px-4 text-nowrap text-xs py-0 flex justify-center"
+                                    >
+                                        <span class="px-2 text-xs text-white py-1 rounded">
                                             {{ roundNameFormatter(roundName) }}
-                                        </p>
+                                        </span>
                                     </div>
                                     <div
                                         class="border-gray-200 flex justify-between"
                                     >
                                         <div
-                                            class="bg-white px-4 text-nowrap text-gray-600 text-xs py-3"
+                                            class="px-4 text-nowrap text-xs py-3"
                                         >
-                                            {{ match.home_team.conference }} #{{
-                                                match.home_team.conference_rank
-                                            }}
-                                            vs {{ match.away_team.conference }} #{{
-                                                match.away_team.conference_rank
-                                            }}
+                                            <span 
+                                            :class="getConferenceClass(match.home_team.conference,match.away_team.conference)"
+                                            class="px-2 shadow py-1 rounded">
+                                                {{ match.home_team.conference }} #{{
+                                                    match.home_team.conference_rank
+                                                }}
+                                                vs {{ match.away_team.conference }} #{{
+                                                    match.away_team.conference_rank
+                                                }}
+                                            </span>
+                                           
                                         </div>
                                         <div
-                                            class="bg-white px-4 text-nowrap text-red-600 text-xs py-3 flex items-center"
+                                            class="px-4 text-nowrap text-red-600 text-xs py-3 flex items-center"
                                         >
                                             <button
-                                                class="button"
+                                                class="text-white bg-orange-500 rounded-full px-2 py-1"
                                                 @click.prevent="
                                                     compareTeams(
                                                         match.home_team.id,
@@ -626,19 +657,19 @@ const simulateGame = async (id, game_id, type, index, round) => {
 const getConferenceClass = (home_conference, away_conference) => {
     // Define Tailwind classes for each conference
     const conferenceClasses = {
-        NCR: "bg-blue-100",
-        Luzon: "bg-green-100",
-        Visayas: "bg-yellow-100",
-        Mindanao: "bg-red-100",
+        NCR: "bg-blue-100 text-blue-500",
+        Luzon: "bg-green-100 text-green-500",
+        Visayas: "bg-yellow-100 text-yellow-500",
+        Mindanao: "bg-red-100 text-red-500",
     };
 
     // Check if the home and away conferences are different
     if (home_conference !== away_conference) {
-        return "bg-yellow-100"; // Color when conferences do not match
+        return "bg-orange-100 text-orange-500"; // Color when conferences do not match
     }
 
     // Return the Tailwind class for the home conference
-    return conferenceClasses[home_conference] || "bg-gray-100"; // Default color if conference is not found
+    return conferenceClasses[home_conference] || "bg-gray-100 text-gray-500"; // Default color if conference is not found
 };
 
 watch(

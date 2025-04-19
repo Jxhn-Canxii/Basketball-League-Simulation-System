@@ -98,8 +98,12 @@ class SimulateController extends Controller
                 'schedules.game_id',
                 'home.id as home_team_id',
                 'home.name as home_team_name',
+                'home.primary_color as home_primary_color',
+                'home.secondary_color as home_secondary_color',
                 'away.id as away_team_id',
                 'away.name as away_team_name',
+                'away.primary_color as away_primary_color',
+                'away.secondary_color as away_secondary_color',
                 'home_standings.overall_rank as home_overall_rank',
                 'away_standings.overall_rank as away_overall_rank',
                 'home_standings.conference_name as home_conference_name',
@@ -514,6 +518,9 @@ class SimulateController extends Controller
                 'conference' => $gameData->home_conference_name,
                 'conference_rank' => $gameData->home_conference_rank,
                 'overall_rank' => $gameData->home_overall_rank,
+                'primary_color' => $gameData->home_primary_rank,
+                'secondary_color' => $gameData->home_secondary_rank,
+                
             ],
             'away_team' => [
                 'id' => $gameData->away_team_id,

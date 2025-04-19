@@ -522,7 +522,9 @@ class ConferenceController extends Controller
                         'home_score' => $game->home_score,
                         'conference' => isset($standingsData[$game->home_id]->conference_name) ? $standingsData[$game->home_id]->conference_name : null,
                         'conference_rank' => isset($standingsData[$game->home_id]->conference_rank) ? $standingsData[$game->home_id]->conference_rank : null,
-                        'overall_rank' => isset($standingsData[$game->home_id]->overall_rank) ? $standingsData[$game->home_id]->overall_rank : null
+                        'overall_rank' => isset($standingsData[$game->home_id]->overall_rank) ? $standingsData[$game->home_id]->overall_rank : null,
+                        'primary_color' => isset($standingsData[$game->home_id]->primary_color) ? $standingsData[$game->home_id]->primary_color : '00000',
+                        'secondary_color' => isset($standingsData[$game->home_id]->secondary_color) ? $standingsData[$game->home_id]->secondary_color : '00000'
                     ],
                     'away_team' => [
                         'id' => $game->away_id,
@@ -530,7 +532,9 @@ class ConferenceController extends Controller
                         'away_score' => $game->away_score,
                         'conference' => isset($standingsData[$game->away_id]->conference_name) ? $standingsData[$game->away_id]->conference_name : null,
                         'conference_rank' => isset($standingsData[$game->away_id]->conference_rank) ? $standingsData[$game->away_id]->conference_rank : null,
-                        'overall_rank' => isset($standingsData[$game->away_id]->overall_rank) ? $standingsData[$game->away_id]->overall_rank : null
+                        'overall_rank' => isset($standingsData[$game->away_id]->overall_rank) ? $standingsData[$game->away_id]->overall_rank : null,
+                        'primary_color' => isset($standingsData[$game->away_id]->primary_color) ? $standingsData[$game->away_id]->primary_color : '00000',
+                        'secondary_color' => isset($standingsData[$game->away_id]->secondary_color) ? $standingsData[$game->away_id]->secondary_color : '00000'
                     ],
                     'winner' => $game->home_score > $game->away_score ? $game->home_id : ($game->home_score < $game->away_score ? $game->away_id : null), // Set winner_id based on score comparison
                     'season_id' => $seasonId // Include season_id
