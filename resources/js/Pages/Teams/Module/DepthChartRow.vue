@@ -23,7 +23,12 @@
             <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
             <span v-else-if="player.role === 'starter'" title="Starter">🔰</span>
             <span v-else-if="player.role === 'all star'" title="All-Star">🌟</span>
-
+            <span
+                title="Newly Aquired"
+                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
+                v-if="player.seasons_played_with_team == 1">
+                <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
+            </span>
             <!-- Rookie -->
             <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
 
