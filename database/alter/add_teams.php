@@ -57,7 +57,7 @@ VALUES
 
 -- Conference 4 (Mindanao) - Bold Color Schemes
 (49, 'Pirates', 'PIR', '000000', 'FFB81C', 1, 4, 'Davao City', 'King City raiders sailing with durian dominance', NOW(), NOW()), -- Pittsburgh Pirates (MLB)
-(50, 'Scorpions', 'SCR', 'FFC72C', '003087', 1, 4, 'Zamboanga City', 'Chavacano stingers dancing to Latin precision', NOW(), NOW()), -- FAU Owls Inspired
+(50, 'Scorpions', 'SCR', 'FFC72C', '003087', 1, 4, 'Zamboanga', 'Chavacano stingers dancing to Latin precision', NOW(), NOW()), -- FAU Owls Inspired
 (51, 'Enemies', 'ENM', '4B5320', '000000', 1, 4, 'Cagayan de Oro', 'Golden rivals armed with friendship fury', NOW(), NOW()), -- Army Black Knights Inspired
 (52, 'Reapers', 'RPR', '000000', 'FF8200', 1, 4, 'General Santos', 'Tuna town harvesters with knockout menace', NOW(), NOW()), -- Jacksonville Jumbo Shrimp Inspired
 (53, 'Raiders', 'RAI', '000000', 'A5ACAF', 1, 4, 'Butuan', 'Caraga marauders with ancient balangay speed', NOW(), NOW()), -- Las Vegas Raiders (NFL)
