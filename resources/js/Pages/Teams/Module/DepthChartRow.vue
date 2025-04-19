@@ -76,7 +76,8 @@ const positions = [
 
 const sortedByPosition = (position) => {
   return props.players?.filter(player =>
-    player.position.split('/').includes(position)
+    player.status !== 2 && player.position.split('/').includes(position)
   );
-}
+};
+
 </script>
