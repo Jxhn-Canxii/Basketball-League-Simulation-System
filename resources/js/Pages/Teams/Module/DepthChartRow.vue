@@ -20,20 +20,66 @@
             <span>{{ player.name }}</span>
 
             <!-- Role Icons -->
-            <span v-if="player.role === 'star player'" title="Star Player">⭐</span>
-            <span v-else-if="player.role === 'starter'" title="Starter">🔰</span>
-            <span v-else-if="player.role === 'all star'" title="All-Star">🌟</span>
-            <span
-                title="Newly Aquired"
-                class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
-                v-if="player.seasons_played_with_team == 1">
-                <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
+            <span v-if="player.role === 'star player'" title="Star Player">
+              <i class="fas fa-star text-yellow-400"></i>
             </span>
-            <!-- Rookie -->
-            <span v-if="player.is_rookie" class="text-blue-500" title="Rookie">🎓</span>
+            <span v-else-if="player.role === 'all star'" title="All-Star">
+              <i class="fas fa-certificate text-pink-500"></i>
+            </span>
+            <span v-else-if="player.role === 'starter'" title="Starter">
+              <i class="fas fa-shield-alt text-green-500"></i>
+            </span>
+
+            <!-- Newly Acquired -->
+            <span
+              title="Newly Acquired"
+              class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
+              v-if="player.seasons_played_with_team == 1"
+            >
+              <i class="fas fa-user-plus text-yellow-500 mr-1"></i>
+            </span>
+
+            <!-- Active -->
+            <span
+              v-if="player.status == 1"
+              class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-green-800 bg-green-100 rounded-full"
+              title="Active"
+            >
+              <i class="fas fa-check-circle"></i>
+            </span>
+
+            <!-- Transferred -->
+            <span
+              v-if="player.status == 2"
+              class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full"
+              title="Transferred"
+            >
+              <i class="fas fa-exchange-alt"></i>
+            </span>
+
+            <!-- Retired -->
+            <span
+              v-if="player.status == 0 && (player.latest_season - player.draft_id != 0)"
+              class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-red-800 bg-red-100 rounded-full"
+              title="Retired"
+            >
+              <i class="fas fa-user-slash"></i>
+            </span>
+
+            <!-- Hardship Contract -->
+            <span
+              v-if="player.hardship_contract > 0"
+              class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-orange-800 bg-orange-100 rounded-full"
+              title="On a Hardship Contract"
+            >
+              <i class="fas fa-hand-holding-medical"></i>
+            </span>
 
             <!-- Injured -->
-            <span v-if="player.is_injured" class="text-red-500" title="Injured">🚑</span>
+            <span v-if="player.is_injured" class="text-red-500" title="Injured">
+              <i class="fas fa-ambulance"></i>
+            </span>
+
           </div>
         </div>
       </div>
@@ -76,7 +122,7 @@ const positions = [
 
 const sortedByPosition = (position) => {
   return props.players?.filter(player =>
-    player.status !== 2 && player.position.split('/').includes(position)
+    player.position.split('/').includes(position)
   );
 };
 
