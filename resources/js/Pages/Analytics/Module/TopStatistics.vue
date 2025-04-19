@@ -57,12 +57,36 @@
             </div>
         </div>
     </div>
+    <!-- Position Needs Summary -->
+    <div
+    v-if="data.position_summary"
+    class="flex items-center border shadow-xs p-4 bg-white rounded-lg shadow-xs md:col-span-3 mt-3"
+    >
+    <div class="p-3 mr-4 text-red-600 bg-red-100 rounded-full dark:text-red-100 dark:bg-red-600">
+        <i class="fa fa-exclamation-triangle"></i>
+    </div>
+    <div>
+        <p class="mb-2 text-sm font-medium text-gray-600">Position Needs</p>
+        <p class="text-sm text-black">
+        <span
+            v-for="(needed, position) in data.position_summary"
+            :key="position"
+            v-if="isPosition(position) && needed > 0"
+            class="inline-block mr-2 px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold"
+        >
+            {{ position }}: {{ needed }}
+        </span>
+        <span v-if="!hasNeededPositions">All positions sufficiently staffed</span>
+        </p>
+    </div>
+    </div>
+
 </template>
 
 <script setup>
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import { Head } from "@inertiajs/vue3";
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import axios from "axios"; // Ensure axios is imported
 import Swal from "sweetalert2";
 import Modal from "@/Components/Modal.vue";
@@ -78,6 +102,18 @@ const fetchPlayerCount = async (page = 1) => {
         console.error("Error fetching player count:", error);
     }
 };
+
+// Helper to check if it's a position_needed field
+const isPosition = (key) => ['PG_needed', 'SG_needed', 'SF_needed', 'PF_needed', 'C_needed'].includes(key);
+
+// Whether there are any needs
+const hasNeededPositions = computed(() => {
+  if (!data.value.position_summary) return false;
+  return Object.entries(data.value.position_summary).some(
+    ([key, value]) => isPosition(key) && value > 0
+  );
+});
+
 onMounted(() => {
     fetchPlayerCount();
 });
