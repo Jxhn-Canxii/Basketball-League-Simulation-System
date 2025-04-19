@@ -50,7 +50,7 @@
       <div><strong>BPG:</strong> {{ formatNumber(player.average_blocks_per_game) }}</div>
       <div><strong>TO:</strong> {{ formatNumber(player.average_turnovers_per_game) }}</div>
       <div><strong>FG%:</strong> {{ player.field_goal_percentage }}%</div>
-      <div><strong>3P%:</strong> {{ player.three_point_percentage }}%</div>
+      <div><strong>3P%:</strong> {{ player.three_point_percentage ?? 0 }}%</div>
       <div><strong>FT%:</strong> {{ player.free_throw_percentage }}%</div>
       <div><strong>EFF:</strong> <span :class="player.effeciency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.effeciency }}</span></div>
       <div><strong>Minutes:</strong> {{ adjustedMinutes(player) }} MPG</div>
