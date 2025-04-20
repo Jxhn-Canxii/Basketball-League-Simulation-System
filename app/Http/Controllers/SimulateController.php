@@ -1328,26 +1328,25 @@ class SimulateController extends Controller
             ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
     
-            // Step 1: Sit injured players
-            $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
-
-            // Step 2: Fill remaining DNP spots if less than 2
-            if ($dnpPlayers->count() < 2) {
-                $remainingSlots = 2 - $dnpPlayers->count();
-
-                $additionalDNP = $sorted
-                    ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already selected or injured
-                    ->sortBy([
-                        ['per', 'asc'],
-                        ['eff', 'asc'],
-                        ['injury_prone_percentage', 'desc'],
-                        ['age', 'desc'],
-                    ])
-                    ->take($remainingSlots);
-
-                $dnpPlayers = $dnpPlayers->merge($additionalDNP);
-            }
-
+        // Step 1: Sit injured players
+        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
+    
+        // Step 2: Fill remaining DNP spots if less than 2
+        if ($dnpPlayers->count() < 2) {
+            $remainingSlots = 2 - $dnpPlayers->count();
+    
+            $additionalDNP = $sorted
+                ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already selected or injured
+                ->sortBy([
+                    ['per', 'asc'],
+                    ['eff', 'asc'],
+                    ['injury_prone_percentage', 'desc'],
+                    ['age', 'desc'],
+                ])
+                ->take($remainingSlots);
+    
+            $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+        }
     
         $minutes = [];
     
@@ -1363,6 +1362,10 @@ class SimulateController extends Controller
             $role = $player['role'];
             $range = $roleMinuteRanges[$role] ?? [5, 15];
             $baseMinutes = rand($range[0], $range[1]);
+    
+            // Adjust base minutes based on player's fatigue
+            $fatigueFactor = (100 - $player['fatigue']) / 100;  // Fatigue multiplier (higher fatigue reduces minutes)
+            $baseMinutes *= $fatigueFactor;
     
             // Split player position (handle hybrid)
             $positions = explode('/', $player['position']);
@@ -1396,6 +1399,7 @@ class SimulateController extends Controller
                 $minutes[$player['id']] = 0;
             }
     
+            // Update fatigue after assigning minutes
             $this->fatigueRate($player, $minutes[$player['id']], $gameId);
             $this->handleInjuredPlayer($player, $gameId);
         }
@@ -1429,6 +1433,7 @@ class SimulateController extends Controller
     
         return $minutes;
     }
+    
         
     public function fatigueRate($player, $minutes, $gameId)
     {
