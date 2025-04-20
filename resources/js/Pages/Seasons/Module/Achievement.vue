@@ -1,7 +1,7 @@
 // Achievement.vue component
 <template>
   <div :class="[
-    'flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium',
+    'flex items-center justify-center w-6 h-6 rounded-full text-md font-medium',
     typeClasses[type]
   ]" :title="typeLabels[type]">
     {{ count }}

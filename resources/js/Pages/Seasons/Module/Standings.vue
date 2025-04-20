@@ -76,7 +76,7 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
             <td class="px-4 py-2 whitespace-nowrap">
-              <div class="flex space-x-1.5">
+              <div class="grid grid-cols-3 gap-1 place-items-center w-fit mx-auto text-xs">
                 <!-- Achievement components -->
                 <Achievement v-if="team.championships > 0" 
                            type="championship" 
@@ -87,12 +87,12 @@
                 <Achievement v-if="team.overall_1_rank > 0" 
                            type="overall" 
                            :count="team.overall_1_rank" />
-                <Achievement v-if="team.conference_1_rank > 0" 
+                <!-- <Achievement v-if="team.conference_1_rank > 0" 
                            type="conference_best" 
                            :count="team.conference_1_rank" />
                 <Achievement v-if="team.is_grandslam > 0" 
                            type="grandslam" 
-                           :count="team.is_grandslam" />
+                           :count="team.is_grandslam" /> -->
               </div>
             </td>
           </tr>
