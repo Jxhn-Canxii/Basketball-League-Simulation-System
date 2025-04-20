@@ -215,8 +215,8 @@ class SimulateController extends Controller
             $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
             $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
             $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-            $turnovers = rand(0, 2);
-            $fouls = rand(0, 4);
+            $turnovers = ($minutes === 0) ? 0 : rand(0, 2);
+            $fouls = ($minutes === 0) ? 0 : rand(0, 4);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -270,8 +270,8 @@ class SimulateController extends Controller
             $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
             $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
             $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-            $turnovers = rand(0, 2);
-            $fouls = rand(0, 4);
+            $turnovers = ($minutes === 0) ? 0 : rand(0, 2);
+            $fouls = ($minutes === 0) ? 0 : rand(0, 4);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -688,8 +688,8 @@ class SimulateController extends Controller
                 $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
                 $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
                 $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-                $turnovers = rand(0, 2);
-                $fouls = rand(0, 4);
+                $turnovers = ($minutes === 0) ? 0 : rand(0, 2);
+                $fouls = ($minutes === 0) ? 0 : rand(0, 4);
 
                 $playerGameStats[] = [
                     'player_id' => $player->id,
