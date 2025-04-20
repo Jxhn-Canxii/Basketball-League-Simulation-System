@@ -134,9 +134,10 @@ class ConferenceController extends Controller
         $teamId = $request->team_id;
         $conferenceId = $request->conference_id;
         $excludedRounds = config('playoffs');
-        $itemsPerPage = $request->itemsperpage ?: 10;
+        $itemsPerPage = $request->itemsperpage ?: 6;
         $currentPage = $request->page_num ?: 1;
     
+        // Calculate offset for pagination based on current page
         $offset = ($currentPage - 1) * $itemsPerPage;
     
         // Get total count first
@@ -171,7 +172,8 @@ class ConferenceController extends Controller
                 });
             })
             ->whereNotIn('round', $excludedRounds)
-            ->orderBy('status', 'desc')
+            ->orderBy('status', 'desc')  // Sort status 2 first
+            ->orderBy('updated_at', 'desc')  // Within status 2, order by updated_at
             ->skip($offset)
             ->take($itemsPerPage)
             ->get()

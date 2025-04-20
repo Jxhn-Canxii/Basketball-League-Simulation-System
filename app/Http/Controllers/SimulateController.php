@@ -193,11 +193,11 @@ class SimulateController extends Controller
             $performanceFactor = rand(100, 120) / 100;
             $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
             
-            // Adjust attempts based on minutes, shooting ratings, and defensive impact
-            $twoPointAttempts = rand(0, floor($minutes * (1 * $player->two_point_rating / 100))) ?? 0;
-            $adjustedTwoPointAttempts = max(0, floor($twoPointAttempts) - $defensiveImpact);
+            $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
+            $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
-            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
+
+            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
 
             // Assign returned values to variables
             $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -215,8 +215,6 @@ class SimulateController extends Controller
             $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
             $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
             $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-            $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
-            $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -249,10 +247,11 @@ class SimulateController extends Controller
                 continue;
             }
 
-            $performanceFactor = rand(100, 120) / 100;
-            $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
+            $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
+            $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
-            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
+
+            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
 
             // Assign returned values to variables
             $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -270,8 +269,6 @@ class SimulateController extends Controller
             $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
             $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
             $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-            $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
-            $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -670,7 +667,11 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
+                $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
+                $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
+    
+    
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
 
                 // Assign returned values to variables
                 $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -688,8 +689,6 @@ class SimulateController extends Controller
                 $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
                 $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
                 $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-                $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
-                $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
                 $playerGameStats[] = [
                     'player_id' => $player->id,
@@ -725,7 +724,11 @@ class SimulateController extends Controller
                 $performanceFactor = rand(100, 120) / 100;
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact);
+                $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
+                $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
+    
+    
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
 
                 // Assign returned values to variables
                 $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -744,8 +747,6 @@ class SimulateController extends Controller
                 $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
                 $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
                 $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
-                $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
-                $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
                 $playerGameStats[] = [
                     'player_id' => $player->id,
@@ -1009,27 +1010,40 @@ class SimulateController extends Controller
 
     private function calculateDefensiveImpact($opponentTeamId)
     {
+        // Get the average defensive ratings for active players on the opponent team
         $defenseRating = Player::where('team_id', $opponentTeamId)
             ->where('is_active', 1)
-            ->avg(DB::raw('(defense_rating + rebounding_rating) / 2')) ?? 0;
+            ->avg('defense_rating') ?? 0;
         
-        return floor($defenseRating / 30);
+        $reboundingRating = Player::where('team_id', $opponentTeamId)
+            ->where('is_active', 1)
+            ->avg('rebounding_rating') ?? 0;
+        
+        // Calculate the overall defensive impact by considering both defense and rebounding ratings
+        $overallDefensiveRating = ($defenseRating + $reboundingRating) / 2;
+        
+        // Normalize the impact value (based on your formula or preference)
+        return floor($overallDefensiveRating / 30);  // Adjust 30 based on desired impact scale
     }
+
     private function calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade)
     {
         $points = ($twoPointMade * 2) + ($threePointMade * 3) + $freeThrowsMade;
         return max($points, 0);
     }
+
     private function calculateRebounds($player, $minutes, $performanceFactor)
     {
-        $reboundPerMinute = 0.3 + ($player->rebounding_rating / 300);
+        $reboundPerMinute = 0.3 + (
+            ($player->rebounding_rating * 0.6 + $player->athleticism_rating * 0.3 + $player->basketball_iq_rating * 0.1) / 300
+        );
         return round($reboundPerMinute * $minutes * $performanceFactor / 2);
     }
-
+    
     private function calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact)
     {
         if ($minutes === 0) return 0;
-
+    
         $baseRates = [
             'PG' => 0.07,
             'SG' => 0.06,
@@ -1037,22 +1051,23 @@ class SimulateController extends Controller
             'PF' => 0.04,
             'C'  => 0.03,
         ];
-
+    
         $positions = explode('/', $player->position ?? 'SF');
         $baseRate = collect($positions)
             ->map(fn($pos) => $baseRates[trim($pos)] ?? 0.05)
             ->average();
-
-        $adjustedRate = $baseRate + ($defensiveImpact / 250);
+    
+        $iqPassFactor = (200 - ($player->passing_rating + $player->basketball_iq_rating)) / 200;
+        $adjustedRate = ($baseRate + ($defensiveImpact / 250)) * (1 + $iqPassFactor / 2);
+    
         $turnovers = round($minutes * $adjustedRate * $performanceFactor);
-
         return min($turnovers, 8);
     }
-
+    
     private function calculateFoul($player, $minutes, $performanceFactor, $defensiveImpact)
     {
         if ($minutes === 0) return 0;
-
+    
         $baseRates = [
             'PG' => 0.04,
             'SG' => 0.05,
@@ -1060,30 +1075,121 @@ class SimulateController extends Controller
             'PF' => 0.07,
             'C'  => 0.08,
         ];
-
-        // Handle single or multi-position
+    
         $positions = explode('/', $player->position ?? 'SF');
         $baseRate = collect($positions)
             ->map(fn($pos) => $baseRates[trim($pos)] ?? 0.06)
             ->average();
-
-        $adjustedRate = $baseRate + ($defensiveImpact / 200);
+    
+        $foulControl = ($player->defense_rating + $player->basketball_iq_rating + $player->athleticism_rating) / 3;
+        $adjustedRate = $baseRate + ($defensiveImpact / 200) * (100 - $foulControl) / 100;
+    
         $fouls = round($minutes * $adjustedRate * $performanceFactor);
-
         return min($fouls, 6);
     }
-
+    
     private function calculateBlocks($player, $minutes, $performanceFactor)
     {
-        $blocksPerMinute = 0.3 + ($player->blocks_rating / 200);
+        $blocksPerMinute = 0.3 + (
+            ($player->blocks_rating * 0.5 + $player->athleticism_rating * 0.3 + $player->defense_rating * 0.2) / 200
+        );
         return round($blocksPerMinute * $minutes * $performanceFactor / 4);
     }
-
+    
     private function calculateSteals($player, $minutes, $performanceFactor)
     {
-        $stealsPerMinute = 0.3 + ($player->steals_rating / 200);
+        $stealsPerMinute = 0.3 + (
+            ($player->steals_rating * 0.4 + $player->defense_rating * 0.3 + $player->basketball_iq_rating * 0.2 + $player->athleticism_rating * 0.1) / 200
+        );
         return round($stealsPerMinute * $minutes * $performanceFactor / 4);
     }
+    
+    private function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $isClutchTime = false)
+    {
+        $positionWeights = [
+            'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
+            'SG' => ['two_point' => 0.4, 'three_point' => 0.6, 'free_throw' => 0.5],
+            'SF' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.5],
+            'PF' => ['two_point' => 0.7, 'three_point' => 0.3, 'free_throw' => 0.5],
+            'C'  => ['two_point' => 0.8, 'three_point' => 0.2, 'free_throw' => 0.4],
+        ];
+
+        $roleMultipliers = [
+            'star player' => 1.2,
+            'all star' => 1.1,
+            'starter' => 1.0,
+            'role player' => 0.8,
+            'bench' => 0.6,
+        ];
+
+        $positions = explode('/', $player->position ?? 'SF');
+        $positionCount = count($positions);
+
+        // Initial position-based shot attempt factors
+        $positionFactor = [
+            'two_point' => 0,
+            'three_point' => 0,
+            'free_throw' => 0,
+        ];
+
+        foreach ($positions as $pos) {
+            $pos = trim($pos);
+            $weights = $positionWeights[$pos] ?? $positionWeights['SF'];
+            $positionFactor['two_point'] += $weights['two_point'] / $positionCount;
+            $positionFactor['three_point'] += $weights['three_point'] / $positionCount;
+            $positionFactor['free_throw'] += $weights['free_throw'] / $positionCount;
+        }
+
+        // Role multiplier
+        $roleFactor = $roleMultipliers[strtolower($player->role)] ?? 1.0;
+
+        // Factors based on fatigue and injury
+        $fatigueFactor = max(0.5, (100 - ($player->fatigue ?? 0)) / 100);
+        $injuryFactor = $player->is_injured ? 0.3 : 1.0;
+        $clutchBoost = ($isClutchTime && ($player->clutch_rating ?? 50) > 80) ? 1.2 : 1.0;
+
+        // Base attempts calculation (based on minutes)
+        $baseAttempts = max(1, round($minutes * 0.8));
+
+        // Adjust shot attempts based on fouls and turnovers
+        $foulImpact = $fouls * 0.05;  // Every foul slightly reduces attempts
+        $turnoverImpact = $turnovers * 0.1;  // Every turnover reduces attempts more significantly
+
+        // Adjusted attempts calculation
+        $adjustedBaseAttempts = $baseAttempts - ($foulImpact + $turnoverImpact);
+        $adjustedBaseAttempts = max(0, $adjustedBaseAttempts); // Prevent negative attempts
+
+        // Calculate shot attempts
+        $twoPointAttempts = round($adjustedBaseAttempts * $positionFactor['two_point'] * $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost);
+        $threePointAttempts = round($adjustedBaseAttempts * $positionFactor['three_point'] * $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost);
+        $freeThrowAttempts = round(($twoPointAttempts * 0.3 + $threePointAttempts * 0.1) * (($player->strength_rating ?? 70) / 100));
+
+        // Adjust for defensive impact
+        $adjustedTwoPointAttempts = max(0, $twoPointAttempts - $defensiveImpact);
+        $adjustedThreePointAttempts = max(0, $threePointAttempts - $defensiveImpact);
+        $adjustedFreeThrowAttempts = max(0, $freeThrowAttempts - ($defensiveImpact * 0.5));
+
+        // Shot accuracy based on player ratings
+        $twoPointAccuracy = ($player->two_point_rating ?? 60) / 100 * ($player->basketball_iq_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
+        $threePointAccuracy = ($player->three_point_rating ?? 60) / 100 * ($player->basketball_iq_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
+        $freeThrowAccuracy = ($player->free_throw_rating ?? 60) / 100 * ($player->work_ethic_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
+
+        // Calculate made shots (ensure it doesn't exceed attempts)
+        $twoPointMade = min(rand(0, round($adjustedTwoPointAttempts * $twoPointAccuracy)), $adjustedTwoPointAttempts);
+        $threePointMade = min(rand(0, round($adjustedThreePointAttempts * $threePointAccuracy)), $adjustedThreePointAttempts);
+        $freeThrowMade = min(rand(0, round($adjustedFreeThrowAttempts * $freeThrowAccuracy)), $adjustedFreeThrowAttempts);
+
+        return [
+            'two_point_attempts' => $adjustedTwoPointAttempts,
+            'two_point_made' => $twoPointMade,
+            'three_point_attempts' => $adjustedThreePointAttempts,
+            'three_point_made' => $threePointMade,
+            'free_throw_attempts' => $adjustedFreeThrowAttempts,
+            'free_throw_made' => $freeThrowMade,
+        ];
+    }
+
+
     public function getScheduleIds(Request $request)
     {
         // Validate the request data
@@ -2265,74 +2371,6 @@ class SimulateController extends Controller
         }
     }
    
-    private function calculateShotAttempts($player, $minutes, $defensiveImpact, $isClutchTime = false)
-    {
-        $positionWeights = [
-            'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
-            'SG' => ['two_point' => 0.4, 'three_point' => 0.6, 'free_throw' => 0.5],
-            'SF' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.5],
-            'PF' => ['two_point' => 0.7, 'three_point' => 0.3, 'free_throw' => 0.5],
-            'C'  => ['two_point' => 0.8, 'three_point' => 0.2, 'free_throw' => 0.4],
-        ];
-
-        $roleMultipliers = [
-            'star player' => 1.2,
-            'all star' => 1.1,
-            'starter' => 1.0,
-            'role player' => 0.8,
-            'bench' => 0.6,
-        ];
-
-        $positions = explode('/', $player->position ?? 'SF');
-        $positionCount = count($positions);
-
-        $positionFactor = [
-            'two_point' => 0,
-            'three_point' => 0,
-            'free_throw' => 0,
-        ];
-
-        foreach ($positions as $pos) {
-            $pos = trim($pos);
-            $weights = $positionWeights[$pos] ?? $positionWeights['SF'];
-            $positionFactor['two_point'] += $weights['two_point'] / $positionCount;
-            $positionFactor['three_point'] += $weights['three_point'] / $positionCount;
-            $positionFactor['free_throw'] += $weights['free_throw'] / $positionCount;
-        }
-
-        $roleFactor = $roleMultipliers[strtolower($player->role)] ?? 1.0;
-        $fatigueFactor = max(0.5, (100 - ($player->fatigue ?? 0)) / 100);
-        $injuryFactor = $player->is_injured ? 0.3 : 1.0;
-        $clutchBoost = ($isClutchTime && ($player->clutch_rating ?? 50) > 80) ? 1.2 : 1.0;
-
-        $baseAttempts = max(1, round($minutes * 0.8));
-
-        $twoPointAttempts = round($baseAttempts * $positionFactor['two_point'] * $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost);
-        $threePointAttempts = round($baseAttempts * $positionFactor['three_point'] * $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost);
-        $freeThrowAttempts = round(($twoPointAttempts * 0.3 + $threePointAttempts * 0.1) * (($player->strength_rating ?? 70) / 100));
-
-        $adjustedTwoPointAttempts = max(0, $twoPointAttempts - $defensiveImpact);
-        $adjustedThreePointAttempts = max(0, $threePointAttempts - $defensiveImpact);
-        $adjustedFreeThrowAttempts = max(0, $freeThrowAttempts - ($defensiveImpact * 0.5));
-
-        $twoPointAccuracy = ($player->two_point_rating ?? 60) / 100 * ($player->basketball_iq_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
-        $threePointAccuracy = ($player->three_point_rating ?? 60) / 100 * ($player->basketball_iq_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
-        $freeThrowAccuracy = ($player->free_throw_rating ?? 60) / 100 * ($player->work_ethic_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
-
-        $twoPointMade = min(rand(0, round($adjustedTwoPointAttempts * $twoPointAccuracy)), $adjustedTwoPointAttempts);
-        $threePointMade = min(rand(0, round($adjustedThreePointAttempts * $threePointAccuracy)), $adjustedThreePointAttempts);
-        $freeThrowMade = min(rand(0, round($adjustedFreeThrowAttempts * $freeThrowAccuracy)), $adjustedFreeThrowAttempts);
-
-        return [
-            'two_point_attempts' => $adjustedTwoPointAttempts,
-            'two_point_made' => $twoPointMade,
-            'three_point_attempts' => $adjustedThreePointAttempts,
-            'three_point_made' => $threePointMade,
-            'free_throw_attempts' => $adjustedFreeThrowAttempts,
-            'free_throw_made' => $freeThrowMade,
-        ];
-    }
-
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
     {

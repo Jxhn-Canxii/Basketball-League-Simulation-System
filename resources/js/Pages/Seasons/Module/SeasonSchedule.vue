@@ -137,7 +137,7 @@
             <select 
                 id="teamFilter" 
                 v-model="search_schedule.team_id" 
-                @change.prevent="fetchConferenceSchedules()" 
+                @change.prevent="searchInput()" 
                 class="ml-4 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             >
                 <option value="0">All Teams</option>
@@ -146,13 +146,13 @@
         </div>
         <div
             v-if="
-                season_schedules &&
-                season_schedules.schedules?.length > 0 && !loadingSchedules
+                data &&
+                data.schedules?.length > 0 && !loadingSchedules
             "
             class="grid md:grid-cols-2 sm:col-span-1 gap-6"
         >
             <div
-                v-for="(game, index) in season_schedules.schedules"
+                v-for="(game, index) in data.schedules"
                 :key="index"
                 :style="{
                 background: `
@@ -212,7 +212,7 @@
                         class="px-4 text-nowrap text-xs py-0"
                     >
                         <span class="px-2 text-lg text-white py-1 rounded  flex justify-center">
-                            {{ "Round #" + (parseFloat(game.round) + 1) }}
+                            {{ "Round #" + parseFloat(game.round) }}
                         </span>
                         <small class="flex justify-center text-white"> #R{{ game.round }}-{{ game.game_id }}</small>
                     </div>
@@ -247,21 +247,21 @@
             <p class="text-gray-500">Loading Schedules.</p>
         </div>
         <div v-if="
-                season_schedules &&
-                season_schedules.schedules?.length == 0 && !loadingSchedules
+                data &&
+                data.schedules?.length == 0 && !loadingSchedules
             ">
             <p class="text-gray-500">No schedule available.</p>
         </div>
         <div class="flex w-full overflow-auto"
         v-if="
-            season_schedules &&
-            season_schedules.schedules?.length > 0 && !loadingSchedules
+            data &&
+            data.schedules?.length > 0 && !loadingSchedules
         ">
             <Paginator
-                v-if="season_schedules.total_count"
+                v-if="data.total_count"
                 :page_number="search_schedule.page_num"
-                :total_rows="season_schedules.total_count ?? 0"
-                :itemsperpage="season_schedules.itemsperpage"
+                :total_rows="data.total_count ?? 0"
+                :itemsperpage="search_schedule.itemsperpage"
                 @page_num="handlePagination"
             />
         </div>
@@ -299,6 +299,7 @@
     const activeConferenceTab = ref(0);
     const loadingSchedules = ref(false);
     const teams = ref([]);
+    const data = ref([]);
     const activeGameId = ref(0);
     const emit = defineEmits(["transaction_id", "simulate_next_conference"]);
     const props = defineProps({
@@ -309,7 +310,7 @@
     });
     
     const search_schedule = ref({
-        current_page: 1,
+        page_num: 1,
         total_pages: 0,
         total: 0,
         search: "",
@@ -318,17 +319,20 @@
         season_id: 0,
         itemsperpage: 6,
     });
-
-    const fetchConferenceSchedules = async (page = 1) => {
+    const searchInput = () => {
+        search_schedule.value.page_num = 1;
+        fetchConferenceSchedules();
+    }
+    const fetchConferenceSchedules = async () => {
         try {
+
             season_schedules.value = [];
             loadingSchedules.value = true;
-            search_schedule.value.current_page = page;
             search_schedule.value.season_id = props.season_id;
             search_schedule.value.conference_id = props.conference_id;
 
             const response = await axios.post(route("conferences.schedules"), search_schedule.value);
-            season_schedules.value = response.data;
+            data.value = response.data;
             loadingSchedules.value = false;
         } catch (error) {
             console.error("Error fetching season standings:", error);
