@@ -1622,14 +1622,20 @@ class SimulateController extends Controller
 
             // STEP 4: Injury chance check using injury_prone_percentage
             if ($newFatigue >= 20) {
-                $chance = rand(1, 100);
-                if ($chance <= $player->injury_prone_percentage) {
-                    $this->causeInjury($player, $gameId, $seasonId);
-                    return;
-                } else {
-                    $newFatigue = 0; // Reset fatigue after hitting threshold
+                $triggerInjuryChance = rand(1, 100);
+            
+                if ($triggerInjuryChance <= 30) { // 30% chance to trigger injury logic
+                    $injuryRoll = rand(1, 100);
+                    if ($injuryRoll <= $player->injury_prone_percentage) {
+                        $this->causeInjury($player, $gameId, $seasonId);
+                        return;
+                    }
                 }
+            
+                // If not injured, reset fatigue
+                $newFatigue = 0;
             }
+            
 
             // STEP 5: Save fatigue
             DB::table('players')->where('id', $player->id)->update([
