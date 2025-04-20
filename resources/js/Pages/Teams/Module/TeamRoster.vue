@@ -1040,7 +1040,12 @@
                                     >
                                         Yrs. Left
                                     </th>
-
+                                    <th
+                                        class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
+                                        title="Estimated time of absence"
+                                    >
+                                        Injury Name
+                                    </th>
                                     <th
                                         class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                         title="Estimated time of absence"
@@ -1098,6 +1103,9 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.contract_years ?? '-' }} yrs.
+                                    </td>
+                                     <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">
+                                        {{ player.injury_type?.replaceAll('_',' ') ?? '-' }}
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                        {{ Math.round(player.injury_recovery_games) ?? '-' }} {{ Math.round(player.injury_recovery_games) === 1 ? 'Day' : 'Days' }}

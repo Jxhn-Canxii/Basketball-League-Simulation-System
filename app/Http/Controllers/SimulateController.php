@@ -1296,7 +1296,7 @@ class SimulateController extends Controller
         ]);
     }
 
-    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    private function distributeMinutesV2($playersArray, $totalMinutes, $gameId)
     {
         $rolePriority = [
             'star player' => 1,
@@ -1432,69 +1432,214 @@ class SimulateController extends Controller
     
         return $minutes;
     }
-        
+    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    {
+        $rolePriority = [
+            'star player' => 1,
+            'all star'    => 2,
+            'starter'     => 3,
+            'role player' => 4,
+            'bench'       => 5,
+        ];
+
+        $roleMinuteRanges = [
+            'star player' => [36, 42],
+            'all star'    => [32, 38],
+            'starter'     => [28, 34],
+            'role player' => [15, 24],
+            'bench'       => [0, 12],
+        ];
+
+        $positionTargets = [
+            'PG' => 48,
+            'SG' => 48,
+            'SF' => 48,
+            'PF' => 48,
+            'C'  => 48,
+        ];
+
+        $sorted = collect($playersArray)
+            ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
+            ->values();
+
+        // Step 1: Sit injured players
+        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
+
+        // Step 2: Fill remaining DNP slots
+        if ($dnpPlayers->count() < 2) {
+            $remainingSlots = 2 - $dnpPlayers->count();
+            $additionalDNP = $sorted
+                ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured'])
+                ->sortBy([
+                    ['per', 'asc'],
+                    ['eff', 'asc'],
+                    ['injury_prone_percentage', 'desc'],
+                    ['age', 'desc'],
+                ])
+                ->take($remainingSlots);
+
+            $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+        }
+
+        // ✅ Ensure minimum of 5 players with minutes
+        $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
+
+        if ($rotation->count() < 5) {
+            $needed = 5 - $rotation->count();
+
+            $reAddCandidates = $dnpPlayers
+                ->filter(fn($p) => !$p['is_injured'])
+                ->sortBy([
+                    ['per', 'desc'],
+                    ['eff', 'desc'],
+                    ['injury_prone_percentage', 'asc'],
+                    ['age', 'asc'],
+                ])
+                ->take($needed);
+
+            $dnpPlayers = $dnpPlayers->reject(fn($p) => $reAddCandidates->contains('id', $p['id']));
+            $rotation = $rotation->merge($reAddCandidates);
+        }
+
+        $minutes = [];
+        foreach ($dnpPlayers as $p) {
+            $minutes[$p['id']] = 0;
+        }
+
+        // Step 3: Assign minutes based on role and position
+        $assignedTotal = 0;
+
+        foreach ($rotation as $player) {
+            $role = $player['role'];
+            $range = $roleMinuteRanges[$role] ?? [5, 15];
+            $baseMinutes = rand($range[0], $range[1]);
+
+            $positions = explode('/', $player['position']);
+            $positionAssigned = false;
+
+            foreach ($positions as $pos) {
+                if (($positionTargets[$pos] ?? 0) > 0) {
+                    $assigned = min($baseMinutes, $positionTargets[$pos]);
+                    $minutes[$player['id']] = $assigned;
+                    $positionTargets[$pos] -= $assigned;
+                    $assignedTotal += $assigned;
+                    $positionAssigned = true;
+                    break;
+                }
+            }
+
+            if (!$positionAssigned) {
+                foreach ($positions as $pos) {
+                    if (isset($positionTargets[$pos])) {
+                        $assigned = min($baseMinutes, $positionTargets[$pos]);
+                        $minutes[$player['id']] = $assigned;
+                        $positionTargets[$pos] -= $assigned;
+                        $assignedTotal += $assigned;
+                        break;
+                    }
+                }
+            }
+
+            if (!isset($minutes[$player['id']])) {
+                $minutes[$player['id']] = 0;
+            }
+
+            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+            $this->handleInjuredPlayer($player, $gameId);
+        }
+
+        // Step 4: Normalize to total minutes (usually 240)
+        $difference = $totalMinutes - array_sum($minutes);
+
+        if (abs($difference) > 0) {
+            $eligible = $rotation->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)->values();
+            $i = 0;
+
+            while ($difference !== 0 && $eligible->isNotEmpty()) {
+                $player = $eligible[$i % $eligible->count()];
+                $id = $player['id'];
+
+                if (!isset($minutes[$id])) {
+                    $minutes[$id] = 0;
+                }
+
+                if ($difference > 0 && $minutes[$id] < 48) {
+                    $minutes[$id]++;
+                    $difference--;
+                } elseif ($difference < 0 && $minutes[$id] > 0) {
+                    $minutes[$id]--;
+                    $difference++;
+                }
+
+                $i++;
+            }
+        }
+
+        return $minutes;
+    }
+    
     public function fatigueRate($player, $minutes, $gameId)
     {
         try {
             if (is_array($player)) {
                 $player = (object) $player;
             }
-    
+
             $seasonId = get_current_season_id() ?? 1;
             $staminaFactor  = $player->stamina_rating / 100;
             $strengthFactor = $player->strength_rating / 100;
             $currentFatigue = $player->fatigue;
-    
-            $retirementAge = $player->retirement_age ?? 36; // Fallback if not set
+            $retirementAge = $player->retirement_age ?? 36;
             $age = $player->age;
-    
+
             // STEP 1: Calculate recovery rate
             $baseRecoveryRate = ($staminaFactor + $strengthFactor) * 0.1;
-    
-            // Age-based slowdown multiplier
+
+            // Age-based slowdown
             $ageGap = $retirementAge - $age;
             if ($ageGap <= 0) {
-                $recoverySlowdown = 0.5; // Very slow recovery for old players
+                $recoverySlowdown = 0.5;
             } elseif ($ageGap <= 5) {
-                $recoverySlowdown = 1 - (0.1 * (5 - $ageGap)); // Gradual decline
+                $recoverySlowdown = 1 - (0.1 * (5 - $ageGap));
             } else {
-                $recoverySlowdown = 1; // Full recovery for younger players
+                $recoverySlowdown = 1;
             }
-    
+
             $recoveryRate = $baseRecoveryRate * $recoverySlowdown;
-    
-            // STEP 2: Apply Recovery (only if not injured and fatigue > 0)
+
+            // STEP 2: Apply Recovery
             if (!$player->is_injured && $currentFatigue > 0) {
                 $currentFatigue = max(0, $currentFatigue - $recoveryRate);
             }
-    
+
             // STEP 3: Add fatigue from this game
             if ($minutes == 0) {
-                $newFatigue = max(0, $currentFatigue - 20); // DNP = auto-recovery
+                $newFatigue = max(0, $currentFatigue - 20); // Auto-recovery for DNP
             } else {
                 $fatigueIncrease = $minutes * (1 - $staminaFactor * 0.5);
-                $newFatigue = min(100, $currentFatigue + round($fatigueIncrease));
+                $newFatigue = min(20, $currentFatigue + round($fatigueIncrease)); // Cap at 20
             }
-    
-            // STEP 4: Injury risk check
-            if ($newFatigue >= 80) {
-                $injuryChance = $this->calculateInjuryChance($newFatigue);
-                if ($injuryChance >= 100) {
+
+            // STEP 4: Injury chance check using injury_prone_percentage
+            if ($newFatigue >= 20) {
+                $chance = rand(1, 100);
+                if ($chance <= $player->injury_prone_percentage) {
                     $this->causeInjury($player, $gameId, $seasonId);
                     return;
+                } else {
+                    $newFatigue = 0; // Reset fatigue after hitting threshold
                 }
             }
-    
-            // STEP 5: Save updated fatigue
+
+            // STEP 5: Save fatigue
             DB::table('players')->where('id', $player->id)->update([
                 'fatigue' => $newFatigue,
             ]);
-    
+
         } catch (\Exception $e) {
             \Log::error("Error updating fatigue for player {$player->id}: " . $e->getMessage());
         }
     }
-    
 
     public function calculateInjuryChance($fatigue)
     {
