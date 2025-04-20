@@ -130,68 +130,16 @@ class ConferenceController extends Controller
     }
     public function seasonschedules(Request $request)
     {
-        // Retrieve the season_id and conference_id from the request
         $seasonId = $request->season_id;
         $teamId = $request->team_id;
         $conferenceId = $request->conference_id;
         $excludedRounds = config('playoffs');
-        $itemsPerPage = $request->itemsperpage ?: 10;  // Default to 10 if not provided
-        $currentPage = $request->current_page ?: 1;  // Default to page 1 if not provided
+        $itemsPerPage = $request->itemsperpage ?: 10;
+        $currentPage = $request->page_num ?: 1;
     
-        // Calculate the offset
         $offset = ($currentPage - 1) * $itemsPerPage;
     
-        // Retrieve schedules with manual pagination (using skip() and take())
-        $schedules = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->when($teamId != 0, function ($query) use ($teamId) {
-                return $query->where(function ($q) use ($teamId) {
-                    $q->where('home_id', $teamId)
-                      ->orWhere('away_id', $teamId);
-                });
-            })
-            ->whereNotIn('round', $excludedRounds)
-            ->orderBy('status','desc')
-            ->skip($offset)
-            ->take($itemsPerPage)
-            ->get()
-            ->toArray();
-        
-        // $schedules = DB::table('schedule_view')
-        //     ->where('season_id', $seasonId)
-        //     ->where('conference_id', $conferenceId)
-        //     ->whereNotIn('round', $excludedRounds)
-        //     ->orderBy('status','desc')
-        //     ->skip($offset)
-        //     ->take($itemsPerPage)
-        //     ->get()
-        //     ->toArray();
-    
-        // Check if all non-final rounds are simulated
-        $allRoundsSimulated = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->whereNotIn('round', $excludedRounds)
-            ->where('status', 1)
-            ->doesntExist(); // Use doesntExist() to check if no records match
-    
-        // // Count distinct rounds
-        // $distinctRoundsCount = DB::table('schedule_view')
-        //     ->where('season_id', $seasonId)
-        //     ->where('conference_id', $conferenceId)
-        //     ->whereNotIn('round', $excludedRounds)
-        //     ->distinct('round')
-        //     ->count('round');
-    
-        // // Retrieve distinct rounds
-        // $rounds = DB::table('schedule_view')
-        //     ->where('season_id', $seasonId)
-        //     ->where('conference_id', $conferenceId)
-        //     ->whereNotIn('round', $excludedRounds)
-        //     ->distinct('round')
-        //     ->pluck('round'); // Get a list of distinct rounds
-       
-        // Get total count of schedules to calculate the total number of pages
+        // Get total count first
         $totalSchedules = DB::table('schedule_view')
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
@@ -204,19 +152,47 @@ class ConferenceController extends Controller
             ->whereNotIn('round', $excludedRounds)
             ->count();
     
-        // Calculate total pages
         $totalPages = ceil($totalSchedules / $itemsPerPage);
+    
+        // Reset to first page if requested page is too high
+        if ($offset >= $totalSchedules) {
+            $offset = 0;
+            $currentPage = 1;
+        }
+    
+        // Fetch the actual schedule data
+        $schedules = DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->where('conference_id', $conferenceId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                      ->orWhere('away_id', $teamId);
+                });
+            })
+            ->whereNotIn('round', $excludedRounds)
+            ->orderBy('status', 'desc')
+            ->skip($offset)
+            ->take($itemsPerPage)
+            ->get()
+            ->toArray();
+    
+        // Check if all non-final rounds are simulated
+        $allRoundsSimulated = DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->whereNotIn('round', $excludedRounds)
+            ->where('status', 1)
+            ->doesntExist();
     
         return response()->json([
             'schedules' => $schedules,
             'is_simulated' => $allRoundsSimulated,
-            // 'distinct_rounds_count' => $distinctRoundsCount,
-            // 'rounds' => $rounds, // Include the list of rounds in the response
             'current_page' => $currentPage,
             'total_pages' => $totalPages,
             'total_count' => $totalSchedules,
         ]);
     }
+    
     public function getConferenceRoundNotSimulated(Request $request){
         $seasonId = $request->season_id;
         $conferenceId = $request->conference_id;

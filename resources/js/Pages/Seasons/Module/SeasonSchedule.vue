@@ -336,6 +336,7 @@
     };
 
     const handlePagination = (page_num) => {
+        console.log(page_num)
         search_schedule.value.page_num = page_num ?? 1;
         fetchConferenceSchedules();
     };
