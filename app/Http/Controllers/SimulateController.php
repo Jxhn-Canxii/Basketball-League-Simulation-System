@@ -1328,25 +1328,26 @@ class SimulateController extends Controller
             ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
     
-        // Step 1: Sit injured players
-        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
-    
-        // Step 2: Fill remaining DNP spots if less than 2
-        if ($dnpPlayers->count() < 2) {
-            $remainingSlots = 2 - $dnpPlayers->count();
-    
-            $additionalDNP = $sorted
-                ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already selected or injured
-                ->sortBy([
-                    ['per', 'asc'],
-                    ['eff', 'asc'],
-                    ['injury_prone_percentage', 'desc'],
-                    ['age', 'desc'],
-                ])
-                ->take($remainingSlots);
-    
-            $dnpPlayers = $dnpPlayers->merge($additionalDNP);
-        }
+            // Step 1: Sit injured players
+            $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
+
+            // Step 2: Fill remaining DNP spots if less than 2
+            if ($dnpPlayers->count() < 2) {
+                $remainingSlots = 2 - $dnpPlayers->count();
+
+                $additionalDNP = $sorted
+                    ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already selected or injured
+                    ->sortBy([
+                        ['per', 'asc'],
+                        ['eff', 'asc'],
+                        ['injury_prone_percentage', 'desc'],
+                        ['age', 'desc'],
+                    ])
+                    ->take($remainingSlots);
+
+                $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+            }
+
     
         $minutes = [];
     
@@ -1362,11 +1363,10 @@ class SimulateController extends Controller
             $role = $player['role'];
             $range = $roleMinuteRanges[$role] ?? [5, 15];
             $baseMinutes = rand($range[0], $range[1]);
-    
-            // Adjust base minutes based on player's fatigue
-            $fatigueFactor = (100 - $player['fatigue']) / 100;  // Fatigue multiplier (higher fatigue reduces minutes)
-            $baseMinutes *= $fatigueFactor;
-    
+            
+            // Adjust base minutes based on the player's fatigue
+            $fatigueFactor = ($player['fatigue'] == 0) ? 1 : (100 - $player['fatigue']) / 100;  // No fatigue penalty if fatigue is 0
+            $baseMinutes *= $fatigueFactor;  // Apply the fatigue adjustment to the base minute
             // Split player position (handle hybrid)
             $positions = explode('/', $player['position']);
             $positionAssigned = false;
@@ -1399,7 +1399,6 @@ class SimulateController extends Controller
                 $minutes[$player['id']] = 0;
             }
     
-            // Update fatigue after assigning minutes
             $this->fatigueRate($player, $minutes[$player['id']], $gameId);
             $this->handleInjuredPlayer($player, $gameId);
         }
@@ -1433,7 +1432,6 @@ class SimulateController extends Controller
     
         return $minutes;
     }
-    
         
     public function fatigueRate($player, $minutes, $gameId)
     {
@@ -1443,67 +1441,54 @@ class SimulateController extends Controller
             }
     
             $seasonId = get_current_season_id() ?? 1;
+            $staminaFactor  = $player->stamina_rating / 100;
+            $strengthFactor = $player->strength_rating / 100;
+            $currentFatigue = $player->fatigue;
     
-            // **Fatigue Calculation Logic:**
-            $staminaFactor = $player->stamina_rating / 100;  // Convert stamina rating to a multiplier between 0 and 1
-            $strengthFactor = $player->strength_rating / 100; // Strength can be factored in similarly
-            $fatigueIncrease = $minutes * (1 - $staminaFactor * 0.5); // Fatigue increases with minutes played, but stamina reduces it
+            $retirementAge = $player->retirement_age ?? 36; // Fallback if not set
+            $age = $player->age;
     
-            // If minutes are zero, reduce fatigue to 20% of max fatigue level
-            if ($minutes == 0) {
-                $newFatigue = max(0, $player->fatigue - 20); // Prevent negative fatigue
+            // STEP 1: Calculate recovery rate
+            $baseRecoveryRate = ($staminaFactor + $strengthFactor) * 0.1;
+    
+            // Age-based slowdown multiplier
+            $ageGap = $retirementAge - $age;
+            if ($ageGap <= 0) {
+                $recoverySlowdown = 0.5; // Very slow recovery for old players
+            } elseif ($ageGap <= 5) {
+                $recoverySlowdown = 1 - (0.1 * (5 - $ageGap)); // Gradual decline
             } else {
-                // Add the calculated fatigue based on minutes and player's stamina
-                $newFatigue = min(100, $player->fatigue + round($fatigueIncrease)); // Cap fatigue at 100
+                $recoverySlowdown = 1; // Full recovery for younger players
             }
     
-            // **Fatigue Adjustments**
-            if ($newFatigue >= 80) {
-                // **Injury Risk Increases When Fatigue is 80 or Higher**
-                $injuryChance = $this->calculateInjuryChance($newFatigue);
+            $recoveryRate = $baseRecoveryRate * $recoverySlowdown;
     
-                // Trigger injury if the injury chance is met
+            // STEP 2: Apply Recovery (only if not injured and fatigue > 0)
+            if (!$player->is_injured && $currentFatigue > 0) {
+                $currentFatigue = max(0, $currentFatigue - $recoveryRate);
+            }
+    
+            // STEP 3: Add fatigue from this game
+            if ($minutes == 0) {
+                $newFatigue = max(0, $currentFatigue - 20); // DNP = auto-recovery
+            } else {
+                $fatigueIncrease = $minutes * (1 - $staminaFactor * 0.5);
+                $newFatigue = min(100, $currentFatigue + round($fatigueIncrease));
+            }
+    
+            // STEP 4: Injury risk check
+            if ($newFatigue >= 80) {
+                $injuryChance = $this->calculateInjuryChance($newFatigue);
                 if ($injuryChance >= 100) {
                     $this->causeInjury($player, $gameId, $seasonId);
                     return;
                 }
             }
     
-            // Update the player's fatigue in the database
+            // STEP 5: Save updated fatigue
             DB::table('players')->where('id', $player->id)->update([
                 'fatigue' => $newFatigue,
             ]);
-    
-            // **Fatigue Recovery (if Player is Not Injured)**
-            if (!$player->is_injured) {
-                // **Recovery Rate Calculation**
-                // Recovery depends on stamina and strength factors
-                $recoveryRate = ($staminaFactor + $strengthFactor) * 0.1; // Increase the recovery rate for higher stamina & strength
-                $recoveryFatigue = max(0, $newFatigue - $recoveryRate); // Reduce fatigue based on recovery rate
-    
-                // Cap the recovery to avoid going below 0 fatigue
-                DB::table('players')->where('id', $player->id)->update([
-                    'fatigue' => $recoveryFatigue,
-                ]);
-            }
-    
-            // **Fatigue replenishment after each game (Fixed 2-game interval)**
-            if (!$player->is_injured) {
-                // Every 2-game interval means the player has 1 rest day.
-                // So, we can assume the player is recovering after every game with 1 rest day in between.
-                $recoveryMultiplier = 1; // Default recovery multiplier
-    
-                // If the player has played more than 1 game (2-game interval), apply recovery multiplier
-                if ($minutes > 0) {
-                    $recoveryMultiplier = 1 + 0.05; // Increase recovery by 5% for each 2-game interval
-                }
-    
-                // Apply recovery multiplier based on interval
-                $recoveryFatigue = max(0, $player->fatigue - ($recoveryRate * $recoveryMultiplier));
-                DB::table('players')->where('id', $player->id)->update([
-                    'fatigue' => $recoveryFatigue,
-                ]);
-            }
     
         } catch (\Exception $e) {
             \Log::error("Error updating fatigue for player {$player->id}: " . $e->getMessage());
