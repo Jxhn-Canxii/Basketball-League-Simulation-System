@@ -1334,9 +1334,19 @@ class SimulateController extends Controller
             ->values();
     
         // Step 2: Sit 3 players (injury or coach decision)
-        $dnpPlayers = $sorted->filter(fn($p) => rand(1, 100) <= $p['injury_prone_percentage'])->take(2);
-        $additionalDNP = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']))->shuffle()->take(1);
-        $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(3);
+
+        // 2. If less than 3, fill remaining spots by injury_prone_percentage then age
+        if ($dnpPlayers->count() < 3) {
+            $remainingSlots = 3 - $dnpPlayers->count();
+
+            $additionalDNP = $sorted
+                ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already DNP or injured
+                ->sortByDesc(fn($p) => [$p['injury_prone_percentage'], $p['age']]) // prioritize by injury_prone then age
+                ->take($remainingSlots);
+
+            $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+        }
     
         $minutes = [];
     

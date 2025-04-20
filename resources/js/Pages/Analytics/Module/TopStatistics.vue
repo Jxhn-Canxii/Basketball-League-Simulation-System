@@ -59,7 +59,6 @@
     </div>
     <!-- Position Needs Summary -->
     <div
-    v-if="data.position_summary"
     class="flex items-center border shadow-xs p-4 bg-white rounded-lg shadow-xs md:col-span-3 mt-3"
     >
     <div class="p-3 mr-4 text-red-600 bg-red-100 rounded-full dark:text-red-100 dark:bg-red-600">
@@ -68,15 +67,14 @@
     <div>
         <p class="mb-2 text-sm font-medium text-gray-600">Position Needs</p>
         <p class="text-sm text-black">
-        <span
-            v-for="(needed, position) in data.position_summary"
-            :key="position"
-            v-if="isPosition(position) && needed > 0"
+         <span
+            v-for="[itemKey, itemValue] in filteredSummary"
+            :key="itemKey"
             class="inline-block mr-2 px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold"
         >
-            {{ position }}: {{ needed }}
+            {{ itemKey.replace('_needed', '') }} Needed: {{ itemValue }}
         </span>
-        <span v-if="!hasNeededPositions">All positions sufficiently staffed</span>
+        <span >{{ data?.position_summary?.warning }}</span>
         </p>
     </div>
     </div>
@@ -111,6 +109,12 @@ const hasNeededPositions = computed(() => {
   if (!data.value.position_summary) return false;
   return Object.entries(data.value.position_summary).some(
     ([key, value]) => isPosition(key) && value > 0
+  );
+});
+
+const filteredSummary = computed(() => {
+  return Object.entries(data.value.position_summary ?? {}).filter(
+    ([key, value]) => key.endsWith('_needed') && value > 0
   );
 });
 
