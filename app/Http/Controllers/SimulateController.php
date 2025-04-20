@@ -1365,8 +1365,8 @@ class SimulateController extends Controller
             $baseMinutes = rand($range[0], $range[1]);
             
             // Adjust base minutes based on the player's fatigue
-            $fatigueFactor = ($player['fatigue'] == 0) ? 1 : (100 - $player['fatigue']) / 100;  // No fatigue penalty if fatigue is 0
-            $baseMinutes *= $fatigueFactor;  // Apply the fatigue adjustment to the base minute
+            // $fatigueFactor = ($player['fatigue'] == 0) ? 1 : (100 - $player['fatigue']) / 100;  // No fatigue penalty if fatigue is 0
+            // $baseMinutes *= $fatigueFactor;  // Apply the fatigue adjustment to the base minute
             // Split player position (handle hybrid)
             $positions = explode('/', $player['position']);
             $positionAssigned = false;
