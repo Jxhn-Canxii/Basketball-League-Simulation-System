@@ -198,7 +198,7 @@
                                             >
                                                 View Result
                                             </a>
-                                            <p  v-if="isHide" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
+                                            <p  v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
                                                 Simulating...
                                             </p>
                                     </div>
