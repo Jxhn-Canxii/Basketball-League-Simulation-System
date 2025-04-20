@@ -74,13 +74,8 @@ class PlayersController extends Controller
                         ->where('player_id', $player->id)
                         ->where('team_id', $teamId)
                         ->where('season_id', $seasonId)
-                        ->where('minutes', '>', 0) // Only count games where minutes > 0
+                        ->where('minutes', '>=', 0) // Only count games where minutes > 0
                         ->count(); // Directly count the rows
-
-                    // If season status is 11 and the player has 0 games played, skip this player
-                    if ($seasonStatus == 11 && $gamesPlayed == 0) {
-                        continue; // Skip the rest of the logic for this player
-                    }
 
                     // Assuming 30 minutes is the average threshold
 
@@ -239,7 +234,7 @@ class PlayersController extends Controller
                         'role' => $player->role,
                         'is_active' => $player->is_active,
                         'is_rookie' => $player->is_rookie,
-                        'is_injured' => $player->is_injured,
+                        'injury_type' => $player->injury_type,
                         'injury_type' => $player->injury_type,
                         'contract_years' => $player->contract_years,
                         'retirement_age' => $player->retirement_age,
