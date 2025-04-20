@@ -1333,12 +1333,12 @@ class SimulateController extends Controller
             ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
     
-        // Step 2: Sit 3 players (injury or coach decision)
-        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(3);
+        // Step 2: Sit 2 players (injury or coach decision)
+        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
 
-        // 2. If less than 3, fill remaining spots by injury_prone_percentage then age
-        if ($dnpPlayers->count() < 3) {
-            $remainingSlots = 3 - $dnpPlayers->count();
+        // 2. If less than 2, fill remaining spots by injury_prone_percentage then age
+        if ($dnpPlayers->count() < 2) {
+            $remainingSlots = 2 - $dnpPlayers->count();
 
             $additionalDNP = $sorted
                 ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already DNP or injured
