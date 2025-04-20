@@ -190,7 +190,7 @@ class SimulateController extends Controller
                 continue;
             }
 
-            $performanceFactor = rand(100, 120) / 100;
+            $performanceFactor = $this->calculatePerformanceFactor($player);
             $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
             
             $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
@@ -247,6 +247,9 @@ class SimulateController extends Controller
                 continue;
             }
 
+            $performanceFactor = $this->calculatePerformanceFactor($player);
+            $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
+            
             $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
             $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
@@ -664,7 +667,7 @@ class SimulateController extends Controller
                     continue;
                 }
 
-                $performanceFactor = rand(100, 120) / 100;
+                $performanceFactor = $this->calculatePerformanceFactor($player);
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
                 $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
@@ -721,7 +724,7 @@ class SimulateController extends Controller
                     continue;
                 }
 
-                $performanceFactor = rand(100, 120) / 100;
+                $performanceFactor = $this->calculatePerformanceFactor($player);
                 $defensiveImpact = $this->calculateDefensiveImpact($gameData->away_team_id);
                 
                 $turnovers = $this->calculateTurnOver($player, $minutes, $performanceFactor,$defensiveImpact);
@@ -1006,6 +1009,36 @@ class SimulateController extends Controller
             'free_throw_attempts' => 0,
             'free_throws_made' => 0,
         ];
+    }
+    private function calculatePerformanceFactor($player)
+    {
+        try {
+            // Base performance factor with a random value between 100 and 120
+            $basePerformanceFactor = rand(100, 120) / 100;
+
+            // Adjust the factor based on player fatigue
+            $fatigueFactor = (100 - $player->fatigue) / 100;
+            $performanceFactor = $basePerformanceFactor * $fatigueFactor;
+
+            // Further adjustments based on player injury status
+            if ($player->is_injured) {
+                // If injured, reduce performance factor by a percentage (e.g., 50% less)
+                $performanceFactor *= 0.5;
+            }
+
+            // Optionally adjust further based on player ratings, like leadership or basketball IQ
+            if ($player->leadership_rating > 70) {
+                // If the player has a high leadership rating, boost performance slightly
+                $performanceFactor *= 1.05;
+            }
+
+            // Return the final performance factor
+            return round($performanceFactor, 2);
+
+        } catch (\Exception $e) {
+            \Log::error("Error calculating performance factor for player {$player->id}: " . $e->getMessage());
+            return 1.0; // Default performance factor in case of error
+        }
     }
 
     private function calculateDefensiveImpact($opponentTeamId)
