@@ -1296,20 +1296,26 @@ class SimulateController extends Controller
             ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
     
-        // Step 2: Sit 2 players (injury or coach decision)
-        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
+            // Step 1: Sit injured players
+            $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
 
-        // 2. If less than 2, fill remaining spots by injury_prone_percentage then age
-        if ($dnpPlayers->count() < 2) {
-            $remainingSlots = 2 - $dnpPlayers->count();
+            // Step 2: Fill remaining DNP spots if less than 2
+            if ($dnpPlayers->count() < 2) {
+                $remainingSlots = 2 - $dnpPlayers->count();
 
-            $additionalDNP = $sorted
-                ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already DNP or injured
-                ->sortByDesc(fn($p) => [$p['injury_prone_percentage'], $p['age']]) // prioritize by injury_prone then age
-                ->take($remainingSlots);
+                $additionalDNP = $sorted
+                    ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already selected or injured
+                    ->sortBy([
+                        ['per', 'asc'],
+                        ['eff', 'asc'],
+                        ['injury_prone_percentage', 'desc'],
+                        ['age', 'desc'],
+                    ])
+                    ->take($remainingSlots);
 
-            $dnpPlayers = $dnpPlayers->merge($additionalDNP);
-        }
+                $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+            }
+
     
         $minutes = [];
     
@@ -1527,11 +1533,19 @@ class SimulateController extends Controller
         }
     }
     
-    public function getActivePlayersSorted($teamId, $rolePriority)
+    public function getActivePlayersSorted($teamId,$rolePriority)
     {
-        return Player::where('team_id', $teamId)
-            ->where('is_active', 1)
-            ->orderByRaw("FIELD(role, 'star player', 'all star', 'starter','role player', 'bench')")  // Example of a custom ordering
+        $seasonId = get_current_season_id();
+
+        return Player::select('players.*', 'player_season_stats.eff', 'player_season_stats.per')
+            ->where('players.team_id', $teamId)
+            ->where('players.is_active', 1)
+            ->leftJoin('player_season_stats', function ($join) use ($seasonId, $teamId) {
+                $join->on('players.id', '=', 'player_season_stats.player_id')
+                    ->where('player_season_stats.season_id', '=', $seasonId)
+                    ->where('player_season_stats.team_id', '=', $teamId);
+            })
+            ->orderByRaw("FIELD(players.role, 'star player', 'all star', 'starter', 'role player', 'bench')")
             ->get();
     }
 
