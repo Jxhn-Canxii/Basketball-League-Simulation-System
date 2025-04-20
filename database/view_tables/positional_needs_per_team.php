@@ -1,27 +1,19 @@
-CREATE OR REPLACE VIEW team_positional_needs_view AS
+CREATE OR REPLACE VIEW team_needs_summary_view AS
 SELECT
-    team_id,
+    t.id AS team_id,
+    t.name AS team_name,
 
-    -- Evaluate PF needs
-    AVG(CASE WHEN position = 'PF' THEN defense_rating END) AS pf_defense,
-    AVG(CASE WHEN position = 'PF' THEN two_point_rating + strength_rating END) / 2 AS pf_offense,
+    CONCAT_WS(', ',
+        CASE WHEN AVG(CASE WHEN p.position = 'PF' THEN p.defense_rating END) < 65 THEN 'Needs Defensive PF' END,
+        CASE WHEN AVG(CASE WHEN p.position = 'PF' THEN (p.two_point_rating + p.strength_rating) / 2 END) < 70 THEN 'Needs Offensive PF' END,
+        CASE WHEN AVG(CASE WHEN p.position = 'SG' THEN p.defense_rating END) < 65 THEN 'Needs Defensive SG' END,
+        CASE WHEN AVG(CASE WHEN p.position = 'SG' THEN (p.three_point_rating + p.shooting_rating) / 2 END) < 70 THEN 'Needs Offensive SG' END,
+        CASE WHEN AVG(CASE WHEN p.position = 'PG' THEN (p.passing_rating + p.basketball_iq_rating) / 2 END) < 70 THEN 'Needs Playmaking PG' END,
+        CASE WHEN AVG(CASE WHEN p.position = 'C' THEN (p.rebounding_rating + p.defense_rating) / 2 END) < 68 THEN 'Needs Defensive C' END,
+        CASE WHEN AVG(CASE WHEN p.position = 'SF' THEN (p.athleticism_rating + p.defense_rating) / 2 END) < 70 THEN 'Needs Defensive SF' END
+    ) AS team_needs_summary
 
-    -- Evaluate SG needs
-    AVG(CASE WHEN position = 'SG' THEN defense_rating END) AS sg_defense,
-    AVG(CASE WHEN position = 'SG' THEN three_point_rating + shooting_rating END) / 2 AS sg_offense,
-
-    -- Evaluate C needs
-    AVG(CASE WHEN position = 'C' THEN rebounding_rating + defense_rating END) / 2 AS c_defense,
-    AVG(CASE WHEN position = 'C' THEN two_point_rating + strength_rating END) / 2 AS c_offense,
-
-    -- Evaluate PG needs
-    AVG(CASE WHEN position = 'PG' THEN passing_rating + basketball_iq_rating END) / 2 AS pg_playmaking,
-    AVG(CASE WHEN position = 'PG' THEN shooting_rating + three_point_rating END) / 2 AS pg_offense,
-
-    -- Evaluate SF needs
-    AVG(CASE WHEN position = 'SF' THEN athleticism_rating + defense_rating END) / 2 AS sf_defense,
-    AVG(CASE WHEN position = 'SF' THEN shooting_rating + clutch_rating END) / 2 AS sf_offense
-
-FROM players
-WHERE is_active = 1
-GROUP BY team_id;
+FROM players p
+JOIN teams t ON t.id = p.team_id
+WHERE p.is_active = 1
+GROUP BY t.id, t.name;
