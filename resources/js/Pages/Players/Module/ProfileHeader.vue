@@ -51,7 +51,7 @@
                     <strong>Team:</strong>
                     {{ main_performance.player_details.team_name ?? "-" }}
                 </p>
-                <p>
+                <p class="text-wrap">
                     <strong>Country:</strong>
                     {{ main_performance.player_details.country ?? "-" }}
                 </p>
@@ -269,7 +269,7 @@
             </div>
         </div>
 
-        <div class="awards mb-6 flex-1">
+        <div class="awards mb-6 flex-1 text-nowrap">
             <h3
                 class="text-md font-semibold text-gray-700 mb-2 flex items-center"
             >

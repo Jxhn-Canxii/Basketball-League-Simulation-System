@@ -1064,6 +1064,7 @@ class TeamsController extends Controller
         $teams = DB::table('teams')
             ->select('id', 'name')
             ->where('conference_id', $conferenceId)
+            ->orderBy('name','asc')
             ->get();
     
         return response()->json($teams);
