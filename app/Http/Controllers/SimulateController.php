@@ -1146,24 +1146,20 @@ class SimulateController extends Controller
             'PF' => ['two_point' => 0.7, 'three_point' => 0.3, 'free_throw' => 0.5],
             'C'  => ['two_point' => 0.8, 'three_point' => 0.2, 'free_throw' => 0.4],
         ];
-    
+
         $roleMultipliers = [
-            'star player' => 1.2,
-            'all star' => 1.1,
-            'starter' => 1.0,
-            'role player' => 0.8,
-            'bench' => 0.6,
+            'star player' => 1.1,
+            'all star'    => 1.05,
+            'starter'     => 1.0,
+            'role player' => 0.85,
+            'bench'       => 0.7,
         ];
-    
+
         $positions = explode('/', $player->position ?? 'SF');
         $positionCount = count($positions);
-    
-        $positionFactor = [
-            'two_point' => 0,
-            'three_point' => 0,
-            'free_throw' => 0,
-        ];
-    
+
+        $positionFactor = ['two_point' => 0, 'three_point' => 0, 'free_throw' => 0];
+
         foreach ($positions as $pos) {
             $pos = trim($pos);
             $weights = $positionWeights[$pos] ?? $positionWeights['SF'];
@@ -1171,57 +1167,75 @@ class SimulateController extends Controller
             $positionFactor['three_point'] += $weights['three_point'] / $positionCount;
             $positionFactor['free_throw'] += $weights['free_throw'] / $positionCount;
         }
-    
+
         $roleFactor = $roleMultipliers[strtolower($player->role)] ?? 1.0;
         $fatigueFactor = max(0.5, (100 - ($player->fatigue ?? 0)) / 100);
         $injuryFactor = $player->is_injured ? 0.3 : 1.0;
         $clutchBoost = ($isClutchTime && ($player->clutch_rating ?? 50) > 80) ? 1.2 : 1.0;
-    
-        // Base attempts calculation
+
         $baseAttempts = max(1, round($minutes * 0.8));
         $foulImpact = $fouls * 0.05;
         $turnoverImpact = $turnovers * 0.1;
         $adjustedBaseAttempts = max(0, $baseAttempts - ($foulImpact + $turnoverImpact));
-    
-        // Dynamic weight balance
-        $attemptBias = rand(85, 115) / 100; // Adds slight randomness
+
+        $attemptBias = rand(85, 115) / 100;
         $threePointWeight = $positionFactor['three_point'] * $attemptBias;
         $twoPointWeight = 1 - $threePointWeight;
-    
+
         $totalFactor = $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost;
-        $adjustedAttempts = $adjustedBaseAttempts * $totalFactor;
-    
-        // Final attempt numbers
+
+        $rawAdjustedAttempts = $adjustedBaseAttempts * $totalFactor;
+        $maxAttempts = ($player->role === 'star player') ? 40 : 35;
+        $adjustedAttempts = min($rawAdjustedAttempts, $maxAttempts);
+
         $threePointAttempts = round($adjustedAttempts * $threePointWeight);
         $twoPointAttempts = round($adjustedAttempts * $twoPointWeight);
-        $freeThrowAttempts = round(($twoPointAttempts * 0.3 + $threePointAttempts * 0.1) * (($player->strength_rating ?? 70) / 100));
-    
-        // Adjust for defensive impact
-        $adjustedTwoPointAttempts = max(0, $twoPointAttempts - $defensiveImpact);
-        $adjustedThreePointAttempts = max(0, $threePointAttempts - $defensiveImpact);
+
+        $freeThrowAttempts = round(
+            ($twoPointAttempts * 0.3 + $threePointAttempts * 0.1) * (($player->strength_rating ?? 70) / 100)
+        );
+
+        // Defense scaling based on how aggressive the player is
+        $defenseScaling = 1 + ($adjustedAttempts / 50);
+        $adjustedTwoPointAttempts = max(0, $twoPointAttempts - ($defensiveImpact * $defenseScaling));
+        $adjustedThreePointAttempts = max(0, $threePointAttempts - ($defensiveImpact * $defenseScaling));
         $adjustedFreeThrowAttempts = max(0, $freeThrowAttempts - ($defensiveImpact * 0.5));
-    
-        // Shot accuracy
-        $twoPointAccuracy = ($player->two_point_rating ?? 60) / 100 * ($player->basketball_iq_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
-        $threePointAccuracy = ($player->three_point_rating ?? 60) / 100 * ($player->basketball_iq_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
-        $freeThrowAccuracy = ($player->free_throw_rating ?? 60) / 100 * ($player->work_ethic_rating ?? 60) / 100 * $fatigueFactor * $injuryFactor;
-    
+
+        // Efficiency drop if a player is forcing too many shots
+        $volumePenalty = 1 - min(0.15, max(0, $adjustedAttempts - 25) * 0.01);
+
+        $twoPointAccuracy = (
+            ($player->two_point_rating ?? 60) / 100 *
+            ($player->basketball_iq_rating ?? 60) / 100 *
+            $fatigueFactor * $injuryFactor * $volumePenalty
+        );
+
+        $threePointAccuracy = (
+            ($player->three_point_rating ?? 60) / 100 *
+            ($player->basketball_iq_rating ?? 60) / 100 *
+            $fatigueFactor * $injuryFactor * $volumePenalty
+        );
+
+        $freeThrowAccuracy = (
+            ($player->free_throw_rating ?? 60) / 100 *
+            ($player->work_ethic_rating ?? 60) / 100 *
+            $fatigueFactor * $injuryFactor
+        );
+
         $twoPointMade = min(rand(0, round($adjustedTwoPointAttempts * $twoPointAccuracy)), $adjustedTwoPointAttempts);
         $threePointMade = min(rand(0, round($adjustedThreePointAttempts * $threePointAccuracy)), $adjustedThreePointAttempts);
         $freeThrowMade = min(rand(0, round($adjustedFreeThrowAttempts * $freeThrowAccuracy)), $adjustedFreeThrowAttempts);
-    
+
         return [
-            'two_point_attempts' => $adjustedTwoPointAttempts,
-            'two_point_made' => $twoPointMade,
-            'three_point_attempts' => $adjustedThreePointAttempts,
-            'three_point_made' => $threePointMade,
-            'free_throw_attempts' => $adjustedFreeThrowAttempts,
-            'free_throw_made' => $freeThrowMade,
+            'two_point_attempts'     => $adjustedTwoPointAttempts,
+            'two_point_made'         => $twoPointMade,
+            'three_point_attempts'   => $adjustedThreePointAttempts,
+            'three_point_made'       => $threePointMade,
+            'free_throw_attempts'    => $adjustedFreeThrowAttempts,
+            'free_throw_made'        => $freeThrowMade,
         ];
     }
     
-
-
     public function getScheduleIds(Request $request)
     {
         // Validate the request data
@@ -1447,7 +1461,7 @@ class SimulateController extends Controller
             'all star'    => [32, 38],
             'starter'     => [28, 34],
             'role player' => [15, 24],
-            'bench'       => [0, 12],
+            'bench'       => [0, 20],
         ];
 
         $positionTargets = [
