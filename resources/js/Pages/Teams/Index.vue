@@ -36,12 +36,13 @@
                     </thead>
                     <tbody>
                         <tr v-for="team in teams.teams" v-if="teams.total_pages" :key="team.id" class="text-gray-700">
-                            <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm">
+                            <td class="border-b border-gray-200 bg-white px-5 py-5 text-sm text-left">
                                 <TeamDetails
                                 :team_id="team.id" 
                                 :key="team.id"
                                 :showInfo="false"
                                 :current_conference_rank="0"
+                                :isTitleCenter="false"
                                 :season_id="teams.current_season"
                                 :showButton="0" 
                                 :text="`${team.city} ${team.name} (${team.acronym})`" />
