@@ -2127,7 +2127,12 @@ class SimulateController extends Controller
         $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val);
         $positionsNeeding = $posCounts->filter(fn($count) => $count < 3);
 
-        // Step 2: Waive players from overloaded positions
+        // Step 2: Skip waiving and signing if all positions have >= 3 players
+        if ($positionsNeeding->isEmpty()) {
+            return response()->json(['message' => 'All positions have sufficient players, no changes needed.']);
+        }
+
+        // Step 3: Waive players from overloaded positions
         foreach ($positionsNeeding as $position => $missingCount) {
             for ($i = 0; $i < $missingCount; $i++) {
                 $currentCounts = DB::table('players_by_team_and_position')
@@ -2139,15 +2144,22 @@ class SimulateController extends Controller
 
                 if ($current[$overflowPosition] <= 3) break;
 
+                //ensure theres no waiving of high value players
                 $playerToWaive = DB::table('players')
-                    ->where('team_id', $teamId)
-                    ->where(function($query) use ($overflowPosition) {
-                        $query->where('position', $overflowPosition)
-                            ->orWhere('position', 'like', $overflowPosition . '/%')
-                            ->orWhere('position', 'like', '%/' . $overflowPosition)
-                            ->orWhere('position', 'like', '%/' . $overflowPosition . '/%');
+                    ->join('player_season_stats', function ($join) use ($teamId, $seasonId) {
+                        $join->on('players.id', '=', 'player_season_stats.player_id')
+                            ->where('player_season_stats.team_id', $teamId)
+                            ->where('player_season_stats.season_id', $seasonId);
                     })
-                    ->orderBy('contract_years', 'asc')
+                    ->where('players.team_id', $teamId)
+                    ->where(function($query) use ($overflowPosition) {
+                        $query->where('players.position', $overflowPosition)
+                            ->orWhere('players.position', 'like', $overflowPosition . '/%')
+                            ->orWhere('players.position', 'like', '%/' . $overflowPosition)
+                            ->orWhere('players.position', 'like', '%/' . $overflowPosition . '/%');
+                    })
+                    ->orderBy('player_season_stats.per', 'asc')
+                    ->select('players.*') // Or select specific columns you need
                     ->first();
 
                 if (!$playerToWaive) continue;
@@ -2170,7 +2182,7 @@ class SimulateController extends Controller
             }
         }
 
-        // Step 3: Sign replacement players (including multi-position)
+        // Step 4: Sign replacement players (including multi-position)
         $countsAfterWaive = DB::table('players_by_team_and_position')
             ->where('team_id', $teamId)
             ->first();
@@ -2181,6 +2193,8 @@ class SimulateController extends Controller
         foreach ($stillMissing as $position => $shortage) {
             $freeAgents = DB::table('players')
                 ->where('team_id', 0)
+                ->where('is_active', 0)
+                ->where('is_injured', 0)
                 ->where(function($query) use ($position) {
                     $query->where('position', $position)
                         ->orWhere('position', 'like', $position . '/%')
