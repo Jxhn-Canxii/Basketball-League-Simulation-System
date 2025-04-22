@@ -2551,7 +2551,7 @@ class SimulateController extends Controller
     }
     
     //relaksdlkajsdlkajsdlk
-    private function updateTeamRolesBasedOnStats($teamId, $round)
+     private function updateTeamRolesBasedOnStats($teamId, $round)
     {
         if (!$teamId) {
             return false;
@@ -2562,25 +2562,21 @@ class SimulateController extends Controller
             $seasonId = get_current_season_id();
     
             // Get all active, healthy players on the team
-            $players = DB::table('players')
-                    ->where('players.contract_years', '>', 0)
-                    ->where('players.is_injured', false)
-                    ->where('players.team_id', $teamId)
-                    ->select('player_season_stats.*', 'players.role', 'players.position')
-                    ->get()
-                    ->map(function ($player) use ($seasonId) {
-                        $stats = DB::table('player_season_stats')
-                            ->where('season_id', $seasonId)
-                            ->where('player_id', $player->id)
-                            ->get();
-                
-                        $player->total_minutes = $stats->sum('avg_minutes_per_game');
-                        $player->average_per = $stats->sum('per'); // or ->sum('per') for total impact
-                
-                        return $player;
-                    })
-                    ->sortByDesc('total_minutes') // Highest total EFF first
-                    ->values(); // Reset array keys
+            $players = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.contract_years', '>', 0)
+                ->where('players.is_injured', false) // ✅ exclude injured players
+                ->where('players.team_id', $teamId)
+                ->selectRaw('
+                    players.id as player_id,
+                    players.role,
+                    players.position,
+                    SUM(player_season_stats.avg_minutes_per_game) as total_minutes
+                ')
+                ->groupBy('players.id', 'players.role', 'players.position')
+                ->orderByDesc('total_minutes')
+                ->get();
     
             // Step 1: Select one player per position for the starting five
             $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -2671,7 +2667,6 @@ class SimulateController extends Controller
     
         return true;
     }
-
 
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
