@@ -2572,10 +2572,10 @@ class SimulateController extends Controller
                     players.id as player_id,
                     players.role,
                     players.position,
-                    SUM(player_season_stats.avg_minutes_per_game) as total_minutes
+                    SUM(player_season_stats.eff) as total_eff
                 ')
                 ->groupBy('players.id', 'players.role', 'players.position')
-                ->orderByDesc('total_minutes')
+                ->orderByDesc('total_eff')
                 ->get();
     
             // Step 1: Select one player per position for the starting five
