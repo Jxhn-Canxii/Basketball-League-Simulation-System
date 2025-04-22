@@ -17,7 +17,7 @@
             @click="selectedPlayer = player"
             class="cursor-pointer text-center flex items-center justify-center gap-1"
           >
-            <span :class="{ 'line-through': player.status === 2 }">{{ player.name }}</span>
+            <span :class="{ 'line-through': player.status === 2 }">{{ player.name }} <sup class="text-red-500 font-bold">{{ Math.round(player.overall_rating ?? 0) }}</sup></span>
             
             <!-- Role Icons -->
             <span v-if="player.role === 'star player'" title="Star Player">
