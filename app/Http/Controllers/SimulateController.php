@@ -2222,124 +2222,163 @@ class SimulateController extends Controller
 
     public function fixTeamPositionBalance($teamId)
     {
-        $seasonId = get_current_season_id(); // 🆕 Get current season
-
+        $seasonId = get_current_season_id();
         $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-
-        // Step 1: Get current position counts
+    
+        // Step 1: Get current roster count
+        $rosterCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_active', true)
+            ->count();
+    
+        // Step 2: Get position counts from view
         $counts = DB::table('players_by_team_and_position')
             ->where('team_id', $teamId)
             ->first();
-
+    
         if (!$counts) {
             return response()->json(['error' => 'Team not found in view.'], 404);
         }
-
+    
         $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val);
         $positionsNeeding = $posCounts->filter(fn($count) => $count < 3);
-
-        // Step 2: Skip waiving and signing if all positions have >= 3 players
-        if ($positionsNeeding->isEmpty()) {
-            return response()->json(['message' => 'All positions have sufficient players, no changes needed.']);
-        }
-
-        // Step 3: Waive players from overloaded positions
-        foreach ($positionsNeeding as $position => $missingCount) {
-            for ($i = 0; $i < $missingCount; $i++) {
-                $currentCounts = DB::table('players_by_team_and_position')
-                    ->where('team_id', $teamId)
-                    ->first();
-
-                $current = collect($currentCounts)->only($positions)->map(fn($val) => (int) $val);
-                $overflowPosition = $current->sortDesc()->keys()->first();
-
-                if ($current[$overflowPosition] <= 3) break;
-
-                //ensure theres no waiving of high value players
-                $playerToWaive = DB::table('players')
-                    ->join('player_season_stats', function ($join) {
-                        $join->on('players.id', '=', 'player_season_stats.player_id');
+        $positionsOverfilled = $posCounts->filter(fn($count) => $count > 3);
+    
+        // =============== CASE 1: Roster < 15 ====================
+        if ($rosterCount < 15) {
+            while ($rosterCount < 15) {
+                $lowestPosition = $posCounts->sort()->keys()->first();
+    
+                $agent = DB::table('players')
+                    ->where('team_id', 0)
+                    ->where('is_active', true)
+                    ->where('is_injured', 0)
+                    ->where(function ($query) use ($lowestPosition) {
+                        $query->where('position', $lowestPosition)
+                            ->orWhere('position', 'like', $lowestPosition . '/%')
+                            ->orWhere('position', 'like', '%/' . $lowestPosition)
+                            ->orWhere('position', 'like', '%/' . $lowestPosition . '/%');
                     })
-                    ->where('players.team_id', $teamId)
-                    ->where('players.is_active', true)
-                    ->where('player_season_stats.team_id', $teamId) // ✅ Ensures stats are for the current team
-                    ->where('player_season_stats.season_id', $seasonId) // ✅ Ensures stats are from current season
-                    ->where(function ($query) use ($overflowPosition) {
-                        $query->where('players.position', $overflowPosition)
-                            ->orWhere('players.position', 'like', $overflowPosition . '/%')
-                            ->orWhere('players.position', 'like', '%/' . $overflowPosition)
-                            ->orWhere('players.position', 'like', '%/' . $overflowPosition . '/%');
-                    })
-                    ->orderBy('players.contract_years', 'asc')
-                    ->orderBy('player_season_stats.per', 'asc')
-                    ->select('players.*')
+                    ->orderByDesc('contract_years')
                     ->first();
-
-
-                if (!$playerToWaive) continue;
-
-                DB::table('players')->where('id', $playerToWaive->id)->update([
-                    'contract_years' => 0,
-                    'team_id' => 0,
-                ]);
-
-                DB::table('transactions')->insert([
-                    'player_id' => $playerToWaive->id,
-                    'season_id' => $seasonId,
-                    'details' => "Waived from {$playerToWaive->position} to rebalance positions",
-                    'from_team_id' => $teamId,
-                    'to_team_id' => 0,
-                    'status' => 'waived',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
-
-        // Step 4: Sign replacement players (including multi-position)
-        $countsAfterWaive = DB::table('players_by_team_and_position')
-            ->where('team_id', $teamId)
-            ->first();
-
-        $updatedCounts = collect($countsAfterWaive)->only($positions)->map(fn($val) => (int) $val);
-        $stillMissing = $updatedCounts->filter(fn($count) => $count < 3);
-
-        foreach ($stillMissing as $position => $shortage) {
-            $freeAgents = DB::table('players')
-                ->where('team_id', 0)
-                ->where('is_active', 0)
-                ->where('is_injured', 0)
-                ->where(function($query) use ($position) {
-                    $query->where('position', $position)
-                        ->orWhere('position', 'like', $position . '/%')
-                        ->orWhere('position', 'like', '%/' . $position)
-                        ->orWhere('position', 'like', '%/' . $position . '/%');
-                })
-                ->orderByDesc('contract_years')
-                ->limit($shortage)
-                ->get();
-
-            foreach ($freeAgents as $agent) {
+    
+                if (!$agent) break;
+    
                 DB::table('players')->where('id', $agent->id)->update([
                     'team_id' => $teamId,
                     'contract_years' => 1,
                 ]);
-
+    
                 DB::table('transactions')->insert([
                     'player_id' => $agent->id,
                     'season_id' => $seasonId,
-                    'details' => "Signed as {$agent->position} to fill $position position",
+                    'details' => "Signed to fill position {$lowestPosition}",
                     'from_team_id' => 0,
                     'to_team_id' => $teamId,
                     'status' => 'signed',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+    
+                $rosterCount++;
+    
+                // Update position counts
+                $posCounts[$lowestPosition]++;
             }
+    
+            return response()->json(['message' => 'Signed players to reach 15-man roster.']);
         }
-
-        return response()->json(['message' => 'Team positions balanced: players waived and signed as needed.']);
+    
+        // =============== CASE 2: Roster == 15 && underfilled positions ================
+        if ($rosterCount == 15 && $positionsNeeding->isNotEmpty()) {
+            foreach ($positionsNeeding as $position => $missing) {
+                for ($i = 0; $i < $missing; $i++) {
+                    // Find a position to waive from
+                    $overflow = $positionsOverfilled->sortDesc()->keys()->first();
+    
+                    if (!$overflow || $posCounts[$overflow] <= 3) break;
+    
+                    $playerToWaive = DB::table('players')
+                        ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
+                        ->where('players.team_id', $teamId)
+                        ->where('players.is_active', true)
+                        ->where('player_season_stats.season_id', $seasonId)
+                        ->where('player_season_stats.team_id', $teamId)
+                        ->where(function ($query) use ($overflow) {
+                            $query->where('players.position', $overflow)
+                                ->orWhere('players.position', 'like', $overflow . '/%')
+                                ->orWhere('players.position', 'like', '%/' . $overflow)
+                                ->orWhere('players.position', 'like', '%/' . $overflow . '/%');
+                        })
+                        ->orderBy('players.contract_years', 'asc')
+                        ->orderBy('player_season_stats.per', 'asc')
+                        ->select('players.*')
+                        ->first();
+    
+                    if (!$playerToWaive) continue;
+    
+                    // Waive player
+                    DB::table('players')->where('id', $playerToWaive->id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                    ]);
+    
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerToWaive->id,
+                        'season_id' => $seasonId,
+                        'details' => "Waived to rebalance position",
+                        'from_team_id' => $teamId,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+    
+                    // Sign replacement
+                    $replacement = DB::table('players')
+                        ->where('team_id', 0)
+                        ->where('is_active', true)
+                        ->where('is_injured', 0)
+                        ->where(function ($query) use ($position) {
+                            $query->where('position', $position)
+                                ->orWhere('position', 'like', $position . '/%')
+                                ->orWhere('position', 'like', '%/' . $position)
+                                ->orWhere('position', 'like', '%/' . $position . '/%');
+                        })
+                        ->orderByDesc('contract_years')
+                        ->first();
+    
+                    if (!$replacement) continue;
+    
+                    DB::table('players')->where('id', $replacement->id)->update([
+                        'team_id' => $teamId,
+                        'contract_years' => 1,
+                    ]);
+    
+                    DB::table('transactions')->insert([
+                        'player_id' => $replacement->id,
+                        'season_id' => $seasonId,
+                        'details' => "Signed to fill underfilled position $position",
+                        'from_team_id' => 0,
+                        'to_team_id' => $teamId,
+                        'status' => 'signed',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+    
+                    // Update in-memory counts
+                    $posCounts[$overflow]--;
+                    $posCounts[$position]++;
+                }
+            }
+    
+            return response()->json(['message' => 'Roster balanced by waiving and signing players.']);
+        }
+    
+        // =============== CASE 3: Roster is full and all positions are fine ================
+        return response()->json(['message' => 'Roster already full and positionally balanced.']);
     }
+    
 
     private function updateFinalsMVPBonusContract($winnerId, $seasonId, $finalsMVPId) {
         $extensionYears = 3; // Number of years to extend the contract for the Finals MVP
