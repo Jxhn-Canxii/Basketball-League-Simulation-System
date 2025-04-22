@@ -1391,7 +1391,7 @@ class AwardsController extends Controller
                 );
     
                 // Update player contract and add transaction record
-                $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
+                // $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
     
                 DB::commit();
             } catch (\Exception $e) {

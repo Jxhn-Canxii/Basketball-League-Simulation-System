@@ -491,8 +491,8 @@ class SimulateController extends Controller
             $this->updateFinalsWinner($gameData, $winnerId, $homeScore, $awayScore);
 
             // Update the finals contract
-            $this->updateFinalsBonusContract($gameData->home_team_id, $gameData->season_id,$gameData->home_team_name);
-            $this->updateFinalsBonusContract($gameData->away_team_id, $gameData->season_id,$gameData->away_team_name);
+            // $this->updateFinalsBonusContract($gameData->home_team_id, $gameData->season_id,$gameData->home_team_name);
+            // $this->updateFinalsBonusContract($gameData->away_team_id, $gameData->season_id,$gameData->away_team_name);
         }
 
         // Update the seasons table if there are updates
