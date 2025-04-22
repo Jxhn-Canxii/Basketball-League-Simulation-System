@@ -2240,9 +2240,10 @@ class SimulateController extends Controller
             return response()->json(['error' => 'Team not found in view.'], 404);
         }
     
-        $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val);
-        $positionsNeeding = $posCounts->filter(fn($count) => $count < 3);
-        $positionsOverfilled = $posCounts->filter(fn($count) => $count > 3);
+        $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val)->toArray();
+        $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < 3);
+        $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > 3);
+        
     
         // =============== CASE 1: Roster < 15 ====================
         if ($rosterCount < 15) {
@@ -2279,6 +2280,8 @@ class SimulateController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->id);
     
                 $rosterCount++;
     
@@ -2366,6 +2369,7 @@ class SimulateController extends Controller
                         'updated_at' => now(),
                     ]);
     
+                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->id);
                     // Update in-memory counts
                     $posCounts[$overflow]--;
                     $posCounts[$position]++;
