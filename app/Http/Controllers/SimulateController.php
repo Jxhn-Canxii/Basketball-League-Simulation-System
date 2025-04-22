@@ -2114,28 +2114,17 @@ class SimulateController extends Controller
             while ($rosterCount < 15) {
                 $lowestPosition = $posCounts->sort()->keys()->first();
     
-                $agent = DB::table('players')
-                    ->where('team_id', 0)
-                    ->where('is_active', true)
-                    ->where('is_injured', 0)
-                    ->where(function ($query) use ($lowestPosition) {
-                        $query->where('position', $lowestPosition)
-                            ->orWhere('position', 'like', $lowestPosition . '/%')
-                            ->orWhere('position', 'like', '%/' . $lowestPosition)
-                            ->orWhere('position', 'like', '%/' . $lowestPosition . '/%');
-                    })
-                    ->orderByDesc('contract_years')
-                    ->first();
-    
+                $agent = $this->getBestFreeAgentAvailable($lowestPosition);
+                $contractYears = $this->getContractYearsBasedOnRole($agent->role);
                 if (!$agent) break;
-    
-                DB::table('players')->where('id', $agent->id)->update([
+
+                DB::table('players')->where('id', $agent->player_id)->update([
                     'team_id' => $teamId,
-                    'contract_years' => 1,
+                    'contract_years' => $contractYears,
                 ]);
     
                 DB::table('transactions')->insert([
-                    'player_id' => $agent->id,
+                    'player_id' => $agent->player_id,
                     'season_id' => $seasonId,
                     'details' => "Signed to fill position {$lowestPosition}",
                     'from_team_id' => 0,
@@ -2145,7 +2134,7 @@ class SimulateController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->id);
+                (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->player_id);
     
                 $rosterCount++;
     
@@ -2218,28 +2207,17 @@ class SimulateController extends Controller
                     ]);
     
                     // Sign replacement
-                    $replacement = DB::table('players')
-                        ->where('team_id', 0)
-                        ->where('is_active', true)
-                        ->where('is_injured', 0)
-                        ->where(function ($query) use ($position) {
-                            $query->where('position', $position)
-                                ->orWhere('position', 'like', $position . '/%')
-                                ->orWhere('position', 'like', '%/' . $position)
-                                ->orWhere('position', 'like', '%/' . $position . '/%');
-                        })
-                        ->orderByDesc('contract_years')
-                        ->first();
-    
+                    $replacement = $this->getBestFreeAgentAvailable($position);
+                    $contractYears = $this->getContractYearsBasedOnRole($replacement->role);
                     if (!$replacement) continue;
-    
-                    DB::table('players')->where('id', $replacement->id)->update([
+                    
+                    DB::table('players')->where('id', $replacement->player_id)->update([
                         'team_id' => $teamId,
-                        'contract_years' => 1,
+                        'contract_years' => $contractYears,
                     ]);
     
                     DB::table('transactions')->insert([
-                        'player_id' => $replacement->id,
+                        'player_id' => $replacement->player_id,
                         'season_id' => $seasonId,
                         'details' => "Signed to fill underfilled position $position",
                         'from_team_id' => 0,
@@ -2249,7 +2227,7 @@ class SimulateController extends Controller
                         'updated_at' => now(),
                     ]);
     
-                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->id);
+                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
                     // Update in-memory counts
                     $posCounts[$overflow]--;
                     $posCounts[$position]++;
