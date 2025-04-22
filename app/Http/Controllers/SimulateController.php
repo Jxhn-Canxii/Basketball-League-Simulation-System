@@ -2302,21 +2302,37 @@ class SimulateController extends Controller
                     if (!$overflow || $posCounts[$overflow] <= 3) break;
     
                     $playerToWaive = DB::table('players')
-                        ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
                         ->where('players.team_id', $teamId)
                         ->where('players.is_active', true)
-                        ->where('player_season_stats.season_id', $seasonId)
-                        ->where('player_season_stats.team_id', $teamId)
                         ->where(function ($query) use ($overflow) {
                             $query->where('players.position', $overflow)
                                 ->orWhere('players.position', 'like', $overflow . '/%')
                                 ->orWhere('players.position', 'like', '%/' . $overflow)
                                 ->orWhere('players.position', 'like', '%/' . $overflow . '/%');
                         })
-                        ->orderBy('players.contract_years', 'asc')
-                        ->orderBy('player_season_stats.per', 'asc')
                         ->select('players.*')
+                        ->get()
+                        ->map(function ($player) use ($seasonId) {
+                            // Get all season stats for this player (regardless of team) in this season
+                            $stats = DB::table('player_season_stats')
+                                ->where('player_id', $player->id)
+                                ->where('season_id', $seasonId)
+                                ->get();
+
+                            // Add up or average stats
+                            $player->total_games = $stats->sum('games_played');
+                            $player->total_minutes = $stats->sum('minutes');
+                            $player->avg_per = $stats->avg('per');
+                            $player->total_per = $stats->sum('per'); // Optional
+
+                            return $player;
+                        })
+                        ->sortBy([
+                            ['contract_years', 'asc'],
+                            ['avg_per', 'asc'], // or use 'total_per' if you want total contribution
+                        ])
                         ->first();
+
     
                     if (!$playerToWaive) continue;
     
