@@ -1139,7 +1139,7 @@ class SimulateController extends Controller
         return round($stealsPerMinute * $minutes * $performanceFactor / 4);
     }
     
-    private function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $isClutchTime = false)
+    private function calculateShotAttemptsV1($player, $minutes, $defensiveImpact, $fouls, $turnovers, $isClutchTime = false)
     {
         $positionWeights = [
             'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
@@ -1238,6 +1238,117 @@ class SimulateController extends Controller
         ];
     }
     
+    private function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $isClutchTime = false)
+    {
+        $positionWeights = [
+            'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
+            'SG' => ['two_point' => 0.4, 'three_point' => 0.6, 'free_throw' => 0.5],
+            'SF' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.5],
+            'PF' => ['two_point' => 0.7, 'three_point' => 0.3, 'free_throw' => 0.5],
+            'C'  => ['two_point' => 0.8, 'three_point' => 0.2, 'free_throw' => 0.4],
+        ];
+
+        $roleMultipliers = [
+            'star player' => 1.1,
+            'all star'    => 1.05,
+            'starter'     => 1.0,
+            'role player' => 0.85,
+            'bench'       => 0.7,
+        ];
+
+        $positions = explode('/', $player->position ?? 'SF');
+        $positionCount = count($positions);
+
+        $positionFactor = ['two_point' => 0, 'three_point' => 0, 'free_throw' => 0];
+        foreach ($positions as $pos) {
+            $pos = trim($pos);
+            $weights = $positionWeights[$pos] ?? $positionWeights['SF'];
+            $positionFactor['two_point'] += $weights['two_point'] / $positionCount;
+            $positionFactor['three_point'] += $weights['three_point'] / $positionCount;
+            $positionFactor['free_throw'] += $weights['free_throw'] / $positionCount;
+        }
+
+        $roleFactor = $roleMultipliers[strtolower($player->role)] ?? 1.0;
+        $fatigueFactor = max(0.5, (100 - ($player->fatigue ?? 0)) / 100);
+        $injuryFactor = $player->is_injured ? 0.3 : 1.0;
+        $clutchBoost = ($isClutchTime && ($player->clutch_rating ?? 50) > 80) ? 1.2 : 1.0;
+
+        $baseAttempts = max(1, round($minutes * 0.8));
+        $foulImpact = $fouls * 0.05;
+        $turnoverImpact = $turnovers * 0.1;
+        $adjustedBaseAttempts = max(0, $baseAttempts - ($foulImpact + $turnoverImpact));
+
+        $attemptBias = rand(85, 115) / 100;
+        $threePointWeight = $positionFactor['three_point'] * $attemptBias;
+        $twoPointWeight = 1 - $threePointWeight;
+
+        $totalFactor = $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost;
+
+        $rawAdjustedAttempts = $adjustedBaseAttempts * $totalFactor;
+        $maxAttempts = ($player->role === 'star player') ? 40 : 35;
+        $adjustedAttempts = min($rawAdjustedAttempts, $maxAttempts);
+
+        $threePointAttempts = round($adjustedAttempts * $threePointWeight);
+        $twoPointAttempts = round($adjustedAttempts * $twoPointWeight);
+
+        $freeThrowAttempts = round(
+            ($twoPointAttempts * 0.3 + $threePointAttempts * 0.1) * (($player->strength_rating ?? 70) / 100)
+        );
+
+        // Defense impact
+        $defenseScaling = 1 + ($adjustedAttempts / 50);
+        $adjustedTwoPointAttempts = max(0, $twoPointAttempts - ($defensiveImpact * $defenseScaling));
+        $adjustedThreePointAttempts = max(0, $threePointAttempts - ($defensiveImpact * $defenseScaling));
+        $adjustedFreeThrowAttempts = max(0, $freeThrowAttempts - ($defensiveImpact * 0.5));
+
+        // Efficiency drop from high volume
+        $volumePenalty = 1 - min(0.15, max(0, $adjustedAttempts - 25) * 0.01);
+
+        $twoPointAccuracy = (
+            ($player->two_point_rating ?? 60) / 100 *
+            ($player->basketball_iq_rating ?? 60) / 100 *
+            $fatigueFactor * $injuryFactor * $volumePenalty
+        );
+
+        $threePointAccuracy = (
+            ($player->three_point_rating ?? 60) / 100 *
+            ($player->basketball_iq_rating ?? 60) / 100 *
+            $fatigueFactor * $injuryFactor * $volumePenalty
+        );
+
+        $freeThrowAccuracy = (
+            ($player->free_throw_rating ?? 60) / 100 *
+            ($player->work_ethic_rating ?? 60) / 100 *
+            $fatigueFactor * $injuryFactor
+        );
+
+        $twoPointMade = min(rand(0, round($adjustedTwoPointAttempts * $twoPointAccuracy)), $adjustedTwoPointAttempts);
+        $threePointMade = min(rand(0, round($adjustedThreePointAttempts * $threePointAccuracy)), $adjustedThreePointAttempts);
+        $freeThrowMade = min(rand(0, round($adjustedFreeThrowAttempts * $freeThrowAccuracy)), $adjustedFreeThrowAttempts);
+
+        // 🆕 Cap scoring to a realistic points per minute
+        $estimatedPoints = ($twoPointMade * 2) + ($threePointMade * 3) + $freeThrowMade;
+        $maxPointsPerMinute = 3.0;
+        $maxPoints = round($minutes * $maxPointsPerMinute);
+
+        if ($estimatedPoints > $maxPoints) {
+            $scalingFactor = $maxPoints / $estimatedPoints;
+
+            $twoPointMade = round($twoPointMade * $scalingFactor);
+            $threePointMade = round($threePointMade * $scalingFactor);
+            $freeThrowMade = round($freeThrowMade * $scalingFactor);
+        }
+
+        return [
+            'two_point_attempts'     => $adjustedTwoPointAttempts,
+            'two_point_made'         => $twoPointMade,
+            'three_point_attempts'   => $adjustedThreePointAttempts,
+            'three_point_made'       => $threePointMade,
+            'free_throw_attempts'    => $adjustedFreeThrowAttempts,
+            'free_throw_made'        => $freeThrowMade,
+        ];
+    }
+
     public function getScheduleIds(Request $request)
     {
         // Validate the request data
@@ -2146,21 +2257,24 @@ class SimulateController extends Controller
 
                 //ensure theres no waiving of high value players
                 $playerToWaive = DB::table('players')
-                    ->join('player_season_stats', function ($join) use ($teamId, $seasonId) {
-                        $join->on('players.id', '=', 'player_season_stats.player_id')
-                            ->where('player_season_stats.team_id', $teamId)
-                            ->where('player_season_stats.season_id', $seasonId);
+                    ->join('player_season_stats', function ($join) {
+                        $join->on('players.id', '=', 'player_season_stats.player_id');
                     })
                     ->where('players.team_id', $teamId)
-                    ->where(function($query) use ($overflowPosition) {
+                    ->where('players.is_active', true)
+                    ->where('player_season_stats.team_id', $teamId) // ✅ Ensures stats are for the current team
+                    ->where('player_season_stats.season_id', $seasonId) // ✅ Ensures stats are from current season
+                    ->where(function ($query) use ($overflowPosition) {
                         $query->where('players.position', $overflowPosition)
                             ->orWhere('players.position', 'like', $overflowPosition . '/%')
                             ->orWhere('players.position', 'like', '%/' . $overflowPosition)
                             ->orWhere('players.position', 'like', '%/' . $overflowPosition . '/%');
                     })
+                    ->orderBy('players.contract_years', 'asc')
                     ->orderBy('player_season_stats.per', 'asc')
-                    ->select('players.*') // Or select specific columns you need
+                    ->select('players.*')
                     ->first();
+
 
                 if (!$playerToWaive) continue;
 
