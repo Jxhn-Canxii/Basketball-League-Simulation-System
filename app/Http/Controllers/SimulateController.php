@@ -1423,142 +1423,6 @@ class SimulateController extends Controller
         ]);
     }
 
-    private function distributeMinutesV2($playersArray, $totalMinutes, $gameId)
-    {
-        $rolePriority = [
-            'star player' => 1,
-            'all star'    => 2,
-            'starter'     => 3,
-            'role player' => 4,
-            'bench'       => 5,
-        ];
-    
-        $roleMinuteRanges = [
-            'star player' => [36, 42],
-            'all star'    => [32, 38],
-            'starter'     => [28, 34],
-            'role player' => [15, 24],
-            'bench'       => [0, 12],
-        ];
-    
-        // Target minutes per position
-        $positionTargets = [
-            'PG' => 48,
-            'SG' => 48,
-            'SF' => 48,
-            'PF' => 48,
-            'C'  => 48,
-        ];
-    
-        // Step 1: Sort players by role priority
-        $sorted = collect($playersArray)
-            ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
-            ->values();
-    
-            // Step 1: Sit injured players
-            $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
-
-            // Step 2: Fill remaining DNP spots if less than 2
-            if ($dnpPlayers->count() < 2) {
-                $remainingSlots = 2 - $dnpPlayers->count();
-
-                $additionalDNP = $sorted
-                    ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured']) // exclude already selected or injured
-                    ->sortBy([
-                        ['per', 'asc'],
-                        ['eff', 'asc'],
-                        ['injury_prone_percentage', 'desc'],
-                        ['age', 'desc'],
-                    ])
-                    ->take($remainingSlots);
-
-                $dnpPlayers = $dnpPlayers->merge($additionalDNP);
-            }
-
-    
-        $minutes = [];
-    
-        foreach ($dnpPlayers as $p) {
-            $minutes[$p['id']] = 0;
-        }
-    
-        // Step 3: Assign minutes with positional fill logic
-        $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
-        $assignedTotal = 0;
-    
-        foreach ($rotation as $player) {
-            $role = $player['role'];
-            $range = $roleMinuteRanges[$role] ?? [5, 15];
-            $baseMinutes = rand($range[0], $range[1]);
-            
-            // Adjust base minutes based on the player's fatigue
-            // $fatigueFactor = ($player['fatigue'] == 0) ? 1 : (100 - $player['fatigue']) / 100;  // No fatigue penalty if fatigue is 0
-            // $baseMinutes *= $fatigueFactor;  // Apply the fatigue adjustment to the base minute
-            // Split player position (handle hybrid)
-            $positions = explode('/', $player['position']);
-            $positionAssigned = false;
-    
-            foreach ($positions as $pos) {
-                if (($positionTargets[$pos] ?? 0) > 0) {
-                    $assigned = min($baseMinutes, $positionTargets[$pos]);
-                    $minutes[$player['id']] = $assigned;
-                    $positionTargets[$pos] -= $assigned;
-                    $assignedTotal += $assigned;
-                    $positionAssigned = true;
-                    break;
-                }
-            }
-    
-            // If no match, assign anywhere we can
-            if (!$positionAssigned) {
-                foreach ($positions as $pos) {
-                    if (isset($positionTargets[$pos])) {
-                        $assigned = min($baseMinutes, $positionTargets[$pos]);
-                        $minutes[$player['id']] = $assigned;
-                        $positionTargets[$pos] -= $assigned;
-                        $assignedTotal += $assigned;
-                        break;
-                    }
-                }
-            }
-    
-            if (!isset($minutes[$player['id']])) {
-                $minutes[$player['id']] = 0;
-            }
-    
-            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
-            $this->handleInjuredPlayer($player, $gameId);
-        }
-    
-        // Step 4: Normalize to total minutes (usually 240)
-        $difference = $totalMinutes - array_sum($minutes);
-    
-        if (abs($difference) > 0) {
-            $eligible = $rotation->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)->values();
-            $i = 0;
-    
-            while ($difference !== 0 && $eligible->isNotEmpty()) {
-                $player = $eligible[$i % $eligible->count()];
-                $id = $player['id'];
-    
-                if (!isset($minutes[$id])) {
-                    $minutes[$id] = 0;
-                }
-    
-                if ($difference > 0 && $minutes[$id] < 48) {
-                    $minutes[$id]++;
-                    $difference--;
-                } elseif ($difference < 0 && $minutes[$id] > 0) {
-                    $minutes[$id]--;
-                    $difference++;
-                }
-    
-                $i++;
-            }
-        }
-    
-        return $minutes;
-    }
     private function distributeMinutes($playersArray, $totalMinutes, $gameId)
     {
         $rolePriority = [
@@ -2720,21 +2584,25 @@ class SimulateController extends Controller
             $seasonId = get_current_season_id();
     
             // Get all active, healthy players on the team
-            $players = DB::table('player_season_stats')
-                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                ->where('player_season_stats.season_id', $seasonId)
-                ->where('players.contract_years', '>', 0)
-                ->where('players.is_injured', false) // ✅ exclude injured players
-                ->where('players.team_id', $teamId)
-                ->selectRaw('
-                    players.id as player_id,
-                    players.role,
-                    players.position,
-                    SUM(player_season_stats.avg_minutes_per_game) as total_minutes
-                ')
-                ->groupBy('players.id', 'players.role', 'players.position')
-                ->orderByDesc('total_minutes')
-                ->get();
+            $players = DB::table('players')
+                    ->where('players.contract_years', '>', 0)
+                    ->where('players.is_injured', false)
+                    ->where('players.team_id', $teamId)
+                    ->select('players.id', 'players.role', 'players.position')
+                    ->get()
+                    ->map(function ($player) use ($seasonId) {
+                        $stats = DB::table('player_season_stats')
+                            ->where('season_id', $seasonId)
+                            ->where('player_id', $player->id)
+                            ->get();
+                
+                        $player->total_minutes = $stats->sum('avg_minutes_per_game');
+                        $player->average_eff = $stats->avg('eff'); // or ->sum('per') for total impact
+                
+                        return $player;
+                    })
+                    ->sortByDesc('average_eff') // Highest total EFF first
+                    ->values(); // Reset array keys
     
             // Step 1: Select one player per position for the starting five
             $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
