@@ -2561,34 +2561,48 @@ class SimulateController extends Controller
         try {
             $seasonId = get_current_season_id();
     
-            // Get all active, healthy players on the team
-            $players = DB::table('players')
-                    ->where('players.contract_years', '>', 0)
-                    ->where('players.is_injured', false)
-                    ->where('players.team_id', $teamId)
-                    ->select('players.id', 'players.role', 'players.position')
-                    ->get()
-                    ->map(function ($player) use ($seasonId) {
-                        $stats = DB::table('player_season_stats')
-                            ->where('season_id', $seasonId)
-                            ->where('player_id', $player->id)
-                            ->get();
-                
-                        $player->total_minutes = $stats->sum('avg_minutes_per_game');
-                        $player->average_eff = $stats->avg('eff'); // or ->sum('per') for total impact
-                
-                        return $player;
-                    })
-                    ->sortByDesc('average_eff') // Highest total EFF first
-                    ->values(); // Reset array keys
+            // Get all active, healthy players for the given season
+            $players = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.contract_years', '>', 0)
+                ->where('players.is_injured', false) // Exclude injured players
+                ->where('players.team_id', $teamId)
+                ->selectRaw('
+                    players.id as player_id,
+                    players.role,
+                    players.position,
+                    SUM(player_season_stats.avg_minutes_per_game) as total_minutes,
+                    SUM(player_season_stats.per) as total_per
+                ')
+                ->groupBy('players.id', 'players.role', 'players.position')
+                ->orderByDesc('total_minutes')
+                ->get();
     
+            // Merge player stats across teams (if player played for multiple teams in the season)
+            $mergedPlayers = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.contract_years', '>', 0)
+                ->where('players.is_injured', false) // Exclude injured players
+                ->selectRaw('
+                    players.id as player_id,
+                    players.role,
+                    players.position,
+                    SUM(player_season_stats.avg_minutes_per_game) as total_minutes,
+                    SUM(player_season_stats.per) as total_per
+                ')
+                ->groupBy('players.id', 'players.role', 'players.position')
+                ->get();
+    
+            // Now, the merged data of all players is stored in $mergedPlayers
             // Step 1: Select one player per position for the starting five
             $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
             $startingFive = [];
             $usedPlayerIds = [];
     
             foreach ($positions as $neededPosition) {
-                foreach ($players as $player) {
+                foreach ($mergedPlayers as $player) {
                     if (in_array($player->player_id, $usedPlayerIds)) continue;
     
                     $playerPositions = explode('/', strtoupper($player->position));
@@ -2602,7 +2616,7 @@ class SimulateController extends Controller
             }
     
             // Fill in extra players for starting five if not enough positions matched
-            foreach ($players as $player) {
+            foreach ($mergedPlayers as $player) {
                 if (count($startingFive) >= 5) break;
                 if (!in_array($player->player_id, $usedPlayerIds)) {
                     $startingFive[] = $player;
@@ -2619,7 +2633,7 @@ class SimulateController extends Controller
     
             // Step 3: Next 5 become role players
             $rolePlayerCount = 0;
-            foreach ($players as $player) {
+            foreach ($mergedPlayers as $player) {
                 if (in_array($player->player_id, $usedPlayerIds)) continue;
                 if ($rolePlayerCount >= 5) break;
     
@@ -2629,7 +2643,7 @@ class SimulateController extends Controller
             }
     
             // Step 4: Remaining players are bench
-            foreach ($players as $player) {
+            foreach ($mergedPlayers as $player) {
                 if (!in_array($player->player_id, $usedPlayerIds)) {
                     $newRoles[$player->player_id] = 'bench';
                 }
@@ -2637,12 +2651,13 @@ class SimulateController extends Controller
     
             // Step 5: Update roles in DB
             foreach ($newRoles as $playerId => $newRole) {
-                $currentRole = collect($players)->firstWhere('player_id', $playerId)->role;
+                $currentRole = collect($mergedPlayers)->firstWhere('player_id', $playerId)->role;
     
                 if ($currentRole !== $newRole) {
                     $roleStatus = ($newRole == 'star player') ? 'star player change' : 'role change';
                     $roundName = is_numeric($round) ? "Round $round" : "Playoffs";
-
+    
+                    // Insert role change transaction
                     DB::table('transactions')->insert([
                         'player_id' => $playerId,
                         'season_id' => $seasonId,
@@ -2653,12 +2668,13 @@ class SimulateController extends Controller
                     ]);
                 }
     
+                // Update the role in players table
                 DB::table('players')->where('id', $playerId)->update(['role' => $newRole]);
     
+                // Update the role in player_season_stats table
                 DB::table('player_season_stats')
                     ->where('player_id', $playerId)
                     ->where('season_id', $seasonId)
-                    ->where('team_id', $teamId)
                     ->update(['role' => $newRole]);
             }
     
@@ -2671,7 +2687,7 @@ class SimulateController extends Controller
     
         return true;
     }
-
+    
 
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
