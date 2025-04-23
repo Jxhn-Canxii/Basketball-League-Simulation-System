@@ -277,9 +277,13 @@
                                             <i class="fa fa-list"></i>
                                             Season
                                         </a>
-                                        <button type="button" @click.prevent="isSeasonAwardsModalOpen = season.id" class="px-2 py-2 bg-yellow-500 rounded-r font-bold text-md text-white shadow">
+                                        <button type="button" @click.prevent="isSeasonAwardsModalOpen = season.id" class="px-2 py-2 bg-yellow-500 font-bold text-md text-white shadow">
                                             <i class="fa fa-medal"></i>
-                                            Season
+                                            Awards
+                                        </button>
+                                        <button :disabled="season.id == 1" :class="season.id == 1 ? 'opacity-50' : ''" type="button" @click.prevent="isSeasonDraftModalOpen = season.id" class="px-2 py-2 bg-pink-500 rounded-r font-bold text-md text-white shadow">
+                                            <i class="fa fa-users"></i>
+                                            Draft
                                         </button>
                                     </div>
                                 </td>
@@ -337,6 +341,12 @@
                     <SeasonAwards :key="isSeasonAwardsModalOpen" :season_id="isSeasonAwardsModalOpen" />
                 </div>
             </Modal>
+             <Modal :show="isSeasonDraftModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonDraftModalOpen} Draft Results`" @close="isSeasonDraftModalOpen = false">
+                <div class="mt-4 p-3 block">
+                    <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" />
+                </div>
+            </Modal>
+             
         </AuthenticatedLayout>
     </div>
 </template>
@@ -356,6 +366,7 @@ import FreeAgents from "@/Pages/Seasons/Module/FreeAgents.vue";
 import SeasonAwards from "@/Pages/Seasons/Module/SeasonAwards.vue";
 import Awards from "@/Pages/Seasons/Module/Awards.vue";
 import Draft from "@/Pages/Seasons/Module/Draft.vue";
+import DraftBoard from "@/Pages/Seasons/Module/DraftBoard.vue"
 import Add from "@/Pages/Seasons/Module/Add.vue";
 
 const isAddModalOpen = ref(false);
@@ -364,6 +375,7 @@ const isPlayerSigningModalOpen = ref(false);
 const isDraftModalOpen = ref(false);
 const isPlayerAwardsModalOpen = ref(false);
 const isSeasonAwardsModalOpen = ref(false);
+const isSeasonDraftModalOpen = ref(false);
 const seasons = ref([]);
 const leagues_dropdown = ref([]);
 const season_id = ref(0);

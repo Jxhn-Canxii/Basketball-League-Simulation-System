@@ -282,14 +282,13 @@ const draftPlayer = async () => {
 
         console.error(error);
           // Close the processing Swal in case of error
-        // Swal.close();
+        Swal.close();
 
-        // await Swal.fire({
-        //     title: 'Error!',
-        //     text: errorMessage,
-        //     icon: 'error',
-        //     confirmButtonText: 'OK'
-        // });
+        await Swal.fire({
+            title: 'Error!',
+            text: error.response.data.message,
+            icon: 'error',
+        });
     }
 };
 
