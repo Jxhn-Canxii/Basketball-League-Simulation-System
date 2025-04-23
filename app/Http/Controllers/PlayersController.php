@@ -59,7 +59,7 @@ class PlayersController extends Controller
             ->where('team_id', $teamId)
             ->where('season_id', $seasonId)
             ->get();
-        if (count($playerStatsData) > 0) {
+        if(count($playerStatsData) > 0) {
             foreach ($playerStatsData as $stats) {
                 // Fetch the player
                 $player = DB::table('players')
@@ -176,6 +176,17 @@ class PlayersController extends Controller
             foreach ($players as $player) {
                 $playerId = $player->id;
 
+                $totalSeasonsPlayed = DB::table('player_season_stats')
+                ->where('player_id', $playerId)
+                ->distinct('season_id') // Ensure distinct season_id values
+                ->count(); // Count the number of distinct seasons
+
+                $seasonsPlayedWithTeam = DB::table('player_season_stats')
+                    ->where('player_id', $player->id)
+                    ->where('team_id', $teamId)
+                    ->count('team_id');
+                
+                $totalSeasonGameSchedule = $this->getScheduleCount($teamId, $seasonId);
                 // Default values in case there are no stats
                 $stats = [
                     'average_minutes_per_game' => (float)0,
@@ -188,9 +199,17 @@ class PlayersController extends Controller
                     'average_fouls_per_game' => (float)0,
                     'bpg_game_leader' => (float) 0,
                     'field_goal_percentage' => (float)0,
-                    'per_game_score' => (float) 0,
-                    'average_eff' => (float)0,
-                    'games_played' => 0,
+                    'three_point_percentage' => (float)0,
+                    'two_point_percentage' => (float)0,
+                    'free_throw_percentage' =>  (float)0,
+                    'per_game_score' => (float)0,
+                    'total_score' =>(float)0,
+                    'combined_score' =>(float)0,
+                    'seasons_played_with_team' => $seasonsPlayedWithTeam + 1,
+                    'team_total_games' => (float)$totalSeasonGameSchedule,
+                    'total_seasons_played' => $totalSeasonsPlayed + 1,
+                    'average_eff' => (float) 0,
+                    'games_played' => (int) 0,
                 ];
 
                 // If there are stats for this player, update values
@@ -211,18 +230,7 @@ class PlayersController extends Controller
                         'average_eff' => (float) $playerGameStats[$playerId]->avg_eff,
                     ];
                 }
-
-                $totalSeasonsPlayed = DB::table('player_season_stats')
-                    ->where('player_id', $playerId)
-                    ->distinct('season_id') // Ensure distinct season_id values
-                    ->count(); // Count the number of distinct seasons
-
-                $seasonsPlayedWithTeam = DB::table('player_season_stats')
-                    ->where('player_id', $player->id)
-                    ->where('team_id', $teamId)
-                    ->count('team_id');
                 
-                $totalSeasonGameSchedule = $this->getScheduleCount($teamId, $seasonId);
                 // Only include players with games played > 0 if season status is 11
                 if ($seasonStatus != 11 || $stats['games_played'] > 0) {
 

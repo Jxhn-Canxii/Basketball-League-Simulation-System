@@ -68,6 +68,7 @@
             </div>
             <div>
                 <select v-model="season_id" @change="seasonBehavior()" class="mt-1 block w-full sm:w-auto border-gray-300 rounded-md shadow-sm sm:text-sm">
+                    <option :key="0" value="0">Latest Roster</option>
                     <option v-for="(season, ss) in seasons" :key="season.season_id" :value="season.season_id">{{ season.name }}</option>
                 </select>
             </div>
