@@ -159,7 +159,6 @@ class DraftController extends Controller
             $currentSeasonId = $latestSeasonId + 1;
         
             $teamCount = DB::table('teams')->count();
-            $draftPlayerCountLimit = $teamCount * 2;
         
             // Get draft order already set in the `drafts` table
             $draftOrder = DB::table('drafts')
@@ -167,7 +166,9 @@ class DraftController extends Controller
                 ->orderBy('round')
                 ->orderBy('pick_number')
                 ->get();
-        
+
+            $draftPlayerCountLimit = count($draftOrder);
+            
             // Get rookie players eligible for drafting
             $availablePlayers = collect(DB::table('players')
                 ->where('is_rookie', 1)
