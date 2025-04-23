@@ -20,6 +20,7 @@ class TransactionsController extends Controller
                 'players.name as player_name',
                 'players.role as player_role',
                 'players.position as position',
+                'players.overall_rating as overall_rating',
                 'players.draft_status as draft_status',
                 'players.draft_id as draft_season_id',
                 DB::raw("CASE WHEN players.drafted_team_id = 0 THEN 'Undrafted' ELSE drafted_team.acronym END as drafted_team_abbre"),

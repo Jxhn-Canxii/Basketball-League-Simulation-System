@@ -272,10 +272,16 @@
                                 <td
                                     class="border border-gray-200 px-1 py-4 text-center text-xs text-nowrap"
                                 >
-                                    <a :href="route('seasons.details', { season_id: season.id })" class="px-2 py-2 bg-blue-500 rounded font-bold text-md text-white shadow">
-                                        <i class="fa fa-list"></i>
-                                        Season
-                                    </a>
+                                    <div class="flex justify-center items-center">
+                                        <a :href="route('seasons.details', { season_id: season.id })" class="px-2 py-2 bg-blue-500 rounded-l font-bold text-md text-white shadow">
+                                            <i class="fa fa-list"></i>
+                                            Season
+                                        </a>
+                                        <button type="button" @click.prevent="isSeasonAwardsModalOpen = season.id" class="px-2 py-2 bg-yellow-500 rounded-r font-bold text-md text-white shadow">
+                                            <i class="fa fa-medal"></i>
+                                            Season
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                             <tr v-else>
@@ -326,6 +332,11 @@
                     />
                 </div>
             </Modal>
+            <Modal :show="isSeasonAwardsModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonAwardsModalOpen} Awards`" @close="isSeasonAwardsModalOpen = false">
+                <div class="mt-4 p-3 block">
+                    <SeasonAwards :key="isSeasonAwardsModalOpen" :season_id="isSeasonAwardsModalOpen" />
+                </div>
+            </Modal>
         </AuthenticatedLayout>
     </div>
 </template>
@@ -342,15 +353,17 @@ import axios from "axios";
 
 import Trade from "@/Pages/Seasons/Module/Trade.vue";
 import FreeAgents from "@/Pages/Seasons/Module/FreeAgents.vue";
-import Awards from "./Module/Awards.vue";
-import Draft from "./Module/Draft.vue";
-import Add from "./Module/Add.vue";
+import SeasonAwards from "@/Pages/Seasons/Module/SeasonAwards.vue";
+import Awards from "@/Pages/Seasons/Module/Awards.vue";
+import Draft from "@/Pages/Seasons/Module/Draft.vue";
+import Add from "@/Pages/Seasons/Module/Add.vue";
 
 const isAddModalOpen = ref(false);
 const isTradeModalOpen = ref(false);
 const isPlayerSigningModalOpen = ref(false);
 const isDraftModalOpen = ref(false);
 const isPlayerAwardsModalOpen = ref(false);
+const isSeasonAwardsModalOpen = ref(false);
 const seasons = ref([]);
 const leagues_dropdown = ref([]);
 const season_id = ref(0);

@@ -38,7 +38,7 @@
                 <div class="flip-card-front p-2" @click="togglePlayerCard(transaction.id)">
                     <div class="flex items-center gap-2">
                         <span class="font-semibold text-gray-900 cursor-pointer">
-                            {{ transaction.player_name }}, {{ transaction.age }} |  {{ transaction.position }}
+                            {{ transaction.player_name }} <sup>{{ Math.round(transaction.overall_rating ?? 0) }}</sup>, {{ transaction.age }} |  {{ transaction.position }}
                         </span>
                         <span :class="roleBadgeClass(transaction.player_role)">
                             {{ transaction.player_role }}
