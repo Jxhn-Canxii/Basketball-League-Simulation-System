@@ -50,7 +50,11 @@
                     <div v-if="season_playoffs.playoffs[roundName].length > 0">
                         <h3
                             v-if="season_playoffs.playoffs[roundName].length > 0"
-                            class="text-lg font-semibold text-orange-400 mt-4"
+                            class="text-lg font-semibold mt-4"
+                            :class="{
+                                'text-start text-orange-400': season_playoffs.playoffs[roundName].length > 2,
+                                'text-center text-orange-600': season_playoffs.playoffs[roundName].length <= 2,
+                            }"
                         >
                             {{ roundNameFormatter(roundName) }}
                         </h3>
