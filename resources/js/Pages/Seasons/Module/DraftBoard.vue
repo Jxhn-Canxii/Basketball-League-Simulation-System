@@ -32,6 +32,8 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Draft #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rank #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                         </tr>
                     </thead>
@@ -41,7 +43,9 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border"   :class="{'bg-green-100': player.pick_number >= player.rank, 'bg-red-100': player.pick_number < player.rank}">{{ player.pick_number }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                         </tr>
                     </tbody>
@@ -51,13 +55,15 @@
             <!-- Round 2 Table -->
             <div v-if="selectedRound === 2">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-50 text-nowrap">
+                   <thead class="bg-gray-50 text-nowrap">
                         <tr>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Draft #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rank #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                         </tr>
                     </thead>
@@ -65,9 +71,11 @@
                         <tr v-for="player in draftResults.filter(player => player.round === 2)" :key="player.player_id" class="hover:bg-gray-100" @click.prevent="showPlayerProfileModal = player.player_id">
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border"   :class="{'bg-green-100': player.pick_number + 80 >= player.rank, 'bg-red-100': player.pick_number + 80 < player.rank}">{{ player.pick_number + 80 }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border"   :class="{'bg-green-100': player.pick_number >= player.rank, 'bg-red-100': player.pick_number < player.rank}">{{ player.pick_number }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                         </tr>
                     </tbody>
