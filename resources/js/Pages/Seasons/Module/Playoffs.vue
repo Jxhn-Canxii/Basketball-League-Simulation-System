@@ -55,38 +55,344 @@
                             {{ roundNameFormatter(roundName) }}
                         </h3>
                         <div
-                            class="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                            class="grid gap-4"
+                            :class="{
+                                'grid-cols-4': season_playoffs.playoffs[roundName].length >= 4,
+                                'grid-cols-2 justify-center': season_playoffs.playoffs[roundName].length === 2,
+                                'grid-cols-1 justify-center max-w-md mx-auto': season_playoffs.playoffs[roundName].length === 1
+                            }"
                         >
-                            <div
-                                v-for="(match, mm) in season_playoffs.playoffs[
-                                    roundName
-                                ]"
+                            <!-- Add container for centering when 2 cards -->
+                            <div 
+                                v-if="season_playoffs.playoffs[roundName].length === 2"
+                                class="col-span-2 flex justify-center gap-4"
+                            >
+                                <div 
+                                    v-for="(match, mm) in season_playoffs.playoffs[roundName]" 
+                                    :key="match.game_id"
+                                    class="w-full max-w-md"
+                                >
+                                    <!-- Existing card content -->
+                                    <div 
+                                        :style="{
+                                            background: `
+                                                linear-gradient(45deg, 
+                                                    #${match?.home_team?.secondary_color} 0%, 
+                                                    #${match?.home_team?.secondary_color} 50%, 
+                                                    #${match?.home_team?.primary_color} 50%, 
+                                                    #${match?.home_team?.primary_color} 100%
+                                                ),
+                                                linear-gradient(-45deg, 
+                                                    #${match?.away_team?.primary_color} 0%, 
+                                                    #${match?.away_team?.primary_color} 50%, 
+                                                    #${match?.away_team?.secondary_color} 50%, 
+                                                    #${match?.away_team?.secondary_color} 100%
+                                                )`,
+                                            backgroundSize: '50% 100%',
+                                            backgroundPosition: 'left, right',
+                                            backgroundRepeat: 'no-repeat'
+                                        }"
+                                        class="shadow-md rounded-md overflow-hidden"
+                                    >
+                                        <div
+                                            class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
+                                        >
+                                            <div>
+                                                <h3>
+                                                    {{ match.home_team.home_score }}
+                                                </h3>
+                                            </div>
+                                            <div>
+                                                <h3>
+                                                    {{ match.away_team.away_score }}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="px-1 py-1 flex justify-between items-center"
+                                        >
+                                            <h3>
+                                                <TeamDetails
+                                                :team_id="match.home_team.id" 
+                                                :key="match.home_team.id" 
+                                                :showButton="0"
+                                                :showInfo="false"
+                                                class="text-white text-md uppercase text-wrap text-left"
+                                                :current_conference_rank="match.home_team.conference_rank"
+                                                :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
+                                            </h3>
+                                                <!-- <small class="text-red-500 font-bold shadow-b-lg bg-white rounded p-2 text-lg">vs</small> -->
+                                            <h3>
+                                                <TeamDetails
+                                                    :team_id="match.away_team.id" 
+                                                    :key="match.away_team.id" 
+                                                    :showButton="0"
+                                                    :showInfo="false"
+                                                    class="text-white text-md uppercase text-wrap text-right"
+                                                    :current_conference_rank="match.away_team.conference_rank"
+                                                    :text="`#${match.away_team.overall_rank ?? 'TBD'} ${match.away_team.name ?? 'TBD'}`" />
+                                            </h3>
+                                        </div>
+                                        <div
+                                            class="px-4 text-nowrap text-xs py-0 flex justify-center"
+                                        >
+                                            <span class="px-2 text-xs text-white py-1 rounded">
+                                                {{ roundNameFormatter(roundName) }}
+                                            </span>
+                                        </div>
+                                        <div
+                                            class="border-gray-200 flex justify-between mt-4 mb-4 bg-white"
+                                        >
+                                            <div
+                                                class="px-2 text-nowrap text-xs py-3"
+                                            >
+                                                <span 
+                                                :class="getConferenceClass(match.home_team.conference,match.away_team.conference)"
+                                                class="px-2 shadow py-1 rounded">
+                                                    {{ match.home_team.conference }} #{{
+                                                        match.home_team.conference_rank
+                                                    }}
+                                                    vs {{ match.away_team.conference }} #{{
+                                                        match.away_team.conference_rank
+                                                    }}
+                                                </span>
+                                               
+                                            </div>
+                                            <div
+                                                class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
+                                            >
+                                                <button
+                                                    class="text-white bg-orange-500 rounded-full px-2 py-1"
+                                                    @click.prevent="
+                                                        compareTeams(
+                                                            match.home_team.id,
+                                                            match.away_team.id
+                                                        )
+                                                    "
+                                                >
+                                                    Compare
+                                                    <i
+                                                        class="fa fa-exchange-alt ml-1"
+                                                    ></i>
+                                                    <!-- Font Awesome icon -->
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="border-gray-200 flex justify-center">
+                                            <button
+                                                v-if="!isHide && match.winner == 0"
+                                                @click.prevent="
+                                                    simulateGame(
+                                                        match.id,
+                                                        match.game_id,
+                                                        2,
+                                                        mm,
+                                                        roundName
+                                                    )
+                                                "
+                                                class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
+                                                >
+                                                    Simulate Game
+                                                </button>
+                                                <a
+                                                href="#"
+                                                v-if="!isHide && match.winner != 0"
+                                                class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
+                                                @click.prevent="
+                                                    isGameResultModalOpen =
+                                                        match.game_id
+                                                "
+                                                >
+                                                    View Result
+                                                </a>
+                                                <p  v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
+                                                    Simulating...
+                                                </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Single card centered -->
+                            <div 
+                                v-if="season_playoffs.playoffs[roundName].length === 1"
+                                class="flex justify-center"
+                            >
+                                <div 
+                                    v-for="(match, mm) in season_playoffs.playoffs[roundName]" 
+                                    :key="match.game_id"
+                                    class="w-full max-w-md"
+                                >
+                                    <!-- Existing card content -->
+                                    <div 
+                                        :style="{
+                                            background: `
+                                                linear-gradient(45deg, 
+                                                    #${match?.home_team?.secondary_color} 0%, 
+                                                    #${match?.home_team?.secondary_color} 50%, 
+                                                    #${match?.home_team?.primary_color} 50%, 
+                                                    #${match?.home_team?.primary_color} 100%
+                                                ),
+                                                linear-gradient(-45deg, 
+                                                    #${match?.away_team?.primary_color} 0%, 
+                                                    #${match?.away_team?.primary_color} 50%, 
+                                                    #${match?.away_team?.secondary_color} 50%, 
+                                                    #${match?.away_team?.secondary_color} 100%
+                                                )`,
+                                            backgroundSize: '50% 100%',
+                                            backgroundPosition: 'left, right',
+                                            backgroundRepeat: 'no-repeat'
+                                        }"
+                                        class="shadow-md rounded-md overflow-hidden"
+                                    >
+                                        <div
+                                            class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
+                                        >
+                                            <div>
+                                                <h3>
+                                                    {{ match.home_team.home_score }}
+                                                </h3>
+                                            </div>
+                                            <div>
+                                                <h3>
+                                                    {{ match.away_team.away_score }}
+                                                </h3>
+                                            </div>
+                                        </div>
+                                        <div
+                                            class="px-1 py-1 flex justify-between items-center"
+                                        >
+                                            <h3>
+                                                <TeamDetails
+                                                :team_id="match.home_team.id" 
+                                                :key="match.home_team.id" 
+                                                :showButton="0"
+                                                :showInfo="false"
+                                                class="text-white text-md uppercase text-wrap text-left"
+                                                :current_conference_rank="match.home_team.conference_rank"
+                                                :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
+                                            </h3>
+                                                <!-- <small class="text-red-500 font-bold shadow-b-lg bg-white rounded p-2 text-lg">vs</small> -->
+                                            <h3>
+                                                <TeamDetails
+                                                    :team_id="match.away_team.id" 
+                                                    :key="match.away_team.id" 
+                                                    :showButton="0"
+                                                    :showInfo="false"
+                                                    class="text-white text-md uppercase text-wrap text-right"
+                                                    :current_conference_rank="match.away_team.conference_rank"
+                                                    :text="`#${match.away_team.overall_rank ?? 'TBD'} ${match.away_team.name ?? 'TBD'}`" />
+                                            </h3>
+                                        </div>
+                                        <div
+                                            class="px-4 text-nowrap text-xs py-0 flex justify-center"
+                                        >
+                                            <span class="px-2 text-xs text-white py-1 rounded">
+                                                {{ roundNameFormatter(roundName) }}
+                                            </span>
+                                        </div>
+                                        <div
+                                            class="border-gray-200 flex justify-between mt-4 mb-4 bg-white"
+                                        >
+                                            <div
+                                                class="px-2 text-nowrap text-xs py-3"
+                                            >
+                                                <span 
+                                                :class="getConferenceClass(match.home_team.conference,match.away_team.conference)"
+                                                class="px-2 shadow py-1 rounded">
+                                                    {{ match.home_team.conference }} #{{
+                                                        match.home_team.conference_rank
+                                                    }}
+                                                    vs {{ match.away_team.conference }} #{{
+                                                        match.away_team.conference_rank
+                                                    }}
+                                                </span>
+                                               
+                                            </div>
+                                            <div
+                                                class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
+                                            >
+                                                <button
+                                                    class="text-white bg-orange-500 rounded-full px-2 py-1"
+                                                    @click.prevent="
+                                                        compareTeams(
+                                                            match.home_team.id,
+                                                            match.away_team.id
+                                                        )
+                                                    "
+                                                >
+                                                    Compare
+                                                    <i
+                                                        class="fa fa-exchange-alt ml-1"
+                                                    ></i>
+                                                    <!-- Font Awesome icon -->
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="border-gray-200 flex justify-center">
+                                            <button
+                                                v-if="!isHide && match.winner == 0"
+                                                @click.prevent="
+                                                    simulateGame(
+                                                        match.id,
+                                                        match.game_id,
+                                                        2,
+                                                        mm,
+                                                        roundName
+                                                    )
+                                                "
+                                                class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
+                                                >
+                                                    Simulate Game
+                                                </button>
+                                                <a
+                                                href="#"
+                                                v-if="!isHide && match.winner != 0"
+                                                class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
+                                                @click.prevent="
+                                                    isGameResultModalOpen =
+                                                        match.game_id
+                                                "
+                                                >
+                                                    View Result
+                                                </a>
+                                                <p  v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
+                                                    Simulating...
+                                                </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Regular grid for 4 or more cards -->
+                            <div 
+                                v-if="season_playoffs.playoffs[roundName].length >= 4"
+                                v-for="(match, mm) in season_playoffs.playoffs[roundName]"
                                 :key="match.game_id"
                                 class="col-span-1"
                             >
-                             <!-- :style="{
-                                    background: 'linear-gradient(135deg, #' + match.home_team.primary_color + ' 50%, #' + props.match.away_team.primary_color + ' 50%)'
-                                }" -->
+                                <!-- Existing card content -->
                                 <div 
-                                :style="{
-                                    background: `
-                                        linear-gradient(45deg, 
-                                            #${match?.home_team?.secondary_color} 0%, 
-                                            #${match?.home_team?.secondary_color} 50%, 
-                                            #${match?.home_team?.primary_color} 50%, 
-                                            #${match?.home_team?.primary_color} 100%
-                                        ),
-                                        linear-gradient(-45deg, 
-                                            #${match?.away_team?.primary_color} 0%, 
-                                            #${match?.away_team?.primary_color} 50%, 
-                                            #${match?.away_team?.secondary_color} 50%, 
-                                            #${match?.away_team?.secondary_color} 100%
-                                        )`,
-                                    backgroundSize: '50% 100%',
-                                    backgroundPosition: 'left, right',
-                                    backgroundRepeat: 'no-repeat'
-                                }"
-                                class="shadow-md rounded-md overflow-hidden">
+                                    :style="{
+                                        background: `
+                                            linear-gradient(45deg, 
+                                                #${match?.home_team?.secondary_color} 0%, 
+                                                #${match?.home_team?.secondary_color} 50%, 
+                                                #${match?.home_team?.primary_color} 50%, 
+                                                #${match?.home_team?.primary_color} 100%
+                                            ),
+                                            linear-gradient(-45deg, 
+                                                #${match?.away_team?.primary_color} 0%, 
+                                                #${match?.away_team?.primary_color} 50%, 
+                                                #${match?.away_team?.secondary_color} 50%, 
+                                                #${match?.away_team?.secondary_color} 100%
+                                            )`,
+                                        backgroundSize: '50% 100%',
+                                        backgroundPosition: 'left, right',
+                                        backgroundRepeat: 'no-repeat'
+                                    }"
+                                    class="shadow-md rounded-md overflow-hidden"
+                                >
                                     <div
                                         class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
                                     >
