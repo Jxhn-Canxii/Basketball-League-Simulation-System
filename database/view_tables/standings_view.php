@@ -12,7 +12,7 @@ WITH team_games AS (
         schedules.id AS game_id,
         schedules.season_id,
         schedules.round,
-        schedules.created_at AS game_date,
+        schedules.id AS game_date,
         CASE
             WHEN schedules.winner_id = teams.id THEN 'W'
             WHEN schedules.winner_id IS NOT NULL AND schedules.winner_id <> teams.id THEN 'L'
