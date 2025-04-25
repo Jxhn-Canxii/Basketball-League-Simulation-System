@@ -1773,25 +1773,24 @@ class SimulateController extends Controller
         }
     }
     
-    public function getActivePlayersSorted($teamId, $rolePriority)
+    public function getActivePlayersSorted($teamId,$rolePriority)
     {
         $seasonId = get_current_season_id();
 
-        return Player::select('players.*', 
-                DB::raw('SUM(player_season_stats.eff) as eff'), 
-                DB::raw('AVG(player_season_stats.per) as per'))  // Use SUM or AVG as per your requirement
+        return Player::select('players.*', 'player_season_stats.eff', 'player_season_stats.per')
             ->where('players.team_id', $teamId)
             ->where('players.is_active', 1)
-            ->leftJoin('player_season_stats', function ($join) use ($seasonId) {
+            ->leftJoin('player_season_stats', function ($join) use ($seasonId, $teamId) {
                 $join->on('players.id', '=', 'player_season_stats.player_id')
-                    ->where('player_season_stats.season_id', '=', $seasonId);
+                    ->where('player_season_stats.season_id', '=', $seasonId)
+                    ->where('player_season_stats.team_id', '=', $teamId);
             })
-            ->groupBy('players.id')  // Grouping by player to merge stats across multiple teams
-            ->orderByDesc('per')  // Sorting by average PER
-            ->orderByDesc('eff')  // Sorting by total Efficiency
+            // ->orderByRaw("FIELD(players.role, 'star player', 'all star', 'starter', 'role player', 'bench')")
+            ->orderByDesc('player_season_stats.per')  // Sorting by PER (Player Efficiency Rating) in descending order
+            ->orderByDesc('player_season_stats.eff')  // Sorting by Efficiency (eff) in descending order
             ->get();
     }
-
+    
     private function fireLeopardRule($teamId)
     {
         $seasonId = get_current_season_id();
