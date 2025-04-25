@@ -1423,7 +1423,7 @@ class SimulateController extends Controller
         ]);
     }
 
-    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    private function distributeMinutesV1($playersArray, $totalMinutes, $gameId)
     {
         $rolePriority = [
             'star player' => 1,
@@ -1568,7 +1568,119 @@ class SimulateController extends Controller
 
         return $minutes;
     }
-    
+    private function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    {
+        $rolePriority = [
+            'star player' => 1,
+            'all star'    => 2,
+            'starter'     => 3,
+            'role player' => 4,
+            'bench'       => 5,
+        ];
+
+        $positionTargets = [
+            'PG' => 48,
+            'SG' => 48,
+            'SF' => 48,
+            'PF' => 48,
+            'C'  => 48,
+        ];
+
+        $sorted = collect($playersArray)
+            ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
+            ->values();
+
+        // Step 1: Sit injured players
+        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
+
+        // Step 2: Fill remaining DNP slots
+        if ($dnpPlayers->count() < 2) {
+            $remainingSlots = 2 - $dnpPlayers->count();
+            $additionalDNP = $sorted
+                ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured'])
+                ->sortBy([['per', 'asc'], ['eff', 'asc'], ['injury_prone_percentage', 'desc'], ['age', 'desc']])
+                ->take($remainingSlots);
+
+            $dnpPlayers = $dnpPlayers->merge($additionalDNP);
+        }
+
+        // Ensure minimum of 5 active players
+        $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
+        if ($rotation->count() < 5) {
+            $needed = 5 - $rotation->count();
+            $reAddCandidates = $dnpPlayers
+                ->filter(fn($p) => !$p['is_injured'])
+                ->sortBy([['per', 'desc'], ['eff', 'desc'], ['injury_prone_percentage', 'asc'], ['age', 'asc']])
+                ->take($needed);
+
+            $dnpPlayers = $dnpPlayers->reject(fn($p) => $reAddCandidates->contains('id', $p['id']));
+            $rotation = $rotation->merge($reAddCandidates);
+        }
+
+        // Initialize minutes
+        $minutes = [];
+        foreach ($dnpPlayers as $p) {
+            $minutes[$p['id']] = 0;
+        }
+
+        // Calculate total EFF per position
+        $positionEFFTotals = [];
+        foreach ($rotation as $player) {
+            $positions = explode('/', $player['position']);
+            foreach ($positions as $pos) {
+                $positionEFFTotals[$pos] = ($positionEFFTotals[$pos] ?? 0) + $player['eff'];
+            }
+        }
+
+        // Assign minutes based on EFF
+        foreach ($rotation as $player) {
+            $positions = explode('/', $player['position']);
+            $baseMinutes = 0;
+
+            foreach ($positions as $pos) {
+                if (isset($positionTargets[$pos]) && $positionEFFTotals[$pos] > 0 && $positionTargets[$pos] > 0) {
+                    $effShare = $player['eff'] / $positionEFFTotals[$pos];
+                    $baseMinutes = round($positionTargets[$pos] * $effShare);
+                    $assigned = min($baseMinutes, $positionTargets[$pos]);
+
+                    $minutes[$player['id']] = ($minutes[$player['id']] ?? 0) + $assigned;
+                    $positionTargets[$pos] -= $assigned;
+                    break;
+                }
+            }
+
+            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+            $this->handleInjuredPlayer($player, $gameId);
+        }
+
+        // Normalize total minutes to match $totalMinutes
+        $difference = $totalMinutes - array_sum($minutes);
+        if (abs($difference) > 0) {
+            $eligible = $rotation->sortByDesc('eff')->values();
+            $i = 0;
+            while ($difference !== 0 && $eligible->isNotEmpty()) {
+                $player = $eligible[$i % $eligible->count()];
+                $id = $player['id'];
+
+                if (!isset($minutes[$id])) {
+                    $minutes[$id] = 0;
+                }
+
+                if ($difference > 0 && $minutes[$id] < 48) {
+                    $minutes[$id]++;
+                    $difference--;
+                } elseif ($difference < 0 && $minutes[$id] > 0) {
+                    $minutes[$id]--;
+                    $difference++;
+                }
+
+                $i++;
+            }
+        }
+
+        return $minutes;
+    }
+
     public function fatigueRate($player, $minutes, $gameId)
     {
         try {
