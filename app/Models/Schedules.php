@@ -17,6 +17,7 @@ class Schedules extends Model
         'home_score',
         'away_id',
         'away_score',
+        'winner_id',
         'status',
     ];
 

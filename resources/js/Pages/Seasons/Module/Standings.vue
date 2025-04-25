@@ -22,9 +22,9 @@
             <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
             <th scope="col" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
             <th scope="col" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
-            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th>
+            <!-- <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th> -->
             <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
-            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Legacy</th>
+            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">LAST 5</th>
           </tr>
         </thead>
         <transition-group 
@@ -67,17 +67,31 @@
             </td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm">
+            <!-- <td class="px-4 py-2 whitespace-nowrap text-sm">
               {{ 
                 (team.wins + team.losses > 0
                   ? ((parseFloat(team.total_home_score ?? 0) + parseFloat(team.total_away_score ?? 0)) / (parseFloat(team.wins ?? 0) + parseFloat(team.losses ?? 0))).toFixed(2)
                   : '0.00')
               }}
-            </td>
+            </td> -->
             <td class="px-4 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
-            <td class="px-4 py-2 whitespace-nowrap">
+            <td class="px-4 py-2 whitespace-nowrap text-center text-sm">
+              <div class="flex justify-center space-x-1">
+                <template v-for="(result, index) in team.last_5_games.split('')" :key="index">
+                  <span :class="{
+                    'bg-green-100 text-green-800 px-1 rounded-full text-xs font-semibold': result === 'W',
+                    'bg-red-100 text-red-800 px-1 rounded-full': result === 'L',
+                    'bg-gray-100 text-gray-500 px-1 rounded': !['W', 'L'].includes(result)
+                  }">
+                    <span v-if="result === 'W'">✓</span>
+                    <span v-else-if="result === 'L'">✕</span>
+                    <span v-else>-</span>
+                  </span>
+                </template>
+              </div>
+            </td>
+            <!-- <td class="px-4 py-2 whitespace-nowrap">
               <div class="grid grid-cols-3 gap-1 place-items-center w-fit mx-auto text-xs">
-                <!-- Achievement components -->
                 <Achievement v-if="team.championships > 0" 
                            type="championship" 
                            :count="team.championships" />
@@ -87,14 +101,14 @@
                 <Achievement v-if="team.overall_1_rank > 0" 
                            type="overall" 
                            :count="team.overall_1_rank" />
-                <!-- <Achievement v-if="team.conference_1_rank > 0" 
+                <Achievement v-if="team.conference_1_rank > 0" 
                            type="conference_best" 
                            :count="team.conference_1_rank" />
                 <Achievement v-if="team.is_grandslam > 0" 
                            type="grandslam" 
-                           :count="team.is_grandslam" /> -->
+                           :count="team.is_grandslam" />
               </div>
-            </td>
+            </td> -->
           </tr>
         </transition-group>
       </table>

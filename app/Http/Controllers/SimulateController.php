@@ -474,6 +474,11 @@ class SimulateController extends Controller
         // Update the scores
         $gameData->home_score = $homeScore;
         $gameData->away_score = $awayScore;
+        
+        $gameData->winner_id = $homeScore > $awayScore
+            ? $gameData->home_team_id
+            : $gameData->away_team_id;
+        
         $gameData->status = 2; // Marking the game as completed
 
         // Save the updated scores
@@ -943,9 +948,14 @@ class SimulateController extends Controller
                 ], 500);
             }
 
-            // Update game data with final scores
+            
             $gameData->home_score = $homeScore;
             $gameData->away_score = $awayScore;
+            
+            $gameData->winner_id = $homeScore > $awayScore
+                ? $gameData->home_team_id
+                : $gameData->away_team_id;
+            
             $gameData->status = 2;
             $gameData->save();
 

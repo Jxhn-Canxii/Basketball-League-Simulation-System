@@ -159,6 +159,7 @@ class ScheduleController extends Controller
                                 'away_id' => $awayTeam->id,
                                 'home_score' => 0, // Initialize with default score
                                 'away_score' => 0, // Initialize with default score
+                                'winner_id' => 0,
                             ];
                             $gameIdCounter++;
                         }
@@ -192,6 +193,7 @@ class ScheduleController extends Controller
                                 'away_id' => $homeTeam->id,
                                 'home_score' => 0, // Initialize with default score
                                 'away_score' => 0, // Initialize with default score
+                                'winner_id' => 0,
                             ];
                             $gameIdCounter++;
                         }
@@ -261,6 +263,7 @@ class ScheduleController extends Controller
                                 'away_id' => $awayTeam->id,
                                 'home_score' => 0, // Initialize with default score
                                 'away_score' => 0, // Initialize with default score
+                                'winner_id' => 0,
                             ];
                             $gameIdCounter++;
                         }
@@ -322,6 +325,7 @@ class ScheduleController extends Controller
                                     'away_id' => $leg === 1 ? $awayTeam->id : $homeTeam->id,
                                     'home_score' => 0,
                                     'away_score' => 0,
+                                    'winner_id' => 0,
                                 ];
                                 $allMatches[] = $match;
                             }
@@ -391,6 +395,7 @@ class ScheduleController extends Controller
                             'away_id' => $awayId,
                             'home_score' => 0,
                             'away_score' => 0,
+                            'winner_id' => 0,
                         ];
                     }
                 }
@@ -532,7 +537,7 @@ class ScheduleController extends Controller
                             'away_id' => $awayId,
                             'home_score' => 0,
                             'away_score' => 0,
-                            'match_type' => 'inter'
+                            'winner_id' => 0,
                         ];
                         
                         // Update counters and mark matchup as used
@@ -1195,6 +1200,9 @@ class ScheduleController extends Controller
                 'away_id' => $pair[1],
                 'season_id' => $seasonId,
                 'round' => $round,
+                'home_score' => 0,
+                'away_score' => 0,
+                'winner_id' => 0,
                 // Add more fields as needed, such as date and time
             ];
         }
