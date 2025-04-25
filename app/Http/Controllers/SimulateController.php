@@ -16,6 +16,7 @@ use App\Models\PlayerGameStats;
 use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\PlayersController;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class SimulateController extends Controller
 {
@@ -1772,25 +1773,33 @@ class SimulateController extends Controller
             \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
         }
     }
-    
-    public function getActivePlayersSorted($teamId,$rolePriority)
+
+    public function getActivePlayersSorted($teamId, $rolePriority)
     {
         $seasonId = get_current_season_id();
-
-        return Player::select('players.*', 'player_season_stats.eff', 'player_season_stats.per')
+    
+        // Get all columns from the players table except created_at and updated_at
+        $playerColumns = Schema::getColumnListing('players');
+        $playerColumns = array_filter($playerColumns, fn($col) => !in_array($col, ['created_at', 'updated_at']));
+    
+        // Add AVG(per) and AVG(eff) from the joined table
+        $selectColumns = array_map(fn($col) => "players.$col", $playerColumns);
+        $selectColumns[] = DB::raw('AVG(player_season_stats.per) as per');
+        $selectColumns[] = DB::raw('AVG(player_season_stats.eff) as eff');
+    
+        return Player::select($selectColumns)
             ->where('players.team_id', $teamId)
             ->where('players.is_active', 1)
-            ->leftJoin('player_season_stats', function ($join) use ($seasonId, $teamId) {
+            ->leftJoin('player_season_stats', function ($join) use ($seasonId) {
                 $join->on('players.id', '=', 'player_season_stats.player_id')
-                    ->where('player_season_stats.season_id', '=', $seasonId)
-                    ->where('player_season_stats.team_id', '=', $teamId);
+                     ->where('player_season_stats.season_id', '=', $seasonId);
             })
-            // ->orderByRaw("FIELD(players.role, 'star player', 'all star', 'starter', 'role player', 'bench')")
-            ->orderByDesc('player_season_stats.per')  // Sorting by PER (Player Efficiency Rating) in descending order
-            ->orderByDesc('player_season_stats.eff')  // Sorting by Efficiency (eff) in descending order
+            ->groupBy(...array_map(fn($col) => "players.$col", $playerColumns))
+            ->orderByDesc('per')
+            ->orderByDesc('eff')
             ->get();
     }
-    
+
     private function fireLeopardRule($teamId)
     {
         $seasonId = get_current_season_id();
@@ -1910,8 +1919,6 @@ class SimulateController extends Controller
                 'players.role'
             )
             ->orderByDesc('players.overall_rating')
-            ->orderBy('players.age')
-            ->orderBy('players.injury_history')
             ->first();
 
         // If no player found with specified role, get random available player
