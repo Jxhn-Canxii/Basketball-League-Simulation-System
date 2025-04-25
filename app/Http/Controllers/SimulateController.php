@@ -1481,8 +1481,6 @@ class SimulateController extends Controller
                 ->sortBy([
                     ['per', 'desc'],
                     ['eff', 'desc'],
-                    ['injury_prone_percentage', 'asc'],
-                    ['age', 'asc'],
                 ])
                 ->take($needed);
 
