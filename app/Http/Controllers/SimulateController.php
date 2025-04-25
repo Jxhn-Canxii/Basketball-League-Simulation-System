@@ -1464,8 +1464,6 @@ class SimulateController extends Controller
                 ->sortBy([
                     ['per', 'asc'],
                     ['eff', 'asc'],
-                    ['injury_prone_percentage', 'desc'],
-                    ['age', 'desc'],
                 ])
                 ->take($remainingSlots);
 
@@ -1789,7 +1787,9 @@ class SimulateController extends Controller
                     ->where('player_season_stats.season_id', '=', $seasonId)
                     ->where('player_season_stats.team_id', '=', $teamId);
             })
-            ->orderByRaw("FIELD(players.role, 'star player', 'all star', 'starter', 'role player', 'bench')")
+            // ->orderByRaw("FIELD(players.role, 'star player', 'all star', 'starter', 'role player', 'bench')")
+            ->orderByDesc('player_season_stats.per')  // Sorting by PER (Player Efficiency Rating) in descending order
+            ->orderByDesc('player_season_stats.eff')  // Sorting by Efficiency (eff) in descending order
             ->get();
     }
 
