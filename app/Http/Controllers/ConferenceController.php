@@ -173,7 +173,7 @@ class ConferenceController extends Controller
             })
             ->whereNotIn('round', $excludedRounds)
             ->orderBy('status', 'desc')  // Sort status 2 first
-            ->orderBy('updated_at', 'desc')  // Within status 2, order by updated_at
+            ->orderBy('id', 'desc')  // Within status 2, order by updated_at
             ->skip($offset)
             ->take($itemsPerPage)
             ->get()

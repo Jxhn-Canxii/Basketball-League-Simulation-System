@@ -4,3 +4,8 @@ ADD COLUMN injury_type VARCHAR(255) NULL,
 ADD COLUMN fatigue INT DEFAULT 0,
 ADD COLUMN injury_history INT DEFAULT 0,
 ADD COLUMN injury_recovery_games INT DEFAULT 0
+
+<!-- 26/04/25 -->
+ALTER TABLE players
+ADD COLUMN morale INT(2) DEFAULT 0,
+

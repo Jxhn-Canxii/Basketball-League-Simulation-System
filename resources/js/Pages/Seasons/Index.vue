@@ -59,7 +59,7 @@
                         </button>
                         <button
                             @click.prevent="isPlayerSigningModalOpen = true"
-                            v-if="seasons.is_new_season == 5 || seasons.is_new_season == 7"
+                            v-if="seasons.is_new_season == 5 || seasons.is_new_season == 8"
                             v-bind:class="{
                                 'opacity-25': isPlayerSigningModalOpen,
                             }"
@@ -68,6 +68,17 @@
                         >
                             <i class="fa fa-users"></i> Player Signings
                         </button>
+                        <!-- <button
+                            @click.prevent="isPlayerSigningModalOpen = true"
+                            v-if="seasons.is_new_season == 6 || seasons.is_new_season == 7"
+                            v-bind:class="{
+                                'opacity-25': isPlayerSigningModalOpen,
+                            }"
+                            v-bind:disabled="isPlayerSigningModalOpen"
+                            class="px-2 py-2 bg-red-700 rounded font-bold text-md float-end text-white shadow"
+                        >
+                            <i class="fa fa-chalkboard-teacher"></i> Coach Signings
+                        </button> -->
                         <Add v-if="seasons.is_new_season == 6 || seasons.is_new_season == 7" @transaction_id="handleCreateSeason" />
                     </div>
                 </div>

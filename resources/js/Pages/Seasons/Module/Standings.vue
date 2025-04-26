@@ -77,7 +77,7 @@
             <td class="px-4 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
             <td class="px-4 py-2 whitespace-nowrap text-center text-sm">
               <div class="flex justify-center space-x-1">
-                <template v-for="(result, index) in team.last_5_games.split('').reverse()" :key="index">
+                <template v-for="(result, index) in team.last_5_games?.split('').reverse()" :key="index">
                   <span :class="{
                     'bg-green-100 text-green-800 px-1 rounded-full text-xs font-semibold': result === 'W',
                     'bg-red-100 text-red-800 px-1 rounded-full': result === 'L',

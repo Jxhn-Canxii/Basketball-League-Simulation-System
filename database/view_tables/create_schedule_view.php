@@ -11,13 +11,17 @@ CREATE OR REPLACE VIEW schedule_view AS
                 t_away.city AS away_team_city,
                 se.name AS season_name,
                 l.name AS league_name,
-                se.type AS league_type
+                se.type AS league_type,
+                t_winner.name as winning_name,
+                t_winner.city as winning_city
             FROM
                 schedules s
             JOIN
                 teams t_home ON s.home_id = t_home.id
             JOIN
                 teams t_away ON s.away_id = t_away.id
+            JOIN
+                teams t_winner ON s.winner_id = t_winner.id
             JOIN
                 seasons se ON s.season_id = se.id
             JOIN

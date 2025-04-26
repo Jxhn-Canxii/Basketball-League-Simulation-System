@@ -94,6 +94,8 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                         </tr>
                     </thead>
@@ -101,8 +103,10 @@
                         <tr v-for="player in draftResults.filter(player => player.round === 1)" :key="player.id" class="hover:bg-gray-100">
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.name }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -116,6 +120,8 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                         </tr>
                     </thead>
@@ -123,8 +129,10 @@
                         <tr v-for="player in draftResults.filter(player => player.round === 2)" :key="player.id" class="hover:bg-gray-100">
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.name }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -368,7 +376,7 @@ const addMultiplePlayers = async (count) => {
 
         for (let i = 0; i < count; i++) {
             // Randomly choose between fetchRandomFullName1 or fetchRandomFullName2
-            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName1 : await fetchRandomFullName1; // 50% chance for each
+            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName2 : await fetchRandomFullName2; // 50% chance for each
 
             const randomFullName = await fetchRandomFullName(); // Fetch random full name
             console.log(randomFullName);
