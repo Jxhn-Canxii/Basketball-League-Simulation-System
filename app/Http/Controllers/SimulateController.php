@@ -485,8 +485,8 @@ class SimulateController extends Controller
         $gameData->save();
 
         // Determine the winner
-        $winnerId = $homeScore > $awayScore ? $gameData->home_team_id : ($homeScore < $awayScore ? $gameData->away_team_id : null);
-        $winnerName = $homeScore > $awayScore ? $gameData->home_team_name : ($homeScore < $awayScore ? $gameData->away_team_name : null);
+        $winnerId = $gameData->winner_id;
+        $winnerName = ($gameData->home_team_id == $gameData->winner_id) ? $gameData->home_team_name : $gameData->away_team_name;
         // Prepare an array to hold the update data for the seasons table if it's finals
         $seasonUpdateData = [];
         if ($gameData->round === 'semi_finals') {
@@ -2899,7 +2899,7 @@ class SimulateController extends Controller
     private function updatePlayerMoraleBasedOnStats($teamId,$wonGame)
     {
         $seasonId = get_current_season_id();
-        
+
         $players = DB::table('players')->where('team_id', $teamId)->get();
         $chemistry = DB::table('season_team_chemistry')
             ->where('team_id', $teamId)
