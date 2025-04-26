@@ -18,5 +18,6 @@ return [
     'draft' => 14,
     'off_season_trade' => 15,
     'player_signings' => 16,
-    'new_season' => 17,
+    'coach_signings' => 17,
+    'new_season' => 18,
 ];

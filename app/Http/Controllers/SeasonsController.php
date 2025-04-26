@@ -107,7 +107,7 @@ class SeasonsController extends Controller
 
         // Return 4 if there are no seasons
         if ($totalSeasons == 0) {
-            return 7;
+            return 8;
         }
 
         // Get the last season status
@@ -131,6 +131,9 @@ class SeasonsController extends Controller
         }
         elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 6; // new season
+        }
+        elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
+            return 7; // new season
         }
         // Optionally, you can return a default value if no status matches
         return null;
