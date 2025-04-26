@@ -33,12 +33,13 @@
             <!-- Players & Free Agents Dropdown -->
             <div class="relative">
                 <button @click.prevent="toggleDropdown('players')" class="text-xs text-gray-300 flex items-center space-x-1 px-2 py-1 rounded-md hover:bg-rose-600 hover:text-white">
-                    <span>Players & Free Agents</span>
+                    <span>Players & Coaches</span>
                     <i class="fa fa-caret-down text-sm"></i>
                 </button>
                 <div v-if="showPlayersDropdown" class="absolute bg-stone-900 border-2 border-rose-600 text-gray-300 rounded-md mt-1 p-2 space-y-1">
                     <nav-link :href="route('players.index')" :active="route().current('players.index')" class="text-xs px-2 py-1 hover:bg-rose-600 hover:text-white">Players</nav-link>
                     <nav-link :href="route('freeagents.index')" :active="route().current('freeagents.index')" class="text-xs px-2 py-1 hover:bg-rose-600 hover:text-white">Free Agents</nav-link>
+                     <nav-link :href="route('coaches.index')" :active="route().current('coaches.index')" class="text-xs px-2 py-1 hover:bg-rose-600 hover:text-white">Coaches</nav-link>
                 </div>
             </div>
 

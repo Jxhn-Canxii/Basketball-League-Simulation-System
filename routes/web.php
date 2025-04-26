@@ -9,6 +9,7 @@ use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\SeasonsController;
 use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\PlayersController;
+use App\Http\Controllers\CoachController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\RatingsController;
 use App\Http\Controllers\AwardsController;
@@ -170,7 +171,14 @@ Route::middleware('auth')->group(function () {
     Route::prefix('games/')->group(function(){
         Route::post('box-score', [GameController::class, 'getBoxScore'])->name('game.boxscore');
     });
-    
+    Route::prefix('coaches/')->group(function(){
+        Route::get('', [CoachController::class, 'index'])->name('coaches.index');
+        Route::post('list-coaches', [CoachController::class, 'listCoaches'])->name('coaches.list');
+        Route::post('add-coach', [CoachController::class, 'addFreeAgentCoach'])->name('coaches.add.free.agent');
+        Route::get('assign-coach-teams', [CoachController::class, 'assignFreeAgentCoaches'])->name('assign.coach.teams');
+        Route::get('end-coach-signings', [CoachController::class, 'endCoachSignings'])->name('end.coach.signings');
+       
+    });
     Route::prefix('players/')->group(function(){
         Route::get('', [PlayersController::class, 'index'])->name('players.index');
         Route::get('experience', [PlayersController::class, 'experience'])->name('experience.index');

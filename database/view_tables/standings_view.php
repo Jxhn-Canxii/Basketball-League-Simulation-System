@@ -12,7 +12,7 @@ WITH team_games AS (
         schedules.id AS game_id,
         schedules.season_id,
         schedules.round,
-        schedules.id AS game_date,
+        schedules.id as game_date,
         CASE
             WHEN schedules.winner_id = teams.id THEN 'W'
             WHEN schedules.winner_id IS NOT NULL AND schedules.winner_id <> teams.id THEN 'L'
@@ -30,6 +30,7 @@ WITH team_games AS (
             'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
             'interconference_semi_finals', 'finals'
         )
+        OR schedules.id IS NULL -- <-- IMPORTANT: allow NULL schedules
 ),
 
 last_five_games AS (
@@ -59,20 +60,18 @@ streaks AS (
         team_id,
         season_id,
         game_result,
-        round,
         COUNT(*) AS streak_length
     FROM (
         SELECT
             team_id,
             season_id,
             game_result,
-            round,
             ROW_NUMBER() OVER (PARTITION BY team_id, season_id ORDER BY game_id) -
             ROW_NUMBER() OVER (PARTITION BY team_id, season_id, game_result ORDER BY game_id) AS streak_id
         FROM team_games
     ) AS streak_groups
     WHERE game_result IS NOT NULL
-    GROUP BY team_id, season_id, game_result, streak_id, round
+    GROUP BY team_id, season_id, game_result, streak_id
 ),
 
 latest_streak AS (
@@ -89,7 +88,7 @@ latest_streak AS (
             streak_length,
             ROW_NUMBER() OVER (
                 PARTITION BY team_id, season_id
-                ORDER BY streak_length DESC, round DESC
+                ORDER BY streak_length DESC
             ) AS rn
         FROM streaks
     ) AS ranked_streaks
@@ -106,36 +105,33 @@ team_rankings AS (
         teams.secondary_color AS secondary_color,
         teams.conference_id AS conference_id,
         conferences.name AS conference_name,
-        COALESCE(SUM(CASE WHEN schedules.winner_id = teams.id THEN 1 ELSE 0 END), 0) AS wins,
-        COALESCE(SUM(CASE WHEN schedules.winner_id IS NOT NULL AND schedules.winner_id <> teams.id THEN 1 ELSE 0 END), 0) AS losses,
-        COALESCE(SUM(CASE WHEN schedules.home_id = teams.id THEN schedules.home_score ELSE 0 END), 0) AS total_home_score,
-        COALESCE(SUM(CASE WHEN schedules.away_id = teams.id THEN schedules.away_score ELSE 0 END), 0) AS total_away_score,
-        ROUND(COALESCE(SUM(CASE WHEN schedules.home_id = teams.id THEN schedules.home_score ELSE 0 END), 0) /
-              NULLIF(COUNT(CASE WHEN schedules.home_id = teams.id THEN 1 END), 0), 2) AS home_ppg,
-        ROUND(COALESCE(SUM(CASE WHEN schedules.away_id = teams.id THEN schedules.away_score ELSE 0 END), 0) /
-              NULLIF(COUNT(CASE WHEN schedules.away_id = teams.id THEN 1 END), 0), 2) AS away_ppg,
-        ABS(COALESCE(SUM(CASE
-            WHEN schedules.home_id = teams.id THEN schedules.home_score - schedules.away_score
-            WHEN schedules.away_id = teams.id THEN schedules.away_score - schedules.home_score
+        COALESCE(SUM(CASE WHEN schedules.status = 2 AND schedules.winner_id = teams.id THEN 1 ELSE 0 END), 0) AS wins,
+        COALESCE(SUM(CASE WHEN schedules.status = 2 AND schedules.winner_id IS NOT NULL AND schedules.winner_id <> teams.id THEN 1 ELSE 0 END), 0) AS losses,
+        COALESCE(SUM(CASE WHEN schedules.status = 2 AND schedules.home_id = teams.id THEN schedules.home_score ELSE 0 END), 0) AS total_home_score,
+        COALESCE(SUM(CASE WHEN schedules.status = 2 AND schedules.away_id = teams.id THEN schedules.away_score ELSE 0 END), 0) AS total_away_score,
+        ROUND(
+            COALESCE(SUM(CASE WHEN schedules.status = 2 AND schedules.home_id = teams.id THEN schedules.home_score ELSE 0 END), 0)
+            / NULLIF(COUNT(CASE WHEN schedules.status = 2 AND schedules.home_id = teams.id THEN 1 END), 0), 2
+        ) AS home_ppg,
+        ROUND(
+            COALESCE(SUM(CASE WHEN schedules.status = 2 AND schedules.away_id = teams.id THEN schedules.away_score ELSE 0 END), 0)
+            / NULLIF(COUNT(CASE WHEN schedules.status = 2 AND schedules.away_id = teams.id THEN 1 END), 0), 2
+        ) AS away_ppg,
+        COALESCE(SUM(CASE
+            WHEN schedules.status = 2 AND schedules.home_id = teams.id THEN schedules.home_score - schedules.away_score
+            WHEN schedules.status = 2 AND schedules.away_id = teams.id THEN schedules.away_score - schedules.home_score
             ELSE 0
-        END), 0)) AS score_difference,
-        schedules.season_id
+        END), 0) AS score_difference,
+        COALESCE(MAX(schedules.season_id), 0) AS season_id
     FROM teams
     LEFT JOIN schedules
         ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
-        AND schedules.status = 2
     LEFT JOIN conferences
         ON teams.conference_id = conferences.id
-    WHERE
-        schedules.round NOT IN (
-            'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
-            'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
-            'interconference_semi_finals', 'finals'
-        )
     GROUP BY
         teams.id, teams.name, teams.city, teams.acronym,
         teams.conference_id, teams.primary_color, teams.secondary_color,
-        conferences.name, schedules.season_id
+        conferences.name
 ),
 
 ranked_team_rankings AS (
@@ -181,15 +177,14 @@ playoff_appearances AS (
         teams.id AS team_id,
         COUNT(DISTINCT schedules.season_id) AS playoff_appearances
     FROM teams
-    JOIN schedules
-        ON teams.id = schedules.home_id OR teams.id = schedules.away_id
-    WHERE
-        schedules.round IN (
-            'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
-            'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
-            'interconference_semi_finals', 'finals'
-        )
+    LEFT JOIN schedules
+        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
         AND schedules.status = 2
+    WHERE schedules.round IN (
+        'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
+        'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
+        'interconference_semi_finals', 'finals'
+    )
     GROUP BY teams.id
 ),
 
@@ -198,10 +193,10 @@ finals_appearances AS (
         teams.id AS team_id,
         COUNT(DISTINCT schedules.season_id) AS finals_appearances
     FROM teams
-    JOIN schedules
-        ON teams.id = schedules.home_id OR teams.id = schedules.away_id
-    WHERE schedules.round = 'finals'
+    LEFT JOIN schedules
+        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
         AND schedules.status = 2
+    WHERE schedules.round = 'finals'
     GROUP BY teams.id
 ),
 
@@ -210,10 +205,10 @@ conference_finals_appearances AS (
         teams.id AS team_id,
         COUNT(DISTINCT schedules.season_id) AS conference_finals_appearance
     FROM teams
-    JOIN schedules
-        ON teams.id = schedules.home_id OR teams.id = schedules.away_id
-    WHERE schedules.round = 'semi_finals'
+    LEFT JOIN schedules
+        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
         AND schedules.status = 2
+    WHERE schedules.round = 'semi_finals'
     GROUP BY teams.id
 ),
 
@@ -222,12 +217,10 @@ championships AS (
         teams.id AS team_id,
         COUNT(DISTINCT schedules.season_id) AS championships
     FROM teams
-    JOIN schedules
-        ON teams.id = schedules.home_id OR teams.id = schedules.away_id
-    WHERE
-        schedules.round = 'finals'
-        AND schedules.winner_id = teams.id
+    LEFT JOIN schedules
+        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
         AND schedules.status = 2
+    WHERE schedules.round = 'finals' AND schedules.winner_id = teams.id
     GROUP BY teams.id
 ),
 
@@ -236,12 +229,10 @@ conference_championships AS (
         teams.id AS team_id,
         COUNT(DISTINCT schedules.season_id) AS championships
     FROM teams
-    JOIN schedules
-        ON teams.id = schedules.home_id OR teams.id = schedules.away_id
-    WHERE
-        schedules.round = 'semi_finals'
-        AND schedules.winner_id = teams.id
+    LEFT JOIN schedules
+        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
         AND schedules.status = 2
+    WHERE schedules.round = 'semi_finals' AND schedules.winner_id = teams.id
     GROUP BY teams.id
 )
 

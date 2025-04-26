@@ -3,147 +3,184 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use DB;
-use Log;
+use Illuminate\Support\Facades\DB;
+use Inertia\Inertia;
 
 class CoachController extends Controller
 {
+    
+    // Read all coaches
+    public function index()
+    {
+        return Inertia::render('Coaches/Index', [
+            'status' => session('status'),
+        ]);
+    }
+
+    public function listCoaches(Request $request)
+    {
+        // Retrieve search query from request
+        $searchQuery = $request->search;
+    
+        // Query builder for coaches with join on teams
+        $query = DB::table('coaches')
+            ->leftJoin('teams', 'coaches.team_id', '=', 'teams.id')
+            ->select('coaches.*', 'teams.name as team_name');
+    
+        // Apply search filter if search query is provided
+        if ($searchQuery) {
+            $query->where(function($q) use ($searchQuery) {
+                $q->where('teams.name', 'like', '%' . $searchQuery . '%')
+                  ->orWhere('coaches.name', 'like', '%' . $searchQuery . '%');
+            });
+        }
+    
+        // Get total count of records before pagination
+        $totalCount = $query->count();
+    
+        // Set the number of records to display per page
+        $perPage = 10;
+    
+        // Calculate the total number of pages
+        $totalPages = ceil($totalCount / $perPage);
+    
+        // Get the current page from the request, default to 1 if not provided
+        $currentPage = $request->page_num ?? 1;
+    
+        // Calculate the offset for pagination
+        $offset = ($currentPage - 1) * $perPage;
+    
+        // Clone the query before applying pagination (important)
+        $coaches = (clone $query)
+            ->offset($offset)
+            ->limit($perPage)
+            ->get();
+    
+        $latestSeason = get_current_season_id();
+    
+        return response()->json([
+            'coaches' => $coaches,
+            'total_pages' => $totalPages,
+            'current_page' => $currentPage,
+            'total_count' => $totalCount,
+            'search' => $searchQuery,
+            'current_season' => $latestSeason,
+        ]);
+    }
+    
     // Create a new coach
-    public function create(Request $request)
+    public function addFreeAgentCoach(Request $request)
     {
         // Validation
         $request->validate([
             'name' => 'required|string|max:100',
-            'team_id' => 'nullable|exists:teams,id',
-            'coach_iq' => 'nullable|integer|min:0|max:100',
-            'age' => 'required|integer|min:18|max:100',
-            'retirement_age' => 'nullable|integer|min:35|max:75',
-            'experience_years' => 'nullable|integer|min:0',
-            'contract_years' => 'nullable|integer|min:1',
         ]);
 
         // Get the current season ID
         $currentSeasonId = get_current_season_id();
-
+        $age = rand(35,45);
+        $retirement_age = rand(50,65);
+        $coachIq = rand(75,99);
         // Insert the new coach into the database
         $coachId = DB::table('coaches')->insertGetId([
             'name' => $request->name,
-            'team_id' => $request->team_id,
-            'coach_iq' => $request->coach_iq ?? 70,
-            'age' => $request->age,
-            'retirement_age' => $request->retirement_age ?? 65,
-            'experience_years' => $request->experience_years ?? 0,
-            'contract_years' => $request->contract_years ?? 0,
+            'team_id' => 0,
+            'coach_iq' => $coachIq,
+            'age' => $age,
+            'retirement_age' => $retirement_age ?? 65,
+            'experience_years' => 0,
+            'contract_years' => 0,
             'is_active' => 1,  // Default active
             'created_at' => now(),
             'updated_at' => now(),
         ]);
 
-        // Log the creation
-        Log::info('New Coach Created', ['coach_id' => $coachId, 'name' => $request->name]);
 
-        // Insert a transaction log with the current season ID
-        DB::table('transactions')->insert([
-            'player_id' => 0, // No player involved here, can be adjusted if needed
-            'season_id' => $currentSeasonId, // Use the current season ID here
-            'details' => $request->name . ' has been appointed as the new coach.',
-            'from_team_id' => 0,
-            'to_team_id' => $request->team_id ?? 0,
-            'status' => 'appointed',
-        ]);
-
-        return response()->json(['message' => 'Coach created successfully!'], 201);
+        return response()->json(['message' => 'Coach '.$request->name.' has applied the coaching pool.'], 201);
     }
 
-    // Read all coaches
-    public function index()
-    {
-        $coaches = DB::table('coaches')->get();
-        return response()->json($coaches);
+    public function endCoachSignings(){
+        $latestSeasonId = get_current_season_id();
+
+        DB::table('seasons')
+        ->where('id',  $latestSeasonId)
+        ->update(['status' => config('timeline.coach_signings')]);
+
+        return response()->json(['message' => 'Trade window ended!']);
     }
 
-    // Read single coach
-    public function show($id)
+    public function assignFreeAgentCoaches()
     {
-        $coach = DB::table('coaches')->find($id);
-        if (!$coach) {
-            return response()->json(['message' => 'Coach not found'], 404);
-        }
-        return response()->json($coach);
-    }
-
-    // Update coach information
-    public function update(Request $request, $id)
-    {
-        // Validation
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'team_id' => 'nullable|exists:teams,id',
-            'coach_iq' => 'nullable|integer|min:0|max:100',
-            'age' => 'required|integer|min:18|max:100',
-            'retirement_age' => 'nullable|integer|min:35|max:75',
-            'experience_years' => 'nullable|integer|min:0',
-            'contract_years' => 'nullable|integer|min:1',
-        ]);
-
-        // Get the current season ID
         $currentSeasonId = get_current_season_id();
 
-        // Update the coach in the database
-        $updated = DB::table('coaches')->where('id', $id)->update([
-            'name' => $request->name,
-            'team_id' => $request->team_id,
-            'coach_iq' => $request->coach_iq ?? 70,
-            'age' => $request->age,
-            'retirement_age' => $request->retirement_age ?? 65,
-            'experience_years' => $request->experience_years ?? 0,
-            'contract_years' => $request->contract_years ?? 0,
-            'updated_at' => now(),
-        ]);
+        // Get all teams without a coach
+        $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
 
-        if ($updated) {
-            // Log the update
-            Log::info('Coach Updated', ['coach_id' => $id, 'name' => $request->name]);
+        // Check if there are no teams without a coach
+        if ($teamsWithoutCoach->isEmpty()) {
+            // Call your endCoachSignings function (you should create this function separately)
+            $this->endCoachSignings();
 
-            // Insert a transaction log with the current season ID
-            DB::table('transactions')->insert([
-                'player_id' => 0,
-                'season_id' => $currentSeasonId, // Use the current season ID here
-                'details' => $request->name . ' has had their coaching details updated.',
-                'from_team_id' => 0,
-                'to_team_id' => $request->team_id ?? 0,
-                'status' => 'updated',
-            ]);
-
-            return response()->json(['message' => 'Coach updated successfully!']);
-        } else {
-            return response()->json(['message' => 'No changes made to coach'], 400);
-        }
-    }
-
-    // Delete a coach
-    public function destroy($id)
-    {
-        $coach = DB::table('coaches')->find($id);
-        if (!$coach) {
-            return response()->json(['message' => 'Coach not found'], 404);
+            // Return error response
+            return response()->json([
+                'message' => 'No teams need a coach. Ended coach signings.'
+            ], 400); // 400 = Bad Request (you can also use 200 if you want success response)
         }
 
-        DB::table('coaches')->where('id', $id)->delete();
+        // Get available free agent coaches
+        $freeCoaches = DB::table('coaches')
+            ->where('team_id', 0)
+            ->where('is_active', 1)
+            ->orderBy('id') // You can change this ordering if needed
+            ->get();
 
-        // Log the deletion
-        Log::info('Coach Deleted', ['coach_id' => $id, 'name' => $coach->name]);
+        if ($freeCoaches->isEmpty()) {
+            return response()->json([
+                'message' => 'No free agent coaches available. Please invite coach for coaching application signings.'
+            ], 400);
+        }  
+        // Track assigned coaches
+        $assigned = [];
 
-        // Insert a transaction log with the current season ID
-        DB::table('transactions')->insert([
-            'player_id' => 0,
-            'season_id' => get_current_season_id(), // Use the current season ID here
-            'details' => $coach->name . ' has been removed from coaching duties.',
-            'from_team_id' => $coach->team_id ?? 0,
-            'to_team_id' => 0,
-            'status' => 'removed',
+        foreach ($teamsWithoutCoach as $team) {
+            // Get one free coach
+            $coach = $freeCoaches->shift(); // Take first available coach
+
+            if ($coach) {
+                // Update the team's coach_id
+                DB::table('teams')
+                    ->where('id', $team->id)
+                    ->update(['coach_id' => $coach->id]);
+
+                // Update the coach's team_id
+                DB::table('coaches')
+                    ->where('id', $coach->id)
+                    ->update(['team_id' => $team->id]);
+                 // Insert a transaction log with the current season ID
+
+                DB::table('transactions')->insert([
+                    'player_id' => 0, // No player involved here, can be adjusted if needed
+                    'season_id' => $currentSeasonId, // Use the current season ID here
+                    'details' => $coach->name . ' has been appointed as the new coach of '.$team->name,
+                    'from_team_id' => 0,
+                    'to_team_id' =>  $team->id,
+                    'status' => 'appointed',
+                ]);
+
+                $assigned[] = [
+                    'team_id' => $team->id,
+                    'coach_id' => $coach->id,
+                ];
+            } else {
+                // No more free coaches available
+                break;
+            }
+        }
+
+        return response()->json([
+            'message' => 'Coaches assigned successfully.',
+            'assigned' => $assigned,
         ]);
-
-        return response()->json(['message' => 'Coach deleted successfully!']);
     }
+
 }

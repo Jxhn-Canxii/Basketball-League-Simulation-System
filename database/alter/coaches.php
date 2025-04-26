@@ -21,7 +21,5 @@ CREATE TABLE coaches (
             ELSE
                 0
         END
-    ) STORED,
-
-    CONSTRAINT fk_coaches_team FOREIGN KEY (team_id) REFERENCES teams(id) ON DELETE SET NULL
+    ) STORED
 );
