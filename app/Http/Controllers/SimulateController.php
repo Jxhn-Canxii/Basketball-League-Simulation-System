@@ -2758,7 +2758,7 @@ class SimulateController extends Controller
         $team = DB::table('teams')->where('id', $teamId)->first();
         if (!$team) return;
 
-        $coachIQ = $team->coach_iq;
+        $coachIQ = $chemistryRow->coach_iq;
 
         // 🎯 Last game outcome
         $lastGame = DB::table('schedules')
