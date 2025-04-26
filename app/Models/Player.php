@@ -52,6 +52,7 @@ class Player extends Model
         'injury_status',
         'injury_history',
         'injury_recovery_games',
+        'morale',
     ];
 
     protected $hidden = [];

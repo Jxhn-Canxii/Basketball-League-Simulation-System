@@ -62,7 +62,7 @@ return new class extends Migration
             $table->decimal('fatigue', 5, 2)->default(0);
             $table->text('injury_history')->nullable();
             $table->decimal('injury_recovery_games',5,2)->default(0);
-
+            $table->integer('morale')->default(75);
             // Timestamps
             $table->timestamps();
         });
