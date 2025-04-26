@@ -1055,33 +1055,26 @@ class SimulateController extends Controller
         }
     }
 
-    private function calculateDefensiveImpact($opponentTeamId, $seasonId)
+    private function calculateDefensiveImpact($opponentTeamId)
     {
+        $seasonId = get_current_season_id();
         // Step 1: Get average defense_rating, rebounding_rating, and morale
         $playerAverages = DB::table('players')
             ->where('team_id', $opponentTeamId)
             ->where('is_active', 1)
-            ->selectRaw('AVG(defense_rating) as defense_rating, AVG(rebounding_rating) as rebounding_rating, AVG(morale) as morale')
+            ->selectRaw('AVG(defense_rating) as defense_rating, AVG(rebounding_rating) as rebounding_rating')
             ->first();
     
         $defenseRating = $playerAverages->defense_rating ?? 0;
         $reboundingRating = $playerAverages->rebounding_rating ?? 0;
         $morale = $playerAverages->morale ?? 0;
     
-        // Step 2: Get team chemistry
-        $teamChemistry = DB::table('team_season_info')
-            ->where('team_id', $opponentTeamId)
-            ->where('season_id', $seasonId)
-            ->value('chemistry') ?? 50; // Default to 50 if no chemistry value
-    
         // Step 3: Calculate the overall defensive score
         $overallDefensiveRating = ($defenseRating + $reboundingRating) / 2;
     
         // Step 4: Combine skill, morale, and chemistry
         $combinedImpact = (
-            ($overallDefensiveRating * 0.6) +
-            ($morale * 0.2) +
-            ($teamChemistry * 0.2)
+            ($overallDefensiveRating * 0.6) + ($morale * 0.2)
         );
     
         // Step 5: Normalize
