@@ -118,6 +118,9 @@ class SimulateController extends Controller
                 'schedules.status'
             )
             ->findOrFail($request->schedule_id);
+        
+        $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
+        $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
 
         //check if home team is injury depleted
         $homeTeamInjuries = DB::table('players')
@@ -511,8 +514,12 @@ class SimulateController extends Controller
         $this->updateAllTeamStreaks();
         $this->updateHeadToHeadResults($gameData->id);
         $this->updateInjuryFreeAgents();
+
         $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
         $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
+
+        $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
+        $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
 
         // Prepare the schedule response data it will update team score card only
         $schedule = [
@@ -619,6 +626,9 @@ class SimulateController extends Controller
             
             $this->fixTeamPositionBalance($gameData->home_team_id);
             $this->fixTeamPositionBalance($gameData->away_team_id);
+
+            $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
+            $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
             //check first to balance team positions
                 //check if home team is injury depleted
             $homeTeamInjuries = DB::table('players')
@@ -972,6 +982,10 @@ class SimulateController extends Controller
 
             $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
+
+            $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
+            $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
+
             $this->updateInjuryFreeAgents();
             $this->updateAllTeamStreaks();
             $this->updateHeadToHeadResults($gameData->id);
@@ -1055,7 +1069,7 @@ class SimulateController extends Controller
             return round($performanceFactor, 2);
 
         } catch (\Exception $e) {
-            \Log::error("Error calculating performance factor for player {$player->id}: " . $e->getMessage());
+          
             return 1.0; // Default performance factor in case of error
         }
     }
@@ -2818,9 +2832,10 @@ class SimulateController extends Controller
             );
     }
 
-    private function updatePlayerMoraleBasedOnStats($teamId,$wonGame)
+    private function updatePlayerMoraleBasedOnStats($teamId,$winnerId)
     {
         $seasonId = get_current_season_id();
+        $wonGame = ($teamId == $winnerId);
 
         $players = DB::table('players')->where('team_id', $teamId)->get();
         $chemistry = DB::table('team_season_info')
