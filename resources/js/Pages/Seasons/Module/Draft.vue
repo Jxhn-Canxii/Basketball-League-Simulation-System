@@ -376,7 +376,7 @@ const addMultiplePlayers = async (count) => {
 
         for (let i = 0; i < count; i++) {
             // Randomly choose between fetchRandomFullName1 or fetchRandomFullName2
-            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName1 : await fetchRandomFullName1; // 50% chance for each
+            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName2 : await fetchRandomFullName2; // 50% chance for each
 
             const randomFullName = await fetchRandomFullName(); // Fetch random full name
             console.log(randomFullName);
