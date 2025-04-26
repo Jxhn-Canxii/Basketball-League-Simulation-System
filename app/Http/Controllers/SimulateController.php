@@ -2797,7 +2797,165 @@ class SimulateController extends Controller
             throw new Exception("Failed to update season stats. Please check logs.".$e->getMessage());
         }
     }
-   
+
+    private function updateSeasonTeamChemistryBeforeGame($teamId)
+    {
+        $seasonId = get_current_season_id();
+
+        $chemistryRow = DB::table('season_team_chemistry')
+            ->where('team_id', $teamId)
+            ->where('season_id', $seasonId)
+            ->first();
+
+        if (!$chemistryRow) {
+            DB::table('season_team_chemistry')->insert([
+                'team_id' => $teamId,
+                'season_id' => $seasonId,
+                'chemistry' => 75, // default
+            ]);
+            $chemistry = 75;
+        } else {
+            $chemistry = $chemistryRow->chemistry;
+        }
+
+        $team = DB::table('teams')->where('id', $teamId)->first();
+        if (!$team) return;
+
+        $coachIQ = $team->coach_iq;
+
+        // 🎯 Last game outcome
+        $lastGame = DB::table('schedules')
+            ->where(function ($query) use ($teamId) {
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->where('season_id', $seasonId)
+            ->where('status', 2)
+            ->orderByDesc('created_at')
+            ->first();
+
+        if ($lastGame) {
+            $wonLastGame = $lastGame->winner_id === $teamId;
+            $chemistry += $wonLastGame ? 2 : -2;
+        }
+
+        // 🎯 Coach IQ
+        if ($coachIQ >= 90) $chemistry += 1;
+        elseif ($coachIQ <= 65) $chemistry -= 1;
+
+        // 🎯 Leadership
+        $leaders = DB::table('players')
+            ->where('team_id', $teamId)
+            ->orderByDesc('leadership_rating')
+            ->limit(3)
+            ->pluck('leadership_rating');
+
+        if ($leaders->isNotEmpty()) {
+            $avgLeadership = $leaders->avg();
+            if ($avgLeadership >= 85) $chemistry += 2;
+            elseif ($avgLeadership <= 60) $chemistry -= 2;
+        }
+
+        // 🎯 Season win percentage
+        $seasonGames = DB::table('schedules')
+            ->where(function ($query) use ($teamId) {
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->where('season_id', $seasonId)
+            ->where('status', 2)
+            ->get();
+
+        $totalGames = $seasonGames->count();
+        $wins = $seasonGames->filter(fn($g) => $g->winner_id === $teamId)->count();
+
+        if ($totalGames >= 5) {
+            $winRate = $wins / $totalGames;
+            if ($winRate >= 0.7) $chemistry += 2;
+            elseif ($winRate <= 0.3) $chemistry -= 2;
+        }
+
+        // 🎯 Morale
+        $moraleAvg = DB::table('players')
+            ->where('team_id', $teamId)
+            ->avg('morale');
+
+        if (!is_null($moraleAvg)) {
+            if ($moraleAvg >= 85) $chemistry += 2;
+            elseif ($moraleAvg <= 60) $chemistry -= 2;
+        }
+
+        // 🧼 Clamp
+        $chemistry = max(50, min(100, round($chemistry)));
+
+        // ✅ Update
+        DB::table('season_team_chemistry')
+            ->updateOrInsert(
+                ['team_id' => $teamId, 'season_id' => $seasonId],
+                ['chemistry' => $chemistry]
+            );
+    }
+
+    private function updatePlayerMoraleBasedOnStats($teamId,$wonGame)
+    {
+        $seasonId = get_current_season_id();
+        
+        $players = DB::table('players')->where('team_id', $teamId)->get();
+        $chemistry = DB::table('season_team_chemistry')
+            ->where('team_id', $teamId)
+            ->where('season_id', $seasonId)
+            ->value('chemistry') ?? 75;
+
+        foreach ($players as $player) {
+            // Fetch the most recent game stats for the player
+            $gameStats = DB::table('player_game_stats')
+                ->where('player_id', $player->id)
+                ->where('season_id', $seasonId)
+                ->orderByDesc('created_at')
+                ->first(); // Assuming `created_at` is a valid column for ordering by game
+
+            if (!$gameStats) continue;
+
+            // Calculate initial morale (base)
+            $morale = $player->morale ?? 75;
+            $role = $player->role ?? 'bench'; // Default role
+
+            // 🎯 1. Game result impact
+            $morale += $wonGame ? 2 : -2;
+
+            // 🎯 2. Performance-based morale adjustment (efficiency or scoring impact)
+            $efficiency = $gameStats->eff ?? 0; // Assuming eff (efficiency) is stored in the stats table
+            if ($efficiency > 20) {
+                $morale += 2; // Good performance boost
+            } elseif ($efficiency < 5) {
+                $morale -= 2; // Poor performance drop
+            }
+
+            // 🎯 3. Minutes played impact (role vs minutes)
+            $expectedMin = match ($role) {
+                'star' => 32,
+                'starter' => 24,
+                'bench' => 10,
+                default => 5,
+            };
+
+            if ($gameStats->minutes < $expectedMin - 5) $morale -= 2;
+            elseif ($gameStats->minutes > $expectedMin + 5) $morale += 1;
+
+            // 🎯 4. Chemistry impact
+            if ($chemistry < 60) $morale -= 1;
+            elseif ($chemistry >= 85) $morale += 1;
+
+            // 🎯 5. Clamp between 50 and 100
+            $morale = max(50, min(100, round($morale)));
+
+            // ✅ Update player morale
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update(['morale' => $morale]);
+        }
+    }
+
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
     {
