@@ -405,9 +405,8 @@ class RatingsController extends Controller
                     'age' => DB::raw('age + 1'), // Increment age by 1
                 ]);
 
-            // Check for players who have reached 50 years old and have a basketball IQ > 80
+            // Check for players have a basketball IQ > 80
             DB::table('players')
-                ->where('age', '>=', 50)
                 ->where('basketball_iq_rating', '>', 80) // Only promote players with a high basketball IQ
                 ->where('is_active', 0)
                 ->where('team_id', '>', 0) // Only promote non-active players with a team
