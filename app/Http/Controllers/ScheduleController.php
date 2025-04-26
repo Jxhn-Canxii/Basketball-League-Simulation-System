@@ -959,40 +959,35 @@ class ScheduleController extends Controller
     {
         // Get the results of the Play-In Elimination Rounds and Finals
         $playInRound1Results = DB::table('schedules')
+            ->select('winner_id')
             ->where('season_id', $seasonId)
             ->where('round', 'play_ins_elims_round_1')
             ->where('conference_id', $conferenceId)
-            ->get();
-
+            ->where('status', 2)
+            ->first();
+    
         $playInFinalsResults = DB::table('schedules')
+            ->select('winner_id')
             ->where('season_id', $seasonId)
             ->where('round', 'play_ins_finals')
             ->where('conference_id', $conferenceId)
-            ->get();
-
+            ->where('status', 2)
+            ->first();
+    
         // Ensure there are results before accessing them
-        if ($playInRound1Results->isEmpty() || $playInFinalsResults->isEmpty()) {
-
+        if (!$playInRound1Results || !$playInFinalsResults) {
             return [
                 'winner_of_7vs8' => null,
                 'winner_of_9vs10' => null,
             ];
         }
-
-        // Determine the winners based on the highest score, return only team_id
-        $winnerPlayInRound1 = $playInRound1Results->first(function ($game) {
-            return $game->home_score > $game->away_score ? $game->home_id : $game->away_id;
-        });
-
-        $winnerPlayInFinals = $playInFinalsResults->first(function ($game) {
-            return $game->home_score > $game->away_score ? $game->home_id : $game->away_id;
-        });
-
+    
         return [
-            'winner_of_7vs8' => $winnerPlayInRound1 ? ($winnerPlayInRound1->home_score > $winnerPlayInRound1->away_score ? $winnerPlayInRound1->home_id : $winnerPlayInRound1->away_id) : null,
-            'winner_of_9vs10' => $winnerPlayInFinals ? ($winnerPlayInFinals->home_score > $winnerPlayInFinals->away_score ? $winnerPlayInFinals->home_id : $winnerPlayInFinals->away_id) : null,
+            'winner_of_7vs8' => $playInRound1Results->winner_id,
+            'winner_of_9vs10' => $playInFinalsResults->winner_id,
         ];
     }
+    
 
     private static function updateSeasonChampionsAndLosers($seasonId)
     {

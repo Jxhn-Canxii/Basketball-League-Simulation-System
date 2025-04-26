@@ -227,7 +227,7 @@ class GameController extends Controller
 
         $randomSeasonStatsLeaders = $this->getStatsLeaders($game->season_id);
         // Determine the winning team
-        $winningTeamId = $game->home_score > $game->away_score ? $game->home_id : $game->away_id;
+        $winningTeamId = $game->winner_id;
 
         // Filter player stats for the winning team
         $winningTeamPlayersStats = $playerStats->filter(function ($stat) use ($winningTeamId) {
