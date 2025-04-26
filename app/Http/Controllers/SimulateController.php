@@ -2832,43 +2832,43 @@ class SimulateController extends Controller
             );
     }
 
-    private function updatePlayerMoraleBasedOnStats($teamId,$winnerId)
+    private function updatePlayerMoraleBasedOnStats($teamId, $winnerId)
     {
         $seasonId = get_current_season_id();
         $wonGame = ($teamId == $winnerId);
-
+    
         $players = DB::table('players')->where('team_id', $teamId)->get();
         $chemistry = DB::table('team_season_info')
             ->where('team_id', $teamId)
             ->where('season_id', $seasonId)
             ->value('chemistry') ?? 75;
-
+    
         foreach ($players as $player) {
             // Fetch the most recent game stats for the player
             $gameStats = DB::table('player_game_stats')
                 ->where('player_id', $player->id)
                 ->where('season_id', $seasonId)
                 ->orderByDesc('created_at')
-                ->first(); // Assuming `created_at` is a valid column for ordering by game
-
+                ->first();
+    
             if (!$gameStats) continue;
-
-            // Calculate initial morale (base)
+    
+            // Calculate initial morale
             $morale = $player->morale ?? 75;
-            $role = $player->role ?? 'bench'; // Default role
-
+            $role = $player->role ?? 'bench';
+    
             // 🎯 1. Game result impact
             $morale += $wonGame ? 2 : -2;
-
-            // 🎯 2. Performance-based morale adjustment (efficiency or scoring impact)
-            $efficiency = $gameStats->eff ?? 0; // Assuming eff (efficiency) is stored in the stats table
+    
+            // 🎯 2. Performance-based morale adjustment
+            $efficiency = $gameStats->eff ?? 0;
             if ($efficiency > 20) {
-                $morale += 2; // Good performance boost
+                $morale += 2;
             } elseif ($efficiency < 5) {
-                $morale -= 2; // Poor performance drop
+                $morale -= 2;
             }
-
-            // 🎯 3. Minutes played impact (role vs minutes)
+    
+            // 🎯 3. Minutes played vs role expectation
             $expectedMin = match ($role) {
                 'star' => 32,
                 'all star' => 28,
@@ -2876,23 +2876,38 @@ class SimulateController extends Controller
                 'bench' => 10,
                 default => 5,
             };
-
-            if ($gameStats->minutes < $expectedMin - 5) $morale -= 2;
-            elseif ($gameStats->minutes > $expectedMin + 5) $morale += 1;
-
+    
+            if ($gameStats->minutes < $expectedMin - 5) {
+                $morale -= 2;
+            } elseif ($gameStats->minutes > $expectedMin + 5) {
+                $morale += 1;
+            }
+    
             // 🎯 4. Chemistry impact
-            if ($chemistry < 60) $morale -= 1;
-            elseif ($chemistry >= 85) $morale += 1;
-
-            // 🎯 5. Clamp between 50 and 100
+            if ($chemistry < 60) {
+                $morale -= 1;
+            } elseif ($chemistry >= 85) {
+                $morale += 1;
+            }
+    
+            // 🎯 5. Clamp morale between 50 and 100
             $morale = max(50, min(100, round($morale)));
-
+    
             // ✅ Update player morale
             DB::table('players')
                 ->where('id', $player->id)
                 ->update(['morale' => $morale]);
         }
-    }
+    
+        // ✅ Update coach career wins or losses
+        $coachId = DB::table('teams')->where('id', $teamId)->value('coach_id');
+    
+        if ($coachId) {
+            DB::table('coaches')
+                ->where('id', $coachId)
+                ->increment($wonGame ? 'career_wins' : 'career_losses');
+        }
+    }    
 
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
