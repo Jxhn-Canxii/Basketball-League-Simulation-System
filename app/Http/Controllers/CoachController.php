@@ -102,6 +102,16 @@ class CoachController extends Controller
     public function endCoachSignings(){
         $latestSeasonId = get_current_season_id();
 
+        $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
+
+        // Check if there are no teams without a coach
+        if ($teamsWithoutCoach) {
+            // Return error response
+            return response()->json([
+                'message' => 'Some teams has no coach assigned please auto assign coach!'
+            ], 400); // 400 = Bad Request (you can also use 200 if you want success response)
+        }
+
         DB::table('seasons')
         ->where('id',  $latestSeasonId)
         ->update(['status' => config('timeline.coach_signings')]);
