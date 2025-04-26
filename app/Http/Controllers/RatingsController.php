@@ -413,37 +413,32 @@ class RatingsController extends Controller
 
     public function updateCoachContract($teamId)
     {
-        // Get the team details based on teamId
         $team = DB::table('teams')->where('id', $teamId)->first();
 
         if (!$team) {
             return response()->json([
                 'message' => 'Team not found!'
-            ], 404); // 404 = Not Found
+            ], 404);
         }
 
         $coachId = $team->coach_id;
 
-        // Check if the team has a coach assigned
         if ($coachId == 0) {
             return response()->json([
                 'message' => 'This team does not have a coach assigned.'
-            ], 400); // 400 = Bad Request
+            ], 400);
         }
 
-        // Get the coach's current contract years
         $coach = DB::table('coaches')->where('id', $coachId)->first();
 
         if (!$coach || $coach->contract_years <= 0) {
             return response()->json([
                 'message' => 'The coach does not have any contract years remaining.'
-            ], 400); // 400 = Bad Request
+            ], 400);
         }
 
-        // Subtract 1 from the coach's contract years
         $newContractYears = $coach->contract_years - 1;
 
-        // Update the coach's contract years
         DB::table('coaches')
             ->where('id', $coachId)
             ->update([
@@ -451,17 +446,106 @@ class RatingsController extends Controller
                 'updated_at' => now(),
             ]);
 
-        // If the coach's contract has expired (contract_years == 0), remove the coach from the team
         if ($newContractYears == 0) {
-            DB::table('teams')
-                ->where('id', $teamId)
-                ->update([
-                    'coach_id' => 0, // Set coach_id to 0
+            $latestSeasonId = get_current_season_id();
+
+            $teamPerformance = DB::table('standings_view')
+                ->where('team_id', $teamId)
+                ->where('season_id', $latestSeasonId)
+                ->select('wins', 'losses')
+                ->first();
+
+            if (!$teamPerformance) {
+                // If no standings data, automatically waive coach
+                DB::table('teams')
+                    ->where('id', $teamId)
+                    ->update([
+                        'coach_id' => 0,
+                        'updated_at' => now(),
+                    ]);
+                
+                DB::table('coaches')
+                    ->where('id', $coachId)
+                    ->update([
+                        'team_id' => 0,
+                        'updated_at' => now(),
+                    ]);
+                // Insert into transactions table (waived)
+                DB::table('transactions')->insert([
+                    'player_id' => 0,
+                    'season_id' => $latestSeasonId,
+                    'details' => $coach->name . ' has been waived as head coach of ' . $team->name,
+                    'from_team_id' => $team->id,
+                    'to_team_id' => 0,
+                    'status' => 'waived',
+                    'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                return response()->json(['message' => 'Coach waived due to missing team performance.']);
+            }
+
+            $wins = $teamPerformance->wins ?? 0;
+            $losses = $teamPerformance->losses ?? 0;
+            $gamesPlayed = $wins + $losses;
+            $winRate = $gamesPlayed > 0 ? ($wins / $gamesPlayed) : 0;
+
+            if ($winRate >= 0.55) {
+                // Re-sign coach
+                $newContractYears = rand(3, 5);
+
+                DB::table('coaches')
+                    ->where('id', $coachId)
+                    ->update([
+                        'contract_years' => $newContractYears,
+                        'updated_at' => now(),
+                    ]);
+
+                // Insert into transactions table (re-signed)
+                DB::table('transactions')->insert([
+                    'player_id' => 0,
+                    'season_id' => $latestSeasonId,
+                    'details' => $coach->name . ' has been re-signed as head coach of ' . $team->name . ' after a good season performance.',
+                    'from_team_id' => 0,
+                    'to_team_id' => $team->id,
+                    'status' => 're-signed',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return response()->json(['message' => 'Coach re-signed based on performance!']);
+            } else {
+                // Waive coach
+                DB::table('teams')
+                    ->where('id', $teamId)
+                    ->update([
+                        'coach_id' => 0,
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('coaches')
+                    ->where('id', $coachId)
+                    ->update([
+                        'team_id' => 0,
+                        'updated_at' => now(),
+                    ]);
+                // Insert into transactions table (waived)
+                DB::table('transactions')->insert([
+                    'player_id' => 0,
+                    'season_id' => $latestSeasonId,
+                    'details' => $coach->name . ' has been waived as head coach of ' . $team->name . ' due to poor season performance.',
+                    'from_team_id' => $team->id,
+                    'to_team_id' => 0,
+                    'status' => 'waived',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return response()->json(['message' => 'Coach waived due to poor performance.']);
+            }
         }
 
-        return response()->json(['message' => 'Coach contract years updated successfully!']);
+        return response()->json(['message' => 'Coach contract years updated successfully.']);
     }
 
     private function promoteRetiredPlayersToCoaches()

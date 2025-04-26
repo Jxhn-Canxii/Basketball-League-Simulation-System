@@ -192,10 +192,12 @@ class CoachController extends Controller
                     ->where('id', $team->id)
                     ->update(['coach_id' => $coach->id]);
 
+                $contractYears = rand(3,7);
                 // Update the coach's team_id
                 DB::table('coaches')
                     ->where('id', $coach->id)
-                    ->update(['team_id' => $team->id]);
+                    ->update(['team_id' => $team->id,'contract_years' => $contractYears]);
+                    
                  // Insert a transaction log with the current season ID
 
                 DB::table('transactions')->insert([
