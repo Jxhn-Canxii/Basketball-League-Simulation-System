@@ -29,10 +29,11 @@
             </div>
         </div>
         <div class="px-1 py-2 flex justify-between items-center">
+            
             <h3>
                 <TeamDetails
-                    :team_id="game.home_team_id"
-                    :key="game.home_team_id"
+                    :team_id="game.home_id"
+                    :key="game.home_id"
                     class="text-white text-xl uppercase text-wrap text-left"
                     :showButton="0"
                     :text="game.home_team_name"
@@ -40,8 +41,8 @@
             </h3>
             <h3>
                 <TeamDetails
-                    :team_id="game.away_team_id"
-                    :key="game.away_team_id"
+                    :team_id="game.away_id"
+                    :key="game.away_id"
                     class="text-white text-xl uppercase text-wrap text-right"
                     :showButton="0"
                     :text="game.away_team_name"
