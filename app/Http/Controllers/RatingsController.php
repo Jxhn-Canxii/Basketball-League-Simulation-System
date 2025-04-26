@@ -438,13 +438,17 @@ class RatingsController extends Controller
         }
 
         $newContractYears = $coach->contract_years - 1;
-
+        $newExperienceYears = $coach->experience_years + 1;
+        
         DB::table('coaches')
-            ->where('id', $coachId)
-            ->update([
-                'contract_years' => $newContractYears,
-                'updated_at' => now(),
-            ]);
+        ->where('id', $coachId)
+        ->update([
+            'contract_years' => $newContractYears,
+            'experience_years' => $newExperienceYears, // ← ADD THIS!
+            'updated_at' => now(),
+        ]);
+    
+    
 
         if ($newContractYears == 0) {
             $latestSeasonId = get_current_season_id();

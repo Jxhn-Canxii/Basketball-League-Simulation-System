@@ -168,10 +168,19 @@ class CoachController extends Controller
         }
 
         // Get available free agent coaches
-        $freeCoaches = DB::table('coaches')
+        $freeCoaches = Coach::query()
             ->where('team_id', 0)
             ->where('is_active', 1)
-            ->orderBy('id') // You can change this ordering if needed
+            ->select('*')
+            ->selectRaw('
+                CASE 
+                    WHEN experience_years = 0 THEN 2 -- Rookie coach
+                    WHEN winning_percentage < 0.3 THEN 3 -- Experienced but poor win rate
+                    ELSE 1 -- Good experienced coach
+                END as priority_group
+            ')
+            ->orderBy('priority_group', 'asc')  // Best group first
+            ->orderBy('winning_percentage', 'desc') // Highest win rate first
             ->get();
 
         if ($freeCoaches->isEmpty()) {
