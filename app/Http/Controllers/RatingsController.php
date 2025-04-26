@@ -438,15 +438,23 @@ class RatingsController extends Controller
         }
 
         $newContractYears = $coach->contract_years - 1;
-        $newExperienceYears = $coach->experience_years + 1;
-        
+        $newAge = $coach->age + 1;
+        $newExperienceYears = $coach->experience_years + 1;  // Adding experience years
+
+        // Check if the new age has reached or exceeded the retirement age
+        $isRetired = $newAge >= $coach->retirement_age;
+
+        // Update the coach's contract, age, experience years, and active status
         DB::table('coaches')
-        ->where('id', $coachId)
-        ->update([
-            'contract_years' => $newContractYears,
-            'experience_years' => $newExperienceYears, // ← ADD THIS!
-            'updated_at' => now(),
-        ]);
+            ->where('id', $coachId)
+            ->update([
+                'contract_years' => $newContractYears,
+                'age' => $newAge,
+                'experience_years' => $newExperienceYears,
+                'is_active' => $isRetired ? 0 : 1,  // Set is_active to false if retired
+                'updated_at' => now(),
+            ]);
+
     
     
 
