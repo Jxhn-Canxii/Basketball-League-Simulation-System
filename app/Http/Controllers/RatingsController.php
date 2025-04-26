@@ -333,6 +333,7 @@ class RatingsController extends Controller
             if ($teamId == $lastTeamId) {
                 \Log::info('Processing last update.');
 
+                $this->updateCoachContract($teamId);
                 $this->updatePlayerAge();
                 $this->promoteRetiredPlayersToCoaches();
 
@@ -408,6 +409,59 @@ class RatingsController extends Controller
                 'contract_years' => 0,
                 'age' => DB::raw('age + 1'), // Increment age by 1
             ]);
+    }
+
+    public function updateCoachContract($teamId)
+    {
+        // Get the team details based on teamId
+        $team = DB::table('teams')->where('id', $teamId)->first();
+
+        if (!$team) {
+            return response()->json([
+                'message' => 'Team not found!'
+            ], 404); // 404 = Not Found
+        }
+
+        $coachId = $team->coach_id;
+
+        // Check if the team has a coach assigned
+        if ($coachId == 0) {
+            return response()->json([
+                'message' => 'This team does not have a coach assigned.'
+            ], 400); // 400 = Bad Request
+        }
+
+        // Get the coach's current contract years
+        $coach = DB::table('coaches')->where('id', $coachId)->first();
+
+        if (!$coach || $coach->contract_years <= 0) {
+            return response()->json([
+                'message' => 'The coach does not have any contract years remaining.'
+            ], 400); // 400 = Bad Request
+        }
+
+        // Subtract 1 from the coach's contract years
+        $newContractYears = $coach->contract_years - 1;
+
+        // Update the coach's contract years
+        DB::table('coaches')
+            ->where('id', $coachId)
+            ->update([
+                'contract_years' => $newContractYears,
+                'updated_at' => now(),
+            ]);
+
+        // If the coach's contract has expired (contract_years == 0), remove the coach from the team
+        if ($newContractYears == 0) {
+            DB::table('teams')
+                ->where('id', $teamId)
+                ->update([
+                    'coach_id' => 0, // Set coach_id to 0
+                    'updated_at' => now(),
+                ]);
+        }
+
+        return response()->json(['message' => 'Coach contract years updated successfully!']);
     }
 
     private function promoteRetiredPlayersToCoaches()
