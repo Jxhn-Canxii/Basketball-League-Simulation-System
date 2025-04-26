@@ -206,6 +206,7 @@ const search = ref({
 const teams = ref([]);
 const key = ref(0);
 const emits = defineEmits(["newSeason"]);
+
 const fetchRandomFullName = async () => {
     try {
         // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
@@ -324,7 +325,7 @@ const addMultiplePlayers = async (count) => {
 
         for (let i = 0; i < count; i++) {
             // Randomly choose between fetchRandomFullName1 or fetchRandomFullName2
-            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName1 : await fetchRandomFullName2; // 50% chance for each
+            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName2 : await fetchRandomFullName2; // 50% chance for each
 
             const randomFullName = await fetchRandomFullName(); // Fetch random full name
             console.log(randomFullName);
