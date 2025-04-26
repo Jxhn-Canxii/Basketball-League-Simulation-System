@@ -415,21 +415,13 @@ class RatingsController extends Controller
                     // Add the player to the coaches table
                     DB::table('coaches')->insert([
                         'name' => $player->name,
-                        'team_id' => $player->team_id,
-                        'coach_iq' => 70, // Default value, you can adjust as needed
+                        'team_id' => 0,
+                        'coach_iq' => $player->basketball_iq_rating, // Default value, you can adjust as needed
                         'age' => $player->age,
                         'retirement_age' => 65, // Default retirement age
                         'experience_years' => 0, // Starting experience, could be adjusted
                         'is_active' => 1,
                     ]);
-
-                    // Optionally, remove the player from the players table or mark them inactive
-                    DB::table('players')
-                        ->where('id', $player->id)
-                        ->update([
-                            'is_active' => 0,
-                            'team_id' => 0,
-                        ]);
                 });
 
             // Update season status
