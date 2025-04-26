@@ -16,6 +16,7 @@
             >
                {{ team_info.teams.city ?? "-" }} {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
             </h2>
+            <span>Coach: {{ team_info.teams.coach_name }} ( {{ team_info.teams.coach_winning }}%)</span>
         </div>
         <div class="flex justify-end">
             {{ team_info.teams.description ?? "-" }}
