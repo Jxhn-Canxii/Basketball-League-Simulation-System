@@ -96,7 +96,7 @@ class CoachController extends Controller
         ]);
 
 
-        return response()->json(['message' => 'Coach '.$request->name.' has applied the coaching pool.'], 201);
+        return response()->json(['message' => 'Coach '.$request->name.' has applied for the coaching pool.'], 201);
     }
 
     public function endCoachSignings(){
