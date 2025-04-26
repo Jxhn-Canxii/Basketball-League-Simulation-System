@@ -68,18 +68,18 @@
                         >
                             <i class="fa fa-users"></i> Player Signings
                         </button>
-                        <!-- <button
-                            @click.prevent="isPlayerSigningModalOpen = true"
-                            v-if="seasons.is_new_season == 6 || seasons.is_new_season == 7"
+                        <button
+                            @click.prevent="isCoachSigningModalOpen = true"
+                            v-if="seasons.is_new_season == 6 || seasons.is_new_season == 8"
                             v-bind:class="{
-                                'opacity-25': isPlayerSigningModalOpen,
+                                'opacity-25': isCoachSigningModalOpen,
                             }"
-                            v-bind:disabled="isPlayerSigningModalOpen"
+                            v-bind:disabled="isCoachSigningModalOpen"
                             class="px-2 py-2 bg-red-700 rounded font-bold text-md float-end text-white shadow"
                         >
                             <i class="fa fa-chalkboard-teacher"></i> Coach Signings
-                        </button> -->
-                        <Add v-if="seasons.is_new_season == 6 || seasons.is_new_season == 7" @transaction_id="handleCreateSeason" />
+                        </button>
+                        <Add v-if="seasons.is_new_season == 7 || seasons.is_new_season == 8" @transaction_id="handleCreateSeason" />
                     </div>
                 </div>
                 <div class="flex overflow-hidden gap-5 p-2">
@@ -357,6 +357,12 @@
                     <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" />
                 </div>
             </Modal>
+            <Modal :show="isCoachSigningModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isCoachSigningModalOpen} Coach Signing`" @close="isCoachSigningModalOpen = false">
+                <div class="mt-4 p-3 block">
+                    <FreeAgentsCoach :showControls="true"  />
+                </div>
+            </Modal>
+           
              
         </AuthenticatedLayout>
     </div>
@@ -374,6 +380,7 @@ import axios from "axios";
 
 import Trade from "@/Pages/Seasons/Module/Trade.vue";
 import FreeAgents from "@/Pages/Seasons/Module/FreeAgents.vue";
+import FreeAgentsCoach from "@/Pages/Coaches/Module/FreeAgentsCoach.vue";
 import SeasonAwards from "@/Pages/Seasons/Module/SeasonAwards.vue";
 import Awards from "@/Pages/Seasons/Module/Awards.vue";
 import Draft from "@/Pages/Seasons/Module/Draft.vue";
@@ -387,6 +394,7 @@ const isDraftModalOpen = ref(false);
 const isPlayerAwardsModalOpen = ref(false);
 const isSeasonAwardsModalOpen = ref(false);
 const isSeasonDraftModalOpen = ref(false);
+const isCoachSigningModalOpen = ref(false);
 const seasons = ref([]);
 const leagues_dropdown = ref([]);
 const season_id = ref(0);

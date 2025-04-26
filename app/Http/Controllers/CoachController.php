@@ -99,24 +99,54 @@ class CoachController extends Controller
         return response()->json(['message' => 'Coach '.$request->name.' has applied for the coaching pool.'], 201);
     }
 
-    public function endCoachSignings(){
-        $latestSeasonId = get_current_season_id();
+    public function endCoachSignings()
+    {
+        $latestSeasonId = get_current_season_id(); // Get the current season ID
 
+        // Get teams that have no coach assigned
         $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
 
-        // Check if there are no teams without a coach
-        if ($teamsWithoutCoach) {
-            // Return error response
+        // Check if there are any teams without a coach
+        if ($teamsWithoutCoach->isNotEmpty()) {
+            // Return an error response if there are teams without a coach
             return response()->json([
-                'message' => 'Some teams has no coach assigned please auto assign coach!'
-            ], 400); // 400 = Bad Request (you can also use 200 if you want success response)
+                'message' => 'Some teams have no coach assigned. Please auto-assign a coach.'
+            ], 400); // 400 = Bad Request
         }
 
+        // Start by updating the season status to indicate coach signings have ended
         DB::table('seasons')
-        ->where('id',  $latestSeasonId)
-        ->update(['status' => config('timeline.coach_signings')]);
+            ->where('id', $latestSeasonId)
+            ->update(['status' => config('timeline.coach_signings')]);
 
-        return response()->json(['message' => 'Trade window ended!']);
+        $teamsCoach = DB::table('teams')->get();
+        // Loop through each team to store their coach, coach IQ, chemistry, and conference info before the season starts
+        foreach ($teamsCoach as $team) {
+            // Fetch the coach information and team chemistry (or set defaults)
+            $coach = DB::table('coaches')->where('id', $team->coach_id)->first();
+            $coachIq = $coach ? $coach->coach_iq : 0; // Default coach IQ to 0 if no coach data
+            $chemistry = 75; // Use existing team chemistry or default to 0
+
+            // Fetch the conference_id for the team
+            $conferenceId = $team->conference_id ?? 0; // Default to 0 if no conference assigned
+
+            // Insert or update the team season info
+            DB::table('team_season_info')->updateOrInsert(
+                [
+                    'team_id' => $team->id,
+                    'season_id' => $latestSeasonId
+                ],
+                [
+                    'coach_id' => $team->coach_id,
+                    'coach_iq' => $coachIq,
+                    'chemistry' => $chemistry,
+                    'conference_id' => $conferenceId, // Add conference_id here
+                    'updated_at' => now(),
+                ]
+            );
+        }
+
+        return response()->json(['message' => 'Coach signings period ended and team season info updated!']);
     }
 
     public function assignFreeAgentCoaches()

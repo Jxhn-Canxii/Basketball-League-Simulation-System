@@ -8,7 +8,7 @@
 
         <div class="overflow-hidden shadow-sm sm:rounded-lg min-h-screen p-3">
             <div class="grid grid-cols-1 gap-6">
-                <FreeAgentsCoach />
+                <FreeAgentsCoach :showControls="false"  />
             </div>
         </div>
 

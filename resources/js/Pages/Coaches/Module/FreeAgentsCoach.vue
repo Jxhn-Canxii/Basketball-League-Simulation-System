@@ -449,7 +449,7 @@ const endCoachSigning = async () => {
         if (response) {
             await Swal.fire({
                 title: 'Success!',
-                text: 'Signing successfully ended!',
+                text: response.data.message,
                 icon: 'success',
                 confirmButtonText: 'OK'
             });
