@@ -7,9 +7,5 @@ CREATE TABLE `team_season_info` (
   `coach_iq` INT UNSIGNED NOT NULL, 
   `chemistry` INT UNSIGNED NOT NULL,
   `created_at` TIMESTAMP NULL DEFAULT NULL,
-  `updated_at` TIMESTAMP NULL DEFAULT NULL,
-  FOREIGN KEY (`team_id`) REFERENCES `teams`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`season_id`) REFERENCES `seasons`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`conference_id`) REFERENCES `conferences`(`id`) ON DELETE CASCADE,
-  FOREIGN KEY (`coach_id`) REFERENCES `coaches`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `updated_at` TIMESTAMP NULL DEFAULT NULL
+)

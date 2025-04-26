@@ -101,7 +101,7 @@ class CoachController extends Controller
 
     public function endCoachSignings()
     {
-        $latestSeasonId = get_current_season_id(); // Get the current season ID
+        $latestSeasonId = get_current_season_id() ?? 1; // Get the current season ID
 
         // Get teams that have no coach assigned
         $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
@@ -151,7 +151,7 @@ class CoachController extends Controller
 
     public function assignFreeAgentCoaches()
     {
-        $currentSeasonId = get_current_season_id();
+        $currentSeasonId = get_current_season_id() ?? 1;
 
         // Get all teams without a coach
         $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
