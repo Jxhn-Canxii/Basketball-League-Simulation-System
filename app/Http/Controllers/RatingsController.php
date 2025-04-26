@@ -333,40 +333,8 @@ class RatingsController extends Controller
             if ($teamId == $lastTeamId) {
                 \Log::info('Processing last update.');
 
-                ///lastly update all active players to non rookie
-                //free agent veteran players
-                DB::table('players')
-                    ->where('team_id', 0)
-                    ->where('is_active', 1)
-                    ->update([
-                        'is_rookie' => 0,
-                        'age' => DB::raw('age + 1'), // Increment age by 1
-                        'contract_years' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE contract_years END"), // Set contract_years to 0 if age reaches retirement_age
-                        'team_id' => 0,
-                        'is_active' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE is_active END"), // Set is_active to 0 if age reaches retirement_age
-                    ]);
-
-                ///active players with teams
-                // DB::table('players')
-                //     ->where('team_id', '>', 0)
-                //     ->where('is_active', 1)
-                //     ->update([
-                //         'is_rookie' => 0,
-                //         'age' => DB::raw('age + 1'), // Increment age by 1
-                //         'contract_years' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE contract_years END"), // Set contract_years to 0 if age reaches retirement_age
-                //         'team_id' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE team_id END"), // Set team_id to 0 if age reaches retirement_age
-                //         'is_active' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE is_active END"), // Set is_active to 0 if age reaches retirement_age
-                //     ]);
-
-                ///lastly update the age of non active players
-                DB::table('players')
-                    ->where('is_active', 0)
-                    ->update([
-                        'team_id' => 0,
-                        'contract_years' => 0,
-                        'age' => DB::raw('age + 1'), // Increment age by 1
-                    ]);
-
+                $this->updatePlayerAge();
+                $this->promoteRetiredPlayersToCoaches();
 
                 // Update season status
                 $season = Seasons::find($seasonId);
@@ -411,6 +379,69 @@ class RatingsController extends Controller
             ], 500);
         }
     }
+
+    private function updatePlayerAge() {
+        DB::table('players')
+        ->where('team_id', 0)
+        ->where('is_active', 1)
+        ->update([
+            'is_rookie' => 0,
+            'age' => DB::raw('age + 1'), // Increment age by 1
+            'contract_years' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE contract_years END"), // Set contract_years to 0 if age reaches retirement_age
+            'team_id' => 0,
+            'is_active' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE is_active END"), // Set is_active to 0 if age reaches retirement_age
+        ]);
+
+        ///lastly update the age of non active players
+        DB::table('players')
+            ->where('is_active', 0)
+            ->update([
+                'team_id' => 0,
+                'contract_years' => 0,
+                'age' => DB::raw('age + 1'), // Increment age by 1
+            ]);
+
+        DB::table('coaches')
+            ->where('is_active', 0)
+            ->update([
+                'team_id' => 0,
+                'contract_years' => 0,
+                'age' => DB::raw('age + 1'), // Increment age by 1
+            ]);
+    }
+
+    private function promoteRetiredPlayersToCoaches()
+    {
+        $retiredHighIQPlayers = DB::table('players')
+            ->where('is_active', 0)
+            ->where('basketball_iq_rating', '>=', 85)
+            ->get();
+
+        foreach ($retiredHighIQPlayers as $player) {
+            $alreadyCoach = DB::table('coaches')
+                ->where('player_id', $player->id)
+                ->exists();
+            $retirementAge = rand($player->age + 5, 65);
+            
+            if (!$alreadyCoach) {
+                DB::table('coaches')->insert([
+                    'first_name' => $player->name,
+                    'coach_iq' => $player->basketball_iq_rating,
+                    'age' => $player->age,
+                    'retirement_age' => $retirementAge,
+                    'team_id' => 0,
+                    'career_wins' => 0,
+                    'career_losses' => 0,
+                    'is_active' => 1,
+                    'player_id' => $player->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
+    }
+
+
     private function getContractYearsBasedOnRole($role)
     {
         switch ($role) {

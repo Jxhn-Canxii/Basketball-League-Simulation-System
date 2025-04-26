@@ -59,14 +59,15 @@
                    <table class="min-w-full divide-y divide-gray-200 text-xs">
                         <thead class="bg-gray-50 text-nowrap">
                             <tr>
+                                <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">ID</th>
                                 <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                 <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                                <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Coach IQ</th>
-                                <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Experience (Years)</th>
-                                <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Age</th>
-                                <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Retirement Age</th>
-                                <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Career Wins</th>
-                                <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Career Losses</th>
+                                <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Coach IQ</th>
+                                <th class="px-2 py-1 text-left text-wrap font-medium text-gray-500 uppercase tracking-wider">Exp (Years)</th>
+                                <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Age</th>
+                                <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Retirement Age</th>
+                                <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Career Wins</th>
+                                <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Career Losses</th>
                                 <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Winning %</th>
                                 <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Status</th>
                             </tr>
@@ -74,30 +75,33 @@
                         <tbody class="bg-white divide-y divide-gray-200">
                             <tr v-for="coach in data.coaches" :key="coach.id" class="hover:bg-gray-100">
                                 <td class="px-2 py-1 whitespace-nowrap border">
+                                    {{ coach.id }}
+                                </td>
+                                <td class="px-2 py-1 whitespace-nowrap border">
                                     {{ coach.name }}
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap border">
                                     {{ coach.team_name || 'Free Agent' }}
                                 </td>
-                                <td class="px-2 py-1 whitespace-nowrap border">
+                                <td class="px-2 py-1 whitespace-nowrap border text-right">
                                     {{ coach.coach_iq }}
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap border">
                                     {{ coach.experience_years }} yrs
                                 </td>
-                                <td class="px-2 py-1 whitespace-nowrap border">
+                                <td class="px-2 py-1 whitespace-nowrap border text-right">
                                     {{ coach.age }}
                                 </td>
-                                <td class="px-2 py-1 whitespace-nowrap border">
+                                <td class="px-2 py-1 whitespace-nowrap border text-right">
                                     {{ coach.retirement_age }}
                                 </td>
-                                <td class="px-2 py-1 whitespace-nowrap border">
+                                <td class="px-2 py-1 whitespace-nowrap border text-right">
                                     {{ coach.career_wins }}
                                 </td>
-                                <td class="px-2 py-1 whitespace-nowrap border">
+                                <td class="px-2 py-1 whitespace-nowrap border text-right">
                                     {{ coach.career_losses }}
                                 </td>
-                                <td class="px-2 py-1 whitespace-nowrap border">
+                                <td class="px-2 py-1 whitespace-nowrap border text-center">
                                     {{ parseFloat(coach.winning_percentage || 0).toFixed(1) }}%
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap border">
@@ -118,9 +122,9 @@
                 <!-- Pagination Controls -->
                 <div class="flex w-full overflow-auto">
                     <Paginator
-                        v-if="data.total"
+                        v-if="data.total_pages"
                         :page_number="search.page_num"
-                        :total_rows="data.total ?? 0"
+                        :total_rows="data.total_pages ?? 0"
                         :itemsperpage="search.itemsperpage"
                         @page_num="handlePagination"
                     />
@@ -243,6 +247,7 @@ const addPlayer = async (info) => {
         });
 
         key.value = Math.random();
+        fetchFreeAgent();
     } catch (error) {
         console.error("Error adding player:", error.response.data.message);
         throw new Error(error.response.data.message); // Throw error to be caught in Promise.all
@@ -331,7 +336,7 @@ const addMultiplePlayers = async (count) => {
 
         // Wait for all promises to resolve
         const results = await Promise.all(promises);
-        fetchAvailablePlayers(); // Refresh free agent list
+        fetchFreeAgent(); // Refresh free agent list
          key.value = Math.random();
         // Notify success
         Swal.fire({
