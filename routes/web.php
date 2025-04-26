@@ -166,9 +166,11 @@ Route::middleware('auth')->group(function () {
 
         Route::post('get-rounds-per-season', [ConferenceController::class, 'getSeasonRoundNotSimulated'])->name('upcoming.rounds.season');
     });
+
     Route::prefix('games/')->group(function(){
         Route::post('box-score', [GameController::class, 'getBoxScore'])->name('game.boxscore');
     });
+    
     Route::prefix('players/')->group(function(){
         Route::get('', [PlayersController::class, 'index'])->name('players.index');
         Route::get('experience', [PlayersController::class, 'experience'])->name('experience.index');
@@ -235,6 +237,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('users/')->group(function(){
         Route::get('', [UserController::class, 'index'])->name('users.index');
     });
+
     Route::prefix('profile/')->group(function(){
         Route::get('', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('', [ProfileController::class, 'update'])->name('profile.update');
