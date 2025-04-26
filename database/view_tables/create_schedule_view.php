@@ -12,8 +12,9 @@ CREATE OR REPLACE VIEW schedule_view AS
                 se.name AS season_name,
                 l.name AS league_name,
                 se.type AS league_type,
+                s.winner_id AS winner_id,
                 t_winner.name as winning_name,
-                t_winner.city as winning_city
+                t_winner.city as winning_city,
             FROM
                 schedules s
             JOIN
