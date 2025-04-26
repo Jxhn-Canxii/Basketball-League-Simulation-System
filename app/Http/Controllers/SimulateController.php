@@ -513,7 +513,8 @@ class SimulateController extends Controller
         $this->updateInjuryFreeAgents();
         $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
         $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
-        // Prepare the schedule response data
+
+        // Prepare the schedule response data it will update team score card only
         $schedule = [
             'id' => $gameData->id,
             'game_id' => $gameData->game_id,
