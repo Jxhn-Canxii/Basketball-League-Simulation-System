@@ -612,9 +612,10 @@ class SimulateController extends Controller
                     'schedules.status'
                 )
                 ->findOrFail($request->schedule_id);
-            if ($gameData) {
+                
+            if (!$gameData) {
                 return response()->json([
-                    'message' => 'Erro Fetchin game data',
+                    'message' => 'Error Fetching game data',
                 ], 400);
             }
 
