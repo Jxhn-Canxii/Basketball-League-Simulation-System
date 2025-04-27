@@ -177,6 +177,7 @@ Route::middleware('auth')->group(function () {
         Route::post('add-coach', [CoachController::class, 'addFreeAgentCoach'])->name('coaches.add.free.agent');
         Route::get('assign-coach-teams', [CoachController::class, 'assignFreeAgentCoaches'])->name('assign.coach.teams');
         Route::get('end-coach-signings', [CoachController::class, 'endCoachSignings'])->name('end.coach.signings');
+        Route::get('duplicate-coaches', [CoachController::class, 'fixDuplicateCoaches'])->name('check.duplicate.team.coach');
        
     });
     Route::prefix('players/')->group(function(){

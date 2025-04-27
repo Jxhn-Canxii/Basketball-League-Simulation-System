@@ -52,6 +52,7 @@ class CoachController extends Controller
     
         // Clone the query before applying pagination (important)
         $coaches = (clone $query)
+            ->orderBy('career_wins', 'desc') // Highest win rate first
             ->offset($offset)
             ->limit($perPage)
             ->get();
@@ -232,6 +233,44 @@ class CoachController extends Controller
             'message' => 'Coaches assigned successfully.',
             'assigned' => $assigned,
         ]);
+    }
+    
+    public function fixDuplicateCoaches()
+    {
+        $coaches = DB::table('coaches')
+            ->where('team_id', '!=', 0)
+            ->get();
+
+        // Group coaches by team_id
+        $grouped = $coaches->groupBy('team_id');
+
+        foreach ($grouped as $teamId => $teamCoaches) {
+            if ($teamCoaches->count() > 1) {
+                // Sort by (career_wins + career_losses) DESC
+                $sorted = $teamCoaches->sortByDesc(function($coach) {
+                    return $coach->career_wins + $coach->career_losses;
+                });
+
+                // Get the best coach (keep this one)
+                $bestCoach = $sorted->first();
+
+                // All others need to be "free agents"
+                $otherCoaches = $sorted->slice(1);
+
+                foreach ($otherCoaches as $coach) {
+                    DB::table('coaches')
+                        ->where('id', $coach->id)
+                        ->update([
+                            'team_id' => 0,
+                            'career_wins' => 0,
+                            'career_losses' => 0,
+                            'updated_at' => now(),
+                        ]);
+                }
+            }
+        }
+
+        return response()->json(['message' => 'Duplicate coaches fixed successfully!']);
     }
 
 }
