@@ -16,8 +16,8 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
                             <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Min</th>
-                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pts</th>
+                            <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Min</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pts</th>
                             <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Reb</th>
                             <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Ast</th>
                             <th v-if="props.full" class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Stl</th>
@@ -46,10 +46,10 @@
                             <td  v-if="props.full" class="px-2 py-1 whitespace-nowrap border">
                                 {{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}
                             </td>
-                            <td class="px-2 py-1 whitespace-nowrap border">
+                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">
                                 {{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}
                             </td>
-                            <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
                             <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.rebounds.toFixed(1) }}</td>
                             <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.assists.toFixed(1) }}</td>
                             <td v-if="props.full" class="px-2 py-1 whitespace-nowrap border">{{ player.steals.toFixed(1) }}</td>
