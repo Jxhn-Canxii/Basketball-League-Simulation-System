@@ -59,6 +59,9 @@ class CoachController extends Controller
     
         $latestSeason = get_current_season_id();
     
+        $teamsWithoutCoach = DB::table('teams')->select('name')->where('coach_id', 0)->get();
+        $teamsWithoutCoachCount =  $teamsWithoutCoach->count();
+        
         return response()->json([
             'coaches' => $coaches,
             'total_pages' => $totalPages,
@@ -66,6 +69,8 @@ class CoachController extends Controller
             'total_count' => $totalCount,
             'search' => $searchQuery,
             'current_season' => $latestSeason,
+            'teams_without_coach' =>  $teamsWithoutCoach,
+            'teams_without_coach_count' =>  $teamsWithoutCoachCount,
         ]);
     }
     

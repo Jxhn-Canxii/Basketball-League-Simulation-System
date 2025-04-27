@@ -10,7 +10,24 @@
                 <h3 class="text-md font-semibold mb-4 text-gray-800">
                     Free Agents Coach List
                 </h3>
-               
+                <!-- Show the count -->
+                <div class="text-gray-600 mb-6">
+                Total: <span class="font-semibold">{{ data?.teams_without_coach?.length }}</span> team(s) without a coach.
+                </div>
+
+                <!-- Debugging / Viewing the Raw Data -->
+                <!-- <pre class="bg-gray-100 p-4 rounded mb-6 text-sm">{{ teams_without_coach }}</pre> -->
+
+                <!-- Display as Badges -->
+                <div v-if="data?.teams_without_coach?.length > 0" class="flex flex-wrap gap-2">
+                    <span
+                        v-for="team in data.teams_without_coach"
+                        :key="team.id"
+                        class="px-4 py-2 bg-red-100 text-red-800 rounded-full text-sm font-medium shadow hover:bg-red-200 transition"
+                    >
+                        {{ team.name }}
+                    </span>
+                </div>
                 <div class="flex justify-between mt-4" v-if="props.showControls">
                     <div class="space-x-2">
                         <button
