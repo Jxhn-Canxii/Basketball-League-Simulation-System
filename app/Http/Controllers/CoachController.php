@@ -120,34 +120,6 @@ class CoachController extends Controller
             ->where('id', $latestSeasonId)
             ->update(['status' => config('timeline.coach_signings')]);
 
-        $teamsCoach = DB::table('teams')->get();
-        // Loop through each team to store their coach, coach IQ, chemistry, and conference info before the season starts
-        foreach ($teamsCoach as $team) {
-            // Fetch the coach information and team chemistry (or set defaults)
-            $coach = DB::table('coaches')->where('id', $team->coach_id)->first();
-            $coachIq = $coach ? $coach->coach_iq : 0; // Default coach IQ to 0 if no coach data
-            $chemistry = 75; // Use existing team chemistry or default to 0
-
-            // Fetch the conference_id for the team
-            $conferenceId = $team->conference_id ?? 0; // Default to 0 if no conference assigned
-
-            // Insert or update the team season info
-            DB::table('team_season_info')->updateOrInsert(
-                [
-                    'team_id' => $team->id,
-                    'season_id' => $latestSeasonId,
-                    'conference_id' => $conferenceId, // Add conference_id here
-                ],
-                [
-                    'coach_id' => $team->coach_id,
-                    'coach_iq' => $coachIq,
-                    'chemistry' => $chemistry,
-                    'conference_id' => $conferenceId, // Add conference_id here
-                    'updated_at' => now(),
-                ]
-            );
-        }
-
         return response()->json(['message' => 'Coach signings period ended and team season info updated!']);
     }
 
