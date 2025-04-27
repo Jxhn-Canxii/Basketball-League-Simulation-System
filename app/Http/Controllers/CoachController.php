@@ -135,7 +135,8 @@ class CoachController extends Controller
             DB::table('team_season_info')->updateOrInsert(
                 [
                     'team_id' => $team->id,
-                    'season_id' => $latestSeasonId
+                    'season_id' => $latestSeasonId,
+                    'conference_id' => $conferenceId, // Add conference_id here
                 ],
                 [
                     'coach_id' => $team->coach_id,
@@ -234,7 +235,7 @@ class CoachController extends Controller
             'assigned' => $assigned,
         ]);
     }
-    
+
     public function fixDuplicateCoaches()
     {
         $coaches = DB::table('coaches')
