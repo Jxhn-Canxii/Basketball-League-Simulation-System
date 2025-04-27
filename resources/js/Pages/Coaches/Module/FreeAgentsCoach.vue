@@ -63,6 +63,7 @@
                                 <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                                 <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                                 <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Coach IQ</th>
+                                <th class="px-2 py-1 text-left text-wrap font-medium text-gray-500 uppercase tracking-wider">Contract (Years)</th>
                                 <th class="px-2 py-1 text-left text-wrap font-medium text-gray-500 uppercase tracking-wider">Exp (Years)</th>
                                 <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Age</th>
                                 <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">Retirement Age</th>
@@ -85,6 +86,9 @@
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap border text-right">
                                     {{ coach.coach_iq }}
+                                </td>
+                                <td class="px-2 py-1 whitespace-nowrap border">
+                                    {{ coach.contract_years }} yrs
                                 </td>
                                 <td class="px-2 py-1 whitespace-nowrap border">
                                     {{ coach.experience_years }} yrs

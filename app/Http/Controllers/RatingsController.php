@@ -328,12 +328,11 @@ class RatingsController extends Controller
                 $this->logPlayerRatings($player, $seasonId);
             }
 
-
+            $this->updateCoachContract($teamId);
             // Show alert if this is the last update
             if ($teamId == $lastTeamId) {
                 \Log::info('Processing last update.');
 
-                $this->updateCoachContract($teamId);
                 $this->updatePlayerAge();
                 $this->promoteRetiredPlayersToCoaches();
 
