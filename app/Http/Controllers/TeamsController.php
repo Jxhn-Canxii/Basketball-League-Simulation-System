@@ -272,7 +272,7 @@ class TeamsController extends Controller
         // Process the collection and append round information
         foreach ($seasonHistory as $season) {
             $roundInfo = $this->getLastRoundPlayed($season->last_round_played, $teamId);
-            $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id);
+            $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id,$teamId);
             $season->round_info = $roundInfo;
         }
 
@@ -293,7 +293,7 @@ class TeamsController extends Controller
         ];
     }
 
-    private function getTeamCoachSeasonInfo($seasonId)
+    private function getTeamCoachSeasonInfo($seasonId,$teamId)
     {
         // Fetch the team_season_info along with the coach's name for the given season
         $teamCoachInfo = DB::table('team_season_info')
@@ -307,6 +307,7 @@ class TeamsController extends Controller
                 'coaches.name as coach_name'
             )
             ->where('team_season_info.season_id', $seasonId)
+            ->where('team_season_info.team_id', $teamId)
             ->first(); // Since a team should have one coach per season, we use `first()`
 
         // Return the team coach info
