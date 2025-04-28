@@ -349,17 +349,17 @@
             </Modal>
             <Modal :show="isSeasonAwardsModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonAwardsModalOpen} Awards`" @close="isSeasonAwardsModalOpen = false">
                 <div class="mt-4 p-3 block">
-                    <SeasonAwards :key="isSeasonAwardsModalOpen" :season_id="isSeasonAwardsModalOpen" />
+                    <SeasonAwards :key="isSeasonAwardsModalOpen" :season_id="isSeasonAwardsModalOpen" @newSeason="handleTradeSeason" />
                 </div>
             </Modal>
              <Modal :show="isSeasonDraftModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonDraftModalOpen} Draft Results`" @close="isSeasonDraftModalOpen = false">
                 <div class="mt-4 p-3 block">
-                    <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" />
+                    <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" @newSeason="handleTradeSeason" />
                 </div>
             </Modal>
             <Modal :show="isCoachSigningModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isCoachSigningModalOpen} Coach Signing`" @close="isCoachSigningModalOpen = false">
                 <div class="mt-4 p-3 block">
-                    <FreeAgentsCoach :showControls="true"  />
+                    <FreeAgentsCoach :showControls="true" :key="isCoachSigningModalOpen" @newSeason="handleTradeSeason"  />
                 </div>
             </Modal>
            

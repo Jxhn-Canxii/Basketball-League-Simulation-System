@@ -131,87 +131,100 @@ class CoachController extends Controller
     public function assignFreeAgentCoaches()
     {
         $currentSeasonId = get_current_season_id() ?? 1;
-
-        // Get all teams without a coach
+    
         $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
-
-        // Check if there are no teams without a coach
+    
         if ($teamsWithoutCoach->isEmpty()) {
-            // Call your endCoachSignings function (you should create this function separately)
             $this->endCoachSignings();
-
-            // Return error response
+    
             return response()->json([
                 'message' => 'No teams need a coach. Ended coach signings.'
-            ], 400); // 400 = Bad Request (you can also use 200 if you want success response)
+            ], 400);
         }
-
-        // Get available free agent coaches
-        $freeCoaches = Coach::query()
+    
+        $freeCoaches = DB::table('coaches')
             ->where('team_id', 0)
             ->where('is_active', 1)
             ->select('*')
             ->selectRaw('
                 CASE 
-                    WHEN experience_years = 0 THEN 2 -- Rookie coach
-                    WHEN winning_percentage < 0.3 THEN 3 -- Experienced but poor win rate
-                    ELSE 1 -- Good experienced coach
+                    WHEN experience_years = 0 THEN 2
+                    WHEN winning_percentage < 0.3 THEN 3
+                    ELSE 1
                 END as priority_group
             ')
-            ->orderBy('priority_group', 'asc')  // Best group first
-            ->orderBy('winning_percentage', 'desc') // Highest win rate first
+            ->orderBy('priority_group', 'asc')
+            ->orderBy('winning_percentage', 'desc')
             ->get();
-
+    
         if ($freeCoaches->isEmpty()) {
             return response()->json([
-                'message' => 'No free agent coaches available. Please invite coach for coaching application signings.'
+                'message' => 'No free agent coaches available. Please invite coaches for applications.'
             ], 400);
-        }  
-        // Track assigned coaches
-        $assigned = [];
-
-        foreach ($teamsWithoutCoach as $team) {
-            // Get one free coach
-            $coach = $freeCoaches->shift(); // Take first available coach
-
-            if ($coach) {
-                // Update the team's coach_id
-                DB::table('teams')
-                    ->where('id', $team->id)
-                    ->update(['coach_id' => $coach->id]);
-
-                $contractYears = rand(3,7);
-                // Update the coach's team_id
-                DB::table('coaches')
-                    ->where('id', $coach->id)
-                    ->update(['team_id' => $team->id,'contract_years' => $contractYears]);
-                    
-                 // Insert a transaction log with the current season ID
-
-                DB::table('transactions')->insert([
-                    'player_id' => 0, // No player involved here, can be adjusted if needed
-                    'season_id' => $currentSeasonId, // Use the current season ID here
-                    'details' => $coach->name . ' has been appointed as the new coach of '.$team->name,
-                    'from_team_id' => 0,
-                    'to_team_id' =>  $team->id,
-                    'status' => 'appointed',
-                ]);
-
-                $assigned[] = [
-                    'team_id' => $team->id,
-                    'coach_id' => $coach->id,
-                ];
-            } else {
-                // No more free coaches available
-                break;
-            }
         }
-
-        return response()->json([
-            'message' => 'Coaches assigned successfully.',
-            'assigned' => $assigned,
-        ]);
+    
+        $assigned = [];
+        $freeCoachesArray = $freeCoaches->toArray();
+    
+        // Start Transaction
+        DB::beginTransaction();
+    
+        try {
+            foreach ($teamsWithoutCoach as $team) {
+                $coach = array_shift($freeCoachesArray);
+    
+                if ($coach) {
+                    $contractYears = rand(3, 7);
+    
+                    // Update team
+                    DB::table('teams')
+                        ->where('id', $team->id)
+                        ->update(['coach_id' => $coach->id]);
+    
+                    // Update coach
+                    DB::table('coaches')
+                        ->where('id', $coach->id)
+                        ->update([
+                            'team_id' => $team->id,
+                            'contract_years' => $contractYears
+                        ]);
+    
+                    // Insert into transactions
+                    DB::table('transactions')->insert([
+                        'player_id' => 0,
+                        'season_id' => $currentSeasonId,
+                        'details' => $coach->name . ' has been appointed as the new coach of ' . $team->name,
+                        'from_team_id' => 0,
+                        'to_team_id' => $team->id,
+                        'status' => 'appointed',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+    
+                    $assigned[] = [
+                        'team_id' => $team->id,
+                        'coach_id' => $coach->id,
+                    ];
+                } else {
+                    break;
+                }
+            }
+    
+            DB::commit(); // Everything good
+    
+            return response()->json([
+                'message' => 'Coaches assigned successfully.',
+                'assigned' => $assigned,
+            ]);
+        } catch (\Exception $e) {
+            DB::rollBack(); // Something went wrong, cancel everything
+    
+            return response()->json([
+                'message' => 'Failed to assign coaches. Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
+    
 
     public function fixDuplicateCoaches()
     {
