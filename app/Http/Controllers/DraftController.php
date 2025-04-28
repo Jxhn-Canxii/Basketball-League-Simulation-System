@@ -597,6 +597,7 @@ class DraftController extends Controller
                 'drafts.player_id',
                 'players.name as player_name',
                 'players.age',
+                'players.position',
                 'players.type as archetype',
                 'players.overall_rating',
                 'drafts.season_id',

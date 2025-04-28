@@ -9,6 +9,7 @@
         </div>
         <!-- Available Players Section -->
         <div class="flex justify-end space-x-2">
+            <!-- <button type="button" @click="fetchDraftResults">Yack</button> -->
             <button
                 v-if="!isHide"
                 @click.prevent="addMultiplePlayers(200)"
