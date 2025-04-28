@@ -593,9 +593,12 @@ class DraftController extends Controller
             ->join('players', 'drafts.player_id', '=', 'players.id')
             ->select(
                 'drafts.team_id',
-                'teams.name',
+                'teams.name as team_name',
                 'drafts.player_id',
                 'players.name as player_name',
+                'players.age',
+                'players.type as archetype',
+                'players.overall_rating',
                 'drafts.season_id',
                 'drafts.round',
                 'drafts.pick_number',
