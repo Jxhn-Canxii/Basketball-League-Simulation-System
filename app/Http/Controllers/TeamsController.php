@@ -272,6 +272,7 @@ class TeamsController extends Controller
         // Process the collection and append round information
         foreach ($seasonHistory as $season) {
             $roundInfo = $this->getLastRoundPlayed($season->last_round_played, $teamId);
+            $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id);
             $season->round_info = $roundInfo;
         }
 
@@ -291,7 +292,27 @@ class TeamsController extends Controller
             'total_pages' => $totalPages
         ];
     }
-    
+
+    private function getTeamCoachSeasonInfo($seasonId)
+    {
+        // Fetch the team_season_info along with the coach's name for the given season
+        $teamCoachInfo = DB::table('team_season_info')
+            ->join('coaches', 'coaches.id', '=', 'team_season_info.coach_id')
+            ->select(
+                'team_season_info.team_id',
+                'team_season_info.season_id',
+                'team_season_info.coach_id',
+                'team_season_info.coach_iq',
+                'team_season_info.chemistry',
+                'coaches.name as coach_name'
+            )
+            ->where('team_season_info.season_id', $seasonId)
+            ->first(); // Since a team should have one coach per season, we use `first()`
+
+        // Return the team coach info
+        return $teamCoachInfo;
+    }
+
     private function getTransactionHistory($teamId, $page, $itemsPerPage)
     {
         // Calculate the offset for pagination

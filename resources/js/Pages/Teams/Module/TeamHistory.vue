@@ -23,8 +23,10 @@
                                 <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Conference Champions</th>
                                 <th class="px-2 py-3 text-right text-xs font-medium uppercase tracking-wider">National Rank</th>
                                 <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Champions</th>
-                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Round Played</th>
+                                <!-- <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Round Played</th> -->
                                 <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Finals</th>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Coach</th>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Chemistry</th>
                                 <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Game</th>
                             </tr>
                         </thead>
@@ -63,14 +65,14 @@
                                         No Awards
                                     </span>
                                 </td>
-                                <td class="px-2 py-3 whitespace-nowrap border">
+                                <!-- <td class="px-2 py-3 whitespace-nowrap border">
                                     <span v-if="isNumberChecker(season.round_info.round)" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800">
                                         Conference Qualifier
                                     </span>
                                     <span v-else class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                         {{ roundNameFormatter(season.round_info.round) }}
                                     </span>
-                                </td>
+                                </td> -->
                                 <td class="px-2 py-3 whitespace-nowrap border">
                                     <span v-if="season.round_info.won && season.round_info.round == 'finals'" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">
                                         National Finals Champion
@@ -79,6 +81,8 @@
                                         No Awards
                                     </span>
                                 </td>
+                                <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.coach_info.coach_name ?? '-' }}</td>
+                                <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.coach_info.chemistry ?? '-' }}</td>
                                 <td class="px-2 py-3 whitespace-nowrap border">
                                     <p v-if="season.season_status > 11">
                                         {{ season.round_info.won ? 'Won' : 'Lost' }} vs <b class="text-red-500">{{ season.round_info.opponent_name }}</b> in <i class="text-yellow-400">{{ isNumberChecker(season.round_info.round) ? 'Round ' : '' }}{{ roundNameFormatter(season.round_info.round) }}</i> ({{ season.round_info.score }}-{{ season.round_info.opponent_score }})
