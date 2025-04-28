@@ -81,7 +81,7 @@
                                 </td>
                                 <td class="px-2 py-3 whitespace-nowrap border">
                                     <p v-if="season.season_status > 11">
-                                        {{ season.round_info.won ? 'Won' : 'Lost' }} vs <b class="text-red-500">{{ season.round_info.opponent_name }}</b> in <i class="text-yellow-400">{{ roundNameFormatter(season.round_info.round) }}</i> ({{ season.round_info.score }}-{{ season.round_info.opponent_score }})
+                                        {{ season.round_info.won ? 'Won' : 'Lost' }} vs <b class="text-red-500">{{ season.round_info.opponent_name }}</b> in <i class="text-yellow-400">{{ isNumberChecker(season.round_info.round) ? 'Round ' : '' }}{{ roundNameFormatter(season.round_info.round) }}</i> ({{ season.round_info.score }}-{{ season.round_info.opponent_score }})
                                     </p>
                                     <p v-else>
                                         -
