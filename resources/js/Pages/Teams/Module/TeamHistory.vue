@@ -25,6 +25,7 @@
                                 <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Champions</th>
                                 <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Round Played</th>
                                 <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">National Finals</th>
+                                <th class="px-2 py-3 text-left text-xs font-medium uppercase tracking-wider">Last Game</th>
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
@@ -78,6 +79,15 @@
                                         No Awards
                                     </span>
                                 </td>
+                                <td class="px-2 py-3 whitespace-nowrap border">
+                                    <p v-if="season.season_status > 11">
+                                        {{ season.round_info.won ? 'Won' : 'Lost' }} vs <b class="text-red-500">{{ season.round_info.opponent_name }}</b> in <i class="text-yellow-400">{{ roundNameFormatter(season.round_info.round) }}</i> ({{ season.round_info.score }}-{{ season.round_info.opponent_score }})
+                                    </p>
+                                    <p v-else>
+                                        -
+                                    </p>
+                                </td>
+
                             </tr>
                         </tbody>
                     </table>
@@ -93,7 +103,7 @@
                     />
                 </div>
         </div>
-        <Modal :show="showTooltip" :maxWidth="'sm'">
+        <!-- <Modal :show="showTooltip" title="Last Game Result" :maxWidth="'sm'">
             <button class="flex float-end bg-gray-100 p-3" @click.prevent="showTooltip = false">
                 <i class="fa fa-times text-black-600"></i>
             </button>
@@ -106,7 +116,7 @@
                 <div><strong>Score:</strong> {{ showTooltip.score }} - {{ showTooltip.opponent_score }}</div>
                 <div><strong>Opponent:</strong> {{ showTooltip.opponent_name }}</div>
             </div>
-        </Modal>
+        </Modal> -->
     </div>
 </template>
 

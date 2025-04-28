@@ -231,6 +231,7 @@ class TeamsController extends Controller
                 'standings_view.overall_rank',
                 'standings_view.conference_rank',
                 'seasons.name as season_name',
+                'seasons.status as season_status',
                 DB::raw('CASE WHEN standings_view.overall_rank <= CASE WHEN seasons.start_playoffs = 16 THEN 16 ELSE 32 END THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
                 DB::raw('MAX(schedules.id) as last_round_played') // Adjusted to get the last round
             )
@@ -290,6 +291,7 @@ class TeamsController extends Controller
             'total_pages' => $totalPages
         ];
     }
+    
     private function getTransactionHistory($teamId, $page, $itemsPerPage)
     {
         // Calculate the offset for pagination
