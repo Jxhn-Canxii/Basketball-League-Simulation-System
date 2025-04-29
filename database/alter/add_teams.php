@@ -21,7 +21,7 @@ VALUES
 
 -- Conference 2 (North) - NCAA Focus
 (17, 'Titans', 'TIT', '01579B', 'FFB300', 1, 2, 'Baguio', 'Highland giants crushing foes with pine-fresh dominance', NOW(), NOW()),
-(18, 'Spartans', 'SPA', '1B5E20', 'F5F5F5', 1, 2, 'Laoag', 'Ilocano warriors standing tall with windmill might', NOW(), NOW()),
+(18, 'Spartans', 'SPA', '1B5E20', '01579B', 1, 2, 'Laoag', 'Ilocano warriors standing tall with windmill might', NOW(), NOW()),
 (19, 'Trojans', 'TRO', 'B71C1C', 'FFCA28', 1, 2, 'Tarlac City', 'Central Luzon tacticians breaking lines with shield and speed', NOW(), NOW()),
 (20, 'Saints', 'SNT', 'FDD835', '3E2723', 1, 2, 'Vigan', 'Heritage believers with cobblestone resilience', NOW(), NOW()),
 (21, 'Aliens', 'ALN', '00C853', '7B1FA2', 1, 2, 'Olongapo', 'Subic spacewalkers beaming with naval discipline', NOW(), NOW()),
