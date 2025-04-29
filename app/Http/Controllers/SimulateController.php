@@ -1835,7 +1835,7 @@ class SimulateController extends Controller
 
     }
 
-    private function getBestFreeAgentAvailable($position)
+    private function getBestFreeAgentAvailableV1($position)
     {
         // Split the position into components (if dual position is passed, otherwise it will be an array with one element)
         $positions = explode('/', $position);
@@ -1887,6 +1887,79 @@ class SimulateController extends Controller
         }
 
         return $bestPlayer;
+    }
+
+    private function getBestFreeAgentAvailable($position)
+    {
+        $positions = explode('/', $position);
+
+        // Reusable position filter
+        $positionFilter = function ($query) use ($positions) {
+            if (count($positions) === 1) {
+                $query->where('players.position', $positions[0]);
+            } else {
+                $query->where(function ($q) use ($positions) {
+                    $q->where('players.position', $positions[0])
+                    ->orWhere('players.position', 'LIKE', '%' . $positions[0] . '%')
+                    ->orWhere('players.position', $positions[1])
+                    ->orWhere('players.position', 'LIKE', '%' . $positions[1] . '%');
+                });
+            }
+        };
+
+        // Top 10 by overall_rating
+        $byOverall = DB::table('players')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where($positionFilter)
+            ->orderByDesc('players.overall_rating')
+            ->limit(10)
+            ->get();
+
+        // Top 10 rookies
+        $byRookies = DB::table('players')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where('players.is_rookie', 1)
+            ->where($positionFilter)
+            ->orderByDesc('players.overall_rating')
+            ->limit(10)
+            ->get();
+
+        // Top 10 by best stats (EFF)
+        $byStats = DB::table('players')
+            ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where($positionFilter)
+            ->select(
+                'players.id as player_id',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role',
+                DB::raw('MAX(player_season_stats.eff) as eff')
+            )
+            ->groupBy(
+                'players.id',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role'
+            )
+            ->orderByDesc(DB::raw('MAX(player_season_stats.eff)'))
+            ->limit(10)
+            ->get();
+
+        // Merge the three collections and randomly pick one
+        $merged = $byOverall->merge($byRookies)->merge($byStats)->unique('player_id')->values();
+
+        return $merged->isNotEmpty() ? $merged->random() : null;
     }
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
