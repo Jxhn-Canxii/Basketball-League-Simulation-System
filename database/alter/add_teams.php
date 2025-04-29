@@ -26,12 +26,12 @@ VALUES
 (20, 'Saints', 'SNT', 'D3BC8D', '000000', 1, 2, 'Vigan', 'Heritage believers with cobblestone resilience', NOW(), NOW()),
 (21, 'Aliens', 'ALN', '00A36C', 'FFD700', 1, 2, 'Olongapo', 'Subic spacewalkers beaming with naval discipline', NOW(), NOW()),
 (22, 'Leopards', 'LEO', '862633', 'F1BE48', 1, 2, 'Legazpi', 'Mayon hunters striking with volcanic elegance', NOW(), NOW()),
-(23, 'Sabertooths', 'SAB', '002654', 'FCB514', 1, 2, 'Lucena', 'Quezon predators slicing through coconut groves', NOW(), NOW()), -- Updated to Buffalo Sabres
-(24, 'Spiders', 'SPD', '003366', 'CC0000', 1, 2, 'Cabanatuan', 'Nueva Ecija web-weavers with farmer precision', NOW(), NOW()),
+(23, 'Sabertooths', 'SAB', '002654', 'FCB514', 1, 2, 'Lucena', 'Quezon predators slicing through coconut groves', NOW(), NOW()),
+(24, 'Spiders', 'SPD', '003366', 'CC0000', 1, 2, 'Nueva Ecija', 'Nueva Ecija web-weavers with farmer precision', NOW(), NOW()),
 (25, 'Vikings', 'VIK', '4F2683', 'FFC62F', 1, 2, 'Pampanga', 'Pampanga raiders with culinary carnage', NOW(), NOW()),
 (26, 'Crows', 'CRW', '241773', '000000', 1, 2, 'Batangas City', 'Heritage scavengers with refinery strength', NOW(), NOW()),
 (27, 'Royals', 'RYL', '004687', 'BA8B02', 1, 2, 'Naga', 'Bicolano kings with fiery river spirit', NOW(), NOW()),
-(28, 'Thunders', 'THN', '007AC1', 'EF3B24', 1, 2, 'Calapan', 'Oriental lightning strikers with island storm bursts', NOW(), NOW()),
+(28, 'Thunders', 'THN', '007AC1', 'EF3B24', 1, 2, 'Mindoro', 'Oriental lightning strikers with island storm bursts', NOW(), NOW()),
 (29, 'Warriors', 'WAR', '1D428A', 'FFC72C', 1, 2, 'Kalinga', 'Kalinga fighters charging with highland pride', NOW(), NOW()),
 (30, 'Hellhounds', 'HH', '1E1E1E', 'B30000', 1, 2, 'Sorsogon', 'Bicolano guardians unleashing underworld ferocity', NOW(), NOW()),
 (31, 'Red Fox', 'RF', 'CC0000', '000000', 1, 2, 'Tuguegarao', 'Cagayan tricksters darting through valley winds', NOW(), NOW()),
@@ -52,7 +52,7 @@ VALUES
 (44, 'Giants', 'GNT', '0B2265', 'A71930', 1, 3, 'Baybay', 'Southern Leyte titans grounded in historic soil', NOW(), NOW()),
 (45, 'Fire', 'FRE', 'CE1141', '000000', 1, 3, 'Maasin', 'Fiery defenders igniting island battles', NOW(), NOW()),
 (46, 'Patriots', 'PAT', 'C60C30', '0033A0', 1, 3, 'Cadiz', 'Negros patriots blazing with sugarland pride', NOW(), NOW()),
-(47, 'Aces', 'ACE', '000000', 'E31837', 1, 3, 'Bogo', 'Northern Cebu elites with coastal confidence', NOW(), NOW()), -- Updated to Las Vegas Aces
+(47, 'Aces', 'ACE', '000000', 'E31837', 1, 3, 'Bogo', 'Northern Cebu elites with coastal confidence', NOW(), NOW()),
 (48, 'Monsters', 'MNT', '6F263D', 'FFB81C', 1, 3, 'Guihulngan', 'Mountain beasts roaring with resilience', NOW(), NOW()),
 
 -- Conference 4 (Mindanao) - Bold Color Schemes
@@ -65,7 +65,7 @@ VALUES
 (55, 'Poseidons', 'POS', '00205B', '7EC8E3', 1, 4, 'Surigao City', 'Sea gods ruling tides with mining muscle', NOW(), NOW()),
 (56, 'Cyclones', 'CYC', '512888', 'FFD100', 1, 4, 'Cotabato City', 'River city storms with Maguindanao force', NOW(), NOW()),
 (57, 'Force', 'FRC', '002F6C', 'BA0C2F', 1, 4, 'Pagadian', 'Zamboanga swirl charging with hilltop speed', NOW(), NOW()),
-(58, 'Astronauts', 'AST', 'FF7F00', '002D62', 1, 4, 'Marawi', 'Lanao explorers orbiting in rebuilt glory', NOW(), NOW()), -- Updated to Houston Astros
+(58, 'Astronauts', 'AST', 'FF7F00', '002D62', 1, 4, 'Marawi', 'Lanao explorers orbiting in rebuilt glory', NOW(), NOW()),
 (59, 'Demons', 'DMN', '6F263D', '000000', 1, 4, 'Iligan City', 'Waterfall phantoms striking from hydro heights', NOW(), NOW()),
 (60, 'Devils', 'DVL', 'CE1126', '000000', 1, 4, 'Malaybalay', 'Bukidnon tempters rising from pine-kissed plateaus', NOW(), NOW()),
 (61, 'Bulldogs', 'BD', '0C2340', 'FF0000', 1, 4, 'Kidapawan', 'Volcano guards bulldozing with hot spring grit', NOW(), NOW()),
