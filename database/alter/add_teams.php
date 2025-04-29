@@ -6,7 +6,7 @@ VALUES
 (2, 'Tigers', 'TIG', 'FB4F14', '2E7D32', 1, 1, 'Manila', 'Capital wildcats with Intramuros strength', NOW(), NOW()),
 (3, 'Bears', 'BEA', '0B162A', 'FFCA28', 1, 1, 'Makati', 'Financial jungle brutes with skyscraper grit', NOW(), NOW()),
 (4, 'Wolves', 'WOL', '4E342E', '00A1D6', 1, 1, 'Taguig', 'Bonifacio hunters with elite urban tactics', NOW(), NOW()),
-(5, 'Eagles', 'EAG', '004AAD', 'F5F5F5', 1, 1, 'Pasig', 'Ortigas raptors soaring above traffic chaos', NOW(), NOW()),
+(5, 'Eagles', 'EAG', '004AAD', '2E7D32', 1, 1, 'Pasig', 'Ortigas raptors soaring above traffic chaos', NOW(), NOW()),
 (6, 'Falcons', 'FAL', 'D32F2F', '78909C', 1, 1, 'Caloocan', 'North Metro aerial attackers with steel resolve', NOW(), NOW()),
 (7, 'Hawks', 'HAW', 'B71C1C', 'FFD54F', 1, 1, 'Parañaque', 'Southern sky hunters gliding past the bay breeze', NOW(), NOW()),
 (8, 'Panthers', 'PAN', '2E8B57', 'AB47BC', 1, 1, 'Mandaluyong', 'Urban jungle prowlers with central bite', NOW(), NOW()),
