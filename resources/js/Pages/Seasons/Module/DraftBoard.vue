@@ -41,7 +41,7 @@
                         <tr v-for="player in draftResults.filter(player => player.round === 1)" :key="player.player_id" class="hover:bg-gray-100" @click.prevent="showPlayerProfileModal = player.player_id">
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border"   :class="{'bg-green-100': player.pick_number >= player.rank, 'bg-red-100': player.pick_number < player.rank}">{{ player.pick_number }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-100': player.pick_number >= player.rank, 'bg-red-100': player.pick_number < player.rank}">{{ player.pick_number }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
@@ -55,7 +55,7 @@
             <!-- Round 2 Table -->
             <div v-if="selectedRound === 2">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                   <thead class="bg-gray-50 text-nowrap">
+                    <thead class="bg-gray-50 text-nowrap">
                         <tr>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
@@ -71,7 +71,7 @@
                         <tr v-for="player in draftResults.filter(player => player.round === 2)" :key="player.player_id" class="hover:bg-gray-100" @click.prevent="showPlayerProfileModal = player.player_id">
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border"   :class="{'bg-green-100': player.pick_number >= player.rank, 'bg-red-100': player.pick_number < player.rank}">{{ player.pick_number }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-100': (player.pick_number + round1Length) >= player.rank, 'bg-red-100': (player.pick_number + round1Length) < player.rank}">{{ player.pick_number + round1Length }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
@@ -91,11 +91,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, computed } from "vue";
 import Swal from "sweetalert2";
 import Modal from "@/Components/Modal.vue";
 import axios from "axios";
-
 import Paginator from "@/Components/Paginator.vue";
 import TopStatistics from "@/Pages/Analytics/Module/TopStatistics.vue";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
@@ -108,10 +107,16 @@ const isHide = ref(true);
 const key = ref(0);
 const props = defineProps({
     season_id: {
-        type: [Number,String],
+        type: [Number, String],
         required: true,
     },
 });
+
+// Compute the total number of Round 1 picks
+const round1Length = computed(() => {
+    return draftResults.value.filter(player => player.round === 1).length;
+});
+
 onMounted(async () => {
     await fetchDraftResults();
 });
@@ -119,7 +124,7 @@ onMounted(async () => {
 const fetchDraftResults = async () => {
     try {
         draftResults.value = [];
-        const response = await axios.post(route("draft.season.results"),{season_id: props.season_id}); // Update with your API endpoint
+        const response = await axios.post(route("draft.season.results"), { season_id: props.season_id });
         draftResults.value = response.data.draft_results;
     } catch (error) {
         console.error("Error fetching draft history:", error);
