@@ -2270,41 +2270,41 @@ class SimulateController extends Controller
     {
         $seasonId = get_current_season_id();
         $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-
+    
         // Step 1: Get current roster count
         $rosterCount = DB::table('players')
             ->where('team_id', $teamId)
             ->where('is_active', true)
             ->count();
-
+    
         // Step 2: Get position counts from view
         $counts = DB::table('players_by_team_and_position')
             ->where('team_id', $teamId)
             ->first();
-
+    
         if (!$counts) {
             return response()->json(['error' => 'Team not found in view.'], 404);
         }
-
+    
         $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val)->toArray();
         $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < 3);
         $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > 3);
-
+    
         // =============== CASE 1: Roster < 15 ====================
         if ($rosterCount < 15) {
             while ($rosterCount < 15) {
                 $lowestPosition = collect($posCounts)->sort()->keys()->first();
-
+    
                 // Sign free agent
                 $agent = $this->getBestFreeAgentAvailable($lowestPosition);
                 if (!$agent) break;
-
+    
                 $contractYears = $this->getContractYearsBasedOnRole($agent->role);
                 DB::table('players')->where('id', $agent->player_id)->update([
                     'team_id' => $teamId,
                     'contract_years' => $contractYears,
                 ]);
-
+    
                 DB::table('transactions')->insert([
                     'player_id' => $agent->player_id,
                     'season_id' => $seasonId,
@@ -2315,38 +2315,38 @@ class SimulateController extends Controller
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-
+    
                 (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->player_id);
                 $posCounts[$lowestPosition]++;
                 $rosterCount++;
             }
-
+    
             return response()->json(['message' => 'Signed free agents to reach 15-man roster.']);
         }
-
+    
         // =============== CASE 2: Roster == 15 && underfilled positions ================
         if ($rosterCount == 15 && $positionsNeeding->isNotEmpty()) {
             foreach ($positionsNeeding as $position => $missing) {
                 for ($i = 0; $i < $missing; $i++) {
                     $overflow = $positionsOverfilled->sortDesc()->keys()->first();
-
+    
                     if (!$overflow || $posCounts[$overflow] <= 3) break;
-
+    
                     // Try to trade first
                     $tradeData = $this->findTradePlayer($teamId, $position, $seasonId, $posCounts);
-
+    
                     if ($tradeData) {
                         // Execute two-way trade
                         // Update player from other team to current team
                         DB::table('players')->where('id', $tradeData['incomingPlayer']->player_id)->update([
                             'team_id' => $teamId,
                         ]);
-
+    
                         // Update player from current team to other team
                         DB::table('players')->where('id', $tradeData['outgoingPlayer']->player_id)->update([
                             'team_id' => $tradeData['otherTeamId'],
                         ]);
-
+    
                         // Record transaction for incoming player
                         DB::table('transactions')->insert([
                             'player_id' => $tradeData['incomingPlayer']->player_id,
@@ -2358,7 +2358,7 @@ class SimulateController extends Controller
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
-
+                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $tradeData['incomingPlayer']->player_id);
                         // Record transaction for outgoing player
                         DB::table('transactions')->insert([
                             'player_id' => $tradeData['outgoingPlayer']->player_id,
@@ -2370,8 +2370,8 @@ class SimulateController extends Controller
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
-
-                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $tradeData['incomingPlayer']->player_id);
+    
+                        (new AwardsController)->storePlayerCurrentSeasonStats($tradeData['otherTeamId'], $tradeData['outgoingPlayer']->player_id);
                         // Update position counts
                         $posCounts[$overflow]--;
                         $posCounts[$position]++;
@@ -2393,7 +2393,7 @@ class SimulateController extends Controller
                                     ->where('player_id', $player->id)
                                     ->where('season_id', $seasonId)
                                     ->get();
-
+    
                                 $player->total_games = $stats->sum('games_played');
                                 $player->total_minutes = $stats->sum('minutes');
                                 $player->avg_per = $stats->avg('per');
@@ -2404,15 +2404,15 @@ class SimulateController extends Controller
                                 ['avg_per', 'asc'],
                             ])
                             ->first();
-
+    
                         if (!$playerToWaive) continue;
-
+    
                         // Waive player
                         DB::table('players')->where('id', $playerToWaive->id)->update([
                             'contract_years' => 0,
                             'team_id' => 0,
                         ]);
-
+    
                         DB::table('transactions')->insert([
                             'player_id' => $playerToWaive->id,
                             'season_id' => $seasonId,
@@ -2423,17 +2423,17 @@ class SimulateController extends Controller
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
-
+    
                         // Sign free agent
                         $replacement = $this->getBestFreeAgentAvailable($position);
                         if (!$replacement) continue;
-
+    
                         $contractYears = $this->getContractYearsBasedOnRole($replacement->role);
                         DB::table('players')->where('id', $replacement->player_id)->update([
                             'team_id' => $teamId,
                             'contract_years' => $contractYears,
                         ]);
-
+    
                         DB::table('transactions')->insert([
                             'player_id' => $replacement->player_id,
                             'season_id' => $seasonId,
@@ -2444,21 +2444,21 @@ class SimulateController extends Controller
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
-
+    
                         (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
                         $posCounts[$overflow]--;
                         $posCounts[$position]++;
                     }
                 }
             }
-
+    
             return response()->json(['message' => 'Roster balanced by trading or waiving/signing players.']);
         }
-
+    
         // =============== CASE 3: Roster is full and all positions are fine ================
         return response()->json(['message' => 'Roster already full and positionally balanced.']);
     }
-
+    
     /**
      * Find a player to trade from a team with an overfilled position and an underfilled position matching the current team's overfilled position
      */
@@ -2470,7 +2470,7 @@ class SimulateController extends Controller
         if (!$overfilledPosition) {
             return null;
         }
-
+    
         $tradeCandidate = DB::table('players_by_team_and_position')
             ->join('players', function ($join) use ($neededPosition) {
                 $join->on('players_by_team_and_position.team_id', '=', 'players.team_id')
@@ -2488,7 +2488,8 @@ class SimulateController extends Controller
             ->select(
                 'players.id as player_id',
                 'players.team_id as current_team_id',
-                'players.*',
+                'players.position',
+                'players.contract_years',
                 'players_by_team_and_position.team_id as other_team_id'
             )
             ->get()
@@ -2497,7 +2498,7 @@ class SimulateController extends Controller
                     ->where('player_id', $player->player_id)
                     ->where('season_id', $seasonId)
                     ->get();
-
+    
                 $player->total_games = $stats->sum('games_played');
                 $player->total_minutes = $stats->sum('minutes');
                 $player->avg_per = $stats->avg('per');
@@ -2508,11 +2509,11 @@ class SimulateController extends Controller
                 ['avg_per', 'asc'],
             ])
             ->first();
-
+    
         if (!$tradeCandidate) {
             return null;
         }
-
+    
         // Find a player from the current team to trade back (from the overfilled position)
         $outgoingPlayer = DB::table('players')
             ->where('team_id', $teamId)
@@ -2523,14 +2524,19 @@ class SimulateController extends Controller
                     ->orWhere('position', 'like', '%/' . $overfilledPosition)
                     ->orWhere('position', 'like', '%/' . $overfilledPosition . '/%');
             })
-            ->select('id as player_id', 'team_id as current_team_id', '*')
+            ->select(
+                'id as player_id',
+                'team_id as current_team_id',
+                'position',
+                'contract_years'
+            )
             ->get()
             ->map(function ($player) use ($seasonId) {
                 $stats = DB::table('player_season_stats')
                     ->where('player_id', $player->player_id)
                     ->where('season_id', $seasonId)
                     ->get();
-
+    
                 $player->total_games = $stats->sum('games_played');
                 $player->total_minutes = $stats->sum('minutes');
                 $player->avg_per = $stats->avg('per');
@@ -2541,11 +2547,11 @@ class SimulateController extends Controller
                 ['avg_per', 'asc'],
             ])
             ->first();
-
+    
         if (!$outgoingPlayer) {
             return null;
         }
-
+    
         return [
             'incomingPlayer' => $tradeCandidate,
             'outgoingPlayer' => $outgoingPlayer,
