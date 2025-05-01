@@ -2295,57 +2295,33 @@ class SimulateController extends Controller
             while ($rosterCount < 15) {
                 $lowestPosition = collect($posCounts)->sort()->keys()->first();
 
-                // Try to trade first
-                $tradePlayer = $this->findTradePlayer($lowestPosition, $seasonId);
-                
-                if ($tradePlayer) {
-                    // Execute trade
-                    DB::table('players')->where('id', $tradePlayer->player_id)->update([
-                        'team_id' => $teamId,
-                    ]);
+                // Sign free agent
+                $agent = $this->getBestFreeAgentAvailable($lowestPosition);
+                if (!$agent) break;
 
-                    DB::table('transactions')->insert([
-                        'player_id' => $tradePlayer->player_id,
-                        'season_id' => $seasonId,
-                        'details' => "Traded to fill position {$lowestPosition}",
-                        'from_team_id' => $tradePlayer->current_team_id,
-                        'to_team_id' => $teamId,
-                        'status' => 'traded',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
+                $contractYears = $this->getContractYearsBasedOnRole($agent->role);
+                DB::table('players')->where('id', $agent->player_id)->update([
+                    'team_id' => $teamId,
+                    'contract_years' => $contractYears,
+                ]);
 
-                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $tradePlayer->player_id);
-                } else {
-                    // Fall back to free agent
-                    $agent = $this->getBestFreeAgentAvailable($lowestPosition);
-                    if (!$agent) break;
+                DB::table('transactions')->insert([
+                    'player_id' => $agent->player_id,
+                    'season_id' => $seasonId,
+                    'details' => "Signed to fill position {$lowestPosition}",
+                    'from_team_id' => 0,
+                    'to_team_id' => $teamId,
+                    'status' => 'signed',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
 
-                    $contractYears = $this->getContractYearsBasedOnRole($agent->role);
-                    DB::table('players')->where('id', $agent->player_id)->update([
-                        'team_id' => $teamId,
-                        'contract_years' => $contractYears,
-                    ]);
-
-                    DB::table('transactions')->insert([
-                        'player_id' => $agent->player_id,
-                        'season_id' => $seasonId,
-                        'details' => "Signed to fill position {$lowestPosition}",
-                        'from_team_id' => 0,
-                        'to_team_id' => $teamId,
-                        'status' => 'signed',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
-                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->player_id);
-                }
-
-                $rosterCount++;
+                (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->player_id);
                 $posCounts[$lowestPosition]++;
+                $rosterCount++;
             }
 
-            return response()->json(['message' => 'Signed or traded players to reach 15-man roster.']);
+            return response()->json(['message' => 'Signed free agents to reach 15-man roster.']);
         }
 
         // =============== CASE 2: Roster == 15 && underfilled positions ================
@@ -2356,76 +2332,99 @@ class SimulateController extends Controller
 
                     if (!$overflow || $posCounts[$overflow] <= 3) break;
 
-                    $playerToWaive = DB::table('players')
-                        ->where('players.team_id', $teamId)
-                        ->where('players.is_active', true)
-                        ->where(function ($query) use ($overflow) {
-                            $query->where('players.position', $overflow)
-                                ->orWhere('players.position', 'like', $overflow . '/%')
-                                ->orWhere('players.position', 'like', '%/' . $overflow)
-                                ->orWhere('players.position', 'like', '%/' . $overflow . '/%');
-                        })
-                        ->select('players.*')
-                        ->get()
-                        ->map(function ($player) use ($seasonId) {
-                            $stats = DB::table('player_season_stats')
-                                ->where('player_id', $player->id)
-                                ->where('season_id', $seasonId)
-                                ->get();
-
-                            $player->total_games = $stats->sum('games_played');
-                            $player->total_minutes = $stats->sum('minutes');
-                            $player->avg_per = $stats->avg('per');
-                            return $player;
-                        })
-                        ->sortBy([
-                            ['contract_years', 'asc'],
-                            ['avg_per', 'asc'],
-                        ])
-                        ->first();
-
-                    if (!$playerToWaive) continue;
-
-                    // Waive player
-                    DB::table('players')->where('id', $playerToWaive->id)->update([
-                        'contract_years' => 0,
-                        'team_id' => 0,
-                    ]);
-
-                    DB::table('transactions')->insert([
-                        'player_id' => $playerToWaive->id,
-                        'season_id' => $seasonId,
-                        'details' => "Waived to rebalance position",
-                        'from_team_id' => $teamId,
-                        'to_team_id' => 0,
-                        'status' => 'waived',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-
                     // Try to trade first
-                    $tradePlayer = $this->findTradePlayer($position, $seasonId);
+                    $tradeData = $this->findTradePlayer($teamId, $position, $seasonId, $posCounts);
 
-                    if ($tradePlayer) {
-                        // Execute trade
-                        DB::table('players')->where('id', $tradePlayer->player_id)->update([
+                    if ($tradeData) {
+                        // Execute two-way trade
+                        // Update player from other team to current team
+                        DB::table('players')->where('id', $tradeData['incomingPlayer']->player_id)->update([
                             'team_id' => $teamId,
                         ]);
 
+                        // Update player from current team to other team
+                        DB::table('players')->where('id', $tradeData['outgoingPlayer']->player_id)->update([
+                            'team_id' => $tradeData['otherTeamId'],
+                        ]);
+
+                        // Record transaction for incoming player
                         DB::table('transactions')->insert([
-                            'player_id' => $tradePlayer->player_id,
+                            'player_id' => $tradeData['incomingPlayer']->player_id,
                             'season_id' => $seasonId,
-                            'details' => "Traded to fill underfilled position $position",
-                            'from_team_id' => $tradePlayer->current_team_id,
+                            'details' => "Traded to fill underfilled position {$position}",
+                            'from_team_id' => $tradeData['otherTeamId'],
                             'to_team_id' => $teamId,
                             'status' => 'traded',
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
 
-                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $tradePlayer->player_id);
+                        // Record transaction for outgoing player
+                        DB::table('transactions')->insert([
+                            'player_id' => $tradeData['outgoingPlayer']->player_id,
+                            'season_id' => $seasonId,
+                            'details' => "Traded to balance position {$tradeData['outgoingPosition']}",
+                            'from_team_id' => $teamId,
+                            'to_team_id' => $tradeData['otherTeamId'],
+                            'status' => 'traded',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $tradeData['incomingPlayer']->player_id);
+                        // Update position counts
+                        $posCounts[$overflow]--;
+                        $posCounts[$position]++;
                     } else {
-                        // Fall back to free agent
+                        // Fall back to waiving and signing free agent
+                        $playerToWaive = DB::table('players')
+                            ->where('players.team_id', $teamId)
+                            ->where('players.is_active', true)
+                            ->where(function ($query) use ($overflow) {
+                                $query->where('players.position', $overflow)
+                                    ->orWhere('players.position', 'like', $overflow . '/%')
+                                    ->orWhere('players.position', 'like', '%/' . $overflow)
+                                    ->orWhere('players.position', 'like', '%/' . $overflow . '/%');
+                            })
+                            ->select('players.*')
+                            ->get()
+                            ->map(function ($player) use ($seasonId) {
+                                $stats = DB::table('player_season_stats')
+                                    ->where('player_id', $player->id)
+                                    ->where('season_id', $seasonId)
+                                    ->get();
+
+                                $player->total_games = $stats->sum('games_played');
+                                $player->total_minutes = $stats->sum('minutes');
+                                $player->avg_per = $stats->avg('per');
+                                return $player;
+                            })
+                            ->sortBy([
+                                ['contract_years', 'asc'],
+                                ['avg_per', 'asc'],
+                            ])
+                            ->first();
+
+                        if (!$playerToWaive) continue;
+
+                        // Waive player
+                        DB::table('players')->where('id', $playerToWaive->id)->update([
+                            'contract_years' => 0,
+                            'team_id' => 0,
+                        ]);
+
+                        DB::table('transactions')->insert([
+                            'player_id' => $playerToWaive->id,
+                            'season_id' => $seasonId,
+                            'details' => "Waived to rebalance position",
+                            'from_team_id' => $teamId,
+                            'to_team_id' => 0,
+                            'status' => 'waived',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        // Sign free agent
                         $replacement = $this->getBestFreeAgentAvailable($position);
                         if (!$replacement) continue;
 
@@ -2447,14 +2446,13 @@ class SimulateController extends Controller
                         ]);
 
                         (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
+                        $posCounts[$overflow]--;
+                        $posCounts[$position]++;
                     }
-
-                    $posCounts[$overflow]--;
-                    $posCounts[$position]++;
                 }
             }
 
-            return response()->json(['message' => 'Roster balanced by waiving and trading/signing players.']);
+            return response()->json(['message' => 'Roster balanced by trading or waiving/signing players.']);
         }
 
         // =============== CASE 3: Roster is full and all positions are fine ================
@@ -2462,35 +2460,47 @@ class SimulateController extends Controller
     }
 
     /**
-     * Find a player to trade from a team with an overfilled position
+     * Find a player to trade from a team with an overfilled position and an underfilled position matching the current team's overfilled position
      */
-    private function findTradePlayer($position, $seasonId)
+    private function findTradePlayer($teamId, $neededPosition, $seasonId, $currentTeamPosCounts)
     {
-        // Find teams with overfilled positions for the desired position
+        // Find teams with overfilled needed position and underfilled position matching current team's overfilled position
+        $overfilledPosition = collect($currentTeamPosCounts)->filter(fn($count) => $count > 3)->sortDesc()->keys()->first();
+        
+        if (!$overfilledPosition) {
+            return null;
+        }
+
         $tradeCandidate = DB::table('players_by_team_and_position')
-            ->join('players', function ($join) use ($position) {
+            ->join('players', function ($join) use ($neededPosition) {
                 $join->on('players_by_team_and_position.team_id', '=', 'players.team_id')
                     ->where('players.is_active', true)
-                    ->where(function ($query) use ($position) {
-                        $query->where('players.position', $position)
-                            ->orWhere('players.position', 'like', $position . '/%')
-                            ->orWhere('players.position', 'like', '%/' . $position)
-                            ->orWhere('players.position', 'like', '%/' . $position . '/%');
+                    ->where(function ($query) use ($neededPosition) {
+                        $query->where('players.position', $neededPosition)
+                            ->orWhere('players.position', 'like', $neededPosition . '/%')
+                            ->orWhere('players.position', 'like', '%/' . $neededPosition)
+                            ->orWhere('players.position', 'like', '%/' . $neededPosition . '/%');
                     });
             })
-            ->where('players_by_team_and_position.' . $position, '>', 3)
-            ->select('players.*')
+            ->where('players_by_team_and_position.' . $neededPosition, '>', 3)
+            ->where('players_by_team_and_position.' . $overfilledPosition, '<', 3)
+            ->where('players_by_team_and_position.team_id', '!=', $teamId)
+            ->select(
+                'players.id as player_id',
+                'players.team_id as current_team_id',
+                'players.*',
+                'players_by_team_and_position.team_id as other_team_id'
+            )
             ->get()
             ->map(function ($player) use ($seasonId) {
                 $stats = DB::table('player_season_stats')
-                    ->where('player_id', $player->id)
+                    ->where('player_id', $player->player_id)
                     ->where('season_id', $seasonId)
                     ->get();
 
                 $player->total_games = $stats->sum('games_played');
                 $player->total_minutes = $stats->sum('minutes');
                 $player->avg_per = $stats->avg('per');
-                $player->current_team_id = $player->team_id;
                 return $player;
             })
             ->sortBy([
@@ -2499,8 +2509,51 @@ class SimulateController extends Controller
             ])
             ->first();
 
-        return $tradeCandidate;
+        if (!$tradeCandidate) {
+            return null;
+        }
+
+        // Find a player from the current team to trade back (from the overfilled position)
+        $outgoingPlayer = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_active', true)
+            ->where(function ($query) use ($overfilledPosition) {
+                $query->where('position', $overfilledPosition)
+                    ->orWhere('position', 'like', $overfilledPosition . '/%')
+                    ->orWhere('position', 'like', '%/' . $overfilledPosition)
+                    ->orWhere('position', 'like', '%/' . $overfilledPosition . '/%');
+            })
+            ->select('id as player_id', 'team_id as current_team_id', '*')
+            ->get()
+            ->map(function ($player) use ($seasonId) {
+                $stats = DB::table('player_season_stats')
+                    ->where('player_id', $player->player_id)
+                    ->where('season_id', $seasonId)
+                    ->get();
+
+                $player->total_games = $stats->sum('games_played');
+                $player->total_minutes = $stats->sum('minutes');
+                $player->avg_per = $stats->avg('per');
+                return $player;
+            })
+            ->sortBy([
+                ['contract_years', 'asc'],
+                ['avg_per', 'asc'],
+            ])
+            ->first();
+
+        if (!$outgoingPlayer) {
+            return null;
+        }
+
+        return [
+            'incomingPlayer' => $tradeCandidate,
+            'outgoingPlayer' => $outgoingPlayer,
+            'otherTeamId' => $tradeCandidate->other_team_id,
+            'outgoingPosition' => $overfilledPosition,
+        ];
     }
+
     private function updateFinalsMVPBonusContract($winnerId, $seasonId, $finalsMVPId) {
         $extensionYears = 3; // Number of years to extend the contract for the Finals MVP
         $awardName = 'Finals MVP'; // Name of the award
