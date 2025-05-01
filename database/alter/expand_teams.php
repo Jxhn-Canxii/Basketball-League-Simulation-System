@@ -32,7 +32,7 @@ INSERT INTO `teams` (
 ) VALUES
 
 -- Conference 1 (Luzon) - Moved from NCR due to city conflicts
-('Rascals', 'RSC', 'Manila', 'Manila Rascals: A fast-paced, high-energy team embodying the relentless spirit of Metro Manila’s streets, known for their hustle and high-pressure gameplay.', 'FFCC00', 'FF5733', 1, 1, NOW(), NOW()),
+('Rascals', 'RSC', 'West Manila', 'Manila Rascals: A fast-paced, high-energy team embodying the relentless spirit of Metro Manila’s streets, known for their hustle and high-pressure gameplay.', 'FFCC00', 'FF5733', 1, 1, NOW(), NOW()),
 ('Guardians', 'GRD', 'Rizal', 'Rizal Guardians: A team built on strength, courage, and resilience, representing the warrior spirit of Rizal with each powerful drive to the basket.', '004B87', 'F1C40F', 1, 1, NOW(), NOW()),
 
 -- Conference 2 (Luzon) - Original Luzon teams updated
