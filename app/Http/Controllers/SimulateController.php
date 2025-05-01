@@ -2109,7 +2109,7 @@ class SimulateController extends Controller
             ]);
     }
 
-    public function fixTeamPositionBalance($teamId)
+    public function fixTeamPositionBalanceV1($teamId)
     {
         $seasonId = get_current_season_id();
         $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -2266,7 +2266,241 @@ class SimulateController extends Controller
         return response()->json(['message' => 'Roster already full and positionally balanced.']);
     }
     
+    public function fixTeamPositionBalance($teamId)
+    {
+        $seasonId = get_current_season_id();
+        $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
 
+        // Step 1: Get current roster count
+        $rosterCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_active', true)
+            ->count();
+
+        // Step 2: Get position counts from view
+        $counts = DB::table('players_by_team_and_position')
+            ->where('team_id', $teamId)
+            ->first();
+
+        if (!$counts) {
+            return response()->json(['error' => 'Team not found in view.'], 404);
+        }
+
+        $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val)->toArray();
+        $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < 3);
+        $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > 3);
+
+        // =============== CASE 1: Roster < 15 ====================
+        if ($rosterCount < 15) {
+            while ($rosterCount < 15) {
+                $lowestPosition = collect($posCounts)->sort()->keys()->first();
+
+                // Try to trade first
+                $tradePlayer = $this->findTradePlayer($lowestPosition, $seasonId);
+                
+                if ($tradePlayer) {
+                    // Execute trade
+                    DB::table('players')->where('id', $tradePlayer->player_id)->update([
+                        'team_id' => $teamId,
+                    ]);
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $tradePlayer->player_id,
+                        'season_id' => $seasonId,
+                        'details' => "Traded to fill position {$lowestPosition}",
+                        'from_team_id' => $tradePlayer->current_team_id,
+                        'to_team_id' => $teamId,
+                        'status' => 'traded',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $tradePlayer->player_id);
+                } else {
+                    // Fall back to free agent
+                    $agent = $this->getBestFreeAgentAvailable($lowestPosition);
+                    if (!$agent) break;
+
+                    $contractYears = $this->getContractYearsBasedOnRole($agent->role);
+                    DB::table('players')->where('id', $agent->player_id)->update([
+                        'team_id' => $teamId,
+                        'contract_years' => $contractYears,
+                    ]);
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $agent->player_id,
+                        'season_id' => $seasonId,
+                        'details' => "Signed to fill position {$lowestPosition}",
+                        'from_team_id' => 0,
+                        'to_team_id' => $teamId,
+                        'status' => 'signed',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->player_id);
+                }
+
+                $rosterCount++;
+                $posCounts[$lowestPosition]++;
+            }
+
+            return response()->json(['message' => 'Signed or traded players to reach 15-man roster.']);
+        }
+
+        // =============== CASE 2: Roster == 15 && underfilled positions ================
+        if ($rosterCount == 15 && $positionsNeeding->isNotEmpty()) {
+            foreach ($positionsNeeding as $position => $missing) {
+                for ($i = 0; $i < $missing; $i++) {
+                    $overflow = $positionsOverfilled->sortDesc()->keys()->first();
+
+                    if (!$overflow || $posCounts[$overflow] <= 3) break;
+
+                    $playerToWaive = DB::table('players')
+                        ->where('players.team_id', $teamId)
+                        ->where('players.is_active', true)
+                        ->where(function ($query) use ($overflow) {
+                            $query->where('players.position', $overflow)
+                                ->orWhere('players.position', 'like', $overflow . '/%')
+                                ->orWhere('players.position', 'like', '%/' . $overflow)
+                                ->orWhere('players.position', 'like', '%/' . $overflow . '/%');
+                        })
+                        ->select('players.*')
+                        ->get()
+                        ->map(function ($player) use ($seasonId) {
+                            $stats = DB::table('player_season_stats')
+                                ->where('player_id', $player->id)
+                                ->where('season_id', $seasonId)
+                                ->get();
+
+                            $player->total_games = $stats->sum('games_played');
+                            $player->total_minutes = $stats->sum('minutes');
+                            $player->avg_per = $stats->avg('per');
+                            return $player;
+                        })
+                        ->sortBy([
+                            ['contract_years', 'asc'],
+                            ['avg_per', 'asc'],
+                        ])
+                        ->first();
+
+                    if (!$playerToWaive) continue;
+
+                    // Waive player
+                    DB::table('players')->where('id', $playerToWaive->id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                    ]);
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerToWaive->id,
+                        'season_id' => $seasonId,
+                        'details' => "Waived to rebalance position",
+                        'from_team_id' => $teamId,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+
+                    // Try to trade first
+                    $tradePlayer = $this->findTradePlayer($position, $seasonId);
+
+                    if ($tradePlayer) {
+                        // Execute trade
+                        DB::table('players')->where('id', $tradePlayer->player_id)->update([
+                            'team_id' => $teamId,
+                        ]);
+
+                        DB::table('transactions')->insert([
+                            'player_id' => $tradePlayer->player_id,
+                            'season_id' => $seasonId,
+                            'details' => "Traded to fill underfilled position $position",
+                            'from_team_id' => $tradePlayer->current_team_id,
+                            'to_team_id' => $teamId,
+                            'status' => 'traded',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $tradePlayer->player_id);
+                    } else {
+                        // Fall back to free agent
+                        $replacement = $this->getBestFreeAgentAvailable($position);
+                        if (!$replacement) continue;
+
+                        $contractYears = $this->getContractYearsBasedOnRole($replacement->role);
+                        DB::table('players')->where('id', $replacement->player_id)->update([
+                            'team_id' => $teamId,
+                            'contract_years' => $contractYears,
+                        ]);
+
+                        DB::table('transactions')->insert([
+                            'player_id' => $replacement->player_id,
+                            'season_id' => $seasonId,
+                            'details' => "Signed to fill underfilled position $position",
+                            'from_team_id' => 0,
+                            'to_team_id' => $teamId,
+                            'status' => 'signed',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                        (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
+                    }
+
+                    $posCounts[$overflow]--;
+                    $posCounts[$position]++;
+                }
+            }
+
+            return response()->json(['message' => 'Roster balanced by waiving and trading/signing players.']);
+        }
+
+        // =============== CASE 3: Roster is full and all positions are fine ================
+        return response()->json(['message' => 'Roster already full and positionally balanced.']);
+    }
+
+    /**
+     * Find a player to trade from a team with an overfilled position
+     */
+    private function findTradePlayer($position, $seasonId)
+    {
+        // Find teams with overfilled positions for the desired position
+        $tradeCandidate = DB::table('players_by_team_and_position')
+            ->join('players', function ($join) use ($position) {
+                $join->on('players_by_team_and_position.team_id', '=', 'players.team_id')
+                    ->where('players.is_active', true)
+                    ->where(function ($query) use ($position) {
+                        $query->where('players.position', $position)
+                            ->orWhere('players.position', 'like', $position . '/%')
+                            ->orWhere('players.position', 'like', '%/' . $position)
+                            ->orWhere('players.position', 'like', '%/' . $position . '/%');
+                    });
+            })
+            ->where('players_by_team_and_position.' . $position, '>', 3)
+            ->select('players.*')
+            ->get()
+            ->map(function ($player) use ($seasonId) {
+                $stats = DB::table('player_season_stats')
+                    ->where('player_id', $player->id)
+                    ->where('season_id', $seasonId)
+                    ->get();
+
+                $player->total_games = $stats->sum('games_played');
+                $player->total_minutes = $stats->sum('minutes');
+                $player->avg_per = $stats->avg('per');
+                $player->current_team_id = $player->team_id;
+                return $player;
+            })
+            ->sortBy([
+                ['contract_years', 'asc'],
+                ['avg_per', 'asc'],
+            ])
+            ->first();
+
+        return $tradeCandidate;
+    }
     private function updateFinalsMVPBonusContract($winnerId, $seasonId, $finalsMVPId) {
         $extensionYears = 3; // Number of years to extend the contract for the Finals MVP
         $awardName = 'Finals MVP'; // Name of the award

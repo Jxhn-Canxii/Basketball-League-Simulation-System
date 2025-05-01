@@ -32,12 +32,14 @@
                     <div class="space-x-2">
                         <button
                             @click="assignTeamsAuto()"
+                            v-if="data?.teams_without_coach_count > 0"
                             class="px-4 py-2 bg-rose-500 text-white rounded mb-2 text-sm"
                         >
                             <i class="fa fa-users"></i> Auto Sign Coaches
                         </button>
                         <button 
-                            @click="endCoachSigning" 
+                            @click="endCoachSigning"
+                            v-if="data?.teams_without_coach_count == 0"
                             class="px-4 py-2 bg-gray-950 text-white rounded mb-2 text-sm">
                             <i class="fa fa-arrow-right"></i> Skip
                         </button>
@@ -432,7 +434,7 @@ const assignTeamsAuto = async () => {
                 html: response.data.message,
             });
 
-            emits("newSeason", is_new_season);
+            emits("newSeason", Math.random());
 
             // Fetch updated free agents list
             fetchFreeAgent();
