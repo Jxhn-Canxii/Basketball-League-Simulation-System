@@ -2354,7 +2354,7 @@ class SimulateController extends Controller
                             'details' => "Traded to fill underfilled position {$position}",
                             'from_team_id' => $tradeData['otherTeamId'],
                             'to_team_id' => $teamId,
-                            'status' => 'traded',
+                            'status' => 'in-season trade',
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
@@ -2366,7 +2366,7 @@ class SimulateController extends Controller
                             'details' => "Traded to balance position {$tradeData['outgoingPosition']}",
                             'from_team_id' => $teamId,
                             'to_team_id' => $tradeData['otherTeamId'],
-                            'status' => 'traded',
+                            'status' => 'in-season trade',
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
