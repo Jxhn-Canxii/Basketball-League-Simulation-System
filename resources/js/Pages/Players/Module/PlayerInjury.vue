@@ -37,7 +37,7 @@
                         <td class="px-2 py-1 text-gray-700">{{ injury.player_name }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ injury.role }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ injury.team_when_injured }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ injury.injury_type }}</td>
+                        <td class="px-2 py-1 text-gray-700 first-letter:uppercase">{{ injury.injury_type?.replaceAll('_',' ') }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ injury.recovery_games }}</td>
                         <td class="px-2 py-1 text-gray-700">{{ injury.status }}</td>
                     </tr>
