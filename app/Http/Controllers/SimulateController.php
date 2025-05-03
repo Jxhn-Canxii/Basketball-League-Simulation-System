@@ -3013,7 +3013,7 @@ class SimulateController extends Controller
                 $playerId = $player->id;
 
                 // Total eff for current season
-                $currentEff = DB::table('player_game_stats')
+                $currentEff = DB::table('player_season_stats')
                     ->where('season_id', $seasonId)
                     ->where('player_id', $playerId)
                     ->sum('eff');
