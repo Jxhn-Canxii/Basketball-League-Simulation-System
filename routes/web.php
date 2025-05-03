@@ -203,7 +203,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('player-best-alltime', [PlayersController::class, 'getTop20PlayersAllTime'])->name('best.players.alltime');
         Route::post('player-best-alltime-by-team', [PlayersController::class, 'getTop10PlayersByTeam'])->name('best.team.players.alltime');
-        Route::post('player-starplayers-per-team-by-season', [PlayersController::class, 'getStarPlayersByTeam'])->name('best.team.star.players');
+        Route::post('players-per-team-by-season', [PlayersController::class, 'getStarPlayersByTeam'])->name('best.team.star.players');
     });
 
     Route::prefix('transactions/')->group(function(){

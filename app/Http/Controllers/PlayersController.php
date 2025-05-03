@@ -1831,23 +1831,31 @@ class PlayersController extends Controller
     
     public function getStarPlayersByTeam(Request $request)
     {
-        // Validate the request
         $request->validate([
             'team_id' => 'required|exists:teams,id',
         ]);
-    
+
         $teamId = $request->team_id;
-    
-       
-        // Query to fetch star players for the given team across all seasons with all stats
+
+        // Subquery to get the highest-efficiency star player per season
+        $sub = DB::table('player_season_stats')
+            ->selectRaw('MAX(eff) as max_eff, season_id')
+            ->where('team_id', $teamId)
+            ->where('role', 'star player')
+            ->groupBy('season_id');
+
+        // Join with player and season data
         $starPlayers = DB::table('player_season_stats AS pss')
+            ->joinSub($sub, 'max_eff_stats', function ($join) {
+                $join->on('pss.season_id', '=', 'max_eff_stats.season_id')
+                    ->on('pss.eff', '=', 'max_eff_stats.max_eff');
+            })
             ->join('players AS p', 'pss.player_id', '=', 'p.id')
             ->join('seasons AS s', 'pss.season_id', '=', 's.id')
-            ->join('teams AS ct', 'p.team_id', '=', 'ct.id','left') 
-            ->join('teams AS t', 'pss.team_id', '=', 't.id','left') // Joining teams to get current team name
+            ->leftJoin('teams AS ct', 'p.team_id', '=', 'ct.id') // current team
+            ->leftJoin('teams AS t', 'pss.team_id', '=', 't.id') // season team
             ->where('pss.team_id', $teamId)
-            ->where('pss.role', 'star player') // Filtering only star players
-            ->orderByDesc('pss.season_id') // Sort by latest season
+            ->orderByDesc('pss.season_id')
             ->select([
                 's.id AS season_id',
                 's.name AS season_name',
@@ -1859,8 +1867,6 @@ class PlayersController extends Controller
                 'pss.role AS season_role',
                 'ct.name AS current_team',
                 't.name AS season_team',
-                
-                // Player Season Stats
                 'pss.avg_minutes_per_game',
                 'pss.avg_points_per_game',
                 'pss.avg_rebounds_per_game',
@@ -1904,9 +1910,10 @@ class PlayersController extends Controller
                 'pss.updated_at',
             ])
             ->get();
-    
+
         return response()->json($starPlayers);
     }
+
     
     public function getPlayerTransactions(Request $request)
     {
