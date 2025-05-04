@@ -1144,6 +1144,7 @@ class ScheduleController extends Controller
         // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
         if (in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
             $winners = DB::table('standings_view')
+                ->where('season_id', $seasonId)
                 ->whereIn('team_id', $winners)
                 ->orderBy('overall_rank', 'asc')
                 ->pluck('team_id')
@@ -1165,7 +1166,7 @@ class ScheduleController extends Controller
     }
 
     // Function to create schedule for a round of playoff matches
-    private static function createScheduleV1($pairings, $seasonId, $round, $conferenceId)
+    private static function createSchedule($pairings, $seasonId, $round, $conferenceId)
     {
 
         $schedule = [];
@@ -1195,53 +1196,6 @@ class ScheduleController extends Controller
         return $schedule;
     }
 
-    private static function createSchedule($pairings, $seasonId, $round, $conferenceId)
-    {
-        $schedule = [];
-
-        foreach ($pairings as $game_number => $pair) {
-            if (!is_array($pair) || count($pair) < 2) {
-                throw new \Exception("Each pairing must contain exactly two team IDs.");
-            }
-
-            $homeId = $pair[0];
-            $awayId = $pair[1];
-
-            if (!is_numeric($round)) {
-                // Use DB facade to fetch overall_rank of both teams
-                $teams = DB::table('standings_view')
-                    ->where('season_id', $seasonId)
-                    ->whereIn('team_id', [$pair[0], $pair[1]])
-                    ->pluck('overall_rank', 'team_id');
-
-                if (!isset($teams[$pair[0]]) || !isset($teams[$pair[1]])) {
-                    throw new \Exception("Team ranks not found for team IDs: {$pair[0]}, {$pair[1]}");
-                }
-
-                // Lower rank is better
-                if ($teams[$pair[0]] > $teams[$pair[1]]) {
-                    $homeId = $pair[1];
-                    $awayId = $pair[0];
-                }
-            }
-
-            $game_id = 'S' . $seasonId . '-R' . $round . '-G' . ($game_number + 1) . 'C-' . $conferenceId;
-
-            $schedule[] = [
-                'home_id' => $homeId,
-                'conference_id' => ($round == 'finals' || $round == 'interconference_semi_finals') ? 0 : $conferenceId,
-                'game_id' => $game_id,
-                'away_id' => $awayId,
-                'season_id' => $seasonId,
-                'round' => $round,
-                'home_score' => 0,
-                'away_score' => 0,
-                'winner_id' => 0,
-            ];
-        }
-
-        return $schedule;
-    }
     private static function insertSchedule($season, $round, $schedule)
     {
         // Start a database transaction
