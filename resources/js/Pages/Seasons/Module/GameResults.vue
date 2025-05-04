@@ -96,8 +96,10 @@
 
             <div class="flex-1 text-center mb-2 lg:mb-0 text-white order-3 md:order-2">
                 <div class="bg-gray-800 p-2 rounded-lg m-1">
-                    <p class="text-xs font-semibold text-yellow-500">
-                        Liga Dos
+                    <p class="text-md text-wrap font-semibold text-yellow-500">
+                        {{ gameDetails?.league_name }} - {{ gameDetails?.season_name }}
+                    </p>
+                    <p class="text-xs font-semibold text-gray-600">
                         {{
                             isNaN(gameDetails?.round)
                                 ? "Playoffs"

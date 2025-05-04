@@ -416,6 +416,16 @@ class GameController extends Controller
 
 
         $injury = $this->getIngameInjury($game->id);
+
+        $seasonData = DB::table('seasons')
+            ->join('leagues', 'seasons.league_id', '=', 'leagues.id')
+            ->where('seasons.id', $game->season_id)
+            ->select('seasons.name as season_name', 'leagues.id as league_id', 'leagues.name as league_name')
+            ->first();
+    
+        $seasonName = $seasonData->season_name;
+        $leagueName = $seasonData->league_name;
+    
         // Format data for box score
         $boxScore = [
             'game_id' => $game->game_id,
@@ -450,7 +460,8 @@ class GameController extends Controller
             'stat_leaders' => $statLeaders,
             'best_player' => $bestWinningTeamPlayerDetails,
             'total_players_played' => $playerStats->count(),
-            'current_season' => get_current_season_id(),
+            'season_name' =>  $seasonName,
+            'league_name' =>  $leagueName,
         ];
 
         return response()->json([
