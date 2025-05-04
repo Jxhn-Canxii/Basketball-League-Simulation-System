@@ -1098,32 +1098,6 @@ class ScheduleController extends Controller
         return $pairings;
     }
 
-    private static function getWinnersOfRoundV1($round, $seasonId, $conferenceId)
-    {
-        // Retrieve the winners of the specified round from the database
-        $winners = false;
-        if ($round != 'semi_finals') {
-            $winners = DB::table('schedules')
-                ->where('round', $round)
-                ->where('conference_id', $conferenceId)
-                ->where('season_id', $seasonId)
-                ->get();
-        } else {
-            $winners = DB::table('schedules')
-                ->where('round', $round)
-                ->where('season_id', $seasonId)
-                ->get();
-        }
-
-        $winningIds = [];
-
-        // Iterate through the winners to determine the winning teams
-        foreach ($winners as $game) {
-            $winningIds[] = $game->winner_id;
-        }
-
-        return $winningIds;
-    }
 
     private static function getWinnersOfRound($round, $seasonId, $conferenceId)
     {
@@ -1142,16 +1116,14 @@ class ScheduleController extends Controller
         $winners = $query->pluck('winner_id')->toArray();
 
         // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
-        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
-            $winners = DB::table('standings_view')
-                ->where('season_id', $seasonId)
-                ->whereIn('team_id', $winners)
-                ->orderBy('overall_rank', 'asc')
-                ->pluck('team_id')
-                ->toArray();
-        }
+        $winnersFormatted = DB::table('standings_view')
+        ->where('season_id', $seasonId)
+        ->whereIn('team_id', $winners)
+        ->orderBy('overall_rank', 'asc')
+        ->pluck('team_id')
+        ->toArray();
 
-        return $winners;
+        return $winnersFormatted;
     }
 
     private static function pairTeams($teams, $pairCount)
