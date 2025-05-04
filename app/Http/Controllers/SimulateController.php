@@ -1746,8 +1746,8 @@ class SimulateController extends Controller
                      ->where('player_season_stats.season_id', '=', $seasonId);
             })
             ->groupBy(...array_map(fn($col) => "players.$col", $playerColumns))
-            ->orderByDesc('per')
             ->orderByDesc('eff')
+            ->orderByDesc('per')
             ->get();
     }
 
