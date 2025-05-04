@@ -39,7 +39,7 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'season_name' => 'required|unique:seasons,name',
-            'type' => 'required|in:1,2,3,4',
+            'type' => 'required|in:1,2,3,4,5',
             'start' => 'required',
             'league_id' => 'required|exists:leagues,id',
             'match_type' => 'required|in:1,2',
@@ -343,7 +343,7 @@ class ScheduleController extends Controller
 
                 $numTeams = count($conferenceTeams);
                 $isOdd = $numTeams % 2 !== 0;
-                $matchLimit = floor(($numTeams - 1) / 2); // Half round robin match count per team
+                $matchLimit = 5; // Half round robin match count per team
 
                 // Track each team's match and bye counts
                 $teamGameCounts = [];

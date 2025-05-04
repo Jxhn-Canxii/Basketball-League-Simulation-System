@@ -132,7 +132,7 @@
     <div class="block" v-if="!isHide && !showTransactions">
         <div class="flex justify-between items-center mb-2">
             <h2 class="text-lg font-semibold text-gray-800">
-                Schedule and Results ({{ season_schedules?.total_count }})
+                Schedule and Results ({{ data?.total_count }})
             </h2>
             <select 
                 id="teamFilter" 
