@@ -320,7 +320,7 @@ class ScheduleController extends Controller
             throw $e;
         }
     }
-    
+
     // Hybrid Round Robin Schedule by Conference
     private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId)
     {
@@ -330,199 +330,113 @@ class ScheduleController extends Controller
             $teams = Teams::where('league_id', $leagueId)->get();
             $teamsByConference = $teams->groupBy('conference_id');
             $conferenceIds = $teamsByConference->keys();
-            
-            // Validate conference structure
+
             $numTeamsPerConference = array_map('count', $teamsByConference->toArray());
-            $isUniformConference = count(array_unique($numTeamsPerConference)) === 1 && $numTeamsPerConference[$conferenceIds[0]] === 5;
+            $isUniformConference = count(array_unique($numTeamsPerConference)) === 1;
             
-            if ($isUniformConference && count($conferenceIds) < 3) {
-                throw new \Exception("Schedule requires at least 3 conferences with 5 teams each for interconference double round-robin.");
-            }
-            
+            // Initialize matches array
             $allMatches = [];
             $globalRoundCounter = 1;
-            
-            // Step 2: Intraconference Single Round Robin
+
+            // Step 2: Intra-conference Double Round Robin
             foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
-                $numTeams = count($conferenceTeams);
-                $gameIdCounter = 1;
-                
-                // Generate single round robin matches within conference
-                for ($round = 0; $round < ($numTeams - 1); $round++) {
-                    for ($i = 0; $i < $numTeams / 2; $i++) {
-                        $homeIndex = ($round + $i) % ($numTeams - 1);
-                        $awayIndex = ($numTeams - 1 - $i + $round) % ($numTeams - 1);
-                        
-                        if ($i == 0 && $numTeams % 2 == 0) {
-                            $awayIndex = $numTeams - 1;
-                        }
-                        
-                        $homeTeam = $conferenceTeams[$homeIndex];
-                        $awayTeam = $conferenceTeams[$awayIndex];
-                        
-                        if ($homeTeam->id != $awayTeam->id) {
-                            $allMatches[] = [
-                                'season_id' => $seasonId,
-                                'game_id' => $seasonId . '-' . $conferenceId . '-intra-' . $gameIdCounter,
-                                'round' => $globalRoundCounter,
-                                'conference_id' => $conferenceId,
-                                'home_id' => $homeTeam->id,
-                                'away_id' => $awayTeam->id,
-                                'home_score' => 0,
-                                'away_score' => 0,
-                                'match_type' => 'intra'
-                            ];
-                            $gameIdCounter++;
-                            $globalRoundCounter++;
-                        }
+                $teamList = $conferenceTeams->pluck('id')->toArray();
+                $numTeams = count($teamList);
+                for ($i = 0; $i < $numTeams; $i++) {
+                    for ($j = $i + 1; $j < $numTeams; $j++) {
+                        $home = $teamList[$i];
+                        $away = $teamList[$j];
+
+                        // First match (home vs away)
+                        $allMatches[] = [
+                            'season_id' => $seasonId,
+                            'game_id' => $seasonId . '-' . $conferenceId . '-intra-' . $globalRoundCounter,
+                            'round' => $globalRoundCounter++,
+                            'conference_id' => $conferenceId,
+                            'home_id' => $home,
+                            'away_id' => $away,
+                            'home_score' => 0,
+                            'away_score' => 0,
+                           'winner_id' => 0,
+                        ];
+
+                        // Second match (reverse home/away)
+                        $allMatches[] = [
+                            'season_id' => $seasonId,
+                            'game_id' => $seasonId . '-' . $conferenceId . '-intra-' . $globalRoundCounter,
+                            'round' => $globalRoundCounter++,
+                            'conference_id' => $conferenceId,
+                            'home_id' => $away,
+                            'away_id' => $home,
+                            'home_score' => 0,
+                            'away_score' => 0,
+                            'winner_id' => 0,
+                        ];
                     }
                 }
             }
-            
-            // Step 3: Interconference Matchups - Double Round Robin for Dynamic Conferences
-            if ($isUniformConference) {
-                $interMatches = [];
-                $usedMatchups = [];
-                $numConferences = count($conferenceIds);
-                
-                // Generate interconference matchups for each pair of conferences
-                foreach ($conferenceIds as $confA) {
-                    foreach ($conferenceIds as $confB) {
-                        if ($confA >= $confB) continue;
-                        
-                        $teamsA = $teamsByConference[$confA];
-                        $teamsB = $teamsByConference[$confB];
-                        
-                        // Create a double round-robin schedule between conferences
-                        for ($i = 0; $i < 5; $i++) {
-                            for ($j = 0; $j < 5; $j++) {
-                                $teamA = $teamsA[$i];
-                                $teamB = $teamsB[$j];
-                                $matchupKey = min($teamA->id, $teamB->id) . '-' . max($teamA->id, $teamB->id);
-                                
-                                // Schedule exactly two matches for each team pair
-                                if (!isset($usedMatchups[$matchupKey])) {
-                                    // First match: Team A at home
-                                    $interMatches[] = [
-                                        'season_id' => $seasonId,
-                                        'game_id' => $seasonId . '-inter-' . $globalRoundCounter,
-                                        'round' => $globalRoundCounter,
-                                        'conference_id' => $confA, // Use home team's conference
-                                        'home_id' => $teamA->id,
-                                        'away_id' => $teamB->id,
-                                        'home_score' => 0,
-                                        'away_score' => 0,
-                                        'match_type' => 'inter'
-                                    ];
-                                    $globalRoundCounter++;
-                                    
-                                    // Second match: Team B at home
-                                    $interMatches[] = [
-                                        'season_id' => $seasonId,
-                                        'game_id' => $seasonId . '-inter-' . $globalRoundCounter,
-                                        'round' => $globalRoundCounter,
-                                        'conference_id' => $confB, // Use home team's conference
-                                        'home_id' => $teamB->id,
-                                        'away_id' => $teamA->id,
-                                        'home_score' => 0,
-                                        'away_score' => 0,
-                                        'match_type' => 'inter'
-                                    ];
-                                    $globalRoundCounter++;
-                                    
-                                    $usedMatchups[$matchupKey] = 2;
-                                }
-                            }
-                        }
-                    }
-                }
-                
-                $allMatches = array_merge($allMatches, $interMatches);
-            } else {
-                // Fallback interconference logic for non-uniform conferences
-                $interGamesPerTeam = array_fill_keys($teams->pluck('id')->toArray(), 0);
-                $usedMatchups = [];
-                $interGamesTarget = 6;
-                
-                $allPossibleMatchups = [];
-                foreach ($conferenceIds as $confA) {
-                    foreach ($conferenceIds as $confB) {
-                        if ($confA >= $confB) continue;
-                        
-                        $teamsA = $teamsByConference[$confA];
-                        $teamsB = $teamsByConference[$confB];
-                        
-                        foreach ($teamsA as $teamA) {
-                            foreach ($teamsB as $teamB) {
-                                $allPossibleMatchups[] = [
-                                    'team_a' => $teamA->id,
-                                    'team_b' => $teamB->id,
-                                    'conf_a' => $confA,
-                                    'conf_b' => $confB
-                                ];
-                            }
-                        }
-                    }
-                }
-                
-                shuffle($allPossibleMatchups);
-                
-                while (!empty($allPossibleMatchups)) {
-                    foreach ($allPossibleMatchups as $key => $matchup) {
-                        $teamA = $matchup['team_a'];
-                        $teamB = $matchup['team_b'];
-                        
-                        if ($interGamesPerTeam[$teamA] < $interGamesTarget && 
-                            $interGamesPerTeam[$teamB] < $interGamesTarget && 
-                            !isset($usedMatchups["$teamA-$teamB"]) && 
-                            !isset($usedMatchups["$teamB-$teamA"])) {
-                            
-                            $isTeamAHome = rand(0, 1) == 1;
-                            $homeId = $isTeamAHome ? $teamA : $teamB;
-                            $awayId = $isTeamAHome ? $teamB : $teamA;
-                            $homeConf = $isTeamAHome ? $matchup['conf_a'] : $matchup['conf_b'];
-                            
-                            $allMatches[] = [
-                                'season_id' => $seasonId,
-                                'game_id' => $seasonId . '-inter-' . $globalRoundCounter,
-                                'round' => $globalRoundCounter,
-                                'conference_id' => $homeConf,
-                                'home_id' => $homeId,
-                                'away_id' => $awayId,
-                                'home_score' => 0,
-                                'away_score' => 0,
-                                'match_type' => 'inter'
-                            ];
-                            
-                            $interGamesPerTeam[$teamA]++;
-                            $interGamesPerTeam[$teamB]++;
-                            $usedMatchups["$teamA-$teamB"] = true;
-                            $globalRoundCounter++;
-                        }
-                        
-                        unset($allPossibleMatchups[$key]);
-                        
-                        if (min($interGamesPerTeam) == $interGamesTarget) {
-                            break 2;
-                        }
-                    }
-                }
-                
-                foreach ($teams as $team) {
-                    if ($interGamesPerTeam[$team->id] != $interGamesTarget) {
-                        throw new \Exception("Team ID {$team->id} has {$interGamesPerTeam[$team->id]} interconference games instead of {$interGamesTarget}");
-                    }
+
+            // Step 3: Inter-conference - 10 matches per team, single matchup per team
+            $teamIdsByConf = [];
+            foreach ($teamsByConference as $confId => $confTeams) {
+                foreach ($confTeams as $team) {
+                    $teamIdsByConf[$confId][] = $team->id;
                 }
             }
-            
-            // Insert all matches
-            if (!empty($allMatches)) {
-                Schedules::insert($allMatches);
+
+            $interMatchesPerTeam = array_fill_keys($teams->pluck('id')->toArray(), 0);
+            $usedPairs = [];
+
+            // Generate Inter-conference matchups
+            foreach ($teams as $team) {
+                $teamId = $team->id;
+                $teamConf = $team->conference_id;
+                $opponentsNeeded = 10;
+
+                // Get teams from other conferences
+                $opponents = collect($teamIdsByConf)
+                    ->except($teamConf)
+                    ->flatten()
+                    ->shuffle()
+                    ->take($opponentsNeeded)
+                    ->toArray();
+
+                foreach ($opponents as $opponentId) {
+                    $pairKey = min($teamId, $opponentId) . '-' . max($teamId, $opponentId);
+                    if (isset($usedPairs[$pairKey])) continue;
+
+                    $homeId = rand(0, 1) ? $teamId : $opponentId;
+                    $awayId = $homeId === $teamId ? $opponentId : $teamId;
+
+                    $allMatches[] = [
+                        'season_id' => $seasonId,
+                        'game_id' => $seasonId . '-inter-' . $globalRoundCounter,
+                        'round' => $globalRoundCounter++,
+                        'conference_id' => $teamConf, // Inter-conference matches have no conference
+                        'home_id' => $homeId,
+                        'away_id' => $awayId,
+                        'home_score' => 0,
+                        'away_score' => 0,
+                        'winner_id' => 0,
+                    ];
+
+                    $interMatchesPerTeam[$teamId]++;
+                    $interMatchesPerTeam[$opponentId]++;
+                    $usedPairs[$pairKey] = true;
+                }
+
+                // If we couldn't generate 10 inter-conference matches, throw an exception
+                if ($interMatchesPerTeam[$teamId] < $opponentsNeeded) {
+                    throw new \Exception("Unable to find enough inter-conference opponents for team {$teamId}.");
+                }
             }
-            
+
+            // Insert all matches into the database
+            DB::table('schedules')->insert($allMatches);
+
             DB::commit();
             return true;
-            
+
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
