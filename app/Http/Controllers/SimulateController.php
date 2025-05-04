@@ -2109,163 +2109,6 @@ class SimulateController extends Controller
             ]);
     }
 
-    public function fixTeamPositionBalanceV1($teamId)
-    {
-        $seasonId = get_current_season_id();
-        $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-    
-        // Step 1: Get current roster count
-        $rosterCount = DB::table('players')
-            ->where('team_id', $teamId)
-            ->where('is_active', true)
-            ->count();
-    
-        // Step 2: Get position counts from view
-        $counts = DB::table('players_by_team_and_position')
-            ->where('team_id', $teamId)
-            ->first();
-    
-        if (!$counts) {
-            return response()->json(['error' => 'Team not found in view.'], 404);
-        }
-    
-        $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val)->toArray();
-        $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < 3);
-        $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > 3);
-        
-    
-        // =============== CASE 1: Roster < 15 ====================
-        if ($rosterCount < 15) {
-            while ($rosterCount < 15) {
-                $lowestPosition = $posCounts->sort()->keys()->first();
-    
-                $agent = $this->getBestFreeAgentAvailable($lowestPosition);
-                $contractYears = $this->getContractYearsBasedOnRole($agent->role);
-                if (!$agent) break;
-
-                DB::table('players')->where('id', $agent->player_id)->update([
-                    'team_id' => $teamId,
-                    'contract_years' => $contractYears,
-                ]);
-    
-                DB::table('transactions')->insert([
-                    'player_id' => $agent->player_id,
-                    'season_id' => $seasonId,
-                    'details' => "Signed to fill position {$lowestPosition}",
-                    'from_team_id' => 0,
-                    'to_team_id' => $teamId,
-                    'status' => 'signed',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->player_id);
-    
-                $rosterCount++;
-    
-                // Update position counts
-                $posCounts[$lowestPosition]++;
-            }
-    
-            return response()->json(['message' => 'Signed players to reach 15-man roster.']);
-        }
-    
-        // =============== CASE 2: Roster == 15 && underfilled positions ================
-        if ($rosterCount == 15 && $positionsNeeding->isNotEmpty()) {
-            foreach ($positionsNeeding as $position => $missing) {
-                for ($i = 0; $i < $missing; $i++) {
-                    // Find a position to waive from
-                    $overflow = $positionsOverfilled->sortDesc()->keys()->first();
-    
-                    if (!$overflow || $posCounts[$overflow] <= 3) break;
-    
-                    $playerToWaive = DB::table('players')
-                        ->where('players.team_id', $teamId)
-                        ->where('players.is_active', true)
-                        ->where(function ($query) use ($overflow) {
-                            $query->where('players.position', $overflow)
-                                ->orWhere('players.position', 'like', $overflow . '/%')
-                                ->orWhere('players.position', 'like', '%/' . $overflow)
-                                ->orWhere('players.position', 'like', '%/' . $overflow . '/%');
-                        })
-                        ->select('players.*')
-                        ->get()
-                        ->map(function ($player) use ($seasonId) {
-                            // Get all season stats for this player (regardless of team) in this season
-                            $stats = DB::table('player_season_stats')
-                                ->where('player_id', $player->id)
-                                ->where('season_id', $seasonId)
-                                ->get();
-
-                            // Add up or average stats
-                            $player->total_games = $stats->sum('games_played');
-                            $player->total_minutes = $stats->sum('minutes');
-                            $player->avg_per = $stats->avg('per');
-                            $player->total_per = $stats->sum('per'); // Optional
-
-                            return $player;
-                        })
-                        ->sortBy([
-                            ['contract_years', 'asc'],
-                            ['avg_per', 'asc'], // or use 'total_per' if you want total contribution
-                        ])
-                        ->first();
-
-    
-                    if (!$playerToWaive) continue;
-    
-                    // Waive player
-                    DB::table('players')->where('id', $playerToWaive->id)->update([
-                        'contract_years' => 0,
-                        'team_id' => 0,
-                    ]);
-    
-                    DB::table('transactions')->insert([
-                        'player_id' => $playerToWaive->id,
-                        'season_id' => $seasonId,
-                        'details' => "Waived to rebalance position",
-                        'from_team_id' => $teamId,
-                        'to_team_id' => 0,
-                        'status' => 'waived',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-    
-                    // Sign replacement
-                    $replacement = $this->getBestFreeAgentAvailable($position);
-                    $contractYears = $this->getContractYearsBasedOnRole($replacement->role);
-                    if (!$replacement) continue;
-                    
-                    DB::table('players')->where('id', $replacement->player_id)->update([
-                        'team_id' => $teamId,
-                        'contract_years' => $contractYears,
-                    ]);
-    
-                    DB::table('transactions')->insert([
-                        'player_id' => $replacement->player_id,
-                        'season_id' => $seasonId,
-                        'details' => "Signed to fill underfilled position $position",
-                        'from_team_id' => 0,
-                        'to_team_id' => $teamId,
-                        'status' => 'signed',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-    
-                    (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
-                    // Update in-memory counts
-                    $posCounts[$overflow]--;
-                    $posCounts[$position]++;
-                }
-            }
-    
-            return response()->json(['message' => 'Roster balanced by waiving and signing players.']);
-        }
-    
-        // =============== CASE 3: Roster is full and all positions are fine ================
-        return response()->json(['message' => 'Roster already full and positionally balanced.']);
-    }
-    
     public function fixTeamPositionBalance($teamId)
     {
         $seasonId = get_current_season_id();
@@ -2396,12 +2239,12 @@ class SimulateController extends Controller
     
                                 $player->total_games = $stats->sum('games_played');
                                 $player->total_minutes = $stats->sum('minutes');
-                                $player->avg_per = $stats->avg('per');
+                                $player->avg_eff = $stats->avg('eff');
                                 return $player;
                             })
                             ->sortBy([
                                 ['contract_years', 'asc'],
-                                ['avg_per', 'asc'],
+                                ['avg_eff', 'asc'],
                             ])
                             ->first();
     
@@ -2501,12 +2344,12 @@ class SimulateController extends Controller
     
                 $player->total_games = $stats->sum('games_played');
                 $player->total_minutes = $stats->sum('minutes');
-                $player->avg_per = $stats->avg('per');
+                $player->avg_eff = $stats->avg('eff');
                 return $player;
             })
             ->sortBy([
                 ['contract_years', 'asc'],
-                ['avg_per', 'asc'],
+                ['avg_eff', 'asc'],
             ])
             ->first();
     
