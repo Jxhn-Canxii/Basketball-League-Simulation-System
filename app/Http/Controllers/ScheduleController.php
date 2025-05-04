@@ -1210,6 +1210,7 @@ class ScheduleController extends Controller
             if (!is_numeric($round)) {
                 // Use DB facade to fetch overall_rank of both teams
                 $teams = DB::table('standings_view')
+                    ->where('season_id', $seasonId)
                     ->whereIn('team_id', [$pair[0], $pair[1]])
                     ->pluck('overall_rank', 'team_id');
 
