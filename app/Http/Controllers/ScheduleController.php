@@ -1116,14 +1116,16 @@ class ScheduleController extends Controller
         $winners = $query->pluck('winner_id')->toArray();
 
         // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
-        $winnersFormatted = DB::table('standings_view')
-        ->where('season_id', $seasonId)
-        ->whereIn('team_id', $winners)
-        ->orderBy('overall_rank', 'asc')
-        ->pluck('team_id')
-        ->toArray();
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
+            $winners = DB::table('standings_view')
+                ->where('season_id', $seasonId)
+                ->whereIn('team_id', $winners)
+                ->orderBy('overall_rank', 'asc')
+                ->pluck('team_id')
+                ->toArray();
+        }
 
-        return $winnersFormatted;
+        return $winners;
     }
 
     private static function pairTeams($teams, $pairCount)
