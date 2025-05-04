@@ -1209,9 +1209,9 @@ class ScheduleController extends Controller
 
             if (!is_numeric($round)) {
                 // Use DB facade to fetch overall_rank of both teams
-                $teams = DB::table('teams')
-                    ->whereIn('id', [$pair[0], $pair[1]])
-                    ->pluck('overall_rank', 'id');
+                $teams = DB::table('standings_view')
+                    ->whereIn('team_id', [$pair[0], $pair[1]])
+                    ->pluck('overall_rank', 'team_id');
 
                 if (!isset($teams[$pair[0]]) || !isset($teams[$pair[1]])) {
                     throw new \Exception("Team ranks not found for team IDs: {$pair[0]}, {$pair[1]}");
