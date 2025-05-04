@@ -65,7 +65,7 @@ VALUES
 (55, 'Poseidons', 'POS', '006D75', 'E9072B', 1, 4, 'Surigao City', 'Sea gods ruling tides with mining muscle', NOW(), NOW()), -- San Diego Padres (MLB colors)
 (56, 'Cyclones', 'CYC', '4B0082', 'FF4500', 1, 4, 'Cotabato City', 'River city storms with Maguindanao force', NOW(), NOW()), -- Brooklyn Nets (NBA inspiration)
 (57, 'Force', 'FRC', '006BB6', 'ED174C', 1, 4, 'Zamboanga del Sur', 'Zamboanga swirl charging with hilltop speed', NOW(), NOW()), -- Philadelphia 76ers (NBA)
-(58, 'Astronauts', 'AST', '004687', '17457C', 1, 4, 'Marawi', 'Lanao explorers orbiting in rebuilt glory', NOW(), NOW()), -- Houston Astros (MLB)
+(58, 'Astronauts', 'AST', '004687', '17457C', 1, 4, 'Lanao del Sur', 'Lanao explorers orbiting in rebuilt glory', NOW(), NOW()), -- Houston Astros (MLB)
 (59, 'Demons', 'DMN', '0B162A', 'C83803', 1, 4, 'Iligan City', 'Waterfall phantoms striking from hydro heights', NOW(), NOW()), -- Chicago Bears (NFL colors)
 (60, 'Devils', 'DVL', 'D50A0A', '34302B', 1, 4, 'Malaybalay', 'Bukidnon tempters rising from pine-kissed plateaus', NOW(), NOW()), -- New Jersey Devils (NHL)
 (61, 'Bulldogs', 'BD', '003087', '000000', 1, 4, 'Kidapawan', 'Volcano guards bulldozing with hot spring grit', NOW(), NOW()), -- Georgia Bulldogs (NCAA)
