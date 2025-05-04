@@ -185,6 +185,8 @@ class SimulateController extends Controller
         $homeMinutes = $this->distributeMinutes($homeTeamPlayers, $totalMinutes, $request->schedule_id);
         $awayMinutes = $this->distributeMinutes($awayTeamPlayers, $totalMinutes, $request->schedule_id);
 
+        $homeChemistry = $this->getTeamChemistry($currentSeasonId, $gameData->home_team_id);
+        $awayChemistry = $this->getTeamChemistry($currentSeasonId, $gameData->away_team_id);
         // Simulate player game stats for home team
         // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
@@ -201,7 +203,7 @@ class SimulateController extends Controller
             $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
 
-            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
+            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers,$homeChemistry, true, true);
 
             // Assign returned values to variables
             $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -258,7 +260,7 @@ class SimulateController extends Controller
             $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
 
-            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
+            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers, $awayChemistry, true, false);
 
             // Assign returned values to variables
             $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -684,6 +686,8 @@ class SimulateController extends Controller
             $homeMinutes = $this->distributeMinutes($homeTeamPlayers, $totalMinutes, $request->schedule_id);
             $awayMinutes = $this->distributeMinutes($awayTeamPlayers, $totalMinutes, $request->schedule_id);
             
+            $homeChemistry = $this->getTeamChemistry($currentSeasonId, $gameData->home_team_id);
+            $awayChemistry = $this->getTeamChemistry($currentSeasonId, $gameData->away_team_id);
             // Simulate home team player stats with detailed shooting metrics
             foreach ($homeTeamPlayers as $player) {
                 $minutes = (float) $homeMinutes[$player->id];
@@ -699,7 +703,7 @@ class SimulateController extends Controller
                 $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
     
     
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers,$homeChemistry, true, true);
 
                 // Assign returned values to variables
                 $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -756,7 +760,7 @@ class SimulateController extends Controller
                 $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
     
     
-                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers);
+                $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers, $awayChemistry, true, false);
 
                 // Assign returned values to variables
                 $twoPointAttempts = $shotStats['two_point_attempts'];
@@ -1179,8 +1183,8 @@ class SimulateController extends Controller
         );
         return round($stealsPerMinute * $minutes * $performanceFactor / 4);
     }
-    
-    private function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry = 50, $isClutchTime = false)
+    // $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers,$homeChemistry, true, true);
+    private function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry = 50, $isClutchTime = false, $isHomeAdvantage)
     {
         $positionWeights = [
             'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
@@ -1219,7 +1223,8 @@ class SimulateController extends Controller
         $morale = $player->morale ?? 50;
         $moraleFactor = 0.9 + ($morale / 1000);     // 0.9 ~ 1.4 range (at morale 40 ~ 100)
         $chemistryFactor = 0.9 + ($chemistry / 1000); // 0.9 ~ 1.4 range (at chemistry 40 ~ 100)
-    
+        $homeAdvantageFactor = $isHomeAdvantage ? 1.05 : 1.0; // 5% boost if at home
+
         $baseAttempts = max(1, round($minutes * 0.8));
         $foulImpact = $fouls * 0.05;
         $turnoverImpact = $turnovers * 0.1;
@@ -1228,8 +1233,8 @@ class SimulateController extends Controller
         $attemptBias = rand(85, 115) / 100;
         $threePointWeight = $positionFactor['three_point'] * $attemptBias;
         $twoPointWeight = 1 - $threePointWeight;
-    
-        $totalFactor = $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost * $moraleFactor * $chemistryFactor;
+
+        $totalFactor = $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost * $moraleFactor * $chemistryFactor * $homeAdvantageFactor;
     
         $rawAdjustedAttempts = $adjustedBaseAttempts * $totalFactor;
         $maxAttempts = ($player->role === 'star player') ? 40 : 35;
@@ -1296,7 +1301,6 @@ class SimulateController extends Controller
         ];
     }
     
-
     public function getScheduleIds(Request $request)
     {
         // Validate the request data
@@ -2065,7 +2069,13 @@ class SimulateController extends Controller
             ->where('id', $gameData->season_id)
             ->update($columnsToUpdate);
     }
-
+    private function getTeamChemistry($seasonId, $teamId)
+    {
+        return DB::table('team_season_info')
+            ->where('season_id', $seasonId)
+            ->where('team_id', $teamId)
+            ->value('chemistry');
+    }
     // Method to handle finals logic
     private function updateFinalsWinner($gameData, $winnerId, $homeScore, $awayScore)
     {
