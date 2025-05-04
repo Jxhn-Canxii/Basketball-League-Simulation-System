@@ -971,9 +971,6 @@ class ScheduleController extends Controller
                 // Pair the winners of semi-finals for finals
                 $winners = self::getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
 
-                // Shuffle the winners array to randomize the order
-                shuffle($winners);
-
                 $pairings = self::pairTeams($winners, 4);
                 break;
             case 'finals':
@@ -986,7 +983,7 @@ class ScheduleController extends Controller
         return $pairings;
     }
 
-    private static function getWinnersOfRound($round, $seasonId, $conferenceId)
+    private static function getWinnersOfRoundV1($round, $seasonId, $conferenceId)
     {
         // Retrieve the winners of the specified round from the database
         $winners = false;
@@ -1007,25 +1004,38 @@ class ScheduleController extends Controller
 
         // Iterate through the winners to determine the winning teams
         foreach ($winners as $game) {
-            if ($game->home_score > $game->away_score) {
-                $winningIds[] = $game->home_id;
-            } elseif ($game->away_score > $game->home_score) {
-                $winningIds[] = $game->away_id;
-            } else {
-                // Handle draws if necessary
-            }
+            $winningIds[] = $game->winner_id;
         }
 
-        // // If the round is semi-finals, order the winning teams by their overall rank
-        // if ($round == 'semi_finals') {
-        //     $winningIds = DB::table('standings_view')
-        //         ->whereIn('team_id', $winningIds)  // Filter by the winning team IDs
-        //         ->orderBy('overall_rank')  // Order by overall rank
-        //         ->pluck('team_id')  // Get the ordered list of team IDs
-        //         ->toArray();  // Convert the result to a plain array
-        // }
-
         return $winningIds;
+    }
+    
+    private static function getWinnersOfRound($round, $seasonId, $conferenceId)
+    {
+        $winners = [];
+
+        // Build base query depending on round
+        $query = DB::table('schedules')
+            ->where('round', $round)
+            ->where('season_id', $seasonId);
+
+        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
+            // Filter by conference only if not special round
+            $query->where('conference_id', $conferenceId);
+        }
+
+        $winners = $query->pluck('winner_id')->toArray();
+
+        // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
+            $winners = DB::table('standings_view')
+                ->whereIn('team_id', $winners)
+                ->orderBy('overall_rank', 'asc')
+                ->pluck('team_id')
+                ->toArray();
+        }
+
+        return $winners;
     }
 
     private static function pairTeams($teams, $pairCount)
@@ -1040,7 +1050,7 @@ class ScheduleController extends Controller
     }
 
     // Function to create schedule for a round of playoff matches
-    private static function createSchedule($pairings, $seasonId, $round, $conferenceId)
+    private static function createScheduleV1($pairings, $seasonId, $round, $conferenceId)
     {
 
         $schedule = [];
@@ -1070,6 +1080,52 @@ class ScheduleController extends Controller
         return $schedule;
     }
 
+    private static function createSchedule($pairings, $seasonId, $round, $conferenceId)
+    {
+        $schedule = [];
+
+        foreach ($pairings as $game_number => $pair) {
+            if (!is_array($pair) || count($pair) < 2) {
+                throw new \Exception("Each pairing must contain exactly two team IDs.");
+            }
+
+            $homeId = $pair[0];
+            $awayId = $pair[1];
+
+            if (!is_numeric($round)) {
+                // Use DB facade to fetch overall_rank of both teams
+                $teams = DB::table('teams')
+                    ->whereIn('id', [$pair[0], $pair[1]])
+                    ->pluck('overall_rank', 'id');
+
+                if (!isset($teams[$pair[0]]) || !isset($teams[$pair[1]])) {
+                    throw new \Exception("Team ranks not found for team IDs: {$pair[0]}, {$pair[1]}");
+                }
+
+                // Lower rank is better
+                if ($teams[$pair[0]] > $teams[$pair[1]]) {
+                    $homeId = $pair[1];
+                    $awayId = $pair[0];
+                }
+            }
+
+            $game_id = 'S' . $seasonId . '-R' . $round . '-G' . ($game_number + 1) . 'C-' . $conferenceId;
+
+            $schedule[] = [
+                'home_id' => $homeId,
+                'conference_id' => ($round == 'finals' || $round == 'interconference_semi_finals') ? 0 : $conferenceId,
+                'game_id' => $game_id,
+                'away_id' => $awayId,
+                'season_id' => $seasonId,
+                'round' => $round,
+                'home_score' => 0,
+                'away_score' => 0,
+                'winner_id' => 0,
+            ];
+        }
+
+        return $schedule;
+    }
     private static function insertSchedule($season, $round, $schedule)
     {
         // Start a database transaction

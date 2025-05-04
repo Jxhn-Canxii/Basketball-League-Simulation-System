@@ -1217,13 +1217,13 @@ class SimulateController extends Controller
         $roleFactor = $roleMultipliers[strtolower($player->role)] ?? 1.0;
         $fatigueFactor = max(0.5, (100 - ($player->fatigue ?? 0)) / 100);
         $injuryFactor = $player->is_injured ? 0.3 : 1.0;
-        $clutchBoost = ($isClutchTime && ($player->clutch_rating ?? 50) > 80) ? 1.2 : 1.0;
+        $clutchBoost = ($isClutchTime && ($player->clutch_rating ?? 50) > 80) ? 0.9 : 0.5; // 0.5 ~ 1.4 range (at clutch rating 40 ~ 100)
     
         // 🆕 New: Chemistry and Morale factors
         $morale = $player->morale ?? 50;
         $moraleFactor = 0.9 + ($morale / 1000);     // 0.9 ~ 1.4 range (at morale 40 ~ 100)
         $chemistryFactor = 0.9 + ($chemistry / 1000); // 0.9 ~ 1.4 range (at chemistry 40 ~ 100)
-        $homeAdvantageFactor = $isHomeAdvantage ? 1.05 : 1.0; // 5% boost if at home
+        $homeAdvantageFactor = $isHomeAdvantage ? 0.8 : 0.5; // 0.5 ~ 1.2 range (at home advantage 0 ~ 100)
 
         $baseAttempts = max(1, round($minutes * 0.8));
         $foulImpact = $fouls * 0.05;
