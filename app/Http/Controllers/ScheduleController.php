@@ -81,7 +81,11 @@ class ScheduleController extends Controller
                     $this->createDoubleRoundRobinScheduleByConference($season->id, $request->league_id);
                 } elseif ($request->type == 4) {
                     $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
-                } else {
+                } elseif ($request->type == 5) {
+                    $this->createHalfRoundRobinScheduleByConference($season->id, $request->league_id);
+                } 
+                
+                else {
                     DB::rollBack();
 
                     return response()->json([
@@ -317,6 +321,117 @@ class ScheduleController extends Controller
             // Log the error for debugging
 
             // Optionally, you can throw the exception again or return a custom error message
+            throw $e;
+        }
+    }
+
+    private function createHalfRoundRobinScheduleByConference($seasonId, $leagueId)
+    {
+        DB::beginTransaction(); // Start DB transaction
+        try {
+            // Get all teams for the league
+            $teams = Teams::where('league_id', $leagueId)->get();
+
+            // Group teams by conference and shuffle each group
+            $teamsByConference = $teams->groupBy('conference_id')->map(function ($conferenceTeams) {
+                return $conferenceTeams->shuffle();
+            });
+
+            // Loop through each conference
+            foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
+                $matches = [];
+
+                $numTeams = count($conferenceTeams);
+                $isOdd = $numTeams % 2 !== 0;
+                $matchLimit = floor(($numTeams - 1) / 2); // Half round robin match count per team
+
+                // Track each team's match and bye counts
+                $teamGameCounts = [];
+                $teamByeRounds = [];
+                foreach ($conferenceTeams as $team) {
+                    $teamGameCounts[$team->id] = 0;
+                    $teamByeRounds[$team->id] = [];
+                }
+
+                // Extract team IDs and add dummy team for odd count
+                $conferenceTeamIds = $conferenceTeams->pluck('id')->toArray();
+                if ($isOdd) {
+                    $byeTeamId = -1; // Dummy ID for bye
+                    $conferenceTeamIds[] = $byeTeamId;
+                }
+
+                // Generate all unique pairings
+                $allMatchups = [];
+                for ($i = 0; $i < count($conferenceTeamIds); $i++) {
+                    for ($j = $i + 1; $j < count($conferenceTeamIds); $j++) {
+                        $allMatchups[] = [$conferenceTeamIds[$i], $conferenceTeamIds[$j]];
+                    }
+                }
+
+                shuffle($allMatchups); // Randomize matchups
+
+                $round = 1;
+                $gameIdCounter = 1;
+
+                foreach ($allMatchups as [$teamA, $teamB]) {
+                    // Skip if either team has hit the match limit (ignore bye)
+                    if ($teamA !== -1 && $teamGameCounts[$teamA] >= $matchLimit) continue;
+                    if ($teamB !== -1 && $teamGameCounts[$teamB] >= $matchLimit) continue;
+                    if ($teamA === -1 && $teamB === -1) continue; // Invalid
+
+                    // Increment game count
+                    if ($teamA !== -1) $teamGameCounts[$teamA]++;
+                    if ($teamB !== -1) $teamGameCounts[$teamB]++;
+
+                    // Handle bye week logging
+                    if ($teamA === -1 || $teamB === -1) {
+                        $realTeam = $teamA === -1 ? $teamB : $teamA;
+                        $teamByeRounds[$realTeam][] = $round;
+                        $round++;
+                        continue;
+                    }
+
+                    // Randomly assign home/away
+                    if (rand(0, 1)) {
+                        $home = $teamA;
+                        $away = $teamB;
+                    } else {
+                        $home = $teamB;
+                        $away = $teamA;
+                    }
+
+                    $gameId = $seasonId . '-' . $round . '-' . $conferenceId . '-' . $gameIdCounter;
+                    $matches[] = [
+                        'season_id' => $seasonId,
+                        'game_id' => $gameId,
+                        'round' => $round,
+                        'conference_id' => $conferenceId,
+                        'home_id' => $home,
+                        'away_id' => $away,
+                        'home_score' => 0,
+                        'away_score' => 0,
+                        'winner_id' => 0,
+                    ];
+
+                    $round++;
+                    $gameIdCounter++;
+                }
+
+                // Insert all matches for this conference
+                Schedules::insert($matches);
+
+                // Log bye weeks for review
+                foreach ($teamByeRounds as $teamId => $byeRounds) {
+                    if (!empty($byeRounds)) {
+                        \Log::info("Team ID {$teamId} has byes in rounds: " . implode(', ', $byeRounds));
+                    }
+                }
+            }
+
+            DB::commit(); // Commit all changes
+        } catch (\Exception $e) {
+            DB::rollBack(); // Roll back on error
+            \Log::error("Failed to generate schedule: " . $e->getMessage());
             throw $e;
         }
     }
@@ -1009,7 +1124,7 @@ class ScheduleController extends Controller
 
         return $winningIds;
     }
-    
+
     private static function getWinnersOfRound($round, $seasonId, $conferenceId)
     {
         $winners = [];
