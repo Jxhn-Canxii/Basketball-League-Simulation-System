@@ -343,7 +343,7 @@ class ScheduleController extends Controller
 
                 $numTeams = count($conferenceTeams);
                 $isOdd = $numTeams % 2 !== 0;
-                $matchLimit = 5; // Half round robin match count per team
+                $matchLimit = 10; // Half round robin match count per team
 
                 // Track each team's match and bye counts
                 $teamGameCounts = [];
@@ -1116,7 +1116,7 @@ class ScheduleController extends Controller
         $winners = $query->pluck('winner_id')->toArray();
 
         // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
-        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','quarter_finals')) {
             $winners = DB::table('standings_view')
                 ->where('season_id', $seasonId)
                 ->whereIn('team_id', $winners)
