@@ -2690,156 +2690,8 @@ class SimulateController extends Controller
 
         return $roundMapping[$round] ?? null; // Return the column name based on the round
     }
-    public function updateRolesForAllTeams()
-    {
-        DB::beginTransaction();
     
-        try {
-            // Get all the team IDs
-            $teamIds = DB::table('teams')->pluck('id'); // Assuming your teams table is 'teams'
-    
-            $round = 30;
-            $update = [];
-    
-            foreach ($teamIds as $teamId) {
-                $updateRoles = $this->updateTeamRolesBasedOnStatsV2($teamId, $round);  
-                $update[$teamId] = $updateRoles; // Store the result for each team
-            }
-    
-            DB::commit(); // ✅ Ensure the transaction commits
-    
-            return response()->json([
-                'update' => $update, // ✅ Return response after committing
-            ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error('Error updating roles for all teams: ' . $e->getMessage());
-            return response()->json([
-                'error' => 'Failed to update roles for all teams',
-                'message' => $e->getMessage()
-            ], 500);
-        }
-    }
-    
-    //relaksdlkajsdlkajsdlk
-     private function updateTeamRolesBasedOnStatsV1($teamId, $round)
-    {
-        if (!$teamId) {
-            return false;
-        }
-    
-        DB::beginTransaction();
-        try {
-            $seasonId = get_current_season_id();
-    
-            // Get all active, healthy players on the team
-            $players = DB::table('player_season_stats')
-                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                ->where('player_season_stats.season_id', $seasonId)
-                ->where('players.contract_years', '>', 0)
-                ->where('players.is_injured', false) // ✅ exclude injured players
-                ->where('players.team_id', $teamId)
-                ->selectRaw('
-                    players.id as player_id,
-                    players.role,
-                    players.position,
-                    SUM(player_season_stats.eff) as total_eff
-                ')
-                ->groupBy('players.id', 'players.role', 'players.position')
-                ->orderByDesc('total_eff')
-                ->get();
-    
-            // Step 1: Select one player per position for the starting five
-            $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
-            $startingFive = [];
-            $usedPlayerIds = [];
-    
-            foreach ($positions as $neededPosition) {
-                foreach ($players as $player) {
-                    if (in_array($player->player_id, $usedPlayerIds)) continue;
-    
-                    $playerPositions = explode('/', strtoupper($player->position));
-    
-                    if (in_array($neededPosition, $playerPositions)) {
-                        $startingFive[] = $player;
-                        $usedPlayerIds[] = $player->player_id;
-                        break;
-                    }
-                }
-            }
-    
-            // Fill in extra players for starting five if not enough positions matched
-            foreach ($players as $player) {
-                if (count($startingFive) >= 5) break;
-                if (!in_array($player->player_id, $usedPlayerIds)) {
-                    $startingFive[] = $player;
-                    $usedPlayerIds[] = $player->player_id;
-                }
-            }
-    
-            // Step 2: Assign roles to the starting five
-            $newRoles = [];
-            $roleOrder = ['star player', 'all star', 'all star', 'starter', 'starter'];
-            foreach ($startingFive as $i => $player) {
-                $newRoles[$player->player_id] = $roleOrder[$i];
-            }
-    
-            // Step 3: Next 5 become role players
-            $rolePlayerCount = 0;
-            foreach ($players as $player) {
-                if (in_array($player->player_id, $usedPlayerIds)) continue;
-                if ($rolePlayerCount >= 5) break;
-    
-                $newRoles[$player->player_id] = 'role player';
-                $usedPlayerIds[] = $player->player_id;
-                $rolePlayerCount++;
-            }
-    
-            // Step 4: Remaining players are bench
-            foreach ($players as $player) {
-                if (!in_array($player->player_id, $usedPlayerIds)) {
-                    $newRoles[$player->player_id] = 'bench';
-                }
-            }
-    
-            // Step 5: Update roles in DB
-            foreach ($newRoles as $playerId => $newRole) {
-                $currentRole = collect($players)->firstWhere('player_id', $playerId)->role;
-    
-                if ($currentRole !== $newRole) {
-                    $roleStatus = ($newRole == 'star player') ? 'star player change' : 'role change';
-                    $roundName = is_numeric($round) ? "Round $round" : "Playoffs";
-
-                    DB::table('transactions')->insert([
-                        'player_id' => $playerId,
-                        'season_id' => $seasonId,
-                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. $roundName",
-                        'from_team_id' => $teamId,
-                        'to_team_id' => $teamId,
-                        'status' => $roleStatus,
-                    ]);
-                }
-    
-                DB::table('players')->where('id', $playerId)->update(['role' => $newRole]);
-    
-                DB::table('player_season_stats')
-                    ->where('player_id', $playerId)
-                    ->where('season_id', $seasonId)
-                    ->where('team_id', $teamId)
-                    ->update(['role' => $newRole]);
-            }
-    
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            \Log::error("Error updating team $teamId roles: " . $e->getMessage());
-            return false;
-        }
-    
-        return true;
-    }
-
-    private function updateTeamRolesBasedOnStats($teamId, $round)
+    private function updateTeamRolesBasedOnStatsV1($teamId, $round)
     {
         if (!$teamId) {
             return false;
@@ -2952,6 +2804,184 @@ class SimulateController extends Controller
             }
 
             // Step 5: Update roles in DB
+            foreach ($newRoles as $playerId => $newRole) {
+                $currentRole = collect($players)->firstWhere('player_id', $playerId)['role'];
+                if ($currentRole !== $newRole) {
+                    $roleStatus = ($newRole === 'star player') ? 'star player change' : 'role change';
+                    $roundName = is_numeric($round) ? "Round $round" : "Playoffs";
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerId,
+                        'season_id' => $seasonId,
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. $roundName",
+                        'from_team_id' => $teamId,
+                        'to_team_id' => $teamId,
+                        'status' => $roleStatus,
+                    ]);
+                }
+
+                DB::table('players')->where('id', $playerId)->update(['role' => $newRole]);
+
+                DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
+            }
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error updating team $teamId roles: " . $e->getMessage());
+            return false;
+        }
+
+        return true;
+    }
+
+    private function updateTeamRolesBasedOnStats($teamId, $round)
+    {
+        if (!$teamId) {
+            return false;
+        }
+
+        DB::beginTransaction();
+        try {
+            $seasonId = get_current_season_id();
+            $previousSeasonId = $seasonId - 1;
+
+            // Get all active, healthy players on the team
+            $playersQuery = DB::table('players')
+                ->where('contract_years', '>', 0)
+                ->where('is_injured', false)
+                ->where('team_id', $teamId)
+                ->select('id', 'role', 'position', 'years_pro');
+
+            $playersRaw = $playersQuery->get();
+
+            $playerEfficiencies = [];
+
+            foreach ($playersRaw as $player) {
+                $playerId = $player->id;
+
+                // Total eff for current season
+                $currentEff = DB::table('player_season_stats')
+                    ->where('season_id', $seasonId)
+                    ->where('player_id', $playerId)
+                    ->sum('eff');
+
+                $totalEff = $currentEff;
+
+                // Include last 5 games of last season if early round
+                if ($round <= 5) {
+                    $lastFiveGames = DB::table('player_game_stats')
+                        ->where('season_id', $previousSeasonId)
+                        ->where('player_id', $playerId)
+                        ->orderByDesc('id')
+                        ->limit(5)
+                        ->pluck('eff');
+
+                    if ($lastFiveGames) {
+                        $totalEff += $lastFiveGames->sum();
+                    }
+                }
+
+                $playerEfficiencies[] = [
+                    'player_id' => $playerId,
+                    'position' => $player->position,
+                    'role' => $player->role,
+                    'total_eff' => $totalEff,
+                    'years_pro' => $player->years_pro,
+                ];
+            }
+
+            // Sort by total_eff descending
+            $players = collect($playerEfficiencies)->sortByDesc('total_eff')->values();
+
+            // Step 1: Try to keep the previous star player
+            $newRoles = [];
+            $usedPlayerIds = [];
+            $starAssigned = false;
+
+            $existingStar = $playersRaw->firstWhere('role', 'star player');
+
+            if ($existingStar) {
+                $starStats = $players->firstWhere('player_id', $existingStar->id);
+                if ($starStats && $starStats['years_pro'] > 1) {
+                    $mainPos = strtoupper(explode('/', $starStats['position'])[0] ?? '');
+                    $positionThresholds = [
+                        'PG' => 65,
+                        'SG' => 70,
+                        'SF' => 70,
+                        'PF' => 75,
+                        'C'  => 75,
+                    ];
+                    $threshold = $positionThresholds[$mainPos] ?? 70;
+
+                    if ($starStats['total_eff'] >= $threshold) {
+                        $newRoles[$existingStar->id] = 'star player';
+                        $usedPlayerIds[] = $existingStar->id;
+                        $starAssigned = true;
+                    }
+                }
+            }
+
+            // Step 2: Build the starting five
+            $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+            $startingFive = $starAssigned ? [$players->firstWhere('player_id', $existingStar->id)] : [];
+
+            foreach ($positions as $neededPosition) {
+                foreach ($players as $player) {
+                    if (in_array($player['player_id'], $usedPlayerIds)) continue;
+
+                    $playerPositions = explode('/', strtoupper($player['position']));
+                    if (in_array($neededPosition, $playerPositions)) {
+                        $startingFive[] = $player;
+                        $usedPlayerIds[] = $player['player_id'];
+                        break;
+                    }
+                }
+            }
+
+            // Fill if less than 5
+            foreach ($players as $player) {
+                if (count($startingFive) >= 5) break;
+                if (!in_array($player['player_id'], $usedPlayerIds)) {
+                    $startingFive[] = $player;
+                    $usedPlayerIds[] = $player['player_id'];
+                }
+            }
+
+            // Step 3: Assign roles to starting five
+            $roleOrder = $starAssigned
+                ? ['all star', 'all star', 'starter', 'starter']
+                : ['star player', 'all star', 'all star', 'starter', 'starter'];
+
+            foreach ($startingFive as $i => $player) {
+                if (!isset($newRoles[$player['player_id']])) {
+                    $newRoles[$player['player_id']] = $roleOrder[$i - ($starAssigned ? 1 : 0)];
+                }
+            }
+
+            // Step 4: Assign role players
+            $rolePlayerCount = 0;
+            foreach ($players as $player) {
+                if (in_array($player['player_id'], $usedPlayerIds)) continue;
+                if ($rolePlayerCount >= 5) break;
+
+                $newRoles[$player['player_id']] = 'role player';
+                $usedPlayerIds[] = $player['player_id'];
+                $rolePlayerCount++;
+            }
+
+            // Step 5: Remaining are bench
+            foreach ($players as $player) {
+                if (!in_array($player['player_id'], $usedPlayerIds)) {
+                    $newRoles[$player['player_id']] = 'bench';
+                }
+            }
+
+            // Step 6: Update roles in DB
             foreach ($newRoles as $playerId => $newRole) {
                 $currentRole = collect($players)->firstWhere('player_id', $playerId)['role'];
                 if ($currentRole !== $newRole) {
