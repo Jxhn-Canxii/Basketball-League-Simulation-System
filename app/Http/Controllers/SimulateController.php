@@ -17,6 +17,7 @@ use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\PlayersController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Carbon;
 
 class SimulateController extends Controller
 {
@@ -1341,16 +1342,23 @@ class SimulateController extends Controller
             ->select('id', 'conference_id')
             ->get();
 
-             // Check if half of the rounds are simulated
+         // Check if half of the rounds are simulated
+        $now = now();
+        $currentHour = $now->hour;
+        
+        // Check if the time is between 6 PM (18) and 6 AM (6)
+        $isTimeRestricted = ($currentHour >= 18 || $currentHour < 6);
+        
         $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) - 2 && $latestSeasonStatus == 1;
-
-        if($isTradeDeadline){
+        
+        if ($isTradeDeadline && !$isTimeRestricted) {
             // Update the season status to indicate trade deadline
             DB::table('seasons')
-            ->where('id',  $seasonId)
-            ->update(['status' => config('timeline.in_season_trade')]);
+                ->where('id', $seasonId)
+                ->update(['status' => config('timeline.in_season_trade')]);
+            
+            $isTradeDeadline = false; // Reset after executing
         }
-        $isTradeDeadline = false; // Reset the flag after updating the status
         // Group by conference_id
         $groupedByConference = $schedules->groupBy('conference_id');
 
