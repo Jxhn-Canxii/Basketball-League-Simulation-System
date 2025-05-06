@@ -1344,6 +1344,13 @@ class SimulateController extends Controller
              // Check if half of the rounds are simulated
         $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) - 2 && $latestSeasonStatus == 1;
 
+        if($isTradeDeadline){
+            // Update the season status to indicate trade deadline
+            DB::table('seasons')
+            ->where('id',  $seasonId)
+            ->update(['status' => config('timeline.in_season_trade')]);
+        }
+        $isTradeDeadline = false; // Reset the flag after updating the status
         // Group by conference_id
         $groupedByConference = $schedules->groupBy('conference_id');
 
