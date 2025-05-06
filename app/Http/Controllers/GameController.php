@@ -241,11 +241,10 @@ class GameController extends Controller
         //     return $bStats <=> $aStats;
         // })->first();
 
-        $bestWinningTeamPlayer = $winningTeamPlayersStats->sort(function ($a, $b) {
-            $aStats = $a->points * 1.0 + $a->rebounds * 1.2 + $a->assists * 1.5 + $a->steals * 2.0 + $a->blocks * 2.0 - $a->turnovers * 1.5;
-            $bStats = $b->points * 1.0 + $b->rebounds * 1.2 + $b->assists * 1.5 + $b->steals * 2.0 + $b->blocks * 2.0 - $b->turnovers * 1.5;
-            return $bStats <=> $aStats;
-        })->first();
+        $bestWinningTeamPlayer = $winningTeamPlayersStats
+            ->sortByDesc('eff')
+            ->first();
+    
 
 
         // Fetch player details for the best player of the winning team if exists

@@ -2083,21 +2083,16 @@ class SimulateController extends Controller
         $mvpPlayer = PlayerGameStats::join('players', 'player_game_stats.player_id', '=', 'players.id')
             ->where('player_game_stats.team_id', $winnerId)
             ->where('player_game_stats.game_id', $gameData->game_id)
-            // Calculate a weighted performance metric for the MVP
             ->select(
                 'player_game_stats.*',
-                'players.name as mvp_name', // Include the player's name
-                DB::raw('(
-        player_game_stats.points * 1.0 +
-        player_game_stats.rebounds * 1.2 +
-        player_game_stats.assists * 1.5 +
-        player_game_stats.steals * 2.0 +
-        player_game_stats.blocks * 2.0 -
-        player_game_stats.turnovers * 1.5
-    ) as mvp_score')
+                'players.name as mvp_name',
+                'player_game_stats.eff as mvp_score' // Use eff directly
             )
-            ->orderByDesc('mvp_score') // Order by the calculated performance score
+            ->orderByDesc('player_game_stats.eff') // Sort by eff
             ->first();
+    
+        
+            
 
         // If an MVP player is found, set the player's name and id
         $finalsMVP = $mvpPlayer ? $mvpPlayer->mvp_name : ''; // Use the player's name from the 'mvp_name' alias
