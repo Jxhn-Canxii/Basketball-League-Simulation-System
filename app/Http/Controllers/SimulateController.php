@@ -1694,7 +1694,7 @@ class SimulateController extends Controller
             $requiredRecoveryGames = 25; // Example: Player should recover within 25 games to avoid waiving
 
             //can replace injured players until in season trade deadline...
-            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 1) {
+            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 1 &&  $player->contract_years <= 2) {
                 // **20% Chance to Waive Player if Recovery is Too Long**
                 if (rand(1, 100) <= 20) {
                     // Player is waived due to extended injury recovery period
