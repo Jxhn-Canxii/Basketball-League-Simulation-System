@@ -1776,8 +1776,8 @@ class SimulateController extends Controller
             ->where('is_injured', false)
             ->count();
 
-        // If the team has at least 4 healthy players, no action is needed
-        if ($activePlayersCount >= 4) {
+        // If the team has at least 11 healthy players, no action is needed
+        if ($activePlayersCount >= 11) {
             return $activePlayersCount;
         }
 
