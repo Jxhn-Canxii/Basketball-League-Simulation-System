@@ -1776,13 +1776,13 @@ class SimulateController extends Controller
             ->where('is_injured', false)
             ->count();
 
-        // If the team has at least 7 healthy players, no action is needed
-        if ($activePlayersCount >= 7) {
+        // If the team has at least 4 healthy players, no action is needed
+        if ($activePlayersCount >= 4) {
             return $activePlayersCount;
         }
 
         // Determine how many players need to be added
-        $playersNeeded = 7 - $activePlayersCount;
+        $playersNeeded = 1;
         $signedPlayers = [];
 
         // Find free agents for temporary contracts
@@ -1790,7 +1790,6 @@ class SimulateController extends Controller
             ->where('team_id', 0) // Free agent pool
             ->where('is_injured', 0) // Not injured
             ->where('is_active', 1) // Ensure the player is active
-            ->where('role', '!=', 'star player') // Exclude star players
             ->orderByDesc('overall_rating') // Sort by highest overall rating
             ->orderBy('injury_prone_percentage', 'asc') // Lowest injury-prone percentage first
             ->orderBy('age', 'asc') // Then sort by youngest age
