@@ -1856,7 +1856,7 @@ class SimulateController extends Controller
     private function getBestFreeAgentAvailable($position)
     {
         $positions = explode('/', $position);
-
+    
         // Reusable position filter
         $positionFilter = function ($query) use ($positions) {
             if (count($positions) === 1) {
@@ -1864,35 +1864,32 @@ class SimulateController extends Controller
             } else {
                 $query->where(function ($q) use ($positions) {
                     $q->where('players.position', $positions[0])
-                    ->orWhere('players.position', 'LIKE', '%' . $positions[0] . '%')
-                    ->orWhere('players.position', $positions[1])
-                    ->orWhere('players.position', 'LIKE', '%' . $positions[1] . '%');
+                        ->orWhere('players.position', 'LIKE', '%' . $positions[0] . '%')
+                        ->orWhere('players.position', $positions[1])
+                        ->orWhere('players.position', 'LIKE', '%' . $positions[1] . '%');
                 });
             }
         };
-
+    
         // Top 10 by overall_rating
         $byOverall = DB::table('players')
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
             ->where($positionFilter)
+            ->select(
+                'players.id as player_id',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role'
+            )
             ->orderByDesc('players.overall_rating')
             ->limit(10)
             ->get();
-
-        // Top 10 rookies
-        $byRookies = DB::table('players')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where('players.is_rookie', 1)
-            ->where($positionFilter)
-            ->orderByDesc('players.overall_rating')
-            ->limit(10)
-            ->get();
-
-        // Top 10 by best stats (EFF)
+    
+        // Top 10 by EFF stats
         $byStats = DB::table('players')
             ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
             ->where('players.is_active', 1)
@@ -1919,22 +1916,41 @@ class SimulateController extends Controller
             ->orderByDesc(DB::raw('MAX(player_season_stats.eff)'))
             ->limit(10)
             ->get();
-
-        // Try each collection in order: byOverall, byRookies, byStats
-        foreach ([$byOverall, $byRookies, $byStats] as $collection) {
-            if ($collection->isNotEmpty()) {
-                try {
-                    return $collection->random();
-                } catch (\Exception $e) {
-                    // If random() fails (e.g., collection is empty or other issue), continue to the next collection
-                    continue;
-                }
-            }
-        }
-
-        // Return null if all collections are empty or random selection fails
-        return null;
+    
+        // Top 10 by number of awards
+        $byAwards = DB::table('players')
+            ->leftJoin('season_awards', 'players.id', '=', 'season_awards.player_id')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where($positionFilter)
+            ->select(
+                'players.id as player_id',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role',
+                DB::raw('COUNT(season_awards.id) as awards_count')
+            )
+            ->groupBy(
+                'players.id',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role'
+            )
+            ->orderByDesc(DB::raw('COUNT(season_awards.id)'))
+            ->limit(10)
+            ->get();
+    
+        // Merge all sources and deduplicate
+        $merged = $byOverall->merge($byStats)->merge($byAwards)->unique('player_id')->values();
+    
+        return $merged->isNotEmpty() ? $merged->random() : null;
     }
+    
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
         // Retrieve all active players for the specified team
