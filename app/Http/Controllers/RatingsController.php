@@ -52,7 +52,9 @@ class RatingsController extends Controller
                 $team = Teams::find($teamId);
                 if ($team) {
                     $teamName = $team->name;
+                
                 }
+                $this->updateCoachContract($teamId);
             }
 
             $improvedPlayers = [];
@@ -326,9 +328,9 @@ class RatingsController extends Controller
 
                 // Log the updated ratings
                 $this->logPlayerRatings($player, $seasonId);
+                
             }
 
-            $this->updateCoachContract($teamId);
             // Show alert if this is the last update
             if ($teamId == $lastTeamId) {
                 \Log::info('Processing last update.');
@@ -357,6 +359,7 @@ class RatingsController extends Controller
                 ]);
             }
 
+          
             DB::commit(); // Commit transaction
 
             return response()->json([
@@ -493,7 +496,7 @@ class RatingsController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                return response()->json(['message' => 'Coach waived due to missing team performance.']);
+                return true;
             }
 
             $wins = $teamPerformance->wins ?? 0;
@@ -524,7 +527,7 @@ class RatingsController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                return response()->json(['message' => 'Coach re-signed based on performance!']);
+                return true;
             } else {
                 // Waive coach
                 DB::table('teams')
@@ -552,11 +555,11 @@ class RatingsController extends Controller
                     'updated_at' => now(),
                 ]);
 
-                return response()->json(['message' => 'Coach waived due to poor performance.']);
+                return true;
             }
         }
 
-        return response()->json(['message' => 'Coach contract years updated successfully.']);
+        return true;
     }
 
     private function promoteRetiredPlayersToCoaches()
@@ -574,7 +577,7 @@ class RatingsController extends Controller
             
             if (!$alreadyCoach) {
                 DB::table('coaches')->insert([
-                    'first_name' => $player->name,
+                    'name' => $player->name,
                     'coach_iq' => $player->basketball_iq_rating,
                     'age' => $player->age,
                     'retirement_age' => $retirementAge,
