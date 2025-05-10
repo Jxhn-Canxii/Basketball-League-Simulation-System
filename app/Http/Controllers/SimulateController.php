@@ -1853,60 +1853,6 @@ class SimulateController extends Controller
 
     }
 
-    private function getBestFreeAgentAvailableV1($position)
-    {
-        // Split the position into components (if dual position is passed, otherwise it will be an array with one element)
-        $positions = explode('/', $position);
-
-        // Start building the query for players
-        $bestPlayer = DB::table('players')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where(function ($query) use ($positions) {
-                if (count($positions) == 1) {
-                    // Single position - match exact position
-                    $query->where('players.position', $positions[0]);
-                } else {
-                    // Dual positions - match either position
-                    $query->where('players.position', $positions[0])
-                        ->orWhere('players.position', 'LIKE', '%' . $positions[0] . '%')
-                        ->orWhere('players.position', $positions[1])
-                        ->orWhere('players.position', 'LIKE', '%' . $positions[1] . '%');
-                }
-            })
-            ->select(
-                'players.id as player_id',
-                'players.team_id',
-                'players.overall_rating', 
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc('players.overall_rating')
-            ->first();
-
-        // If no player found with specified role, get random available player
-        if (!$bestPlayer) {
-            $bestPlayer = DB::table('players')
-                ->where('players.is_active', 1)
-                ->where('players.is_injured', 0) 
-                ->where('players.team_id', 0)
-                ->select(
-                    'players.id as player_id',
-                    'players.team_id',
-                    'players.overall_rating',
-                    'players.injury_history', 
-                    'players.age',
-                    'players.role'
-                )
-                ->inRandomOrder() // Pick random player
-                ->first();
-        }
-
-        return $bestPlayer;
-    }
-
     private function getBestFreeAgentAvailable($position)
     {
         $positions = explode('/', $position);
@@ -1974,10 +1920,20 @@ class SimulateController extends Controller
             ->limit(10)
             ->get();
 
-        // Merge the three collections and randomly pick one
-        $merged = $byOverall->merge($byRookies)->merge($byStats)->unique('player_id')->values();
+        // Try each collection in order: byOverall, byRookies, byStats
+        foreach ([$byOverall, $byRookies, $byStats] as $collection) {
+            if ($collection->isNotEmpty()) {
+                try {
+                    return $collection->random();
+                } catch (\Exception $e) {
+                    // If random() fails (e.g., collection is empty or other issue), continue to the next collection
+                    continue;
+                }
+            }
+        }
 
-        return $merged->isNotEmpty() ? $merged->random() : null;
+        // Return null if all collections are empty or random selection fails
+        return null;
     }
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
