@@ -1871,9 +1871,8 @@ class SimulateController extends Controller
             }
         };
     
-        // Get players based on highest overall rating and most awards
+        // Get top 10 players based on highest overall_rating
         $players = DB::table('players')
-            ->leftJoin('season_awards', 'players.id', '=', 'season_awards.player_id')
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
@@ -1884,24 +1883,15 @@ class SimulateController extends Controller
                 'players.overall_rating',
                 'players.injury_history',
                 'players.age',
-                'players.role',
-                DB::raw('COUNT(season_awards.id) as awards_count')
-            )
-            ->groupBy(
-                'players.id',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
                 'players.role'
             )
             ->orderByDesc('players.overall_rating')  // Highest overall rating
-            ->orderByDesc(DB::raw('COUNT(season_awards.id)'))  // Most awards
+            ->limit(30)  // Top 30
             ->get();
     
-        // Return a random player if players are found
+        // Randomly pick one player from the top 10 list
         if ($players->isNotEmpty()) {
-            return $players->random();  // Randomly pick from the list
+            return $players->random();  // Randomly return one player
         }
     
         // Fallback: return any available player at the position
@@ -1916,7 +1906,7 @@ class SimulateController extends Controller
                 'players.overall_rating',
                 'players.injury_history',
                 'players.age',
-                'players.role',
+                'players.role'
             )
             ->orderByDesc('players.overall_rating')
             ->limit(1)
@@ -1924,6 +1914,7 @@ class SimulateController extends Controller
     
         return $fallback;
     }
+    
     
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
