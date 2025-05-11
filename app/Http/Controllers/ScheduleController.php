@@ -44,19 +44,22 @@ class ScheduleController extends Controller
             'league_id' => 'required|exists:leagues,id',
             'match_type' => 'required|in:1,2',
         ]);
-
-        // Check if the match type is valid for double round robin by conference
+    
         if ($request->match_type != 1) {
             return response()->json([
-                'message' => 'Invalid match type or season type for double round robin by conference.',
+                'message' => 'Invalid match type for conference play.',
             ], 400);
         }
-
+    
+        if ($request->type == 1) {
+            return response()->json([
+                'message' => 'Single Elimination not available for this season type.',
+            ], 400);
+        }
+    
         DB::beginTransaction();
-
+    
         try {
-            // Create a new seasons
-
             $season = Seasons::create([
                 'name' => $request->season_name,
                 'type' => $request->type,
@@ -64,61 +67,43 @@ class ScheduleController extends Controller
                 'start_playoffs' => $request->start,
                 'league_id' => $request->league_id,
                 'is_conference' => 1,
-                'status' => config('timeline.start'), // Assuming default status is 'active'
+                'status' => config('timeline.start'),
             ]);
-
-            // Create the double round robin schedule by conference
-            if($request->match_type == 1){
-                if($request->type == 1){
-                    DB::rollBack();
-
-                    return response()->json([
-                        'message' => 'Single Elimination not available for this season type.',
-                    ], 400);
-                } elseif($request->type == 2){
+    
+            switch ($request->type) {
+                case 2:
                     $this->createSingleRoundRobinScheduleByConference($season->id, $request->league_id);
-                } elseif ($request->type == 3) {
+                    break;
+                case 3:
                     $this->createDoubleRoundRobinScheduleByConference($season->id, $request->league_id);
-                } elseif ($request->type == 4) {
+                    break;
+                case 4:
                     $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
-                } elseif ($request->type == 5) {
+                    break;
+                case 5:
                     $this->createHalfRoundRobinScheduleByConference($season->id, $request->league_id);
-                } 
-                
-                else {
-                    DB::rollBack();
-
-                    return response()->json([
-                        'message' => 'Invalid match type.',
-                    ], 400);
-                }
-            }else{
-                DB::rollBack();
-
-                return response()->json([
-                    'message' => 'Match type not available for this season type.',
-                ], 400);
+                    break;
+                default:
+                    throw new \Exception('Invalid season type.');
             }
-
-            // to make sure the teamseasoninfo is stored
-            $this->storeTeamSeasonInfo(); 
+    
+            $this->storeTeamSeasonInfo(); // Store team-season info
             DB::commit();
-
+    
             return response()->json([
                 'message' => 'Created game schedule successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-
-            // Log the exception or handle it as needed
+    
             return response()->json([
                 'message' => 'Failed to create game schedule.',
                 'error' => 'Error creating season and schedule: ' . $e->getMessage(),
-                'season_id' => $request->season_name,
+                'season_name' => $request->season_name,
             ], 500);
         }
     }
-
+    
     private function storeTeamSeasonInfo(){
 
         $latestSeasonId = get_current_season_id();
