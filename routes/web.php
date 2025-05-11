@@ -204,7 +204,7 @@ Route::middleware('auth')->group(function () {
         Route::post('player-best-alltime-by-team', [PlayersController::class, 'getTop10PlayersByTeam'])->name('best.team.players.alltime');
         Route::post('players-per-team-by-season', [PlayersController::class, 'getStarPlayersByTeam'])->name('best.team.star.players');
     
-        Route::get('test-free-agent/{position}', [PlayersController::class, 'getBestFreeAgent'])->name('get.free.agent');
+        Route::get('test-free-agent/{position}', [SimulateController::class, 'getBestFreeAgent'])->name('get.free.agent');
     });
 
     Route::prefix('transactions/')->group(function(){
