@@ -82,22 +82,6 @@ class ConferenceController extends Controller
         ]);
     }
 
-    // Function to get power rankings
-    public function powerRankings(Request $request)
-    {
-        // Retrieve the season_id from the request
-        $seasonId = $request->season_id;
-
-        // Fetch power rankings filtered by season_id
-        $powerRankings = DB::table('power_rankings_view') // Replace with your actual view or table name
-            ->where('season_id', $seasonId)
-            ->orderByDesc('ranking') // Adjust ordering based on your power ranking logic
-            ->get();
-
-        return response()->json([
-            'power_rankings' => $powerRankings,
-        ]);
-    }
 
     // Function to get the results of the previous round in a conference
     public function previousConferenceRoundResults(Request $request)
@@ -128,6 +112,7 @@ class ConferenceController extends Controller
             'previous_round_results' => $previousRoundResults,
         ]);
     }
+
     public function seasonschedules(Request $request)
     {
         $seasonId = $request->season_id;
@@ -284,6 +269,7 @@ class ConferenceController extends Controller
                 'is_injured' => 0, // Set is_injured to 0 for players with no injury recovery games left
             ]);
     }
+
     public function seasonsplayoffs(Request $request)
     {
         // Retrieve the season_id from the request
@@ -297,6 +283,7 @@ class ConferenceController extends Controller
             'playoffs' => $playoffs,
         ]);
     }
+    
     private static function playoffTree($seasonId, $status, $type, $start)
     {
         $status = $status >= 8 ? 8 : $status;

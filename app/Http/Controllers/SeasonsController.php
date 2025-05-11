@@ -101,44 +101,6 @@ class SeasonsController extends Controller
         // Return the seasons data along with pagination information as a JSON response
         return response()->json($response);
     }
-    private function isNewSeason() {
-        // Get the total count of seasons
-        $totalSeasons = DB::table('seasons')->count();
-
-        // Return 4 if there are no seasons
-        if ($totalSeasons == 0) {
-            return 8;
-        }
-
-        // Get the last season status
-        $lastSeasonStatus = DB::table('seasons')
-            ->orderBy('id', 'desc')
-            ->value('status');
-
-        // Check the status and return the appropriate value
-        if ($lastSeasonStatus == config('timeline.finals')) {
-            return 1; //show update awards update to 9
-        } elseif ($lastSeasonStatus == config('timeline.awards')) {
-            return 2; //update player status update to 10
-        } elseif ($lastSeasonStatus == config('timeline.player_update')) {
-            return 3; //player rookie drafting update
-        }
-        elseif ($lastSeasonStatus == config('timeline.draft')) {
-            return 4; //player signing
-        }
-        elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
-            return 5; // player trade
-        }
-        elseif ($lastSeasonStatus == config('timeline.player_signings')) {
-            return 6; // new season
-        }
-        elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
-            return 7; // new season
-        }
-        // Optionally, you can return a default value if no status matches
-        return null;
-    }
-
 
     public function seasonsPerLeague(Request $request)
     {
@@ -251,47 +213,7 @@ class SeasonsController extends Controller
 
         return $conferenceChampions;
     }
-
-    private function championsPerConference($conference_id)
-    {
-        $result = DB::table('teams')
-                ->join('seasons', 'teams.id', '=', 'seasons.finals_winner_id')
-                ->where('teams.conference_id',$conference_id)
-                ->select('seasons.finals_winner_name', 'seasons.name as season_name')
-                ->get();
-        return $result;
-    }
-
-    public function seasonStandings(Request $request)
-    {
-        // Retrieve the season_id from the request
-        $seasonId = $request->season_id;
-
-        // Fetch standings filtered by season_id
-        $standings = DB::table('standings_view')
-            ->where('season_id', $seasonId)
-            ->orderByDesc('wins') // Order by wins in descending order
-            ->orderByDesc('score_difference') // If wins are tied, then order by score_difference in descending order
-            ->get();
-
-        return response()->json([
-            'standings' => $standings,
-        ]);
-    }
-
-    public function seasonsPlayoffs(Request $request)
-    {
-        // Retrieve the season_id from the request
-        $seasonId = $request->season_id;
-        $status = $request->status;
-        $type = $request->type; // 1 is for finished playoffs : 2 for single update
-        $playoffs = ($type == 1 ) ? $this->playoffTree($seasonId,$status) : $this->playoffTreeSingle($seasonId,$status);
-
-        return response()->json([
-            'playoffs' => $playoffs,
-        ]);
-    }
-
+   
     public function getSeasonsDropdown ()
     {
         // Fetch all seasons with their id and name, ordered by the latest season_id
@@ -303,199 +225,55 @@ class SeasonsController extends Controller
         // Return the data as JSON response
         return response()->json($seasons);
     }
-
-    public function seasonSchedules(Request $request)
-    {
-        // Retrieve the season_id from the request
-        $seasonId = $request->season_id;
-
-        $schedules = DB::table('schedule_view')
-            ->where('season_id', $seasonId)
-            ->whereNotIn('round', config('playoffs'))
-            ->get();
-
-        return response()->json([
-            'schedules' => $schedules,
-        ]);
-    }
-    
-    private static function playoffTree($seasonId, $status)
-    {
-        // Define round indices based on status
-        $roundIndices = [
-            1 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-            ],
-            2 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-            ],
-            3 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-                'round_of_16',
-            ],
-            4 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-                'round_of_16',
-                'quarter_finals',
-            ],
-            5 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-                'round_of_16',
-                'quarter_finals',
-                'semi_finals',
-            ],
-            6 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-                'round_of_16',
-                'quarter_finals',
-                'semi_finals',
-                'finals',
-            ],
-            7 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-                'round_of_16',
-                'quarter_finals',
-                'semi_finals',
-                'interconference_semi_finals',
-                'finals',
-            ],
-            8 => [
-                'play_ins_elims_round_1',
-                'play_ins_elims_round_2',
-                'play_in_finals',
-                'round_of_16',
-                'quarter_finals',
-                'semi_finals',
-                'interconference_semi_finals',
-                'finals',
-            ],
-        ];
-
-
-        // Determine the current rounds based on status
-        $currentRounds = $roundIndices[$status];
-
-        // Organize the playoff tree structure
-        $tree = [];
-
-        foreach ($currentRounds as $round) {
-            $tree[$round] = [];
-
-            // Fetch playoff schedule data for the specified season ID and current round
-            $playoffSchedule = DB::table('schedules')
-                ->select('game_id', 'home_id', 'away_id', 'home_score', 'away_score', 'round', 'id')
-                ->where('season_id', $seasonId)
-                ->where('round', $round)
-                ->orderBy('round', 'asc')
-                ->get();
-
-            // Organize the playoff schedule data into the tree structure
-            foreach ($playoffSchedule as $game) {
-                $gameNode = [
-                    'id' => $game->id,
-                    'game_id' => $game->game_id,
-                    'home_team' => [
-                        'id' => $game->home_id,
-                        'name' => DB::table('teams')->where('id', $game->home_id)->value('name'),
-                        'score' => $game->home_score,
-                    ],
-                    'away_team' => [
-                        'id' => $game->away_id,
-                        'name' => DB::table('teams')->where('id', $game->away_id)->value('name'),
-                        'score' => $game->away_score,
-                    ],
-                    'winner' => null // Initialize winner as null
-                ];
-
-                // Determine the winner based on home_score and away_score
-                if ($game->home_score > $game->away_score) {
-                    $gameNode['winner'] = $game->home_id;
-                } elseif ($game->home_score < $game->away_score) {
-                    $gameNode['winner'] = $game->away_id;
-                }
-
-                $tree[$round][] = $gameNode;
-            }
-        }
-
-        return $tree;
-    }
-    private static function playoffTreeSingle($seasonId, $status)
-    {
-        // Define all possible round names
-
-        // Define round indices based on status
-        $roundIndices = [
-            1 => [],
-            3 => ['round_of_16'],
-            4 => ['quarter_finals'],
-            5 => ['semi_finals'],
-            6 => ['interconference_semi_finals'],
-            7 => ['finals'],
-            8 => ['finals'],
-        ];
-
-        // Determine the current rounds based on status
-        $currentRounds = $roundIndices[$status];
-
-        // Organize the playoff tree structure
-        $tree = [];
-
-        foreach ($currentRounds as $round) {
-            $tree[$round] = [];
-
-            // Fetch playoff schedule data for the specified season ID and current round
-            $playoffSchedule = DB::table('schedules')
-                ->select('game_id', 'home_id', 'away_id', 'home_score', 'away_score', 'round', 'id')
-                ->where('season_id', $seasonId)
-                ->where('round', $round)
-                ->orderBy('round', 'asc')
-                ->get();
-
-            // Organize the playoff schedule data into the tree structure
-            foreach ($playoffSchedule as $game) {
-                $gameNode = [
-                    'id' => $game->id,
-                    'game_id' => $game->game_id,
-                    'home_team' => [
-                        'id' => $game->home_id,
-                        'name' => DB::table('teams')->where('id', $game->home_id)->value('name'),
-                        'score' => $game->home_score,
-                    ],
-                    'away_team' => [
-                        'id' => $game->away_id,
-                        'name' => DB::table('teams')->where('id', $game->away_id)->value('name'),
-                        'score' => $game->away_score,
-                    ],
-                    'winner' => null // Initialize winner as null
-                ];
-
-                // Determine the winner based on home_score and away_score
-                if ($game->home_score > $game->away_score) {
-                    $gameNode['winner'] = $game->home_id;
-                } elseif ($game->home_score < $game->away_score) {
-                    $gameNode['winner'] = $game->away_id;
-                }
-
-                $tree[$round][] = $gameNode;
-            }
-        }
-
-        return $tree;
-    }
     // Other methods...
+
+    private function championsPerConference($conference_id)
+    {
+        $result = DB::table('teams')
+                ->join('seasons', 'teams.id', '=', 'seasons.finals_winner_id')
+                ->where('teams.conference_id',$conference_id)
+                ->select('seasons.finals_winner_name', 'seasons.name as season_name')
+                ->get();
+        return $result;
+    }
+
+    private function isNewSeason() {
+        // Get the total count of seasons
+        $totalSeasons = DB::table('seasons')->count();
+
+        // Return 4 if there are no seasons
+        if ($totalSeasons == 0) {
+            return 8;
+        }
+
+        // Get the last season status
+        $lastSeasonStatus = DB::table('seasons')
+            ->orderBy('id', 'desc')
+            ->value('status');
+
+        // Check the status and return the appropriate value
+        if ($lastSeasonStatus == config('timeline.finals')) {
+            return 1; //show update awards update to 9
+        } elseif ($lastSeasonStatus == config('timeline.awards')) {
+            return 2; //update player status update to 10
+        } elseif ($lastSeasonStatus == config('timeline.player_update')) {
+            return 3; //player rookie drafting update
+        }
+        elseif ($lastSeasonStatus == config('timeline.draft')) {
+            return 4; //player signing
+        }
+        elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
+            return 5; // player trade
+        }
+        elseif ($lastSeasonStatus == config('timeline.player_signings')) {
+            return 6; // new season
+        }
+        elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
+            return 7; // new season
+        }
+        // Optionally, you can return a default value if no status matches
+        return null;
+    }
+
+
 }
