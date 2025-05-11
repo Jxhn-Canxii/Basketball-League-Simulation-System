@@ -345,24 +345,7 @@ class TransactionsController extends Controller
         }
 
         // Set contract years based on the player's role
-        $contractYears = 1; // Default value
-        switch ($player->role) {
-            case 'star player':
-                $contractYears = 5;
-                break;
-            case 'all star':
-                $contractYears = 3;
-                break;
-            case 'starter':
-                $contractYears = 3;
-                break;
-            case 'role player':
-                $contractYears = 2;
-                break;
-            case 'bench':
-                $contractYears = 1;
-                break;
-        }
+        $contractYears = $this->determineContractYears($player->role);
 
         // Update the player's team and contract years
         $player->update([
