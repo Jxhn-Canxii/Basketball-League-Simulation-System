@@ -1852,7 +1852,18 @@ class SimulateController extends Controller
         }
 
     }
+    public function getBestFreeAgent(Request $request){
+        // Validate the request data
+        $position = $request->position;
 
+        if (!$position) {
+            return response()->json(['error' => 'Position is required'], 400);
+        }
+        
+        $freeAgent = $this->getBestFreeAgentAvailable($position);
+
+        return response()->json(['data' =>  $freeAgent]);
+    }
     private function getBestFreeAgentAvailable($position)
     {
         $positions = explode('/', $position);

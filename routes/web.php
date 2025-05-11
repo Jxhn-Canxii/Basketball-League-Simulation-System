@@ -203,6 +203,8 @@ Route::middleware('auth')->group(function () {
         Route::get('player-best-alltime', [PlayersController::class, 'getTop20PlayersAllTime'])->name('best.players.alltime');
         Route::post('player-best-alltime-by-team', [PlayersController::class, 'getTop10PlayersByTeam'])->name('best.team.players.alltime');
         Route::post('players-per-team-by-season', [PlayersController::class, 'getStarPlayersByTeam'])->name('best.team.star.players');
+    
+        Route::get('test-free-agent/{position}', [PlayersController::class, 'getBestFreeAgent'])->name('get.free.agent');
     });
 
     Route::prefix('transactions/')->group(function(){
@@ -213,7 +215,6 @@ Route::middleware('auth')->group(function () {
         Route::post('extend-contract-player', [TransactionsController::class, 'extendContract'])->name('players.contract.extend');
         Route::post('player-transactions', [TransactionsController::class, 'getTransactions'])->name('players.transactions');
         Route::post('recent-transactions', [TransactionsController::class, 'getRecentNonTransferTransactions'])->name('recent.transactions');
-        
         // Route::post('freeagent-market', [TransactionsController::class, 'getFreeAgentsByCompositeScore'])->name('players.best.free.agent');
     });
 
