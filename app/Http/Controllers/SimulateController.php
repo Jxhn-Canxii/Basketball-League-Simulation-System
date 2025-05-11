@@ -1856,7 +1856,7 @@ class SimulateController extends Controller
     private function getBestFreeAgentAvailable($position)
     {
         $positions = explode('/', $position);
-
+    
         // Reusable position filter
         $positionFilter = function ($query) use ($positions) {
             if (count($positions) === 1) {
@@ -1870,55 +1870,9 @@ class SimulateController extends Controller
                 });
             }
         };
-
-        // Top 10 by overall_rating
-        $byOverall = DB::table('players')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc('players.overall_rating')
-            ->limit(10)
-            ->get();
-
-        // Top 10 by EFF stats
-        $byStats = DB::table('players')
-            ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role',
-                DB::raw('MAX(player_season_stats.eff) as eff')
-            )
-            ->groupBy(
-                'players.id',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc(DB::raw('MAX(player_season_stats.eff)'))
-            ->limit(10)
-            ->get();
-
-        // Top 10 by number of awards
-        $byAwards = DB::table('players')
+    
+        // Get players based on highest overall rating and most awards
+        $players = DB::table('players')
             ->leftJoin('season_awards', 'players.id', '=', 'season_awards.player_id')
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
@@ -1941,18 +1895,16 @@ class SimulateController extends Controller
                 'players.age',
                 'players.role'
             )
-            ->orderByDesc(DB::raw('COUNT(season_awards.id)'))
-            ->limit(10)
+            ->orderByDesc('players.overall_rating')  // Highest overall rating
+            ->orderByDesc(DB::raw('COUNT(season_awards.id)'))  // Most awards
             ->get();
-
-        // Merge all sources and deduplicate
-        $merged = $byOverall->merge($byStats)->merge($byAwards)->unique('player_id')->values();
-
-        if ($merged->isNotEmpty()) {
-            return $merged->random();
+    
+        // Return a random player if players are found
+        if ($players->isNotEmpty()) {
+            return $players->random();  // Randomly pick from the list
         }
-
-        // Fallback: get *any* available player at the position
+    
+        // Fallback: return any available player at the position
         $fallback = DB::table('players')
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
@@ -1964,14 +1916,15 @@ class SimulateController extends Controller
                 'players.overall_rating',
                 'players.injury_history',
                 'players.age',
-                'players.role'
+                'players.role',
             )
             ->orderByDesc('players.overall_rating')
             ->limit(1)
             ->first();
-
+    
         return $fallback;
     }
+    
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
         // Retrieve all active players for the specified team
