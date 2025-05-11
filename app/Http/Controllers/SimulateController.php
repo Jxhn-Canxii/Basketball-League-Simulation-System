@@ -1886,7 +1886,7 @@ class SimulateController extends Controller
                 'players.role'
             )
             ->orderByDesc('players.overall_rating')  // Highest overall rating
-            ->limit(30)  // Top 30
+            ->limit(10)  // Top 10
             ->get();
     
         // Randomly pick one player from the top 10 list
