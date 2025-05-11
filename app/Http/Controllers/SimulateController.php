@@ -1346,19 +1346,19 @@ class SimulateController extends Controller
         $now = now();
         $currentHour = $now->hour;
         
-        // Check if the time is between 6 PM (18) and 6 AM (6)
-        $isTimeRestricted = ($currentHour >= 18 || $currentHour < 6);
+        // // Check if the time is between 6 PM (18) and 6 AM (6)
+        // $isTimeRestricted = ($currentHour >= 18 || $currentHour < 6);
         
         $isTradeDeadline = $simulatedRounds >= ($totalRounds / 2) - 2 && $latestSeasonStatus == 1;
         
-        if ($isTradeDeadline) {
-            // Update the season status to indicate trade deadline
-            DB::table('seasons')
-                ->where('id', $seasonId)
-                ->update(['status' => config('timeline.in_season_trade')]);
+        // if ($isTradeDeadline) {
+        //     // Update the season status to indicate trade deadline
+        //     DB::table('seasons')
+        //         ->where('id', $seasonId)
+        //         ->update(['status' => config('timeline.in_season_trade')]);
             
-            $isTradeDeadline = false; // Reset after executing
-        }
+        //     $isTradeDeadline = false; // Reset after executing
+        // }
         // Group by conference_id
         $groupedByConference = $schedules->groupBy('conference_id');
 
@@ -1694,7 +1694,7 @@ class SimulateController extends Controller
             $requiredRecoveryGames = 25; // Example: Player should recover within 25 games to avoid waiving
 
             //can replace injured players until in season trade deadline...
-            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 1 &&  $player->contract_years <= 2) {
+            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2 &&  $player->contract_years <= 2) {
                 // **20% Chance to Waive Player if Recovery is Too Long**
                 if (rand(1, 100) <= 20) {
                     // Player is waived due to extended injury recovery period
