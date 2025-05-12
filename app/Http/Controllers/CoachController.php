@@ -52,6 +52,7 @@ class CoachController extends Controller
     
         // Clone the query before applying pagination (important)
         $coaches = (clone $query)
+            ->orderBy('is_active', 'desc') // active
             ->orderBy('career_wins', 'desc') // Highest win rate first
             ->offset($offset)
             ->limit($perPage)
