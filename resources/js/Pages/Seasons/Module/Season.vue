@@ -43,12 +43,12 @@
             v-if="season_info.seasons && season_info.seasons[0].type != 1"
         >
             <!-- Standings UI (Left Side) -->
-            <div class="md:col-span-2 sm:col-span-1 overflow-y-auto">
+            <div v-if="activeConferenceTab != 0" class="md:col-span-2 sm:col-span-1 overflow-y-auto">
                 <Standings v-if="updateKey" :key="updateKey" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
                 <!-- <small class="text-gray-500">Transaction ID:{{ updateKey }}</small>    -->
             </div>
             <!-- Schedule and Results UI (Right Side) -->
-            <div class="md:col-span-3 sm:col-span-1 overflow-y-auto pt-3">
+            <div :class="activeConferenceTab != 0 ? 'md:col-span-3' : 'md:col-span-5'" class="sm:col-span-1 overflow-y-auto pt-3">
                 <SeasonSchedule v-if="season_info" 
                 @transaction_id="(id) => handleTransaction(id)" 
                 :season_id="props.season_id"

@@ -146,7 +146,8 @@
         </div>
         <div
             v-if="data && data.schedules?.length > 0 && !loadingSchedules"
-            class="grid md:grid-cols-2 sm:col-span-1 gap-6"
+            class="grid sm:col-span-1 gap-6"
+            :class="props.conference_id != 0 ? 'md:grid-cols-2' : 'md:grid-cols-4'"
         >
             <ScoreCard
                 v-for="(game, index) in data.schedules"
@@ -154,7 +155,7 @@
                 :game="game"
                 :isSimulating="isHide"
                 @view-result="isGameResultModalOpen = $event"
-            />
+            /> 
         </div>
         <div v-if="loadingSchedules">
             <p class="text-gray-500">Loading Schedules.</p>
@@ -231,7 +232,7 @@
         conference_id: 0,
         team_id: 0,
         season_id: 0,
-        itemsperpage: 6,
+        itemsperpage: (props.conference_id != 0) ? 6 : 12,
     });
     const searchInput = () => {
         search_schedule.value.page_num = 1;
