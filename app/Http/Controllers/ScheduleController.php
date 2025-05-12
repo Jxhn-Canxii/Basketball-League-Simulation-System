@@ -473,26 +473,22 @@ class ScheduleController extends Controller
         try {
             $teams = Teams::where('league_id', $leagueId)->get();
             $teamsByConference = $teams->groupBy('conference_id');
-            $conferenceIds = $teamsByConference->keys();
-    
+
             $allMatches = [];
-            $globalRound = 1;
-    
+
             // Step 1: Intra-conference Single Round Robin
             foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
                 $teamIds = $conferenceTeams->pluck('id')->toArray();
                 $numTeams = count($teamIds);
-    
+
                 for ($i = 0; $i < $numTeams; $i++) {
                     for ($j = $i + 1; $j < $numTeams; $j++) {
                         $home = $teamIds[$i];
                         $away = $teamIds[$j];
-    
-                        // Single match (no reverse leg)
+
                         $allMatches[] = [
                             'season_id' => $seasonId,
-                            'game_id' => "{$seasonId}-{$conferenceId}-intra-{$globalRound}",
-                            'round' => $globalRound++,
+                            'game_id' => "{$seasonId}-{$conferenceId}-intra-{$home}-{$away}",
                             'conference_id' => $conferenceId,
                             'home_id' => $home,
                             'away_id' => $away,
@@ -503,36 +499,33 @@ class ScheduleController extends Controller
                     }
                 }
             }
-    
+
             // Step 2: Inter-conference - Exactly 10 matches per team
             $teamIdsByConference = [];
             foreach ($teamsByConference as $confId => $confTeams) {
                 $teamIdsByConference[$confId] = $confTeams->pluck('id')->toArray();
             }
-    
+
             $interMatchesPerTeam = array_fill_keys($teams->pluck('id')->toArray(), 0);
             $usedPairs = [];
             $requiredMatches = 10;
-    
-            // Create a priority queue of teams based on remaining matches needed
+
             $teamsQueue = collect($teams)->map(function ($team) {
                 return ['id' => $team->id, 'conference_id' => $team->conference_id, 'matches' => 0];
             })->shuffle()->toArray();
-    
+
             while (collect($teamsQueue)->some(fn($team) => $team['matches'] < $requiredMatches)) {
-                // Sort teams by matches assigned (ascending) to prioritize those with fewer matches
                 usort($teamsQueue, fn($a, $b) => $a['matches'] <=> $b['matches']);
-                
-                $team = array_shift($teamsQueue); // Get team with fewest matches
+                $team = array_shift($teamsQueue);
+
                 if ($team['matches'] >= $requiredMatches) {
                     array_push($teamsQueue, $team);
                     continue;
                 }
-    
+
                 $teamId = $team['id'];
                 $teamConf = $team['conference_id'];
-    
-                // Get potential opponents from other conferences
+
                 $opponents = collect($teamIdsByConference)
                     ->except($teamConf)
                     ->flatten()
@@ -542,23 +535,19 @@ class ScheduleController extends Controller
                     })
                     ->shuffle()
                     ->first();
-    
+
                 if (!$opponents) {
-                    // If no valid opponent found, put team back and try another
                     array_push($teamsQueue, $team);
                     continue;
                 }
-    
+
                 $opponentId = $opponents;
-    
-                // Randomly assign home/away
                 $homeId = rand(0, 1) ? $teamId : $opponentId;
                 $awayId = $homeId === $teamId ? $opponentId : $teamId;
-    
+
                 $allMatches[] = [
                     'season_id' => $seasonId,
-                    'game_id' => "{$seasonId}-inter-{$globalRound}",
-                    'round' => $globalRound++,
+                    'game_id' => "{$seasonId}-inter-{$homeId}-{$awayId}",
                     'conference_id' => 0,
                     'home_id' => $homeId,
                     'away_id' => $awayId,
@@ -566,43 +555,69 @@ class ScheduleController extends Controller
                     'away_score' => 0,
                     'winner_id' => 0,
                 ];
-    
+
                 $pairKey = min($teamId, $opponentId) . '-' . max($teamId, $opponentId);
                 $usedPairs[$pairKey] = true;
                 $interMatchesPerTeam[$teamId]++;
                 $interMatchesPerTeam[$opponentId]++;
                 $team['matches']++;
-    
-                // Update opponent's match count in queue
+
                 foreach ($teamsQueue as &$qTeam) {
                     if ($qTeam['id'] === $opponentId) {
                         $qTeam['matches']++;
                         break;
                     }
                 }
-    
+
                 array_push($teamsQueue, $team);
             }
-    
-            // Verify all teams have exactly 10 inter-conference matches
+
             foreach ($interMatchesPerTeam as $teamId => $matchCount) {
                 if ($matchCount !== $requiredMatches) {
                     throw new \Exception("Team {$teamId} has {$matchCount} inter-conference matches, expected {$requiredMatches}.");
                 }
             }
-    
-            // Final Step: Save all to DB
+
+            // Step 3: Assign matches to rounds (5 matches per round, no back-to-back)
+            $rounds = [];
+            $teamLastRound = [];
+
+            shuffle($allMatches);
+
+            foreach ($allMatches as &$match) {
+                $home = $match['home_id'];
+                $away = $match['away_id'];
+
+                $assigned = false;
+                for ($r = 1; !$assigned; $r++) {
+                    if (!isset($rounds[$r])) $rounds[$r] = [];
+
+                    if (count($rounds[$r]) < 5 &&
+                        (!isset($teamLastRound[$home]) || $teamLastRound[$home] < $r - 1) &&
+                        (!isset($teamLastRound[$away]) || $teamLastRound[$away] < $r - 1)
+                    ) {
+                        $match['round'] = $r;
+                        $rounds[$r][] = $match;
+                        $teamLastRound[$home] = $r;
+                        $teamLastRound[$away] = $r;
+                        $assigned = true;
+                    }
+                }
+            }
+
+            $allMatches = array_merge(...array_values($rounds));
+
+            // Step 4: Save to DB
             DB::table('schedules')->insert($allMatches);
             DB::commit();
             return true;
-    
+
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error("Schedule generation failed: " . $e->getMessage());
             throw $e;
         }
     }
-    
 
     //start playoff algo
     public static function playoffSchedule(Request $request)
