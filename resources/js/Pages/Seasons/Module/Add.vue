@@ -57,7 +57,7 @@
                         <option value="5">Super 5</option>
                         <option value="2">Single Round Robin</option>
                         <option value="3">Double Round Robin</option>
-                        <option value="4">Double Round Robin + Inter Conference</option>
+                        <option value="4">Round Robin + Inter Conference</option>
                     </select>
                     <InputError
                         class="mt-2"

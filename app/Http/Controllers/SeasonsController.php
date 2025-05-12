@@ -182,17 +182,39 @@ class SeasonsController extends Controller
 
     private function allConference($seasonId)
     {
+        // Check season type
+        $season = DB::table('seasons')
+            ->where('id', $seasonId)
+            ->select('type')
+            ->first();
+    
+        if (!$season) {
+            throw new \Exception("Season with ID {$seasonId} not found.");
+        }
+    
+        // Fetch conferences
         $conferences = DB::table('conferences')
             ->join('seasons', 'conferences.league_id', '=', 'seasons.league_id')
             ->where('seasons.id', $seasonId)
             ->select('conferences.id as conference_id', 'conferences.name as conference_name')
             ->distinct()
             ->get();
-
+    
+        // Convert to array for modification
+        $conferences = $conferences->toArray();
+    
+        // If season type is 4, add conference 0
+        if ($season->type == 4) {
+            $conferences[] = (object) [
+                'conference_id' => 0,
+                'conference_name' => 'Interconference'
+            ];
+        }
+    
         $conferenceChampions = [];
         foreach ($conferences as $conference) {
             $champions = self::championsperconference($conference->conference_id);
-
+    
             $championshipSeasons = [];
             foreach ($champions as $champion) {
                 $championshipSeasons[] = [
@@ -200,9 +222,9 @@ class SeasonsController extends Controller
                     'team_name' => $champion->finals_winner_name
                 ];
             }
-
+    
             $championCount = count($championshipSeasons);
-
+    
             $conferenceChampions[] = [
                 'id' => $conference->conference_id,
                 'name' => $conference->conference_name,
@@ -210,7 +232,7 @@ class SeasonsController extends Controller
                 'championship_season' => $championshipSeasons
             ];
         }
-
+    
         return $conferenceChampions;
     }
    
