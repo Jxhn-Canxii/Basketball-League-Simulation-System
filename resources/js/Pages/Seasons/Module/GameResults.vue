@@ -354,7 +354,7 @@
                         </tr>
                         <tr v-if="sortedHomePlayers.length === 0">
                             <td
-                                colspan="10"
+                                colspan="13"
                                 class="py-1 px-3 text-center text-xs"
                             >
                                 No player statistics available.
@@ -511,7 +511,7 @@
                         </tr>
                         <tr v-if="sortedHomePlayers.length === 0">
                             <td
-                                colspan="10"
+                                colspan="13"
                                 class="py-1 px-3 text-center text-xs"
                             >
                                 No player statistics available.
