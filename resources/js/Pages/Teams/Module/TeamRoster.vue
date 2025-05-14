@@ -105,6 +105,11 @@
                                     <th
                                         class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                     >
+                                        Achievements
+                                    </th>
+                                    <th
+                                        class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
+                                    >
                                     Draft
                                     </th>
                                     <th
@@ -262,6 +267,26 @@
                                 >
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ index + 1 }}
+                                    </td>
+                                    <td class="px-2 py-1 whitespace-nowrap border text-center">
+                                        <span
+                                            title="National Championships: {{ player.championships_won }}"
+                                            class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-yellow-800 bg-yellow-100 rounded-full"
+                                            v-if="player.championships_won > 0">
+                                            {{ player.championships_won }}
+                                        </span>
+                                         <span
+                                            title="Conference Championships: {{ player.conference_championships_won }}"
+                                            class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full"
+                                            v-if="player.conference_championships_won > 0">
+                                            {{ player.conference_championships_won }}
+                                        </span>
+                                        <span
+                                            title="Awards Won: {{ player.awards_won }}"
+                                            class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
+                                            v-if="player.awards_won > 0">
+                                            {{ player.awards_won }}
+                                        </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
                                         {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
