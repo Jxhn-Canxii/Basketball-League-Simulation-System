@@ -876,7 +876,7 @@ const simulateFullPlayoffs = async () => {
 
             // Refresh latest data
             await fetchSeasonInfo(form.seasons_id);
-            await fetchSeasonPlayoffs(2);
+            await fetchSeasonPlayoffs(is_play_ins.value);
 
             // Check if round has matches
             if (
@@ -891,7 +891,7 @@ const simulateFullPlayoffs = async () => {
                         scheduleResponse.toLowerCase().includes("already created")) {
                         console.log(`Schedule for ${roundName} already exists. Proceeding.`);
                     } else {
-                        await fetchSeasonPlayoffs(2);
+                        await fetchSeasonPlayoffs(is_play_ins.value);
                     }
                 } catch (scheduleError) {
                     console.warn(`Failed to create schedule for ${roundName}:`, scheduleError);
@@ -910,7 +910,7 @@ const simulateFullPlayoffs = async () => {
                 const match = matches[index];
                 if (match.winner == 0) {
                     await simulateGame(match.id, match.game_id, 2, index, roundName);
-                    await fetchSeasonPlayoffs(2); // Refresh after each game
+                    await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
                 }
             }
 
