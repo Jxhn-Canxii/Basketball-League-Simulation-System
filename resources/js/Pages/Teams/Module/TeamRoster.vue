@@ -270,19 +270,19 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border text-center">
                                         <span
-                                            title="National Championships: {{ player.championships_won }}"
+                                            :title="`National Championships: ${ player.championships_won }`"
                                             class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-yellow-800 bg-yellow-100 rounded-full"
                                             v-if="player.championships_won > 0">
                                             {{ player.championships_won }}
                                         </span>
                                          <span
-                                            title="Conference Championships: {{ player.conference_championships_won }}"
+                                            :title="`Conference Championships: ${ player.conference_championships_won }`"
                                             class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full"
                                             v-if="player.conference_championships_won > 0">
                                             {{ player.conference_championships_won }}
                                         </span>
                                         <span
-                                            title="Awards Won: {{ player.awards_won }}"
+                                            :title="`Awards Won: ${ player.awards_won }`"
                                             class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-blue-800 bg-blue-100 rounded-full"
                                             v-if="player.awards_won > 0">
                                             {{ player.awards_won }}
