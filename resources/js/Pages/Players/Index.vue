@@ -19,7 +19,7 @@
                         placeholder="Enter Player name"
                         class="mt-1 mb-2 p-2 border rounded w-full"
                     />
-                    <div v-if="data.free_agents.length === 0" class="text-center text-gray-500">No player found.</div>
+                    <div v-if="data.players?.length === 0" class="text-center text-gray-500">No player found.</div>
                     <div v-else class="overflow-x-auto mt-4">
                         <table class="min-w-full divide-y divide-gray-200 text-xs">
                             <thead class="bg-gray-50 text-nowrap">
@@ -37,7 +37,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="player in data.free_agents" :key="player.player_id" @click.prevent="showPlayerProfile(player)" class="hover:bg-gray-100">
+                                <tr v-for="player in data.players" :key="player.player_id" @click.prevent="showPlayerProfile(player)" class="hover:bg-gray-100">
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.name }}
                                         <sup v-if="player.is_finals_mvp">
