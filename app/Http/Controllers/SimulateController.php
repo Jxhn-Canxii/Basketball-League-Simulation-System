@@ -1899,7 +1899,7 @@ class SimulateController extends Controller
                 'players.role'
             )
             ->orderByDesc('players.overall_rating')
-            ->limit(50)
+            ->limit(30)
             ->get();
     
         // Top 10 by awards count
@@ -1931,7 +1931,7 @@ class SimulateController extends Controller
                 'players.role'
             )
             ->orderByDesc('awards_count')
-            ->limit(50)
+            ->limit(10)
             ->get();
     
         // Top 10 by EFF in latest season
@@ -1954,7 +1954,7 @@ class SimulateController extends Controller
                 'player_season_stats.eff'
             )
             ->orderByDesc('player_season_stats.eff')
-            ->limit(50)
+            ->limit(10)
             ->get();
     
         // Merge all and deduplicate by player_id
