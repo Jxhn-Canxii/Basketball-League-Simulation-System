@@ -1,18 +1,11 @@
-```vue
 <template>
     <div
         class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border-b-2 border-dashed"
         v-if="season_info.seasons && season_info.seasons[0].status > 1 && !loading"
     >
         <div class="md:col-span-4 overflow-y-auto">
-            <div class="flex justify-between">
+            <div class="flex justify-start">
                 <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs</h2>
-                 <button
-                    @click="simulateFullPlayoffs"
-                    class="text-white bg-red-500 bg-gradient-to-br p-3 shadow rounded-full font-bold text-md text-nowrap hover:text-indigo-900"
-                >
-                    Simulate Full Playoffs
-                </button>
             </div>
             <div
                 class="flex justify-center"
@@ -45,6 +38,8 @@
                     ) in season_playoffs.playoffs"
                     :key="roundName"
                     class="block"
+                    
+                    
                 >
                     <div v-if="season_playoffs.playoffs[roundName].length > 0">
                         <h3
@@ -124,6 +119,7 @@
                                                 :current_conference_rank="match.home_team.conference_rank"
                                                 :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
                                             </h3>
+                                                <!-- <small class="text-red-500 font-bold shadow-b-lg bg-white rounded p-2 text-lg">vs</small> -->
                                             <h3>
                                                 <TeamDetails
                                                     :team_id="match.away_team.id" 
@@ -158,6 +154,7 @@
                                                         match.away_team.conference_rank
                                                     }}
                                                 </span>
+                                               
                                             </div>
                                             <div
                                                 class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
@@ -175,6 +172,7 @@
                                                     <i
                                                         class="fa fa-exchange-alt ml-1"
                                                     ></i>
+                                                    <!-- Font Awesome icon -->
                                                 </button>
                                             </div>
                                         </div>
@@ -191,10 +189,10 @@
                                                     )
                                                 "
                                                 class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
-                                            >
-                                                Simulate Game
-                                            </button>
-                                            <a
+                                                >
+                                                    Simulate Game
+                                                </button>
+                                                <a
                                                 href="#"
                                                 v-if="!isHide && match.winner != 0"
                                                 class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
@@ -202,16 +200,17 @@
                                                     isGameResultModalOpen =
                                                         match.game_id
                                                 "
-                                            >
-                                                View Result
-                                            </a>
-                                            <p v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
-                                                Simulating...
-                                            </p>
+                                                >
+                                                    View Result
+                                                </a>
+                                                <p  v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
+                                                    Simulating...
+                                                </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
                             <!-- Single card centered -->
                             <div 
                                 v-if="season_playoffs.playoffs[roundName].length === 1"
@@ -271,6 +270,7 @@
                                                 :current_conference_rank="match.home_team.conference_rank"
                                                 :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
                                             </h3>
+                                                <!-- <small class="text-red-500 font-bold shadow-b-lg bg-white rounded p-2 text-lg">vs</small> -->
                                             <h3>
                                                 <TeamDetails
                                                     :team_id="match.away_team.id" 
@@ -305,6 +305,7 @@
                                                         match.away_team.conference_rank
                                                     }}
                                                 </span>
+                                               
                                             </div>
                                             <div
                                                 class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
@@ -322,6 +323,7 @@
                                                     <i
                                                         class="fa fa-exchange-alt ml-1"
                                                     ></i>
+                                                    <!-- Font Awesome icon -->
                                                 </button>
                                             </div>
                                         </div>
@@ -338,10 +340,10 @@
                                                     )
                                                 "
                                                 class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
-                                            >
-                                                Simulate Game
-                                            </button>
-                                            <a
+                                                >
+                                                    Simulate Game
+                                                </button>
+                                                <a
                                                 href="#"
                                                 v-if="!isHide && match.winner != 0"
                                                 class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
@@ -349,16 +351,17 @@
                                                     isGameResultModalOpen =
                                                         match.game_id
                                                 "
-                                            >
-                                                View Result
-                                            </a>
-                                            <p v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
-                                                Simulating...
-                                            </p>
+                                                >
+                                                    View Result
+                                                </a>
+                                                <p  v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
+                                                    Simulating...
+                                                </p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+
                             <!-- Regular grid for 4 or more cards -->
                             <div 
                                 v-if="season_playoffs.playoffs[roundName].length >= 4"
@@ -415,6 +418,7 @@
                                             :current_conference_rank="match.home_team.conference_rank"
                                             :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
                                         </h3>
+                                            <!-- <small class="text-red-500 font-bold shadow-b-lg bg-white rounded p-2 text-lg">vs</small> -->
                                         <h3>
                                             <TeamDetails
                                                 :team_id="match.away_team.id" 
@@ -449,6 +453,7 @@
                                                     match.away_team.conference_rank
                                                 }}
                                             </span>
+                                           
                                         </div>
                                         <div
                                             class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
@@ -466,6 +471,7 @@
                                                 <i
                                                     class="fa fa-exchange-alt ml-1"
                                                 ></i>
+                                                <!-- Font Awesome icon -->
                                             </button>
                                         </div>
                                     </div>
@@ -482,10 +488,10 @@
                                                 )
                                             "
                                             class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
-                                        >
-                                            Simulate Game
-                                        </button>
-                                        <a
+                                            >
+                                                Simulate Game
+                                            </button>
+                                            <a
                                             href="#"
                                             v-if="!isHide && match.winner != 0"
                                             class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
@@ -493,12 +499,12 @@
                                                 isGameResultModalOpen =
                                                     match.game_id
                                             "
-                                        >
-                                            View Result
-                                        </a>
-                                        <p v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
-                                            Simulating...
-                                        </p>
+                                            >
+                                                View Result
+                                            </a>
+                                            <p  v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
+                                                Simulating...
+                                            </p>
                                     </div>
                                 </div>
                             </div>
@@ -529,6 +535,14 @@
                             </button>
                         </div>
                     </div>
+                    <!-- <div class="flex justify-end" v-else>
+                        <button
+                            disabled
+                            class="text-indigo-600 animate-pulse font-bold text-md flex bg-orange-200 shadow p-1 rounded-full hover:text-indigo-900 mt-4"
+                        >
+                            Preparing...
+                        </button>
+                    </div> -->
                 </div>
             </div>
         </div>
@@ -614,27 +628,27 @@ const comparison = useForm({
 });
 const props = defineProps({
     season_id: {
-        type: [Number, String],
+        type: [Number,String],
         required: true,
     },
 });
-
 const compareTeams = (home_id, away_id) => {
     comparison.season_id = props.season_id;
     comparison.home_id = home_id;
     comparison.away_id = away_id;
+
     isTeamComparisonModalOpen.value = true;
 };
-
 const createPlayOffSchedule = async (round) => {
     try {
+
         let prev_round = round;
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
-        round = roundStatusFormatter(round, start_playoffs, is_play_ins.value);
+        round = roundStatusFormatter(round,start_playoffs, is_play_ins.value);
 
         Swal.fire({
             title: "Simulating...",
-            text: "Please wait while creating the schedule for " + roundNameFormatter(round),
+            text: "Please wait while creating the schedule for "+roundNameFormatter(round),
             icon: "info",
             allowOutsideClick: false,
             didOpen: () => {
@@ -643,7 +657,7 @@ const createPlayOffSchedule = async (round) => {
         });
 
         const response = await axios.post(route("create.schedule.playoff"), {
-            season_id: form.seasons_id,
+            season_id: form.seasons_id, // Assuming the parameter name should be schedule_id
             round: round,
             prev_round: prev_round,
             start: start_playoffs,
@@ -657,72 +671,23 @@ const createPlayOffSchedule = async (round) => {
         Swal.fire({
             icon: "success",
             title: "Success!",
-            text: response.data.message,
+            text: response.data.message, // Assuming the response contains a 'message' field
         });
     } catch (error) {
-        console.error("Error creating playoff schedule:", error);
+        console.error("Error simulating the game:", error);
+        // Show error message using Swal2 if needed
         Swal.close();
         Swal.fire({
             icon: "error",
             title: "Error!",
-            text: error.response?.data?.message || "Failed to create playoff schedule.",
+            text: error.response.data.message,
         });
-        throw error; // Rethrow to allow caller to handle
     }
 };
-const createPlayOffScheduleAuto = async (round) => {
-    try {
-        let prev_round = round;
-        let start_playoffs = season_info.value.seasons[0].start_playoffs;
-        round = roundStatusFormatter(round, start_playoffs, is_play_ins.value);
-
-        Swal.fire({
-            title: "Simulating...",
-            text: "Please wait while creating the schedule for " + roundNameFormatter(round),
-            icon: "info",
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
-        });
-
-        const response = await axios.post(route("create.schedule.playoff"), {
-            season_id: form.seasons_id,
-            round: round,
-            prev_round: prev_round,
-            start: start_playoffs,
-        });
-
-        isHide.value = true;
-        await fetchSeasonInfo(form.seasons_id);
-        await fetchSeasonPlayoffs(2);
-        isHide.value = false;
-        isAddModalOpen.value = false;
-
-        Swal.close();
-        Swal.fire({
-            icon: "success",
-            title: "Success!",
-            text: response.data.message,
-        });
-
-        // ✅ Return message so it can be checked by caller
-        return response.data.message;
-
-    } catch (error) {
-        console.error("Error creating playoff schedule:", error);
-        Swal.close();
-        Swal.fire({
-            icon: "error",
-            title: "Error!",
-            text: error.response?.data?.message || "Failed to create playoff schedule.",
-        });
-        throw error; // Still rethrow to let the simulation function decide
-    }
-};
-
+///functions that can trigger a change value of change_key
 const fetchSeasonInfo = async (id) => {
     try {
+        let type = 0;
         form.seasons_id = id;
         const response = await axios.post(route("seasons.info"), {
             season_id: form.seasons_id,
@@ -730,17 +695,16 @@ const fetchSeasonInfo = async (id) => {
 
         season_info.value = response.data;
         is_play_ins.value = response.data.is_play_ins ? 1 : 2;
-        await fetchSeasonPlayoffs(is_play_ins.value);
+        fetchSeasonPlayoffs(is_play_ins.value);
     } catch (error) {
         console.error("Error fetching season information:", error);
         Swal.fire({
             icon: "error",
             title: "Error!",
-            text: error.response?.data?.message || "Failed to fetch season information.",
+            text: error.response.data.message,
         });
     }
 };
-
 const fetchSeasonPlayoffs = async (type) => {
     try {
         let status = season_info.value.seasons[0].status;
@@ -753,17 +717,26 @@ const fetchSeasonPlayoffs = async (type) => {
         });
 
         if (type === 2) {
+            // Log the type of season_playoffs.value.playoffs before pushing
+            console.log(
+                "Type of season_playoffs.value.playoffs:",
+                typeof season_playoffs.value.playoffs
+            );
+
+            // Ensure season_playoffs.value.playoffs is an object before updating
             if (
                 typeof season_playoffs.value.playoffs !== "object" ||
                 season_playoffs.value.playoffs === null
             ) {
-                season_playoffs.value.playoffs = {};
+                season_playoffs.value.playoffs = {}; // Initialize as an empty object if it's not already an object
             }
+            // Update season_playoffs.value.playoffs with response.data.playoffs
             season_playoffs.value.playoffs = {
                 ...season_playoffs.value.playoffs,
                 ...response.data.playoffs,
             };
         } else {
+            // Simply update season_playoffs.value with response data if type is not 2
             loading.value = true;
             season_playoffs.value = response.data;
             loading.value = false;
@@ -774,7 +747,7 @@ const fetchSeasonPlayoffs = async (type) => {
         Swal.fire({
             icon: "error",
             title: "Error!",
-            text: error.response?.data?.message || "Failed to fetch playoff data.",
+            text: error.response.data.message,
         });
     }
 };
@@ -784,6 +757,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
         isHide.value = true;
         activeIndex.value = index;
 
+        // Show simulating game status
         Swal.fire({
             title: "Simulating...",
             text: "Please wait while the game is being simulated.",
@@ -795,34 +769,42 @@ const simulateGame = async (id, game_id, type, index, round) => {
         });
 
         const response = await axios.post(route("game.simulate.playoff"), {
-            schedule_id: id,
+            schedule_id: id, // Assuming the parameter name should be schedule_id
         });
 
         season_playoffs.value.playoffs[round][index] = response.data.schedule;
 
+        // Close the simulating status alert
         Swal.close();
+
+        // Show success message using Swal2
         Swal.fire({
             icon: "success",
             title: "Success!",
-            text: response.data.message,
+            text: response.data.message, // Assuming the response contains a 'message' field
         });
-
+        
         isGameResultModalOpen.value = game_id;
+        Swal.close();
         isHide.value = false;
     } catch (error) {
         console.error("Error simulating the game:", error);
+
+        // Close the simulating status alert if there's an error
         Swal.close();
+
         isHide.value = false;
+        // Show error message using Swal2
         Swal.fire({
             icon: "error",
             title: "Error!",
-            text: error.response?.data?.message || "Failed to simulate game.",
+            text: error.response.data.message,
         });
-        throw error; // Rethrow to allow caller to handle
     }
 };
 
 const getConferenceClass = (home_conference, away_conference) => {
+    // Define Tailwind classes for each conference
     const conferenceClasses = {
         NCR: "bg-blue-100 text-blue-500",
         Luzon: "bg-green-100 text-green-500",
@@ -830,143 +812,24 @@ const getConferenceClass = (home_conference, away_conference) => {
         Mindanao: "bg-red-100 text-red-500",
     };
 
+    // Check if the home and away conferences are different
     if (home_conference !== away_conference) {
-        return "bg-orange-100 text-orange-500";
+        return "bg-orange-100 text-orange-500"; // Color when conferences do not match
     }
 
-    return conferenceClasses[home_conference] || "bg-gray-100 text-gray-500";
+    // Return the Tailwind class for the home conference
+    return conferenceClasses[home_conference] || "bg-gray-100 text-gray-500"; // Default color if conference is not found
 };
-
-const simulateFullPlayoffs = async () => {
-    try {
-        isHide.value = true;
-        loading.value = true;
-
-        Swal.fire({
-            title: "Simulating Playoffs...",
-            text: "Please wait while the entire playoff is being simulated.",
-            icon: "info",
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
-        });
-
-        const roundOrder = [
-            'play_ins_elims_round_1',
-            'play_ins_elims_round_2',
-            'play_ins_finals',
-            'round_of_16',
-            'quarterfinals',
-            'semifinals',
-            'interconference_semi_finals',
-            'finals'
-        ];
-
-        let currentRoundIndex = 0;
-        let initialRound = 'start';
-
-        // Initialize playoffs if not started
-        if (season_info.value.seasons[0].status == 2) {
-            await createPlayOffScheduleAuto(initialRound);
-        }
-
-        while (currentRoundIndex < roundOrder.length) {
-            const roundName = roundOrder[currentRoundIndex];
-
-            // Refresh latest data
-            await fetchSeasonInfo(form.seasons_id);
-            await fetchSeasonPlayoffs(2);
-
-            // Check if round has matches
-            if (
-                !season_playoffs.value.playoffs[roundName] ||
-                season_playoffs.value.playoffs[roundName].length === 0
-            ) {
-                try {
-                    const scheduleResponse = await createPlayOffScheduleAuto(roundName);
-
-                    // If schedule already created, log and continue
-                    if (typeof scheduleResponse === 'string' &&
-                        scheduleResponse.toLowerCase().includes("already created")) {
-                        console.log(`Schedule for ${roundName} already exists. Proceeding.`);
-                    } else {
-                        await fetchSeasonPlayoffs(2);
-                    }
-                } catch (scheduleError) {
-                    console.warn(`Failed to create schedule for ${roundName}:`, scheduleError);
-                }
-            }
-
-            // Get updated matches
-            const matches = season_playoffs.value.playoffs[roundName] || [];
-            if (matches.length === 0) {
-                currentRoundIndex++;
-                continue;
-            }
-
-            // Simulate each game
-            for (let index = 0; index < matches.length; index++) {
-                const match = matches[index];
-                if (match.winner == 0) {
-                    await simulateGame(match.id, match.game_id, 2, index, roundName);
-                    await fetchSeasonPlayoffs(2); // Refresh after each game
-                }
-            }
-
-            // Try to advance to next round if not finals
-            if (roundName !== 'finals') {
-                try {
-                    const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
-                    if (typeof nextRoundResponse === 'string' &&
-                        nextRoundResponse.toLowerCase().includes("already created")) {
-                        console.log(`Next round after ${roundName} already scheduled.`);
-                    }
-                } catch (advanceError) {
-                    console.warn(`Could not advance from ${roundName}:`, advanceError);
-                }
-            }
-
-            currentRoundIndex++;
-        }
-
-        // Final refresh
-        await fetchSeasonInfo(form.seasons_id);
-        await fetchSeasonPlayoffs(2);
-
-        Swal.close();
-        Swal.fire({
-            icon: "success",
-            title: "Playoffs Completed!",
-            text: "The entire playoff simulation has finished successfully.",
-        });
-
-    } catch (error) {
-        console.error("Error simulating full playoffs:", error);
-        Swal.close();
-        Swal.fire({
-            icon: "error",
-            title: "Error!",
-            text: error.response?.data?.message || "Failed to simulate playoffs.",
-        });
-    } finally {
-        isHide.value = false;
-        loading.value = false;
-    }
-};
-
 
 watch(
     () => props.season_id,
     async (n, o) => {
         if (n !== o) {
-            await fetchSeasonInfo(n); // Use new season_id
+            await fetchSeasonInfo(o);
         }
     }
 );
-
 onMounted(() => {
     fetchSeasonInfo(props.season_id);
 });
 </script>
-```
