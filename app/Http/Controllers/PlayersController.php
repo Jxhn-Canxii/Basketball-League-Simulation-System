@@ -375,11 +375,13 @@ class PlayersController extends Controller
                         ->count();
 
                     // Count seasons played with the team
-                    $seasonsPlayedWithTeam = DB::table('player_season_stats')
+                  $seasonsPlayedWithTeam = DB::table('player_season_stats')
+                        ->select(DB::raw('DISTINCT season_id, team_id'))
                         ->where('player_id', $player->id)
                         ->where('team_id', $teamId)
                         ->where('season_id', '<=', $seasonId)
-                        ->count('team_id');
+                        ->get()
+                        ->count();
 
                     $totalSeasonsPlayed = DB::table('player_season_stats')
                         ->where('player_id', $player->id)
