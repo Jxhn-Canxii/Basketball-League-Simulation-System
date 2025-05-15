@@ -320,6 +320,7 @@ class AnalyticsController extends Controller
 
         return response()->json(['leaders' => $response]);
     }
+
     public function getAllStatistics()
     {
         // Use the DB query builder to get the first row from the table
@@ -328,13 +329,17 @@ class AnalyticsController extends Controller
         // Return the data as JSON
         return response()->json($statistics); // Or return view('game_statistics', compact('statistics'));
     }
+
     public function getDraftPlayerStatistics()
     {
-        // Query the draft_player_statistics view using raw SQL
-        $statistics = DB::table('draft_player_statistics')->get();
+        // Query the draft_player_statistics view and order by latest ID
+        $statistics = DB::table('draft_player_statistics')
+                        ->orderBy('draft_id', 'desc')
+                        ->get();
 
         // Return the result as JSON
         return response()->json($statistics);
     }
+
 
 }
