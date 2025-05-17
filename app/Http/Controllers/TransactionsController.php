@@ -745,38 +745,53 @@ class TransactionsController extends Controller
     }
 
     //getFreeAgentsByPositionAndCompositeScore
-    private function getBestAvailableFreeAgent($position, $usedPlayerIds)
+   private function getBestAvailableFreeAgent($position, $usedPlayerIds)
     {
         $query = Player::select(
                 'players.*',
                 'teams.acronym as drafted_team',
-                DB::raw("(SELECT GROUP_CONCAT(CONCAT(award_name, ' (Season ', season_id, ')') SEPARATOR ', ') FROM season_awards WHERE season_awards.player_id = players.id) as awards"),
-                DB::raw("(SELECT CONCAT('Finals MVP (Season ', seasons.id, ')') FROM seasons WHERE seasons.finals_mvp_id = players.id LIMIT 1) as finals_mvp"),
-                DB::raw("CASE WHEN players.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = players.id) THEN 1 ELSE 0 END as is_finals_mvp"),
-                DB::raw("(SELECT GROUP_CONCAT(seasons.name SEPARATOR ', ') FROM seasons WHERE seasons.finals_mvp_id = players.id) as finals_mvp_seasons")
+                DB::raw("(
+                    SELECT GROUP_CONCAT(CONCAT(award_name, ' (Season ', season_id, ')') SEPARATOR ', ')
+                    FROM season_awards
+                    WHERE season_awards.player_id = players.id
+                ) as awards"),
+                DB::raw("(
+                    SELECT CONCAT('Finals MVP (Season ', seasons.id, ')')
+                    FROM seasons
+                    WHERE seasons.finals_mvp_id = players.id
+                    ORDER BY seasons.id DESC
+                    LIMIT 1
+                ) as finals_mvp"),
+                DB::raw("(
+                    CASE WHEN EXISTS (
+                        SELECT 1 FROM seasons WHERE seasons.finals_mvp_id = players.id
+                    ) THEN 1 ELSE 0 END
+                ) as is_finals_mvp"),
+                DB::raw("(
+                    SELECT GROUP_CONCAT(seasons.name SEPARATOR ', ')
+                    FROM seasons
+                    WHERE seasons.finals_mvp_id = players.id
+                ) as finals_mvp_seasons")
             )
             ->where('players.contract_years', 0) // Only free agents
             ->where('players.is_active', 1) // Only active players
-            ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id'); // Join with teams for drafted team info
-        
-        // Filter by position if specified
+            ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id');
+
         if ($position) {
-            $query->where('players.position', 'LIKE', "%$position%"); // Like to handle multiple positions (e.g., PG/SG)
+            $query->where('players.position', 'LIKE', "%$position%");
         }
-        
-        // Exclude already used players
+
         if (!empty($usedPlayerIds)) {
             $query->whereNotIn('players.id', $usedPlayerIds);
         }
 
-        // Order by award value and role
         $query->orderByRaw("
             LENGTH(awards) DESC,
             is_finals_mvp DESC,
             FIELD(role, 'star player', 'all star', 'starter', 'role player', 'bench')
         ");
 
-        return $query->first(); // Return just one best-fit free agent
+        return $query->first();
     }
 
     private function getFreeAgentsByCompositeScore($currentSeasonId)
