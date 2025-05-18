@@ -116,6 +116,7 @@ class SimulateController extends Controller
                 'away_standings.wins as away_current_performance',
                 'schedules.home_score',
                 'schedules.away_score',
+                'schedules.winner_id',
                 'schedules.status'
             )
             ->findOrFail($request->schedule_id);
@@ -612,6 +613,7 @@ class SimulateController extends Controller
                     'away_standings.wins as away_current_performance',
                     'schedules.home_score',
                     'schedules.away_score',
+                    'schedules.winner_id',
                     'schedules.status'
                 )
                 ->findOrFail($request->schedule_id);
@@ -2724,35 +2726,45 @@ class SimulateController extends Controller
             ->where('game_id', $gameId)
             ->value('team_id');
 
-        // Determine the playoff round column
+        // Determine the playoff round column (e.g., finals_appearances)
         $roundColumn = $this->getRoundColumn($round);
 
-        // Check if the player has a record in the playoff appearances table
+        // Check if the player has a record already
         $exists = DB::table('player_playoff_appearances')
             ->where('player_id', $playerId)
             ->exists();
 
+        // Determine if this is a championship win
+        $wonChampionship = ($playerTeamId == $winningTeamId && $round === 'finals') ? 1 : 0;
+
         if ($exists) {
-            // Update the existing record
             DB::table('player_playoff_appearances')
                 ->where('player_id', $playerId)
                 ->update([
                     'total_playoff_appearances' => DB::raw('total_playoff_appearances + 1'),
                     $roundColumn => DB::raw("$roundColumn + 1"),
-                    // These assume CSV columns – you may want a separate table instead
                     'seasons_played_in_playoffs' => DB::raw("seasons_played_in_playoffs + IF(NOT FIND_IN_SET('$seasonId', seasons_played_in_playoffs), 1, 0)"),
                     'total_seasons_played' => DB::raw("total_seasons_played + IF(NOT FIND_IN_SET('$seasonId', total_seasons_played), 1, 0)"),
-                    'championships_won' => DB::raw("championships_won + IF($playerTeamId = $winningTeamId AND '$round' = 'finals', 1, 0)")
+                    'championships_won' => DB::raw("championships_won + $wonChampionship"),
                 ]);
         } else {
-            // Insert a new record
             DB::table('player_playoff_appearances')->insert([
                 'player_id' => $playerId,
                 'total_playoff_appearances' => 1,
                 $roundColumn => 1,
-                'seasons_played_in_playoffs' => 1,
-                'total_seasons_played' => 1,
-                'championships_won' => ($playerTeamId == $winningTeamId && $round == 'finals') ? 1 : 0
+                'seasons_played_in_playoffs' => (string)$seasonId,
+                'total_seasons_played' => (string)$seasonId,
+                'championships_won' => $wonChampionship,
+                // Initialize all round columns (optional, adjust to match your schema)
+                'play_ins_elims_round_1_appearances' => $roundColumn === 'play_ins_elims_round_1_appearances' ? 1 : 0,
+                'play_ins_elims_round_2_appearances' => $roundColumn === 'play_ins_elims_round_2_appearances' ? 1 : 0,
+                'play_ins_finals_appearances'       => $roundColumn === 'play_ins_finals_appearances' ? 1 : 0,
+                'round_of_32_appearances'            => $roundColumn === 'round_of_32_appearances' ? 1 : 0,
+                'round_of_16_appearances'            => $roundColumn === 'round_of_16_appearances' ? 1 : 0,
+                'quarter_finals_appearances'         => $roundColumn === 'quarter_finals_appearances' ? 1 : 0,
+                'semi_finals_appearances'            => $roundColumn === 'semi_finals_appearances' ? 1 : 0,
+                'interconference_semi_finals_appearances' => $roundColumn === 'interconference_semi_finals_appearances' ? 1 : 0,
+                'finals_appearances'                 => $roundColumn === 'finals_appearances' ? 1 : 0,
             ]);
         }
     }
