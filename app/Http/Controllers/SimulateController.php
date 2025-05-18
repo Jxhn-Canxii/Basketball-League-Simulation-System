@@ -2716,7 +2716,7 @@ class SimulateController extends Controller
         $round = $gameData->round;
         $homeTeamId = $gameData->home_team_id;
         $awayTeamId = $gameData->away_team_id;
-        $winningTeamId = ($gameData->home_score > $gameData->away_score) ? $homeTeamId : $awayTeamId;
+        $winningTeamId = $gameData->winner_id;
 
         // Get the player's team for this game
         $playerTeamId = DB::table('player_game_stats')
@@ -2724,27 +2724,28 @@ class SimulateController extends Controller
             ->where('game_id', $gameId)
             ->value('team_id');
 
-        // Check if the player has a record in the appearances table
+        // Determine the playoff round column
+        $roundColumn = $this->getRoundColumn($round);
+
+        // Check if the player has a record in the playoff appearances table
         $exists = DB::table('player_playoff_appearances')
             ->where('player_id', $playerId)
             ->exists();
 
-        // Define appearance columns based on round
-        $roundColumn = $this->getRoundColumn($round);
-
         if ($exists) {
-            // Update existing record: increment appearances
+            // Update the existing record
             DB::table('player_playoff_appearances')
                 ->where('player_id', $playerId)
                 ->update([
                     'total_playoff_appearances' => DB::raw('total_playoff_appearances + 1'),
                     $roundColumn => DB::raw("$roundColumn + 1"),
-                    'seasons_played_in_playoffs' => DB::raw("seasons_played_in_playoffs + IF(NOT FIND_IN_SET($seasonId, seasons_played_in_playoffs), 1, 0)"),
-                    'total_seasons_played' => DB::raw("total_seasons_played + IF(NOT FIND_IN_SET($seasonId, total_seasons_played), 1, 0)"),
+                    // These assume CSV columns – you may want a separate table instead
+                    'seasons_played_in_playoffs' => DB::raw("seasons_played_in_playoffs + IF(NOT FIND_IN_SET('$seasonId', seasons_played_in_playoffs), 1, 0)"),
+                    'total_seasons_played' => DB::raw("total_seasons_played + IF(NOT FIND_IN_SET('$seasonId', total_seasons_played), 1, 0)"),
                     'championships_won' => DB::raw("championships_won + IF($playerTeamId = $winningTeamId AND '$round' = 'finals', 1, 0)")
                 ]);
         } else {
-            // Insert new record
+            // Insert a new record
             DB::table('player_playoff_appearances')->insert([
                 'player_id' => $playerId,
                 'total_playoff_appearances' => 1,
