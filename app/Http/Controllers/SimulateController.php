@@ -2707,72 +2707,20 @@ class SimulateController extends Controller
         }
     }
 
-    private function updatePlayerPlayoffAppearance($playerId, $gameData)
+    public function updatePlayerPlayoffAppearances($playerId, $gameData)
     {
         if (!$playerId || !$gameData) {
             return;
         }
 
-        $gameId = $gameData->game_id;
         $seasonId = $gameData->season_id;
         $round = $gameData->round;
-        $homeTeamId = $gameData->home_team_id;
-        $awayTeamId = $gameData->away_team_id;
-        $winningTeamId = $gameData->winner_id;
+        $winnerTeamId = $gameData->winner_id;
 
-        // Get the player's team for this game
-        $playerTeamId = DB::table('player_game_stats')
-            ->where('player_id', $playerId)
-            ->where('game_id', $gameId)
-            ->value('team_id');
+        // You may need to pass this into the function or fetch it if needed
+        $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
 
-        // Determine the playoff round column (e.g., finals_appearances)
-        $roundColumn = $this->getRoundColumn($round);
-
-        // Check if the player has a record already
-        $exists = DB::table('player_playoff_appearances')
-            ->where('player_id', $playerId)
-            ->exists();
-
-        // Determine if this is a championship win
-        $wonChampionship = ($playerTeamId == $winningTeamId &&  $roundColumn === 'finals_appearances') ? 1 : 0;
-
-        if ($exists) {
-            DB::table('player_playoff_appearances')
-                ->where('player_id', $playerId)
-                ->update([
-                    'total_playoff_appearances' => DB::raw('total_playoff_appearances + 1'),
-                    $roundColumn => DB::raw("$roundColumn + 1"),
-                    'seasons_played_in_playoffs' => DB::raw("seasons_played_in_playoffs + IF(NOT FIND_IN_SET('$seasonId', seasons_played_in_playoffs), 1, 0)"),
-                    'total_seasons_played' => DB::raw("total_seasons_played + IF(NOT FIND_IN_SET('$seasonId', total_seasons_played), 1, 0)"),
-                    'championships_won' => DB::raw("championships_won + $wonChampionship"),
-                ]);
-        } else {
-            DB::table('player_playoff_appearances')->insert([
-                'player_id' => $playerId,
-                'total_playoff_appearances' => 1,
-                $roundColumn => 1,
-                'seasons_played_in_playoffs' => (string)$seasonId,
-                'total_seasons_played' => (string)$seasonId,
-                'championships_won' => $wonChampionship,
-                // Initialize all round columns (optional, adjust to match your schema)
-                'play_ins_elims_round_1_appearances' => $roundColumn === 'play_ins_elims_round_1_appearances' ? 1 : 0,
-                'play_ins_elims_round_2_appearances' => $roundColumn === 'play_ins_elims_round_2_appearances' ? 1 : 0,
-                'play_ins_finals_appearances'       => $roundColumn === 'play_ins_finals_appearances' ? 1 : 0,
-                'round_of_32_appearances'            => $roundColumn === 'round_of_32_appearances' ? 1 : 0,
-                'round_of_16_appearances'            => $roundColumn === 'round_of_16_appearances' ? 1 : 0,
-                'quarter_finals_appearances'         => $roundColumn === 'quarter_finals_appearances' ? 1 : 0,
-                'semi_finals_appearances'            => $roundColumn === 'semi_finals_appearances' ? 1 : 0,
-                'interconference_semi_finals_appearances' => $roundColumn === 'interconference_semi_finals_appearances' ? 1 : 0,
-                'finals_appearances'                 => $roundColumn === 'finals_appearances' ? 1 : 0,
-            ]);
-        }
-    }
-
-    // Helper function to get the round column based on the round name
-    private function getRoundColumn($round)
-    {
-        $roundMapping = [
+        $roundColumnMap = [
             'play_ins_elims_round_1' => 'play_ins_elims_round_1_appearances',
             'play_ins_elims_round_2' => 'play_ins_elims_round_2_appearances',
             'play_ins_finals' => 'play_ins_finals_appearances',
@@ -2784,7 +2732,69 @@ class SimulateController extends Controller
             'finals' => 'finals_appearances',
         ];
 
-        return $roundMapping[$round] ?? null; // Return the column name based on the round
+        if (!isset($roundColumnMap[$round])) {
+            return; // Not a tracked playoff round
+        }
+
+        $columnToIncrement = $roundColumnMap[$round];
+
+        // Ensure player record exists
+        DB::table('player_playoff_appearances')->updateOrInsert(
+            ['player_id' => $playerId],
+            [
+                $columnToIncrement => 0,
+                'total_playoff_appearances' => 0,
+                'seasons_played_in_playoffs' => DB::raw("''"),
+                'total_seasons_played' => DB::raw("''"),
+                'championships_won' => 0,
+            ]
+        );
+
+        // Increment specific round appearance
+        DB::table('player_playoff_appearances')
+            ->where('player_id', $playerId)
+            ->increment($columnToIncrement);
+
+        // Increment total playoff appearances
+        DB::table('player_playoff_appearances')
+            ->where('player_id', $playerId)
+            ->increment('total_playoff_appearances');
+
+        // Check and update season tracking
+        $record = DB::table('player_playoff_appearances')
+            ->where('player_id', $playerId)
+            ->first();
+
+        // Update seasons_played_in_playoffs
+        $seasonsPlayed = explode(',', $record->seasons_played_in_playoffs);
+        if (!in_array($seasonId, $seasonsPlayed)) {
+            $seasonsPlayed[] = $seasonId;
+            DB::table('player_playoff_appearances')
+                ->where('player_id', $playerId)
+                ->update([
+                    'seasons_played_in_playoffs' => implode(',', $seasonsPlayed),
+                ]);
+        }
+
+        // Update total_seasons_played
+        $allSeasons = explode(',', $record->total_seasons_played);
+        if (!in_array($seasonId, $allSeasons)) {
+            $allSeasons[] = $seasonId;
+            DB::table('player_playoff_appearances')
+                ->where('player_id', $playerId)
+                ->update([
+                    'total_seasons_played' => implode(',', $allSeasons),
+                ]);
+        }
+
+        // Handle championship win in finals
+        if ($round === 'finals' && $playerTeamId == $winnerTeamId) {
+            DB::table('player_playoff_appearances')
+                ->where('player_id', $playerId)
+                ->increment('championships_won');
+        }
+
+        return response()->json(['message' => 'Player playoff appearance data updated.']);
     }
 
     private function updateTeamRolesBasedOnStats($teamId, $round)
