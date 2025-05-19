@@ -2735,7 +2735,7 @@ class SimulateController extends Controller
             ->exists();
 
         // Determine if this is a championship win
-        $wonChampionship = ($playerTeamId == $winningTeamId && $round === 'finals') ? 1 : 0;
+        $wonChampionship = ($playerTeamId == $winningTeamId &&  $roundColumn === 'finals_appearances') ? 1 : 0;
 
         if ($exists) {
             DB::table('player_playoff_appearances')
