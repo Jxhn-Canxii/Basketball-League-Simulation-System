@@ -81,7 +81,7 @@
                     <th
                         class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
                     >
-                        Seasons Played (Playoffs)
+                        Seasons Played
                     </th>
                 </tr>
             </thead>
@@ -161,7 +161,7 @@
                         class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
                     >
                         <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_seasons_played }}
+                            {{ player.experience ?? 0 }}
                         </p>
                     </td>
                 </tr>
