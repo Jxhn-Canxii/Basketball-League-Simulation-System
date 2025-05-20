@@ -1629,19 +1629,10 @@ class PlayersController extends Controller
             ->join('players as p', 'ppa.player_id', '=', 'p.id')  // Join with players table to get player names
             ->leftJoin('teams as t', 'p.team_id', '=', 't.id')    // Join with teams table to get current team names
             ->select(
-                'ppa.player_id',
                 'p.is_active AS active_status',
                 'p.name as player_name',
                 't.name as current_team_name',
-                'ppa.round_of_32_appearances',
-                'ppa.round_of_16_appearances',
-                'ppa.quarter_finals_appearances',
-                'ppa.semi_finals_appearances',
-                'ppa.interconference_semi_finals_appearances',
-                'ppa.finals_appearances',
-                'ppa.total_playoff_appearances',
-                'ppa.seasons_played_in_playoffs',
-                'ppa.championships_won'
+                'ppa.*'
             );
 
         // Apply sorting

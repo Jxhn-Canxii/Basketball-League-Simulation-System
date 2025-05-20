@@ -1,178 +1,89 @@
 <template>
-    <div
-        class="bg-white inline-block min-w-full overflow-hidden rounded shadow p-2"
-    >
+    <div class="bg-white inline-block min-w-full overflow-hidden rounded shadow p-2">
         <h3 class="text-md font-semibold text-gray-800">
             Player Playoff Filters
         </h3>
 
-        <!-- Input for filtering -->
-         <div class="flex gap-2">
+        <!-- Filters -->
+        <div class="flex gap-2">
             <input
-            type="text"
-            v-model="search_filters.search"
-            @input.prevent="fetchFilteredPlayers()"
-            placeholder="Enter player name"
-            class="mt-1 mb-2 p-2 border rounded w-full"
-        />
+                type="text"
+                v-model="search_filters.search"
+                @input.prevent="fetchFilteredPlayers()"
+                placeholder="Enter player name"
+                class="mt-1 mb-2 p-2 border rounded w-full"
+            />
+            <select
+                v-model="search_filters.sort_by"
+                @change="fetchFilteredPlayers()"
+                class="mt-1 mb-2 p-2 border rounded w-full"
+            >
+                <option value="playoff_appearances">Most Playoff Appearances</option>
+                <option value="finals_appearances">Most Finals Appearances</option>
+                <option value="big_four">Most Big 4 Appearances</option>
+                <option value="seasons_played">Seasons Played</option>
+                <option value="championships_won">Championships</option>
+            </select>
+        </div>
 
-        <!-- Dropdown for sorting by -->
-        <select
-            v-model="search_filters.sort_by"
-            @change="fetchFilteredPlayers()"
-            class="mt-1 mb-2 p-2 border rounded w-full"
-        >
-            <option value="playoff_appearances">
-                Most Playoff Appearances
-            </option>
-            <option value="finals_appearances">Most Finals Appearances</option>
-            <option value="big_four">Most Big 4 Appearances</option>
-            <option value="seasons_played">Seasons Played</option>
-            <option value="championships_won">Championships</option>
-        </select>
-         </div>
-
-
+        <!-- Table -->
         <table class="w-full text-xs">
             <thead>
-                <tr
-                    class="border-b bg-gray-50 text-left text-nowrap text-xs font-semibold uppercase tracking-wide text-gray-500"
-                >
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Player
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Status
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Current Team
-                    </th>
-                    <!-- <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Teams Played
-                    </th> -->
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Playoffs
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Big 4
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Finals
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Championships
-                    </th>
-                    <th
-                        class="border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase text-gray-600"
-                    >
-                        Seasons Played
-                    </th>
+                <tr class="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    <th :class="getThClass('player_name')">Player</th>
+                    <th>Status</th>
+                    <th>Current Team</th>
+                    <th :class="getThClass('playoff_appearances')" class="text-right">Playoffs</th>
+                    <th class="text-right">Play-ins (10th vs 9th)</th>
+                    <th class="text-right">Play-ins (8th vs 7th)</th>
+                    <th class="text-right">Play-ins Finals</th>
+                    <th class="text-right">Conf. Quarters</th>
+                    <th class="text-right">Conf. Semis</th>
+                    <th class="text-right">Conf. Finals</th>
+                    <th :class="getThClass('big_four')" class="text-nowrap">Big 4</th>
+                    <th :class="getThClass('finals_appearances')" class="text-right">Nat'l Finals</th>
+                    <th :class="getThClass('championships_won')" class="text-right">Championships</th>
+                    <th :class="getThClass('seasons_played')" class="text-right">Seasons Played</th>
                 </tr>
             </thead>
             <tbody>
-                <tr
-                    v-for="player in players.data"
-                    :key="player.id"
-                    class="text-gray-700"
-                >
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
+                <tr v-for="player in players.data" :key="player.id" class="text-gray-700">
+                    <td>
                         <p class="text-gray-900 whitespace-nowrap truncate">
                             {{ player.player_name }}
                         </p>
                     </td>
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden text-nowrap"
-                    >
-                        <!-- Display "Retired" if player is not active and retirement age is greater than or equal to their age -->
+                    <td>
                         <span
                             v-if="!player.active_status"
                             class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800"
-                            >Free Agent/Retired</span
-                        >
-
-                        <!-- Display "Active" if player is active and retirement age is less than their age -->
+                        >Free Agent/Retired</span>
                         <span
                             v-else
                             class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
-                            >Active</span
-                        >
+                        >Active</span>
                     </td>
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
+                    <td>
                         <p class="text-gray-900 whitespace-nowrap truncate">
                             {{ player.current_team_name ?? "-" }}
                         </p>
                     </td>
-                    <!-- <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-normal break-words">
-                            {{ player.teams_played_for_in_playoffs ?? "-" }}
-                        </p>
-                    </td> -->
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.total_playoff_appearances }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.interconference_semi_finals_appearances }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.finals_appearances }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.championships_won }}
-                        </p>
-                    </td>
-                    <td
-                        class="border-b border-gray-200 bg-white px-2 py-2 text-ellipsis overflow-hidden"
-                    >
-                        <p class="text-gray-900 whitespace-nowrap truncate">
-                            {{ player.experience ?? 0 }}
-                        </p>
-                    </td>
+                    <td class="text-right">{{ player.total_playoff_appearances }}</td>
+                    <td class="text-right">{{ player.round_of_16_appearances }}</td>
+                    <td class="text-right">{{ player.play_ins_elims_round_1_appearances }}</td>
+                    <td class="text-right">{{ player.play_ins_elims_round_2_appearances }}</td>
+                    <td class="text-right">{{ player.play_ins_finals_appearances }}</td>
+                    <td class="text-right">{{ player.quarter_finals_appearances }}</td>
+                    <td class="text-right">{{ player.semi_finals_appearances }}</td>
+                    <td class="text-right">{{ player.interconference_semi_finals_appearances }}</td>
+                    <td class="text-right">{{ player.finals_appearances }}</td>
+                    <td class="text-right">{{ player.championships_won }}</td>
+                    <td class="text-right">{{ player.experience ?? 0 }}</td>
                 </tr>
-                <!-- <tr v-if="!players.data.length">
-                    <td colspan="6" class="border-b text-center font-bold text-lg border-gray-200 bg-white px-3 py-3">
-                        <p class="text-red-500 whitespace-no-wrap">No Data Found!</p>
-                    </td>
-                </tr> -->
             </tbody>
         </table>
 
+        <!-- Pagination -->
         <div class="flex w-full overflow-auto mt-2">
             <Paginator
                 v-if="players.total"
@@ -186,10 +97,10 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import Paginator from "@/Components/Paginator.vue";
+import { ref, computed, onMounted } from "vue";
 import axios from "axios";
 import { useForm } from "@inertiajs/vue3";
+import Paginator from "@/Components/Paginator.vue";
 
 const players = ref([]);
 const search_filters = useForm({
@@ -202,10 +113,7 @@ const search_filters = useForm({
 
 const fetchFilteredPlayers = async () => {
     try {
-        const response = await axios.post(
-            route("filter.playoffs.player"),
-            search_filters
-        );
+        const response = await axios.post(route("filter.playoffs.player"), search_filters);
         players.value = response.data;
     } catch (error) {
         console.error("Error fetching filtered players:", error);
@@ -217,13 +125,21 @@ const handlePagination = (page_num) => {
     fetchFilteredPlayers();
 };
 
+const getThClass = (column) => {
+    return [
+        "border-b-2 border-gray-200 bg-gray-100 py-2 px-2 text-left font-semibold uppercase",
+        {
+            "bg-yellow-100 text-yellow-800": search_filters.sort_by === column,
+        },
+    ];
+};
+
 onMounted(() => {
     fetchFilteredPlayers();
 });
 </script>
 
 <style scoped>
-/* Additional custom styles */
 table {
     border-collapse: collapse;
 }
