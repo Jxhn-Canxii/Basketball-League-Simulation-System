@@ -2744,8 +2744,6 @@ class SimulateController extends Controller
             [
                 $columnToIncrement => 0,
                 'total_playoff_appearances' => 0,
-                'seasons_played_in_playoffs' => DB::raw("''"),
-                'total_seasons_played' => DB::raw("''"),
                 'championships_won' => 0,
             ]
         );
@@ -2766,26 +2764,26 @@ class SimulateController extends Controller
             ->first();
 
         // Update seasons_played_in_playoffs
-        $seasonsPlayed = explode(',', $record->seasons_played_in_playoffs);
-        if (!in_array($seasonId, $seasonsPlayed)) {
-            $seasonsPlayed[] = $seasonId;
-            DB::table('player_playoff_appearances')
-                ->where('player_id', $playerId)
-                ->update([
-                    'seasons_played_in_playoffs' => implode(',', $seasonsPlayed),
-                ]);
-        }
+        // $seasonsPlayed = explode(',', $record->seasons_played_in_playoffs);
+        // if (!in_array($seasonId, $seasonsPlayed)) {
+        //     $seasonsPlayed[] = $seasonId;
+        //     DB::table('player_playoff_appearances')
+        //         ->where('player_id', $playerId)
+        //         ->update([
+        //             'seasons_played_in_playoffs' => implode(',', $seasonsPlayed),
+        //         ]);
+        // }
 
-        // Update total_seasons_played
-        $allSeasons = explode(',', $record->total_seasons_played);
-        if (!in_array($seasonId, $allSeasons)) {
-            $allSeasons[] = $seasonId;
-            DB::table('player_playoff_appearances')
-                ->where('player_id', $playerId)
-                ->update([
-                    'total_seasons_played' => implode(',', $allSeasons),
-                ]);
-        }
+        // // Update total_seasons_played
+        // $allSeasons = explode(',', $record->total_seasons_played);
+        // if (!in_array($seasonId, $allSeasons)) {
+        //     $allSeasons[] = $seasonId;
+        //     DB::table('player_playoff_appearances')
+        //         ->where('player_id', $playerId)
+        //         ->update([
+        //             'total_seasons_played' => implode(',', $allSeasons),
+        //         ]);
+        // }
 
         // Handle championship win in finals
         if ($round === 'finals' && $playerTeamId == $winnerTeamId) {
