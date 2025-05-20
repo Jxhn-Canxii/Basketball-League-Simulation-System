@@ -2707,7 +2707,7 @@ class SimulateController extends Controller
         }
     }
 
-    public function updatePlayerPlayoffAppearances($playerId, $gameData)
+    public function updatePlayerPlayoffAppearance($playerId, $gameData)
     {
         if (!$playerId || !$gameData) {
             return;
