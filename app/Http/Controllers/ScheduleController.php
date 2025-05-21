@@ -35,7 +35,7 @@ class ScheduleController extends Controller
         return response()->json($seasons);
     }
 
-   public function createSeasonandSchedule(Request $request)
+    public function createSeasonandSchedule(Request $request)
     {
         $request->validate([
             'season_name' => 'required|unique:seasons,name',
@@ -80,7 +80,10 @@ class ScheduleController extends Controller
                     $this->createHybridRoundRobinScheduleByConference($season->id, $request->league_id);
                     break;
                 case 5:
-                    $this->createHalfRoundRobinScheduleByConference($season->id, $request->league_id);
+                    $this->createCustomRoundRobinScheduleByConference($season->id, $request->league_id,5);
+                    break;
+                case 6:
+                    $this->createCustomRoundRobinScheduleByConference($season->id, $request->league_id,10);
                     break;
                 case 1:
                     throw new \Exception('Single Elimination not available for this season type.');
@@ -105,7 +108,7 @@ class ScheduleController extends Controller
     }
 
 
-   private function storeTeamSeasonInfo()
+    private function storeTeamSeasonInfo()
     {
         $latestSeasonId = get_current_season_id();
 
@@ -318,7 +321,7 @@ class ScheduleController extends Controller
         }
     }
 
-    private function createHalfRoundRobinScheduleByConference($seasonId, $leagueId)
+    private function createCustomRoundRobinScheduleByConference($seasonId, $leagueId, $roundLimit)
     {
         DB::beginTransaction(); // Start transaction
         try {
@@ -330,7 +333,6 @@ class ScheduleController extends Controller
                 return $conferenceTeams->shuffle();
             });
 
-            $roundLimit = 10;
             // Generate matches for each conference
             foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
                 $roundCounter = 0; // Initialize round counter

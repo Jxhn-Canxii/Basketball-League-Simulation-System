@@ -54,7 +54,8 @@
                         <option value="1" disabled>
                             Single Elimination (Coming Soon)
                         </option>
-                        <option value="5">Power 10</option>
+                        <option value="5">Super 5</option>
+                        <option value="6">Power 10</option>
                         <option value="2">Single Round Robin</option>
                         <option value="3">Double Round Robin</option>
                         <option value="4" disabled>Round Robin + Inter Conference</option>
