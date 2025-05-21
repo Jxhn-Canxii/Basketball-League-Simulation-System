@@ -2741,11 +2741,7 @@ class SimulateController extends Controller
         // Ensure player record exists
         DB::table('player_playoff_appearances')->updateOrInsert(
             ['player_id' => $playerId],
-            [
-                $columnToIncrement => 0,
-                'total_playoff_appearances' => 0,
-                'championships_won' => 0,
-            ]
+            [] // No values to reset
         );
 
         // Increment specific round appearance
@@ -2758,33 +2754,6 @@ class SimulateController extends Controller
             ->where('player_id', $playerId)
             ->increment('total_playoff_appearances');
 
-        // Check and update season tracking
-        $record = DB::table('player_playoff_appearances')
-            ->where('player_id', $playerId)
-            ->first();
-
-        // Update seasons_played_in_playoffs
-        // $seasonsPlayed = explode(',', $record->seasons_played_in_playoffs);
-        // if (!in_array($seasonId, $seasonsPlayed)) {
-        //     $seasonsPlayed[] = $seasonId;
-        //     DB::table('player_playoff_appearances')
-        //         ->where('player_id', $playerId)
-        //         ->update([
-        //             'seasons_played_in_playoffs' => implode(',', $seasonsPlayed),
-        //         ]);
-        // }
-
-        // // Update total_seasons_played
-        // $allSeasons = explode(',', $record->total_seasons_played);
-        // if (!in_array($seasonId, $allSeasons)) {
-        //     $allSeasons[] = $seasonId;
-        //     DB::table('player_playoff_appearances')
-        //         ->where('player_id', $playerId)
-        //         ->update([
-        //             'total_seasons_played' => implode(',', $allSeasons),
-        //         ]);
-        // }
-
         // Handle championship win in finals
         if ($round === 'finals' && $playerTeamId == $winnerTeamId) {
             DB::table('player_playoff_appearances')
@@ -2792,7 +2761,7 @@ class SimulateController extends Controller
                 ->increment('championships_won');
         }
 
-        return response()->json(['message' => 'Player playoff appearance data updated.']);
+        // return response()->json(['message' => 'Player playoff appearance data updated.']);
     }
 
     private function updateTeamRolesBasedOnStats($teamId, $round)
