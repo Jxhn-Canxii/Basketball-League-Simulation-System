@@ -39,7 +39,7 @@ class ScheduleController extends Controller
     {
         $request->validate([
             'season_name' => 'required|unique:seasons,name',
-            'type' => 'required|in:1,2,3,4,5',
+            'type' => 'required|in:1,2,3,4,5,6',
             'start' => 'required',
             'league_id' => 'required|exists:leagues,id',
             'match_type' => 'required|in:1,2',

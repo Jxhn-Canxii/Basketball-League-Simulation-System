@@ -426,6 +426,11 @@ class SimulateController extends Controller
         // Distribute assists for the away team
         distributeAssistsPlayoffs($playerGameStats, $gameData->away_team_id, $maxAwayAssists, $awayAssistsAssigned);
 
+        // Clear reference
+        // unset($stats);
+
+        // Update or insert player game stats
+        $this->updateSeasonStats($playerGameStats,$gameData,true);
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
@@ -448,6 +453,13 @@ class SimulateController extends Controller
         
         $randomReason = $reasons[array_rand($reasons)];
         
+        if ($homeScore === $awayScore) {
+            DB::rollBack();
+            return response()->json([
+                'message' => 'The game is postponed ' . $randomReason . '!',
+            ], 500);
+        }
+
         // Update the scores
         $gameData->home_score = $homeScore;
         $gameData->away_score = $awayScore;
@@ -458,15 +470,9 @@ class SimulateController extends Controller
         
         $gameData->status = 2; // Marking the game as completed
 
-          // Update or insert player game stats
-        if ($homeScore === $awayScore) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'The game is postponed ' . $randomReason . '!',
-            ], 500);
+        foreach ($playerGameStats as $stats) {
+           $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
         }
-
-        $this->updateSeasonStats($playerGameStats,$gameData,true);
         // Save the updated scores
         $gameData->save();
 
@@ -908,6 +914,10 @@ class SimulateController extends Controller
             // Distribute assists for the away team
             distributeAssists($playerGameStats, $gameData->away_team_id, $maxAwayAssists, $awayAssistsAssigned);
 
+
+            // Update database records with new stats
+            $this->updateSeasonStats($playerGameStats,$gameData,false);
+
              // Calculate scores based on player stats
             $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
             ->where('game_id', $gameData->game_id)
@@ -929,6 +939,14 @@ class SimulateController extends Controller
             
             $randomReason = $reasons[array_rand($reasons)];
             
+            if ($homeScore === $awayScore) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'The game is postponed ' . $randomReason . '!',
+                ], 500);
+            }
+
+            
             $gameData->home_score = $homeScore;
             $gameData->away_score = $awayScore;
             
@@ -937,16 +955,6 @@ class SimulateController extends Controller
                 : $gameData->away_team_id;
             
             $gameData->status = 2;
-
-            if ($homeScore === $awayScore) {
-                DB::rollBack();
-                return response()->json([
-                    'message' => 'The game is postponed ' . $randomReason . '!',
-                ], 500);
-            }
-
-            $this->updateSeasonStats($playerGameStats,$gameData,false);
-
             $gameData->save();
 
             // Check if all rounds have been simulated for the season
@@ -2681,10 +2689,12 @@ class SimulateController extends Controller
 
         $seasonId = $gameData->season_id;
         $round = $gameData->round;
+        $homeScore = $gameData->home_score;
+        $awayScore = $gameData->away_score;
         $homeTeamId = $gameData->home_id;
         $awayTeamId = $gameData->away_id;
-        $winnerTeamId =  $gameData->winner_id;
-
+        $winnerTeamId = $gameData->winner_id;
+        
         // Fetch player's team_id
         $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
         if (!$playerTeamId) {
@@ -2935,9 +2945,6 @@ class SimulateController extends Controller
                     unset($stats['passing_rating']);
                 }
 
-                if($isPlayoff){
-                    $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
-                }
                 // Update Player Game Stats
                 PlayerGameStats::updateOrCreate(
                     [
