@@ -2715,10 +2715,31 @@ class SimulateController extends Controller
 
         $seasonId = $gameData->season_id;
         $round = $gameData->round;
-        $winnerTeamId = $gameData->winner_id;
+        $homeScore = $gameData->home_score;
+        $awayScore = $gameData->away_score;
+        $homeTeamId = $gameData->home_id;
+        $awayTeamId = $gameData->away_id;
 
-        // You may need to pass this into the function or fetch it if needed
+        // Determine winnerTeamId based on scores
+        $winnerTeamId = null;
+        if (is_numeric($homeScore) && is_numeric($awayScore)) {
+            if ($homeScore > $awayScore) {
+                $winnerTeamId = $homeTeamId;
+            } elseif ($awayScore > $homeScore) {
+                $winnerTeamId = $awayTeamId;
+            }
+            // If scores are equal, it might be a tie; handle as needed (e.g., no winner)
+        } else {
+            \Log::warning("Invalid scores: home_score=$homeScore, away_score=$awayScore");
+            return; // Exit if scores are invalid
+        }
+
+        // Fetch player's team_id
         $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
+        if (!$playerTeamId) {
+            \Log::error("No team_id found for player_id: $playerId");
+            return;
+        }
 
         $roundColumnMap = [
             'play_ins_elims_round_1' => 'play_ins_elims_round_1_appearances',
@@ -2733,33 +2754,40 @@ class SimulateController extends Controller
         ];
 
         if (!isset($roundColumnMap[$round])) {
+            \Log::warning("Invalid playoff round: $round");
             return; // Not a tracked playoff round
         }
 
         $columnToIncrement = $roundColumnMap[$round];
 
-        // Ensure player record exists
-        DB::table('player_playoff_appearances')->updateOrInsert(
-            ['player_id' => $playerId],
-            [] // No values to reset
-        );
+        // Use a transaction for database consistency
+        DB::transaction(function () use ($playerId, $columnToIncrement, $round, $playerTeamId, $winnerTeamId) {
+            // Ensure player record exists
+            DB::table('player_playoff_appearances')->updateOrInsert(
+                ['player_id' => $playerId],
+                []
+            );
 
-        // Increment specific round appearance
-        DB::table('player_playoff_appearances')
-            ->where('player_id', $playerId)
-            ->increment($columnToIncrement);
-
-        // Increment total playoff appearances
-        DB::table('player_playoff_appearances')
-            ->where('player_id', $playerId)
-            ->increment('total_playoff_appearances');
-
-        // Handle championship win in finals
-        if ($round === 'finals' && $playerTeamId == $winnerTeamId) {
+            // Increment specific round appearance
             DB::table('player_playoff_appearances')
                 ->where('player_id', $playerId)
-                ->increment('championships_won');
-        }
+                ->increment($columnToIncrement);
+
+            // Increment total playoff appearances
+            DB::table('player_playoff_appearances')
+                ->where('player_id', $playerId)
+                ->increment('total_playoff_appearances');
+
+            // Handle championship win in finals
+            if ($round === 'finals' && $winnerTeamId && $playerTeamId == $winnerTeamId) {
+                \Log::info("Incrementing championships_won for player $playerId, team $playerTeamId won");
+                DB::table('player_playoff_appearances')
+                    ->where('player_id', $playerId)
+                    ->increment('championships_won');
+            } else {
+                \Log::info("Championship not incremented: round=$round, playerTeamId=$playerTeamId, winnerTeamId=$winnerTeamId");
+            }
+        });
 
         // return response()->json(['message' => 'Player playoff appearance data updated.']);
     }
