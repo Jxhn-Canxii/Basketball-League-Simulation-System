@@ -931,6 +931,7 @@ const fetchBoxScore = async () => {
         gameDetails.value = false;
         const response = await axios.post(route("game.boxscore"), {
             game_id: props.game_id,
+            show_stats: props.showBoxScore,
         });
         const data = response.data.box_score;
 
