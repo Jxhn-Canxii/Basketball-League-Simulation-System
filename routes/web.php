@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
         Route::post('game-per-round', [SimulateController::class, 'simulatePerRound'])->name('game.simulate.round');
         Route::get('testroles', [SimulateController::class, 'testRoleAssignment'])->name('test.roles');
         
+        Route::get('test-free-agent/{position}', [SimulateController::class, 'getBestFreeAgent'])->name('get.free.agent');
     });
 
     Route::prefix('schedule/')->group(function(){
@@ -204,7 +205,7 @@ Route::middleware('auth')->group(function () {
         Route::post('player-best-alltime-by-team', [PlayersController::class, 'getTop10PlayersByTeam'])->name('best.team.players.alltime');
         Route::post('players-per-team-by-season', [PlayersController::class, 'getStarPlayersByTeam'])->name('best.team.star.players');
     
-        Route::get('test-free-agent/{position}', [SimulateController::class, 'getBestFreeAgent'])->name('get.free.agent');
+        Route::get('generate-new-player', [PlayersController::class, 'generateNewPlayer'])->name('generate.new.player');
     });
 
     Route::prefix('transactions/')->group(function(){

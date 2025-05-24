@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Faker\Factory as Faker;
 use App\Models\Player;
 use App\Models\Schedules;
 use App\Models\Seasons;
@@ -487,6 +488,23 @@ class PlayersController extends Controller
         ]);
     }
     
+    public function generateNewPlayer() {
+        $faker = Faker::create();
+
+        $name = $faker->firstNameMale . ' ' . $faker->lastName;
+        $address = $faker->address;
+        $country = $faker->country;
+
+        $data = [
+            'name' => $faker->firstNameMale . ' ' . $faker->lastName,
+            'address' => $faker->address,
+            'country' => $faker->country,
+            // Add other fields you want to generate...
+        ];
+
+        return response()->json($data);
+    }
+    
     // Add a player to a team with random attributes
     public function addPlayer(Request $request)
     {
@@ -559,7 +577,6 @@ class PlayersController extends Controller
             'player' => $player,
         ]);
     }
-    
 
     public function addFreeAgentPlayer(Request $request)
     {

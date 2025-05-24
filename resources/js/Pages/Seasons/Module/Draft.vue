@@ -329,6 +329,7 @@ const fetchRandomFullName1 = async () => {
         return null; // Return null on error
     }
 };
+
 const fetchRandomFullName2 = async () => {
     try {
         let data = null;
@@ -370,22 +371,48 @@ const fetchRandomFullName2 = async () => {
     }
 };
 
+const fetchRandomFullName3 = async () => {
+    try {
+        // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
+        const response = await axios.get(route('generate.new.player')); // API URL for random male user
+        const { name, country, address } = response.data; // Extract first and last name
+        const data = {
+            name: name,
+            country: country,
+            address: address,
+        };
+        // Function to check if a name contains only English alphabet letters
+        const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
+
+        if (isEnglishReadable(first) && isEnglishReadable(last)) {
+            return data; // Return full name if valid
+        } else {
+            return null; // Return null if the name is not valid
+        }
+    } catch (error) {
+        console.error("Error fetching random player name:", error);
+        return null; // Return null on error
+    }
+};
 
 const addMultiplePlayers = async (count) => {
     try {
         const promises = [];
 
-        for (let i = 0; i < count; i++) {
-            // Randomly choose between fetchRandomFullName1 or fetchRandomFullName2
-            const fetchRandomFullName = Math.random() < 0.5 ? await fetchRandomFullName1 : await fetchRandomFullName2; // 50% chance for each
+       for (let i = 0; i < count; i++) {
+            // Array of your 3 fetch functions
+            const fetchFunctions = [fetchRandomFullName1, fetchRandomFullName2, fetchRandomFullName3];
 
-            const randomFullName = await fetchRandomFullName(); // Fetch random full name
+            // Pick one at random
+            const randomIndex = Math.floor(Math.random() * fetchFunctions.length);
+            const fetchRandomFullName = fetchFunctions[randomIndex];
+
+            const randomFullName = await fetchRandomFullName();
             console.log(randomFullName);
             if (randomFullName != null) {
-                promises.push(addPlayer(randomFullName)); // Add the promise to the array
+                promises.push(addPlayer(randomFullName));
             }
         }
-
 
         // Wait for all promises to resolve
         const results = await Promise.all(promises);
