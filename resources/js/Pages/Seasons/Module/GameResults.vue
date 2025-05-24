@@ -310,8 +310,11 @@
                             class="border-b hover:bg-gray-600 text-xs"
                         >
                             <td class="py-1 px-3">
-                                {{ player.name
-                                }}<sup>{{ player.is_rookie ? "R" : "V" }}</sup>
+                                {{ player.name }}
+                                <sup>
+                                    {{ player.is_rookie ? "R" : "V" }} 
+                                    <i v-if="player.is_injured" class="fa fa-plus-square text-red-500"></i>
+                                </sup>
                             </td>
                             <td class="py-1 px-3">
                                 {{ player.position }}
@@ -467,8 +470,11 @@
                             class="border-b hover:bg-gray-600 text-xs"
                         >
                             <td class="py-1 px-3">
-                                {{ player.name
-                                }}<sup>{{ player.is_rookie ? "R" : "V" }}</sup>
+                                {{ player.name }}
+                                <sup>
+                                    {{ player.is_rookie ? "R" : "V" }} 
+                                    <i v-if="player.is_injured" class="fa fa-plus-square text-red-500"></i>
+                                </sup>
                             </td>
                             <td class="py-1 px-3">
                                 {{ player.position }}
