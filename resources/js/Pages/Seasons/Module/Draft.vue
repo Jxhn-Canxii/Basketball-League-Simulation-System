@@ -381,14 +381,9 @@ const fetchRandomFullName3 = async () => {
             country: country,
             address: address,
         };
-        // Function to check if a name contains only English alphabet letters
-        const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
-
-        if (isEnglishReadable(first) && isEnglishReadable(last)) {
-            return data; // Return full name if valid
-        } else {
-            return null; // Return null if the name is not valid
-        }
+        
+        return data; // Return full name if valid
+       
     } catch (error) {
         console.error("Error fetching random player name:", error);
         return null; // Return null on error
