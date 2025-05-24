@@ -401,7 +401,7 @@ const addMultiplePlayers = async (count) => {
 
        for (let i = 0; i < count; i++) {
             // Array of your 3 fetch functions
-            const fetchFunctions = [fetchRandomFullName1, fetchRandomFullName2, fetchRandomFullName3];
+            const fetchFunctions = [fetchRandomFullName3, fetchRandomFullName3, fetchRandomFullName3];
 
             // Pick one at random
             const randomIndex = Math.floor(Math.random() * fetchFunctions.length);
