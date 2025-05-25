@@ -337,7 +337,7 @@ class RatingsController extends Controller
             if ($teamId == $lastTeamId) {
                 \Log::info('Processing last update.');
 
-                $this->updatePlayerAge();
+                $this->updatePlayerAndCoachAge();
                 $this->promoteRetiredPlayersToCoaches();
 
                 // Update season status
@@ -385,33 +385,39 @@ class RatingsController extends Controller
         }
     }
 
-    private function updatePlayerAge() {
+    private function updatePlayerAndCoachAge()
+    {
+        // Update active, free agent players with age <= 65
         DB::table('players')
-        ->where('team_id', 0)
-        ->where('is_active', 1)
-        ->update([
-            'is_rookie' => 0,
-            'age' => DB::raw('age + 1'), // Increment age by 1
-            'contract_years' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE contract_years END"), // Set contract_years to 0 if age reaches retirement_age
-            'team_id' => 0,
-            'is_active' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE is_active END"), // Set is_active to 0 if age reaches retirement_age
-        ]);
-
-        ///lastly update the age of non active players
-        DB::table('players')
-            ->where('is_active', 0)
+            ->where('team_id', 0)
+            ->where('is_active', 1)
+            ->where('age', '<=', 65)
             ->update([
+                'is_rookie' => 0,
+                'age' => DB::raw('age + 1'),
+                'contract_years' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE contract_years END"),
                 'team_id' => 0,
-                'contract_years' => 0,
-                'age' => DB::raw('age + 1'), // Increment age by 1
+                'is_active' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE is_active END"),
             ]);
 
-        DB::table('coaches')
+        // Update non-active players with age <= 65
+        DB::table('players')
             ->where('is_active', 0)
+            ->where('age', '<=', 65)
             ->update([
                 'team_id' => 0,
                 'contract_years' => 0,
-                'age' => DB::raw('age + 1'), // Increment age by 1
+                'age' => DB::raw('age + 1'),
+            ]);
+
+        // Update non-active coaches with age <= 65
+        DB::table('coaches')
+            ->where('is_active', 0)
+            ->where('age', '<=', 65)
+            ->update([
+                'team_id' => 0,
+                'contract_years' => 0,
+                'age' => DB::raw('age + 1'),
             ]);
     }
 
