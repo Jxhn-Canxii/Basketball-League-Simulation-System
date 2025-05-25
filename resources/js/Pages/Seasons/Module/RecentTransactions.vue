@@ -48,7 +48,7 @@
                         </span>
                         <!-- draft status badge -->
                         <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
-                          S{{ transaction.draft_season_id}} {{ transaction.draft_status }} {{ transaction.drafted_team_abbre == 'Undrafted' ? '' : `(${transaction.drafted_team_abbre})` }}
+                         {{ transaction.draft_status == 'Undrafted' ? `S${ transaction.draft_season_id} ${transaction.draft_status}` : `${transaction.draft_status}` }} {{ transaction.draft_status == 'Undrafted' ? '' : `(${transaction.drafted_team_abbre})` }}
                         </span>
                         <i v-if="transaction.awards_info" 
                           class="fas fa-award text-yellow-500 hover:text-yellow-600 cursor-pointer"
