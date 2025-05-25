@@ -38,7 +38,9 @@ class RatingsController extends Controller
             \Log::info('Received request:', ['team_id' => $teamId, 'is_last' => $isLast]);
 
             // Fetch all active players, filtered by team_id if provided
-            $query = Player::where('is_active', 1);
+           $query = Player::where('is_active', 1)
+                    ->where('age', '<=', 65);
+
             if ($teamId) {
                 $query->where('team_id', $teamId);
             }
