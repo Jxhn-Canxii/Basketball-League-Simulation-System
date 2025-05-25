@@ -356,7 +356,10 @@ const fetchRandomFullName2 = async () => {
                 };
 
                 // Check if both first and last names contain only English alphabet letters
-                const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
+                const isEnglishReadable = (name) => {
+                    return /^[A-Za-z]+$/.test(name) && /[AEIOUaeiou]/.test(name);
+                };
+
                 
                 if (!isEnglishReadable(first_name) || !isEnglishReadable(last_name)) {
                     data = null; // Reset and retry if the name contains non-English characters
