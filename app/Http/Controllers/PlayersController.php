@@ -488,18 +488,26 @@ class PlayersController extends Controller
         ]);
     }
     
-    public function generateNewPlayer() {
-        $faker = Faker::create();
+    public function generateNewPlayer()
+    {
+        $locales = [
+            'en_US', 'en_GB', 'fr_FR', 'de_DE', 'it_IT',
+            'es_ES', 'nl_NL', 'pt_BR', 'tr_TR', 'ru_RU',
+            'ja_JP', 'ko_KR', 'zh_CN', 'hi_IN',
+        ];
 
-        $name = $faker->firstNameMale . ' ' . $faker->lastName;
-        $address = $faker->address;
-        $country = $faker->country;
+        // Random locale for global diversity
+        $locale = $locales[array_rand($locales)];
+        $faker = Faker::create($locale);
+
+        $firstName = $faker->firstNameMale;
+        $lastName = $faker->lastName;
 
         $data = [
-            'name' => $faker->firstNameMale . ' ' . $faker->lastName,
+            'name' => "$firstName $lastName",
             'address' => $faker->address,
             'country' => $faker->country,
-            // Add other fields you want to generate...
+            'locale' => $locale, // Optional: see source locale
         ];
 
         return response()->json($data);
