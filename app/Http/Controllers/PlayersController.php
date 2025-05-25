@@ -511,13 +511,12 @@ class PlayersController extends Controller
         $countryRaw = $fakerEn->country; 
 
         $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
-        $address = Transliterator::transliterate($addressRaw);
 
         // Clean & format the data:
         // - Replace dashes and multiple spaces with single space in address
         // - Capitalize each word in name, address, country
         $name = Str::title(str_replace(['-', '_'], ' ', $name));
-        $address = Str::title(preg_replace('/[\-\_]+/', ' ', $address));
+        $address = Str::title(preg_replace('/[\-\_]+/', ' ', $addressRaw));
         $country = Str::title(str_replace(['-', '_'], ' ', $countryRaw));
 
         // Optionally remove extra commas or weird chars from address (example)
