@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Faker\Factory as Faker;
+use Behat\Transliterator\Transliterator;
+use Illuminate\Support\Str;
 use App\Models\Player;
 use App\Models\Schedules;
 use App\Models\Seasons;
@@ -487,32 +489,47 @@ class PlayersController extends Controller
             'players' => $allPlayers,
         ]);
     }
-    
+
     public function generateNewPlayer()
     {
         $locales = [
-            'en_US', 'en_GB', 'fr_FR', 'de_DE', 'it_IT',
-            'es_ES', 'nl_NL', 'pt_BR', 'tr_TR', 'ru_RU',
-            'ja_JP', 'ko_KR', 'zh_CN', 'hi_IN',
+            'en_US', 'en_GB', 'fr_FR', 'de_DE', 'it_IT', 'es_ES', 'nl_NL', 'pt_BR',
+            'pt_PT', 'tr_TR', 'ru_RU', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'hi_IN',
+            'ar_SA', 'sv_SE', 'fi_FI', 'no_NO', 'da_DK', 'pl_PL', 'cs_CZ', 'sk_SK',
+            'ro_RO', 'hu_HU', 'el_GR', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'th_TH',
+            'bg_BG', 'uk_UA', 'ca_ES', 'sl_SI', 'hr_HR', 'lt_LT', 'lv_LV', 'et_EE',
+            'fa_IR', 'af_ZA', 'sq_AL', 'az_AZ', 'be_BY', 'bs_BA', 'mk_MK', 'sr_RS',
         ];
 
-        // Random locale for global diversity
         $locale = $locales[array_rand($locales)];
         $faker = Faker::create($locale);
 
-        $firstName = $faker->firstNameMale;
-        $lastName = $faker->lastName;
+        $firstNameRaw = $faker->firstNameMale;
+        $lastNameRaw = $faker->lastName;
+        $addressRaw = $faker->address;
+        $countryRaw = $faker->country;
 
-        $data = [
-            'name' => "$firstName $lastName",
-            'address' => $faker->address,
-            'country' => $faker->country,
-            'locale' => $locale, // Optional: see source locale
-        ];
+        $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
+        $address = Transliterator::transliterate($addressRaw);
+        $country = Transliterator::transliterate($countryRaw);
 
-        return response()->json($data);
+        // Clean & format the data:
+        // - Replace dashes and multiple spaces with single space in address
+        // - Capitalize each word in name, address, country
+        $name = Str::title(str_replace(['-', '_'], ' ', $name));
+        $address = Str::title(preg_replace('/[\-\_]+/', ' ', $address));
+        $country = Str::title(str_replace(['-', '_'], ' ', $country));
+
+        // Optionally remove extra commas or weird chars from address (example)
+        $address = preg_replace('/\s+/', ' ', trim($address));
+
+        return response()->json([
+            'name' => $name,
+            'address' => $address,
+            'country' => $country,
+            'locale' => $locale,
+        ]);
     }
-    
     // Add a player to a team with random attributes
     public function addPlayer(Request $request)
     {
