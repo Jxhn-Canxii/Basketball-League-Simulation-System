@@ -604,11 +604,21 @@ class PlayersController extends Controller
 
     public function addFreeAgentPlayer(Request $request)
     {
+       $messages = [
+            'name.regex' => 'The name must contain at least one vowel.',
+        ];
+
         $request->validate([
-            'name' => 'required|string|max:255|unique:players,name',
+            'name' => [
+                'required',
+                'string',
+                'max:255',
+                'unique:players,name',
+                'regex:/[aeiouAEIOU]/',
+            ],
             'address' => 'required|string|max:255',
             'country' => 'required|string',
-        ]);
+        ], $messages);
 
         $latestSeasonId = get_current_season_id();
         $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
