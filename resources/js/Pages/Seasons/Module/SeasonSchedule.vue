@@ -64,7 +64,7 @@
         </transition>
         <transition name="fade" mode="out-in">
              <div v-if="showMVPLeaders" class="mt-4">
-                <Top10MVPCandidate :key="showMVPLeaders" :current_round="currentRound"/>
+                <Top15MVPCandidate :key="showMVPLeaders" :current_round="currentRound"/>
             </div>
         </transition>
     </div>
@@ -75,7 +75,7 @@
             </div>
             <div v-else-if="!showGameResults && activeGameId != 0" :key="'transactions-' + activeGameId">
                 <RecentTransactions :key="activeGameId"/>
-                <!-- <Top10MVPCandidate  :key="activeGameId" :current_round="currentRound"/> -->
+                <!-- <Top15MVPCandidate  :key="activeGameId" :current_round="currentRound"/> -->
             </div>
         </transition>
         <div
@@ -222,7 +222,7 @@
     import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
     import Trade from "@/Pages/Seasons/Module/Trade.vue";
     import RecentTransactions from "@/Pages/Seasons/Module/RecentTransactions.vue";
-    import Top10MVPCandidate from "@/Pages/Seasons/Module/Top10MVPCandidate.vue";
+    import Top15MVPCandidate from "@/Pages/Seasons/Module/Top15MVPCandidate.vue";
     import ScoreCard from "@/Pages/Seasons/Module/ScoreCard.vue";
 
     const season_schedules = ref(false);

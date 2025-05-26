@@ -1,7 +1,7 @@
 <template>
   <div class="mvp-leaderboard max-w-full mx-auto p-4 bg-white">
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-bold text-center flex-1">Top 10 MVP Candidates</h2>
+      <h2 class="text-2xl font-bold text-center flex-1">Top 15 MVP Candidates</h2>
       <button
         @click="fetchMVPLeaders"
         class="ml-4 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded shadow"
@@ -18,7 +18,7 @@
         No data available
       </div>
 
-      <ul v-else class="space-y-3">
+      <ul v-else class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
         <li
           v-for="(player, index) in leaders"
           :key="player.player_id"
@@ -28,7 +28,7 @@
             'bg-red-100': rankChange(player.player_id) < 0,
             'bg-white': rankChange(player.player_id) === 0
           }"
-          :style="[ 
+          :style="[
             getAnimationStyle(player.player_id),
             {
               borderLeft: `6px solid #${player.primary_color}`,

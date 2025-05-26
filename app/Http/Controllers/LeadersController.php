@@ -379,7 +379,7 @@ class LeadersController extends Controller
         }
     }
 
-    public function getTop10MVPLeaders()
+    public function getTop15MVPLeaders()
     {
         $topPlayers = \DB::table('mvp_leaders as m')
             ->select([
@@ -410,7 +410,7 @@ class LeadersController extends Controller
             ])
             ->join('teams as t', 'm.team_id', '=', 't.id')
             ->orderByDesc('m.performance_score')
-            ->limit(10)
+            ->limit(15)
             ->get();
 
         return response()->json([
