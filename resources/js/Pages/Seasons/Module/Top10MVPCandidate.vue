@@ -1,6 +1,15 @@
 <template>
   <div class="mvp-leaderboard max-w-full mx-auto p-4 bg-white">
-    <h2 class="text-2xl font-bold mb-4 text-center">Top 10 MVP Candidates</h2>
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-2xl font-bold text-center flex-1">Top 10 MVP Candidates</h2>
+      <button
+        @click="fetchMVPLeaders"
+        class="ml-4 bg-blue-600 hover:bg-blue-700 text-white text-sm px-4 py-1.5 rounded shadow"
+        title="Reload Leaderboard"
+      >
+        🔄 Reload
+      </button>
+    </div>
 
     <div v-if="loading" class="text-center text-gray-500">Loading...</div>
 
@@ -26,7 +35,6 @@
               backgroundImage: `linear-gradient(to right, #${player.primary_color}20, #${player.secondary_color}20)`
             }
           ]"
-          title="Team colors accent"
         >
           <div class="w-8 text-center font-bold text-lg text-gray-700">
             {{ index + 1 }}
@@ -39,7 +47,6 @@
               <span v-else-if="rankChange(player.player_id) < 0" title="Rank fell" class="text-red-600">▼</span>
             </div>
 
-            <!-- Rookie and Draft Status -->
             <div class="text-xs text-gray-500 space-x-2 mt-0.5">
               <span v-if="player.is_rookie" class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
                 Rookie
@@ -62,31 +69,41 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import axios from "axios";
+import { defineProps } from "vue";
+
+const props = defineProps({
+  current_round: {
+    type: Number,
+    required: true,
+  },
+});
 
 const leaders = ref([]);
 const loading = ref(true);
-
 const previousRanks = ref({});
 const animationTimers = new Map();
 
-const STORAGE_KEY = "mvp_leaderboard_ranks";
+const BASE_KEY = "mvp_leaderboard_ranks";
+const getRoundKey = (round) => `${BASE_KEY}_round_${round}`;
 
-const loadPreviousRanks = () => {
+const loadPreviousRanks = (round) => {
+  const prevRound = round - 1;
+  if (prevRound < 1) return {};
   try {
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(getRoundKey(prevRound));
     return saved ? JSON.parse(saved) : {};
   } catch {
     return {};
   }
 };
 
-const saveRanks = (ranks) => {
+const saveRanks = (round, ranks) => {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(ranks));
+    localStorage.setItem(getRoundKey(round), JSON.stringify(ranks));
   } catch {
-    // Silent fail
+    // silent fail
   }
 };
 
@@ -117,19 +134,18 @@ const getAnimationStyle = (playerId) => {
 };
 
 const formatDraftStatus = (status) => {
-  // Basic formatter — you can customize this further
-  return status === 'Undrafted' ? "Undrafted" : `${status}`;
+  return status === "Undrafted" ? "Undrafted" : `${status}`;
 };
 
 const fetchMVPLeaders = async () => {
+  const round = props.current_round;
   loading.value = true;
+
   try {
-    const response = await axios.get(route("season.mvp.leaders"));
+    const response = await axios.get(route("season.mvp.leaders", { round }));
     const data = response.data.data || [];
 
-    if (Object.keys(previousRanks.value).length === 0) {
-      previousRanks.value = loadPreviousRanks();
-    }
+    previousRanks.value = loadPreviousRanks(round);
 
     const newRanks = {};
     data.forEach((player, index) => {
@@ -137,8 +153,7 @@ const fetchMVPLeaders = async () => {
     });
 
     leaders.value = data;
-    saveRanks(newRanks);
-    previousRanks.value = newRanks;
+    saveRanks(round, newRanks);
   } catch (error) {
     console.error("Failed to fetch MVP leaders", error);
     leaders.value = [];
@@ -149,6 +164,12 @@ const fetchMVPLeaders = async () => {
 
 onMounted(() => {
   fetchMVPLeaders();
+});
+
+watch(() => props.current_round, (newVal, oldVal) => {
+  if (newVal !== oldVal) {
+    fetchMVPLeaders();
+  }
 });
 </script>
 

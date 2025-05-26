@@ -64,7 +64,7 @@
         </transition>
         <transition name="fade" mode="out-in">
              <div v-if="showMVPLeaders" class="mt-4">
-                <Top10MVPCandidate :key="showMVPLeaders" />
+                <Top10MVPCandidate :key="showMVPLeaders" :current_round="currentRound"/>
             </div>
         </transition>
     </div>
@@ -74,8 +74,8 @@
                 <GameResults :game_id="activeGameId" :showBoxScore="false" />
             </div>
             <div v-else-if="!showGameResults && activeGameId != 0" :key="'transactions-' + activeGameId">
-                <RecentTransactions v-if="activeConferenceTab != 4" :key="activeGameId"/>
-                <Top10MVPCandidate v-else :key="activeGameId"/>
+                <RecentTransactions :key="activeGameId"/>
+                <!-- <Top10MVPCandidate  :key="activeGameId" :current_round="currentRound"/> -->
             </div>
         </transition>
         <div
@@ -228,6 +228,7 @@
     const season_schedules = ref(false);
     const isTradeModalOpen = ref(false);
     const isGameResultModalOpen = ref(false);
+    const currentRound = ref(0);
     const showTransactions = ref(false);
     const showMVPLeaders = ref(false);
     const isHide = ref(false);
@@ -291,6 +292,8 @@
             const response = await axios.post(route("upcoming.rounds.season"), {
                 season_id: props.season_id,
             });
+
+            currentRound.value = response.data.current_round;
 
             let rounds = response.data.rounds;
             let isFinished = response.data.is_finished;
