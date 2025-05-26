@@ -30,7 +30,10 @@
         <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                 <button
-                    @click.prevent="showTransactions = !showTransactions"
+                    @click.prevent="
+                        showTransactions = true;
+                        showMVPLeaders = false;
+                    "
                     class="flex items-center px-1 py-2 text-sm font-medium"
                     :class="[
                         showTransactions 
@@ -38,11 +41,14 @@
                             : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     ]"
                 >
-                    <i class="fas fa-exchange-alt mr-2"></i>
+                    <i class="fas fa-exchange-alt text-red-500 mr-2"></i>
                     Recent Transactions
                 </button>
                 <button
-                    @click.prevent="showMVPLeaders = true"
+                    @click.prevent="
+                        showTransactions = false;
+                        showMVPLeaders = true;
+                    "
                     class="flex items-center px-1 py-2 text-sm font-medium"
                     :class="[
                         showMVPLeaders 
@@ -50,8 +56,19 @@
                             : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     ]"
                 >
-                    <i class="fas fa-medal mr-2"></i>
+                    <i class="fas fa-medal text-yellow-600 mr-2"></i>
                     MVP Leaders
+                </button>
+                <button
+                    v-if="showTransactions || showMVPLeaders"
+                    @click.prevent="
+                        showTransactions = false;
+                        showMVPLeaders = false;
+                    "
+                    class="flex items-center px-1 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                >
+                    <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
+                    Show Schedule
                 </button>
             </nav>
         </div>

@@ -45,4 +45,4 @@ GROUP BY
     players.id, players.name, teams.name, players.is_rookie, players.draft_status, players.team_id
 ORDER BY
     performance_score DESC
-LIMIT 10; -- Fetching the top 10 MVP leaders
+LIMIT 15; -- Fetching the top 10 MVP leaders

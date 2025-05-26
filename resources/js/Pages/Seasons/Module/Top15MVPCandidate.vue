@@ -42,7 +42,7 @@
 
           <div class="flex-1">
             <div class="font-semibold text-gray-900 flex items-center space-x-2">
-              <span>{{ player.player_name }}</span>
+              <span class="text-nowrap">{{ player.player_name }}</span>
               <span v-if="rankChange(player.player_id) > 0" title="Rank rose" class="text-green-600">▲</span>
               <span v-else-if="rankChange(player.player_id) < 0" title="Rank fell" class="text-red-600">▼</span>
             </div>
