@@ -378,4 +378,45 @@ class LeadersController extends Controller
             }
         }
     }
+
+    public function getTop10MVPLeaders()
+    {
+        $topPlayers = \DB::table('mvp_leaders as m')
+            ->select([
+                'm.player_id',
+                'm.player_name',
+                'm.is_rookie',
+                'm.draft_status',
+                'm.team_id',
+                'm.team_name',
+                't.primary_color',
+                't.secondary_color',
+                'm.games_played',
+                'm.points_per_game',
+                'm.rebounds_per_game',
+                'm.assists_per_game',
+                'm.steals_per_game',
+                'm.blocks_per_game',
+                'm.turnovers_per_game',
+                'm.fouls_per_game',
+                'm.total_points',
+                'm.total_rebounds',
+                'm.total_assists',
+                'm.total_steals',
+                'm.total_blocks',
+                'm.total_turnovers',
+                'm.total_fouls',
+                'm.performance_score',
+            ])
+            ->join('teams as t', 'm.team_id', '=', 't.id')
+            ->orderByDesc('m.performance_score')
+            ->limit(10)
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $topPlayers,
+        ]);
+    }
+
 }
