@@ -15,15 +15,30 @@
           :key="player.player_id"
           class="flex items-center space-x-4 p-3 border rounded shadow-sm transition-transform duration-500"
           :class="{
-            'bg-green-100': rankChange(player.player_id) < 0,
-            'bg-red-100': rankChange(player.player_id) > 0,
+            'bg-green-100': rankChange(player.player_id) > 0,  // rank rose (better)
+            'bg-red-100': rankChange(player.player_id) < 0,    // rank fell (worse)
             'bg-white': rankChange(player.player_id) === 0
           }"
-          :style="getAnimationStyle(player.player_id)"
+          :style="[
+            getAnimationStyle(player.player_id),
+            {
+              borderLeft: `6px solid #${player.primary_color}`,
+              backgroundImage: `linear-gradient(to right, #${player.primary_color}20, #${player.secondary_color}20)`
+            }
+          ]"
+          title="Team colors accent"
         >
           <div class="w-8 text-center font-bold text-lg text-gray-700">{{ index + 1 }}</div>
           <div class="flex-1">
-            <div class="font-semibold text-gray-900">{{ player.player_name }}</div>
+            <div class="font-semibold text-gray-900 flex items-center space-x-2">
+              <span>{{ player.player_name }}</span>
+              <span v-if="rankChange(player.player_id) > 0" title="Rank rose" class="text-green-600">
+                ▲
+              </span>
+              <span v-else-if="rankChange(player.player_id) < 0" title="Rank fell" class="text-red-600">
+                ▼
+              </span>
+            </div>
             <div class="text-sm text-gray-500">{{ player.team_name }}</div>
           </div>
           <div class="text-right w-20 font-mono text-gray-800">
@@ -68,14 +83,13 @@ const rankChange = (playerId) => {
   const oldRank = previousRanks.value[playerId];
   const newRank = leaders.value.findIndex((p) => p.player_id === playerId);
   if (oldRank === undefined || newRank === -1) return 0;
-  return oldRank - newRank; // positive = rose, negative = dropped
+  return oldRank - newRank; // positive = rank rose (better), negative = rank fell
 };
 
 const getAnimationStyle = (playerId) => {
   const change = rankChange(playerId);
   if (change === 0) return {};
 
-  // Animate color or transform for 1.5s then reset
   if (!animationTimers.has(playerId)) {
     animationTimers.set(
       playerId,
@@ -97,12 +111,10 @@ const fetchMVPLeaders = async () => {
     const response = await axios.get(route('season.mvp.leaders'));
     const data = response.data.data || [];
 
-    // Load previous ranks once on first load or from storage
     if (Object.keys(previousRanks.value).length === 0) {
       previousRanks.value = loadPreviousRanks();
     }
 
-    // Save new ranks for next fetch
     const newRanks = {};
     data.forEach((player, index) => {
       newRanks[player.player_id] = index;
@@ -128,5 +140,6 @@ onMounted(() => {
 <style scoped>
 .mvp-leaderboard li {
   will-change: transform, background-color;
+  /* Added left border as accent via inline style */
 }
 </style>
