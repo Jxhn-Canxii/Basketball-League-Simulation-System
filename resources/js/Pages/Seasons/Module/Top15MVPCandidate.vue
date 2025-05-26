@@ -48,10 +48,10 @@
             </div>
 
             <div class="text-xs text-gray-500 space-x-2 mt-0.5">
-              <span v-if="player.is_rookie" class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
+              <span v-if="player.is_rookie" class="text-nowrap bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
                 Rookie
               </span>
-              <span v-if="player.draft_status" class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">
+              <span v-if="player.draft_status" class="text-nowrap bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">
                 Draft: {{ formatDraftStatus(player.draft_status) }}
               </span>
             </div>
