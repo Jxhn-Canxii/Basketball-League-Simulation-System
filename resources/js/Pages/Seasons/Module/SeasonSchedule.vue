@@ -30,21 +30,7 @@
         <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8" aria-label="Tabs">
                 <button
-                    v-if="showTransactions || showMVPLeaders"
-                    @click.prevent="
-                        showTransactions = false;
-                        showMVPLeaders = false;
-                    "
-                    class="flex items-center px-1 py-2 text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
-                >
-                    <i class="fas fa-calendar-alt text-blue-500 mr-2"></i>
-                    Show Schedule
-                </button>
-                <button
-                    @click.prevent="
-                        showTransactions = true;
-                        showMVPLeaders = false;
-                    "
+                    @click.prevent="showTransactions = !showTransactions"
                     class="flex items-center px-1 py-2 text-sm font-medium"
                     :class="[
                         showTransactions 
@@ -52,14 +38,11 @@
                             : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     ]"
                 >
-                    <i class="fas fa-exchange-alt text-red-500 mr-2"></i>
+                    <i class="fas fa-exchange-alt mr-2"></i>
                     Recent Transactions
                 </button>
                 <button
-                    @click.prevent="
-                        showTransactions = false;
-                        showMVPLeaders = true;
-                    "
+                    @click.prevent="showMVPLeaders = true"
                     class="flex items-center px-1 py-2 text-sm font-medium"
                     :class="[
                         showMVPLeaders 
@@ -67,7 +50,7 @@
                             : 'text-gray-500 hover:text-gray-700 hover:border-gray-300'
                     ]"
                 >
-                    <i class="fas fa-medal text-yellow-600 mr-2"></i>
+                    <i class="fas fa-medal mr-2"></i>
                     MVP Leaders
                 </button>
             </nav>
@@ -80,26 +63,19 @@
             </div>
         </transition>
         <transition name="fade" mode="out-in">
-            <div v-if="showMVPLeaders" class="mt-4">
-                <Top10MVPCandidate :key="showMVPLeaders" :showTitle="!showMVPLeaders" />
+             <div v-if="showMVPLeaders" class="mt-4">
+                <Top10MVPCandidate :key="showMVPLeaders" />
             </div>
         </transition>
     </div>
     <div class="block px-2" v-if="isHide">
         <transition name="fade" mode="out-in">
-            <div v-if="activeGameId != 0">
-                <template v-if="flipStep === 0">
-                    <GameResults :game_id="activeGameId" :showBoxScore="false" />
-                </template>
-                <template v-else-if="flipStep === 1">
-                    <RecentTransactions :key="activeGameId"/>
-                </template>
-                <template v-else-if="flipStep === 2">
-                    <GameResults :game_id="activeGameId" :showBoxScore="false" />
-                </template>
-                <template v-else-if="flipStep === 3">
-                    <Top10MVPCandidate :key="activeGameId"/>
-                </template>
+            <div v-if="showGameResults && activeGameId != 0" :key="'game-' + activeGameId">
+                <GameResults :game_id="activeGameId" :showBoxScore="false" />
+            </div>
+            <div v-else-if="!showGameResults && activeGameId != 0" :key="'transactions-' + activeGameId">
+                <RecentTransactions v-if="activeConferenceTab != 4" :key="activeGameId"/>
+                <Top10MVPCandidate v-else :key="activeGameId"/>
             </div>
         </transition>
         <div
@@ -404,15 +380,15 @@
     };
 
 
-    const flipStep = ref(0); // 0: GameResults, 1: RecentTransactions, 2: GameResults, 3: Top10MVPCandidate
-
-    const simulateGameWithResults = async (schedule_id, conference_id) => {
+    const simulateGameWithResults = async (schedule_id,conference_id) => {
         try {
+
             isHide.value = true;
             const response = await axios.post(route("game.simulate.regular"), {
                 schedule_id: schedule_id,
             });
-
+            
+             // Show a toast notification
             Swal.fire({
                 icon: "success",
                 title: "Game Simulated!",
@@ -422,23 +398,30 @@
                 toast: true,
                 position: "top-end",
             });
-
+            
             activeGameId.value = response.data.game_id ?? 0;
-            flipStep.value = 0; // Start at first step
+            showGameResults.value = true; // Show game results first
 
+            // Wait for the user to view results before moving to the next game
             activeConferenceTab.value = conference_id;
-            emit('transaction_id', conference_id);
+            emit('transaction_id',conference_id);
 
+            // Start flipping between views
             if (flipTimer.value) clearInterval(flipTimer.value);
             flipTimer.value = setInterval(() => {
-                flipStep.value = (flipStep.value + 1) % 4;
+                showGameResults.value = !showGameResults.value;
             }, 4000);
-            await new Promise((resolve) => setTimeout(resolve, 16000)); // 4 steps * 4s = 16s
+    
+            await new Promise((resolve) => setTimeout(resolve, 8000)); // Allow 3 flips
 
+            // Clear the interval when moving to next game
             if (flipTimer.value) {
                 clearInterval(flipTimer.value);
                 flipTimer.value = null;
             }
+
+           
+
         } catch (error) {
             console.error("Error simulating game:", error);
             if (flipTimer.value) clearInterval(flipTimer.value);

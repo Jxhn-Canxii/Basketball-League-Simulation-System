@@ -15,11 +15,11 @@
           :key="player.player_id"
           class="flex items-center space-x-4 p-3 border rounded shadow-sm transition-transform duration-500"
           :class="{
-            'bg-green-100': rankChange(player.player_id) > 0,  // rank rose (better)
-            'bg-red-100': rankChange(player.player_id) < 0,    // rank fell (worse)
+            'bg-green-100': rankChange(player.player_id) > 0,
+            'bg-red-100': rankChange(player.player_id) < 0,
             'bg-white': rankChange(player.player_id) === 0
           }"
-          :style="[
+          :style="[ 
             getAnimationStyle(player.player_id),
             {
               borderLeft: `6px solid #${player.primary_color}`,
@@ -28,19 +28,30 @@
           ]"
           title="Team colors accent"
         >
-          <div class="w-8 text-center font-bold text-lg text-gray-700">{{ index + 1 }}</div>
+          <div class="w-8 text-center font-bold text-lg text-gray-700">
+            {{ index + 1 }}
+          </div>
+
           <div class="flex-1">
             <div class="font-semibold text-gray-900 flex items-center space-x-2">
               <span>{{ player.player_name }}</span>
-              <span v-if="rankChange(player.player_id) > 0" title="Rank rose" class="text-green-600">
-                ▲
+              <span v-if="rankChange(player.player_id) > 0" title="Rank rose" class="text-green-600">▲</span>
+              <span v-else-if="rankChange(player.player_id) < 0" title="Rank fell" class="text-red-600">▼</span>
+            </div>
+
+            <!-- Rookie and Draft Status -->
+            <div class="text-xs text-gray-500 space-x-2 mt-0.5">
+              <span v-if="player.is_rookie" class="bg-yellow-100 text-yellow-800 px-2 py-0.5 rounded-full font-medium">
+                Rookie
               </span>
-              <span v-else-if="rankChange(player.player_id) < 0" title="Rank fell" class="text-red-600">
-                ▼
+              <span v-if="player.draft_status" class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-medium">
+                Draft: {{ formatDraftStatus(player.draft_status) }}
               </span>
             </div>
+
             <div class="text-sm text-gray-500">{{ player.team_name }}</div>
           </div>
+
           <div class="text-right w-20 font-mono text-gray-800">
             {{ player.performance_score }}
           </div>
@@ -57,7 +68,7 @@ import axios from "axios";
 const leaders = ref([]);
 const loading = ref(true);
 
-const previousRanks = ref({}); // { player_id: rank_index }
+const previousRanks = ref({});
 const animationTimers = new Map();
 
 const STORAGE_KEY = "mvp_leaderboard_ranks";
@@ -75,7 +86,7 @@ const saveRanks = (ranks) => {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(ranks));
   } catch {
-    // Fail silently
+    // Silent fail
   }
 };
 
@@ -83,7 +94,7 @@ const rankChange = (playerId) => {
   const oldRank = previousRanks.value[playerId];
   const newRank = leaders.value.findIndex((p) => p.player_id === playerId);
   if (oldRank === undefined || newRank === -1) return 0;
-  return oldRank - newRank; // positive = rank rose (better), negative = rank fell
+  return oldRank - newRank;
 };
 
 const getAnimationStyle = (playerId) => {
@@ -105,10 +116,15 @@ const getAnimationStyle = (playerId) => {
   };
 };
 
+const formatDraftStatus = (status) => {
+  // Basic formatter — you can customize this further
+  return status === 'Undrafted' ? "Undrafted" : `${status}`;
+};
+
 const fetchMVPLeaders = async () => {
   loading.value = true;
   try {
-    const response = await axios.get(route('season.mvp.leaders'));
+    const response = await axios.get(route("season.mvp.leaders"));
     const data = response.data.data || [];
 
     if (Object.keys(previousRanks.value).length === 0) {
@@ -133,13 +149,11 @@ const fetchMVPLeaders = async () => {
 
 onMounted(() => {
   fetchMVPLeaders();
-  setInterval(fetchMVPLeaders, 30000);
 });
 </script>
 
 <style scoped>
 .mvp-leaderboard li {
   will-change: transform, background-color;
-  /* Added left border as accent via inline style */
 }
 </style>
