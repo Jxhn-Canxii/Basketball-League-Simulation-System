@@ -215,7 +215,7 @@
             />
         </div>
     </div>
-    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'" title="Game Results" @close="isGameResultModalOpen = false">
+    <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
         <div class="mt-4">
             <GameResults :game_id="isGameResultModalOpen" />
         </div>

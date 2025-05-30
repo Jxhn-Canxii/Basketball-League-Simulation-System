@@ -1,5 +1,5 @@
 <template>
-    <div class="p-4 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg max-w-7xl mx-auto" v-if="!gameDetails">
+    <div class="p-4 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg min-w-screen mx-auto" v-if="!gameDetails">
         <!-- Skeleton Loader -->
         <div class="flex justify-center items-center h-full">
             <!-- Centered Loader with Timer -->
@@ -23,7 +23,7 @@
             </div>
         </div>
     </div>
-    <div class="p-4 bg-gray-900 shadow-md rounded-lg max-w-7xl mx-auto" v-else>
+    <div class="p-6 bg-gray-900 shadow-md rounded-lg min-w-screen mx-auto" v-else>
         <!-- Game Summary -->
         <div
             class="flex flex-col lg:flex-row justify-between mb-4 border-b-2 border-gray-700 pb-4"
@@ -208,12 +208,11 @@
         </div>
 
         <!-- Player Statistics Tables -->
-        <div class="mb-4 text-white" v-if="props.showBoxScore">
-            <h3 class="text-xl font-semibold mb-2">Player Statistics</h3>
-
+        <h3 class="text-xl font-semibold mb-2 text-white">Player Statistics</h3>
+        <div class="lg:flex lg:justify-between mb-4 text-white" v-if="props.showBoxScore">
             <!-- Home Team Player Stats -->
             <div
-                class="mb-2 p-2 rounded"
+                class="mb-2 p-2 rounded shadow-md shadow-red-500"
                 :style="{
                     backgroundColor: '#' + gameDetails?.home_team.primary_color,
                 }"
@@ -372,7 +371,7 @@
 
             <!-- Away Team Player Stats -->
             <div
-                class="mb-2 p-2 rounded"
+                class="mb-2 p-2 rounded shadow-md shadow-red-500"
                 :style="{
                     backgroundColor: '#' + gameDetails?.away_team.primary_color,
                 }"

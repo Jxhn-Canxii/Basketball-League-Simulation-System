@@ -570,7 +570,7 @@
             />
         </div>
     </Modal>
-   <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'" title="Game Results" @close="isGameResultModalOpen = false">
+   <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
         <div class="mt-4">
             <GameResults :key="isGameResultModalOpen" :game_id="isGameResultModalOpen" />
         </div>
@@ -785,14 +785,20 @@ const simulateGame = async (id, game_id, type, index, round) => {
         activeIndex.value = index;
 
         Swal.fire({
-            title: "Simulating...",
-            text: "Please wait while the game is being simulated.",
-            icon: "info",
-            allowOutsideClick: false,
-            didOpen: () => {
+            title: 'Simulating...',
+            text: 'Please wait while the game is being simulated.',
+            icon: 'info',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            allowOutsideClick: true,
+            allowEscapeKey: true,
+            timerProgressBar: true,
+            didOpen: (toast) => {
                 Swal.showLoading();
-            },
+            }
         });
+
 
         const response = await axios.post(route("game.simulate.playoff"), {
             schedule_id: id,
