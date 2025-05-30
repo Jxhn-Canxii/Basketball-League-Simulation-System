@@ -46,7 +46,7 @@ ranked AS (
     CROSS JOIN latest_season ls
 )
 SELECT 
-    ROW_NUMBER() OVER (ORDER BY championship_drought DESC, finals_drought DESC) AS ranking,
+    ROW_NUMBER() OVER (ORDER BY championship_drought ASC, finals_drought ASC) AS ranking,
     team_id,
     team_name,
     finals_appearances,
