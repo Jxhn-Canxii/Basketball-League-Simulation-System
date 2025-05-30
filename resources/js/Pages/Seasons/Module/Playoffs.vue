@@ -789,7 +789,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
             text: 'Please wait while the game is being simulated.',
             icon: 'info',
             toast: true,
-            position: 'top-end',
+            position: 'top',
             showConfirmButton: false,
             allowOutsideClick: true,
             allowEscapeKey: true,
@@ -811,7 +811,11 @@ const simulateGame = async (id, game_id, type, index, round) => {
             icon: "success",
             title: "Success!",
             text: response.data.message,
+            timer: 2000, // Auto-close after 2 seconds (2000ms)
+            showConfirmButton: false,
+            timerProgressBar: true
         });
+
 
         isGameResultModalOpen.value = game_id;
         isHide.value = false;
