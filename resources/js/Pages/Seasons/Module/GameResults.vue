@@ -427,7 +427,7 @@
 
                 <table
                     v-if="!showAwayDepthChart"
-                    class="min-w-full bg-gray-800 rounded-lg overflow-hidden text-sm"
+                    class="min-w-full text-nowrap bg-gray-800 rounded-lg overflow-hidden text-sm"
                 >
                     <thead>
                         <tr
