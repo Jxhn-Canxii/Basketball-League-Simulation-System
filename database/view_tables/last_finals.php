@@ -49,9 +49,9 @@ SELECT
     ROW_NUMBER() OVER (ORDER BY finals_drought ASC, championship_drought ASC) AS ranking,
     team_id,
     team_name,
+    finals_appearances,
     finals_drought,
     championship_drought,
-    finals_appearances,
     last_finals_season,
     championships_won,
     last_championship_season
