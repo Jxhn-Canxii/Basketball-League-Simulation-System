@@ -209,7 +209,7 @@
 
         <!-- Player Statistics Tables -->
         <h3 class="text-xl font-semibold mb-2 text-white">Player Statistics</h3>
-        <div class="lg:flex lg:justify-between mb-4 text-white" v-if="props.showBoxScore">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4 text-white" v-if="props.showBoxScore">
             <!-- Home Team Player Stats -->
             <div
                 class="mb-2 p-2 rounded shadow-md shadow-red-500"
