@@ -262,7 +262,7 @@ class SimulateController extends Controller
             $fouls = $this->calculateFoul($player, $minutes, $performanceFactor,$defensiveImpact);
 
 
-            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers, $awayChemistry, true, false);
+            $shotStats = $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers, $awayChemistry, true, true);
 
             // Assign returned values to variables
             $twoPointAttempts = $shotStats['two_point_attempts'];
