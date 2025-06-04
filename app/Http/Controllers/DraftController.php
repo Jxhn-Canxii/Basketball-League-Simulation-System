@@ -177,7 +177,6 @@ class DraftController extends Controller
                 ->where('draft_id', $currentSeasonId)
                 ->where('is_drafted', 0)
                 ->orderBy('overall_rating', 'desc')
-                ->limit($draftPlayerCountLimit) // Limit to the number of draft picks
                 ->get());
 
             $availablePlayers = $topPlayers->shuffle(); // Shuffle to randomize player selection
