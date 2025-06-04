@@ -169,14 +169,20 @@ class DraftController extends Controller
 
             $draftPlayerCountLimit = count($draftOrder);
             
+            $draftPlayerCountLimit = (float) $draftPlayerCountLimit + 20; // Limit to 60 players for the draft
             // Get rookie players eligible for drafting
-            $availablePlayers = collect(DB::table('players')
+            $topPlayers = collect(DB::table('players')
                 ->where('is_rookie', 1)
                 ->where('team_id', 0)
                 ->where('draft_id', $currentSeasonId)
                 ->where('is_drafted', 0)
                 ->orderBy('overall_rating', 'desc')
+                ->limit($draftPlayerCountLimit) // Limit to the number of draft picks
                 ->get());
+
+            $availablePlayers = $topPlayers->shuffle(); // Shuffle to randomize player selection
+
+
     
             // If there aren't enough rookies for the draft, return an error
             if ($availablePlayers->count() < $draftPlayerCountLimit) {
