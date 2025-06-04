@@ -361,7 +361,6 @@ class RatingsController extends Controller
                 ]);
             }
 
-          
             DB::commit(); // Commit transaction
 
             return response()->json([
@@ -391,7 +390,6 @@ class RatingsController extends Controller
         DB::table('players')
             ->where('team_id', 0)
             ->where('is_active', 1)
-            ->where('age', '<=', 65)
             ->update([
                 'is_rookie' => 0,
                 'age' => DB::raw('age + 1'),
@@ -403,8 +401,6 @@ class RatingsController extends Controller
         // Update non-active coaches with age <= 65
         DB::table('coaches')
             ->where('team_id', 0)
-            ->where('is_active', 1)
-            ->where('age', '<=', 65)
             ->update([
                 'team_id' => 0,
                 'contract_years' => 0,
