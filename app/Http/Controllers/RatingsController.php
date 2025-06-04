@@ -400,19 +400,10 @@ class RatingsController extends Controller
                 'is_active' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE is_active END"),
             ]);
 
-        // Update non-active players with age <= 65
-        DB::table('players')
-            ->where('is_active', 0)
-            ->where('age', '<=', 65)
-            ->update([
-                'team_id' => 0,
-                'contract_years' => 0,
-                'age' => DB::raw('age + 1'),
-            ]);
-
         // Update non-active coaches with age <= 65
         DB::table('coaches')
-            ->where('is_active', 0)
+            ->where('team_id', 0)
+            ->where('is_active', 1)
             ->where('age', '<=', 65)
             ->update([
                 'team_id' => 0,

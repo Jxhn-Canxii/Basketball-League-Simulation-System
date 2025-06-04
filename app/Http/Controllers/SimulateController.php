@@ -1717,32 +1717,6 @@ class SimulateController extends Controller
         }
     }
 
-    public function getActivePlayersSortedV1($teamId, $rolePriority)
-    {
-        $seasonId = get_current_season_id();
-    
-        // Get all columns from the players table except created_at and updated_at
-        $playerColumns = Schema::getColumnListing('players');
-        $playerColumns = array_filter($playerColumns, fn($col) => !in_array($col, ['created_at', 'updated_at']));
-    
-        // Add AVG(per) and AVG(eff) from the joined table
-        $selectColumns = array_map(fn($col) => "players.$col", $playerColumns);
-        $selectColumns[] = DB::raw('AVG(player_season_stats.per) as per');
-        $selectColumns[] = DB::raw('AVG(player_season_stats.eff) as eff');
-    
-        return Player::select($selectColumns)
-            ->where('players.team_id', $teamId)
-            ->where('players.is_active', 1)
-            ->leftJoin('player_season_stats', function ($join) use ($seasonId) {
-                $join->on('players.id', '=', 'player_season_stats.player_id')
-                     ->where('player_season_stats.season_id', '=', $seasonId);
-            })
-            ->groupBy(...array_map(fn($col) => "players.$col", $playerColumns))
-            ->orderByDesc('eff')
-            ->orderByDesc('per')
-            ->get();
-    }
-
     public function getActivePlayersSorted($teamId, $rolePriority, $round)
     {
         $seasonId = get_current_season_id();
@@ -1876,7 +1850,8 @@ class SimulateController extends Controller
         $deductionPerGame = 1 / $totalGamesPerDay; // 0.03125
         
         $deductInjuryGames = DB::table('players')
-            ->where('is_injured', true)
+            ->where('is_active', 1)
+            ->where('is_injured', 1)
             ->where('injury_recovery_games', '>', 0)
             ->update([
                 'injury_recovery_games' => DB::raw("GREATEST(injury_recovery_games - $deductionPerGame, 0)")
@@ -1885,13 +1860,15 @@ class SimulateController extends Controller
     
         // Check if any rows were actually updated
         $affectedRows = DB::table('players')
-            ->where('is_injured', true)
+            ->where('is_active', 1)
+            ->where('is_injured', 1)
             ->where('injury_recovery_games', 0)
             ->count(); // Count players whose recovery reached 0
 
         if ($affectedRows > 0) {
             DB::table('players')
-                ->where('is_injured', true)
+                ->where('is_active', 1)
+                ->where('is_injured', 1)
                 ->where('injury_recovery_games','<=', 0)
                 ->update(['is_injured' => 0]);
         }
@@ -2786,14 +2763,15 @@ class SimulateController extends Controller
 
                 $totalEff = $currentEff;
 
-                $lastFiveGames = DB::table('player_game_stats')
+                if ($round <= 5) {
+                    $lastFiveGames = DB::table('player_game_stats')
                         ->where('season_id', $previousSeasonId)
                         ->where('player_id', $playerId)
                         ->orderByDesc('id')
                         ->limit(5)
                         ->pluck('eff');
-                
-                $totalEff += $lastFiveGames->sum();
+                    $totalEff += $lastFiveGames->sum();
+                }
 
                 $draft = DB::table('drafts')
                     ->where('player_id', $playerId)
@@ -2918,8 +2896,6 @@ class SimulateController extends Controller
             return false;
         }
     }
-
-    
 
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
