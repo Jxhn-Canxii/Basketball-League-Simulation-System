@@ -49,7 +49,7 @@
                 <!-- <Top15MVPCandidate v-if="activeConferenceTab" :key="updateKey" /> -->
             </div>
             <!-- Schedule and Results UI (Right Side) -->
-            <div class="md:col-span-3 sm:col-span-1 overflow-y-auto pt-3">
+            <div class="md:col-span-3 sm:col-span-1 overflow-y-auto pt-0">
                 <SeasonSchedule v-if="season_info" 
                 @transaction_id="(id) => handleTransaction(id)" 
                 :season_id="props.season_id"
