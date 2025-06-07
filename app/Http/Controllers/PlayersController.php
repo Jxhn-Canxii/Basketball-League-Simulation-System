@@ -606,13 +606,14 @@ class PlayersController extends Controller
     {
        $messages = [
             'name.regex' => 'The name must contain at least one vowel.',
+            'name.max' => 'The name must not exceed 30 characters.',
         ];
 
         $request->validate([
             'name' => [
                 'required',
                 'string',
-                'max:255',
+                'max:30',
                 'unique:players,name',
                 'regex:/[aeiouAEIOU]/',
             ],
@@ -1383,7 +1384,7 @@ class PlayersController extends Controller
         $conference_championships = \DB::table('seasons')
             ->join('player_game_stats', 'seasons.id', '=', 'player_game_stats.season_id')
             ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id')
-            ->join('teams as team', 'player_game_stats.team_id', '=', 'team.id') // Join with player’s team
+            ->join('teams as team', 'player_game_stats.team_id', '=', 'team.id') // Join with player's team
             ->join('teams as home_team', 'schedules.home_id', '=', 'home_team.id') // Join with home team
             ->join('teams as away_team', 'schedules.away_id', '=', 'away_team.id') // Join with away team
             ->select(
