@@ -1400,11 +1400,16 @@ class SimulateController extends Controller
         // Step 1: Sit injured players
         $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
 
-        // Step 2: Fill remaining DNP slots
+        // Step 2: Fill remaining DNP slots, but protect star players and all-stars
         if ($dnpPlayers->count() < 2) {
             $remainingSlots = 2 - $dnpPlayers->count();
             $additionalDNP = $sorted
-                ->reject(fn($p) => $dnpPlayers->contains('id', $p['id']) || $p['is_injured'])
+                ->reject(fn($p) => 
+                    $dnpPlayers->contains('id', $p['id']) || 
+                    $p['is_injured'] || 
+                    $p['role'] === 'star player' || 
+                    $p['role'] === 'all star'
+                )
                 ->sortBy([
                     ['per', 'asc'],
                     ['eff', 'asc'],
@@ -1414,11 +1419,11 @@ class SimulateController extends Controller
             $dnpPlayers = $dnpPlayers->merge($additionalDNP);
         }
 
-        // ✅ Ensure minimum of 5 players with minutes
+        // Ensure minimum of 8 players with minutes
         $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
 
-        if ($rotation->count() < 5) {
-            $needed = 5 - $rotation->count();
+        if ($rotation->count() < 8) {
+            $needed = 8 - $rotation->count();
 
             $reAddCandidates = $dnpPlayers
                 ->filter(fn($p) => !$p['is_injured'])
@@ -1440,28 +1445,16 @@ class SimulateController extends Controller
         // Step 3: Assign minutes based on role and position
         $assignedTotal = 0;
 
+        // First pass: Assign minimum minutes to star players and all-stars
         foreach ($rotation as $player) {
-            $role = $player['role'];
-            $range = $roleMinuteRanges[$role] ?? [5, 15];
-            $baseMinutes = rand($range[0], $range[1]);
+            if ($player['role'] === 'star player' || $player['role'] === 'all star') {
+                $role = $player['role'];
+                $range = $roleMinuteRanges[$role];
+                $baseMinutes = rand($range[0], $range[1]);
 
-            $positions = explode('/', $player['position']);
-            $positionAssigned = false;
-
-            foreach ($positions as $pos) {
-                if (($positionTargets[$pos] ?? 0) > 0) {
-                    $assigned = min($baseMinutes, $positionTargets[$pos]);
-                    $minutes[$player['id']] = $assigned;
-                    $positionTargets[$pos] -= $assigned;
-                    $assignedTotal += $assigned;
-                    $positionAssigned = true;
-                    break;
-                }
-            }
-
-            if (!$positionAssigned) {
+                $positions = explode('/', $player['position']);
                 foreach ($positions as $pos) {
-                    if (isset($positionTargets[$pos])) {
+                    if (($positionTargets[$pos] ?? 0) > 0) {
                         $assigned = min($baseMinutes, $positionTargets[$pos]);
                         $minutes[$player['id']] = $assigned;
                         $positionTargets[$pos] -= $assigned;
@@ -1470,9 +1463,44 @@ class SimulateController extends Controller
                     }
                 }
             }
+        }
 
+        // Second pass: Assign minutes to remaining players
+        foreach ($rotation as $player) {
             if (!isset($minutes[$player['id']])) {
-                $minutes[$player['id']] = 0;
+                $role = $player['role'];
+                $range = $roleMinuteRanges[$role] ?? [5, 15];
+                $baseMinutes = rand($range[0], $range[1]);
+
+                $positions = explode('/', $player['position']);
+                $positionAssigned = false;
+
+                foreach ($positions as $pos) {
+                    if (($positionTargets[$pos] ?? 0) > 0) {
+                        $assigned = min($baseMinutes, $positionTargets[$pos]);
+                        $minutes[$player['id']] = $assigned;
+                        $positionTargets[$pos] -= $assigned;
+                        $assignedTotal += $assigned;
+                        $positionAssigned = true;
+                        break;
+                    }
+                }
+
+                if (!$positionAssigned) {
+                    foreach ($positions as $pos) {
+                        if (isset($positionTargets[$pos])) {
+                            $assigned = min($baseMinutes, $positionTargets[$pos]);
+                            $minutes[$player['id']] = $assigned;
+                            $positionTargets[$pos] -= $assigned;
+                            $assignedTotal += $assigned;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isset($minutes[$player['id']])) {
+                    $minutes[$player['id']] = 0;
+                }
             }
 
             $this->fatigueRate($player, $minutes[$player['id']], $gameId);
@@ -1483,9 +1511,16 @@ class SimulateController extends Controller
         $difference = $totalMinutes - array_sum($minutes);
 
         if (abs($difference) > 0) {
-            $eligible = $rotation->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)->values();
-            $i = 0;
+            // Prioritize star players and all-stars when distributing remaining minutes
+            $eligible = $rotation->sortBy(function($p) use ($rolePriority) {
+                $role = $p['role'];
+                if ($role === 'star player' || $role === 'all star') {
+                    return 0; // Highest priority
+                }
+                return $rolePriority[$role] ?? 5;
+            })->values();
 
+            $i = 0;
             while ($difference !== 0 && $eligible->isNotEmpty()) {
                 $player = $eligible[$i % $eligible->count()];
                 $id = $player['id'];
@@ -1741,18 +1776,15 @@ class SimulateController extends Controller
             $currentEff = DB::table('player_season_stats')
                 ->where('season_id', $seasonId)
                 ->where('player_id', $playerId)
-                ->sum('eff');
+                ->sum('eff') ?? 0;
 
             // Last 5 games from previous season (only if early season)
-            $lastFiveGamesEff = 0;
-            if ($round <= 5 && $previousSeasonId) {
-                $lastFiveGamesEff = DB::table('player_game_stats')
-                    ->where('season_id', $previousSeasonId)
-                    ->where('player_id', $playerId)
-                    ->orderByDesc('id')
-                    ->limit(5)
-                    ->sum('eff');
-            }
+            $lastFiveGamesEff = DB::table('player_game_stats')
+            ->where('season_id', $previousSeasonId)
+            ->where('player_id', $playerId)
+            ->orderByDesc('id')
+            ->limit(5)
+            ->sum('eff') ?? 0;
 
             $totalEff = $currentEff + $lastFiveGamesEff;
 
@@ -2698,7 +2730,7 @@ class SimulateController extends Controller
 
         $columnToIncrement = $roundColumnMap[$round];
 
-        // Use a transaction for database consistency
+        // Use a tranreabase consistency
         DB::transaction(function () use ($playerId, $columnToIncrement, $round, $playerTeamId, $winnerTeamId) {
             // Ensure player record exists
             DB::table('player_playoff_appearances')->updateOrInsert(
