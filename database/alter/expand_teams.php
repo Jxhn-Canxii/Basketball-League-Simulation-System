@@ -20,7 +20,7 @@ INSERT INTO `teams` (
 
 -- Conference 4 (Mindanao) - New strategic locations
 ('Marlins', 'MRL', 'Koronadal', 'South Cotabato aquatic hunters thriving in Lake Sebu', '4682B4', 'FF69B4', 1, 4, NOW(), NOW()),
-('Black Bulls', 'BBL', 'Misamis', 'Misamis dark chargers with rainforest momentum', '000000', 'B8860B', 1, 4, NOW(), NOW());
+('Black Bulls', 'BBB', 'Basilan', 'Basilan dark chargers with rainforest momentum', '000000', 'B8860B', 1, 4, NOW(), NOW());
 
 
 
