@@ -1397,8 +1397,9 @@ class SimulateController extends Controller
             ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
 
-        // Step 1: Sit injured players
-        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured'])->take(2);
+       // Step 1: Sit injured players
+        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
+
 
         // Step 2: Fill remaining DNP slots, but protect star players and all-stars
         if ($dnpPlayers->count() < 2) {
