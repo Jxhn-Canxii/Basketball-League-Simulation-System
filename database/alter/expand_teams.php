@@ -37,7 +37,7 @@ INSERT INTO `teams` (
 
 -- Conference 2 (Luzon) - Original Luzon teams updated
 ('Kryptonites', 'KRY', 'Bulacan', 'Bulacan Kryptonites: Unstoppable on the court, embodying the power and resilience of Kryptonite, delivering explosive dunks and unstoppable fast breaks.', '3B8C3A', 'FFD700', 1, 2, NOW(), NOW()),
-('Razorbacks', 'RAZ', 'Valenzuela', 'Valenzuela Razorbacks: A team with razor-sharp precision, cutting through defenses with speed, precision, and an aggressive offensive attack.', '8B0000', 'A52A2A', 1, 2, NOW(), NOW()),
+('Razorbacks', 'RAZ', 'Sta. Rosa', 'Sta. Rosa Razorbacks: A team with razor-sharp precision, cutting through defenses with speed, precision, and an aggressive offensive attack.', '8B0000', 'A52A2A', 1, 2, NOW(), NOW()),
 
 -- Conference 3 (Visayas) - Updated with new cities
 ('Sky Express', 'SSE', 'Silay', 'Silay Sky Express: Soaring above the competition with lightning-fast breaks and pinpoint shooting, inspired by the winds over Negros.', '1E90FF', 'ADD8E6', 1, 3, NOW(), NOW()),
