@@ -225,6 +225,21 @@ rank_counts AS (
     FROM ranked_team_rankings
     GROUP BY team_id, season_id
 ),
+last_playoff_appearance AS (
+    SELECT
+        team_id,
+        MAX(season_id) AS last_playoff_season_id
+    FROM
+        team_season_info
+    WHERE
+        is_playoff_qualified = 1
+    GROUP BY
+        team_id
+),
+seasons_list AS (
+    SELECT id, name AS season_name
+    FROM seasons
+),
 playoff_appearances AS (
     SELECT
         team_id,
@@ -303,6 +318,7 @@ conference_championships AS (
 SELECT
     standings.*,
     team_season_info.is_defending_champion,
+    COALESCE(seasons_list.season_name, '') AS last_playoff_season_name,
     COALESCE(playoff_appearances.playoff_appearances, 0) AS playoff_appearances,
     COALESCE(finals_appearances.finals_appearances, 0) AS finals_appearances,
     COALESCE(conference_finals_appearances.conference_finals_appearance, 0) AS conference_finals_appearances,
@@ -315,6 +331,10 @@ SELECT
     END AS streak_status,
     COALESCE(last_five_games.last_5, '') AS last_5_games
 FROM ranked_team_rankings AS standings
+LEFT JOIN last_playoff_appearance
+    ON standings.team_id = last_playoff_appearance.team_id
+LEFT JOIN seasons_list
+    ON last_playoff_appearance.last_playoff_season_id = seasons_list.id
 LEFT JOIN playoff_appearances
     ON standings.team_id = playoff_appearances.team_id
 LEFT JOIN team_season_info

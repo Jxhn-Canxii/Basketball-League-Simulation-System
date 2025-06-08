@@ -45,7 +45,14 @@
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="flex items-center">
                 <TeamDetails
-                  :title="'Playoff Appearances: ' + team.playoff_appearances"
+                  :title="
+                    'Playoff Appearances: ' + team.playoff_appearances + '\n' +
+                    'Last Playoff: ' + (team.last_playoff_season_name ?? 'None' ) + '\n' +
+                    'Conference Finals Appearances: ' + team.conference_finals_appearances + '\n' +
+                    'Conference Championships: ' + team.conference_championships + '\n' +
+                    'Finals Appearances: ' + team.finals_appearances + '\n' +
+                    'Championships: ' + team.championships
+                  "
                   :team_id="team.team_id"
                   :showInfo="props.showLegend"
                   :current_conference_rank="team.conference_rank"
