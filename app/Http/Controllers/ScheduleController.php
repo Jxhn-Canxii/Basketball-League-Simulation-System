@@ -111,8 +111,14 @@ class ScheduleController extends Controller
     private function storeTeamSeasonInfo()
     {
         $latestSeasonId = get_current_season_id();
+        $previousSeasonId = $latestSeasonId - 1;
 
         $teamsCoach = DB::table('teams')->get();
+
+        // Get the previous season's champion team_id
+        $prevChampion = DB::table('seasons')
+            ->where('id', $previousSeasonId)
+            ->value('finals_winner_id');
 
         foreach ($teamsCoach as $team) {
             try {
@@ -126,6 +132,7 @@ class ScheduleController extends Controller
                 $chemistry = 75;
                 $conferenceId = $team->conference_id ?? 0;
 
+                $isDefendingChampion = $team->id == $prevChampion ? 1 : 0;
                 // Perform the insert/update
                 DB::table('team_season_info')->updateOrInsert(
                     [
@@ -137,6 +144,7 @@ class ScheduleController extends Controller
                         'coach_iq' => $coachIq,
                         'chemistry' => $chemistry,
                         'conference_id' => $conferenceId,
+                        'is_defending_champion' => $isDefendingChampion,
                         'updated_at' => now(),
                     ]
                 );

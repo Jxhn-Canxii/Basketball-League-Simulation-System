@@ -225,78 +225,85 @@ rank_counts AS (
     FROM ranked_team_rankings
     GROUP BY team_id, season_id
 ),
-
 playoff_appearances AS (
     SELECT
-        teams.id AS team_id,
-        schedules.season_id,
-        COUNT(DISTINCT schedules.season_id) AS playoff_appearances
-    FROM teams
-    LEFT JOIN schedules
-        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
-        AND schedules.status = 2
-    WHERE schedules.round IN (
-        'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
-        'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
-        'interconference_semi_finals', 'finals'
-    )
-    GROUP BY teams.id, schedules.season_id
+        team_id,
+        COUNT(*) AS playoff_appearances
+    FROM
+        team_season_info
+    WHERE
+        is_playoff_qualified = 1
+    GROUP BY
+        team_id
 ),
-
+team_season_info AS (
+    SELECT
+        team_id,
+        season_id,
+        is_defending_champion
+    FROM
+        team_season_info
+),  
 finals_appearances AS (
     SELECT
         teams.id AS team_id,
-        schedules.season_id,
         COUNT(DISTINCT schedules.season_id) AS finals_appearances
-    FROM teams
-    LEFT JOIN schedules
-        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
-        AND schedules.status = 2
-    WHERE schedules.round = 'finals'
-    GROUP BY teams.id, schedules.season_id
+    FROM
+        teams
+    JOIN
+        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+    WHERE
+        schedules.round = 'finals'
+    GROUP BY
+        teams.id
 ),
-
 conference_finals_appearances AS (
     SELECT
         teams.id AS team_id,
-        schedules.season_id,
         COUNT(DISTINCT schedules.season_id) AS conference_finals_appearance
-    FROM teams
-    LEFT JOIN schedules
-        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
-        AND schedules.status = 2
-    WHERE schedules.round = 'semi_finals'
-    GROUP BY teams.id, schedules.season_id
+    FROM
+        teams
+    JOIN
+        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+    WHERE
+        schedules.round = 'semi_finals'
+    GROUP BY
+        teams.id
 ),
-
 championships AS (
     SELECT
         teams.id AS team_id,
-        schedules.season_id,
         COUNT(DISTINCT schedules.season_id) AS championships
-    FROM teams
-    LEFT JOIN schedules
-        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
-        AND schedules.status = 2
-    WHERE schedules.round = 'finals' AND schedules.winner_id = teams.id
-    GROUP BY teams.id, schedules.season_id
+    FROM
+        teams
+    JOIN
+        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+    WHERE
+        schedules.round = 'finals' AND
+        ((schedules.home_score > schedules.away_score AND schedules.home_id = teams.id) OR
+         (schedules.away_score > schedules.home_score AND schedules.away_id = teams.id))
+    GROUP BY
+        teams.id
 ),
-
 conference_championships AS (
     SELECT
         teams.id AS team_id,
-        schedules.season_id,
         COUNT(DISTINCT schedules.season_id) AS championships
-    FROM teams
-    LEFT JOIN schedules
-        ON (teams.id = schedules.home_id OR teams.id = schedules.away_id)
-        AND schedules.status = 2
-    WHERE schedules.round = 'semi_finals' AND schedules.winner_id = teams.id
-    GROUP BY teams.id, schedules.season_id
+    FROM
+        teams
+    JOIN
+        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+    WHERE
+        schedules.round = 'semi_finals' AND
+        ((schedules.home_score > schedules.away_score AND schedules.home_id = teams.id) OR
+         (schedules.away_score > schedules.home_score AND schedules.away_id = teams.id))
+    GROUP BY
+        teams.id
 )
 
 SELECT
     standings.*,
+    team_season_info.is_defending_champion,
     COALESCE(playoff_appearances.playoff_appearances, 0) AS playoff_appearances,
     COALESCE(finals_appearances.finals_appearances, 0) AS finals_appearances,
     COALESCE(conference_finals_appearances.conference_finals_appearance, 0) AS conference_finals_appearances,
@@ -311,19 +318,17 @@ SELECT
 FROM ranked_team_rankings AS standings
 LEFT JOIN playoff_appearances
     ON standings.team_id = playoff_appearances.team_id
-    AND standings.season_id = playoff_appearances.season_id
+LEFT JOIN team_season_info
+    ON standings.team_id = team_season_info.team_id
+    AND standings.season_id = team_season_info.season_id
 LEFT JOIN finals_appearances
     ON standings.team_id = finals_appearances.team_id
-    AND standings.season_id = finals_appearances.season_id
 LEFT JOIN conference_finals_appearances
     ON standings.team_id = conference_finals_appearances.team_id
-    AND standings.season_id = conference_finals_appearances.season_id
 LEFT JOIN championships
     ON standings.team_id = championships.team_id
-    AND standings.season_id = championships.season_id
 LEFT JOIN conference_championships
     ON standings.team_id = conference_championships.team_id
-    AND standings.season_id = conference_championships.season_id
 LEFT JOIN latest_streak
     ON standings.team_id = latest_streak.team_id
     AND standings.season_id = latest_streak.season_id

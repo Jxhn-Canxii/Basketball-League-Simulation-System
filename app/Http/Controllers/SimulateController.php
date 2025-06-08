@@ -977,6 +977,8 @@ class SimulateController extends Controller
                 if ($season) {
                     $season->status = 2;
                     $season->save();
+
+                    $this->updatePlayoffQualifiedFlags();
                 }
             }
 
@@ -1001,6 +1003,29 @@ class SimulateController extends Controller
         }
     }
 
+    private function updatePlayoffQualifiedFlags()
+    {
+        $seasonId = get_current_season_id();
+
+        // Step 1: Get all team IDs in the top 10 of their conference for this season
+        $qualifiedTeamIds = DB::table('standings_view')
+            ->where('season_id', $seasonId)
+            ->where('conference_rank', '<=', 10)
+            ->pluck('team_id')
+            ->toArray();
+
+        // Step 2: Set is_playoff_qualified = 1 for qualified teams
+        DB::table('team_season_info')
+            ->where('season_id', $seasonId)
+            ->whereIn('team_id', $qualifiedTeamIds)
+            ->update(['is_playoff_qualified' => 1]);
+
+        // Step 3 (optional): Set is_playoff_qualified = 0 for all others
+        DB::table('team_season_info')
+            ->where('season_id', $seasonId)
+            ->whereNotIn('team_id', $qualifiedTeamIds)
+            ->update(['is_playoff_qualified' => 0]);
+    }
     // Helper methods for stat calculation
     private function createInactivePlayerStats($player, $gameData, $seasonId)
     {
