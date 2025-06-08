@@ -300,7 +300,6 @@ conference_championships AS (
     GROUP BY
         teams.id
 )
-
 SELECT
     standings.*,
     team_season_info.is_defending_champion,

@@ -56,7 +56,7 @@
                   :showButton="0"
                   :text="`${team.team_city} ${team.team_name}`"
                 />
-                <span v-if="team.is_defending_champion">
+                <span v-if="team.is_defending_champion == 1">
                   <i class="fa fa-trophy text-yellow-600"></i>
                 </span>
                 <span 
