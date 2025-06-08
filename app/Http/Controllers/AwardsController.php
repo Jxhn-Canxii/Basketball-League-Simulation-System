@@ -1391,7 +1391,7 @@ class AwardsController extends Controller
                 );
     
                 // Update player contract and add transaction record
-                // $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
+                $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
     
                 DB::commit();
             } catch (\Exception $e) {
@@ -1407,30 +1407,45 @@ class AwardsController extends Controller
     
     private function processAwardContractExtension($playerStats, $awardName, $seasonId)
     {
-        // List of awards that don't get contract extensions
-        $noContractAwards = [
-            'Shooting Efficiency Leader',
-            'Player Efficiency Leader',
-            'Most Versatile Player',
-            'Points Game Leader',
-            'Rebounds Game Leader',
-            'Assists Game Leader',
-            'Blocks Game Leader',
-            'Steals Game Leader'
+        // Step 1: Check if the award is eligible
+        $eligibleAwards = [
+            'Best Overall Player',
+            'Best Defensive Player',
+            'Rookie of the Season',
+            'Double-Double Machine',
+            'Triple-Double Machine',
+            'Most Improved Player',
+            'Sixth Man of the Year',
         ];
 
-        // Skip contract extension if award is in the exclusion list
-        if (in_array($awardName, $noContractAwards)) {
+        if (!in_array($awardName, $eligibleAwards)) {
             return;
         }
 
-        // Determine contract extension years based on award
-        $extensionYears = match($awardName) {
-            'Best Overall Player', 'Best Defensive Player', 'Rookie of the Season' => 3,
-            default => 1
-        };
+        // Step 2: Check if player has fewer than 3 years on their contract
+        $contractYears = DB::table('players')
+            ->where('id', $playerStats->player_id)
+            ->value('contract_years');
 
-        // Add years to player's contract
+        if ($contractYears >= 3) {
+            return;
+        }
+
+        // Step 3: Check how many extensions the player already received this season
+        $existingExtensions = DB::table('transactions')
+            ->where('player_id', $playerStats->player_id)
+            ->where('season_id', $seasonId)
+            ->where('status', 'contract extension')
+            ->count();
+
+        if ($existingExtensions >= 2) {
+            return;
+        }
+
+        // Step 4: Apply extension
+        $extensionYears = rand(3, 5); // Or fixed value if you prefer
+
+        // Update contract years
         DB::table('players')
             ->where('id', $playerStats->player_id)
             ->update([
@@ -1438,18 +1453,19 @@ class AwardsController extends Controller
                 'updated_at' => now()
             ]);
 
-        // Record contract extension transaction
+        // Log the extension transaction
         DB::table('transactions')->insert([
             'player_id' => $playerStats->player_id,
             'season_id' => $seasonId,
             'details' => "Contract extended by {$extensionYears} year(s) for winning {$awardName}",
             'from_team_id' => $playerStats->team_id,
             'to_team_id' => $playerStats->team_id,
-            'status' => 'extension',
+            'status' => 'contract extension',
             'created_at' => now(),
             'updated_at' => now()
         ]);
     }
+
     public function getFinalsMVPList()
     {
         // Fetch data from the view table directly
