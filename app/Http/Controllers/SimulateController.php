@@ -2073,7 +2073,7 @@ class SimulateController extends Controller
                     'details' => 'Re-signed with ' . $teamName . ' for a contract extension(Finals Bonus) of ' . $additionalContractYears . ' years',
                     'from_team_id' => $player->team_id,
                     'to_team_id' => $player->team_id,
-                    'status' => 'resigned',
+                    'status' => 'contract extension',
                 ]);
             }
         }

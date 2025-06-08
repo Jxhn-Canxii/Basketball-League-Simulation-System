@@ -1427,7 +1427,7 @@ class AwardsController extends Controller
             ->where('id', $playerStats->player_id)
             ->value('contract_years');
 
-        if ($contractYears >= 3) {
+        if ($contractYears >= 5) {
             return;
         }
 
