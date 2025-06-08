@@ -2302,6 +2302,7 @@ class SimulateController extends Controller
                         $playerToWaive = DB::table('players')
                             ->where('players.team_id', $teamId)
                             ->where('players.is_active', true)
+                            ->where('players.contract_years','<=', 2)
                             ->where(function ($query) use ($overflow) {
                                 $query->where('players.position', $overflow)
                                     ->orWhere('players.position', 'like', $overflow . '/%')
@@ -2322,8 +2323,12 @@ class SimulateController extends Controller
                                 return $player;
                             })
                             ->sortBy([
-                                ['contract_years', 'asc'],
                                 ['avg_eff', 'asc'],
+                                ['total_games', 'asc'],
+                                ['total_minutes', 'asc'],
+                                ['injury_history', 'desc'],
+                                ['age', 'desc'],
+                                ['contract_years', 'asc'],
                             ])
                             ->first();
     
