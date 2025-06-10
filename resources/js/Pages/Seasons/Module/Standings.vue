@@ -44,14 +44,24 @@
           >
             <td class="px-4 py-2 whitespace-nowrap">
               <div class="flex items-center">
+                <span class="text-xs flex items-center">
+                  <i
+                    :class="getChemistryIcon(team.chemistry)"
+                    :title="`${getChemistryTitle(team.chemistry)} ${team.chemistry}%`"
+                    style="font-size: 1em;"
+                  ></i>
+                </span>
                 <TeamDetails
                   :title="
-                    'Playoff Appearances: ' + team.playoff_appearances + '\n' +
-                    'Last Playoff: ' + (team.last_playoff_season_name ?? 'None' ) + '\n' +
-                    'Conference Finals Appearances: ' + team.conference_finals_appearances + '\n' +
-                    'Conference Championships: ' + team.conference_championships + '\n' +
-                    'Finals Appearances: ' + team.finals_appearances + '\n' +
-                    'Championships: ' + team.championships
+                    'Team ' + team.team_city +' '+ team.team_name + ' Achievements ' + '\n' +
+                    (team.playoff_appearances ? team.playoff_appearances + 'x Playoff Appearances' : 'No Playoff Appearances') + '\n' +
+                    'Last Playoff: ' + (team.last_playoff_season_name ?? 'None') + '\n' +
+                    (team.conference_finals_appearances > 0 ? team.conference_finals_appearances + 'x Conference Finals Appearances\n' : '') +
+                    (team.conference_championships > 0 ? team.conference_championships + 'x Conference Championships\n' : '') +
+                    (team.finals_appearances > 0 ? team.finals_appearances + 'x National Finals Appearances\n' : '') +
+                    (team.championships > 0 ? team.championships + 'x National Championships\n' : '') +
+                    (team.overall_rank_count > 0 ? team.overall_rank_count + 'x National Ranked #1\n' : '') +
+                    (team.conference_rank_count > 0 ? team.conference_rank_count + 'x Conference Ranked #1' : '')
                   "
                   :team_id="team.team_id"
                   :showInfo="props.showLegend"
@@ -326,6 +336,21 @@ const getTeamRowClass = (index) => {
 
   return `${baseClass} ${baseBorder} ${topBorder} ${borderStyleFix}`.trim();
 };
+
+const getChemistryIcon = (chemistry) => {
+  if (chemistry >= 80) return 'fa-solid fa-face-laugh-beam text-yellow-500';
+  if (chemistry >= 60) return 'fa-solid fa-face-smile text-green-500';
+  if (chemistry >= 40) return 'fa-solid fa-face-meh text-gray-500';
+  if (chemistry >= 20) return 'fa-solid fa-face-frown text-orange-500';
+  return 'fa-solid fa-face-angry text-red-600';
+}
+const getChemistryTitle = (chemistry) => {
+  if (chemistry >= 80) return 'Excellent Chemistry';
+  if (chemistry >= 60) return 'Good Chemistry';
+  if (chemistry >= 40) return 'Average Chemistry';
+  if (chemistry >= 20) return 'Poor Chemistry';
+  return 'Very Poor Chemistry';
+}
 </script>
 
 <style>
