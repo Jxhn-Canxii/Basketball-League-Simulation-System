@@ -3159,8 +3159,16 @@ class SimulateController extends Controller
             elseif ($moraleAvg <= 60) $chemistry -= 2;
         }
 
+        $injuredCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_injured', true) // assuming you track this
+            ->count();
+
+        if ($injuredCount >= 3) $chemistry -= 3;
+        elseif ($injuredCount === 1) $chemistry -= 1;
+
         // 🧼 Clamp
-        $chemistry = max(50, min(100, round($chemistry)));
+        $chemistry = max(20, min(100, round($chemistry)));
 
         // ✅ Update
         DB::table('team_season_info')
