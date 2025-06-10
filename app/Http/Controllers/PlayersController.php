@@ -499,7 +499,7 @@ class PlayersController extends Controller
             'ro_RO', 'hu_HU', 'el_GR', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'th_TH',
             'bg_BG', 'uk_UA', 'ca_ES', 'sl_SI', 'hr_HR', 'lt_LT', 'lv_LV', 'et_EE',
             'fa_IR', 'af_ZA', 'sq_AL', 'az_AZ', 'be_BY', 'bs_BA', 'mk_MK', 'sr_RS',
-            'ph_PH',
+            'en_PH',
         ];
 
         $locale = $locales[array_rand($locales)];
