@@ -3164,11 +3164,13 @@ class SimulateController extends Controller
             ->where('is_injured', true) // assuming you track this
             ->count();
 
-        if ($injuredCount >= 3) $chemistry -= 3;
-        elseif ($injuredCount === 1) $chemistry -= 1;
+        if (!is_null($injuredCount)) {
+            if ($injuredCount >= 3) $chemistry -= 3;
+            elseif ($injuredCount === 1) $chemistry -= 1;
+        }
 
         // 🧼 Clamp
-        $chemistry = max(20, min(100, round($chemistry)));
+        $chemistry = max(10, min(100, round($chemistry)));
 
         // ✅ Update
         DB::table('team_season_info')
