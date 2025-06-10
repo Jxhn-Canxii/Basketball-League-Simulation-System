@@ -255,7 +255,8 @@ team_season_info AS (
     SELECT
         team_id,
         season_id,
-        is_defending_champion
+        is_defending_champion,
+        chemistry
     FROM
         team_season_info
 ),  
@@ -318,6 +319,9 @@ conference_championships AS (
 SELECT
     standings.*,
     team_season_info.is_defending_champion,
+    team_season_info.chemistry,
+    COALESCE(rank_counts.overall_rank, 0) AS overall_rank,
+    COALESCE(rank_counts.conference_rank, 0) AS conference_rank,
     COALESCE(seasons_list.season_name, '') AS last_playoff_season_name,
     COALESCE(playoff_appearances.playoff_appearances, 0) AS playoff_appearances,
     COALESCE(finals_appearances.finals_appearances, 0) AS finals_appearances,
