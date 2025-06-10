@@ -510,8 +510,7 @@ class PlayersController extends Controller
         $addressRaw = $fakerEn->address;
         $countryRaw = $fakerEn->country; 
 
-        $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
-
+        $name = Transliterator::create('Any-Latin; Latin-ASCII')->transliterate("$firstNameRaw $lastNameRaw");
         // Clean & format the data:
         // - Replace dashes and multiple spaces with single space in address
         // - Capitalize each word in name, address, country
