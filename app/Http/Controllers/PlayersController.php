@@ -496,23 +496,23 @@ class PlayersController extends Controller
             'en_US', 'en_GB', 'fr_FR', 'de_DE', 'it_IT', 'es_ES', 'nl_NL', 'pt_BR',
             'pt_PT', 'tr_TR', 'ru_RU', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'hi_IN',
             'ar_SA', 'sv_SE', 'fi_FI', 'no_NO', 'da_DK', 'pl_PL', 'cs_CZ', 'sk_SK',
-            'ro_RO', 'hu_HU', 'el_GR', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'th_TH',
+            'ro_RO', 'hu_HU', 'el_GR', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'en_PH',
             'bg_BG', 'uk_UA', 'ca_ES', 'sl_SI', 'hr_HR', 'lt_LT', 'lv_LV', 'et_EE',
             'fa_IR', 'af_ZA', 'sq_AL', 'az_AZ', 'be_BY', 'bs_BA', 'mk_MK', 'sr_RS',
-            'en_PH',
         ];
 
         $locale = $locales[array_rand($locales)];
         $faker = Faker::create($locale);
+        $fakerUs = Faker::create('en_US');
 
         $firstNameRaw = $faker->firstNameMale;
         $lastNameRaw = $faker->lastName;
-        $addressRaw = $faker->address;
-        $countryRaw = $faker->country; 
+        $addressRaw = $fakerUs->address;
+        $countryRaw = $fakerUs->country; 
 
-        $name = Transliterator::create('Any-Latin; Latin-ASCII')->transliterate("$firstNameRaw $lastNameRaw");
-        $addressRaw = Transliterator::create('Any-Latin; Latin-ASCII')->transliterate("$addressRaw");
-        $countryRaw = Transliterator::create('Any-Latin; Latin-ASCII')->transliterate("$countryRaw");
+        $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
+        $addressRaw = Transliterator::transliterate("$addressRaw");
+        $countryRaw = Transliterator::transliterate("$countryRaw");
         // Clean & format the data:
         // - Replace dashes and multiple spaces with single space in address
         // - Capitalize each word in name, address, country
