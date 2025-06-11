@@ -215,15 +215,6 @@ ranked_team_rankings AS (
         ) AS overall_rank
     FROM team_rankings
 ),
-rank_counts AS (
-    SELECT
-        team_id,
-        season_id,
-        SUM(CASE WHEN overall_rank = 1 THEN 1 ELSE 0 END) AS overall_rank,
-        SUM(CASE WHEN conference_rank = 1 THEN 1 ELSE 0 END) AS conference_rank
-    FROM ranked_team_rankings
-    GROUP BY team_id, season_id
-),
 last_playoff_appearance AS (
     SELECT
         team_id,
@@ -319,8 +310,6 @@ SELECT
     standings.*,
     team_season_info.is_defending_champion,
     team_season_info.chemistry,
-    COALESCE(rank_counts.overall_rank, 0) AS overall_rank_count,
-    COALESCE(rank_counts.conference_rank, 0) AS conference_rank_count,
     COALESCE(seasons_list.season_name, '') AS last_playoff_season_name,
     COALESCE(playoff_appearances.playoff_appearances, 0) AS playoff_appearances,
     COALESCE(finals_appearances.finals_appearances, 0) AS finals_appearances,
@@ -343,9 +332,6 @@ LEFT JOIN playoff_appearances
 LEFT JOIN team_season_info
     ON standings.team_id = team_season_info.team_id
     AND standings.season_id = team_season_info.season_id
-LEFT JOIN rank_counts
-    ON standings.team_id = rank_counts.team_id
-    AND standings.season_id = rank_counts.season_id
 LEFT JOIN finals_appearances
     ON standings.team_id = finals_appearances.team_id
 LEFT JOIN conference_finals_appearances

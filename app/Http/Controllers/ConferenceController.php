@@ -75,13 +75,36 @@ class ConferenceController extends Controller
             ->orderBy('conference_rank','asc') // If wins are tied, then order by score_difference in descending order
             ->get();
 
+        // Get all-time conference_rank = 1 and overall_rank = 1 counts per team
+        $rankCounts = DB::table('standings_view')
+            ->where('conference_id', $conferenceId)
+            ->select('team_id')
+            ->selectRaw('SUM(conference_rank = 1) as conference_rank_1_count')
+            ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
+            ->groupBy('team_id')
+            ->pluck('conference_rank_1_count', 'team_id')
+            ->toArray();
+
+        $overallCounts = DB::table('standings_view')
+            ->where('conference_id', $conferenceId)
+            ->select('team_id')
+            ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
+            ->groupBy('team_id')
+            ->pluck('overall_rank_1_count', 'team_id')
+            ->toArray();
+        
+        // Add the all-time conference_rank = 1 and overall_rank = 1 counts to each team's standings
+        $standings = $standings->map(function ($team) use ($rankCounts, $overallCounts) {
+            $team->conference_rank_count = isset($rankCounts[$team->team_id]) ? (int)$rankCounts[$team->team_id] : 0;
+            $team->overall_rank_count = isset($overallCounts[$team->team_id]) ? (int)$overallCounts[$team->team_id] : 0;
+            return $team;
+        });
         // Return the standings along with the conference name
         return response()->json([
             'standings' => $standings,
             'conference_name' => $conference ? $conference->name : 'N/A', // Check if conference exists
         ]);
     }
-
 
     // Function to get the results of the previous round in a conference
     public function previousConferenceRoundResults(Request $request)
