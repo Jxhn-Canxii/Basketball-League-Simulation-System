@@ -24,7 +24,7 @@
             </div>
             <div class="grid grid-cols-1 gap-6 mt-4">
                 <TopPlayoffTeams />
-                <Rivals />
+                <!-- <Rivals /> -->
             </div>
         </div>
     </AuthenticatedLayout>
