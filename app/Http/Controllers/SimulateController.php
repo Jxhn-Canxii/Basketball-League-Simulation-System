@@ -470,9 +470,9 @@ class SimulateController extends Controller
         
         $gameData->status = 2; // Marking the game as completed
 
-        foreach ($playerGameStats as $stats) {
-           $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
-        }
+        // foreach ($playerGameStats as $stats) {
+        //    $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+        // }
         // Save the updated scores
         $gameData->save();
 

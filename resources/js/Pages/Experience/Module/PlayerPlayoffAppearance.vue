@@ -25,14 +25,16 @@
                 <option value="championships_won">Championships</option>
             </select>
         </div>
-
-        <!-- Table -->
-        <table class="w-full text-xs">
+        <div v-if="isLoading" class="flex justify-center items-center py-4">
+            <span class="loader mr-2"></span> Loading...
+        </div>
+        <table v-else class="w-full text-xs">
             <thead>
                 <tr class="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
                     <th :class="getThClass('player_name')">Player</th>
                     <th>Status</th>
                     <th>Current Team</th>
+                    <th>Team Played (Playoffs)</th>
                     <th :class="getThClass('playoff_appearances')" class="text-right">Playoffs</th>
                     <th class="text-right">Play-ins (10th vs 9th)</th>
                     <th class="text-right">Play-ins (8th vs 7th)</th>
@@ -66,6 +68,11 @@
                     <td>
                         <p class="text-gray-900 whitespace-nowrap truncate">
                             {{ player.current_team_name ?? "-" }}
+                        </p>
+                    </td>
+                    <td>
+                        <p class="text-gray-900 whitespace-nowrap truncate">
+                            {{ player.teams_played_for_in_playoffs ?? "-" }}
                         </p>
                     </td>
                     <td class="text-right">{{ player.total_playoff_appearances }}</td>
@@ -103,6 +110,7 @@ import { useForm } from "@inertiajs/vue3";
 import Paginator from "@/Components/Paginator.vue";
 
 const players = ref([]);
+const isLoading = ref(false);
 const search_filters = useForm({
     page_num: 1,
     itemsperpage: 10,
@@ -112,11 +120,14 @@ const search_filters = useForm({
 });
 
 const fetchFilteredPlayers = async () => {
+    isLoading.value = true;
     try {
         const response = await axios.post(route("filter.playoffs.player"), search_filters);
         players.value = response.data;
     } catch (error) {
         console.error("Error fetching filtered players:", error);
+    } finally {
+        isLoading.value = false;
     }
 };
 
@@ -150,5 +161,18 @@ td {
 }
 th {
     background-color: #f4f4f4;
+}
+.loader {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 18px;
+    height: 18px;
+    animation: spin 1s linear infinite;
+    display: inline-block;
+}
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 </style>

@@ -1219,18 +1219,31 @@ class PlayersController extends Controller
                 'total_blocks' => $stats->total_blocks,
                 'total_turnovers' => $stats->total_turnovers,
                 'total_fouls' => $stats->total_fouls,
-                'games_played' => $stats->games_played,
-                'average_points_per_game' => $averagePointsPerGame,
-                'average_rebounds_per_game' => $averageReboundsPerGame,
-                'average_assists_per_game' => $averageAssistsPerGame,
-                'average_steals_per_game' => $averageStealsPerGame,
-                'average_blocks_per_game' => $averageBlocksPerGame,
-                'average_turnovers_per_game' => $averageTurnoversPerGame,
-                'average_fouls_per_game' => $averageFoulsPerGame,
-                'field_goal_percentage' => $fieldGoalPercentage,
-                'two_point_percentage' => $twoPointPercentage,
-                'three_point_percentage' => $threePointPercentage,
-                'free_throw_percentage' => $freeThrowPercentage,
+                'total_minutes_played' => $stats->total_minutes_played,
+                'total_games_played' => $stats->total_games_played,
+                'per' => $stats->per,
+                'ts_percent' => $stats->ts_percent,
+                'average_points_per_game' => round($stats->avg_points_per_game, 2),
+                'average_rebounds_per_game' => round($stats->avg_rebounds_per_game, 2),
+                'average_assists_per_game' => round($stats->avg_assists_per_game,  2),
+                'average_steals_per_game' => round($stats->avg_steals_per_game, 2),
+                'average_blocks_per_game' => round($stats->avg_blocks_per_game, 2),
+                'average_turnovers_per_game' => round($stats->avg_turnovers_per_game, 2),
+                'average_fouls_per_game' => round($stats->avg_fouls_per_game, 2),
+                // Include shooting percentages
+                'field_goal_percentage' => round($fieldGoalPercentage, 2),
+                'two_point_percentage' => round($twoPointPercentage, 2),
+                'three_point_percentage' => round($threePointPercentage, 2),
+                'free_throw_percentage' => round($freeThrowPercentage, 2),
+                // Include attempts and made
+                'total_field_goals_made' => $stats->total_field_goals_made,
+                'total_field_goal_attempts' => $stats->total_field_goal_attempts,
+                'total_two_pointers_made' => $stats->total_two_pointers_made,
+                'total_two_point_attempts' => $stats->total_two_point_attempts,
+                'total_three_pointers_made' => $stats->total_three_pointers_made,
+                'total_three_point_attempts' => $stats->total_three_point_attempts,
+                'total_free_throws_made' => $stats->total_free_throws_made,
+                'total_free_throw_attempts' => $stats->total_free_throw_attempts,
             ];
         }
     
@@ -1677,147 +1690,142 @@ class PlayersController extends Controller
         $page = $request->input('page_num', 1);
         $offset = ($page - 1) * $perPage;
 
-        // Base query to get filtered players from the player_playoff_appearances table
-        $query = DB::table('player_playoff_appearances as ppa')
-            ->join('players as p', 'ppa.player_id', '=', 'p.id')  // Join with players table to get player names
-            ->leftJoin('teams as t', 'p.team_id', '=', 't.id')    // Join with teams table to get current team names
-            ->select(
-                'p.is_active AS active_status',
-                'p.name as player_name',
-                't.name as current_team_name',
-                'ppa.*'
-            );
+        $cacheKey = 'players_with_filters_' . md5(json_encode([
+            $sortColumn, $sortOrder, $perPage, $page
+        ]));
+        $result = \Cache::remember($cacheKey, 60, function () use ($sortColumn, $sortOrder, $perPage, $page, $offset) {
+            $query = DB::table('player_playoff_appearances_view as ppa')
+                ->join('players as p', 'ppa.player_id', '=', 'p.id')
+                ->leftJoin('teams as t', 'p.team_id', '=', 't.id')
+                ->select(
+                    'p.is_active AS active_status',
+                    'p.name as player_name',
+                    'ppa.*'
+                );
 
-        // Apply sorting
-        switch ($sortColumn) {
-            case 'playoff_appearances':
-                $query->orderBy('ppa.total_playoff_appearances', $sortOrder);
-                break;
-            case 'big_four':
-                $query->orderBy('ppa.interconference_semi_finals_appearances', $sortOrder);
-                break;
-            case 'finals_appearances':
-                $query->orderBy('ppa.finals_appearances', $sortOrder);
-                break;
-            case 'seasons_played':
-                $query->orderBy('ppa.total_seasons_played', $sortOrder); // NOTE: column must exist or be handled differently
-                break;
-            case 'championships_won':
-                $query->orderBy('ppa.championships_won', $sortOrder);
-                break;
-            default:
-                $query->orderBy('p.name', 'asc');
-        }
+            switch ($sortColumn) {
+                case 'playoff_appearances':
+                    $query->orderBy('ppa.total_playoff_appearances', $sortOrder);
+                    break;
+                case 'big_four':
+                    $query->orderBy('ppa.interconference_semi_finals_appearances', $sortOrder);
+                    break;
+                case 'finals_appearances':
+                    $query->orderBy('ppa.finals_appearances', $sortOrder);
+                    break;
+                case 'seasons_played':
+                    $query->orderBy('ppa.total_seasons_played', $sortOrder); // NOTE: column must exist or be handled differently
+                    break;
+                case 'championships_won':
+                    $query->orderBy('ppa.championships_won', $sortOrder);
+                    break;
+                default:
+                    $query->orderBy('p.name', 'asc');
+            }
 
-        // Fetch total number of records
-        $total = DB::table('player_playoff_appearances as ppa')
-            ->join('players as p', 'ppa.player_id', '=', 'p.id')
-            ->count();
+            $total = DB::table('player_playoff_appearances as ppa')
+                ->join('players as p', 'ppa.player_id', '=', 'p.id')
+                ->count();
 
-        // Fetch paginated results
-        $players = $query->skip($offset)->take($perPage)->get();
+            $players = $query->skip($offset)->take($perPage)->get();
 
-        // Add total_seasons_played to each player using player_season_stats table
-        foreach ($players as $player) {
-            $player->experience = DB::table('player_season_stats')
-                ->where('player_id', $player->player_id)
-                ->distinct('season_id')
-                ->count('season_id');
-        }
+            foreach ($players as $player) {
+                $player->experience = DB::table('player_season_stats')
+                    ->where('player_id', $player->player_id)
+                    ->distinct('season_id')
+                    ->count('season_id');
+            }
 
-        // Return paginated response
-        return response()->json([
-            'data' => $players,
-            'total' => $total,
-            'per_page' => $perPage,
-            'current_page' => $page,
-            'last_page' => ceil($total / $perPage),
-        ]);
+            return [
+                'data' => $players,
+                'total' => $total,
+                'per_page' => $perPage,
+                'current_page' => $page,
+                'last_page' => ceil($total / $perPage),
+            ];
+        });
+        return response()->json($result);
     }
-
 
     public function getTop20PlayersAllTime()
     {
-        // Combine stats for players by player_id
-        $top20PlayersAllTime = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-            ->leftJoin('teams as current_team', 'players.team_id', '=', 'current_team.id') // Get the current team name
-            ->select(
-                'player_season_stats.player_id',
-                'players.id as player_id',
-                'players.name as player_name',
-                'players.is_active as is_active',
-                'current_team.id as current_team_id', // Current team of the player
-                'current_team.name as current_team_name', // Current team of the player
-                DB::raw('SUM(player_season_stats.total_points) as total_points'),
-                DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
-                DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
-                DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
-                DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
-                DB::raw('SUM(player_season_stats.total_turnovers) as total_turnovers'),
-                DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
-                DB::raw('COUNT(player_season_stats.season_id) as seasons_played'),
-                DB::raw('(
-                    SUM(player_season_stats.total_points) * 0.2 +
-                    SUM(player_season_stats.total_rebounds) * 0.2 +
-                    SUM(player_season_stats.total_assists) * 0.2 +
-                    SUM(player_season_stats.total_steals) * 0.2 +
-                    SUM(player_season_stats.total_blocks) * 0.2 - 
-                    SUM(player_season_stats.total_turnovers) * 0.2 - 
-                    SUM(player_season_stats.total_fouls) * 0.2
-                ) as base_statistical_points')
-            )
-            ->groupBy(
-                'player_season_stats.player_id',
-                'players.id',
-                'players.name',
-                'players.is_active',
-                'current_team.name',
-                'current_team.id'
-            )
-            ->get();
-
-        foreach ($top20PlayersAllTime as $player) {
-            // Fetch individual awards for this player
-            $awards = DB::table('season_awards')
-                ->where('player_id', $player->player_id)
+        $cacheKey = 'top20_players_all_time';
+        $result = \Cache::remember($cacheKey, 60, function () {
+            $top20PlayersAllTime = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->leftJoin('teams as current_team', 'players.team_id', '=', 'current_team.id')
                 ->select(
-                    DB::raw('GROUP_CONCAT(DISTINCT CONCAT(award_name, " (Season ", season_id, ")") SEPARATOR ", ") as all_awards'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) * 7 as best_overall_player_points'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) * 5 as best_defensive_player_points'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) as best_overall_player_count'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) as best_defensive_player_count')
+                    'player_season_stats.player_id',
+                    'players.id as player_id',
+                    'players.name as player_name',
+                    'players.is_active as is_active',
+                    'current_team.id as current_team_id',
+                    'current_team.name as current_team_name',
+                    DB::raw('SUM(player_season_stats.total_points) as total_points'),
+                    DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
+                    DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
+                    DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
+                    DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
+                    DB::raw('SUM(player_season_stats.total_turnovers) as total_turnovers'),
+                    DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
+                    DB::raw('COUNT(player_season_stats.season_id) as seasons_played'),
+                    DB::raw('(
+                        SUM(player_season_stats.total_points) * 0.2 +
+                        SUM(player_season_stats.total_rebounds) * 0.2 +
+                        SUM(player_season_stats.total_assists) * 0.2 +
+                        SUM(player_season_stats.total_steals) * 0.2 +
+                        SUM(player_season_stats.total_blocks) * 0.2 - 
+                        SUM(player_season_stats.total_turnovers) * 0.2 - 
+                        SUM(player_season_stats.total_fouls) * 0.2
+                    ) as base_statistical_points')
                 )
-                ->first();
+                ->groupBy(
+                    'player_season_stats.player_id',
+                    'players.id',
+                    'players.name',
+                    'players.is_active',
+                    'current_team.name',
+                    'current_team.id'
+                )
+                ->get();
 
-            // Fetch championships won and finals MVP count for this player
-            $finalsMVPCount = DB::table('seasons')
-                ->where('finals_mvp_id', $player->player_id)
-                ->count();
+            foreach ($top20PlayersAllTime as $player) {
+                $awards = DB::table('season_awards')
+                    ->where('player_id', $player->player_id)
+                    ->select(
+                        DB::raw('GROUP_CONCAT(DISTINCT CONCAT(award_name, " (Season ", season_id, ")") SEPARATOR ", ") as all_awards'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) * 7 as best_overall_player_points'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) * 5 as best_defensive_player_points'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) as best_overall_player_count'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) as best_defensive_player_count')
+                    )
+                    ->first();
 
-            $finalsMVPPoints = $finalsMVPCount * 6; // Each Finals MVP is worth 6 points
+                $finalsMVPCount = DB::table('seasons')
+                    ->where('finals_mvp_id', $player->player_id)
+                    ->count();
 
-            // Add the additional stats to the player object
-            $player->all_awards = $awards->all_awards ?? null;
-            $player->best_overall_player_points = $awards->best_overall_player_points ?? 0;
-            $player->best_defensive_player_points = $awards->best_defensive_player_points ?? 0;
-            $player->best_overall_player_count = $awards->best_overall_player_count ?? 0;
-            $player->best_defensive_player_count = $awards->best_defensive_player_count ?? 0;
-            $player->finals_mvp_count = $finalsMVPCount ?? 0;
-            $player->finals_mvp_points = $finalsMVPPoints;
+                $finalsMVPPoints = $finalsMVPCount * 6;
 
-            // Update ranking points with awards
-            $player->total_statistical_points = 
-                $player->base_statistical_points +
-                $player->best_overall_player_points +
-                $player->best_defensive_player_points +
-                $player->finals_mvp_points;
-        }
+                $player->all_awards = $awards->all_awards ?? null;
+                $player->best_overall_player_points = $awards->best_overall_player_points ?? 0;
+                $player->best_defensive_player_points = $awards->best_defensive_player_points ?? 0;
+                $player->best_overall_player_count = $awards->best_overall_player_count ?? 0;
+                $player->best_defensive_player_count = $awards->best_defensive_player_count ?? 0;
+                $player->finals_mvp_count = $finalsMVPCount ?? 0;
+                $player->finals_mvp_points = $finalsMVPPoints;
 
-        // Sort players by total_statistical_points in descending order
-        $sortedPlayers = collect($top20PlayersAllTime)->sortByDesc('total_statistical_points')->take(20);
+                $player->total_statistical_points = 
+                    $player->base_statistical_points +
+                    $player->best_overall_player_points +
+                    $player->best_defensive_player_points +
+                    $player->finals_mvp_points;
+            }
 
-        return response()->json($sortedPlayers->values());
+            $sortedPlayers = collect($top20PlayersAllTime)->sortByDesc('total_statistical_points')->take(20);
+            return $sortedPlayers->values();
+        });
+        return response()->json($result);
     }
 
     public function getTop10PlayersByTeam(Request $request)
@@ -1827,88 +1835,84 @@ class PlayersController extends Controller
         ]);
     
         $teamId = $request->team_id;
-    
-        // Fetch total stats for players for the given team across all seasons and also current team name
-        $playerStatsForTeam = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-            ->leftJoin('teams as current_team', 'players.team_id', '=', 'current_team.id') // Get the current team name
-            ->select(
-                'player_season_stats.player_id',
-                'players.id as player_id',
-                'players.name as player_name',
-                'players.is_active as is_active',
-                'current_team.id as current_team_id', // Current team of the player
-                'current_team.name as current_team_name', // Current team of the player
-                DB::raw('SUM(player_season_stats.total_points) as total_points'),
-                DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
-                DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
-                DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
-                DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
-                DB::raw('SUM(player_season_stats.total_turnovers) as total_turnovers'),
-                DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
-                DB::raw('COUNT(player_season_stats.season_id) as seasons_played'),
-                DB::raw('(
-                    SUM(player_season_stats.total_points) * 0.2 +
-                    SUM(player_season_stats.total_rebounds) * 0.2 +
-                    SUM(player_season_stats.total_assists) * 0.2 +
-                    SUM(player_season_stats.total_steals) * 0.2 +
-                    SUM(player_season_stats.total_blocks) * 0.2 - 
-                    SUM(player_season_stats.total_turnovers) * 0.2 - 
-                    SUM(player_season_stats.total_fouls) * 0.2
-                ) as base_statistical_points')
-            )
-            ->where('player_season_stats.team_id',$teamId)
-            ->groupBy(
-                'player_season_stats.player_id',
-                'players.id',
-                'players.name',
-                'players.is_active',
-                'current_team.name',
-                'current_team.id'
-            )
-            ->get();
-
-        foreach ($playerStatsForTeam as $player) {
-            // Fetch individual awards for this player
-            $awards = DB::table('season_awards')
-                ->where('player_id', $player->player_id)
+        $cacheKey = 'top10_players_by_team_' . $teamId;
+        $result = \Cache::remember($cacheKey, 60, function () use ($teamId) {
+            $playerStatsForTeam = DB::table('player_season_stats')
+                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+                ->leftJoin('teams as current_team', 'players.team_id', '=', 'current_team.id')
                 ->select(
-                    DB::raw('GROUP_CONCAT(DISTINCT CONCAT(award_name, " (Season ", season_id, ")") SEPARATOR ", ") as all_awards'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) * 7 as best_overall_player_points'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) * 5 as best_defensive_player_points'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) as best_overall_player_count'),
-                    DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) as best_defensive_player_count')
+                    'player_season_stats.player_id',
+                    'players.id as player_id',
+                    'players.name as player_name',
+                    'players.is_active as is_active',
+                    'current_team.id as current_team_id',
+                    'current_team.name as current_team_name',
+                    DB::raw('SUM(player_season_stats.total_points) as total_points'),
+                    DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
+                    DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
+                    DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
+                    DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
+                    DB::raw('SUM(player_season_stats.total_turnovers) as total_turnovers'),
+                    DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
+                    DB::raw('COUNT(player_season_stats.season_id) as seasons_played'),
+                    DB::raw('(
+                        SUM(player_season_stats.total_points) * 0.2 +
+                        SUM(player_season_stats.total_rebounds) * 0.2 +
+                        SUM(player_season_stats.total_assists) * 0.2 +
+                        SUM(player_season_stats.total_steals) * 0.2 +
+                        SUM(player_season_stats.total_blocks) * 0.2 - 
+                        SUM(player_season_stats.total_turnovers) * 0.2 - 
+                        SUM(player_season_stats.total_fouls) * 0.2
+                    ) as base_statistical_points')
                 )
-                ->first();
+                ->where('player_season_stats.team_id',$teamId)
+                ->groupBy(
+                    'player_season_stats.player_id',
+                    'players.id',
+                    'players.name',
+                    'players.is_active',
+                    'current_team.name',
+                    'current_team.id'
+                )
+                ->get();
 
-            // Fetch championships won and finals MVP count for this player
-            $finalsMVPCount = DB::table('seasons')
-                ->where('finals_mvp_id', $player->player_id)
-                ->count();
+            foreach ($playerStatsForTeam as $player) {
+                $awards = DB::table('season_awards')
+                    ->where('player_id', $player->player_id)
+                    ->select(
+                        DB::raw('GROUP_CONCAT(DISTINCT CONCAT(award_name, " (Season ", season_id, ")") SEPARATOR ", ") as all_awards'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) * 7 as best_overall_player_points'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) * 5 as best_defensive_player_points'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Overall Player" THEN 1 END) as best_overall_player_count'),
+                        DB::raw('COUNT(CASE WHEN award_name = "Best Defensive Player" THEN 1 END) as best_defensive_player_count')
+                    )
+                    ->first();
 
-            $finalsMVPPoints = $finalsMVPCount * 6; // Each Finals MVP is worth 6 points
+                $finalsMVPCount = DB::table('seasons')
+                    ->where('finals_mvp_id', $player->player_id)
+                    ->count();
 
-            // Add the additional stats to the player object
-            $player->all_awards = $awards->all_awards ?? null;
-            $player->best_overall_player_points = $awards->best_overall_player_points ?? 0;
-            $player->best_defensive_player_points = $awards->best_defensive_player_points ?? 0;
-            $player->best_overall_player_count = $awards->best_overall_player_count ?? 0;
-            $player->best_defensive_player_count = $awards->best_defensive_player_count ?? 0;
-            $player->finals_mvp_count = $finalsMVPCount ?? 0;
-            $player->finals_mvp_points = $finalsMVPPoints;
+                $finalsMVPPoints = $finalsMVPCount * 6;
 
-            // Update ranking points with awards
-            $player->total_statistical_points = 
-                $player->base_statistical_points +
-                $player->best_overall_player_points +
-                $player->best_defensive_player_points +
-                $player->finals_mvp_points;
-        }
+                $player->all_awards = $awards->all_awards ?? null;
+                $player->best_overall_player_points = $awards->best_overall_player_points ?? 0;
+                $player->best_defensive_player_points = $awards->best_defensive_player_points ?? 0;
+                $player->best_overall_player_count = $awards->best_overall_player_count ?? 0;
+                $player->best_defensive_player_count = $awards->best_defensive_player_count ?? 0;
+                $player->finals_mvp_count = $finalsMVPCount ?? 0;
+                $player->finals_mvp_points = $finalsMVPPoints;
 
-        // Sort players by total_statistical_points in descending order
-        $sortedPlayers = collect($playerStatsForTeam)->sortByDesc('total_statistical_points')->take(15);
+                $player->total_statistical_points = 
+                    $player->base_statistical_points +
+                    $player->best_overall_player_points +
+                    $player->best_defensive_player_points +
+                    $player->finals_mvp_points;
+            }
 
-        return response()->json($sortedPlayers->values());
+            $sortedPlayers = collect($playerStatsForTeam)->sortByDesc('total_statistical_points')->take(15);
+            return $sortedPlayers->values();
+        });
+        return response()->json($result);
     }
     
     public function getStarPlayersByTeam(Request $request)
