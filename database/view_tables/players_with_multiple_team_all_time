@@ -17,4 +17,4 @@ GROUP BY
 HAVING
   total_teams > 1
 ORDER BY
-  player_name ASC;
+  total_teams DESC, player_name ASC;
