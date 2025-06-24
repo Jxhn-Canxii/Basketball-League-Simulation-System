@@ -470,9 +470,6 @@ class SimulateController extends Controller
         
         $gameData->status = 2; // Marking the game as completed
 
-        // foreach ($playerGameStats as $stats) {
-        //    $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
-        // }
         // Save the updated scores
         $gameData->save();
 
@@ -509,6 +506,10 @@ class SimulateController extends Controller
 
         $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
         $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
+
+        foreach ($playerGameStats as $stats) {
+           $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+        }
 
         // Prepare the schedule response data it will update team score card only
         $schedule = [
