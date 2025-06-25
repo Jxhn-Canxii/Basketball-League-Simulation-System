@@ -2198,7 +2198,7 @@ class SimulateController extends Controller
         $finalsMVP = $mvpPlayer ? $mvpPlayer->mvp_name : ''; // Use the player's name from the 'mvp_name' alias
         $finalsMVPId = $mvpPlayer ? $mvpPlayer->player_id : '';
 
-        $this->updateFinalsMVPBonusContract($winnerId, $gameData->season_id, $finalsMVPId);
+        // $this->updateFinalsMVPBonusContract($winnerId, $gameData->season_id, $finalsMVPId);
         // Update the season's finals information
         DB::table('seasons')
             ->where('id', $gameData->season_id)
