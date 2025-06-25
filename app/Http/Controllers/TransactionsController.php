@@ -458,6 +458,7 @@ class TransactionsController extends Controller
             ->select('teams.id', 'teams.name', DB::raw('COUNT(players.id) as player_count'))
             ->groupBy('teams.id', 'teams.name')
             ->havingRaw('COUNT(players.id) < 15')
+            ->inRandomOrder() // Add randomization
             ->get();
     
         $teamsCount = $teamsWithFewMembers->count();
