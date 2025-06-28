@@ -207,77 +207,76 @@ class TeamsController extends Controller
 
         return response()->json($teamTransactionHistory);
     }
+   
     private function getSeasonHistory($teamId, $page, $itemsPerPage)
     {
         // Calculate the offset for pagination
         $offset = ($page - 1) * $itemsPerPage;
 
-        // Fetch data from database with pagination
-        $seasonHistory = DB::table('standings_view')
+        // Fetch data from standings_snapshots with pagination
+        $seasonHistory = DB::table('standings_snapshots')
             ->select(
-                'standings_view.team_id',
-                'standings_view.team_name',
-                'standings_view.team_acronym',
-                'standings_view.conference_id',
-                'standings_view.conference_name',
-                'standings_view.wins',
-                'standings_view.losses',
-                'standings_view.total_home_score',
-                'standings_view.total_away_score',
-                'standings_view.home_ppg',
-                'standings_view.away_ppg',
-                'standings_view.score_difference',
-                'standings_view.season_id',
-                'standings_view.overall_rank',
-                'standings_view.conference_rank',
+                'standings_snapshots.team_id',
+                'standings_snapshots.team_name',
+                'standings_snapshots.team_acronym',
+                'standings_snapshots.conference_id',
+                'standings_snapshots.conference_name',
+                'standings_snapshots.wins',
+                'standings_snapshots.losses',
+                'standings_snapshots.total_home_score',
+                'standings_snapshots.total_away_score',
+                'standings_snapshots.home_ppg',
+                'standings_snapshots.away_ppg',
+                'standings_snapshots.score_difference',
+                'standings_snapshots.season_id',
+                'standings_snapshots.overall_rank',
+                'standings_snapshots.conference_rank',
                 'seasons.name as season_name',
                 'seasons.status as season_status',
-                DB::raw('CASE WHEN standings_view.overall_rank <= CASE WHEN seasons.start_playoffs = 16 THEN 16 ELSE 32 END THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
-                DB::raw('MAX(schedules.id) as last_round_played') // Adjusted to get the last round
+                DB::raw('CASE WHEN standings_snapshots.overall_rank <= CASE WHEN seasons.start_playoffs = 16 THEN 16 ELSE 32 END THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
+                DB::raw('MAX(schedules.id) as last_round_played')
             )
-            ->join('seasons', 'seasons.id', '=', 'standings_view.season_id')
+            ->join('seasons', 'seasons.id', '=', 'standings_snapshots.season_id')
             ->leftJoin('schedules', function ($join) use ($teamId) {
-                $join->on('schedules.season_id', '=', 'standings_view.season_id')
+                $join->on('schedules.season_id', '=', 'standings_snapshots.season_id')
                     ->where(function ($query) use ($teamId) {
                         $query->where('schedules.home_id', '=', $teamId)
                             ->orWhere('schedules.away_id', '=', $teamId);
                     });
             })
-            ->where('standings_view.team_id', $teamId)
+            ->where('standings_snapshots.team_id', $teamId)
             ->groupBy(
-                'standings_view.team_id',
-                'standings_view.team_name',
-                'standings_view.team_acronym',
-                'standings_view.conference_id',
-                'standings_view.conference_name',
-                'standings_view.wins',
-                'standings_view.losses',
-                'standings_view.total_home_score',
-                'standings_view.total_away_score',
-                'standings_view.home_ppg',
-                'standings_view.away_ppg',
-                'standings_view.score_difference',
-                'standings_view.season_id',
-                'standings_view.overall_rank',
-                'standings_view.conference_rank',
+                'standings_snapshots.team_id',
+                'standings_snapshots.team_name',
+                'standings_snapshots.team_acronym',
+                'standings_snapshots.conference_id',
+                'standings_snapshots.conference_name',
+                'standings_snapshots.wins',
+                'standings_snapshots.losses',
+                'standings_snapshots.total_home_score',
+                'standings_snapshots.total_away_score',
+                'standings_snapshots.home_ppg',
+                'standings_snapshots.away_ppg',
+                'standings_snapshots.score_difference',
+                'standings_snapshots.season_id',
+                'standings_snapshots.overall_rank',
+                'standings_snapshots.conference_rank',
                 'seasons.name'
             )
-            ->orderBy('standings_view.season_id', 'desc')
+            ->orderBy('standings_snapshots.season_id', 'desc')
             ->offset($offset)
             ->limit($itemsPerPage)
             ->get();
 
-
-
         // Process the collection and append round information
         foreach ($seasonHistory as $season) {
             $roundInfo = $this->getLastRoundPlayed($season->last_round_played, $teamId);
-            $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id,$teamId);
+            $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id, $teamId);
             $season->round_info = $roundInfo;
         }
 
         // Get the total number of records
-        $totalItems = DB::table('standings_view')
+        $totalItems = DB::table('standings_snapshots')
             ->where('team_id', $teamId)
             ->count();
 
