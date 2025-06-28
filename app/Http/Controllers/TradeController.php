@@ -404,33 +404,32 @@ class TradeController extends Controller
         );
     }
 
-
     private function findUnderperformingPlayers($teamId)
     {
         $latestSeasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // Assuming seasons are sequential
-    
-        // Get top 5 teams per conference
-        $topTeams = DB::table('standings_view')
+
+        // Get top 6 teams per conference
+        $topTeams = DB::table('standings_snapshots')
             ->where('season_id', $latestSeasonId)
             ->where('conference_rank', '<=', 6) // Top 6 teams per conference
             ->pluck('team_id')
             ->toArray();
-    
+
         // Get star players and all-stars from top 6 teams in each conference
         $starPlayers = DB::table('players')
             ->whereIn('team_id', $topTeams)
-            ->whereIn('players.role', ['star player', 'all star','starter']) // Filter by role
+            ->whereIn('players.role', ['star player', 'all star', 'starter']) // Filter by role
             ->pluck('players.id')
             ->toArray();
- 
-        // Fetch latest player stats, excluding star players and all-stars from top 5 teams
+
+        // Fetch latest player stats, excluding star players and all-stars from top 6 teams
         $latestStats = DB::table('player_season_stats')
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->where('players.team_id', $teamId)
             ->whereNotIn('players.id', $starPlayers) // Exclude stars and all-stars
             ->where('players.is_injured', 0)
-            ->where('players.contract_years','<=', 2)
+            ->where('players.contract_years', '<=', 2)
             ->where('player_season_stats.season_id', $latestSeasonId)
             ->select(
                 'players.id as player_id',
@@ -449,47 +448,45 @@ class TradeController extends Controller
                 'player_season_stats.avg_fouls_per_game'
             )
             ->get();
-    
+
         $underperformingPlayers = [];
-    
+
         foreach ($latestStats as $playerStats) {
             $previousStats = DB::table('player_season_stats')
                 ->where('player_id', $playerStats->player_id)
                 ->where('season_id', $previousSeasonId)
                 ->first();
-        
+
             $latestScore = $this->calculatePerformanceScore($playerStats);
             $previousScore = $previousStats ? $this->calculatePerformanceScore($previousStats) : 0;
-        
+
             if ($previousScore > 0) {
                 $declinePercentage = (($previousScore - $latestScore) / $previousScore) * 100;
-                
+
                 if ($declinePercentage >= 20) { // Threshold for a **super decline** (e.g., 20% drop)
                     $playerStats->super_decline = true;
                 }
             }
-        
+
             if ($latestScore < $previousScore) {
                 $underperformingPlayers[] = (array) $playerStats;
             }
         }
-        
-    
+
         return $underperformingPlayers;
     }
-    
-    
+
     private function findUnhappyStars()
     {
         $latestSeasonId = get_current_season_id();
 
         $starPlayers = DB::table('players')
             ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
-            ->join('standings_view', 'players.team_id', '=', 'standings_view.team_id')
-            ->where('standings_view.season_id', $latestSeasonId)
-            ->where('standings_view.overall_rank', '>=', 56) // Teams ranked below 70
+            ->join('standings_snapshots', 'players.team_id', '=', 'standings_snapshots.team_id')
+            ->where('standings_snapshots.season_id', $latestSeasonId)
+            ->where('standings_snapshots.overall_rank', '>=', 56) // Teams ranked 56 or lower
             ->where('player_season_stats.season_id', $latestSeasonId)
-            ->whereIn('players.role', ['star player', 'starter','all star'])  // Use whereIn to filter by both 'star player' and 'starter'
+            ->whereIn('players.role', ['star player', 'starter', 'all star']) // Filter by role
             ->select(
                 'players.id as player_id',
                 'players.team_id',
@@ -507,10 +504,9 @@ class TradeController extends Controller
                 'player_season_stats.avg_fouls_per_game'
             )
             ->get();
-    
+
         return $starPlayers->map(fn($player) => (array) $player)->toArray();
     }
-    
     
     private function getPlayerStats($playerId)
     {

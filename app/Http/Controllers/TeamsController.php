@@ -466,7 +466,7 @@ class TeamsController extends Controller
 
     private function getAllTimeStats($teamId)
     {
-        return DB::table('standings_view')
+        return DB::table('standings_snapshots')
             ->where('team_id', $teamId)
             ->selectRaw('SUM(wins) AS all_time_wins, SUM(losses) AS all_time_losses')
             ->first();
@@ -474,26 +474,33 @@ class TeamsController extends Controller
 
     private function getSeasonHistoryCount($teamId, $seasonId)
     {
-        // Fetch data from database
-        $seasonHistory = DB::table('standings_view')
+        // Fetch data from standings_snapshots
+        $seasonHistory = DB::table('standings_snapshots')
             ->select(
-                'standings_view.*',
+                'standings_snapshots.*',
                 'seasons.name as season_name',
-                'conference_championships as conference_championship',
-                DB::raw('CASE WHEN standings_view.overall_rank <= CASE WHEN seasons.start_playoffs = 16 THEN 16 ELSE 32 END THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
-                DB::raw('MAX(schedules.id) as last_round_played_id'),
+                'standings_snapshots.conference_championships as conference_championship',
+                DB::raw('CASE WHEN standings_snapshots.overall_rank <= CASE WHEN seasons.start_playoffs = 16 THEN 16 ELSE 32 END THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
+                DB::raw('MAX(schedules.id) as last_round_played_id')
             )
-            ->join('seasons', 'seasons.id', '=', 'standings_view.season_id')
+            ->join('seasons', 'seasons.id', '=', 'standings_snapshots.season_id')
             ->leftJoin('schedules', function ($join) use ($teamId) {
-                $join->on('schedules.season_id', '=', 'standings_view.season_id')
+                $join->on('schedules.season_id', '=', 'standings_snapshots.season_id')
                     ->where(function ($query) use ($teamId) {
                         $query->where('schedules.home_id', '=', $teamId)
                             ->orWhere('schedules.away_id', '=', $teamId);
                     });
             })
-            ->where('standings_view.team_id', $teamId)
-            ->groupBy('standings_view.season_id', 'seasons.id', 'seasons.name', 'standings_view.overall_rank', 'isPlayoffQualified')
-            ->orderBy('standings_view.season_id', 'desc')
+            ->where('standings_snapshots.team_id', $teamId)
+            ->groupBy(
+                'standings_snapshots.season_id',
+                'seasons.id',
+                'seasons.name',
+                'standings_snapshots.overall_rank',
+                'standings_snapshots.conference_rank',
+                'standings_snapshots.conference_championships'
+            )
+            ->orderBy('standings_snapshots.season_id', 'desc')
             ->get();
 
         // Process the collection and append round information
@@ -515,25 +522,25 @@ class TeamsController extends Controller
             return $season->conference_rank == 1;
         })->count();
 
-
-        $seasonCount = DB::table('standings_view')
+        // Count the standings_snapshots where season_id = $seasonId to get the last team number
+        $seasonCount = DB::table('standings_snapshots')
             ->where('season_id', $seasonId)
             ->count();
 
-
-        // Count the standings_view where season_id = $seasonId to get the last team number
+        // Count seasons where the team had the last overall rank
         $lastOverallRankCount = $seasonHistory->filter(function ($season) use ($teamId, $seasonCount) {
-            // Compare overall_rank with the count of standings for the team in the season
             return $season->team_id == $teamId && $season->overall_rank == $seasonCount;
         })->count();
 
+        // Get the conference championships for the latest season in the collection
+        $conferenceChampions = $seasonHistory->first()->conference_championship ?? 0;
+
         return [
-            // 'seasonHistory' => $seasonHistory,
             'playoffQualifiedCount' => $playoffQualifiedCount,
             'overallRank1Count' => $overallRank1Count,
             'conferenceRank1Count' => $conferenceRank1Count,
             'lastOverallRankCount' => $lastOverallRankCount,
-            'conferenceChampions' => $season->conference_championship,
+            'conferenceChampions' => $conferenceChampions,
         ];
     }
 

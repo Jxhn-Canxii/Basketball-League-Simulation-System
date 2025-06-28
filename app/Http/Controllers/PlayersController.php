@@ -1449,43 +1449,40 @@ class PlayersController extends Controller
             ->distinct('schedules.season_id')
             ->count('schedules.round');
 
-        $overallRankSeasons = \DB::table('player_season_stats')
-            ->join('standings_view', function ($join) {
-                $join->on('player_season_stats.team_id', '=', 'standings_view.team_id')
-                     ->on('player_season_stats.season_id', '=', 'standings_view.season_id');
+        $overallRankSeasons = DB::table('player_season_stats')
+            ->join('standings_snapshots', function ($join) {
+                $join->on('player_season_stats.team_id', '=', 'standings_snapshots.team_id')
+                     ->on('player_season_stats.season_id', '=', 'standings_snapshots.season_id');
             })
-            ->join('seasons', 'standings_view.season_id', '=', 'seasons.id')
+            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
             ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
             ->where('player_season_stats.player_id', $playerId)
-            ->where('standings_view.overall_rank', 1)
+            ->where('standings_snapshots.overall_rank', 1)
             ->distinct()
             ->get([
-                'standings_view.season_id',
+                'standings_snapshots.season_id',
                 'seasons.name as season_name',
-                'standings_view.overall_rank',
+                'standings_snapshots.overall_rank',
                 'teams.name as team_name'
             ]);
-        
-        
-    
-        $conferenceRankSeasons = \DB::table('player_season_stats')
-            ->join('standings_view', function ($join) {
-                $join->on('player_season_stats.team_id', '=', 'standings_view.team_id')
-                     ->on('player_season_stats.season_id', '=', 'standings_view.season_id');
+
+        $conferenceRankSeasons = DB::table('player_season_stats')
+            ->join('standings_snapshots', function ($join) {
+                $join->on('player_season_stats.team_id', '=', 'standings_snapshots.team_id')
+                     ->on('player_season_stats.season_id', '=', 'standings_snapshots.season_id');
             })
-            ->join('seasons', 'standings_view.season_id', '=', 'seasons.id')
+            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
             ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
             ->where('player_season_stats.player_id', $playerId)
-            ->where('standings_view.conference_rank', 1)
+            ->where('standings_snapshots.conference_rank', 1)
             ->distinct()
             ->get([
-                'standings_view.season_id',
+                'standings_snapshots.season_id',
                 'seasons.name as season_name',
-                'standings_view.conference_rank',
+                'standings_snapshots.conference_rank',
                 'teams.name as team_name'
             ]);
-        
-        
+
         $latestSeasonId = get_current_season_id();
 
         return response()->json([

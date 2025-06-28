@@ -291,38 +291,47 @@ class RecordsController extends Controller
         $offset = ($page - 1) * $perPage;
 
         // Query to fetch team statistics
-        $teamsStats = DB::table('standings_view')
-            ->select('teams.id as team_id', 'teams.name','teams.primary_color','teams.secondary_color', 'conferences.name as conference',
-                     DB::raw('SUM(wins) as total_wins'),
-                     DB::raw('SUM(losses) as total_losses'),
-                     DB::raw('IFNULL((SUM(wins) / NULLIF(SUM(wins) + SUM(losses), 0)) * 100, 0) as win_rate'))
-            ->leftJoin('teams', 'standings_view.team_id', '=', 'teams.id')
+        $teamsStats = DB::table('standings_snapshots')
+            ->select(
+                'teams.id as team_id',
+                'teams.name',
+                'teams.primary_color',
+                'teams.secondary_color',
+                'conferences.name as conference',
+                DB::raw('SUM(wins) as total_wins'),
+                DB::raw('SUM(losses) as total_losses'),
+                DB::raw('IFNULL((SUM(wins) / NULLIF(SUM(wins) + SUM(losses), 0)) * 100, 0) as win_rate')
+            )
+            ->leftJoin('teams', 'standings_snapshots.team_id', '=', 'teams.id')
             ->leftJoin('conferences', 'teams.conference_id', '=', 'conferences.id')
-            ->groupBy('teams.id', 'teams.name', 'conferences.name','teams.primary_color','teams.secondary_color')
+            ->groupBy('teams.id', 'teams.name', 'conferences.name', 'teams.primary_color', 'teams.secondary_color')
             ->orderBy('total_wins', 'desc') // Sort by total wins in descending order
             ->skip($offset)
             ->take($perPage)
             ->get();
 
-        // Count total records (number of distinct teams in standings_view)
-        $totalCount = DB::table('standings_view')
+        // Count total records (number of distinct teams in standings_snapshots)
+        $totalCount = DB::table('standings_snapshots')
             ->distinct('team_id')
             ->count('team_id');
 
         // Calculate total pages
         $totalPages = ceil($totalCount / $perPage);
 
-        // Query to get best and worst seasons for each team
-        // $teamSeasons = DB::table('standings_view')
-        //     ->select('standings_view.team_id', 'standings_view.season_id',
-        //              'seasons.name as season_name',
-        //              DB::raw('SUM(wins) as total_wins'),
-        //              DB::raw('SUM(losses) as total_losses'),
-        //              DB::raw('IFNULL((SUM(wins) / NULLIF(SUM(wins) + SUM(losses), 0)) * 100, 0) as win_rate'))
-        //     ->leftJoin('seasons', 'standings_view.season_id', '=', 'seasons.id') // Join with seasons table
-        //     ->where('seasons.status',8)
-        //     ->groupBy('standings_view.team_id', 'standings_view.season_id', 'seasons.name')
-        //     ->orderBy('standings_view.team_id', 'asc'); // For grouping by team_id
+        // Query to get best and worst seasons for each team (commented out but updated)
+        // $teamSeasons = DB::table('standings_snapshots')
+        //     ->select(
+        //         'standings_snapshots.team_id',
+        //         'standings_snapshots.season_id',
+        //         'seasons.name as season_name',
+        //         DB::raw('SUM(wins) as total_wins'),
+        //         DB::raw('SUM(losses) as total_losses'),
+        //         DB::raw('IFNULL((SUM(wins) / NULLIF(SUM(wins) + SUM(losses), 0)) * 100, 0) as win_rate')
+        //     )
+        //     ->leftJoin('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
+        //     ->where('seasons.status', 8)
+        //     ->groupBy('standings_snapshots.team_id', 'standings_snapshots.season_id', 'seasons.name')
+        //     ->orderBy('standings_snapshots.team_id', 'asc');
 
         // // Determine best and worst seasons per team
         // $bestSeasons = $teamSeasons->clone()->orderBy('win_rate', 'desc')->get()->groupBy('team_id')->map(function ($seasons) {
@@ -333,8 +342,8 @@ class RecordsController extends Controller
         //     return $seasons->first(); // Worst winning season (lowest percentage) for each team
         // });
 
-        // Combine team stats with best and worst seasons
-        // $teamsWithSeasons = $teamsStats->map(function ($team) use ($) {
+        // // Combine team stats with best and worst seasons
+        // $teamsWithSeasons = $teamsStats->map(function ($team) use ($bestSeasons, $worstSeasons) {
         //     $bestSeason = $bestSeasons->get($team->team_id);
         //     $worstSeason = $worstSeasons->get($team->team_id);
 
@@ -344,16 +353,16 @@ class RecordsController extends Controller
         //         'total_wins' => $team->total_wins,
         //         'total_losses' => $team->total_losses,
         //         'win_rate' => $team->win_rate,
-        //         // 'best_season' => $bestSeason ? $bestSeason->season_name : 'N/A',
-        //         // 'best_win_loss' => $bestSeason ? $bestSeason->total_wins . "-" . $bestSeason->total_losses : 'N/A',
-        //         // 'worst_season' => $worstSeason ? $worstSeason->season_name : 'N/A',
-        //         // 'worst_win_loss' => $worstSeason ? $worstSeason->total_wins . "-" . $worstSeason->total_losses : 'N/A',
+        //         'best_season' => $bestSeason ? $bestSeason->season_name : 'N/A',
+        //         'best_win_loss' => $bestSeason ? $bestSeason->total_wins . "-" . $bestSeason->total_losses : 'N/A',
+        //         'worst_season' => $worstSeason ? $worstSeason->season_name : 'N/A',
+        //         'worst_win_loss' => $worstSeason ? $worstSeason->total_wins . "-" . $worstSeason->total_losses : 'N/A',
         //     ];
         // });
 
         // Create the response array
         $response = [
-            'data' => $teamsStats,
+            'data' => $teamsStats, // Use $teamsWithSeasons if uncommenting the best/worst seasons logic
             'current_page' => $page,
             'total_pages' => $totalPages,
             'total' => $totalCount,
