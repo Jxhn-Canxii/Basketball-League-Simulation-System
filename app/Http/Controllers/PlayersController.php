@@ -492,16 +492,8 @@ class PlayersController extends Controller
 
     public function generateNewPlayer()
     {
-        $locales = [
-            'en_US', 'en_GB', 'fr_FR', 'de_DE', 'it_IT', 'es_ES', 'nl_NL', 'pt_BR',
-            'pt_PT', 'tr_TR', 'ru_RU', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'hi_IN',
-            'ar_SA', 'sv_SE', 'fi_FI', 'no_NO', 'da_DK', 'pl_PL', 'cs_CZ', 'sk_SK',
-            'ro_RO', 'hu_HU', 'el_GR', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'en_PH',
-            'bg_BG', 'uk_UA', 'ca_ES', 'sl_SI', 'hr_HR', 'lt_LT', 'lv_LV', 'et_EE',
-            'fa_IR', 'af_ZA', 'sq_AL', 'az_AZ', 'be_BY', 'bs_BA', 'mk_MK', 'sr_RS',
-        ];
 
-        $locale = $locales[array_rand($locales)];
+        $locale = $this->selectWeightedLocale();
         $faker = Faker::create($locale);
         $fakerUs = Faker::create('en_US');
 
@@ -2149,6 +2141,63 @@ class PlayersController extends Controller
         return $count;
     }
     
+    private function selectWeightedLocale()
+    {
+        $locales = [
+            'en_US', 'en_GB', 'fr_FR', 'de_DE', 'it_IT', 'es_ES', 'nl_NL', 'pt_BR',
+            'pt_PT', 'tr_TR', 'ru_RU', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'hi_IN',
+            'ar_SA', 'sv_SE', 'fi_FI', 'no_NO', 'da_DK', 'pl_PL', 'cs_CZ', 'sk_SK',
+            'ro_RO', 'hu_HU', 'el_GR', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'en_PH',
+            'bg_BG', 'uk_UA', 'ca_ES', 'sl_SI', 'hr_HR', 'lt_LT', 'lv_LV', 'et_EE',
+            'fa_IR', 'af_ZA', 'sq_AL', 'az_AZ', 'be_BY', 'bs_BA', 'mk_MK', 'sr_RS',
+        ];
+
+        // Define weights for each locale
+        $weights = [];
+        $usLocales = ['en_US', 'en_PH'];
+        $europeanLocales = [
+            'en_GB', 'fr_FR', 'de_DE', 'it_IT', 'es_ES', 'nl_NL', 'pt_PT', 'sv_SE',
+            'fi_FI', 'no_NO', 'da_DK', 'pl_PL', 'cs_CZ', 'sk_SK', 'ro_RO', 'hu_HU',
+            'el_GR', 'ca_ES', 'sl_SI', 'hr_HR', 'lt_LT', 'lv_LV', 'et_EE', 'bg_BG',
+            'uk_UA', 'sq_AL', 'bs_BA', 'sr_RS'
+        ];
+        $asianAndOtherLocales = [
+            'pt_BR', 'tr_TR', 'ru_RU', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'hi_IN',
+            'ar_SA', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'fa_IR', 'af_ZA', 'az_AZ',
+            'be_BY', 'mk_MK'
+        ];
+
+        // Assign weights: 40% for US, 50% for European, 10% for Asian/Others
+        $totalLocales = count($locales);
+        $usWeight = 0.4 / count($usLocales); // 40% split across US locales
+        $europeanWeight = 0.5 / count($europeanLocales); // 50% split across European locales
+        $asianOtherWeight = 0.1 / count($asianAndOtherLocales); // 10% split across Asian/Other locales
+
+        foreach ($locales as $locale) {
+            if (in_array($locale, $usLocales)) {
+                $weights[$locale] = $usWeight;
+            } elseif (in_array($locale, $europeanLocales)) {
+                $weights[$locale] = $europeanWeight;
+            } else {
+                $weights[$locale] = $asianOtherWeight;
+            }
+        }
+
+        // Perform weighted random selection
+        $rand = mt_rand() / mt_getrandmax(); // Random float between 0 and 1
+        $cumulativeWeight = 0;
+
+        foreach ($weights as $locale => $weight) {
+            $cumulativeWeight += $weight;
+            if ($rand <= $cumulativeWeight) {
+                return $locale;
+            }
+        }
+
+        // Fallback to a random locale if something goes wrong
+        return $locales[array_rand($locales)];
+    }
+
     private function generateHealthRating()
     {
         $probabilityRanges = [
