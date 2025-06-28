@@ -26,24 +26,24 @@ class AnalyticsController extends Controller
             'team_id' => 'required|integer',
         ]);
 
-        // Fetch all records from standings_view and join with seasons and teams tables
-        $standings = DB::table('standings_view')
-            ->join('seasons', 'standings_view.season_id', '=', 'seasons.id')
-            ->join('teams', 'standings_view.team_id', '=', 'teams.id') // Join with teams table to get colors
+        // Fetch all records from standings_snapshots and join with seasons and teams tables
+        $standings = DB::table('standings_snapshots')
+            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
+            ->join('teams', 'standings_snapshots.team_id', '=', 'teams.id')
             ->select(
-                'standings_view.team_name',
+                'standings_snapshots.team_name',
                 'seasons.name AS season',
-                'standings_view.wins',
+                'standings_snapshots.wins',
                 'teams.primary_color',
                 'teams.secondary_color'
             );
 
-        // Check if conference_id is 0, then conditionally add the where clause
+        // Apply filters for conference_id and team_id if provided
         if ($request->conference_id > 0) {
-            $standings->where('standings_view.conference_id', $request->conference_id);
+            $standings->where('standings_snapshots.conference_id', $request->conference_id);
         }
         if ($request->team_id > 0) {
-            $standings->where('standings_view.team_id', $request->team_id);
+            $standings->where('standings_snapshots.team_id', $request->team_id);
         }
 
         $standings = $standings->get();
@@ -97,7 +97,6 @@ class AnalyticsController extends Controller
 
         return response()->json($finalData); // Return JSON response for chart
     }
-
 
     public function countPlayers()
     {

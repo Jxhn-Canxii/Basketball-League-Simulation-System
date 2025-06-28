@@ -979,6 +979,7 @@ class SimulateController extends Controller
                     $season->status = 2;
                     $season->save();
 
+                    $this->saveStandingsSnapshot();
                     $this->updatePlayoffQualifiedFlags();
                 }
             }
@@ -1051,6 +1052,37 @@ class SimulateController extends Controller
             'free_throws_made' => 0,
         ];
     }
+
+    private function saveStandingsSnapshot()
+    {
+        try {
+            $snapshots = DB::table('standings_view')
+                ->select(
+                    'team_id', 'team_name', 'team_city', 'team_acronym',
+                    'primary_color', 'secondary_color', 'conference_id', 'conference_name',
+                    'season_id', 'wins', 'losses', 'total_home_score', 'total_away_score',
+                    'home_ppg', 'away_ppg', 'score_difference', 'conference_rank', 'overall_rank',
+                    'is_defending_champion', 'chemistry', 'last_playoff_season_name', 
+                    'playoff_appearances', 'finals_appearances', 'conference_finals_appearances',
+                    'conference_championships', 'championships', 'streak_status', 'last_5_games'
+                )
+                ->get();
+
+            foreach ($snapshots as $snapshot) {
+                DB::table('standings_snapshots')->updateOrInsert(
+                    [
+                        'team_id' => $snapshot->team_id,
+                        'season_id' => $snapshot->season_id,
+                    ],
+                    (array) $snapshot
+                );
+            }
+
+        } catch (\Exception $e) {
+            Log::error('❌ Failed to save standings snapshot: ' . $e->getMessage());
+        }
+    }
+
     private function calculatePerformanceFactor($player)
     {
         try {

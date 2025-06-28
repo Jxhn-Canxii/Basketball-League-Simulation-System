@@ -62,21 +62,26 @@ class ConferenceController extends Controller
         $seasonId = $request->season_id;
         $conferenceId = $request->conference_id;
 
+        $latestSeasonId = get_current_season_id();
+
+        // Determine the table to query based on season_id
+        $table = ($seasonId == $latestSeasonId) ? 'standings_view' : 'standings_snapshots';
+
         // Fetch the conference name from the conferences table
         $conference = DB::table('conferences')
             ->where('id', $conferenceId)
             ->first();
 
         // Fetch standings filtered by season_id and conference_id
-        $standings = DB::table('standings_view')
+        $standings = DB::table($table)
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
             ->orderByDesc('wins') // Order by wins in descending order
-            ->orderBy('conference_rank','asc') // If wins are tied, then order by score_difference in descending order
+            ->orderBy('conference_rank', 'asc') // If wins are tied, order by conference_rank ascending
             ->get();
 
         // Get all-time conference_rank = 1 and overall_rank = 1 counts per team
-        $rankCounts = DB::table('standings_view')
+        $rankCounts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
             ->where('conference_id', $conferenceId)
             ->select('team_id')
             ->selectRaw('SUM(conference_rank = 1) as conference_rank_1_count')
@@ -85,20 +90,21 @@ class ConferenceController extends Controller
             ->pluck('conference_rank_1_count', 'team_id')
             ->toArray();
 
-        $overallCounts = DB::table('standings_view')
+        $overallCounts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
             ->where('conference_id', $conferenceId)
             ->select('team_id')
             ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
             ->groupBy('team_id')
             ->pluck('overall_rank_1_count', 'team_id')
             ->toArray();
-        
+
         // Add the all-time conference_rank = 1 and overall_rank = 1 counts to each team's standings
         $standings = $standings->map(function ($team) use ($rankCounts, $overallCounts) {
             $team->conference_rank_count = isset($rankCounts[$team->team_id]) ? (int)$rankCounts[$team->team_id] : 0;
             $team->overall_rank_count = isset($overallCounts[$team->team_id]) ? (int)$overallCounts[$team->team_id] : 0;
             return $team;
         });
+
         // Return the standings along with the conference name
         return response()->json([
             'standings' => $standings,
