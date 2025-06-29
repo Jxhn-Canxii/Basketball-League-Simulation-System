@@ -261,7 +261,9 @@ class TeamsController extends Controller
                 'standings_snapshots.season_id',
                 'standings_snapshots.overall_rank',
                 'standings_snapshots.conference_rank',
-                'seasons.name'
+                'seasons.name',
+                'seasons.status',
+                'seasons.start_playoffs'
             )
             ->orderBy('standings_snapshots.season_id', 'desc')
             ->offset($offset)
@@ -350,7 +352,8 @@ class TeamsController extends Controller
         });
         
         // Exclude "transfer" status
-        $transactionQuery->where('transactions.status', '!=', 'transfer');
+        $transactionQuery->where('transactions.status', '!=', 'transfer')
+                        ->where('transactions.status', '!=', 'role change');
         
         // Sorting
         $transactionQuery->orderBy('transactions.season_id', 'desc')
