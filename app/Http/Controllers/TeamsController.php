@@ -246,6 +246,7 @@ class TeamsController extends Controller
             })
             ->where('standings_snapshots.team_id', $teamId)
             ->groupBy(
+                'standings_snapshots.id',
                 'standings_snapshots.team_id',
                 'standings_snapshots.team_name',
                 'standings_snapshots.team_acronym',
@@ -495,13 +496,39 @@ class TeamsController extends Controller
                     });
             })
             ->where('standings_snapshots.team_id', $teamId)
-            ->groupBy(
+            ->groupBy('standings_snapshots.id',
+                'standings_snapshots.team_id',
+                'standings_snapshots.team_name',
+                'standings_snapshots.team_city',
+                'standings_snapshots.primary_color',
+                'standings_snapshots.secondary_color',
+                'standings_snapshots.team_acronym',
+                'standings_snapshots.conference_id',
+                'standings_snapshots.conference_name',
                 'standings_snapshots.season_id',
-                'seasons.id',
-                'seasons.name',
-                'standings_snapshots.overall_rank',
+                'standings_snapshots.wins',
+                'standings_snapshots.losses',
+                'standings_snapshots.total_home_score',
+                'standings_snapshots.total_away_score',
+                'standings_snapshots.home_ppg',
+                'standings_snapshots.away_ppg',
+                'standings_snapshots.score_difference',
                 'standings_snapshots.conference_rank',
-                'standings_snapshots.conference_championships'
+                'standings_snapshots.overall_rank',
+                'standings_snapshots.is_defending_champion',
+                'standings_snapshots.chemistry',
+                'standings_snapshots.last_playoff_season_name',
+                'standings_snapshots.playoff_appearances',
+                'standings_snapshots.finals_appearances',
+                'standings_snapshots.conference_finals_appearances',
+                'standings_snapshots.conference_championships',
+                'standings_snapshots.championships',
+                'standings_snapshots.streak_status',
+                'standings_snapshots.last_5_games',
+                'standings_snapshots.created_at',
+                'standings_snapshots.updated_at',
+                'seasons.name',
+                'seasons.start_playoffs'
             )
             ->orderBy('standings_snapshots.season_id', 'desc')
             ->get();
