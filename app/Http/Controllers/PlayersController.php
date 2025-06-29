@@ -498,9 +498,22 @@ class PlayersController extends Controller
         $fakerUs = Faker::create('en_US');
 
         $firstNameRaw = $faker->firstNameMale;
-        $lastNameRaw = $faker->lastName;
         $addressRaw = $fakerUs->address;
-        $countryRaw = $fakerUs->country; 
+        $countryRaw = $fakerUs->country;
+        
+        // 50/50 chance: lastName OR one of (colorName, domainWord, citySuffix)
+        $useWord = (bool) random_int(0, 1);
+
+        if ($useWord) {
+            $wordOptions = [
+                $faker->colorName,
+                $faker->domainWord,
+                $faker->citySuffix,
+            ];
+            $lastNameRaw = collect($wordOptions)->random();
+        } else {
+            $lastNameRaw = $faker->lastName;
+        }
 
         $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
         $addressRaw = Transliterator::transliterate("$addressRaw");
