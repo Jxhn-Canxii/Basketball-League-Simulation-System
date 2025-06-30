@@ -134,7 +134,9 @@ class CoachController extends Controller
         $currentSeasonId = get_current_season_id() ?? 1;
     
         $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
-    
+        $teamCount = $teamsWithoutCoach->count();
+        $maxCoachesToQuery = $teamCount + 10;
+
         if ($teamsWithoutCoach->isEmpty()) {
             $this->endCoachSignings();
     
@@ -156,7 +158,9 @@ class CoachController extends Controller
             ')
             ->orderBy('priority_group', 'asc')
             ->orderBy('winning_percentage', 'desc')
-            ->get();
+            ->limit($maxCoachesToQuery)
+            ->get()
+            ->shuffle(); // Randomize after limiting
     
         if ($freeCoaches->isEmpty()) {
             return response()->json([
