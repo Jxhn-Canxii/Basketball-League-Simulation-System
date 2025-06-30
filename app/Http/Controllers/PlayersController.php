@@ -502,17 +502,17 @@ class PlayersController extends Controller
         $countryRaw = $fakerUs->country;
         
         // 50/50 chance: lastName OR one of (colorName, domainWord, citySuffix)
-        $useWord = (bool) random_int(0, 1);
+       $useLastName = random_int(1, 100) <= 80;
 
-        if ($useWord) {
+        if ($useLastName) {
+            $lastNameRaw = $faker->lastName;
+        } else {
             $wordOptions = [
                 $faker->colorName,
                 $faker->domainWord,
-                // $faker->citySuffix,
+                // You can re-enable this if needed: $faker->citySuffix,
             ];
             $lastNameRaw = collect($wordOptions)->random();
-        } else {
-            $lastNameRaw = $faker->lastName;
         }
 
         $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
