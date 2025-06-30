@@ -508,7 +508,7 @@ class PlayersController extends Controller
             $wordOptions = [
                 $faker->colorName,
                 $faker->domainWord,
-                $faker->citySuffix,
+                // $faker->citySuffix,
             ];
             $lastNameRaw = collect($wordOptions)->random();
         } else {
