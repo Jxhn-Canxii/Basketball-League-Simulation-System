@@ -498,10 +498,13 @@ class PlayersController extends Controller
         $fakerUs = Faker::create('en_US');
 
         $firstNameRaw = $faker->firstNameMale;
-        $lastNameRaw = $this->getLastName($faker);
+        $lastNameRaw = $this->getLastName($fakerUs);
         $addressRaw = $fakerUs->address;
         $countryRaw = $fakerUs->country;
 
+        $useLastName = random_int(1, 100) <= 70;
+        $lastNameRaw = $useLastName ? $faker->lastName : str_replace(' ', '-',$lastNameRaw);
+        
         $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
         $addressRaw = Transliterator::transliterate("$addressRaw");
         $countryRaw = Transliterator::transliterate("$countryRaw");
@@ -2198,33 +2201,58 @@ class PlayersController extends Controller
         return $locales[array_rand($locales)];
     }
 
-        private function getLastName($faker){
-         // 50/50 chance: lastName OR one of (colorName, domainWord, citySuffix)
-       $useLastName = random_int(1, 100) <= 90;
+    private function getLastName($faker)
+    {
+        
 
         $rawCompany = $faker->company;
-        // Remove common suffixes
-        $clean = preg_replace('/\b(Inc|LLC|Ltd|Corp|Group|Co|and Sons)\b/i', '', $rawCompany);
-        // Remove special characters
-        $clean = preg_replace('/[^A-Za-z\s]/', '', $clean);
-        // Trim and extract the first word
-        $parts = preg_split('/\s+/', trim($clean));
-        $potentialSurname = ucfirst($parts[0]);
 
-        if ($useLastName) {
-           return $faker->lastName;
+        // Replace " & " with "-" to preserve hyphenated names
+        $rawCompany = preg_replace('/\s*&\s*/', '-', $rawCompany);
+
+        // Remove common suffixes and clean non-letter symbols
+        $cleaned = preg_replace('/\b(Inc|LLC|Ltd|Corp|Group|Co|and Sons|Holdings|Ks|LLP|PLC|Enterprises|Solutions)\b/i', '', $rawCompany);
+        $cleaned = preg_replace('/[^A-Za-z\s\-]/', '', $cleaned);
+        $cleaned = trim($cleaned);
+
+        // Extract valid words (ignore acronyms and 1-letter strings)
+        $words = array_values(array_filter(
+            preg_split('/\s+/', $cleaned),
+            fn($w) => strlen($w) > 1 && !preg_match('/^[A-Z]{2,}$/', $w)
+        ));
+
+        // Create name-like form from company
+        if (count($words) >= 2) {
+            $companyWord = ucfirst($words[0]) . '-' . ucfirst($words[1]);
+        } elseif (count($words) === 1) {
+            $companyWord = ucfirst($words[0]);
         } else {
-            $wordOptions = [
-                $faker->colorName,
-                $faker->domainWord,
-                $faker->citySuffix,
-                $faker->streetSuffix,
-                ucfirst($parts[0])
-            ];
-            return collect($wordOptions)->random();
+            $companyWord = $faker->lastName;
         }
+
+        // Final filtering: avoid acronyms or unreadable parts
+        $isAllCaps = strtoupper($companyWord) === $companyWord;
+        $isShort = strlen($companyWord) <= 2;
+        $isAcronymLike = preg_match('/^[A-Z]{2,}$/', $companyWord);
+        $hasWeirdCluster = preg_match('/[bcdfghjklmnpqrstvwxyz]{4,}/i', $companyWord);
+
+        if ($isAllCaps || $isShort || $isAcronymLike || $hasWeirdCluster) {
+            $companyLastName = $faker->lastName;
+        } else {
+            $companyLastName = $companyWord;
+        }
+
+        $wordOptions = [
+            $faker->colorName,
+            $faker->domainWord,
+            $faker->citySuffix,
+            $faker->streetSuffix,
+            $companyLastName,
+        ];
+
+        return collect($wordOptions)->random();
     }
-    
+
     private function generateHealthRating()
     {
         $probabilityRanges = [
