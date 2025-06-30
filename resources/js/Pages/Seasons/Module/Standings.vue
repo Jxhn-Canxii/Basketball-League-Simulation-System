@@ -19,12 +19,12 @@
       <table class="min-w-full divide-y divide-gray-200 text-nowrap">
         <thead class="bg-gray-50">
           <tr>
-            <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-            <th scope="col" class="px-4 py-2 text-left text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
-            <th scope="col" class="px-4 py-2 text-left text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
-            <!-- <th scope="col" class="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PPG</th> -->
-            <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
-            <th scope="col" class="px-4 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">LAST 5 GAMES</th>
+            <th scope="col" class="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STRK</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">LAST 5 GAMES</th>
           </tr>
         </thead>
         <transition-group 
@@ -42,7 +42,7 @@
             :data-prev-rank="getPreviousRank(team.team_id)"
             class="transition-all duration-500 ease-in-out"
           >
-            <td class="px-4 py-2 whitespace-nowrap">
+            <td class="px-2 py-2 whitespace-nowrap">
               <div class="flex items-center">
                 <span class="text-xs flex items-center">
                   <i
@@ -85,17 +85,15 @@
                 </span>
               </div>
             </td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
-            <!-- <td class="px-4 py-2 whitespace-nowrap text-sm">
-              {{ 
-                (team.wins + team.losses > 0
-                  ? ((parseFloat(team.total_home_score ?? 0) + parseFloat(team.total_away_score ?? 0)) / (parseFloat(team.wins ?? 0) + parseFloat(team.losses ?? 0))).toFixed(2)
-                  : '0.00')
-              }}
-            </td> -->
-            <td class="px-4 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
-            <td class="px-4 py-2 whitespace-nowrap text-center text-sm">
+            <td class="px-2 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-center text-sm">
+              <span :class="team.streak_status && team.streak_status.toLowerCase().startsWith('w') ? 'text-green-700 font-bold' : 'text-red-700 font-bold'">
+                {{ team.streak_status }}
+              </span>
+            </td>
+            <td class="px-2 py-2 whitespace-nowrap text-center text-sm">
               <div class="flex justify-center space-x-1">
                 <template v-for="(result, index) in team.last_5_games?.split('').reverse()" :key="index">
                   <span :class="{
@@ -110,7 +108,7 @@
                 </template>
               </div>
             </td>
-            <!-- <td class="px-4 py-2 whitespace-nowrap">
+            <!-- <td class="px-2 py-2 whitespace-nowrap">
               <div class="grid grid-cols-3 gap-1 place-items-center w-fit mx-auto text-xs">
                 <Achievement v-if="team.championships > 0" 
                            type="championship" 
