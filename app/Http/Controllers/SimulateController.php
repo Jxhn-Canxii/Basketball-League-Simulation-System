@@ -507,16 +507,7 @@ class SimulateController extends Controller
         $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
         $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
 
-        $processedPlayers = [];
-
-        foreach ($playerGameStats as $stats) {
-            $playerId = $stats['player_id'];
-
-            if (!in_array($playerId, $processedPlayers)) {
-                $this->updatePlayerPlayoffAppearance($playerId, $gameData);
-                $processedPlayers[] = $playerId;
-            }
-        }
+        $this->updatePlayoffAppearancesForGame($gameData);
 
         // Prepare the schedule response data it will update team score card only
         $schedule = [
@@ -2758,6 +2749,22 @@ class SimulateController extends Controller
             return response()->json([
                 'error' => 'Error updating head-to-head matchup: ' . $e->getMessage()
             ], 500); // Internal server error
+        }
+    }
+
+    public function updatePlayoffAppearancesForGame($gameData)
+    {
+        $homeId = $gameData->home_team_id;
+        $awayId = $gameData->away_team_id;
+
+        // Get unique player IDs from both teams
+        $playerIds = DB::table('players')
+            ->whereIn('team_id', [$homeId, $awayId])
+            ->pluck('id')
+            ->unique();
+
+        foreach ($playerIds as $playerId) {
+            $this->updatePlayerPlayoffAppearance($playerId, $gameData);
         }
     }
 
