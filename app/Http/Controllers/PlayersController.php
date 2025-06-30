@@ -502,7 +502,7 @@ class PlayersController extends Controller
         $countryRaw = $fakerUs->country;
         
         // 50/50 chance: lastName OR one of (colorName, domainWord, citySuffix)
-       $useLastName = random_int(1, 100) <= 80;
+       $useLastName = random_int(1, 100) <= 90;
 
         if ($useLastName) {
             $lastNameRaw = $faker->lastName;
@@ -510,7 +510,8 @@ class PlayersController extends Controller
             $wordOptions = [
                 $faker->colorName,
                 $faker->domainWord,
-                // You can re-enable this if needed: $faker->citySuffix,
+                $faker->citySuffix,
+                $faker->streetSuffix
             ];
             $lastNameRaw = collect($wordOptions)->random();
         }
