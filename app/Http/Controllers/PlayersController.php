@@ -2183,9 +2183,9 @@ class PlayersController extends Controller
 
         // Assign weights: 40% for US, 50% for European, 10% for Asian/Others
         $totalLocales = count($locales);
-        $usWeight = 0.4 / count($usLocales); // 40% split across US locales
-        $europeanWeight = 0.5 / count($europeanLocales); // 50% split across European locales
-        $asianOtherWeight = 0.1 / count($asianAndOtherLocales); // 10% split across Asian/Other locales
+        $usWeight = 0.6 / count($usLocales); // 60% split across US locales
+        $europeanWeight = 0.39 / count($europeanLocales); // 39% split across European locales
+        $asianOtherWeight = 0.01 / count($asianAndOtherLocales); // 1% split across Asian/Other locales
 
         foreach ($locales as $locale) {
             if (in_array($locale, $usLocales)) {
