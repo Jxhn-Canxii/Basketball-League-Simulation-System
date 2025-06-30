@@ -230,29 +230,48 @@ const teams = ref([]);
 const key = ref(0);
 const emits = defineEmits(["newSeason"]);
 
+// const fetchRandomFullName = async () => {
+//     try {
+//         // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
+//         const response = await axios.get(' https://randomuser.me/api/?inc=name,gender,location,nat&gender=male'); // API URL for random male user
+//         const { first, last } = response.data.results[0].name; // Extract first and last name
+//         const { city, state, country} = response.data.results[0].location; // Extract first and last name
+//         const nationality = response.data.results[0].nat; // Extract first and last name
+//         const address = `${city}, ${state}, ${country}`; // Extract first and last name
+//         const name = `${first} ${last}`;
+//         const country_formatted = `${country}`;
+//         const data = {
+//             name: name,
+//             country: country_formatted,
+//             address: address,
+//         };
+//         // Function to check if a name contains only English alphabet letters
+//         const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
+
+//         if (isEnglishReadable(first) && isEnglishReadable(last)) {
+//             return data; // Return full name if valid
+//         } else {
+//             return null; // Return null if the name is not valid
+//         }
+//     } catch (error) {
+//         console.error("Error fetching random player name:", error);
+//         return null; // Return null on error
+//     }
+// };
+
 const fetchRandomFullName = async () => {
     try {
         // https://randomuser.me/api/?inc=name,gender,location,nat&gender=male
-        const response = await axios.get(' https://randomuser.me/api/?inc=name,gender,location,nat&gender=male'); // API URL for random male user
-        const { first, last } = response.data.results[0].name; // Extract first and last name
-        const { city, state, country} = response.data.results[0].location; // Extract first and last name
-        const nationality = response.data.results[0].nat; // Extract first and last name
-        const address = `${city}, ${state}, ${country}`; // Extract first and last name
-        const name = `${first} ${last}`;
-        const country_formatted = `${country}`;
+        const response = await axios.get(route('generate.new.player')); // API URL for random male user
+        const { name, country, address } = response.data; // Extract first and last name
         const data = {
             name: name,
-            country: country_formatted,
+            country: country,
             address: address,
         };
-        // Function to check if a name contains only English alphabet letters
-        const isEnglishReadable = (name) => /^[A-Za-z]+$/.test(name);
-
-        if (isEnglishReadable(first) && isEnglishReadable(last)) {
-            return data; // Return full name if valid
-        } else {
-            return null; // Return null if the name is not valid
-        }
+        
+        return data; // Return full name if valid
+       
     } catch (error) {
         console.error("Error fetching random player name:", error);
         return null; // Return null on error
