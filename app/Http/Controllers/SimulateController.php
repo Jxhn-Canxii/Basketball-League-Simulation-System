@@ -1077,7 +1077,9 @@ class SimulateController extends Controller
             }
 
         } catch (\Exception $e) {
-            Log::error('❌ Failed to save standings snapshot: ' . $e->getMessage());
+            return response()->json([
+                'message' => 'Standing Snapshot Error'.$e->getMessage(),
+            ], 500);
         }
     }
 
