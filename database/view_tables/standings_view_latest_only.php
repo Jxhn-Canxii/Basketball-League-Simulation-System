@@ -62,17 +62,19 @@ streaks AS (
         team_id,
         season_id,
         game_result,
-        COUNT(*) AS streak_length
+        COUNT(*) AS streak_length,
+        MAX(game_id) AS last_game_id
     FROM (
         SELECT
             team_id,
             season_id,
             game_result,
+            game_id,
             ROW_NUMBER() OVER (PARTITION BY team_id, season_id ORDER BY game_id) -
             ROW_NUMBER() OVER (PARTITION BY team_id, season_id, game_result ORDER BY game_id) AS streak_id
         FROM team_games
+        WHERE game_result IS NOT NULL
     ) AS streak_groups
-    WHERE game_result IS NOT NULL
     GROUP BY team_id, season_id, game_result, streak_id
 ),
 latest_streak AS (
@@ -89,7 +91,7 @@ latest_streak AS (
             streak_length,
             ROW_NUMBER() OVER (
                 PARTITION BY team_id, season_id
-                ORDER BY streak_length DESC
+                ORDER BY last_game_id DESC
             ) AS rn
         FROM streaks
     ) AS ranked_streaks
