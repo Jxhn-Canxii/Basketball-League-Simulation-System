@@ -498,23 +498,9 @@ class PlayersController extends Controller
         $fakerUs = Faker::create('en_US');
 
         $firstNameRaw = $faker->firstNameMale;
+        $lastNameRaw = $this->getLastName($faker);
         $addressRaw = $fakerUs->address;
         $countryRaw = $fakerUs->country;
-        
-        // 50/50 chance: lastName OR one of (colorName, domainWord, citySuffix)
-       $useLastName = random_int(1, 100) <= 90;
-
-        if ($useLastName) {
-            $lastNameRaw = $faker->lastName;
-        } else {
-            $wordOptions = [
-                $faker->colorName,
-                $faker->domainWord,
-                $faker->citySuffix,
-                $faker->streetSuffix
-            ];
-            $lastNameRaw = collect($wordOptions)->random();
-        }
 
         $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
         $addressRaw = Transliterator::transliterate("$addressRaw");
@@ -2212,6 +2198,33 @@ class PlayersController extends Controller
         return $locales[array_rand($locales)];
     }
 
+        private function getLastName($faker){
+         // 50/50 chance: lastName OR one of (colorName, domainWord, citySuffix)
+       $useLastName = random_int(1, 100) <= 90;
+
+        $rawCompany = $faker->company;
+        // Remove common suffixes
+        $clean = preg_replace('/\b(Inc|LLC|Ltd|Corp|Group|Co|and Sons)\b/i', '', $rawCompany);
+        // Remove special characters
+        $clean = preg_replace('/[^A-Za-z\s]/', '', $clean);
+        // Trim and extract the first word
+        $parts = preg_split('/\s+/', trim($clean));
+        $potentialSurname = ucfirst($parts[0]);
+
+        if ($useLastName) {
+           return $faker->lastName;
+        } else {
+            $wordOptions = [
+                $faker->colorName,
+                $faker->domainWord,
+                $faker->citySuffix,
+                $faker->streetSuffix,
+                ucfirst($parts[0])
+            ];
+            return collect($wordOptions)->random();
+        }
+    }
+    
     private function generateHealthRating()
     {
         $probabilityRanges = [

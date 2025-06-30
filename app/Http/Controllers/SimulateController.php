@@ -507,8 +507,15 @@ class SimulateController extends Controller
         $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
         $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
 
+        $processedPlayers = [];
+
         foreach ($playerGameStats as $stats) {
-           $this->updatePlayerPlayoffAppearance($stats['player_id'], $gameData);
+            $playerId = $stats['player_id'];
+
+            if (!in_array($playerId, $processedPlayers)) {
+                $this->updatePlayerPlayoffAppearance($playerId, $gameData);
+                $processedPlayers[] = $playerId;
+            }
         }
 
         // Prepare the schedule response data it will update team score card only
