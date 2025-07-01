@@ -52,7 +52,6 @@ class PlayoffTreeService
     public static function buildPlayoffTree($seasonId, $status, $type, $start)
     {
         $status = min($status, 8);
-        $currentSeasonId = get_current_season_id();
         $roundStructure = self::getPlayoffRoundStructure($start, $type);
         $currentRounds = $roundStructure[$status] ?? [];
 
@@ -70,8 +69,7 @@ class PlayoffTreeService
                         ->merge($playoffSchedule->pluck('away_id'))
                         ->unique();
 
-            $standingsTable = ($currentSeasonId == $seasonId) ? 'standings_view' : 'standings_snapshots';
-            $standingsData = DB::table($standingsTable)
+            $standingsData = DB::table('standings_view')
                 ->whereIn('team_id', $teamIds)
                 ->where('season_id', $seasonId)
                 ->get()
@@ -88,7 +86,7 @@ class PlayoffTreeService
                     'game_id' => $game->game_id,
                     'home_team' => [
                         'id' => $game->home_id,
-                        'name' => $home->name ?? $home->team_name ?? 'Unknown',
+                        'name' => $home->name ?? 'Unknown',
                         'home_score' => $game->home_score,
                         'conference' => $home->conference_name ?? null,
                         'conference_rank' => $home->conference_rank ?? null,
@@ -98,7 +96,7 @@ class PlayoffTreeService
                     ],
                     'away_team' => [
                         'id' => $game->away_id,
-                        'name' => $away->name ?? $away->team_name ?? 'Unknown',
+                        'name' => $away->name ?? 'Unknown',
                         'away_score' => $game->away_score,
                         'conference' => $away->conference_name ?? null,
                         'conference_rank' => $away->conference_rank ?? null,
