@@ -3084,32 +3084,36 @@ class SimulateController extends Controller
                 $player = DB::table('players')->where('id', $stats['player_id'])->first();
             
                 if ($player && $player->hardship_contract > 0) {
-                    $newHardshipGames = $player->hardship_contract - 1;
+                    // $newHardshipGames = $player->hardship_contract - 1;
             
-                    if ($newHardshipGames > 0) {
-                        // Reduce remaining hardship games
-                        DB::table('players')->where('id', $player->id)->update([
-                            'hardship_contract' => $newHardshipGames
-                        ]);
-                    } else {
-                        // Hardship contract expired -> Release player back to free agency
-                        DB::table('players')->where('id', $player->id)->update([
-                            'team_id' => 0, // Free agent pool
-                            'contract_years' => 0, // Reset contract
-                            'hardship_contract' => 0 // Clear hardship flag
-                        ]);
+                    // if ($newHardshipGames > 0) {
+                    //     // Reduce remaining hardship games
+                    //     DB::table('players')->where('id', $player->id)->update([
+                    //         'hardship_contract' => $newHardshipGames
+                    //     ]);
+                    // } else {
+                    //     // Hardship contract expired -> Release player back to free agency
+                    //     DB::table('players')->where('id', $player->id)->update([
+                    //         'team_id' => 0, // Free agent pool
+                    //         'contract_years' => 0, // Reset contract
+                    //         'hardship_contract' => 0 // Clear hardship flag
+                    //     ]);
             
-                        // Log transaction
-                        DB::table('transactions')->insert([
-                            'player_id' => $player->id,
-                            'season_id' => $stats['season_id'],
-                            'details' => 'Released after hardship contract expired.',
-                            'from_team_id' => $stats['team_id'],
-                            'to_team_id' => 0, // Free agent pool
-                            'status' => 'released-hardship'
-                        ]);
-                    }
+                    //     // Log transaction
+                    //     DB::table('transactions')->insert([
+                    //         'player_id' => $player->id,
+                    //         'season_id' => $stats['season_id'],
+                    //         'details' => 'Released after hardship contract expired.',
+                    //         'from_team_id' => $stats['team_id'],
+                    //         'to_team_id' => 0, // Free agent pool
+                    //         'status' => 'released-hardship'
+                    //     ]);
+                    // }
+
+                    $this->handleHardshipContract($player, $stats);
                 }
+
+               
             }
 
         } catch (Exception $e) {
@@ -3306,6 +3310,81 @@ class SimulateController extends Controller
         }
     }    
 
+    private function handleHardshipContract($player, $stats)
+    {
+        $newHardshipGames = $player->hardship_contract - 1;
+        if ($newHardshipGames > 0) {
+            // Reduce remaining hardship games
+            DB::table('players')->where('id', $player->id)->update([
+                'hardship_contract' => $newHardshipGames
+            ]);
+        } else {
+            // Check if player performance is good (e.g., points or eff >= 10)
+            $performanceGood = false;
+            $playerStats = DB::table('player_game_stats')
+                ->where('player_id', $player->id)
+                ->orderByDesc('id')
+                ->first();
+            if ($playerStats && ($playerStats->points >= 10 || ($playerStats->eff ?? 0) >= 10)) {
+                $performanceGood = true;
+            }
+            if ($performanceGood) {
+                // Sign as regular: assign contract years (e.g., 1 or based on role)
+                $contractYears = $this->getContractYearsBasedOnRole($player->role);
+                DB::table('players')->where('id', $player->id)->update([
+                    'hardship_contract' => 0,
+                    'contract_years' => $contractYears,
+                ]);
+                // Waive the lowest-rated injured player at the same position
+                $lowestInjured = DB::table('players')
+                    ->where('team_id', $player->team_id)
+                    ->where('is_injured', 1)
+                    ->where('position', $player->position)
+                    ->orderBy('overall_rating', 'asc')
+                    ->first();
+                if ($lowestInjured) {
+                    DB::table('players')->where('id', $lowestInjured->id)->update([
+                        'team_id' => 0,
+                        'contract_years' => 0,
+                    ]);
+                    // Log transaction for waived player
+                    DB::table('transactions')->insert([
+                        'player_id' => $lowestInjured->id,
+                        'season_id' => $stats['season_id'],
+                        'details' => 'Waived due to hardship player being signed as regular.',
+                        'from_team_id' => $stats['team_id'],
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
+                }
+                // Log transaction for hardship player
+                DB::table('transactions')->insert([
+                    'player_id' => $player->id,
+                    'season_id' => $stats['season_id'],
+                    'details' => 'Signed a regular contract for the rest of the season.',
+                    'from_team_id' => $stats['team_id'],
+                    'to_team_id' => $stats['team_id'],
+                    'status' => 'signed',
+                ]);
+            } else {
+                // Hardship contract expired -> Release player back to free agency
+                DB::table('players')->where('id', $player->id)->update([
+                    'team_id' => 0, // Free agent pool
+                    'contract_years' => 0, // Reset contract
+                    'hardship_contract' => 0 // Clear hardship flag
+                ]);
+                // Log transaction
+                DB::table('transactions')->insert([
+                    'player_id' => $player->id,
+                    'season_id' => $stats['season_id'],
+                    'details' => 'Released after hardship contract expired.',
+                    'from_team_id' => $stats['team_id'],
+                    'to_team_id' => 0, // Free agent pool
+                    'status' => 'released-hardship'
+                ]);
+            }
+        }
+    }
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
     {
