@@ -508,15 +508,17 @@ class PlayersController extends Controller
         if ($lastNameChances <= 70) {
             // 70% chance: Use regular last name
             $lastNameRaw = $faker->lastName;
+            $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
         } elseif ($lastNameChances <= 90) {
             // 20% chance: Modify an existing last name
             $lastNameRaw = $this->getLastName($faker);
+            $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
         } else {
             // 10% chance: Use a double last name
-            $lastNameRaw = $doubleLastNameRaw;
+            $name = $fakerUs->firstNameMale.' '.$doubleLastNameRaw;
         }
 
-        $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
+       
         $addressRaw = Transliterator::transliterate("$addressRaw");
         $countryRaw = Transliterator::transliterate("$countryRaw");
         // Clean & format the data:
