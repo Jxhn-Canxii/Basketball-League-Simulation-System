@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Conference;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\PlayoffTreeService;
+
 
 class ConferenceController extends Controller
 {
@@ -315,185 +317,14 @@ class ConferenceController extends Controller
     
     private static function playoffTree($seasonId, $status, $type, $start)
     {
-        $status = $status >= 8 ? 8 : $status;
-        // Define round indices based on status
-        $roundIndices = [];
-        if($start == 8){
-            if ($type == 2) {
-                $roundIndices = [
-                    1 => [],
-                    2 => [],
-                    4 => [],
-                    5 => ['quarter_finals'],
-                    6 => ['semi_finals'],
-                    7 => ['interconference_semi_finals'],
-                    8 => ['finals'],
-                ];
-            }
-            if ($type == 1) {
-                $roundIndices = [
-                    1 => [],
-                    2 => [],
-                    4 => [],
-                    5 => ['quarter_finals'],
-                    6 => ['quarter_finals', 'semi_finals'],
-                    7 => ['quarter_finals', 'semi_finals','interconference_semi_finals'],
-                    8 => ['quarter_finals', 'semi_finals','interconference_semi_finals', 'finals']
-                ];
-            }
-        }
-        if($start == 16){
-            if ($type == 2) {
-                $roundIndices = [
-                    1 => [],
-                    2 => [],
-                    4 => ['round_of_16'],
-                    5 => ['quarter_finals'],
-                    6 => ['semi_finals'],
-                    8 => ['finals'],
-                    9 => ['finals'],
-                ];
-            }
-            if ($type == 1) {
-                $roundIndices = [
-                    1 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                    ],
-                    2 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                    ],
-                    3 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                        'round_of_16',
-                    ],
-                    4 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                        'round_of_16',
-                        'quarter_finals',
-                    ],
-                    5 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                        'round_of_16',
-                        'quarter_finals',
-                        'semi_finals',
-                    ],
-                    6 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                        'round_of_16',
-                        'quarter_finals',
-                        'semi_finals',
-                        'finals',
-                    ],
-                    7 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                        'round_of_16',
-                        'quarter_finals',
-                        'semi_finals',
-                        'interconference_semi_finals',
-                        'finals',
-                    ],
-                    8 => [
-                        'play_ins_elims_round_1',
-                        'play_ins_elims_round_2',
-                        'play_ins_finals',
-                        'round_of_16',
-                        'quarter_finals',
-                        'semi_finals',
-                        'interconference_semi_finals',
-                        'finals',
-                    ],
-                ];
-            }
-        }
+        
+        $status = 6;
+        $type = 1;
+        $start = 16;
 
+        $tree = PlayoffTreeService::buildPlayoffTree($seasonId, $status, $type, $start);
 
-        // Determine the current rounds based on status
-        $currentRounds = $roundIndices[$status];
-
-        // Organize the playoff tree structure
-        $tree = [];
-
-        foreach ($currentRounds as $round) {
-            $tree[$round] = [];
-
-            // Fetch playoff schedule data for the specified season ID and current round
-            $playoffSchedule = DB::table('schedules')
-                ->select('game_id', 'home_id', 'away_id', 'home_score', 'away_score', 'round', 'id')
-                ->where('season_id', $seasonId)
-                ->where('round', $round)
-                ->orderBy('round', 'asc')
-                ->get();
-
-            // Organize the playoff schedule data into the tree structure
-            // Fetch unique team IDs for home and away teams
-            $teamIds = $playoffSchedule->pluck('home_id')->merge($playoffSchedule->pluck('away_id'))->unique();
-
-            // Fetch standings data for all teams in a single query
-            $standingsData = DB::table('standings_view')
-                ->whereIn('team_id', $teamIds)
-                ->where('season_id', $seasonId)
-                ->get()
-                ->keyBy('team_id');
-
-            foreach ($playoffSchedule as $game) {
-                // Fetch team names from the standings_data if available, otherwise fetch from the teams table
-                $homeTeamName = isset($standingsData[$game->home_id]->name) ? $standingsData[$game->home_id]->name : DB::table('teams')->where('id', $game->home_id)->value('name');
-                $awayTeamName = isset($standingsData[$game->away_id]->name) ? $standingsData[$game->away_id]->name : DB::table('teams')->where('id', $game->away_id)->value('name');
-
-                $gameNode = [
-                    'id' => $game->id,
-                    'game_id' => $game->game_id,
-                    'home_team' => [
-                        'id' => $game->home_id,
-                        'name' => $homeTeamName,
-                        'home_score' => $game->home_score,
-                        'conference' => isset($standingsData[$game->home_id]->conference_name) ? $standingsData[$game->home_id]->conference_name : null,
-                        'conference_rank' => isset($standingsData[$game->home_id]->conference_rank) ? $standingsData[$game->home_id]->conference_rank : null,
-                        'overall_rank' => isset($standingsData[$game->home_id]->overall_rank) ? $standingsData[$game->home_id]->overall_rank : null,
-                        'primary_color' => isset($standingsData[$game->home_id]->primary_color) ? $standingsData[$game->home_id]->primary_color : '00000',
-                        'secondary_color' => isset($standingsData[$game->home_id]->secondary_color) ? $standingsData[$game->home_id]->secondary_color : '00000'
-                    ],
-                    'away_team' => [
-                        'id' => $game->away_id,
-                        'name' => $awayTeamName,
-                        'away_score' => $game->away_score,
-                        'conference' => isset($standingsData[$game->away_id]->conference_name) ? $standingsData[$game->away_id]->conference_name : null,
-                        'conference_rank' => isset($standingsData[$game->away_id]->conference_rank) ? $standingsData[$game->away_id]->conference_rank : null,
-                        'overall_rank' => isset($standingsData[$game->away_id]->overall_rank) ? $standingsData[$game->away_id]->overall_rank : null,
-                        'primary_color' => isset($standingsData[$game->away_id]->primary_color) ? $standingsData[$game->away_id]->primary_color : '00000',
-                        'secondary_color' => isset($standingsData[$game->away_id]->secondary_color) ? $standingsData[$game->away_id]->secondary_color : '00000'
-                    ],
-                    'winner' => $game->home_score > $game->away_score ? $game->home_id : ($game->home_score < $game->away_score ? $game->away_id : 0), // Set winner_id based on score comparison
-                    'season_id' => $seasonId // Include season_id
-                ];
-
-
-                // Determine the winner based on home_score and away_score
-                if ($game->home_score > $game->away_score) {
-                    $gameNode['winner'] = $game->home_id;
-                } elseif ($game->home_score < $game->away_score) {
-                    $gameNode['winner'] = $game->away_id;
-                }
-
-                $tree[$round][] = $gameNode;
-            }
-        }
-
-        return $tree;
+        return response()->json($tree);
     }
 
     /**
