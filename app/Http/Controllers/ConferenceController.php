@@ -324,7 +324,7 @@ class ConferenceController extends Controller
 
         $tree = PlayoffTreeService::buildPlayoffTree($seasonId, $status, $type, $start);
 
-        return response()->json($tree);
+        return $tree;
     }
 
     /**
