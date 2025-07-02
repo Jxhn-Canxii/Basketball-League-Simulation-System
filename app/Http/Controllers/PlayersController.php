@@ -505,12 +505,12 @@ class PlayersController extends Controller
 
         $lastNameChances = random_int(1, 100);
 
-        if ($lastNameChances <= 70) {
+        if ($lastNameChances <= 85) {
             // 70% chance: Use regular last name
             $lastNameRaw = $faker->lastName;
             $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
             $name = Str::title(str_replace(['-', '_'], ' ', $name));
-        } elseif ($lastNameChances <= 90) {
+        } elseif ($lastNameChances <= 95) {
             // 20% chance: Modify an existing last name
             $lastNameRaw = $this->getLastName($faker);
             $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
