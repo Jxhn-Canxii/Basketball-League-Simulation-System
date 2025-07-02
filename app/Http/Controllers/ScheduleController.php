@@ -468,7 +468,7 @@ class ScheduleController extends Controller
                     $interMatches[] = [
                         'season_id' => $seasonId,
                         'game_id' => 0,
-                        'conference_id' => 0,
+                        'conference_id' => $conferenceMap[$home],
                         'home_id' => $home,
                         'away_id' => $away,
                         'home_score' => 0,
@@ -528,7 +528,7 @@ class ScheduleController extends Controller
                 for ($j = 0; $j < $interThisRound && $interGameIndex < $totalInterGames; $j++) {
                     $match = $interMatches[$interGameIndex++];
                     $match['round'] = $roundCounter;
-                    $match['game_id'] = "S{$seasonId}-C0-inter-R{$roundCounter}-G{$gameNumber}";
+                    $match['game_id'] = "S{$seasonId}-C{$match['conference_id']}-inter-R{$roundCounter}-G{$gameNumber}";
                     $allMatches[] = $match;
                     $gameNumber++;
                 }
