@@ -509,22 +509,23 @@ class PlayersController extends Controller
             // 70% chance: Use regular last name
             $lastNameRaw = $faker->lastName;
             $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
+            $name = Str::title(str_replace(['-', '_'], ' ', $name));
         } elseif ($lastNameChances <= 90) {
             // 20% chance: Modify an existing last name
             $lastNameRaw = $this->getLastName($faker);
             $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
+            $name = Str::title(str_replace(['-', '_'], ' ', $name));
         } else {
             // 10% chance: Use a double last name
             $name = $fakerUs->firstNameMale.' '.$doubleLastNameRaw;
         }
-
-       
+        
+        // $name = $faker->firstNameMale.' '.$doubleLastNameRaw;
         $addressRaw = Transliterator::transliterate("$addressRaw");
         $countryRaw = Transliterator::transliterate("$countryRaw");
         // Clean & format the data:
         // - Replace dashes and multiple spaces with single space in address
-        // - Capitalize each word in name, address, country
-        $name = Str::title(str_replace(['-', '_'], ' ', $name));
+        // - Capitalize each word in name, address, countr
         $address = Str::title(preg_replace('/[\-\_]+/', ' ', $addressRaw));
         $country = Str::title(str_replace(['-', '_'], ' ', $countryRaw));
 
