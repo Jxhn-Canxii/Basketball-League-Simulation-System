@@ -203,14 +203,6 @@ class SeasonsController extends Controller
         // Convert to array for modification
         $conferences = $conferences->toArray();
     
-        // If season type is 4, add conference 0
-        if ($season->type == 4) {
-            $conferences[] = (object) [
-                'conference_id' => 0,
-                'conference_name' => 'Interconference'
-            ];
-        }
-    
         $conferenceChampions = [];
         foreach ($conferences as $conference) {
             $champions = self::championsperconference($conference->conference_id);
