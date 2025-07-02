@@ -77,7 +77,7 @@ const season_info = ref(false);
 const activeConferenceTab = ref(false);
 const isAutoSimulate = ref(false);
 const updateKey = ref(0);
-const selectedConference = ref(0);
+const selectedConference = ref(1);
 const props = defineProps({
     season_id: {
         type: [Number,String],
