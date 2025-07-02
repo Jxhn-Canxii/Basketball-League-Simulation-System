@@ -434,27 +434,6 @@ class ScheduleController extends Controller
                 $maxIntraRounds = max($maxIntraRounds, count($roundChunks));
             }
 
-            // STEP 1B: Interleave conference matches per round
-            for ($i = 0; $i < $maxIntraRounds; $i++) {
-                foreach ($intraGamesByConference as $conferenceId => $chunks) {
-                    if (!isset($chunks[$i])) continue;
-                    foreach ($chunks[$i] as [$home, $away]) {
-                        $allMatches[] = [
-                            'season_id' => $seasonId,
-                            'game_id' => "{$seasonId}-{$conferenceId}-intra-{$home}-{$away}",
-                            'conference_id' => $conferenceId,
-                            'home_id' => $home,
-                            'away_id' => $away,
-                            'home_score' => 0,
-                            'away_score' => 0,
-                            'winner_id' => 0,
-                            'round' => $roundCounter,
-                        ];
-                    }
-                }
-                $roundCounter++;
-            }
-
             // STEP 2: Build inter-conference matchups (5 per team)
             $scheduledPairs = [];
             $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
@@ -486,10 +465,9 @@ class ScheduleController extends Controller
 
                     $home = ($teamInterCount[$teamId] % 2 === 0) ? $teamId : $oppId;
                     $away = ($home === $teamId) ? $oppId : $teamId;
-
                     $interMatches[] = [
                         'season_id' => $seasonId,
-                        'game_id' => "{$seasonId}-inter-{$home}-{$away}",
+                        'game_id' => 0,
                         'conference_id' => 0,
                         'home_id' => $home,
                         'away_id' => $away,
@@ -512,13 +490,49 @@ class ScheduleController extends Controller
                 }
             }
 
-            // STEP 3: Assign inter-conference matches into last 5 rounds
-            $interChunks = array_chunk($interMatches, ceil(count($interMatches) / 5));
-            foreach ($interChunks as $chunk) {
-                foreach ($chunk as $match) {
-                    $match['round'] = $roundCounter;
-                    $allMatches[] = $match;
+            // STEP 3: Build full round-by-round schedule, interleaving intra and inter games
+            $interGameIndex = 0;
+            $totalInterGames = count($interMatches);
+            $interGamesPerRound = floor($totalInterGames / $maxIntraRounds);
+            $remainingInterGames = $totalInterGames % $maxIntraRounds;
+
+            for ($i = 0; $i < $maxIntraRounds; $i++) {
+                $gameNumber = 1;
+
+                // Add intra-conference games first
+                foreach ($intraGamesByConference as $conferenceId => $chunks) {
+                    if (!isset($chunks[$i])) continue;
+                    foreach ($chunks[$i] as [$home, $away]) {
+                        $allMatches[] = [
+                            'season_id' => $seasonId,
+                            'game_id' => "S{$seasonId}-C{$conferenceId}-intra-R" . ($roundCounter) . "-G{$gameNumber}",
+                            'conference_id' => $conferenceId,
+                            'home_id' => $home,
+                            'away_id' => $away,
+                            'home_score' => 0,
+                            'away_score' => 0,
+                            'winner_id' => 0,
+                            'round' => $roundCounter,
+                        ];
+                        $gameNumber++;
+                    }
                 }
+
+                // Add inter-conference games into this round
+                $interThisRound = $interGamesPerRound;
+                if ($remainingInterGames > 0) {
+                    $interThisRound++;
+                    $remainingInterGames--;
+                }
+
+                for ($j = 0; $j < $interThisRound && $interGameIndex < $totalInterGames; $j++) {
+                    $match = $interMatches[$interGameIndex++];
+                    $match['round'] = $roundCounter;
+                    $match['game_id'] = "S{$seasonId}-C0-inter-R{$roundCounter}-G{$gameNumber}";
+                    $allMatches[] = $match;
+                    $gameNumber++;
+                }
+
                 $roundCounter++;
             }
 
