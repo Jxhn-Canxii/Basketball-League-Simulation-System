@@ -435,7 +435,7 @@ class ScheduleController extends Controller
             }
 
             // STEP 2: Build inter-conference matchups (5 per team)
-            $maxInterMatches = 5;
+            $maxInterMatches = 10;
             $scheduledPairs = [];
             $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
             $interMatches = [];
