@@ -409,15 +409,6 @@ class TransactionsController extends Controller
         } catch (\Exception $e) {
             // Rollback the transaction in case of an error
             DB::rollback();
-        
-            // Enhanced logging for better debugging
-            Log::error('Error assigning player to team: ' . $e->getMessage(), [
-                'player_id' => $player->id,
-                'team_id' => $teamId,
-                'contract_years' => $contractYears,
-                'season_id' => $currentSeasonId,
-                'exception' => $e,
-            ]);
             
             // Rethrow or handle the error as needed
             throw $e;

@@ -58,7 +58,7 @@
                         <option value="6">Power 10</option>
                         <option value="2">Single Round Robin</option>
                         <option value="3">Double Round Robin</option>
-                        <option value="4" disabled>Round Robin + Inter Conference</option>
+                        <option value="4">Round Robin + Inter Conference</option>
                     </select>
                     <InputError
                         class="mt-2"
