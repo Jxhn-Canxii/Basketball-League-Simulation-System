@@ -46,7 +46,8 @@
             <div class="md:col-span-2 sm:col-span-1 overflow-y-auto">
                 <Standings v-if="selectedConference != 0" :key="updateKey" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
                 <Top15MVPCandidate v-else :key="updateKey" :current_round="updateKey"/>
-                <!-- <small class="text-gray-500">Transaction ID:{{ updateKey }}</small>    -->
+
+                <small class="text-gray-500">Transaction ID:{{ updateKey+' x '+selectedConference }}</small>   
                 <!-- <Top15MVPCandidate v-if="activeConferenceTab" :key="updateKey" /> -->
             </div>
             <!-- Schedule and Results UI (Right Side) -->
