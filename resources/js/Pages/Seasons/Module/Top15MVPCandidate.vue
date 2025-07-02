@@ -13,12 +13,12 @@
 
     <div v-if="loading" class="text-center text-gray-500">Loading...</div>
 
-    <div v-else>
+    <div v-else class="max-h-[90vh] overflow-auto">
       <div v-if="leaders.length === 0" class="text-center text-red-500 font-semibold">
         No data available
       </div>
 
-      <ul v-else class="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+      <ul v-else class="grid gap-4 grid-cols-1">
         <li
           v-for="(player, index) in leaders"
           :key="player.player_id"
