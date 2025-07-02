@@ -80,7 +80,7 @@
             </div>
         </transition>
         <transition name="fade" mode="out-in">
-             <div v-if="showMVPLeaders" class="mt-4">
+            <div v-if="showMVPLeaders" class="mt-4">
                 <Top15MVPCandidate :key="showMVPLeaders" :current_round="currentRound"/>
             </div>
         </transition>
@@ -181,8 +181,7 @@
         </div>
         <div
             v-if="data && data.schedules?.length > 0 && !loadingSchedules"
-            class="grid sm:col-span-1 gap-6"
-            :class="props.conference_id != 0 ? 'md:grid-cols-2' : 'md:grid-cols-4'"
+            class="grid sm:col-span-1 md:grid-cols-2 gap-6"
         >
             <ScoreCard
                 v-for="(game, index) in data.schedules"
@@ -270,7 +269,7 @@
         conference_id: 0,
         team_id: 0,
         season_id: 0,
-        itemsperpage: (props.conference_id != 0) ? 6 : 12,
+        itemsperpage: 6,
     });
     const searchInput = () => {
         search_schedule.value.page_num = 1;
