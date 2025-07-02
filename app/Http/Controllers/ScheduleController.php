@@ -435,6 +435,7 @@ class ScheduleController extends Controller
             }
 
             // STEP 2: Build inter-conference matchups (5 per team)
+            $maxInterMatches = 5;
             $scheduledPairs = [];
             $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
             $interMatches = [];
@@ -443,12 +444,12 @@ class ScheduleController extends Controller
                 $teamId = $team->id;
                 $confId = $conferenceMap[$teamId];
 
-                if ($teamInterCount[$teamId] >= 5) continue;
+                if ($teamInterCount[$teamId] >= $maxInterMatches) continue;
 
                 $opponents = $teams->filter(function ($t) use ($confId, $teamId, $teamInterCount, $conferenceMap) {
                     return $conferenceMap[$t->id] !== $confId &&
                         $t->id !== $teamId &&
-                        $teamInterCount[$t->id] < 5;
+                        $teamInterCount[$t->id] < $maxInterMatches;
                 })->pluck('id')->toArray();
 
                 // Prioritize opponents with fewer inter games
@@ -456,7 +457,7 @@ class ScheduleController extends Controller
                     return $teamInterCount[$a] <=> $teamInterCount[$b];
                 });
 
-                $gamesNeeded = 5 - $teamInterCount[$teamId];
+                $gamesNeeded = $maxInterMatches - $teamInterCount[$teamId];
                 $opponents = array_slice($opponents, 0, $gamesNeeded);
 
                 foreach ($opponents as $oppId) {
@@ -483,9 +484,9 @@ class ScheduleController extends Controller
                 }
             }
 
-            // Validate exactly 5 inter-conference games per team
+            // Validate exactly $maxInterMatches inter-conference games per team
             foreach ($teamInterCount as $teamId => $count) {
-                if ($count !== 5) {
+                if ($count !== $maxInterMatches) {
                     throw new \Exception("Team ID {$teamId} has {$count} inter-conference games, expected 5");
                 }
             }
