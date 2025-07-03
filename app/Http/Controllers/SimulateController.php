@@ -1928,7 +1928,7 @@ class SimulateController extends Controller
             ]);
 
             $storeStats = new AwardsController;
-            $storeStats->storePlayerSeasonStats($teamId, $freeAgent->id);
+            $storeStats->storePlayerSeasonStats($player->team_id, $freeAgent->id);
 
             $signedPlayers[] = $freeAgent;
         }
@@ -3322,6 +3322,16 @@ class SimulateController extends Controller
                     ->where('position', $player->position)
                     ->orderByDesc('injury_recovery_games')
                     ->first();
+                    
+                if (!$longestInjured) {
+                    // If none at the same position, get any injured player with the longest recovery time
+                    $longestInjured = DB::table('players')
+                        ->where('team_id', $player->team_id)
+                        ->where('is_injured', 1)
+                        ->orderByDesc('injury_recovery_games')
+                        ->first();
+                }
+
                 if ($longestInjured) {
                     DB::table('players')->where('id', $longestInjured->id)->update([
                         'team_id' => 0,
