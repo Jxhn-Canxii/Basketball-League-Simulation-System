@@ -1928,7 +1928,7 @@ class SimulateController extends Controller
             ]);
 
             $storeStats = new AwardsController;
-            $storeStats->storePlayerSeasonStats($player->team_id, $freeAgent->id);
+            $storeStats->storePlayerSeasonStats($teamId, $freeAgent->id);
 
             $signedPlayers[] = $freeAgent;
         }
