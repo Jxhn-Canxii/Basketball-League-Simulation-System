@@ -452,7 +452,8 @@ class ScheduleController extends Controller
 
                 shuffle($matchups);
                 // Use the helper to avoid team conflicts in a round
-                $roundChunks = $this->chunkMatchupsNoConflicts($matchups, 5);
+                $gamesPerRound = max(1, floor(count($matchups) / ($numTeams - 1)));
+                $roundChunks = $this->chunkMatchupsNoConflicts($matchups, $gamesPerRound);
                 $intraGamesByConference[$conferenceId] = $roundChunks;
                 $maxIntraRounds = max($maxIntraRounds, count($roundChunks));
             }
