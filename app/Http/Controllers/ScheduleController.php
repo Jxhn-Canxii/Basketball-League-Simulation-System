@@ -438,11 +438,8 @@ class ScheduleController extends Controller
             $scheduledPairs = [];
             $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
             $interMatches = [];
-
             $maxInterGamesPerTeam = 9; // CHANGE THIS VALUE TO ANY INTER-CONF GAME COUNT
-            if ($maxInterGamesPerTeam < 5) {
-                throw new \Exception("Inter-conference games per team must be at least 5.");
-            }
+   
             foreach ($teams as $team) {
                 $teamId = $team->id;
                 $confId = $conferenceMap[$teamId];
