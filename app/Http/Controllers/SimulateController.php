@@ -2233,19 +2233,18 @@ class SimulateController extends Controller
         $finalsMVPId = $mvpPlayer ? $mvpPlayer->player_id : '';
 
         // $this->updateFinalsMVPBonusContract($winnerId, $gameData->season_id, $finalsMVPId);
-        // Update the season's finals information
         DB::table('seasons')
             ->where('id', $gameData->season_id)
             ->update([
-                'finals_winner_id' => $winnerId,
-                'finals_loser_id' => $winnerId === $gameData->home_team_id ? $gameData->away_team_id : $gameData->home_team_id,
-                'finals_winner_name' => $winnerId === $gameData->home_team_id ? $gameData->home_team_name : $gameData->away_team_name,
-                'finals_loser_name' => $winnerId === $gameData->home_team_id ? $gameData->away_team_name : $gameData->home_team_name,
-                'finals_winner_score' => $winnerId === $gameData->home_team_id ? $homeScore : $awayScore,
-                'finals_loser_score' => $winnerId === $gameData->home_team_id ? $awayScore : $homeScore,
-                'finals_mvp' => $finalsMVP,
-                'finals_mvp_id' => $finalsMVPId,
-            });
+                'finals_winner_id'    => $winnerId,
+                'finals_loser_id'     => $homeTeamWins ? $gameData->away_team_id : $gameData->home_team_id,
+                'finals_winner_name'  => $homeTeamWins ? $gameData->home_team_name : $gameData->away_team_name,
+                'finals_loser_name'   => $homeTeamWins ? $gameData->away_team_name : $gameData->home_team_name,
+                'finals_winner_score' => $homeTeamWins ? $homeScore : $awayScore,
+                'finals_loser_score'  => $homeTeamWins ? $awayScore : $homeScore,
+                'finals_mvp'          => $finalsMVP,
+                'finals_mvp_id'       => $finalsMVPId,
+            ]);
     }
 
     public function fixTeamPositionBalance($teamId)
@@ -2410,7 +2409,7 @@ class SimulateController extends Controller
                             'status' => 'waived',
                             'created_at' => now(),
                             'updated_at' => now(),
-                        });
+                            ]);
     
                         // Sign free agent
                         $replacement = $this->getBestFreeAgentAvailable($position);
@@ -2431,7 +2430,7 @@ class SimulateController extends Controller
                             'status' => 'signed',
                             'created_at' => now(),
                             'updated_at' => now(),
-                        });
+                        ]);
     
                         (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
                         $posCounts[$overflow]--;
