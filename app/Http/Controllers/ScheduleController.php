@@ -446,7 +446,7 @@ class ScheduleController extends Controller
 
                 if ($teamInterCount[$teamId] >= $maxInterGamesPerTeam) continue;
 
-                $opponents = $teams->filter(function ($t) use ($confId, $teamId, $teamInterCount, $conferenceMap) {
+                $opponents = $teams->filter(function ($t) use ($confId, $teamId, $teamInterCount, $conferenceMap, $maxInterGamesPerTeam) {
                     return $conferenceMap[$t->id] !== $confId &&
                         $t->id !== $teamId &&
                         $teamInterCount[$t->id] < $maxInterGamesPerTeam;
