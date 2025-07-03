@@ -3301,13 +3301,13 @@ class SimulateController extends Controller
             $playerSeasonStats = DB::table('player_season_stats')
                 ->where('player_id', $player->id)
                 ->where('season_id', $seasonId)
+                ->where('team_id', $player->team_id)
                 ->first();
 
             $effPerGame = $playerSeasonStats->eff ?? 0;
             $minutesPerGame = $playerSeasonStats->avg_minutes_per_game ?? 0;
 
             $performanceGood = $effPerGame >= 10 || ($effPerGame >= 7 && $minutesPerGame <= 15); // efficient in small minutes
-
             if ($performanceGood) {
                 // Sign as regular: assign contract years (e.g., 1 or based on role)
                 $contractYears = $this->getContractYearsBasedOnRole($player->role);
