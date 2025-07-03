@@ -391,6 +391,28 @@ class ScheduleController extends Controller
         }
     }
 
+    private function chunkMatchupsNoConflicts($matchups, $gamesPerRound) {
+        $rounds = [];
+        $pending = $matchups;
+        while (!empty($pending)) {
+            $used = [];
+            $round = [];
+            foreach ($pending as $k => $pair) {
+                if (!in_array($pair[0], $used) && !in_array($pair[1], $used)) {
+                    $round[] = $pair;
+                    $used[] = $pair[0];
+                    $used[] = $pair[1];
+                    unset($pending[$k]);
+                    if (count($round) >= $gamesPerRound) break;
+                }
+            }
+            // Remove scheduled games from pending
+            $pending = array_values($pending);
+            $rounds[] = $round;
+        }
+        return $rounds;
+    }
+
     private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId)
     {
         DB::beginTransaction();
@@ -413,7 +435,7 @@ class ScheduleController extends Controller
             $allMatches = [];
             $roundCounter = 1;
 
-            // STEP 1: Build intra-conference games and chunk them into 5-game blocks per round
+            // STEP 1: Build intra-conference games and chunk them into 5-game blocks per round (no team plays twice per round)
             $intraGamesByConference = [];
             $maxIntraRounds = 0;
 
@@ -429,12 +451,13 @@ class ScheduleController extends Controller
                 }
 
                 shuffle($matchups);
-                $roundChunks = array_chunk($matchups, 5); // 5 games per round
+                // Use the helper to avoid team conflicts in a round
+                $roundChunks = $this->chunkMatchupsNoConflicts($matchups, 5);
                 $intraGamesByConference[$conferenceId] = $roundChunks;
                 $maxIntraRounds = max($maxIntraRounds, count($roundChunks));
             }
 
-            // STEP 2: Build inter-conference matchups (5 per team)
+            // STEP 2: Build inter-conference matchups ($maxInterGamesPerTeam per team)
             $scheduledPairs = [];
             $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
             $interMatches = [];
