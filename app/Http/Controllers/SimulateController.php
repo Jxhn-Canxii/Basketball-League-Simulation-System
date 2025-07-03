@@ -3301,7 +3301,6 @@ class SimulateController extends Controller
             $playerSeasonStats = DB::table('player_season_stats')
                 ->where('player_id', $player->id)
                 ->where('season_id', $seasonId)
-                ->where('team_id', $player->team_id)
                 ->first();
 
             $effPerGame = $playerSeasonStats->eff ?? 0;
