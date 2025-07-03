@@ -439,16 +439,20 @@ class ScheduleController extends Controller
             $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
             $interMatches = [];
 
+            $maxInterGamesPerTeam = 9; // CHANGE THIS VALUE TO ANY INTER-CONF GAME COUNT
+            if ($maxInterGamesPerTeam < 5) {
+                throw new \Exception("Inter-conference games per team must be at least 5.");
+            }
             foreach ($teams as $team) {
                 $teamId = $team->id;
                 $confId = $conferenceMap[$teamId];
 
-                if ($teamInterCount[$teamId] >= 5) continue;
+                if ($teamInterCount[$teamId] >= $maxInterGamesPerTeam) continue;
 
                 $opponents = $teams->filter(function ($t) use ($confId, $teamId, $teamInterCount, $conferenceMap) {
                     return $conferenceMap[$t->id] !== $confId &&
                         $t->id !== $teamId &&
-                        $teamInterCount[$t->id] < 5;
+                        $teamInterCount[$t->id] < $maxInterGamesPerTeam;
                 })->pluck('id')->toArray();
 
                 // Prioritize opponents with fewer inter games
@@ -456,7 +460,7 @@ class ScheduleController extends Controller
                     return $teamInterCount[$a] <=> $teamInterCount[$b];
                 });
 
-                $gamesNeeded = 5 - $teamInterCount[$teamId];
+                $gamesNeeded = $maxInterGamesPerTeam - $teamInterCount[$teamId];
                 $opponents = array_slice($opponents, 0, $gamesNeeded);
 
                 foreach ($opponents as $oppId) {
@@ -485,8 +489,8 @@ class ScheduleController extends Controller
 
             // Validate exactly 5 inter-conference games per team
             foreach ($teamInterCount as $teamId => $count) {
-                if ($count !== 5) {
-                    throw new \Exception("Team ID {$teamId} has {$count} inter-conference games, expected 5");
+                if ($count !== $maxInterGamesPerTeam) {
+                    throw new \Exception("Team ID {$teamId} has {$count} inter-conference games, expected {$maxInterGamesPerTeam}");
                 }
             }
 
