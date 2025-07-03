@@ -1272,6 +1272,8 @@ class SimulateController extends Controller
         $totalFactor = $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost * $moraleFactor * $chemistryFactor * $homeAdvantageFactor;
     
         $rawAdjustedAttempts = $adjustedBaseAttempts * $totalFactor;
+
+        $maxPointsPerMinute = 3.0;
         $maxAttempts = ($player->role === 'star player') ? 40 : 35;
         $adjustedAttempts = min($rawAdjustedAttempts, $maxAttempts);
     
@@ -2243,7 +2245,7 @@ class SimulateController extends Controller
                 'finals_loser_score' => $winnerId === $gameData->home_team_id ? $awayScore : $homeScore,
                 'finals_mvp' => $finalsMVP,
                 'finals_mvp_id' => $finalsMVPId,
-            ]);
+            });
     }
 
     public function fixTeamPositionBalance($teamId)
@@ -2297,6 +2299,7 @@ class SimulateController extends Controller
                 ]);
     
                 (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $agent->player_id);
+
                 $posCounts[$lowestPosition]++;
                 $rosterCount++;
             }
@@ -2407,7 +2410,7 @@ class SimulateController extends Controller
                             'status' => 'waived',
                             'created_at' => now(),
                             'updated_at' => now(),
-                        ]);
+                        });
     
                         // Sign free agent
                         $replacement = $this->getBestFreeAgentAvailable($position);
@@ -2428,7 +2431,7 @@ class SimulateController extends Controller
                             'status' => 'signed',
                             'created_at' => now(),
                             'updated_at' => now(),
-                        ]);
+                        });
     
                         (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
                         $posCounts[$overflow]--;
@@ -3084,32 +3087,6 @@ class SimulateController extends Controller
                 $player = DB::table('players')->where('id', $stats['player_id'])->first();
             
                 if ($player && $player->hardship_contract > 0) {
-                    // $newHardshipGames = $player->hardship_contract - 1;
-            
-                    // if ($newHardshipGames > 0) {
-                    //     // Reduce remaining hardship games
-                    //     DB::table('players')->where('id', $player->id)->update([
-                    //         'hardship_contract' => $newHardshipGames
-                    //     ]);
-                    // } else {
-                    //     // Hardship contract expired -> Release player back to free agency
-                    //     DB::table('players')->where('id', $player->id)->update([
-                    //         'team_id' => 0, // Free agent pool
-                    //         'contract_years' => 0, // Reset contract
-                    //         'hardship_contract' => 0 // Clear hardship flag
-                    //     ]);
-            
-                    //     // Log transaction
-                    //     DB::table('transactions')->insert([
-                    //         'player_id' => $player->id,
-                    //         'season_id' => $stats['season_id'],
-                    //         'details' => 'Released after hardship contract expired.',
-                    //         'from_team_id' => $stats['team_id'],
-                    //         'to_team_id' => 0, // Free agent pool
-                    //         'status' => 'released-hardship'
-                    //     ]);
-                    // }
-
                     $this->handleHardshipContract($player, $stats);
                 }
 
@@ -3321,11 +3298,16 @@ class SimulateController extends Controller
         } else {
             // Check if player performance is good (e.g., points or eff >= 10)
             $performanceGood = false;
-            $playerStats = DB::table('player_game_stats')
+            $seasonId = $stats['season_id'] ?? get_current_season_id();
+            $playerSeasonStats = DB::table('player_season_stats')
                 ->where('player_id', $player->id)
-                ->orderByDesc('id')
+                ->where('season_id', $seasonId)
                 ->first();
-            if ($playerStats && ($playerStats->points >= 10 || ($playerStats->eff ?? 0) >= 10)) {
+
+            if ($playerSeasonStats && (
+                    ($playerSeasonStats->average_points_per_game ?? 0) / max(1, $playerSeasonStats->total_games_played ?? 0) >= 10
+                    || ($playerSeasonStats->eff ?? 0) / max(1, $playerSeasonStats->total_games_played ?? 0) >= 10
+                )) {
                 $performanceGood = true;
             }
             if ($performanceGood) {
@@ -3335,21 +3317,21 @@ class SimulateController extends Controller
                     'hardship_contract' => 0,
                     'contract_years' => $contractYears,
                 ]);
-                // Waive the lowest-rated injured player at the same position
-                $lowestInjured = DB::table('players')
+                // Waive the injured player at the same position with the longest injury recovery time
+                $longestInjured = DB::table('players')
                     ->where('team_id', $player->team_id)
                     ->where('is_injured', 1)
                     ->where('position', $player->position)
-                    ->orderBy('overall_rating', 'asc')
+                    ->orderByDesc('injury_recovery_games')
                     ->first();
-                if ($lowestInjured) {
-                    DB::table('players')->where('id', $lowestInjured->id)->update([
+                if ($longestInjured) {
+                    DB::table('players')->where('id', $longestInjured->id)->update([
                         'team_id' => 0,
                         'contract_years' => 0,
                     ]);
                     // Log transaction for waived player
                     DB::table('transactions')->insert([
-                        'player_id' => $lowestInjured->id,
+                        'player_id' => $longestInjured->id,
                         'season_id' => $stats['season_id'],
                         'details' => 'Waived due to hardship player being signed as regular.',
                         'from_team_id' => $stats['team_id'],
