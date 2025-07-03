@@ -3303,12 +3303,11 @@ class SimulateController extends Controller
                 ->where('season_id', $seasonId)
                 ->first();
 
-            if ($playerSeasonStats && (
-                    ($playerSeasonStats->average_points_per_game ?? 0) / max(1, $playerSeasonStats->total_games_played ?? 0) >= 10
-                    || ($playerSeasonStats->eff ?? 0) / max(1, $playerSeasonStats->total_games_played ?? 0) >= 10
-                )) {
-                $performanceGood = true;
-            }
+            $effPerGame = $playerSeasonStats->eff ?? 0;
+            $minutesPerGame = $playerSeasonStats->avg_minutes_per_game ?? 0;
+
+            $performanceGood = $effPerGame >= 10 || ($effPerGame >= 7 && $minutesPerGame <= 15); // efficient in small minutes
+
             if ($performanceGood) {
                 // Sign as regular: assign contract years (e.g., 1 or based on role)
                 $contractYears = $this->getContractYearsBasedOnRole($player->role);
