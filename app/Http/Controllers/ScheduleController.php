@@ -391,7 +391,7 @@ class ScheduleController extends Controller
         }
     }
 
-    private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId)
+    private function createHybridRoundRobinScheduleByConferenceV1($seasonId, $leagueId)
     {
         DB::beginTransaction();
         try {
@@ -539,6 +539,188 @@ class ScheduleController extends Controller
             }
 
             // STEP 4: Save everything
+            DB::table('schedules')->insert($allMatches);
+            DB::commit();
+
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Schedule generation failed: " . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId)
+    {
+        DB::beginTransaction();
+        try {
+            $teams = Teams::where('league_id', $leagueId)->get();
+            if ($teams->isEmpty()) {
+                throw new \Exception("No teams found for league ID: {$leagueId}");
+            }
+
+            $teamsByConference = $teams->groupBy('conference_id');
+
+            // Map team_id => conference_id
+            $conferenceMap = [];
+            foreach ($teamsByConference as $confId => $teamGroup) {
+                foreach ($teamGroup as $team) {
+                    $conferenceMap[$team->id] = $confId;
+                }
+            }
+
+            $allMatches = [];
+            $roundCounter = 1;
+
+            // STEP 1: Build intra-conference games and chunk them into 5-game blocks per round
+            $intraGamesByConference = [];
+            $maxIntraRounds = 0;
+
+            foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
+                $teamIds = $conferenceTeams->pluck('id')->toArray();
+                $numTeams = count($teamIds);
+                $matchups = [];
+
+                for ($i = 0; $i < $numTeams; $i++) {
+                    for ($j = $i + 1; $j < $numTeams; $j++) {
+                        $matchups[] = [$teamIds[$i], $teamIds[$j]];
+                    }
+                }
+
+                shuffle($matchups);
+                $roundChunks = array_chunk($matchups, 5); // 5 games per round
+                $intraGamesByConference[$conferenceId] = $roundChunks;
+                $maxIntraRounds = max($maxIntraRounds, count($roundChunks));
+            }
+
+            // STEP 2: Build inter-conference matchups (9 per team)
+            $scheduledPairs = [];
+            $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
+            $interMatches = [];
+            $maxInterGamesPerTeam = 9;
+
+            foreach ($teams as $team) {
+                $teamId = $team->id;
+                $confId = $conferenceMap[$teamId];
+
+                if ($teamInterCount[$teamId] >= $maxInterGamesPerTeam) continue;
+
+                $opponents = $teams->filter(function ($t) use ($confId, $teamId, $teamInterCount, $conferenceMap, $maxInterGamesPerTeam) {
+                    return $conferenceMap[$t->id] !== $confId &&
+                        $t->id !== $teamId &&
+                        $teamInterCount[$t->id] < $maxInterGamesPerTeam;
+                })->pluck('id')->toArray();
+
+                usort($opponents, function ($a, $b) use ($teamInterCount) {
+                    return $teamInterCount[$a] <=> $teamInterCount[$b];
+                });
+
+                $gamesNeeded = $maxInterGamesPerTeam - $teamInterCount[$teamId];
+                $opponents = array_slice($opponents, 0, $gamesNeeded);
+
+                foreach ($opponents as $oppId) {
+                    $pairKey = min($teamId, $oppId) . '-' . max($teamId, $oppId);
+                    if (isset($scheduledPairs[$pairKey])) continue;
+
+                    $home = ($teamInterCount[$teamId] % 2 === 0) ? $teamId : $oppId;
+                    $away = ($home === $teamId) ? $oppId : $teamId;
+
+                    $interMatches[] = [
+                        'season_id' => $seasonId,
+                        'game_id' => 0,
+                        'conference_id' => $conferenceMap[$home],
+                        'home_id' => $home,
+                        'away_id' => $away,
+                        'home_score' => 0,
+                        'away_score' => 0,
+                        'winner_id' => 0,
+                        'round' => 0,
+                    ];
+
+                    $scheduledPairs[$pairKey] = true;
+                    $teamInterCount[$teamId]++;
+                    $teamInterCount[$oppId]++;
+                }
+            }
+
+            // Validate inter-game count
+            foreach ($teamInterCount as $teamId => $count) {
+                if ($count !== $maxInterGamesPerTeam) {
+                    throw new \Exception("Team ID {$teamId} has {$count} inter-conference games, expected {$maxInterGamesPerTeam}");
+                }
+            }
+
+            // STEP 3: Distribute inter-games evenly using round-robin rotation
+            $interMatchesByRound = array_fill(1, $maxIntraRounds, []);
+            $currentRound = 1;
+            $totalRounds = $maxIntraRounds;
+
+            foreach ($interMatches as $match) {
+                $assigned = false;
+                $attempts = 0;
+
+                while (!$assigned && $attempts < $totalRounds) {
+                    $roundTeams = array_merge(...array_map(function ($m) {
+                        return [$m['home_id'], $m['away_id']];
+                    }, $interMatchesByRound[$currentRound]));
+
+                    if (!in_array($match['home_id'], $roundTeams) && !in_array($match['away_id'], $roundTeams)) {
+                        $interMatchesByRound[$currentRound][] = $match;
+                        $assigned = true;
+                    }
+
+                    $currentRound++;
+                    if ($currentRound > $totalRounds) {
+                        $currentRound = 1;
+                    }
+
+                    $attempts++;
+                }
+
+                if (!$assigned) {
+                    // Fallback: assign to round with fewest games
+                    $minRound = array_reduce(array_keys($interMatchesByRound), function ($carry, $key) use ($interMatchesByRound) {
+                        return count($interMatchesByRound[$key]) < count($interMatchesByRound[$carry]) ? $key : $carry;
+                    }, 1);
+                    $interMatchesByRound[$minRound][] = $match;
+                }
+            }
+
+            // STEP 4: Merge intra + inter into final schedule per round
+            for ($i = 0; $i < $maxIntraRounds; $i++) {
+                $roundNum = $i + 1;
+                $gameNumber = 1;
+
+                // Intra-games first
+                foreach ($intraGamesByConference as $conferenceId => $chunks) {
+                    if (!isset($chunks[$i])) continue;
+                    foreach ($chunks[$i] as [$home, $away]) {
+                        $allMatches[] = [
+                            'season_id' => $seasonId,
+                            'game_id' => "S{$seasonId}-C{$conferenceId}-intra-R{$roundNum}-G{$gameNumber}",
+                            'conference_id' => $conferenceId,
+                            'home_id' => $home,
+                            'away_id' => $away,
+                            'home_score' => 0,
+                            'away_score' => 0,
+                            'winner_id' => 0,
+                            'round' => $roundNum,
+                        ];
+                        $gameNumber++;
+                    }
+                }
+
+                // Inter-games for this round
+                foreach ($interMatchesByRound[$roundNum] as $match) {
+                    $match['round'] = $roundNum;
+                    $match['game_id'] = "S{$seasonId}-C{$match['conference_id']}-inter-R{$roundNum}-G{$gameNumber}";
+                    $allMatches[] = $match;
+                    $gameNumber++;
+                }
+            }
+
+            // STEP 5: Save schedule
             DB::table('schedules')->insert($allMatches);
             DB::commit();
 
