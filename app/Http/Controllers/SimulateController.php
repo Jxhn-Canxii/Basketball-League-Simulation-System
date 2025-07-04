@@ -2232,7 +2232,7 @@ class SimulateController extends Controller
         $finalsMVP = $mvpPlayer ? $mvpPlayer->mvp_name : ''; // Use the player's name from the 'mvp_name' alias
         $finalsMVPId = $mvpPlayer ? $mvpPlayer->player_id : '';
         $homeTeamWins = $gameData->home_team_id === $winnerId;
-        
+
         // Update the finals winner in the seasons table
         // $this->updateFinalsMVPBonusContract($winnerId, $gameData->season_id, $finalsMVPId);
         DB::table('seasons')
@@ -2894,11 +2894,25 @@ class SimulateController extends Controller
                     ->where('season_id', $seasonId)
                     ->first();
 
+                $positionWeights = [
+                    'PG' => fn($eff) => $eff * 1.05,
+                    'SG' => fn($eff) => $eff * 1.03,
+                    'SF' => fn($eff) => $eff,           // neutral
+                    'PF' => fn($eff) => $eff * 1.02,
+                    'C'  => fn($eff) => $eff * 1.06,
+                ];
+
+                $mainPosition = explode('/', $player->position)[0] ?? 'SF'; // default fallback
+                $weightedEff = isset($positionWeights[$mainPosition])
+                    ? $positionWeights[$mainPosition]($totalEff)
+                    : $totalEff;
+
                 $playerEfficiencies[] = [
                     'player_id' => $playerId,
                     'position' => $player->position,
                     'role' => $player->role,
-                    'total_eff' => $totalEff,
+                    // 'total_eff' => $totalEff,
+                    'total_eff' => $weightedEff,
                     'years_pro' => $yearsPro,
                     'is_rookie' => $draft ? true : false,
                     'draft_round' => $draft->round ?? null,
