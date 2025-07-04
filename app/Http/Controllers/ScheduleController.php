@@ -434,32 +434,30 @@ class ScheduleController extends Controller
                 $maxIntraRounds = max($maxIntraRounds, count($roundChunks));
             }
 
-            // STEP 2: Build inter-conference matchups (9 per team)
+            // STEP 2: Build inter-conference matchups (5 per team, randomized)
             $scheduledPairs = [];
             $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
             $interMatches = [];
-            $maxInterGamesPerTeam = 9;
+            $maxInterGamesPerTeam = 5;
 
-            foreach ($teams as $team) {
-                $teamId = $team->id;
+            $teamIds = $teams->pluck('id')->toArray();
+            shuffle($teamIds); // Shuffle the order of team processing to vary season-by-season
+
+            foreach ($teamIds as $teamId) {
                 $confId = $conferenceMap[$teamId];
 
-                if ($teamInterCount[$teamId] >= $maxInterGamesPerTeam) continue;
-
-                $opponents = $teams->filter(function ($t) use ($confId, $teamId, $teamInterCount, $conferenceMap, $maxInterGamesPerTeam) {
+                $possibleOpponents = $teams->filter(function ($t) use ($confId, $teamId, $teamInterCount, $conferenceMap, $maxInterGamesPerTeam) {
                     return $conferenceMap[$t->id] !== $confId &&
                         $t->id !== $teamId &&
                         $teamInterCount[$t->id] < $maxInterGamesPerTeam;
                 })->pluck('id')->toArray();
 
-                usort($opponents, function ($a, $b) use ($teamInterCount) {
-                    return $teamInterCount[$a] <=> $teamInterCount[$b];
-                });
+                shuffle($possibleOpponents); // Shuffle opponents for variation
 
-                $gamesNeeded = $maxInterGamesPerTeam - $teamInterCount[$teamId];
-                $opponents = array_slice($opponents, 0, $gamesNeeded);
+                foreach ($possibleOpponents as $oppId) {
+                    if ($teamInterCount[$teamId] >= $maxInterGamesPerTeam) break;
+                    if ($teamInterCount[$oppId] >= $maxInterGamesPerTeam) continue;
 
-                foreach ($opponents as $oppId) {
                     $pairKey = min($teamId, $oppId) . '-' . max($teamId, $oppId);
                     if (isset($scheduledPairs[$pairKey])) continue;
 
@@ -483,6 +481,7 @@ class ScheduleController extends Controller
                     $teamInterCount[$oppId]++;
                 }
             }
+
 
             // Validate inter-game count
             foreach ($teamInterCount as $teamId => $count) {
