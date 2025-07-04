@@ -1514,6 +1514,24 @@ class PlayersController extends Controller
             ]);
 
         $latestSeasonId = get_current_season_id();
+        
+        // Fetch player comparison data
+        $playerComparison = \DB::table('view_player_projection_extremes')
+            ->where('player_id', $playerId)
+            ->select('best_projection_player_id', 'best_projection_player_name', 'best_projection_similarity_score',
+                'worst_projection_player_id', 'worst_projection_player_name', 'worst_projection_similarity_score')
+            ->get();
+
+        if ($playerComparison->isEmpty()) {
+            $playerComparison = collect([
+                'best_projection_player_id' => null,
+                'best_projection_player_name' => null,
+                'best_projection_similarity_score' => null,
+                'worst_projection_player_id' => null,
+                'worst_projection_player_name' => null,
+                'worst_projection_similarity_score' => null,
+            ]);
+        }
 
         return response()->json([
             'player_details' => $playerDetails,
@@ -1529,6 +1547,7 @@ class PlayersController extends Controller
             'awards' => $awardsData,
             'playoff_count' => $playoffCount,
             'current_season_id' => $latestSeasonId,
+            'player_comparison' => $playerComparison,
         ]);
     }
 

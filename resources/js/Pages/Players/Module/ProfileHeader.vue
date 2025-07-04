@@ -159,7 +159,7 @@
                             " games left" : "none"
                     }}
                 </p>
-            </div>
+            </div> 
         </div>
 
         <!-- Playoff Performance Section -->
@@ -266,6 +266,44 @@
             </div>
             <div v-else class="ml-4">
                 <p>No career highs data available.</p>
+            </div>
+             <h3
+                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+            >
+                <i class="fa fa-users text-red-500 mr-2"></i>
+                Player Projection
+            </h3>
+            <div class="ml-4 text-wrap" v-if="main_performance.player_comparison && main_performance.player_comparison.length > 0">
+                <p>
+                    <strong  class="text-blue-500">Best Projection</strong>
+                    {{
+                        main_performance.player_comparison[0]?.best_projection_player_name ?? "N/A"
+                    }}
+                </p>
+                <p>
+                    <strong>Similarity Rating:</strong>
+                    {{
+                        main_performance.player_comparison[0]?.best_projection_similarity_score ?? "N/A"
+                    }}
+                </p>
+            </div>
+             <div class="ml-4 mt-4 text-wrap" v-if="main_performance.player_comparison && main_performance.player_comparison.length > 0">
+                <p>
+                    <strong class="text-red-500">Worst Projection</strong>
+                    {{
+                        main_performance.player_comparison[0]?.worst_projection_player_name ?? "N/A"
+                    }}
+                </p>
+                <p>
+                    <strong>Similarity Rating:</strong>
+                    {{
+                        main_performance.player_comparison[0]?.worst_projection_similarity_score ?? "N/A"
+                    }}
+                </p>
+            </div>
+            <div v-else class="ml-4">
+                <p>No player comparison data available.</p>
+                
             </div>
         </div>
 
