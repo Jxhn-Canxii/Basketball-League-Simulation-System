@@ -413,7 +413,7 @@ class PlayersController extends Controller
         $perPage = $request->input('itemsperpage', 10); // Number of items per page
         $currentPage = $request->input('page_num', 1); // Current page number
         $search = $request->input('search', ''); // Search term
-    
+        $position = $request->input('position', ''); // Search term
         // Calculate the offset for the query
         $offset = ($currentPage - 1) * $perPage;
     
@@ -429,43 +429,64 @@ class PlayersController extends Controller
                 'players.is_active',
                 'players.retirement_age',
                 'players.contract_years',
+                'players.draft_status',
+                'players.is_injured',
+                'players.overall_rating',
                 DB::raw("IF(players.team_id = 0, 'none', teams.name) as team_name"),
-    
-                // Get the list of awards for the player
+
+                // Awards
                 DB::raw("
                     (SELECT GROUP_CONCAT(
                             CONCAT(award_name, ' (Season ', season_awards.season_id, ')')
                             SEPARATOR ', ')
-                     FROM season_awards
-                     WHERE season_awards.player_id = players.id
+                    FROM season_awards
+                    WHERE season_awards.player_id = players.id
                     ) as awards
                 "),
-    
-                // Get the Finals MVP for the player, if applicable
+
+                // Finals MVP (text + flag)
                 DB::raw("
                     COALESCE(
                         (SELECT
                             CONCAT('Finals MVP (Season ', seasons.id, ')')
-                         FROM seasons
-                         WHERE seasons.finals_mvp_id = players.id
-                         LIMIT 1
+                        FROM seasons
+                        WHERE seasons.finals_mvp_id = players.id
+                        LIMIT 1
                         ), '') as finals_mvp
                 "),
-    
-                // Check if player is finals MVP in any season
                 DB::raw("
                     CASE WHEN EXISTS (
                         SELECT 1 FROM seasons WHERE seasons.finals_mvp_id = players.id
                     ) THEN 1 ELSE 0 END as is_finals_mvp
+                "),
+
+                // Drafted team name (or acronym)
+                DB::raw("COALESCE(drafted_team.acronym, drafted_team.name, 'N/A') as drafted_team_name"),
+
+                // Formatted draft status
+                DB::raw("
+                    CASE 
+                        WHEN players.draft_status = 'Undrafted' OR players.draft_status = 'Special Draft' THEN 
+                            CONCAT('S', players.draft_id,' ',players.draft_status)
+                        ELSE 
+                            CONCAT(
+                                players.draft_status, 
+                                '(', COALESCE(drafted_team.acronym, drafted_team.name, 'N/A'), ')'
+                            )
+                    END as formatted_draft_status
                 ")
             )
-            ->leftJoin('teams', 'players.team_id', '=', 'teams.id');
+            ->leftJoin('teams', 'players.team_id', '=', 'teams.id')
+            ->leftJoin('teams as drafted_team', 'players.drafted_team_id', '=', 'drafted_team.id');
+
     
         // Apply search filter if provided
         if ($search) {
             $query->where('players.name', 'like', "%{$search}%");
         }
-    
+        if ($position) {
+            $query->where('players.position', 'like', "%{$position}%");
+        }
         // Add sorting by is_active status, then by role priority
         $query->orderBy('players.is_active', 'desc') // Active players first
             ->orderByRaw("FIELD(players.role, 'star player','all star', 'starter', 'role player', 'bench')");

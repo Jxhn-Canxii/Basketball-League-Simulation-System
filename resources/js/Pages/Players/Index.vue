@@ -11,20 +11,33 @@
 
                 <div class="bg-white inline-block min-w-full overflow-hidden rounded shadow p-2">
                     <h3 class="text-md font-semibold text-gray-800">Player List</h3>
-                    <input
-                        type="text"
-                        v-model="search.search"
-                        @input="fetchAllPlayers()"
-                        id="LeagueName"
-                        placeholder="Enter Player name"
-                        class="mt-1 mb-2 p-2 border rounded w-full"
-                    />
+                    <div class="flex justify-between items-center space-x-3 mb-2">
+                        <input
+                            type="text"
+                            v-model="search.search"
+                            @input="fetchAllPlayers()"
+                            id="LeagueName"
+                            placeholder="Enter Player name"
+                            class="mt-1 mb-2 p-2 border rounded w-full"
+                        />
+                        <select class="mt-1 mb-2 p-2 border rounded w-full" v-model="search.position" @change="fetchAllPlayers()">
+                            <option value="">All Positions</option>
+                            <option value="PG">Point Guard</option>
+                            <option value="SG">Shooting Guard</option>
+                            <option value="SF">Small Forward</option>
+                            <option value="PF">Power Forward</option>
+                            <option value="C">Center</option>
+                        </select>
+                    </div>
+                  
                     <div v-if="data.players?.length === 0" class="text-center text-gray-500">No player found.</div>
                     <div v-else class="overflow-x-auto mt-4">
                         <table class="min-w-full divide-y divide-gray-200 text-xs">
                             <thead class="bg-gray-50 text-nowrap">
                                 <tr>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Draft</th>
+                                    <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rating</th>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Country</th>
                                     <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Awards</th>
@@ -43,7 +56,13 @@
                                         <sup v-if="player.is_finals_mvp">
                                             <i class="fa fa-star fa-sm text-yellow-500"></i>
                                         </sup>
+                                         <!-- Display "Injured" if player is injured -->
+                                        <span v-if="player.is_injured && player.age <= player.retirement_age && player.is_active" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium text-red-800">
+                                            <i class="fa fa-crutch"></i>
+                                        </span>
                                     </td>
+                                    <td class="px-2 py-1 whitespace-nowrap border">{{ player.formatted_draft_status }}</td>
+                                    <td class="px-2 py-1 whitespace-nowrap border">{{ player.overall_rating }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap border">{{ player.country }}</td>
                                     <td class="px-2 py-1 whitespace-nowrap border text-wrap">{{ player.awards }}</td>
@@ -110,6 +129,7 @@ const data = ref({
     free_agents: [],
     current_page: 1,
     total_pages: 0,
+    position: '',
     total: 0,
 });
 const search = ref({
@@ -117,6 +137,7 @@ const search = ref({
     total_pages: 0,
     total: 0,
     search: '',
+    position: '',
     itemsperpage: 10,
 });
 const teams = ref([]);
