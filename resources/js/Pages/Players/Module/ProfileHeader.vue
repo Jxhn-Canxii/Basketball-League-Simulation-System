@@ -12,7 +12,7 @@
                 <i class="fa fa-user text-blue-500 mr-2"></i>
                 Player Details
                 <small v-if="main_performance.player_details.injury_recovery_game_count > 0">
-                    <span class="inline-flex items-center justify-center animate-pulse ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-400 text-white">
+                    <span class="inline-flex items-center text-nowrap justify-center animate-pulse ml-3 px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-400 text-white">
                         <i class="fa fa-medkit mr-1"></i> 
                          {{ Math.round(main_performance.player_details.injury_recovery_game_count) ?? '-' }} {{ Math.round(main_performance.player_details.injury_recovery_game_count) === 1 ? 'Day' : 'Days' }}
                     </span>
