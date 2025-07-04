@@ -281,9 +281,9 @@
                     }}
                 </p>
                 <p>
-                    <strong>Similarity Rating:</strong>
+                    <strong>Rating:</strong>
                     {{
-                        main_performance.player_comparison[0]?.best_projection_similarity_score ?? "N/A"
+                        main_performance.player_comparison[0]?.best_projection_rating ?? "N/A"
                     }}
                 </p>
             </div>
@@ -295,9 +295,9 @@
                     }}
                 </p>
                 <p>
-                    <strong>Similarity Rating:</strong>
+                    <strong>Rating:</strong>
                     {{
-                        main_performance.player_comparison[0]?.worst_projection_similarity_score ?? "N/A"
+                        main_performance.player_comparison[0]?.worst_projection_rating ?? "N/A"
                     }}
                 </p>
             </div>

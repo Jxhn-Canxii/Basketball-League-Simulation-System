@@ -1518,8 +1518,8 @@ class PlayersController extends Controller
         // Fetch player comparison data
         $playerComparison = \DB::table('view_player_projection_extremes')
             ->where('player_id', $playerId)
-            ->select('best_projection_player_id', 'best_projection_player_name', 'best_projection_similarity_score',
-                'worst_projection_player_id', 'worst_projection_player_name', 'worst_projection_similarity_score')
+            ->select('best_projection_player_id', 'best_projection_player_name', 'best_projection_similarity_score','best_projection_rating',
+                'worst_projection_player_id', 'worst_projection_player_name', 'worst_projection_similarity_score','worst_projection_rating')
             ->get();
 
         if ($playerComparison->isEmpty()) {
@@ -1527,6 +1527,8 @@ class PlayersController extends Controller
                 'best_projection_player_id' => null,
                 'best_projection_player_name' => null,
                 'best_projection_similarity_score' => null,
+                'best_projection_rating' => null,
+                'worst_projection_player_rating' => null,
                 'worst_projection_player_id' => null,
                 'worst_projection_player_name' => null,
                 'worst_projection_similarity_score' => null,
