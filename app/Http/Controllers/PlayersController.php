@@ -2219,7 +2219,7 @@ class PlayersController extends Controller
             'ar_SA', 'sv_SE', 'fi_FI', 'no_NO', 'da_DK', 'pl_PL', 'cs_CZ', 'sk_SK',
             'ro_RO', 'hu_HU', 'el_GR', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'en_PH',
             'bg_BG', 'uk_UA', 'ca_ES', 'sl_SI', 'hr_HR', 'lt_LT', 'lv_LV', 'et_EE',
-            'fa_IR', 'af_ZA', 'sq_AL', 'az_AZ', 'be_BY', 'bs_BA', 'mk_MK', 'sr_RS',
+            'af_ZA', 'sq_AL', 'az_AZ', 'be_BY', 'bs_BA', 'mk_MK', 'sr_RS',
         ];
 
         // Define weights for each locale
