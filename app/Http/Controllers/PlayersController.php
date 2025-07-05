@@ -777,7 +777,7 @@ class PlayersController extends Controller
 
         // Save the player
         $player = Player::create([
-            'name' => Str::title($request->name),
+            'name' => $request->name,
             'address' => $request->address,
             'country' => $request->country,
             'team_id' => 0,
