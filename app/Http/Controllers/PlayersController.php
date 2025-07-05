@@ -513,7 +513,6 @@ class PlayersController extends Controller
 
     public function generateNewPlayer()
     {
-
         $doubleBarrelSurname = app('doubleBarrelSurname');
         $locale = $this->selectWeightedLocale();
         $faker = Faker::create($locale);
@@ -524,33 +523,44 @@ class PlayersController extends Controller
         $addressRaw = $fakerUs->address;
         $countryRaw = $fakerUs->country;
 
+        // List of locales that may require transliteration (non-Latin scripts)
+        $nonLatinLocales = ['zh_CN', 'ja_JP', 'ko_KR', 'ru_RU', 'ar_SA', 'th_TH'];
+
+        // Function to check if a name needs transliteration (contains non-Latin characters)
+        $needsTransliteration = function ($name) {
+            return preg_match('/[^\x20-\x7E]/u', $name); // Detects non-ASCII characters
+        };
+
         $lastNameChances = random_int(1, 100);
 
         if ($lastNameChances <= 85) {
-            // 70% chance: Use regular last name
+            // 85% chance: Use regular last name
             $lastNameRaw = $faker->lastName;
-            $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
-            $name = Str::title(str_replace(['-', '_'], ' ', $name));
+            $name = "$firstNameRaw $lastNameRaw";
         } elseif ($lastNameChances <= 95) {
-            // 20% chance: Modify an existing last name
+            // 10% chance: Modify an existing last name
             $lastNameRaw = $this->getLastName($faker);
-            $name = Transliterator::transliterate("$firstNameRaw $lastNameRaw");
-            $name = Str::title(str_replace(['-', '_'], ' ', $name));
+            $name = "$firstNameRaw $lastNameRaw";
         } else {
-            // 10% chance: Use a double last name
-            $name = $fakerUs->firstNameMale.' '.$doubleLastNameRaw;
+            // 5% chance: Use a double last name
+            $name = "$firstNameRaw $doubleLastNameRaw";
         }
         
-        // $name = $faker->firstNameMale.' '.$doubleLastNameRaw;
-        $addressRaw = Transliterator::transliterate("$addressRaw");
-        $countryRaw = Transliterator::transliterate("$countryRaw");
-        // Clean & format the data:
-        // - Replace dashes and multiple spaces with single space in address
-        // - Capitalize each word in name, address, countr
+        // Transliterate only if locale is non-Latin or name contains non-Latin characters
+        if (in_array($locale, $nonLatinLocales) || $needsTransliteration($name)) {
+            $name = Transliterator::transliterate($name);
+            $name = Str::title(str_replace(['-', '_'], ' ', $name));
+        }
+
+        // Clean and format the name
+
+        // Transliterate address and country (as they come from en_US, but clean anyway)
+        $addressRaw = Transliterator::transliterate($addressRaw);
+        $countryRaw = Transliterator::transliterate($countryRaw);
+
+        // Clean and format address and country
         $address = Str::title(preg_replace('/[\-\_]+/', ' ', $addressRaw));
         $country = Str::title(str_replace(['-', '_'], ' ', $countryRaw));
-
-        // Optionally remove extra commas or weird chars from address (example)
         $address = preg_replace('/\s+/', ' ', trim($address));
 
         return response()->json([
@@ -767,7 +777,7 @@ class PlayersController extends Controller
 
         // Save the player
         $player = Player::create([
-            'name' => $request->name,
+            'name' => Str::title($request->name),
             'address' => $request->address,
             'country' => $request->country,
             'team_id' => 0,
@@ -2221,16 +2231,15 @@ class PlayersController extends Controller
             'uk_UA', 'sq_AL', 'bs_BA', 'sr_RS'
         ];
         $asianAndOtherLocales = [
-            'pt_BR', 'tr_TR', 'ru_RU', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'hi_IN',
-            'ar_SA', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'fa_IR', 'af_ZA', 'az_AZ',
+            'pt_BR', 'tr_TR', 'ru_RU', 'ja_JP', 'ko_KR', 'zh_CN', 'zh_TW', 'hi_IN', 'he_IL', 'id_ID', 'ms_MY', 'vi_VN', 'fa_IR', 'af_ZA', 'az_AZ',
             'be_BY', 'mk_MK'
         ];
 
         // Assign weights: 40% for US, 50% for European, 10% for Asian/Others
         $totalLocales = count($locales);
         $usWeight = 0.6 / count($usLocales); // 60% split across US locales
-        $europeanWeight = 0.39 / count($europeanLocales); // 39% split across European locales
-        $asianOtherWeight = 0.01 / count($asianAndOtherLocales); // 1% split across Asian/Other locales
+        $europeanWeight = 0.35 / count($europeanLocales); // 35% split across European locales
+        $asianOtherWeight = 0.05 / count($asianAndOtherLocales); // 5% split across Asian/Other locales
 
         foreach ($locales as $locale) {
             if (in_array($locale, $usLocales)) {
