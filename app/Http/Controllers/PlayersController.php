@@ -559,6 +559,7 @@ class PlayersController extends Controller
         $countryRaw = Transliterator::transliterate($countryRaw);
 
         // Clean and format address and country
+        $name = Str::title($name); // Capitalize each word
         $address = Str::title(preg_replace('/[\-\_]+/', ' ', $addressRaw));
         $country = Str::title(str_replace(['-', '_'], ' ', $countryRaw));
         $address = preg_replace('/\s+/', ' ', trim($address));
