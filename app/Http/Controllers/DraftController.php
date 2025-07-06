@@ -385,7 +385,7 @@ class DraftController extends Controller
             foreach ($draftOrder as $pick) {
                 if ($availablePlayers->isEmpty()) break;
 
-                $originalTeamId = $pick->original_team_id;
+                $originalTeamId = $pick->team_id;
                 $teamId = $pick->team_id;
                 $team = DB::table('teams')->where('id', $teamId)->first();
                 $neededPositions = array_keys($teamPositionNeeds[$teamId] ?? []);
@@ -435,7 +435,6 @@ class DraftController extends Controller
                         DB::table('players')->where('id', $playerToWaive->id)->update([
                             'team_id' => 0,
                             'contract_years' => 0,
-                            'waived' => 1,
                         ]);
                         DB::table('transactions')->insert([
                             'player_id' => $playerToWaive->id,
