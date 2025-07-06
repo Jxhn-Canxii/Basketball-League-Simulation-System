@@ -23,6 +23,7 @@ ORDER BY d.season_id DESC, d.pick_number;
 
 CREATE OR REPLACE VIEW top_ten_picks_ranked AS
 SELECT 
+    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, t1.name) AS id,
     t1.name AS draft_team_name,
     COUNT(*) AS pick_count,
     RANK() OVER (ORDER BY COUNT(*) DESC) AS team_rank
