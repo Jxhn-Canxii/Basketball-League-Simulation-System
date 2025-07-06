@@ -292,6 +292,10 @@
                                             <i class="fa fa-medal"></i>
                                             Awards
                                         </button>
+                                        <button  :disabled="season.status != 17" :class="season.status != 17 ? 'opacity-50' : ''" type="button" @click.prevent="isSeasonStoryLineModalOpen = season.id" class="px-2 py-2 bg-blue-500 font-bold text-md text-white shadow">
+                                            <i class="fa fa-image"></i>
+                                            Storyline
+                                        </button>
                                         <button :disabled="season.id == 1" :class="season.id == 1 ? 'opacity-50' : ''" type="button" @click.prevent="isSeasonDraftModalOpen = season.id" class="px-2 py-2 bg-pink-500 rounded-r font-bold text-md text-white shadow">
                                             <i class="fa fa-users"></i>
                                             Draft
@@ -362,6 +366,11 @@
                     <FreeAgentsCoach :showControls="true" :key="isCoachSigningModalOpen" @newSeason="handleTradeSeason"  />
                 </div>
             </Modal>
+            <Modal :show="isSeasonStoryLineModalOpen" :maxWidth="'4xl'" :title="`Season ${isSeasonStoryLineModalOpen} Storyline`" @close="isSeasonStoryLineModalOpen = false">
+                <div class="mt-4 p-3 block">
+                    <StoryLine :key="isSeasonStoryLineModalOpen" :season_id="isSeasonStoryLineModalOpen" @newSeason="handleTradeSeason"  />
+                </div>
+            </Modal>
            
              
         </AuthenticatedLayout>
@@ -386,6 +395,7 @@ import Awards from "@/Pages/Seasons/Module/Awards.vue";
 import Draft from "@/Pages/Seasons/Module/Draft.vue";
 import DraftBoard from "@/Pages/Seasons/Module/DraftBoard.vue"
 import Add from "@/Pages/Seasons/Module/Add.vue";
+import StoryLine from "@/Pages/Seasons/Module/Storyline.vue";
 
 const isAddModalOpen = ref(false);
 const isTradeModalOpen = ref(false);
@@ -395,6 +405,7 @@ const isPlayerAwardsModalOpen = ref(false);
 const isSeasonAwardsModalOpen = ref(false);
 const isSeasonDraftModalOpen = ref(false);
 const isCoachSigningModalOpen = ref(false);
+const isSeasonStoryLineModalOpen = ref(false);
 const seasons = ref([]);
 const leagues_dropdown = ref([]);
 const season_id = ref(0);

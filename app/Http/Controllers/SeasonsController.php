@@ -227,7 +227,23 @@ class SeasonsController extends Controller
     
         return $conferenceChampions;
     }
-   
+    public function seasonStoryLine(Request $request)
+    {
+        // Validate the incoming request
+        $request->validate([
+            'season_id' => 'required|exists:seasons,id', // Ensure the season_id exists in the seasons table
+        ]);
+
+        // Retrieve the storylines for the given season_id
+        $storylines = DB::table('storylines')
+            ->where('season_id', $request->season_id)
+            ->get(['id', 'storyline'])
+            ->first(); // Get the first storyline or null if none exists
+
+        // Return the storylines as a JSON response
+        return response()->json($storylines);
+
+    }
     public function getSeasonsDropdown ()
     {
         // Fetch all seasons with their id and name, ordered by the latest season_id

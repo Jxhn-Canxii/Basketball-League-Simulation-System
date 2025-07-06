@@ -484,7 +484,7 @@ class SimulateController extends Controller
         if ($gameData->round === 'finals') {
             // Find the MVP of the winning team
             $this->updateFinalsWinner($gameData, $winnerId, $homeScore, $awayScore);
-
+            $this->upsertCurrentSeasonStoryline();
             // Update the finals contract
             // $this->updateFinalsBonusContract($gameData->home_team_id, $gameData->season_id,$gameData->home_team_name);
             // $this->updateFinalsBonusContract($gameData->away_team_id, $gameData->season_id,$gameData->away_team_name);
@@ -3390,6 +3390,28 @@ class SimulateController extends Controller
             }
         }
     }
+    private function upsertCurrentSeasonStoryline()
+    {
+        // Get the current season's storyline from the view
+        $storylineData = DB::table('current_season_storyline')->first();
+
+        if (!$storylineData) {
+            return response()->json(['message' => 'No current season storyline found.'], 404);
+        }
+
+        // Perform safe insert or update
+        DB::table('storylines')->updateOrInsert(
+            ['season_id' => $storylineData->season_id], // Unique key
+            [
+                'storyline' => $storylineData->storyline,
+                'updated_at' => now(),
+                'created_at' => now(), // Safe to include; will only apply on insert
+            ]
+        );
+
+        return response()->json(['message' => 'Storyline inserted or updated successfully.']);
+    }
+    
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
     {

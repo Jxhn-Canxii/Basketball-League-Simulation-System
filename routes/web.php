@@ -142,6 +142,8 @@ Route::middleware('auth')->group(function () {
         Route::post('seasons-per-league-paginate', [SeasonsController::class, 'seasonsPerLeaguePaginate'])->name('league.seasons.paginate');
         Route::post('dropdown-season', [SeasonsController::class, 'getSeasonsDropdown'])->name('seasons.dropdown');
 
+         Route::post('seasons-storyline', [SeasonsController::class, 'seasonStoryLine'])->name('seasons.storyline');
+
     });
 
     Route::prefix('leagues/')->group(function(){
