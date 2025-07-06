@@ -2283,17 +2283,32 @@ class PlayersController extends Controller
     }
 
     // This function generates a unique player name with suffixes if necessary
-    private function suffixNamingFormat($name){
-        $baseName = trim($name);
-        $finalName = $baseName;
-        $suffixes = ['Jr.', 'II', 'III', 'IV'];
+    private function suffixNamingFormat($name)
+    {
+        // Suffixes: Jr. and Roman numerals II to XX
+        $suffixes = ['Jr.'];
+        $romanNumerals = [
+            2 => 'II', 3 => 'III', 4 => 'IV', 5 => 'V',
+            6 => 'VI', 7 => 'VII', 8 => 'VIII', 9 => 'IX',
+            10 => 'X', 11 => 'XI', 12 => 'XII', 13 => 'XIII',
+            14 => 'XIV', 15 => 'XV', 16 => 'XVI', 17 => 'XVII',
+            18 => 'XVIII', 19 => 'XIX', 20 => 'XX'
+        ];
 
-        // Try to generate a unique name with suffix if needed
+        foreach ($romanNumerals as $roman) {
+            $suffixes[] = $roman;
+        }
+
+        // Regex to remove suffix from name
+        $pattern = '/\s(' . implode('|', array_map('preg_quote', $suffixes)) . ')$/';
+        $baseName = preg_replace($pattern, '', trim($name));
+        $finalName = $baseName;
+
         for ($i = 0; $i <= count($suffixes); $i++) {
             $existingPlayer = Player::where('name', $finalName)->first();
 
             if (!$existingPlayer) {
-                break; // Name is unique
+                return $finalName; // ✅ Return unique name
             }
 
             if ($i < count($suffixes)) {
@@ -2301,12 +2316,10 @@ class PlayersController extends Controller
             } else {
                 return response()->json([
                     'error' => true,
-                    'message' => 'A player with this name and all suffix variations (up to IV) already exists.',
-                ], 400);
+                    'message' => 'A player with this name and all suffix variations (up to XX) already exists.',
+                ], 400); // ❌ All suffixes used up
             }
         }
-        // Ensure the final name is unique
-        return $finalName;
     }
 
     private function generateHealthRating()
