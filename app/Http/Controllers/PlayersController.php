@@ -667,7 +667,9 @@ class PlayersController extends Controller
         $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
 
         // Check if player already exists
-        $existingPlayer = Player::where('name', $request->name)->first();
+        $finalName = $this->suffixNamingFormat($request->name);
+        $existingPlayer = Player::where('name', $finalName)->first();
+
         if ($existingPlayer) {
             return response()->json([
                 'error' => true,
@@ -778,7 +780,7 @@ class PlayersController extends Controller
 
         // Save the player
         $player = Player::create([
-            'name' => $request->name,
+            'name' => $finalName,
             'address' => $request->address,
             'country' => $request->country,
             'team_id' => 0,
@@ -2278,6 +2280,33 @@ class PlayersController extends Controller
         ];
 
         return collect($wordOptions)->random();
+    }
+
+    // This function generates a unique player name with suffixes if necessary
+    private function suffixNamingFormat($name){
+        $baseName = trim($name);
+        $finalName = $baseName;
+        $suffixes = ['Jr.', 'II', 'III', 'IV'];
+
+        // Try to generate a unique name with suffix if needed
+        for ($i = 0; $i <= count($suffixes); $i++) {
+            $existingPlayer = Player::where('name', $finalName)->first();
+
+            if (!$existingPlayer) {
+                break; // Name is unique
+            }
+
+            if ($i < count($suffixes)) {
+                $finalName = $baseName . ' ' . $suffixes[$i];
+            } else {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'A player with this name and all suffix variations (up to IV) already exists.',
+                ], 400);
+            }
+        }
+        // Ensure the final name is unique
+        return $finalName;
     }
 
     private function generateHealthRating()
