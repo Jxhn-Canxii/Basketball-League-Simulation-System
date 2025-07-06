@@ -410,9 +410,34 @@ class DraftController extends Controller
 
                 // Determine if a player needs to be waived
                 $hasSpace = DB::table('players')->where('team_id', $teamId)->count() < 15;
+                $shouldWaive = false;
+
                 if (!$hasSpace) {
+                    // Determine waiver probability based on round and pick number
+                    $waiverProbability = 0;
+                    if ($pick->round == 1) {
+                        if ($pick->pick_number <= 10) {
+                            $waiverProbability = 100;
+                        } elseif ($pick->pick_number <= 20) {
+                            $waiverProbability = 80;
+                        } elseif ($pick->pick_number <= 30) {
+                            $waiverProbability = 70;
+                        } elseif ($pick->pick_number <= 50) {
+                            $waiverProbability = 60;
+                        } elseif ($pick->pick_number <= 80) {
+                            $waiverProbability = 50;
+                        }
+                    } elseif ($pick->round == 2 && $pick->pick_number <= 30) {
+                        $waiverProbability = 20;
+                    }
+
+                    // Decide whether to waive based on probability
+                    $shouldWaive = $waiverProbability > 0 && rand(0, 99) < $waiverProbability;
+                }
+
+                if (!$hasSpace && $shouldWaive) {
                     // Try to waive low performer with matching position
-                   $previousSeasonId = $currentSeasonId;
+                    $previousSeasonId = $currentSeasonId;
 
                     $playerToWaive = DB::table('players as p')
                         ->leftJoin('player_season_stats as stats', function ($join) use ($previousSeasonId) {
