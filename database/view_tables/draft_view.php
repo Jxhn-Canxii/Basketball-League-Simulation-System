@@ -1,5 +1,6 @@
 CREATE OR REPLACE VIEW top_five_picks AS
-SELECT 
+SELECT
+    d.season_id,
     d.pick_number,
     t1.name AS draft_team_name,
     p.name AS player_name,
@@ -8,7 +9,6 @@ SELECT
     p.position AS player_position,
     p.overall_rating AS player_rating,
     d.player_id,
-    d.season_id,
     d.round,
     d.id,
     d.team_id,
