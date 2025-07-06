@@ -8,7 +8,7 @@ WITH SeasonGroups AS (
     FROM 
         player_season_stats pss
 ),
-StreakLengths AS (
+Streaks AS (
     SELECT 
         team_id,
         player_id,
@@ -22,60 +22,64 @@ StreakLengths AS (
     HAVING 
         COUNT(*) >= 3
 ),
-MaxStreak AS (
+LatestTeamSeason AS (
     SELECT 
         team_id,
-        player_id,
-        streak_start,
-        streak_end,
-        streak_length,
-        ROW_NUMBER() OVER (PARTITION BY team_id, player_id ORDER BY streak_length DESC, streak_start ASC) AS rn
+        MAX(season_id) AS latest_season
     FROM 
-        StreakLengths
-),
-TeamTenure AS (
-    SELECT 
-        sl.team_id,
-        sl.player_id,
-        MIN(sl.streak_start) AS earliest_season,
-        MAX(sl.streak_length) AS longest_streak,
-        CONCAT(MIN(sl.streak_start), ' to ', MAX(CASE WHEN sl.rn = 1 THEN sl.streak_end END)) AS season_span,
-        COUNT(DISTINCT pss.season_id) AS seasons_played
-    FROM 
-        MaxStreak sl
-    JOIN 
-        player_season_stats pss ON pss.team_id = sl.team_id AND pss.player_id = sl.player_id
-    WHERE 
-        sl.rn = 1
-        AND EXISTS (
-            SELECT 1
-            FROM player_season_stats pss2
-            WHERE pss2.team_id = sl.team_id
-            AND pss2.player_id = sl.player_id
-            AND pss2.season_id = (
-                SELECT MAX(pss3.season_id)
-                FROM player_season_stats pss3
-                WHERE pss3.team_id = sl.team_id
-            )
-        )
+        player_season_stats
     GROUP BY 
-        sl.team_id, sl.player_id
+        team_id
+),
+CurrentTenures AS (
+    SELECT 
+        s.team_id,
+        s.player_id,
+        s.streak_start,
+        s.streak_end,
+        s.streak_length
+    FROM 
+        Streaks s
+    JOIN 
+        LatestTeamSeason lts ON s.team_id = lts.team_id
+    WHERE 
+        s.streak_end = lts.latest_season  -- ensures player is active on team
+),
+RankedTenures AS (
+    SELECT 
+        ct.*,
+        ROW_NUMBER() OVER (PARTITION BY ct.team_id ORDER BY ct.streak_length DESC, ct.streak_start ASC) AS rn
+    FROM 
+        CurrentTenures ct
+),
+FinalTenure AS (
+    SELECT 
+        rt.team_id,
+        rt.player_id,
+        rt.streak_start AS earliest_season,
+        rt.streak_end AS latest_season,
+        rt.streak_length,
+        CONCAT(rt.streak_start, ' to ', rt.streak_end) AS season_span
+    FROM 
+        RankedTenures rt
+    WHERE 
+        rt.rn = 1
 )
 SELECT 
-    tt.team_id,
+    ft.team_id,
     t.name AS team_name,
-    tt.player_id,
+    ft.player_id,
     p.name AS player_name,
-    tt.earliest_season,
-    tt.longest_streak,
-    tt.season_span,
-    tt.seasons_played,
-    RANK() OVER (ORDER BY tt.longest_streak DESC) AS tenure_rank
+    ft.earliest_season,
+    ft.latest_season,
+    ft.streak_length AS longest_streak,
+    ft.season_span,
+    RANK() OVER (ORDER BY ft.streak_length DESC) AS tenure_rank
 FROM 
-    TeamTenure tt
+    FinalTenure ft
 JOIN 
-    teams t ON tt.team_id = t.id
+    teams t ON ft.team_id = t.id
 JOIN 
-    players p ON tt.player_id = p.id
+    players p ON ft.player_id = p.id
 ORDER BY 
-    tt.longest_streak DESC, tt.earliest_season, tt.team_id, tt.player_id;
+    ft.streak_length DESC, ft.earliest_season, ft.team_id, ft.player_id;

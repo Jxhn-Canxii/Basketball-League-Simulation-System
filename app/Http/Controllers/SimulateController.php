@@ -1764,50 +1764,49 @@ class SimulateController extends Controller
             }
 
             // **Waive Player if Injury Recovery is Taking Too Long**
-            $requiredRecoveryGames = 25; // Example: Player should recover within 25 games to avoid waiving
-
+            $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->team_id); // Get total regular season games for the team
+            $requiredRecoveryGames = ceil($totalTeamGames * 0.5); // Waive if injury > 50% of season
+            $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonStatus);
             //can replace injured players until in season trade deadline...
-            if ($player->injury_recovery_games >= $requiredRecoveryGames && $seasonStatus <= 2 &&  $player->contract_years <= 2) {
-                // **20% Chance to Waive Player if Recovery is Too Long**
-                if (rand(1, 100) <= 20) {
-                    // Player is waived due to extended injury recovery period
+            if ($shouldWaiveThisPlayer) {
+                // Player is waived due to extended injury recovery period
+                DB::table('transactions')->insert([
+                    'player_id' => $player->id,
+                    'season_id' => $seasonId,
+                    'details' => 'Waived due to extended injury recovery period',
+                    'from_team_id' => $player->team_id,
+                    'to_team_id' => 0,
+                    'status' => 'waived',
+                ]);
+
+                // Set contract to zero, indicating that the player is now waived
+                DB::table('players')->where('id', $player->id)->update([
+                    'contract_years' => 0,
+                    'team_id' => 0,
+                ]);
+
+                // **Replace Waived Player with Best Free Agent Available**
+                $replacement = $this->getBestFreeAgentAvailable($player->position);
+                if ($replacement) {
+                    $contractYears = $this->getContractYearsBasedOnRole($player->role);
+                    DB::table('players')->where('id', $replacement->player_id)->update([
+                        'team_id' => $player->team_id,
+                        'contract_years' => $contractYears,
+                    ]);
+
                     DB::table('transactions')->insert([
-                        'player_id' => $player->id,
+                        'player_id' => $replacement->player_id,
                         'season_id' => $seasonId,
-                        'details' => 'Waived due to extended injury recovery period',
-                        'from_team_id' => $player->team_id,
-                        'to_team_id' => 0,
-                        'status' => 'waived',
+                        'details' => 'Signed as injury replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
+                        'from_team_id' => 0,
+                        'to_team_id' => $player->team_id,
+                        'status' => 'signed',
                     ]);
 
-                    // Set contract to zero, indicating that the player is now waived
-                    DB::table('players')->where('id', $player->id)->update([
-                        'contract_years' => 0,
-                        'team_id' => 0,
-                    ]);
-
-                    // **Replace Waived Player with Best Free Agent Available**
-                    $replacement = $this->getBestFreeAgentAvailable($player->position);
-                    if ($replacement) {
-                        $contractYears = $this->getContractYearsBasedOnRole($player->role);
-                        DB::table('players')->where('id', $replacement->player_id)->update([
-                            'team_id' => $player->team_id,
-                            'contract_years' => $contractYears,
-                        ]);
-
-                        DB::table('transactions')->insert([
-                            'player_id' => $replacement->player_id,
-                            'season_id' => $seasonId,
-                            'details' => 'Signed as injury replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
-                            'from_team_id' => 0,
-                            'to_team_id' => $player->team_id,
-                            'status' => 'signed',
-                        ]);
-
-                        (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
-                    }
+                    (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
                 }
             }
+            
         } catch (\Exception $e) {
             \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
         }
@@ -3411,7 +3410,77 @@ class SimulateController extends Controller
 
         return response()->json(['message' => 'Storyline inserted or updated successfully.']);
     }
-    
+
+    // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
+    private function shouldWaivePlayer($player, $seasonStatus, $requiredRecoveryGames = 25): bool
+    {
+        // Only consider waiving during first half of season (e.g., before trade deadline)
+        if ($seasonStatus > 2) return false;
+
+        // Must be a serious injury
+        if ($player->injury_recovery_games < $requiredRecoveryGames) return false;
+
+        // Never waive your top talents (franchise anchors)
+        if (
+            in_array($player->role, ['star player', 'all star']) ||
+            $player->overall_rating >= 80 ||
+            ($player->is_rookie && $player->overall_rating >= 70) ||
+            $player->work_ethic_rating >= 85 ||
+            $player->leadership_rating >= 85
+        ) {
+            return false;
+        }
+
+        // Waive protection for players with long-term deals unless clearly declining
+        if ($player->contract_years > 2 && $player->overall_rating > 72) return false;
+
+        // Risk categories
+        $isOldDeclining = $player->age >= 30 && $player->overall_rating <= 72;
+        $isInjuryProne = $player->injury_prone_percentage >= 70 || count(json_decode($player->injury_history ?? '[]')) >= 3;
+        $lowMorale = $player->morale !== null && $player->morale <= 40;
+        $lowStamina = $player->stamina_rating <= 60;
+        $poorWorkEthic = $player->work_ethic_rating <= 60;
+
+        // Role-based likelihood
+        $waivableRoles = ['bench', 'role player'];
+        $isExpendableRole = in_array($player->role, $waivableRoles);
+
+        // High likelihood waiver condition
+        if (
+            ($isOldDeclining || $isInjuryProne || $lowMorale || $lowStamina || $poorWorkEthic) &&
+            $isExpendableRole &&
+            rand(1, 100) <= 50
+        ) {
+            return true;
+        }
+
+        // Medium likelihood waiver condition (e.g., injured starter)
+        if (
+            $player->role === 'starter' &&
+            ($isInjuryProne || $lowMorale || $poorWorkEthic) &&
+            rand(1, 100) <= 25
+        ) {
+            return true;
+        }
+
+        // Rare chance to simulate tough or chaotic front office decisions
+        if (rand(1, 100) <= 10) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function getRegularSeasonGameCount($seasonId, $teamId)
+    {
+        return DB::table('player_game_stats')
+            ->where('season_id', $seasonId)
+            ->where('team_id', $teamId)
+            ->whereRaw('round REGEXP "^[0-9]+$"')
+            ->selectRaw('COUNT(DISTINCT game_id) as total_games')
+            ->value('total_games');
+    }
+
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
     {
