@@ -1,6 +1,5 @@
 CREATE OR REPLACE VIEW longest_tenured_players AS
 WITH SeasonGroups AS (
-    -- Identify consecutive season streaks using a difference between season_id and row number
     SELECT 
         pss.team_id,
         pss.player_id,
@@ -10,7 +9,6 @@ WITH SeasonGroups AS (
         player_season_stats pss
 ),
 StreakLengths AS (
-    -- Calculate the length of each streak and the min/max season_id per streak
     SELECT 
         team_id,
         player_id,
@@ -22,10 +20,9 @@ StreakLengths AS (
     GROUP BY 
         team_id, player_id, streak_group
     HAVING 
-        COUNT(*) >= 3  -- Ensure at least 3 consecutive seasons
+        COUNT(*) >= 3
 ),
 MaxStreak AS (
-    -- Select the longest streak for each player-team
     SELECT 
         team_id,
         player_id,
@@ -37,7 +34,6 @@ MaxStreak AS (
         StreakLengths
 ),
 TeamTenure AS (
-    -- Select the longest streak and ensure earliest season for the team
     SELECT 
         sl.team_id,
         sl.player_id,
@@ -50,9 +46,8 @@ TeamTenure AS (
     JOIN 
         player_season_stats pss ON pss.team_id = sl.team_id AND pss.player_id = sl.player_id
     WHERE 
-        sl.rn = 1  -- Select only the longest streak
+        sl.rn = 1
         AND EXISTS (
-            -- Ensure player is active in the most recent season for the team
             SELECT 1
             FROM player_season_stats pss2
             WHERE pss2.team_id = sl.team_id
@@ -65,13 +60,6 @@ TeamTenure AS (
         )
     GROUP BY 
         sl.team_id, sl.player_id
-    HAVING 
-        MIN(sl.streak_start) = (
-            SELECT MIN(pss4.season_id)
-            FROM player_season_stats pss4
-            WHERE pss4.team_id = sl.team_id
-            GROUP BY pss4.team_id
-        )
 )
 SELECT 
     tt.team_id,
