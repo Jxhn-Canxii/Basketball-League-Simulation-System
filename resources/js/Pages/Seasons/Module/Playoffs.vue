@@ -8,8 +8,11 @@
             <div class="flex justify-between">
                 <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs</h2>
                  <button
+                    :disabled="season_info.seasons && season_info.seasons[0].status > 2"
+                    :class="season_info.seasons && season_info.seasons[0].status > 2 ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 hover:text-red-900'"
                     @click="simulateFullPlayoffs"
-                    class="text-white bg-red-500 bg-gradient-to-br p-3 shadow rounded-full font-bold text-md text-nowrap hover:text-indigo-900"
+                    type="button"
+                    class="text-white bg-red-500 bg-gradient-to-br p-3 shadow rounded-full font-bold text-md text-nowrap"
                 >
                     Simulate Full Playoffs
                 </button>
