@@ -315,6 +315,7 @@ class ConferenceController extends Controller
     
     private static function playoffTree($seasonId, $status, $type, $start)
     {
+        $currentSeasonId = get_current_season_id();
         $status = $status >= 8 ? 8 : $status;
         // Define round indices based on status
         $roundIndices = [];
@@ -443,7 +444,9 @@ class ConferenceController extends Controller
             $teamIds = $playoffSchedule->pluck('home_id')->merge($playoffSchedule->pluck('away_id'))->unique();
 
             // Fetch standings data for all teams in a single query
-            $standingsData = DB::table('standings_view')
+            $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+            // Fetch standings data for the teams involved in the playoff schedule
+            $standingsData = DB::table($standingsTable)
                 ->whereIn('team_id', $teamIds)
                 ->where('season_id', $seasonId)
                 ->get()
