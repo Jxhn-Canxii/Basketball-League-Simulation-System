@@ -391,18 +391,18 @@ class ScheduleController extends Controller
         }
     }
     
-    private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId)
+    private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId, $maxInterGames = 5)
     {
         DB::beginTransaction();
         try {
+            // Fetch teams and validate
             $teams = Teams::where('league_id', $leagueId)->inRandomOrder()->get();
             if ($teams->isEmpty()) {
                 throw new \Exception("No teams found for league ID: {$leagueId}");
             }
 
+            // Group teams by conference and create conference map
             $teamsByConference = $teams->groupBy('conference_id');
-
-            // Map team_id => conference_id
             $conferenceMap = [];
             foreach ($teamsByConference as $confId => $teamGroup) {
                 foreach ($teamGroup as $team) {
@@ -410,122 +410,143 @@ class ScheduleController extends Controller
                 }
             }
 
+            // Validate inter-conference game feasibility
+            $numTeams = $teams->count();
+            $numConferences = count($teamsByConference);
+            $maxPossibleInterGames = $numTeams - (max($teamsByConference->pluck('count')->toArray()));
+            if ($maxInterGames > $maxPossibleInterGames) {
+                throw new \Exception("Requested inter-conference games ($maxInterGames) exceeds available opponents ($maxPossibleInterGames)");
+            }
+
             $allMatches = [];
             $roundCounter = 1;
 
-            // STEP 1: Build intra-conference games and chunk them into 5-game blocks per round
+            // STEP 1: Intra-conference matchups
             $intraGamesByConference = [];
             $maxIntraRounds = 0;
-
             foreach ($teamsByConference as $conferenceId => $conferenceTeams) {
                 $teamIds = $conferenceTeams->pluck('id')->toArray();
                 $numTeams = count($teamIds);
                 $matchups = [];
-
                 for ($i = 0; $i < $numTeams; $i++) {
                     for ($j = $i + 1; $j < $numTeams; $j++) {
                         $matchups[] = [$teamIds[$i], $teamIds[$j]];
                     }
                 }
-
                 shuffle($matchups);
-                $roundChunks = array_chunk($matchups, 5); // 5 games per round
-                $intraGamesByConference[$conferenceId] = $roundChunks;
-                $maxIntraRounds = max($maxIntraRounds, count($roundChunks));
+                $chunks = array_chunk($matchups, ceil($numTeams / 2));
+                $intraGamesByConference[$conferenceId] = $chunks;
+                $maxIntraRounds = max($maxIntraRounds, count($chunks));
             }
 
-            // STEP 2: Build inter-conference matchups fairly (5 per team)
-            $teamInterCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
-            $interMatches = [];
-            $maxInterGamesPerTeam = 5;
-            $validPairs = [];
-
-            foreach ($teams as $teamA) {
-                foreach ($teams as $teamB) {
-                    if (
-                        $teamA->id < $teamB->id &&
-                        $conferenceMap[$teamA->id] !== $conferenceMap[$teamB->id]
-                    ) {
-                        $validPairs[] = [$teamA->id, $teamB->id];
+            // STEP 2: Inter-conference scheduling
+            $conferenceIds = array_keys($teamsByConference->toArray());
+            $interConferencePairs = [];
+            for ($i = 0; $i < count($conferenceIds); $i++) {
+                for ($j = $i + 1; $j < count($conferenceIds); $j++) {
+                    $confA = $conferenceIds[$i];
+                    $confB = $conferenceIds[$j];
+                    foreach ($teamsByConference[$confA] as $teamA) {
+                        foreach ($teamsByConference[$confB] as $teamB) {
+                            $interConferencePairs[] = [$teamA->id, $teamB->id];
+                        }
                     }
                 }
             }
+            shuffle($interConferencePairs);
 
-            shuffle($validPairs); // Randomize matchups
+            // Initialize tracking arrays
+            $teamGamesCount = array_fill_keys($teams->pluck('id')->toArray(), 0);
+            $teamOpponents = array_fill_keys($teams->pluck('id')->toArray(), []);
+            $teamConferenceGames = array_fill_keys($teams->pluck('id')->toArray(), array_fill_keys($conferenceIds, 0));
+            $interMatchSchedule = [];
 
-            foreach ($validPairs as [$teamA, $teamB]) {
-                if (
-                    $teamInterCount[$teamA] < $maxInterGamesPerTeam &&
-                    $teamInterCount[$teamB] < $maxInterGamesPerTeam
-                ) {
-                    $home = ($teamInterCount[$teamA] % 2 === 0) ? $teamA : $teamB;
+            // Calculate desired games per conference pair
+            $gamesPerConfPair = [];
+            foreach ($conferenceIds as $confId) {
+                $numOtherTeams = $numTeams - count($teamsByConference[$confId]);
+                $baseGames = floor($maxInterGames / ($numConferences - 1));
+                $extraGames = $maxInterGames % ($numConferences - 1);
+                $gamesPerConfPair[$confId] = array_fill_keys($conferenceIds, 0);
+                $assigned = 0;
+                foreach ($conferenceIds as $otherConfId) {
+                    if ($otherConfId == $confId) continue;
+                    $gamesPerConfPair[$confId][$otherConfId] = $baseGames + ($assigned < $extraGames ? 1 : 0);
+                    $assigned++;
+                }
+            }
+
+            // Schedule inter-conference games
+            $round = 1;
+            $scheduledGames = 0;
+            $totalInterGamesNeeded = $numTeams * $maxInterGames / 2;
+            while ($scheduledGames < $totalInterGamesNeeded && count($interConferencePairs) > 0) {
+                $usedThisRound = [];
+                $matchesThisRound = [];
+                shuffle($interConferencePairs); // Re-shuffle to avoid bias
+
+                foreach ($interConferencePairs as $index => [$teamA, $teamB]) {
+                    $confA = $conferenceMap[$teamA];
+                    $confB = $conferenceMap[$teamB];
+
+                    // Check constraints
+                    if ($teamGamesCount[$teamA] >= $maxInterGames || $teamGamesCount[$teamB] >= $maxInterGames) continue;
+                    if (in_array($teamB, $teamOpponents[$teamA]) || in_array($teamA, $teamOpponents[$teamB])) continue;
+                    if (isset($usedThisRound[$teamA]) || isset($usedThisRound[$teamB])) continue;
+                    if ($teamConferenceGames[$teamA][$confB] >= $gamesPerConfPair[$confA][$confB] ||
+                        $teamConferenceGames[$teamB][$confA] >= $gamesPerConfPair[$confB][$confA]) continue;
+
+                    // Assign home/away
+                    $home = ($teamGamesCount[$teamA] <= $teamGamesCount[$teamB]) ? $teamA : $teamB;
                     $away = ($home === $teamA) ? $teamB : $teamA;
 
-                    $interMatches[] = [
-                        'season_id' => $seasonId,
-                        'game_id' => 0,
-                        'conference_id' => $conferenceMap[$home],
+                    $matchesThisRound[] = [
                         'home_id' => $home,
                         'away_id' => $away,
-                        'home_score' => 0,
-                        'away_score' => 0,
-                        'winner_id' => 0,
-                        'round' => 0,
+                        'conference_id' => $conferenceMap[$home]
                     ];
 
-                    $teamInterCount[$teamA]++;
-                    $teamInterCount[$teamB]++;
+                    // Update tracking
+                    $teamGamesCount[$teamA]++;
+                    $teamGamesCount[$teamB]++;
+                    $teamConferenceGames[$teamA][$confB]++;
+                    $teamConferenceGames[$teamB][$confA]++;
+                    $teamOpponents[$teamA][] = $teamB;
+                    $teamOpponents[$teamB][] = $teamA;
+                    $usedThisRound[$teamA] = true;
+                    $usedThisRound[$teamB] = true;
+                    $scheduledGames++;
+
+                    // Remove used pair
+                    unset($interConferencePairs[$index]);
                 }
-            }
 
-            // Validation
-            foreach ($teamInterCount as $teamId => $count) {
-                if ($count !== $maxInterGamesPerTeam) {
-                    throw new \Exception("Team ID {$teamId} has {$count} inter-conference games, expected {$maxInterGamesPerTeam}");
-                }
-            }
-
-            // STEP 3: Distribute inter-games across rounds
-            $interMatchesByRound = array_fill(1, $maxIntraRounds, []);
-            $currentRound = 1;
-            $totalRounds = $maxIntraRounds;
-
-            foreach ($interMatches as $match) {
-                $assigned = false;
-                $attempts = 0;
-
-                while (!$assigned && $attempts < $totalRounds) {
-                    $roundTeams = array_merge(...array_map(function ($m) {
-                        return [$m['home_id'], $m['away_id']];
-                    }, $interMatchesByRound[$currentRound]));
-
-                    if (!in_array($match['home_id'], $roundTeams) && !in_array($match['away_id'], $roundTeams)) {
-                        $interMatchesByRound[$currentRound][] = $match;
-                        $assigned = true;
+                if (!empty($matchesThisRound)) {
+                    $interMatchSchedule[$round] = $matchesThisRound;
+                    $round++;
+                } else {
+                    // Check if we can continue
+                    if (count(array_filter($teamGamesCount, fn($g) => $g < $maxInterGames)) > 0) {
+                        throw new \Exception("Unable to schedule all inter-conference games: insufficient valid matchups");
                     }
-
-                    $currentRound++;
-                    if ($currentRound > $totalRounds) {
-                        $currentRound = 1;
-                    }
-
-                    $attempts++;
-                }
-
-                if (!$assigned) {
-                    // Fallback: assign to round with fewest games
-                    $minRound = array_reduce(array_keys($interMatchesByRound), function ($carry, $key) use ($interMatchesByRound) {
-                        return count($interMatchesByRound[$key]) < count($interMatchesByRound[$carry]) ? $key : $carry;
-                    }, 1);
-                    $interMatchesByRound[$minRound][] = $match;
+                    break;
                 }
             }
 
-            // STEP 4: Merge intra + inter into final schedule
-            for ($i = 0; $i < $maxIntraRounds; $i++) {
+            // Verify all teams have exactly $maxInterGames
+            foreach ($teamGamesCount as $teamId => $count) {
+                if ($count != $maxInterGames) {
+                    throw new \Exception("Team $teamId has $count inter-conference games, expected $maxInterGames");
+                }
+            }
+
+            // STEP 3: Merge intra + inter per round
+            $finalRounds = max($round - 1, $maxIntraRounds);
+            for ($i = 0; $i < $finalRounds; $i++) {
                 $roundNum = $i + 1;
                 $gameNumber = 1;
 
+                // Intra-conference games
                 foreach ($intraGamesByConference as $conferenceId => $chunks) {
                     if (!isset($chunks[$i])) continue;
                     foreach ($chunks[$i] as [$home, $away]) {
@@ -544,19 +565,29 @@ class ScheduleController extends Controller
                     }
                 }
 
-                foreach ($interMatchesByRound[$roundNum] as $match) {
-                    $match['round'] = $roundNum;
-                    $match['game_id'] = "S{$seasonId}-C{$match['conference_id']}-inter-R{$roundNum}-G{$gameNumber}";
-                    $allMatches[] = $match;
-                    $gameNumber++;
+                // Inter-conference games
+                if (isset($interMatchSchedule[$roundNum])) {
+                    foreach ($interMatchSchedule[$roundNum] as $match) {
+                        $allMatches[] = [
+                            'season_id' => $seasonId,
+                            'game_id' => "S{$seasonId}-C{$match['conference_id']}-inter-R{$roundNum}-G{$gameNumber}",
+                            'conference_id' => $match['conference_id'],
+                            'home_id' => $match['home_id'],
+                            'away_id' => $match['away_id'],
+                            'home_score' => 0,
+                            'away_score' => 0,
+                            'winner_id' => 0,
+                            'round' => $roundNum,
+                        ];
+                        $gameNumber++;
+                    }
                 }
             }
 
-            // STEP 5: Save
+            // Insert into database
             DB::table('schedules')->insert($allMatches);
             DB::commit();
             return true;
-
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error("Schedule generation failed: " . $e->getMessage());

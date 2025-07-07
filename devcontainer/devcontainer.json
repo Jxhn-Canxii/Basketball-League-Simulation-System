@@ -1,0 +1,15 @@
+{
+  "name": "Laravel Sail Dev Container",
+  "dockerComposeFile": "../docker-compose.yml",
+  "service": "laravel.test",
+  "workspaceFolder": "/var/www/html",
+  "extensions": [
+    "bmewburn.vscode-intelephense-client",
+    "xdebug.php-debug",
+    "esbenp.prettier-vscode"
+  ],
+  "settings": {
+    "terminal.integrated.shell.linux": "/bin/sh"
+  },
+  "postCreateCommand": "./vendor/bin/sail composer install"
+}
