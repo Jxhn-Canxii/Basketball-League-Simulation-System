@@ -14,6 +14,7 @@
             </button> -->
             <button
                 @click.prevent="simulateAll()"
+                v-if="!isHide"
                 :disabled="isHide"
                 :class="isHide ? 'opacity-50' : ''"
                 class="text-indigo-600 bg-orange-400 shadow rounded-full p-2 font-bold text-md text-nowrap hover:text-indigo-900"
