@@ -10,6 +10,7 @@ class Seasons extends Model
     use HasFactory;
 
     protected $fillable = [
+        'season_id',
         'id',
         'name',
         'league_id',

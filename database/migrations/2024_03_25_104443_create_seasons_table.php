@@ -6,15 +6,11 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
     public function up(): void
     {
         Schema::create('seasons', function (Blueprint $table) {
-            $table->id(); // auto-incrementing primary key for the id
+            $table->bigIncrements('season_id'); // auto-incrementing primary key for season_id
+            $table->integer('id'); // separate integer column
             $table->string('name'); // name of the season
             $table->integer('league_id'); // foreign key for league_id
             $table->integer('type'); // enum for season type
@@ -45,7 +41,6 @@ return new class extends Migration
             $table->timestamps(); // created_at, updated_at
         });
     }
-
     /**
      * Reverse the migrations.
      *
