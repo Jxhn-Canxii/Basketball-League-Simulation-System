@@ -431,13 +431,13 @@ class ScheduleController extends Controller
                 for ($round = 0; $round < $numRounds; $round++) {
                     for ($i = 0; $i < $half; $i++) {
                         $teamA = $i === 0 ? $ids[0] : $rotating[$i - 1];
-                        $teamB = $rotating[$numTeams - 2 - $i];
+                        $teamB = $rotating[$numRounds - 1 - $i];
 
                         if (rand(0, 1)) [$teamA, $teamB] = [$teamB, $teamA];
 
                         $roundGames[$round + 1][] = [
                             'season_id' => $seasonId,
-                            'game_id' => "S{$seasonId}-C{$confId}-intra-R" . ($round + 1),
+                            'game_id' => '', // to be filled later
                             'conference_id' => $confId,
                             'home_id' => $teamA,
                             'away_id' => $teamB,
@@ -445,6 +445,7 @@ class ScheduleController extends Controller
                             'away_score' => 0,
                             'winner_id' => 0,
                             'round' => $round + 1,
+                            'type' => 'intra',
                         ];
                         $teamHomeGames[$teamA]++;
                     }
@@ -455,7 +456,7 @@ class ScheduleController extends Controller
                 $totalRounds = max($totalRounds, $numRounds);
             }
 
-            // === STEP 2: Inter-conference matchups (non-consecutive) ===
+            // === STEP 2: Inter-conference matchups (spread fairly, avoid consecutive matches) ===
             $interPairs = [];
             for ($i = 0; $i < count($teamIds); $i++) {
                 for ($j = $i + 1; $j < count($teamIds); $j++) {
@@ -478,10 +479,11 @@ class ScheduleController extends Controller
                     in_array($a, $teamInterOpponents[$b])
                 ) continue;
 
-                $triedRounds = 0;
-                while ($triedRounds < $totalRounds) {
-                    $currentRound = $roundPointer;
-                    $games = $roundGames[$currentRound] ?? [];
+                $placed = false;
+                $startRound = $roundPointer;
+
+                do {
+                    $games = $roundGames[$roundPointer] ?? [];
                     $lastGame = end($games);
                     $lastTeams = $lastGame ? [$lastGame['home_id'], $lastGame['away_id']] : [];
 
@@ -489,16 +491,17 @@ class ScheduleController extends Controller
                         $home = $teamHomeGames[$a] <= $teamHomeGames[$b] ? $a : $b;
                         $away = $home === $a ? $b : $a;
 
-                        $roundGames[$currentRound][] = [
+                        $roundGames[$roundPointer][] = [
                             'season_id' => $seasonId,
-                            'game_id' => "S{$seasonId}-inter-R{$currentRound}-G" . (count($games) + 1),
+                            'game_id' => '', // to be set later
                             'conference_id' => $conferenceMap[$home],
                             'home_id' => $home,
                             'away_id' => $away,
                             'home_score' => 0,
                             'away_score' => 0,
                             'winner_id' => 0,
-                            'round' => $currentRound,
+                            'round' => $roundPointer,
+                            'type' => 'inter',
                         ];
 
                         $teamHomeGames[$home]++;
@@ -506,27 +509,21 @@ class ScheduleController extends Controller
                         $teamInterGames[$b]++;
                         $teamInterOpponents[$a][] = $b;
                         $teamInterOpponents[$b][] = $a;
-                        break;
+                        $placed = true;
                     }
 
                     $roundPointer = ($roundPointer % $totalRounds) + 1;
-                    $triedRounds++;
-                }
+                } while (!$placed && $roundPointer !== $startRound);
             }
 
-            // === STEP 3: Validation and Final Insertion ===
-            foreach ($teamInterGames as $teamId => $count) {
-                if ($count < $maxInterGames) {
-                    \Log::warning("Team $teamId has only $count inter games (expected $maxInterGames)");
-                }
-            }
-
+            // === STEP 3: Generate game_id + Final insert ===
             $finalMatches = [];
             foreach (range(1, $totalRounds) as $round) {
                 $games = $roundGames[$round] ?? [];
                 $gameNum = 1;
-                foreach ($games as $game) {
-                    $game['game_id'] .= "-G{$gameNum}";
+                foreach ($games as &$game) {
+                    $type = $game['type'] ?? (str_contains($game['game_id'], 'inter') ? 'inter' : 'intra');
+                    $game['game_id'] = "S{$seasonId}-C{$game['conference_id']}-{$type}-G{$gameNum}";
                     $finalMatches[] = $game;
                     $gameNum++;
                 }

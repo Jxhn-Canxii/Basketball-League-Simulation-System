@@ -7,5 +7,9 @@ SELECT
 FROM schedules s
 JOIN teams th ON s.home_id = th.id
 JOIN teams ta ON s.away_id = ta.id
+WHERE (s.game_id LIKE '%intra%' OR s.game_id LIKE '%inter%')
+  AND s.season_id = (
+      SELECT MAX(id) FROM seasons
+  )
 GROUP BY s.round
 ORDER BY s.round;
