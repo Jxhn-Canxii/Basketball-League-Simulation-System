@@ -2,7 +2,7 @@
     <div>
         <div
             class="flex justify-end mb-2 space-x-2"
-            v-if="season_schedules && !season_schedules.is_simulated && !loadingSchedules"
+            v-if="data && !data.is_simulated && !loadingSchedules"
         >
             <!-- <button
                 @click.prevent="simulateConference(props.season_id,props.conference_id)"
@@ -19,7 +19,7 @@
                 :class="isHide ? 'opacity-50' : ''"
                 class="text-indigo-600 bg-orange-400 shadow rounded-full p-2 font-bold text-md text-nowrap hover:text-indigo-900"
             >
-                <span class="text-end">Simulate All Season</span>
+                <span class="text-end">Simulate All Season {{ data.is_simulated }}</span>
             </button>
         </div>
         <div v-else>
@@ -241,7 +241,6 @@
     import Top15MVPCandidate from "@/Pages/Seasons/Module/Top15MVPCandidate.vue";
     import ScoreCard from "@/Pages/Seasons/Module/ScoreCard.vue";
 
-    const season_schedules = ref(false);
     const isTradeModalOpen = ref(false);
     const isGameResultModalOpen = ref(false);
     const currentRound = ref(0);
@@ -278,7 +277,6 @@
     const fetchConferenceSchedules = async () => {
         try {
 
-            season_schedules.value = [];
             loadingSchedules.value = true;
             search_schedule.value.season_id = props.season_id;
             search_schedule.value.conference_id = props.conference_id;
