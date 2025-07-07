@@ -484,7 +484,6 @@ class SimulateController extends Controller
         if ($gameData->round === 'finals') {
             // Find the MVP of the winning team
             $this->updateFinalsWinner($gameData, $winnerId, $homeScore, $awayScore);
-            $this->upsertCurrentSeasonStoryline();
             // Update the finals contract
             // $this->updateFinalsBonusContract($gameData->home_team_id, $gameData->season_id,$gameData->home_team_name);
             // $this->updateFinalsBonusContract($gameData->away_team_id, $gameData->season_id,$gameData->away_team_name);
@@ -1766,7 +1765,7 @@ class SimulateController extends Controller
             // **Waive Player if Injury Recovery is Taking Too Long**
             $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->team_id); // Get total regular season games for the team
             $requiredRecoveryGames = ceil($totalTeamGames * 0.5); // Waive if injury > 50% of season
-            
+
             $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonStatus);
             //can replace injured players until in season trade deadline...
             if ($shouldWaiveThisPlayer) {
@@ -3390,27 +3389,27 @@ class SimulateController extends Controller
             }
         }
     }
-    private function upsertCurrentSeasonStoryline()
-    {
-        // Get the current season's storyline from the view
-        $storylineData = DB::table('current_season_storyline')->first();
+    // private function upsertCurrentSeasonStoryline()
+    // {
+    //     // Get the current season's storyline from the view
+    //     $storylineData = DB::table('current_season_storyline')->first();
 
-        if (!$storylineData) {
-            return response()->json(['message' => 'No current season storyline found.'], 404);
-        }
+    //     if (!$storylineData) {
+    //         return response()->json(['message' => 'No current season storyline found.'], 404);
+    //     }
 
-        // Perform safe insert or update
-        DB::table('storylines')->updateOrInsert(
-            ['season_id' => $storylineData->season_id], // Unique key
-            [
-                'storyline' => $storylineData->storyline,
-                'updated_at' => now(),
-                'created_at' => now(), // Safe to include; will only apply on insert
-            ]
-        );
+    //     // Perform safe insert or update
+    //     DB::table('storylines')->updateOrInsert(
+    //         ['season_id' => $storylineData->season_id], // Unique key
+    //         [
+    //             'storyline' => $storylineData->storyline,
+    //             'updated_at' => now(),
+    //             'created_at' => now(), // Safe to include; will only apply on insert
+    //         ]
+    //     );
 
-        return response()->json(['message' => 'Storyline inserted or updated successfully.']);
-    }
+    //     return response()->json(['message' => 'Storyline inserted or updated successfully.']);
+    // }
 
     // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
     private function shouldWaivePlayer($player, $seasonStatus, $requiredRecoveryGames = 25): bool

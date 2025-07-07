@@ -292,7 +292,7 @@
                                             <i class="fa fa-medal"></i>
                                             Awards
                                         </button>
-                                        <button  :disabled="season.status != 17" :class="season.status != 17 ? 'opacity-50' : ''" type="button" @click.prevent="isSeasonStoryLineModalOpen = season.id" class="px-2 py-2 bg-blue-500 font-bold text-md text-white shadow">
+                                        <button  :disabled="season.status <= 10" :class="season.status <= 10 ? 'opacity-50' : ''" type="button" @click.prevent="isSeasonStoryLineModalOpen = season.id" class="px-2 py-2 bg-blue-500 font-bold text-md text-white shadow">
                                             <i class="fa fa-image"></i>
                                             Storyline
                                         </button>

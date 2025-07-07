@@ -19,5 +19,6 @@ TRUNCATE TABLE transactions;
 TRUNCATE TABLE team_season_info;
 TRUNCATE TABLE coaches;
 TRUNCATE TABLE standings_snapshots;
+TRUNCATE TABLE storylines;
 
 SET FOREIGN_KEY_CHECKS = 1; -- Re-enable foreign key checks

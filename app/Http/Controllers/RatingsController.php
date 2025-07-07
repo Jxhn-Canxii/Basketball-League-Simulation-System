@@ -644,6 +644,7 @@ class RatingsController extends Controller
             $player->overall_rating = ($player->shooting_rating + $player->defense_rating + $player->passing_rating + $player->rebounding_rating) / 4;
         }
     }
+    
     private function logPlayerRatings($player, $seasonId)
     {
         // Check if the player ratings for the current season already exist

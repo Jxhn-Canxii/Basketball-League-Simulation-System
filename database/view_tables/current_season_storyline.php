@@ -230,13 +230,5 @@ LEFT JOIN team_season_info tsi
   ON s.id = tsi.season_id AND s.finals_winner_id = tsi.team_id
 LEFT JOIN player_season_stats pss 
   ON s.finals_mvp_id = pss.player_id AND s.id = pss.season_id
-WHERE s.status = 17 AND s.id = (SELECT MAX(id) FROM seasons WHERE status = 17)
-GROUP BY s.id, s.name, s.finals_winner_id, s.finals_loser_id, 
-         s.finals_winner_name, s.finals_loser_name, 
-         s.finals_winner_score, s.finals_loser_score, 
-         s.finals_mvp, s.finals_mvp_id, 
-         s.north_champion_id, s.south_champion_id, 
-         s.east_champion_id, s.west_champion_id,
-         s.north_champion_name, s.south_champion_name, 
-         s.east_champion_name, s.west_champion_name
+WHERE s.status > 10 AND s.id = (SELECT MAX(id) FROM seasons WHERE status > 10)
 ORDER BY s.id;
