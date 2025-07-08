@@ -417,6 +417,9 @@ class ScheduleController extends Controller
             $teamInterOpponents = array_fill_keys($teamIds, []);
             $roundGames = [];
 
+            $globalGameCounter = 1;
+            $confGameCounters = [];
+
             // === STEP 1: Intra-conference round robin ===
             $totalRounds = 0;
             foreach ($teamsByConf as $confId => $group) {
@@ -426,18 +429,19 @@ class ScheduleController extends Controller
                 $half = $numTeams / 2;
 
                 $rotating = $ids;
-                array_shift($rotating); // remove first
+                array_shift($rotating);
+
+                $confGameCounters[$confId] = 1;
 
                 for ($round = 0; $round < $numRounds; $round++) {
                     for ($i = 0; $i < $half; $i++) {
                         $teamA = $i === 0 ? $ids[0] : $rotating[$i - 1];
                         $teamB = $rotating[$numRounds - 1 - $i];
-
                         if (rand(0, 1)) [$teamA, $teamB] = [$teamB, $teamA];
 
                         $roundGames[$round + 1][] = [
                             'season_id' => $seasonId,
-                            'game_id' => '', // to be filled later
+                            'game_id' => '',
                             'conference_id' => $confId,
                             'home_id' => $teamA,
                             'away_id' => $teamB,
@@ -450,13 +454,12 @@ class ScheduleController extends Controller
                         $teamHomeGames[$teamA]++;
                     }
 
-                    array_unshift($rotating, array_pop($rotating)); // rotate
+                    array_unshift($rotating, array_pop($rotating));
                 }
-
                 $totalRounds = max($totalRounds, $numRounds);
             }
 
-            // === STEP 2: Inter-conference matchups (spread fairly, avoid consecutive matches) ===
+            // === STEP 2: Inter-conference matchups with max per round enforcement ===
             $interPairs = [];
             for ($i = 0; $i < count($teamIds); $i++) {
                 for ($j = $i + 1; $j < count($teamIds); $j++) {
@@ -470,6 +473,9 @@ class ScheduleController extends Controller
 
             shuffle($interPairs);
             $roundPointer = 1;
+            $totalInterGames = (count($teamIds) * $maxInterGames) / 2;
+            $maxInterPerRound = ceil($totalInterGames / $totalRounds);
+            $interGamesPerRound = array_fill(1, $totalRounds, 0);
 
             foreach ($interPairs as [$a, $b]) {
                 if (
@@ -484,17 +490,21 @@ class ScheduleController extends Controller
 
                 do {
                     $games = $roundGames[$roundPointer] ?? [];
-                    $lastGame = end($games);
-                    $lastTeams = $lastGame ? [$lastGame['home_id'], $lastGame['away_id']] : [];
+                    $roundTeamIds = array_merge(array_column($games, 'home_id'), array_column($games, 'away_id'));
 
-                    if (!in_array($a, $lastTeams) && !in_array($b, $lastTeams)) {
+                    if (!in_array($a, $roundTeamIds) && !in_array($b, $roundTeamIds) && $interGamesPerRound[$roundPointer] < $maxInterPerRound) {
                         $home = $teamHomeGames[$a] <= $teamHomeGames[$b] ? $a : $b;
                         $away = $home === $a ? $b : $a;
 
+                        $confId = $conferenceMap[$home];
+                        if (!isset($confGameCounters[$confId])) {
+                            $confGameCounters[$confId] = 1;
+                        }
+
                         $roundGames[$roundPointer][] = [
                             'season_id' => $seasonId,
-                            'game_id' => '', // to be set later
-                            'conference_id' => $conferenceMap[$home],
+                            'game_id' => '',
+                            'conference_id' => $confId,
                             'home_id' => $home,
                             'away_id' => $away,
                             'home_score' => 0,
@@ -509,6 +519,7 @@ class ScheduleController extends Controller
                         $teamInterGames[$b]++;
                         $teamInterOpponents[$a][] = $b;
                         $teamInterOpponents[$b][] = $a;
+                        $interGamesPerRound[$roundPointer]++;
                         $placed = true;
                     }
 
@@ -520,12 +531,13 @@ class ScheduleController extends Controller
             $finalMatches = [];
             foreach (range(1, $totalRounds) as $round) {
                 $games = $roundGames[$round] ?? [];
-                $gameNum = 1;
                 foreach ($games as &$game) {
-                    $type = $game['type'] ?? (str_contains($game['game_id'], 'inter') ? 'inter' : 'intra');
-                    $game['game_id'] = "S{$seasonId}-C{$game['conference_id']}-{$type}-G{$gameNum}";
+                    $type = $game['type'] ?? 'intra';
+                    $confId = $game['conference_id'];
+                    $game['game_id'] = "S{$seasonId}-C{$confId}-{$type}-G{$confGameCounters[$confId]}-GLOB{$globalGameCounter}";
+                    $confGameCounters[$confId]++;
+                    $globalGameCounter++;
                     $finalMatches[] = $game;
-                    $gameNum++;
                 }
             }
 
@@ -540,7 +552,7 @@ class ScheduleController extends Controller
             DB::commit();
             return response()->json([
                 'success' => true,
-                'message' => 'Schedule generated with intra/inter mixed rounds',
+                'message' => 'Schedule generated with balanced inter and intra rounds',
                 'total_rounds' => $totalRounds,
                 'total_matches' => count($finalMatches),
             ]);
