@@ -1,8 +1,6 @@
 CREATE OR REPLACE VIEW teams_with_hardship_contracts AS
 SELECT 
-    t.id AS team_id,
     t.name AS team_name,
-    p.id AS player_id,
     p.name AS player_name,
     GROUP_CONCAT(DISTINCT COALESCE(s.name, CONCAT('Season ID ', tr.season_id)) ORDER BY s.name) AS seasons_signed,
     COUNT(*) AS hardship_contracts_count
