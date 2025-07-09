@@ -20,12 +20,6 @@ return new class extends Migration
             $table->integer('coach_iq');
             $table->integer('chemistry');
             $table->timestamps();
-
-            // Foreign key constraints
-            $table->foreign('team_id')->references('id')->on('teams')->onDelete('cascade');
-            $table->foreign('season_id')->references('id')->on('seasons')->onDelete('cascade');
-            $table->foreign('conference_id')->references('id')->on('conferences')->onDelete('cascade');
-            $table->foreign('coach_id')->references('id')->on('coaches')->onDelete('cascade');
         });
     }
 

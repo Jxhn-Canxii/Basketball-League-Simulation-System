@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('trade_proposals', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('season_id')->constrained();
-            $table->foreignId('team_to_id')->constrained('teams');
-            $table->foreignId('team_from_id')->constrained('teams');
-            $table->foreignId('player_from_id')->constrained('players');
-            $table->foreignId('player_to_id')->constrained('players');
+            $table->foreignId('season_id');
+            $table->foreignId('team_to_id');
+            $table->foreignId('team_from_id');
+            $table->foreignId('player_from_id');
+            $table->foreignId('player_to_id');
             $table->string('type', 20);
             $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
             $table->timestamps();

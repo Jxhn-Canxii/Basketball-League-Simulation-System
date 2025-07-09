@@ -1,4 +1,4 @@
-CREATE TABLE `team_season_info` (
+CREATE OR REPLACE TABLE `team_season_info` (
   `id` BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
   `team_id` BIGINT UNSIGNED NOT NULL,
   `season_id` BIGINT UNSIGNED NOT NULL,
@@ -6,8 +6,8 @@ CREATE TABLE `team_season_info` (
   `coach_id` BIGINT UNSIGNED NOT NULL,
   `coach_iq` INT UNSIGNED NOT NULL, 
   `chemistry` INT UNSIGNED NOT NULL,
-  'is_playoff_qualified` TINYINT UNSIGNED NOT NULL,
-  'is_defending_champion` TINYINT UNSIGNED NOT NULL,
+  `is_playoff_qualified` TINYINT UNSIGNED NOT NULL,
+  `is_defending_champion` TINYINT UNSIGNED NOT NULL,
   `created_at` TIMESTAMP NULL DEFAULT NULL,
   `updated_at` TIMESTAMP NULL DEFAULT NULL
 )
