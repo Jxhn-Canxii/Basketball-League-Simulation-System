@@ -91,6 +91,9 @@
                         </li>
                     </ul>
                 </div>
+                <h2 class="text-2xl font-bold text-white">
+                    {{ gameDetails?.home_team.sponsor }}
+                </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.home_team.team_id }}</small>
             </div>
 
@@ -203,6 +206,9 @@
                         </li>
                     </ul>
                 </div>
+                <h2 class="text-2xl font-bold text-white">
+                    {{ gameDetails?.away_team.sponsor }}
+                </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.away_team.team_id }}</small>
             </div>
         </div>

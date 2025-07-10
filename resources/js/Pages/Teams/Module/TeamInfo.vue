@@ -19,7 +19,9 @@
             <span>Coach: {{ team_info.teams.coach_name }} ( {{ team_info.teams.coach_winning }}%)</span>
         </div>
         <div class="flex justify-end">
-            {{ team_info.teams.description ?? "-" }}
+            <h2 class="text-4xl font-bold text-white">
+                {{  team_info.teams.sponsor }}
+            </h2>
         </div>
     </div>
     <div class="mt-4 grid md:grid-cols-5 grid-cols-1 gap-4 p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }" v-if="team_info">

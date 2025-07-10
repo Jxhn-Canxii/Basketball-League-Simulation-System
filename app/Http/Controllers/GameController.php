@@ -31,9 +31,13 @@ class GameController extends Controller
             ->where('schedule_view.game_id', $game_id)
             ->select(
                 'schedule_view.*', // Select all columns from schedule_view
+                'away_team.description as away_description',
+                'away_team.sponsor as away_sponsor',
                 'away_team.primary_color as away_primary_color',
                 'away_team.secondary_color as away_secondary_color',
                 'away_team.city as away_city',
+                'home_team.description as home_description',
+                'home_team.sponsor as home_sponsor',
                 'home_team.primary_color as home_primary_color',
                 'home_team.secondary_color as home_secondary_color',
                 'home_team.city as home_city',
@@ -448,6 +452,8 @@ class GameController extends Controller
                 'score' => $game->home_score,
                 'primary_color' => $game->home_primary_color, // Add primary color
                 'secondary_color' => $game->home_secondary_color, // Add secondary color
+                'description' => $game->home_description, // Add secondary color
+                'sponsor' => $game->home_sponsor, // Add secondary color
                 'streak' => $homeTeamStreak,
                 'ratings' => $homeTeamRatings,
             ],
@@ -458,6 +464,8 @@ class GameController extends Controller
                 'score' => $game->away_score,
                 'primary_color' => $game->away_primary_color, // Add primary color
                 'secondary_color' => $game->away_secondary_color, // Add secondary color
+                'description' => $game->away_description, // Add secondary color
+                'sponsor' => $game->away_sponsor, // Add secondary color
                 'streak' => $awayTeamStreak,
                 'ratings' => $awayTeamRatings,
             ],
