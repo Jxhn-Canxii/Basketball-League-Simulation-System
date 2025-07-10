@@ -20,12 +20,12 @@
         </div>
         <div class="flex justify-end p-0">
         <div
-            class="trapezoid-right bg-white px-6 py-0"
+            class="trapezoid-right bg-white px-2 py-2"
             style="width: 300px;"
         >
             <h2
             :style="{ color: '#' + team_info.teams.primary_color }"
-            class="text-4xl font-bold text-right"
+            class="text-3xl font-bold text-right text-nowrap"
             >
             {{ team_info.teams.sponsor }}
             </h2>
