@@ -91,7 +91,7 @@
                         </li>
                     </ul>
                 </div>
-                <h2 class="text-xl px-2 font-bold text-gray-200">
+                <h2 class="text-sm absolute bottom-2 left-2 font-bold text-gray-200">
                     {{ gameDetails?.home_team.sponsor }}
                 </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.home_team.team_id }}</small>
@@ -206,7 +206,7 @@
                         </li>
                     </ul>
                 </div>
-                <h2 class="text-xl font-bold text-gray-200">
+                <h2 class="text-sm absolute bottom-2 left-2 font-bold text-gray-200">
                     {{ gameDetails?.away_team.sponsor }}
                 </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.away_team.team_id }}</small>
