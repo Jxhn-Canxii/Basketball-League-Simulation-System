@@ -39,7 +39,7 @@
                     {{ gameDetails?.home_team.score }}
                 </h2>
                 <p
-                    class="text-md font-semibold text-white text-center"
+                    class="text-4xl font-semibold text-white text-center"
                     :style="{
                         backgroundColor:
                             '#' + gameDetails?.home_team.secondary_color,
@@ -91,7 +91,7 @@
                         </li>
                     </ul>
                 </div>
-                <h2 class="text-2xl font-bold text-white">
+                <h2 class="text-xl px-2 font-bold text-gray-200">
                     {{ gameDetails?.home_team.sponsor }}
                 </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.home_team.team_id }}</small>
@@ -154,7 +154,7 @@
                     {{ gameDetails?.away_team.score }}
                 </h2>
                 <p
-                    class="text-md font-semibold text-white text-center"
+                    class="text-4xl font-semibold text-white text-center"
                     :style="{
                         backgroundColor:
                             '#' + gameDetails?.away_team.secondary_color,
@@ -206,7 +206,7 @@
                         </li>
                     </ul>
                 </div>
-                <h2 class="text-2xl font-bold text-white">
+                <h2 class="text-xl font-bold text-white">
                     {{ gameDetails?.away_team.sponsor }}
                 </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.away_team.team_id }}</small>

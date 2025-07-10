@@ -18,10 +18,18 @@
             </h2>
             <span>Coach: {{ team_info.teams.coach_name }} ( {{ team_info.teams.coach_winning }}%)</span>
         </div>
-        <div class="flex justify-end">
-            <h2 class="text-4xl font-bold text-white">
-                {{  team_info.teams.sponsor }}
+        <div class="flex justify-end p-0">
+        <div
+            class="trapezoid-right bg-white px-6 py-0"
+            style="width: 300px;"
+        >
+            <h2
+            :style="{ color: '#' + team_info.teams.primary_color }"
+            class="text-4xl font-bold text-right"
+            >
+            {{ team_info.teams.sponsor }}
             </h2>
+        </div>
         </div>
     </div>
     <div class="mt-4 grid md:grid-cols-5 grid-cols-1 gap-4 p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }" v-if="team_info">
@@ -789,3 +797,8 @@ const paginatedBattles = computed(() => {
 
 
 </script>
+<style scoped>
+.trapezoid-right {
+  clip-path: polygon(20% 0%, 100% 0%, 100% 100%, 0% 100%);
+}
+</style>
