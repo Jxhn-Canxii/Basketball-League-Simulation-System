@@ -345,15 +345,6 @@ SELECT
     ' scoring ',
     COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' in their final test. ',
     '\n\n',
-    'The playoffs were filled with memorable moments. ',
-    (SELECT STRING_AGG(
-      CONCAT('The ', round, ' between ', team1_name, ' and ', team2_name, ' went to ', 
-      GREATEST(team1_wins, team2_wins), '-', LEAST(team1_wins, team2_wins), 
-      CASE WHEN high_score IS NOT NULL THEN CONCAT(' with a playoff-high ', high_score, ' points scored') ELSE '' END), 
-     ', ') 
-    FROM playoff_series ps WHERE ps.season_id = s.id),
-    '. ',
-    '\n\n',
     'The finals delivered fireworks as the championship game concluded ',
     (SELECT CONCAT('with a scoreline of ', f.home_team, ' ', f.home_score, ' - ', f.away_score, ' ', f.away_team)
      FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' ORDER BY f.home_score + f.away_score DESC LIMIT 1),
