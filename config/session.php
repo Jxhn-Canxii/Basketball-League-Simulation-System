@@ -20,6 +20,10 @@ return [
 
     'driver' => env('SESSION_DRIVER', 'file'),
 
+    'lifetime' => 120,
+
+    'expire_on_close' => false,
+
     /*
     |--------------------------------------------------------------------------
     | Session Lifetime
