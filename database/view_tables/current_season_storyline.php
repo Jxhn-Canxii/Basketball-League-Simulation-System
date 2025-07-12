@@ -10,6 +10,7 @@ WITH champion_runs AS (
 consecutive_titles AS (
   SELECT cr1.id,
          cr1.finals_winner_id,
+         cr1.finals_winner_id,
          COUNT(*) AS consecutive_titles
   FROM champion_runs cr1
   JOIN champion_runs cr2
@@ -150,37 +151,9 @@ finals_details AS (
 finals_winner_rank AS (
   SELECT ss.season_id, ss.team_id, ss.conference_rank
   FROM standings_snapshots ss
-  GROUP BY ss.season_id, ss.team_id, ss.conference_rank
-),
-playoff_series AS (
-  SELECT 
-    s.id AS season_id,
-    sch.round,
-    t1.name AS team1_name,
-    t2.name AS team2_name,
-    COUNT(CASE WHEN sch.winner_id = sch.home_id THEN 1 END) AS team1_wins,
-    COUNT(CASE WHEN sch.winner_id = sch.away_id THEN 1 END) AS team2_wins,
-    MAX(pgs.points) AS high_score
-  FROM schedules sch
-  JOIN seasons s ON s.id = sch.season_id
-  JOIN teams t1 ON t1.id = sch.home_id
-  JOIN teams t2 ON t2.id = sch.away_id
-  LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
-  WHERE sch.round IN ('quarter_finals', 'semi_finals', 'finals')
-    AND s.status = 17
-  GROUP BY s.id, sch.round, t1.name, t2.name
-),
-season_stats AS (
-  SELECT 
-    s.id AS season_id,
-    AVG(sch.home_score + sch.away_score) AS avg_points_per_game,
-    MAX(pgs.points) AS season_high_points,
-    COUNT(DISTINCT CASE WHEN pgs.points >= 50 THEN pgs.player_id END) AS fifty_point_games
-  FROM seasons s
-  JOIN schedules sch ON sch.season_id = s.id
-  LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
-  WHERE s.status = 17
-  GROUP BY s.id
+  WHERE (ss.season_id, ss.round) IN (
+    SELECT season_id, MAX(round) FROM standings_snapshots GROUP BY season_id
+  )
 )
 SELECT
   s.id AS season_id,
