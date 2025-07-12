@@ -134,15 +134,22 @@ finals_mvp AS (
 ),
 finals_details AS (
   SELECT s.id,
-         sch.home_score, sch.away_score, t1.name AS home_team, t2.name AS away_team,
-         sch.winner_id, sch.round, sch.home_id, sch.away_id
+    sch.home_score, sch.away_score, t1.name AS home_team, t2.name AS away_team,
+    sch.winner_id, sch.round, sch.home_id, sch.away_id
   FROM schedules sch
   JOIN seasons s ON s.id = sch.season_id
   JOIN teams t1 ON t1.id = sch.home_id
   JOIN teams t2 ON t2.id = sch.away_id
   WHERE sch.round IN ('finals', 'semi_finals')
     AND s.status = 17
-)
+),
+finals_winner_rank AS (
+  SELECT ss.season_id, ss.team_id, ss.conference_rank
+  FROM standings_snapshots ss
+  WHERE (ss.season_id, ss.round) IN (
+    SELECT season_id, MAX(round) FROM standings_snapshots GROUP BY season_id
+  )
+),
 SELECT
   s.id AS season_id,
   s.name AS season_name,
@@ -153,6 +160,7 @@ SELECT
       WHEN s.id = 1 THEN 'INAUGURAL CHAMPIONS CROWNED IN HISTORIC FIRST SEASON'
       WHEN ct2.consecutive_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' COMPLETE HISTORIC THREE-PEAT RUN')
       WHEN r.is_redemption = 1 THEN CONCAT('REDEMPTION: ', UPPER(s.finals_winner_name), ' AVENGE PAST LOSS')
+      WHEN fwr.conference_rank >= 6 THEN CONCAT('CINDERELLA RUN: ', UPPER(s.finals_winner_name), ' STUNS THE LEAGUE FROM ', fwr.conference_rank, 'TH SEED')
       WHEN tt.total_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' CAPTURE ', 
           CASE tt.total_titles
               WHEN 1 THEN '1st'
