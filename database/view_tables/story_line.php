@@ -150,7 +150,6 @@ finals_details AS (
 finals_winner_rank AS (
   SELECT ss.season_id, ss.team_id, ss.conference_rank
   FROM standings_snapshots ss
-  WHERE ss.week = (SELECT MAX(week) FROM standings_snapshots ss2 WHERE ss2.season_id = ss.season_id)
   GROUP BY ss.season_id, ss.team_id, ss.conference_rank
 ),
 playoff_series AS (
