@@ -1,10 +1,11 @@
 <template>
     <div class="draft-board">
         <div class="overflow-x-auto mb-8" v-if="data">
-            <p>{{ data.storyline }}</p>
+            <p v-for="(paragraph, index) in storylineParagraphs" :key="index" :class="index === 0 ? 'storyline-title' : 'storyline-paragraph'">
+                {{ paragraph }}
+            </p>
         </div>
     </div>
-
 </template>
 
 <script setup>
@@ -25,6 +26,14 @@ const props = defineProps({
     },
 });
 
+// Computed property to split storyline into paragraphs
+const storylineParagraphs = computed(() => {
+    if (data.value.storyline) {
+        return data.value.storyline.split('\n\n').filter(paragraph => paragraph.trim());
+    }
+    return [];
+});
+
 onMounted(async () => {
     await fetchStoryLine();
 });
@@ -35,7 +44,24 @@ const fetchStoryLine = async () => {
         const response = await axios.post(route("seasons.storyline"), { season_id: props.season_id });
         data.value = response.data;
     } catch (error) {
-        console.error("Error fetching draft history:", error);
+        console.error("Error fetching storyline:", error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to load storyline. Please try again.',
+        });
     }
 };
 </script>
+
+<style scoped>
+.storyline-title {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 1.5rem;
+}
+
+.storyline-paragraph {
+    margin-bottom: 1rem;
+}
+</style>

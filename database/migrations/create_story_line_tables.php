@@ -1,3 +1,4 @@
+<?php
 // database/migrations/[timestamp]_create_storylines_table.php
 
 use Illuminate\Database\Migrations\Migration;
@@ -14,7 +15,7 @@ return new class extends Migration
             $table->text('storyline');
             $table->timestamps();
             
-            $table->foreign('season_id')->references('id')->on('seasons')->onDelete('cascade');
+            $table->foreign('season_id')->references('season_id')->on('seasons')->onDelete('cascade');
         });
     }
 
