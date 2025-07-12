@@ -319,5 +319,7 @@ LEFT JOIN conference_redemption cr ON cr.id = s.id
 LEFT JOIN redemption r ON r.id = s.id
 LEFT JOIN awards aw ON aw.season_id = s.id
 LEFT JOIN finals_mvp fm ON fm.season_id = s.id
+LEFT JOIN finals_winner_rank fwr 
+  ON fwr.season_id = s.id AND fwr.team_id = s.finals_winner_id
 WHERE s.status > 10 AND s.id = (SELECT MAX(id) FROM seasons WHERE status > 10)
 ORDER BY s.id;
