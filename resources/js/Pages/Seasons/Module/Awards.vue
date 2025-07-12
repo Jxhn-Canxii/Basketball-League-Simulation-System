@@ -1,17 +1,30 @@
 <template>
-    <div class="team-roster">
+    <div class="team-roster relative">
+        <!-- Loader Overlay with Progress -->
+        <div v-if="isLoading" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
+            <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center w-80">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
+                <p class="mt-4 text-lg font-semibold text-gray-700">Preparing Season Awards...</p>
+                <div class="w-full mt-4">
+                    <div class="progress">
+                        <div class="progress-bar" :style="{ width: progressPercentage + '%' }">{{ progressPercentage }}%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <h2 class="text-xl font-semibold text-gray-800">Season Awards</h2>
 
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
 
         <!-- Update Button -->
-        <div class="mb-4 flex justify-center items-center" v-if="!awards.length">
+        <div class="mb-4 flex justify-center items-center" v-if="!awards.length && !isLoading">
             <p class="text-red-500 font-bold text-2xl">***No data available***</p>
         </div>
 
         <!-- Awards Table -->
-        <div class="overflow-x-auto" v-if="awards.length">
+        <div class="overflow-x-auto" v-if="awards.length && !isLoading">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
@@ -33,93 +46,66 @@
         </div>
     </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from 'vue';
-import axios from 'axios'; // Ensure axios is imported
+import axios from 'axios';
 import Swal from 'sweetalert2';
 
 const awards = ref([]);
+const isLoading = ref(false);
+const progressPercentage = ref(0);
 const props = defineProps({
     team_ids: Array,
 });
 
-// const updatePlayerStatus = async () => {
-//     try {
-//         const team_ids = props.team_ids;
+const updatePlayerStatus = async () => {
+    try {
+        isLoading.value = true;
+        const team_ids = props.team_ids;
+        const team_count = team_ids.length;
 
-//         for (let i = 0; i < team_ids.length; i++) {
-//             const team_id = team_ids[i];
-//             const is_last = i === team_ids.length - 1;
+        for (let i = 0; i < team_count; i++) {
+            const team_id = team_ids[i];
+            await updatePlayerStatusPerTeam(i, team_id, team_count);
+            progressPercentage.value = Math.round(((i + 1) / team_count) * 100);
+        }
 
-//             // Update player status for each team and get the response
-//             await updatePlayerStatusPerTeam(i, team_id,team_ids.length);
-//             if (is_last) {
-//                 await showSeasonAwards();
-//             }
-//         }
-//     } catch (error) {
-//         console.error(error);
-//         Swal.fire({
-//             icon: 'error',
-//             title: 'Error!',
-//             text: 'Failed to update player status for some or all teams. Please try again later.',
-//         });
-//     }
-// };
+        await showSeasonAwards();
+        Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'All player stats updated successfully.',
+        });
+    } catch (error) {
+        console.error(error);
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: 'Failed to update player status for some or all teams. Please try again later.',
+        });
+    } finally {
+        isLoading.value = false;
+        progressPercentage.value = 0;
+    }
+};
 
-// const updatePlayerStatusPerTeam = async (index, team_id, team_count) => {
-//     try {
-//         // const total_teams = team_count + 1;
-
-//         // Show the initial Swal with a progress bar
-//         Swal.fire({
-//             title: 'Preparing Season Awards',
-//             html: `<div id="progress-container">
-//                     <p>Processing team ${team_id}/${team_count}</p>
-//                     <div class="progress">
-//                         <div id="progress-bar" class="progress-bar" role="progressbar" style="width: ${((index / team_count) * 100)}%;" aria-valuenow="${index}" aria-valuemin="0" aria-valuemax="${team_count}"></div>
-//                     </div>
-//                    </div>`,
-//             showConfirmButton: true,
-//             allowOutsideClick: false,
-//             position: 'top',
-//             willOpen: () => {
-//                 Swal.showLoading();
-//             }
-//         });
-
-//         // Make the request
-//         const response = await axios.post(route('store.player.stats'), { team_id: team_id });
-
-//         // Update progress bar after response
-//         const progressPercentage = ((index / team_count) * 100);
-//         document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
-
-//         // After completion of all teams, show a success message
-//         if (index === team_count) {
-//             Swal.fire({
-//                 title: 'Success!',
-//                 text: 'All player stats updated successfully.',
-//                 icon: 'success',
-//                 showConfirmButton: true,
-//             });
-//         }
-
-//     } catch (error) {
-//         console.error(error);
-//         Swal.fire({
-//             icon: 'error',
-//             title: 'Error!',
-//             text: 'Failed to update player stats. Please try again later.',
-//         });
-//     }
-// };
-
+const updatePlayerStatusPerTeam = async (index, team_id, team_count) => {
+    try {
+        await axios.post(route('store.player.stats'), { team_id });
+    } catch (error) {
+        console.error(error);
+        throw new Error('Failed to update player stats for team ' + team_id);
+    }
+};
 
 const showSeasonAwards = async () => {
     try {
+        isLoading.value = true;
+        progressPercentage.value = 50; // Example: set to 50% while fetching awards
         const response = await axios.post(route('player.awards'));
         awards.value = response.data.awards;
+        progressPercentage.value = 100;
     } catch (error) {
         console.error(error);
         Swal.fire({
@@ -127,25 +113,29 @@ const showSeasonAwards = async () => {
             title: 'Error!',
             text: 'Failed to fetch season awards. Please try again later.',
         });
+    } finally {
+        isLoading.value = false;
+        progressPercentage.value = 0;
     }
 };
 
 onMounted(() => {
-    // Initialize if needed
     showSeasonAwards();
+    // Uncomment the following line to trigger team updates on mount
+    // updatePlayerStatus();
 });
 </script>
+
 <style scoped>
 .table {
-    font-size: 0.75rem; /* Smaller text size */
+    font-size: 0.75rem;
 }
 
 .table th,
 .table td {
-    padding: 0.5rem; /* Smaller padding */
+    padding: 0.5rem;
 }
 
-/* Progress bar styling */
 .progress {
     width: 100%;
     background-color: #f3f3f3;
@@ -160,7 +150,6 @@ onMounted(() => {
     text-align: center;
     color: white;
     line-height: 20px;
-    transition: width 0.5s;
+    transition: width 0.5s ease-in-out;
 }
-
 </style>
