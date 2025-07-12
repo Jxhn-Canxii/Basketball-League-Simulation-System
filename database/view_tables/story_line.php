@@ -9,13 +9,14 @@ WITH champion_runs AS (
 ),
 consecutive_titles AS (
   SELECT cr1.id,
+         cr1.finals_winner_id,
          COUNT(*) AS consecutive_titles
   FROM champion_runs cr1
   JOIN champion_runs cr2
     ON cr2.finals_winner_id = cr1.finals_winner_id
    AND cr2.grp = cr1.grp
    AND cr2.id <= cr1.id
-  GROUP BY cr1.id
+  GROUP BY cr1.id, cr1.finals_winner_id, cr1.grp
 ),
 total_titles AS (
   SELECT s.id,
@@ -29,13 +30,15 @@ total_titles AS (
   GROUP BY s.id
 ),
 redemption AS (
-  -- Checks if the current season's champion was a finals loser in any prior season
   SELECT s.id,
          CASE WHEN EXISTS (
            SELECT 1 FROM seasons s2
            WHERE s2.finals_loser_id = s.finals_winner_id
              AND s2.id < s.id AND s2.status = 17
-         ) THEN 1 ELSE 0 END AS is_redemption
+         ) THEN 1 ELSE 0 END AS is_redemption,
+         (SELECT MAX(s2.id) FROM seasons s2
+          WHERE s2.finals_loser_id = s.finals_winner_id
+            AND s2.id < s.id AND s2.status = 17) AS redemption_season_id
   FROM seasons s
   WHERE s.status = 17
 ),
@@ -90,8 +93,7 @@ conference_redemption AS (
            SELECT 1 FROM schedules sch
            JOIN seasons s2 ON sch.season_id = s2.id
            WHERE sch.round = 'semi_finals'
-             AND sch.season_id <
- s.id
+             AND sch.season_id < s.id
              AND (sch.home_id = s.north_champion_id OR sch.away_id = s.north_champion_id)
              AND sch.winner_id != s.north_champion_id
              AND s2.finals_winner_id != s.north_champion_id
@@ -113,14 +115,16 @@ conference_redemption AS (
 award_counts AS (
   SELECT player_id, award_name, COUNT(*) AS award_count
   FROM season_awards
-  WHERE award_name IN ('Best Overall Player', 'Best Defensive Player', 'Sixth Man of the Year')
+  WHERE award_name IN ('Best Overall Player', 'Best Defensive Player', 'Sixth Man of the Year', 'Most Improved Player', 'Rookie of the Year')
   GROUP BY player_id, award_name
 ),
 awards AS (
   SELECT sa.season_id,
          MAX(CASE WHEN sa.award_name = 'Best Overall Player' THEN CONCAT(p.name, ' (', ac.award_count, 'x MVP)') END) AS best_overall,
          MAX(CASE WHEN sa.award_name = 'Best Defensive Player' THEN CONCAT(p.name, ' (', ac.award_count, 'x DPOY)') END) AS best_defense,
-         MAX(CASE WHEN sa.award_name = 'Sixth Man of the Year' THEN CONCAT(p.name, ' (', ac.award_count, 'x 6th Man)') END) AS sixth_man
+         MAX(CASE WHEN sa.award_name = 'Sixth Man of the Year' THEN CONCAT(p.name, ' (', ac.award_count, 'x 6th Man)') END) AS sixth_man,
+         MAX(CASE WHEN sa.award_name = 'Most Improved Player' THEN p.name END) AS most_improved,
+         MAX(CASE WHEN sa.award_name = 'Rookie of the Year' THEN p.name END) AS rookie_year
   FROM season_awards sa
   JOIN players p ON p.id = sa.player_id
   LEFT JOIN award_counts ac ON ac.player_id = sa.player_id AND ac.award_name = sa.award_name
@@ -146,9 +150,38 @@ finals_details AS (
 finals_winner_rank AS (
   SELECT ss.season_id, ss.team_id, ss.conference_rank
   FROM standings_snapshots ss
-  WHERE (ss.season_id, ss.round) IN (
-    SELECT season_id, MAX(round) FROM standings_snapshots GROUP BY season_id
-  )
+  WHERE ss.week = (SELECT MAX(week) FROM standings_snapshots ss2 WHERE ss2.season_id = ss.season_id)
+  GROUP BY ss.season_id, ss.team_id, ss.conference_rank
+),
+playoff_series AS (
+  SELECT 
+    s.id AS season_id,
+    sch.round,
+    t1.name AS team1_name,
+    t2.name AS team2_name,
+    COUNT(CASE WHEN sch.winner_id = sch.home_id THEN 1 END) AS team1_wins,
+    COUNT(CASE WHEN sch.winner_id = sch.away_id THEN 1 END) AS team2_wins,
+    MAX(pgs.points) AS high_score
+  FROM schedules sch
+  JOIN seasons s ON s.id = sch.season_id
+  JOIN teams t1 ON t1.id = sch.home_id
+  JOIN teams t2 ON t2.id = sch.away_id
+  LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
+  WHERE sch.round IN ('quarter_finals', 'semi_finals', 'finals')
+    AND s.status = 17
+  GROUP BY s.id, sch.round, t1.name, t2.name
+),
+season_stats AS (
+  SELECT 
+    s.id AS season_id,
+    AVG(sch.home_score + sch.away_score) AS avg_points_per_game,
+    MAX(pgs.points) AS season_high_points,
+    COUNT(DISTINCT CASE WHEN pgs.points >= 50 THEN pgs.player_id END) AS fifty_point_games
+  FROM seasons s
+  JOIN schedules sch ON sch.season_id = s.id
+  LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
+  WHERE s.status = 17
+  GROUP BY s.id
 )
 SELECT
   s.id AS season_id,
@@ -160,7 +193,14 @@ SELECT
       WHEN s.id = 1 THEN 'INAUGURAL CHAMPIONS CROWNED IN HISTORIC FIRST SEASON'
       WHEN ct2.consecutive_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' COMPLETE HISTORIC THREE-PEAT RUN')
       WHEN r.is_redemption = 1 THEN CONCAT('REDEMPTION: ', UPPER(s.finals_winner_name), ' AVENGE PAST LOSS')
-      WHEN fwr.conference_rank >= 6 THEN CONCAT('CINDERELLA RUN: ', UPPER(s.finals_winner_name), ' STUNS THE LEAGUE FROM ', fwr.conference_rank, 'TH SEED')
+      WHEN fwr.conference_rank >= 6 THEN CONCAT('CINDERELLA RUN: ', UPPER(s.finals_winner_name), ' STUNS THE LEAGUE FROM ', fwr.conference_rank, 
+          CASE 
+            WHEN fwr.conference_rank % 100 BETWEEN 11 AND 13 THEN 'TH'
+            WHEN fwr.conference_rank % 10 = 1 THEN 'ST'
+            WHEN fwr.conference_rank % 10 = 2 THEN 'ND'
+            WHEN fwr.conference_rank % 10 = 3 THEN 'RD'
+            ELSE 'TH'
+          END, ' SEED')
       WHEN tt.total_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' CAPTURE ', 
           CASE tt.total_titles
               WHEN 1 THEN '1st'
@@ -174,17 +214,17 @@ SELECT
     '\n\n',
     'In a season filled with storylines, the ', s.name, ' belonged to the ', COALESCE(s.finals_winner_name, 'Unknown Champion'),
     CASE 
-      WHEN s.id > 1 AND r.is_redemption = 1 THEN CONCAT('. After falling short in a previous finals appearance, they stormed back with a vengeance to claim their ',
+      WHEN s.id > 1 AND r.is_redemption = 1 THEN CONCAT('. After falling short in Season ', r.redemption_season_id, ', they stormed back with a vengeance to claim their ',
           CASE COALESCE(tt.total_titles, 1)
               WHEN 1 THEN '1st'
               WHEN 2 THEN '2nd'
               WHEN 3 THEN '3rd'
               ELSE CONCAT(COALESCE(tt.total_titles, 1), 'th')
-          END) 
+          END, ' championship') 
       ELSE '.' 
     END,
     CASE 
-      WHEN s.id > 1 AND COALESCE(ct2.consecutive_titles, 0) > 1 THEN CONCAT(' championship — marking their ', 
+      WHEN s.id > 1 AND COALESCE(ct2.consecutive_titles, 0) > 1 THEN CONCAT(' — marking their ', 
           CASE ct2.consecutive_titles
               WHEN 1 THEN '1st'
               WHEN 2 THEN '2nd'
@@ -197,7 +237,14 @@ SELECT
       WHEN s.id > 1 AND r.is_redemption = 1 THEN ', completing a powerful redemption arc that silenced critics.' 
       ELSE '' 
     END,
-    ' On the road to the championship, the four conference champions made their mark. ',
+    '\n\n',
+    'The season was marked by offensive fireworks, with teams averaging ', ROUND(stats.avg_points_per_game, 1), ' points per game. ',
+    CASE 
+      WHEN stats.fifty_point_games > 0 THEN CONCAT('A total of ', stats.fifty_point_games, ' players scored 50+ points in games, with the season high being ', stats.season_high_points, ' points. ')
+      ELSE ''
+    END,
+    '\n\n',
+    'On the road to the championship, the four conference champions made their mark. ',
     CASE 
       WHEN (SELECT COUNT(*) FROM seasons s2 
             WHERE s2.north_champion_id = s.north_champion_id 
@@ -222,7 +269,7 @@ SELECT
     END,
     COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'an emerging star'),
     ' who dropped ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points. ',
+    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points in their conference final. ',
     CASE 
       WHEN (SELECT COUNT(*) FROM seasons s2 
             WHERE s2.south_champion_id = s.south_champion_id 
@@ -263,7 +310,7 @@ SELECT
                   WHEN 2 THEN 'nd'
                   WHEN 3 THEN 'rd'
                   ELSE 'th'
-              END, 'th consecutive conference championship spearheaded by ')
+              END, ' consecutive conference championship spearheaded by ')
       WHEN (SELECT COUNT(*) FROM seasons s2 
             WHERE s2.east_champion_id = s.east_champion_id 
             AND s2.id < s.id AND s2.status = 17) = 1 THEN
@@ -298,22 +345,52 @@ SELECT
     COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'an unstoppable force'),
     ' scoring ',
     COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' in their final test. ',
-    ' The finals delivered fireworks as the championship game concluded ',
+    '\n\n',
+    'The playoffs were filled with memorable moments. ',
+    (SELECT STRING_AGG(
+      CONCAT('The ', round, ' between ', team1_name, ' and ', team2_name, ' went to ', 
+      GREATEST(team1_wins, team2_wins), '-', LEAST(team1_wins, team2_wins), 
+      CASE WHEN high_score IS NOT NULL THEN CONCAT(' with a playoff-high ', high_score, ' points scored') ELSE '' END), 
+     ', ') 
+    FROM playoff_series ps WHERE ps.season_id = s.id),
+    '. ',
+    '\n\n',
+    'The finals delivered fireworks as the championship game concluded ',
     (SELECT CONCAT('with a scoreline of ', f.home_team, ' ', f.home_score, ' - ', f.away_score, ' ', f.away_team)
      FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' ORDER BY f.home_score + f.away_score DESC LIMIT 1),
-    '. ',
-    'Finals MVP honors went to ', COALESCE(fm.finals_mvp_name, 'an outstanding player'), '. ',
+    CASE 
+      WHEN (SELECT ABS(f.home_score - f.away_score) FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' LIMIT 1) <= 5 
+        THEN ' in a nail-biting finish that came down to the final possession.'
+      WHEN (SELECT ABS(f.home_score - f.away_score) FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' LIMIT 1) <= 10 
+        THEN ' in a closely contested battle that kept fans on the edge of their seats.'
+      WHEN (SELECT ABS(f.home_score - f.away_score) FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' LIMIT 1) >= 20 
+        THEN ' in a dominant performance that left no doubt about the better team.'
+      ELSE '.'
+    END,
+    ' Finals MVP honors went to ', COALESCE(fm.finals_mvp_name, 'an outstanding player'), 
+    CASE 
+      WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.season_id = s.id AND sa.award_name = 'Best Overall Player' AND sa.player_id = s.finals_mvp_id)
+        THEN ', who also claimed the regular season MVP award.'
+      ELSE '.'
+    END,
+    '\n\n',
     'Season MVP: ', COALESCE(aw.best_overall, 'Not awarded'), '. ',
     'Defensive anchor of the year: ', COALESCE(aw.best_defense, 'Not awarded'), '. ',
     'Sixth Man spark: ', COALESCE(aw.sixth_man, 'Not awarded'), '. ',
+    CASE WHEN aw.most_improved IS NOT NULL THEN CONCAT('Most Improved Player: ', aw.most_improved, '. ') ELSE '' END,
+    CASE WHEN aw.rookie_year IS NOT NULL THEN CONCAT('Rookie of the Year: ', aw.rookie_year, '. ') ELSE '' END,
+    '\n\n',
     CASE 
       WHEN r.is_redemption = 1 THEN 'With redemption fulfilled and dynasties forming, fans now wonder: who will rise next?'
-      ELSE 'With dynasties forming, fans now wonder: who will rise next?'
+      WHEN ct2.consecutive_titles >= 2 THEN CONCAT('With ', s.finals_winner_name, ' establishing a potential dynasty, the league braces for their continued dominance. Can anyone stop them?')
+      WHEN fwr.conference_rank >= 6 THEN 'This Cinderella story has rewritten the league narrative. Will this underdog success inspire other teams next season?'
+      WHEN tt.total_titles = 1 THEN 'With the championship landscape shifting, the league enters an exciting new era of competition.'
+      ELSE 'With dynasties forming and new challengers emerging, fans now wonder: who will rise next?'
     END
   ) AS storyline
 FROM seasons s
 LEFT JOIN total_titles tt ON tt.id = s.id
-LEFT JOIN consecutive_titles ct2 ON ct2.id = s.id
+LEFT JOIN consecutive_titles ct2 ON ct2.id = s.id AND ct2.finals_winner_id = s.finals_winner_id
 LEFT JOIN conference_titles ct ON ct.id = s.id
 LEFT JOIN conference_redemption cr ON cr.id = s.id
 LEFT JOIN redemption r ON r.id = s.id
@@ -321,5 +398,6 @@ LEFT JOIN awards aw ON aw.season_id = s.id
 LEFT JOIN finals_mvp fm ON fm.season_id = s.id
 LEFT JOIN finals_winner_rank fwr 
   ON fwr.season_id = s.id AND fwr.team_id = s.finals_winner_id
+LEFT JOIN season_stats stats ON stats.season_id = s.id
 WHERE s.status = 17
 ORDER BY s.id;
