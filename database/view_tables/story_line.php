@@ -149,7 +149,7 @@ finals_winner_rank AS (
   WHERE (ss.season_id, ss.round) IN (
     SELECT season_id, MAX(round) FROM standings_snapshots GROUP BY season_id
   )
-),
+)
 SELECT
   s.id AS season_id,
   s.name AS season_name,
