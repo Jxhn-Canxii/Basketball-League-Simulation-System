@@ -124,7 +124,7 @@ awards AS (
          MAX(CASE WHEN sa.award_name = 'Best Defensive Player' THEN CONCAT(p.name, ' (', ac.award_count, 'x DPOY)') END) AS best_defense,
          MAX(CASE WHEN sa.award_name = 'Sixth Man of the Year' THEN CONCAT(p.name, ' (', ac.award_count, 'x 6th Man)') END) AS sixth_man,
          MAX(CASE WHEN sa.award_name = 'Most Improved Player' THEN p.name END) AS most_improved,
-         MAX(CASE WHEN sa.award_name = 'Rookie of the Year' THEN p.name END) AS rookie_year
+         MAX(CASE WHEN sa.award_name = 'Rookie of the Season' THEN p.name END) AS rookie_year
   FROM season_awards sa
   JOIN players p ON p.id = sa.player_id
   LEFT JOIN award_counts ac ON ac.player_id = sa.player_id AND ac.award_name = sa.award_name
