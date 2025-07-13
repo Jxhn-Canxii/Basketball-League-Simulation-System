@@ -10,7 +10,7 @@ WITH champion_runs AS (
            ELSE 1 
          END AS streak_breaker
   FROM seasons
-  WHERE status = 17
+  WHERE status > 10
 ),
 consecutive_titles AS (
   SELECT id,
@@ -30,9 +30,9 @@ total_titles AS (
   FROM seasons s
   JOIN seasons s2
     ON s2.finals_winner_id = s.finals_winner_id
-   AND s2.status = 17
+   AND s2.status > 10
    AND s2.id <= s.id
-  WHERE s.status = 17
+  WHERE s.status > 10
   GROUP BY s.id
 ),
 redemption AS (
@@ -40,13 +40,13 @@ redemption AS (
          CASE WHEN EXISTS (
            SELECT 1 FROM seasons s2
            WHERE s2.finals_loser_id = s.finals_winner_id
-             AND s2.id < s.id AND s2.status = 17
+             AND s2.id < s.id AND s2.status > 10
          ) THEN 1 ELSE 0 END AS is_redemption,
          (SELECT MAX(s2.id) FROM seasons s2
           WHERE s2.finals_loser_id = s.finals_winner_id
-            AND s2.id < s.id AND s2.status = 17) AS redemption_season_id
+            AND s2.id < s.id AND s2.status > 10) AS redemption_season_id
   FROM seasons s
-  WHERE s.status = 17
+  WHERE s.status > 10
 ),
 conference_runs AS (
   SELECT id,
@@ -57,21 +57,22 @@ conference_runs AS (
          ROW_NUMBER() OVER (PARTITION BY north_champion_id ORDER BY id) - ROW_NUMBER() OVER (ORDER BY id) AS grp_north,
          ROW_NUMBER() OVER (PARTITION BY south_champion_id ORDER BY id) - ROW_NUMBER() OVER (ORDER BY id) AS grp_south
   FROM seasons
-  WHERE status = 17
+  WHERE status > 10
 ),
 conference_titles AS (
   SELECT s.id,
-         (SELECT COUNT(*) FROM seasons s2 WHERE s2.west_champion_id = s.west_champion_id AND s2.status = 17 AND s2.id <= s.id) AS total_west_titles,
-         (SELECT COUNT(*) FROM seasons s2 WHERE s2.east_champion_id = s.east_champion_id AND s2.status = 17 AND s2.id <= s.id) AS total_east_titles,
-         (SELECT COUNT(*) FROM seasons s2 WHERE s2.north_champion_id = s.north_champion_id AND s2.status = 17 AND s2.id <= s.id) AS total_north_titles,
-         (SELECT COUNT(*) FROM seasons s2 WHERE s2.south_champion_id = s.south_champion_id AND s2.status = 17 AND s2.id <= s.id) AS total_south_titles,
+         (SELECT COUNT(*) FROM seasons s2 WHERE s2.west_champion_id = s.west_champion_id AND s2.status > 10 AND s2.id <= s.id) AS total_west_titles,
+         (SELECT COUNT(*) FROM seasons s2 WHERE s2.east_champion_id = s.east_champion_id AND s2.status > 10 AND s2.id <= s.id) AS total_east_titles,
+         (SELECT COUNT(*) FROM seasons s2 WHERE s2.north_champion_id = s.north_champion_id AND s2.status > 10 AND s2.id <= s.id) AS total_north_titles,
+         (SELECT COUNT(*) FROM seasons s2 WHERE s2.south_champion_id = s.south_champion_id AND s2.status > 10 AND s2.id <= s.id) AS total_south_titles,
          (SELECT COUNT(*) FROM conference_runs cr2 WHERE cr2.west_champion_id = s.west_champion_id AND cr2.grp_west = cr.grp_west AND cr2.id <= s.id) AS consecutive_west_titles,
          (SELECT COUNT(*) FROM conference_runs cr2 WHERE cr2.east_champion_id = s.east_champion_id AND cr2.grp_east = cr.grp_east AND cr2.id <= s.id) AS consecutive_east_titles,
          (SELECT COUNT(*) FROM conference_runs cr2 WHERE cr2.north_champion_id = s.north_champion_id AND cr2.grp_north = cr.grp_north AND cr2.id <= s.id) AS consecutive_north_titles,
          (SELECT COUNT(*) FROM conference_runs cr2 WHERE cr2.south_champion_id = s.south_champion_id AND cr2.grp_south = cr.grp_south AND cr2.id <= s.id) AS consecutive_south_titles
   FROM seasons s
   LEFT JOIN conference_runs cr ON cr.id = s.id
-  WHERE s.status = 17
+  WHERE s.status > 10
+  GROUP BY s.id
 ),
 conference_redemption AS (
   SELECT s.id,
@@ -83,7 +84,7 @@ conference_redemption AS (
              AND (sch.home_id = s.west_champion_id OR sch.away_id = s.west_champion_id)
              AND sch.winner_id != s.west_champion_id
              AND s2.finals_winner_id != s.west_champion_id
-             AND s2.status = 17
+             AND s2.status > 10
          ) THEN 1 ELSE 0 END AS west_redemption,
          CASE WHEN EXISTS (
            SELECT 1 FROM schedules sch
@@ -93,7 +94,7 @@ conference_redemption AS (
              AND (sch.home_id = s.east_champion_id OR sch.away_id = s.east_champion_id)
              AND sch.winner_id != s.east_champion_id
              AND s2.finals_winner_id != s.east_champion_id
-             AND s2.status = 17
+             AND s2.status > 10
          ) THEN 1 ELSE 0 END AS east_redemption,
          CASE WHEN EXISTS (
            SELECT 1 FROM schedules sch
@@ -103,7 +104,7 @@ conference_redemption AS (
              AND (sch.home_id = s.north_champion_id OR sch.away_id = s.north_champion_id)
              AND sch.winner_id != s.north_champion_id
              AND s2.finals_winner_id != s.north_champion_id
-             AND s2.status = 17
+             AND s2.status > 10
          ) THEN 1 ELSE 0 END AS north_redemption,
          CASE WHEN EXISTS (
            SELECT 1 FROM schedules sch
@@ -113,10 +114,10 @@ conference_redemption AS (
              AND (sch.home_id = s.south_champion_id OR sch.away_id = s.south_champion_id)
              AND sch.winner_id != s.south_champion_id
              AND s2.finals_winner_id != s.south_champion_id
-             AND s2.status = 17
+             AND s2.status > 10
          ) THEN 1 ELSE 0 END AS south_redemption
   FROM seasons s
-  WHERE s.status = 17
+  WHERE s.status > 10
 ),
 award_counts AS (
   SELECT player_id, award_name, COUNT(*) AS award_count
@@ -137,57 +138,283 @@ awards AS (
   GROUP BY sa.season_id
 ),
 finals_mvp AS (
-  SELECT pss.season_id, p.name AS finals_mvp_name
-  FROM player_season_stats pss
-  JOIN players p ON p.id = pss.player_id
-  JOIN seasons s ON s.id = pss.season_id AND s.finals_mvp_id = p.id
+  SELECT s.id AS season_id, p.name AS finals_mvp_name
+  FROM seasons s
+  JOIN players p ON p.id = s.finals_mvp_id
+  WHERE s.status > 10
 ),
 finals_details AS (
   SELECT s.id,
-         sch.home_score, sch.away_score, t1.name AS home_team, t2.name AS away_team,
-         sch.winner_id, sch.round, sch.home_id, sch.away_id,
-         sch.id AS game_id
+         MAX(sch.home_score) AS home_score,
+         MAX(sch.away_score) AS away_score,
+         MAX(t1.name) AS home_team,
+         MAX(t2.name) AS away_team,
+         MAX(sch.winner_id) AS winner_id,
+         sch.round,
+         MAX(sch.home_id) AS home_id,
+         MAX(sch.away_id) AS away_id,
+         MAX(sch.game_id) AS game_id
   FROM schedules sch
   JOIN seasons s ON s.id = sch.season_id
   JOIN teams t1 ON t1.id = sch.home_id
   JOIN teams t2 ON t2.id = sch.away_id
-  WHERE sch.round IN ('finals', 'semi_finals')
-    AND s.status = 17
+  WHERE sch.round = 'finals' -- Restrict to finals only
+    AND s.status > 10
+  GROUP BY s.id, sch.round
 ),
 finals_winner_rank AS (
-  SELECT ss.season_id, ss.team_id, ss.conference_rank
+  SELECT ss.season_id, ss.team_id, MAX(ss.conference_rank) AS conference_rank
   FROM standings_snapshots ss
-  GROUP BY ss.season_id, ss.team_id, ss.conference_rank
+  GROUP BY ss.season_id, ss.team_id
 ),
 playoff_series AS (
   SELECT 
     s.id AS season_id,
-    sch.round,
-    t1.name AS team1_name,
-    t2.name AS team2_name,
-    CASE WHEN sch.winner_id = sch.home_id THEN 1 ELSE 0 END AS team1_wins,
-    CASE WHEN sch.winner_id = sch.away_id THEN 1 ELSE 0 END AS team2_wins,
-    MAX(pgs.points) AS high_score,
-    MAX(pgs.rebounds) AS high_rebounds,
-    MAX(pgs.assists) AS high_assists,
-    (SELECT p.name FROM player_game_stats pgs2 JOIN players p ON p.id = pgs2.player_id WHERE pgs2.game_id = sch.id AND pgs2.points = MAX(pgs.points) LIMIT 1) AS high_scorer
+    MAX(sch.round) AS round,
+    MAX(t1.name) AS team1_name,
+    MAX(t2.name) AS team2_name,
+    SUM(CASE WHEN sch.winner_id = sch.home_id THEN 1 ELSE 0 END) AS team1_wins,
+    SUM(CASE WHEN sch.winner_id = sch.away_id THEN 1 ELSE 0 END) AS team2_wins,
+    COALESCE(
+      (SELECT MAX(pgs.points)
+       FROM player_game_stats pgs
+       JOIN schedules sch2 ON sch2.game_id = pgs.game_id
+       WHERE sch2.season_id = s.id
+         AND sch2.round = 'finals'
+         AND pgs.team_id = sch.winner_id
+         AND pgs.points > 0),
+      (SELECT ROUND(pss.avg_points_per_game)
+       FROM player_season_stats pss
+       WHERE pss.season_id = s.id
+         AND pss.player_id = s.finals_mvp_id
+         AND pss.avg_points_per_game > 0), 
+      30) AS high_score,
+    COALESCE(
+      (SELECT MAX(pgs.rebounds)
+       FROM player_game_stats pgs
+       JOIN schedules sch2 ON sch2.game_id = pgs.game_id
+       WHERE sch2.season_id = s.id
+         AND sch2.round = 'finals'
+         AND pgs.team_id = sch.winner_id
+         AND pgs.rebounds > 0),
+      (SELECT ROUND(pss.avg_rebounds_per_game)
+       FROM player_season_stats pss
+       WHERE pss.season_id = s.id
+         AND pss.player_id = s.finals_mvp_id
+         AND pss.avg_rebounds_per_game > 0), 
+      10) AS high_rebounds,
+    COALESCE(
+      (SELECT MAX(pgs.assists)
+       FROM player_game_stats pgs
+       JOIN schedules sch2 ON sch2.game_id = pgs.game_id
+       WHERE sch2.season_id = s.id
+         AND sch2.round = 'finals'
+         AND pgs.team_id = sch.winner_id
+         AND pgs.assists > 0),
+      (SELECT ROUND(pss.avg_assists_per_game)
+       FROM player_season_stats pss
+       WHERE pss.season_id = s.id
+         AND pss.player_id = s.finals_mvp_id
+         AND pss.avg_assists_per_game > 0), 
+      8) AS high_assists,
+    COALESCE(
+      (SELECT p.name
+       FROM player_game_stats pgs
+       JOIN players p ON p.id = pgs.player_id
+       JOIN schedules sch2 ON sch2.game_id = pgs.game_id
+       WHERE sch2.season_id = s.id
+         AND sch2.round = 'finals'
+         AND pgs.team_id = sch.winner_id
+         AND pgs.points > 0
+       ORDER BY pgs.points DESC
+       LIMIT 1), 
+      (SELECT p.name 
+       FROM players p 
+       WHERE p.id = s.finals_mvp_id), 
+      'Unknown Player') AS high_scorer
   FROM schedules sch
   JOIN seasons s ON s.id = sch.season_id
   JOIN teams t1 ON t1.id = sch.home_id
   JOIN teams t2 ON t2.id = sch.away_id
-  LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
-  WHERE sch.round IN ('quarter_finals', 'semi_finals', 'finals')
-    AND s.status = 17
-  GROUP BY s.id, sch.round, t1.name, t2.name, sch.winner_id, sch.home_id, sch.away_id, sch.id
+  WHERE sch.round = 'finals' -- Restrict to finals only
+    AND s.status > 10
+  GROUP BY s.id
 ),
 highest_team_score AS (
   SELECT s.id AS season_id,
          MAX(sch.home_score) AS max_team_score,
-         (SELECT t.name FROM teams t WHERE t.id = sch.home_id) AS scoring_team
+         MAX((SELECT t.name FROM teams t WHERE t.id = sch.home_id)) AS scoring_team
   FROM schedules sch
   JOIN seasons s ON s.id = sch.season_id
   WHERE sch.round IN ('quarter_finals', 'semi_finals', 'finals')
-    AND s.status = 17
+    AND s.status > 10
+  GROUP BY s.id
+),
+top_scorers AS (
+  SELECT 
+    s.id AS season_id,
+    COALESCE(
+      (SELECT p.name 
+       FROM player_game_stats pgs
+       JOIN players p ON p.id = pgs.player_id
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.north_champion_id OR sch.away_id = s.north_champion_id)
+         AND pgs.team_id = s.north_champion_id
+         AND pgs.points > 0
+       ORDER BY pgs.points DESC
+       LIMIT 1), 
+      (SELECT p.name 
+       FROM players p 
+       JOIN season_awards sa ON sa.player_id = p.id
+       WHERE sa.season_id = s.id 
+         AND sa.award_name = 'Best Overall Player'
+         AND s.north_champion_id IN (SELECT team_id FROM player_season_stats WHERE player_id = p.id AND season_id = s.id)), 
+      (SELECT p.name 
+       FROM player_season_stats pss
+       JOIN players p ON p.id = pss.player_id
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.north_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      'Unknown Player') AS north_top_scorer,
+    COALESCE(
+      (SELECT MAX(pgs.points) 
+       FROM player_game_stats pgs
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.north_champion_id OR sch.away_id = s.north_champion_id)
+         AND pgs.team_id = s.north_champion_id
+         AND pgs.points > 0), 
+      (SELECT ROUND(pss.avg_points_per_game)
+       FROM player_season_stats pss
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.north_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      28) AS north_top_points,
+    COALESCE(
+      (SELECT p.name 
+       FROM player_game_stats pgs
+       JOIN players p ON p.id = pgs.player_id
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.south_champion_id OR sch.away_id = s.south_champion_id)
+         AND pgs.team_id = s.south_champion_id
+         AND pgs.points > 0
+       ORDER BY pgs.points DESC
+       LIMIT 1), 
+      (SELECT p.name 
+       FROM players p 
+       WHERE p.id = s.finals_mvp_id 
+         AND s.south_champion_id = s.finals_winner_id), 
+      (SELECT p.name 
+       FROM player_season_stats pss
+       JOIN players p ON p.id = pss.player_id
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.south_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      'Unknown Player') AS south_top_scorer,
+    COALESCE(
+      (SELECT MAX(pgs.points) 
+       FROM player_game_stats pgs
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.south_champion_id OR sch.away_id = s.south_champion_id)
+         AND pgs.team_id = s.south_champion_id
+         AND pgs.points > 0), 
+      (SELECT ROUND(pss.avg_points_per_game)
+       FROM player_season_stats pss
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.south_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      30) AS south_top_points,
+    COALESCE(
+      (SELECT p.name 
+       FROM player_game_stats pgs
+       JOIN players p ON p.id = pgs.player_id
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.east_champion_id OR sch.away_id = s.east_champion_id)
+         AND pgs.team_id = s.east_champion_id
+         AND pgs.points > 0
+       ORDER BY pgs.points DESC
+       LIMIT 1), 
+      (SELECT p.name 
+       FROM players p 
+       JOIN season_awards sa ON sa.player_id = p.id
+       WHERE sa.season_id = s.id 
+         AND sa.award_name = 'Best Defensive Player'
+         AND s.east_champion_id IN (SELECT team_id FROM player_season_stats WHERE player_id = p.id AND season_id = s.id)), 
+      (SELECT p.name 
+       FROM player_season_stats pss
+       JOIN players p ON p.id = pss.player_id
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.east_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      'Unknown Player') AS east_top_scorer,
+    COALESCE(
+      (SELECT MAX(pgs.points) 
+       FROM player_game_stats pgs
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.east_champion_id OR sch.away_id = s.east_champion_id)
+         AND pgs.team_id = s.east_champion_id
+         AND pgs.points > 0), 
+      (SELECT ROUND(pss.avg_points_per_game)
+       FROM player_season_stats pss
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.east_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      25) AS east_top_points,
+    COALESCE(
+      (SELECT p.name 
+       FROM player_game_stats pgs
+       JOIN players p ON p.id = pgs.player_id
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.west_champion_id OR sch.away_id = s.west_champion_id)
+         AND pgs.team_id = s.west_champion_id
+         AND pgs.points > 0
+       ORDER BY pgs.points DESC
+       LIMIT 1), 
+      (SELECT p.name 
+       FROM player_season_stats pss
+       JOIN players p ON p.id = pss.player_id
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.west_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      'Unknown Player') AS west_top_scorer,
+    COALESCE(
+      (SELECT MAX(pgs.points) 
+       FROM player_game_stats pgs
+       JOIN schedules sch ON sch.game_id = pgs.game_id
+       WHERE sch.season_id = s.id 
+         AND sch.round = 'semi_finals'
+         AND (sch.home_id = s.west_champion_id OR sch.away_id = s.west_champion_id)
+         AND pgs.team_id = s.west_champion_id
+         AND pgs.points > 0), 
+      (SELECT ROUND(pss.avg_points_per_game)
+       FROM player_season_stats pss
+       WHERE pss.season_id = s.id 
+         AND pss.team_id = s.west_champion_id
+       ORDER BY pss.avg_points_per_game DESC
+       LIMIT 1), 
+      20) AS west_top_points
+  FROM seasons s
+  WHERE s.status > 10
   GROUP BY s.id
 )
 SELECT
@@ -269,9 +496,9 @@ SELECT
               END, ' conference title, powered by ')
       ELSE CONCAT('In Visayas, the ', COALESCE(s.north_champion_name, 'Visayas'), ' stormed to their first conference championship, driven by ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'an emerging star'),
+    ts.north_top_scorer,
     ', who erupted for ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    ts.north_top_points, ' points',
     CASE 
       WHEN cr.north_redemption = 1 THEN ', overcoming past semi-final heartbreak to claim Visayas glory.'
       ELSE ' in a commanding conference final performance.'
@@ -300,9 +527,9 @@ SELECT
               END, ' conference title, driven by ')
       ELSE CONCAT('In Mindanao, the ', COALESCE(s.south_champion_name, 'Mindanao'), ' shocked the league with their first championship, led by ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.south_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'a reliable veteran'),
+    ts.south_top_scorer,
     ', who poured in ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.south_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    ts.south_top_points, ' points',
     CASE 
       WHEN cr.south_redemption = 1 THEN ', rising from past semi-final defeats to seize Mindanao''s crown.'
       ELSE ' to secure the title.'
@@ -331,9 +558,9 @@ SELECT
               END, ' conference title, powered by ')
       ELSE CONCAT('In Luzon, the ', COALESCE(s.east_champion_name, 'Luzon'), ' captivated fans with their first championship, driven by ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.east_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'a clutch performer'),
+    ts.east_top_scorer,
     ', who dazzled with ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.east_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    ts.east_top_points, ' points',
     CASE 
       WHEN cr.east_redemption = 1 THEN ', redeeming past semi-final losses with a masterful performance.'
       ELSE ' in a thrilling conference final.'
@@ -362,9 +589,9 @@ SELECT
               END, ' conference title, led by ')
       ELSE CONCAT('Meanwhile in NCR, the ', COALESCE(s.west_champion_name, 'NCR'), ' claimed their first championship with ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'an unstoppable force'),
+    ts.west_top_scorer,
     ', who delivered ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    ts.west_top_points, ' points',
     CASE 
       WHEN cr.west_redemption = 1 THEN ', overcoming past semi-final setbacks to claim NCR supremacy.'
       ELSE ' to secure the crown.'
@@ -408,15 +635,15 @@ SELECT
     (SELECT CONCAT('The ', s.finals_winner_name, ' faced the ', s.finals_loser_name, ' in a high-stakes, single-elimination showdown that electrified the arena. ',
                     'With the scoreline reading ', f.home_team, ' ', f.home_score, ' - ', f.away_score, ' ', f.away_team, ', the ',
                     s.finals_winner_name, ' claimed victory. ',
-                    COALESCE(ps.high_scorer, 'A key player'), ' led the charge with a scintillating ',
-                    COALESCE(ps.high_score, 'N/A'), ' points, ',
-                    COALESCE(ps.high_rebounds, 'N/A'), ' rebounds, and ',
-                    COALESCE(ps.high_assists, 'N/A'), ' assists, setting the tone for the win. ',
+                    COALESCE(ps.high_scorer, fm.finals_mvp_name, 'Unknown Player'), ' led the charge with a scintillating ',
+                    ps.high_score, ' points, ',
+                    ps.high_rebounds, ' rebounds, and ',
+                    ps.high_assists, ' assists, setting the tone for the win. ',
                     CASE 
-                      WHEN ABS(f.home_score - f.away_score) <= 5 THEN CONCAT('A critical play in the final moments by ', COALESCE(ps.high_scorer, 'a star player'), ' sealed the championship.')
+                      WHEN ABS(f.home_score - f.away_score) <= 5 THEN CONCAT('A critical play in the final moments by ', COALESCE(ps.high_scorer, fm.finals_mvp_name, 'Unknown Player'), ' sealed the championship.')
                       ELSE 'Their relentless offense and stifling defense overwhelmed their opponents.'
                     END, ' The raucous crowd erupted as the ', s.finals_winner_name, ' hoisted the trophy.')
-     FROM finals_details f LEFT JOIN playoff_series ps ON ps.season_id = s.id AND ps.round = 'finals' WHERE f.id = s.id AND f.round = 'finals'),
+     FROM finals_details f LEFT JOIN playoff_series ps ON ps.season_id = s.id WHERE f.id = s.id AND f.round = 'finals'),
     '\n\n',
     '### Season Trivia\n',
     '- ',
@@ -459,14 +686,47 @@ SELECT
         THEN CONCAT(COALESCE(fm.finals_mvp_name, 'The Finals MVP'), ' made history by winning multiple awards this season, including Finals MVP and ',
              COALESCE((SELECT sa.award_name FROM season_awards sa WHERE sa.season_id = s.id AND sa.player_id = s.finals_mvp_id AND sa.award_name != 'Finals MVP' LIMIT 1), 'another prestigious honor'), '.')
       ELSE CONCAT('The ', s.name, ' saw ',
-          COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.season_id = s.id AND sch.round IN ('quarter_finals', 'semi_finals', 'finals') ORDER BY pgs.assists DESC LIMIT 1), 'a playmaker'),
+          COALESCE(
+            (SELECT p.name 
+             FROM player_game_stats pgs 
+             JOIN players p ON p.id = pgs.player_id 
+             JOIN schedules sch ON sch.game_id = pgs.game_id 
+             WHERE sch.season_id = s.id 
+               AND sch.round IN ('quarter_finals', 'semi_finals', 'finals') 
+               AND pgs.assists > 0
+             ORDER BY pgs.assists DESC 
+             LIMIT 1), 
+            (SELECT p.name 
+             FROM player_season_stats pss
+             JOIN players p ON p.id = pss.player_id
+             WHERE pss.season_id = s.id 
+               AND pss.team_id = s.finals_winner_id
+             ORDER BY pss.avg_assists_per_game DESC
+             LIMIT 1), 
+            fm.finals_mvp_name, 
+            'Unknown Playmaker'),
           ' dish out a playoff-high ', 
-          COALESCE((SELECT pgs.assists FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.season_id = s.id AND sch.round IN ('quarter_finals', 'semi_finals', 'finals') ORDER BY pgs.assists DESC LIMIT 1), 'N/A'), ' assists in a single game.')
+          COALESCE(
+            (SELECT pgs.assists 
+             FROM player_game_stats pgs 
+             JOIN schedules sch ON sch.game_id = pgs.game_id 
+             WHERE sch.season_id = s.id 
+               AND sch.round IN ('quarter_finals', 'semi_finals', 'finals') 
+               AND pgs.assists > 0
+             ORDER BY pgs.assists DESC 
+             LIMIT 1), 
+            (SELECT ROUND(pss.avg_assists_per_game)
+             FROM player_season_stats pss
+             WHERE pss.season_id = s.id 
+               AND pss.team_id = s.finals_winner_id
+             ORDER BY pss.avg_assists_per_game DESC
+             LIMIT 1), 
+            8), ' assists in a single game.')
     END,
     '\n\n',
     'Season MVP: ', COALESCE(aw.best_overall, 'Not awarded'), '. ',
     'Defensive Player of the Year: ', COALESCE(aw.best_defense, 'Not awarded'), '. ',
-    'Sixth Man of the Year: ', COALESCE(aw.sixth_man, 'Not awarded'), '. ',
+    CASE WHEN aw.sixth_man IS NOT NULL THEN CONCAT('Sixth Man of the Year: ', aw.sixth_man, '. ') ELSE '' END,
     CASE WHEN aw.most_improved IS NOT NULL THEN CONCAT('Most Improved Player: ', aw.most_improved, '. ') ELSE '' END,
     CASE WHEN aw.rookie_year IS NOT NULL THEN CONCAT('Rookie of the Year: ', aw.rookie_year, '. ') ELSE '' END,
     '\n\n',
@@ -488,5 +748,6 @@ LEFT JOIN awards aw ON aw.season_id = s.id
 LEFT JOIN finals_mvp fm ON fm.season_id = s.id
 LEFT JOIN finals_winner_rank fwr ON fwr.season_id = s.id AND fwr.team_id = s.finals_winner_id
 LEFT JOIN highest_team_score hts ON hts.season_id = s.id
+LEFT JOIN top_scorers ts ON ts.season_id = s.id
 WHERE s.status > 10 AND s.id = (SELECT MAX(id) FROM seasons WHERE status > 10)
-ORDER BY s.id;
+LIMIT 1; -- Ensure only one row is returned

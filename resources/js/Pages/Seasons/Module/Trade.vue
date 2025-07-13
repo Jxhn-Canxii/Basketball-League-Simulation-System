@@ -271,53 +271,49 @@ const handlePagination = (page_num) => {
 
 // End trade function (currently not used here)
 const endTrade = async () => {
-    try {
-        // Show loading Swal
-        await Swal.fire({
-            title: 'Processing...',
-            text: 'Ending trade and creating season storyline summary...',
-            icon: 'info',
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            showConfirmButton: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
-        });
+  try {
+    // 1️⃣  fire‑and‑forget: no await here
+    Swal.fire({
+      title: 'Processing...',
+      text: 'Ending trade and creating season storyline summary...',
+      icon: 'info',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      showConfirmButton: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
 
-        // End the trade
-        const endTradeUrl = props.isOffSeason ? 'trade.end.offseason' : 'trade.end.inseason';
-        const tradeResponse = await axios.post(route(endTradeUrl));
+    // 2️⃣  do the API call
+    await axios.post(route(props.isOffSeason ? 'trade.end.offseason'
+                                            : 'trade.end.inseason'));
 
-        // Create past season storyline summary
-        const storylineResponse = await axios.post(route('storyline.upsert'));
+    // 3️⃣  close loader & show success
+    await Swal.close();
+    await Swal.fire({
+      title: 'Success!',
+      text: 'Trade successfully completed and season storyline summary created!',
+      icon: 'success',
+      confirmButtonText: 'OK'
+    });
 
-        // Close loading Swal and show success
-        await Swal.fire({
-            title: 'Success!',
-            text: 'Trade successfully completed and season storyline summary created!',
-            icon: 'success',
-            confirmButtonText: 'OK'
-        });
-
-        // Proceed with existing logic
-        fetchApprovedTradeProposals();
-        emits("newSeason", Math.random());
-    } catch (error) {
-        // Close loading Swal
-        Swal.close();
-
-        // Show error Swal
-        await Swal.fire({
-            title: 'Error!',
-            text: error.response?.data?.message || 'Failed to end trade or create storyline summary',
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
-
-        console.error("Error in endTrade:", error);
-    }
+    // 4️⃣  follow‑up logic
+    fetchApprovedTradeProposals();
+    emits('newSeason', Math.random());
+  } catch (error) {
+    await Swal.close();
+    await Swal.fire({
+      title: 'Error!',
+      text: error.response?.data?.message
+            || 'Failed to end trade or create storyline summary',
+      icon: 'error',
+      confirmButtonText: 'OK'
+    });
+    console.error('Error in endTrade:', error);
+  }
 };
+
 const autoTrade = async () => {
     // Show the "Processing" Swal when the function is called
     const processingSwal = Swal.fire({
