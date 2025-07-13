@@ -272,26 +272,50 @@ const handlePagination = (page_num) => {
 // End trade function (currently not used here)
 const endTrade = async () => {
     try {
+        // Show loading Swal
+        await Swal.fire({
+            title: 'Processing...',
+            text: 'Ending trade and creating season storyline summary...',
+            icon: 'info',
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
 
+        // End the trade
         const endTradeUrl = props.isOffSeason ? 'trade.end.offseason' : 'trade.end.inseason';
-        const response = await axios.post(route(endTradeUrl));
-        if (response) {
-            await Swal.fire({
-                title: 'Success!',
-                text: 'Trade successfully completed!',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-            fetchApprovedTradeProposals();
-            emits("newSeason", Math.random());
-        }
+        const tradeResponse = await axios.post(route(endTradeUrl));
+
+        // Create past season storyline summary
+        const storylineResponse = await axios.post(route('storyline.upsert'));
+
+        // Close loading Swal and show success
+        await Swal.fire({
+            title: 'Success!',
+            text: 'Trade successfully completed and season storyline summary created!',
+            icon: 'success',
+            confirmButtonText: 'OK'
+        });
+
+        // Proceed with existing logic
+        fetchApprovedTradeProposals();
+        emits("newSeason", Math.random());
     } catch (error) {
-        console.error("Error ending trade:", error);
+        // Close loading Swal
+        Swal.close();
+
+        // Show error Swal
         await Swal.fire({
             title: 'Error!',
-            text: error.response.data.message,
+            text: error.response?.data?.message || 'Failed to end trade or create storyline summary',
             icon: 'error',
+            confirmButtonText: 'OK'
         });
+
+        console.error("Error in endTrade:", error);
     }
 };
 const autoTrade = async () => {

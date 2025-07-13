@@ -1,18 +1,5 @@
 <template>
-    <div class="team-roster relative">
-        <!-- Loader Overlay with Progress -->
-        <div v-if="isLoading" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50">
-            <div class="bg-white p-6 rounded-lg shadow-lg flex flex-col items-center w-80">
-                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
-                <p class="mt-4 text-lg font-semibold text-gray-700">Preparing Season Awards...</p>
-                <div class="w-full mt-4">
-                    <div class="progress">
-                        <div class="progress-bar" :style="{ width: progressPercentage + '%' }">{{ progressPercentage }}%</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
+    <div class="team-roster relative min-h-screen">
         <h2 class="text-xl font-semibold text-gray-800">Season Awards</h2>
 
         <!-- Divider -->
@@ -21,6 +8,10 @@
         <!-- Update Button -->
         <div class="mb-4 flex justify-center items-center" v-if="!awards.length && !isLoading">
             <p class="text-red-500 font-bold text-2xl">***No data available***</p>
+        </div>
+
+        <div class="mb-4 flex justify-center items-center" v-if="isLoading">
+            <p class="text-red-500 font-bold text-2xl">Loading data...</p>
         </div>
 
         <!-- Awards Table -->

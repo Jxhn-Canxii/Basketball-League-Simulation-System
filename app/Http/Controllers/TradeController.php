@@ -296,6 +296,8 @@ class TradeController extends Controller
     public function endOffSeasonTradeWindow(){
         $latestSeasonId = get_current_season_id();
 
+        $this->upsertCurrentSeasonStoryline();
+        
         DB::table('seasons')
         ->where('id',  $latestSeasonId)
         ->update(['status' => config('timeline.off_season_trade')]);
@@ -391,7 +393,33 @@ class TradeController extends Controller
         ]);
     }
     
-    
+    private function upsertCurrentSeasonStoryline()
+    {
+        try {
+            // Get the current season's storyline from the view
+            $storylineData = DB::table('current_season_storyline')->first();
+
+            if (!$storylineData) {
+                return response()->json(['message' => 'No current season storyline found.'], 404);
+            }
+
+            // Perform safe insert or update
+            DB::table('storylines')->updateOrInsert(
+                ['season_id' => $storylineData->season_id], // Unique key
+                [
+                    'storyline' => $storylineData->storyline,
+                    'updated_at' => now(),
+                    'created_at' => now(), // Safe to include; will only apply on insert
+                ]
+            );
+
+            return response()->json(['message' => 'Storyline inserted or updated successfully.']);
+        } catch (\Exception $e) {
+            \Log::error("Failed to upsert storyline: " . $e->getMessage());
+            return response()->json(['error' => 'Failed to upsert storyline'], 500);
+        }
+    }
+
     private function calculatePerformanceScore($player)
     {
         return (float) (

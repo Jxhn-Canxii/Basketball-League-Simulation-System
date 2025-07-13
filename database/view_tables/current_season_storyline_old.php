@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW season_storyline AS
+CREATE OR REPLACE VIEW current_season_storyline AS
 WITH champion_runs AS (
   SELECT id,
          finals_winner_id,
@@ -175,18 +175,6 @@ playoff_series AS (
   WHERE sch.round IN ('quarter_finals', 'semi_finals', 'finals')
     AND s.status = 17
   GROUP BY s.id, sch.round, t1.name, t2.name
-),
-season_stats AS (
-  SELECT 
-    s.id AS season_id,
-    AVG(sch.home_score + sch.away_score) AS avg_points_per_game,
-    MAX(pgs.points) AS season_high_points,
-    COUNT(DISTINCT CASE WHEN pgs.points >= 50 THEN pgs.player_id END) AS fifty_point_games
-  FROM seasons s
-  JOIN schedules sch ON sch.season_id = s.id
-  LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
-  WHERE s.status = 17
-  GROUP BY s.id
 )
 SELECT
   s.id AS season_id,
@@ -241,12 +229,6 @@ SELECT
     CASE 
       WHEN s.id > 1 AND r.is_redemption = 1 THEN ', completing a powerful redemption arc that silenced critics.' 
       ELSE '' 
-    END,
-    '\n\n',
-    'The season was marked by offensive fireworks, with teams averaging ', ROUND(stats.avg_points_per_game, 1), ' points per game. ',
-    CASE 
-      WHEN stats.fifty_point_games > 0 THEN CONCAT('A total of ', stats.fifty_point_games, ' players scored 50+ points in games, with the season high being ', stats.season_high_points, ' points. ')
-      ELSE ''
     END,
     '\n\n',
     'On the road to the championship, the four conference champions made their mark. ',
@@ -388,6 +370,5 @@ LEFT JOIN awards aw ON aw.season_id = s.id
 LEFT JOIN finals_mvp fm ON fm.season_id = s.id
 LEFT JOIN finals_winner_rank fwr 
   ON fwr.season_id = s.id AND fwr.team_id = s.finals_winner_id
-LEFT JOIN season_stats stats ON stats.season_id = s.id
-WHERE s.status = 17
+WHERE s.status > 10 AND s.id = (SELECT MAX(id) FROM seasons WHERE status > 10)
 ORDER BY s.id;

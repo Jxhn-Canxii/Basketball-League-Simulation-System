@@ -145,7 +145,8 @@ finals_mvp AS (
 finals_details AS (
   SELECT s.id,
          sch.home_score, sch.away_score, t1.name AS home_team, t2.name AS away_team,
-         sch.winner_id, sch.round, sch.home_id, sch.away_id
+         sch.winner_id, sch.round, sch.home_id, sch.away_id,
+         sch.id AS game_id
   FROM schedules sch
   JOIN seasons s ON s.id = sch.season_id
   JOIN teams t1 ON t1.id = sch.home_id
@@ -164,9 +165,12 @@ playoff_series AS (
     sch.round,
     t1.name AS team1_name,
     t2.name AS team2_name,
-    COUNT(CASE WHEN sch.winner_id = sch.home_id THEN 1 END) AS team1_wins,
-    COUNT(CASE WHEN sch.winner_id = sch.away_id THEN 1 END) AS team2_wins,
-    MAX(pgs.points) AS high_score
+    CASE WHEN sch.winner_id = sch.home_id THEN 1 ELSE 0 END AS team1_wins,
+    CASE WHEN sch.winner_id = sch.away_id THEN 1 ELSE 0 END AS team2_wins,
+    MAX(pgs.points) AS high_score,
+    MAX(pgs.rebounds) AS high_rebounds,
+    MAX(pgs.assists) AS high_assists,
+    (SELECT p.name FROM player_game_stats pgs2 JOIN players p ON p.id = pgs2.player_id WHERE pgs2.game_id = sch.id AND pgs2.points = MAX(pgs.points) LIMIT 1) AS high_scorer
   FROM schedules sch
   JOIN seasons s ON s.id = sch.season_id
   JOIN teams t1 ON t1.id = sch.home_id
@@ -174,18 +178,16 @@ playoff_series AS (
   LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
   WHERE sch.round IN ('quarter_finals', 'semi_finals', 'finals')
     AND s.status = 17
-  GROUP BY s.id, sch.round, t1.name, t2.name
+  GROUP BY s.id, sch.round, t1.name, t2.name, sch.winner_id, sch.home_id, sch.away_id, sch.id
 ),
-season_stats AS (
-  SELECT 
-    s.id AS season_id,
-    AVG(sch.home_score + sch.away_score) AS avg_points_per_game,
-    MAX(pgs.points) AS season_high_points,
-    COUNT(DISTINCT CASE WHEN pgs.points >= 50 THEN pgs.player_id END) AS fifty_point_games
-  FROM seasons s
-  JOIN schedules sch ON sch.season_id = s.id
-  LEFT JOIN player_game_stats pgs ON pgs.game_id = sch.id
-  WHERE s.status = 17
+highest_team_score AS (
+  SELECT s.id AS season_id,
+         MAX(sch.home_score) AS max_team_score,
+         (SELECT t.name FROM teams t WHERE t.id = sch.home_id) AS scoring_team
+  FROM schedules sch
+  JOIN seasons s ON s.id = sch.season_id
+  WHERE sch.round IN ('quarter_finals', 'semi_finals', 'finals')
+    AND s.status = 17
   GROUP BY s.id
 )
 SELECT
@@ -194,11 +196,11 @@ SELECT
   s.created_at,
   s.updated_at,
   CONCAT_WS('',
-     CASE
+    CASE
       WHEN s.id = 1 THEN 'INAUGURAL CHAMPIONS CROWNED IN HISTORIC FIRST SEASON'
-      WHEN ct2.consecutive_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' COMPLETE HISTORIC THREE-PEAT RUN')
-      WHEN r.is_redemption = 1 THEN CONCAT('REDEMPTION: ', UPPER(s.finals_winner_name), ' AVENGE PAST LOSS')
-      WHEN fwr.conference_rank >= 6 THEN CONCAT('CINDERELLA RUN: ', UPPER(s.finals_winner_name), ' STUNS THE LEAGUE FROM ', fwr.conference_rank, 
+      WHEN ct2.consecutive_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' ETCH THEIR LEGACY WITH HISTORIC THREE-PEAT')
+      WHEN r.is_redemption = 1 THEN CONCAT('REDEMPTION REALIZED: ', UPPER(s.finals_winner_name), ' AVENGE PAST DEFEAT IN EPIC FASHION')
+      WHEN fwr.conference_rank >= 6 THEN CONCAT('CINDERELLA SENSATION: ', UPPER(s.finals_winner_name), ' SHOCKS LEAGUE FROM ', fwr.conference_rank, 
           CASE 
             WHEN fwr.conference_rank % 100 BETWEEN 11 AND 13 THEN 'TH'
             WHEN fwr.conference_rank % 10 = 1 THEN 'ST'
@@ -206,45 +208,47 @@ SELECT
             WHEN fwr.conference_rank % 10 = 3 THEN 'RD'
             ELSE 'TH'
           END, ' SEED')
-      WHEN tt.total_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' CAPTURE ', 
+      WHEN tt.total_titles >= 3 THEN CONCAT(UPPER(s.finals_winner_name), ' CLAIM ', 
           CASE tt.total_titles
               WHEN 1 THEN '1st'
               WHEN 2 THEN '2nd'
               WHEN 3 THEN '3rd'
               ELSE CONCAT(tt.total_titles, 'th')
-          END, ' TITLE IN DOMINANT FASHION')
-      WHEN tt.total_titles = 1 THEN CONCAT('A NEW DYNASTY BEGINS: ', UPPER(s.finals_winner_name), ' CLAIM FIRST CROWN')
-      ELSE CONCAT(UPPER(s.finals_winner_name), ' CONQUER ', UPPER(COALESCE(s.finals_loser_name, 'THE FIELD')))
+          END, ' TITLE IN DOMINANT DISPLAY')
+      WHEN tt.total_titles = 1 THEN CONCAT('A NEW ERA DAWNS: ', UPPER(s.finals_winner_name), ' SEIZE FIRST CHAMPIONSHIP')
+      ELSE CONCAT(UPPER(s.finals_winner_name), ' TRIUMPH OVER ', UPPER(COALESCE(s.finals_loser_name, 'THE FIELD')))
     END,
     '\n\n',
-    'In a season filled with storylines, the ', s.name, ' belonged to the ', COALESCE(s.finals_winner_name, 'Unknown Champion'),
-     CASE 
-      WHEN s.id > 1 AND r.is_redemption = 1 THEN CONCAT('. After falling short in Season ', r.redemption_season_id, ', they stormed back with a vengeance to claim their ',
+    'The ', s.name, ' unfolded as a saga of grit, glory, and unforgettable moments, with the ', COALESCE(s.finals_winner_name, 'Unknown Champion'), ' emerging as the ultimate victors.',
+    CASE 
+      WHEN s.id > 1 AND r.is_redemption = 1 THEN CONCAT(' After their heart-wrenching defeat in Season ', r.redemption_season_id, ', the ', s.finals_winner_name, ' roared back with unrelenting determination to claim their ',
           CASE COALESCE(tt.total_titles, 1)
               WHEN 1 THEN '1st'
               WHEN 2 THEN '2nd'
               WHEN 3 THEN '3rd'
               ELSE CONCAT(COALESCE(tt.total_titles, 1), 'th')
-          END, ' championship') 
-      ELSE '.' 
+          END, ' championship.') 
+      ELSE ' Their journey to the top was marked by resilience and brilliance.' 
     END,
     CASE 
-      WHEN s.id > 1 AND COALESCE(ct2.consecutive_titles, 0) > 1 THEN CONCAT(' — marking their ', 
+      WHEN s.id > 1 AND COALESCE(ct2.consecutive_titles, 0) > 1 THEN CONCAT(' This victory marks their ', 
           CASE ct2.consecutive_titles
               WHEN 1 THEN '1st'
               WHEN 2 THEN '2nd'
               WHEN 3 THEN '3rd'
               ELSE CONCAT(ct2.consecutive_titles, 'th')
-          END, ' consecutive title') 
+          END, ' consecutive title, cementing their status as a budding dynasty.') 
+      ELSE '' 
+    END,
+    CASE 
+      WHEN s.id > 1 AND r.is_redemption = 1 THEN ' This triumph silenced doubters and completed a redemption arc that will echo through league history.' 
       ELSE '' 
     END,
     '\n\n',
-    'The season was marked by offensive fireworks, with teams averaging ', ROUND(stats.avg_points_per_game, 1), ' points per game. ',
-    '\n\n',
-    'On the road to the championship, the four conference champions made their mark. ',
+    'The path to the championship was paved with epic battles across the four conferences. ',
     CASE 
       WHEN ct.consecutive_north_titles >= 2 THEN
-        CONCAT('In Visayas, ', COALESCE(s.north_champion_name, 'Visayas'), ' continued their reign of terror, securing their ',
+        CONCAT('In Visayas, the ', COALESCE(s.north_champion_name, 'Visayas'), ' reigned supreme, clinching their ',
               ct.consecutive_north_titles,
               CASE 
                 WHEN ct.consecutive_north_titles % 100 BETWEEN 11 AND 13 THEN 'th'
@@ -252,9 +256,9 @@ SELECT
                 WHEN ct.consecutive_north_titles % 10 = 2 THEN 'nd'
                 WHEN ct.consecutive_north_titles % 10 = 3 THEN 'rd'
                 ELSE 'th'
-              END, ' consecutive conference title behind ')
+              END, ' consecutive conference crown, led by ')
       WHEN ct.total_north_titles >= 2 THEN
-        CONCAT('In Visayas, ', COALESCE(s.north_champion_name, 'Visayas'), ' added to their trophy case with their ',
+        CONCAT('In Visayas, the ', COALESCE(s.north_champion_name, 'Visayas'), ' bolstered their legacy with their ',
               ct.total_north_titles,
               CASE 
                 WHEN ct.total_north_titles % 100 BETWEEN 11 AND 13 THEN 'th'
@@ -262,15 +266,20 @@ SELECT
                 WHEN ct.total_north_titles % 10 = 2 THEN 'nd'
                 WHEN ct.total_north_titles % 10 = 3 THEN 'rd'
                 ELSE 'th'
-              END, ' overall conference title behind ')
-      ELSE CONCAT('In Visayas, ', COALESCE(s.north_champion_name, 'Visayas'), ' captured their first conference title behind ')
+              END, ' conference title, powered by ')
+      ELSE CONCAT('In Visayas, the ', COALESCE(s.north_champion_name, 'Visayas'), ' stormed to their first conference championship, driven by ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'an emerging star'),
-    ' who dropped ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points in their conference final. ',
+    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'an emerging star'),
+    ', who erupted for ',
+    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.north_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    CASE 
+      WHEN cr.north_redemption = 1 THEN ', overcoming past semi-final heartbreak to claim Visayas glory.'
+      ELSE ' in a commanding conference final performance.'
+    END,
+    ' ',
     CASE 
       WHEN ct.consecutive_south_titles >= 2 THEN
-        CONCAT('In Mindanao, ', COALESCE(s.south_champion_name, 'Mindanao'), ' established their conference dynasty with a staggering ',
+        CONCAT('In Mindanao, the ', COALESCE(s.south_champion_name, 'Mindanao'), ' solidified their dynasty with a jaw-dropping ',
               ct.consecutive_south_titles,
               CASE 
                 WHEN ct.consecutive_south_titles % 100 BETWEEN 11 AND 13 THEN 'th'
@@ -278,17 +287,30 @@ SELECT
                 WHEN ct.consecutive_south_titles % 10 = 2 THEN 'nd'
                 WHEN ct.consecutive_south_titles % 10 = 3 THEN 'rd'
                 ELSE 'th'
-              END, ' straight championships as ')
+              END, ' consecutive championship, fueled by ')
       WHEN ct.total_south_titles >= 2 THEN
-        CONCAT('In Mindanao, ', COALESCE(s.south_champion_name, 'Mindanao'), ' defended their conference crown with ')
-      ELSE CONCAT('In Mindanao, ', COALESCE(s.south_champion_name, 'Mindanao'), ' stunned fans as ')
+        CONCAT('In Mindanao, the ', COALESCE(s.south_champion_name, 'Mindanao'), ' defended their crown with a relentless ',
+              ct.total_south_titles,
+              CASE 
+                WHEN ct.total_south_titles % 100 BETWEEN 11 AND 13 THEN 'th'
+                WHEN ct.total_south_titles % 10 = 1 THEN 'st'
+                WHEN ct.total_south_titles % 10 = 2 THEN 'nd'
+                WHEN ct.total_south_titles % 10 = 3 THEN 'rd'
+                ELSE 'th'
+              END, ' conference title, driven by ')
+      ELSE CONCAT('In Mindanao, the ', COALESCE(s.south_champion_name, 'Mindanao'), ' shocked the league with their first championship, led by ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.south_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'a reliable veteran'),
-    ' poured in ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.south_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points to secure the title. ',
+    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.south_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'a reliable veteran'),
+    ', who poured in ',
+    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.south_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    CASE 
+      WHEN cr.south_redemption = 1 THEN ', rising from past semi-final defeats to seize Mindanao''s crown.'
+      ELSE ' to secure the title.'
+    END,
+    ' ',
     CASE 
       WHEN ct.consecutive_east_titles >= 2 THEN
-        CONCAT('In Luzon, ', COALESCE(s.east_champion_name, 'Luzon'), ' became the team to beat with their ',
+        CONCAT('In Luzon, the ', COALESCE(s.east_champion_name, 'Luzon'), ' asserted dominance with their ',
               ct.consecutive_east_titles,
               CASE 
                 WHEN ct.consecutive_east_titles % 100 BETWEEN 11 AND 13 THEN 'th'
@@ -296,17 +318,30 @@ SELECT
                 WHEN ct.consecutive_east_titles % 10 = 2 THEN 'nd'
                 WHEN ct.consecutive_east_titles % 10 = 3 THEN 'rd'
                 ELSE 'th'
-              END, ' consecutive conference championship spearheaded by ')
+              END, ' straight conference championship, spearheaded by ')
       WHEN ct.total_east_titles >= 2 THEN
-        CONCAT('In Luzon, ', COALESCE(s.east_champion_name, 'Luzon'), ' went back-to-back as conference champs behind ')
-      ELSE CONCAT('In Luzon, ', COALESCE(s.east_champion_name, 'Luzon'), ' turned heads behind the brilliance of ')
+        CONCAT('In Luzon, the ', COALESCE(s.east_champion_name, 'Luzon'), ' went back-to-back with their ',
+              ct.total_east_titles,
+              CASE 
+                WHEN ct.total_east_titles % 100 BETWEEN 11 AND 13 THEN 'th'
+                WHEN ct.total_east_titles % 10 = 1 THEN 'st'
+                WHEN ct.total_east_titles % 10 = 2 THEN 'nd'
+                WHEN ct.total_east_titles % 10 = 3 THEN 'rd'
+                ELSE 'th'
+              END, ' conference title, powered by ')
+      ELSE CONCAT('In Luzon, the ', COALESCE(s.east_champion_name, 'Luzon'), ' captivated fans with their first championship, driven by ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.east_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'a clutch performer'),
-    ', who lit up the scoreboard with ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.east_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points. ',
+    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.east_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'a clutch performer'),
+    ', who dazzled with ',
+    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.east_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    CASE 
+      WHEN cr.east_redemption = 1 THEN ', redeeming past semi-final losses with a masterful performance.'
+      ELSE ' in a thrilling conference final.'
+    END,
+    ' ',
     CASE 
       WHEN ct.consecutive_west_titles >= 2 THEN
-        CONCAT('Meanwhile in NCR, ', COALESCE(s.west_champion_name, 'NCR'), ' rewrote the history books with an unprecedented ',
+        CONCAT('Meanwhile in NCR, the ', COALESCE(s.west_champion_name, 'NCR'), ' rewrote history with an unprecedented ',
               ct.consecutive_west_titles,
               CASE 
                 WHEN ct.consecutive_west_titles % 100 BETWEEN 11 AND 13 THEN 'th'
@@ -314,60 +349,133 @@ SELECT
                 WHEN ct.consecutive_west_titles % 10 = 2 THEN 'nd'
                 WHEN ct.consecutive_west_titles % 10 = 3 THEN 'rd'
                 ELSE 'th'
-              END, ' straight conference titles, powered by ')
+              END, ' consecutive conference title, powered by ')
       WHEN ct.total_west_titles >= 2 THEN
-        CONCAT('Meanwhile in NCR, ', COALESCE(s.west_champion_name, 'NCR'), ' repeated as conference kings with ')
-      ELSE CONCAT('Meanwhile in NCR, ', COALESCE(s.west_champion_name, 'NCR'), ' secured the crown thanks to ')
+        CONCAT('Meanwhile in NCR, the ', COALESCE(s.west_champion_name, 'NCR'), ' repeated as champions with their ',
+              ct.total_west_titles,
+              CASE 
+                WHEN ct.total_west_titles % 100 BETWEEN 11 AND 13 THEN 'th'
+                WHEN ct.total_west_titles % 10 = 1 THEN 'st'
+                WHEN ct.total_west_titles % 10 = 2 THEN 'nd'
+                WHEN ct.total_west_titles % 10 = 3 THEN 'rd'
+                ELSE 'th'
+              END, ' conference title, led by ')
+      ELSE CONCAT('Meanwhile in NCR, the ', COALESCE(s.west_champion_name, 'NCR'), ' claimed their first championship with ')
     END,
-    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'an unstoppable force'),
-    ' scoring ',
-    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' in their final test. ',
+    COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'an unstoppable force'),
+    ', who delivered ',
+    COALESCE((SELECT pgs.points FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.team_id = s.west_champion_id AND pgs.season_id = s.id AND sch.round = 'semi_finals' ORDER BY pgs.points DESC LIMIT 1), 'N/A'), ' points',
+    CASE 
+      WHEN cr.west_redemption = 1 THEN ', overcoming past semi-final setbacks to claim NCR supremacy.'
+      ELSE ' to secure the crown.'
+    END,
     '\n\n',
-    'The finals delivered fireworks as the championship game concluded ',
-    (SELECT CONCAT('with a scoreline of ', f.home_team, ' ', f.home_score, ' - ', f.away_score, ' ', f.away_team)
-     FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' ORDER BY f.home_score + f.away_score DESC LIMIT 1),
+    'The championship game was a spectacle that will be etched in fans’ memories for years. ',
+    (SELECT CONCAT('The ', s.finals_winner_name, ' clashed with the ', s.finals_loser_name, ', emerging triumphant with a score of ',
+                    f.home_team, ' ', f.home_score, ' - ', f.away_score, ' ', f.away_team)
+     FROM finals_details f WHERE f.id = s.id AND f.round = 'finals'),
     CASE 
       WHEN (SELECT ABS(f.home_score - f.away_score) FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' LIMIT 1) <= 5 
-        THEN ' in a nail-biting finish that came down to the final possession.'
+        THEN ' in a heart-stopping finish that came down to the final seconds, with the crowd roaring as the buzzer sounded.'
       WHEN (SELECT ABS(f.home_score - f.away_score) FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' LIMIT 1) <= 10 
-        THEN ' in a closely contested battle that kept fans on the edge of their seats.'
+        THEN ' in a fiercely contested battle that had fans on the edge of their seats until the final whistle.'
       WHEN (SELECT ABS(f.home_score - f.away_score) FROM finals_details f WHERE f.id = s.id AND f.round = 'finals' LIMIT 1) >= 20 
-        THEN ' in a dominant performance that left no doubt about the better team.'
-      ELSE '.'
+        THEN ' in a commanding performance that showcased their unrivaled dominance.'
+      ELSE ' in a thrilling showdown that captivated the league.'
     END,
     CASE 
       WHEN r.is_redemption = 1 AND s.id = r.redemption_season_id + 1 
-        THEN ' In a stunning reversal from last season''s heartbreak, the ' || s.finals_winner_name || ' turned the tables on their opponents.'
+        THEN CONCAT(' In a dramatic reversal of last season’s heartbreak against the ', s.finals_loser_name, ', the ', s.finals_winner_name, ' seized their moment of glory.')
       WHEN r.is_redemption = 1 
-        THEN ' Finally overcoming past demons after falling short in season ' || r.redemption_season_id || ', the ' || s.finals_winner_name || ' completed their journey to redemption.'
+        THEN CONCAT(' After falling in the finals of Season ', r.redemption_season_id, ', the ', s.finals_winner_name, ' completed an epic redemption arc.')
       ELSE ''
     END,
     CASE 
       WHEN ct2.consecutive_titles >= 3 
-        THEN CONCAT(' With this win, they cemented their legacy with a remarkable ', ct2.consecutive_titles, '-peat.')
+        THEN CONCAT(' This victory solidifies the ', s.finals_winner_name, ' as a dynasty with a rare ', ct2.consecutive_titles, '-peat.')
       WHEN ct2.consecutive_titles = 2 
-        THEN ' This win sets the stage for a potential dynasty.'
+        THEN CONCAT(' With back-to-back titles, the ', s.finals_winner_name, ' are poised to build a dynasty.')
       ELSE ''
     END,
     ' Finals MVP honors went to ', COALESCE(fm.finals_mvp_name, 'an outstanding player'), 
     CASE 
       WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.season_id = s.id AND sa.award_name = 'Best Overall Player' AND sa.player_id = s.finals_mvp_id)
-        THEN ', who also claimed the regular season MVP award.'
-      ELSE '.'
+        THEN ', who also claimed the regular season MVP, achieving a rare double crown.'
+      ELSE ', whose clutch performance defined the finals.'
+    END,
+    '\n\n',
+    '### Championship Game Recap\n',
+    (SELECT CONCAT('The ', s.finals_winner_name, ' faced the ', s.finals_loser_name, ' in a high-stakes, single-elimination showdown that electrified the arena. ',
+                    'With the scoreline reading ', f.home_team, ' ', f.home_score, ' - ', f.away_score, ' ', f.away_team, ', the ',
+                    s.finals_winner_name, ' claimed victory. ',
+                    COALESCE(ps.high_scorer, 'A key player'), ' led the charge with a scintillating ',
+                    COALESCE(ps.high_score, 'N/A'), ' points, ',
+                    COALESCE(ps.high_rebounds, 'N/A'), ' rebounds, and ',
+                    COALESCE(ps.high_assists, 'N/A'), ' assists, setting the tone for the win. ',
+                    CASE 
+                      WHEN ABS(f.home_score - f.away_score) <= 5 THEN CONCAT('A critical play in the final moments by ', COALESCE(ps.high_scorer, 'a star player'), ' sealed the championship.')
+                      ELSE 'Their relentless offense and stifling defense overwhelmed their opponents.'
+                    END, ' The raucous crowd erupted as the ', s.finals_winner_name, ' hoisted the trophy.')
+     FROM finals_details f LEFT JOIN playoff_series ps ON ps.season_id = s.id AND ps.round = 'finals' WHERE f.id = s.id AND f.round = 'finals'),
+    '\n\n',
+    '### Season Trivia\n',
+    '- ',
+    CASE 
+      WHEN ct2.consecutive_titles >= 2 THEN CONCAT(s.finals_winner_name, ' joined an elite group as only the ',
+          CASE 
+            WHEN ct2.consecutive_titles = 2 THEN 'second team'
+            WHEN ct2.consecutive_titles = 3 THEN 'first team'
+            ELSE CONCAT(ct2.consecutive_titles, 'th team')
+          END, ' in league history to win ', ct2.consecutive_titles, ' consecutive championships.')
+      ELSE CONCAT(s.finals_winner_name, ' etched their name in history with their ',
+          CASE tt.total_titles
+              WHEN 1 THEN 'first'
+              WHEN 2 THEN 'second'
+              WHEN 3 THEN 'third'
+              ELSE CONCAT(tt.total_titles, 'th')
+          END, ' championship title.')
+    END,
+    '\n- ',
+    CASE 
+      WHEN r.is_redemption = 1 THEN CONCAT(s.finals_winner_name, ' completed a rare redemption arc, overcoming their finals loss in Season ', r.redemption_season_id, ' to claim the ultimate prize.')
+      ELSE CONCAT(COALESCE(fm.finals_mvp_name, 'The Finals MVP'), ' delivered a playoff masterclass, leading the ', s.finals_winner_name, ' with poise and precision.')
+    END,
+    '\n- ',
+    CASE 
+      WHEN fwr.conference_rank >= 6 THEN CONCAT(s.finals_winner_name, ' defied all odds as a ', fwr.conference_rank,
+          CASE 
+            WHEN fwr.conference_rank % 100 BETWEEN 11 AND 13 THEN 'th'
+            WHEN fwr.conference_rank % 10 = 1 THEN 'st'
+            WHEN fwr.conference_rank % 10 = 2 THEN 'nd'
+            WHEN fwr.conference_rank % 10 = 3 THEN 'rd'
+            ELSE 'th'
+          END, ' seed, marking one of the most improbable championship runs in league history.')
+      ELSE CONCAT('The ', s.name, ' featured a historic ',
+          COALESCE(hts.max_team_score, 'N/A'), '-point performance by the ', COALESCE(hts.scoring_team, 'a standout team'), ' in a single playoff game.')
+    END,
+    '\n- ',
+    CASE 
+      WHEN (SELECT COUNT(*) FROM season_awards sa WHERE sa.season_id = s.id AND sa.player_id = s.finals_mvp_id) > 1 
+        THEN CONCAT(COALESCE(fm.finals_mvp_name, 'The Finals MVP'), ' made history by winning multiple awards this season, including Finals MVP and ',
+             COALESCE((SELECT sa.award_name FROM season_awards sa WHERE sa.season_id = s.id AND sa.player_id = s.finals_mvp_id AND sa.award_name != 'Finals MVP' LIMIT 1), 'another prestigious honor'), '.')
+      ELSE CONCAT('The ', s.name, ' saw ',
+          COALESCE((SELECT p.name FROM player_game_stats pgs JOIN players p ON p.id = pgs.player_id JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.season_id = s.id AND sch.round IN ('quarter_finals', 'semi_finals', 'finals') ORDER BY pgs.assists DESC LIMIT 1), 'a playmaker'),
+          ' dish out a playoff-high ', 
+          COALESCE((SELECT pgs.assists FROM player_game_stats pgs JOIN schedules sch ON sch.id = pgs.game_id WHERE pgs.season_id = s.id AND sch.round IN ('quarter_finals', 'semi_finals', 'finals') ORDER BY pgs.assists DESC LIMIT 1), 'N/A'), ' assists in a single game.')
     END,
     '\n\n',
     'Season MVP: ', COALESCE(aw.best_overall, 'Not awarded'), '. ',
-    'Defensive anchor of the year: ', COALESCE(aw.best_defense, 'Not awarded'), '. ',
-    'Sixth Man spark: ', COALESCE(aw.sixth_man, 'Not awarded'), '. ',
+    'Defensive Player of the Year: ', COALESCE(aw.best_defense, 'Not awarded'), '. ',
+    'Sixth Man of the Year: ', COALESCE(aw.sixth_man, 'Not awarded'), '. ',
     CASE WHEN aw.most_improved IS NOT NULL THEN CONCAT('Most Improved Player: ', aw.most_improved, '. ') ELSE '' END,
     CASE WHEN aw.rookie_year IS NOT NULL THEN CONCAT('Rookie of the Year: ', aw.rookie_year, '. ') ELSE '' END,
     '\n\n',
-   CASE 
-      WHEN r.is_redemption = 1 THEN 'With redemption fulfilled and dynasties forming, fans now wonder: who will rise next?'
-      WHEN ct2.consecutive_titles >= 2 THEN CONCAT('With ', s.finals_winner_name, ' establishing a potential dynasty, the league braces for their continued dominance. Can anyone stop them?')
-      WHEN fwr.conference_rank >= 6 THEN 'This Cinderella story has rewritten the league narrative. Will this underdog success inspire other teams next season?'
-      WHEN tt.total_titles = 1 THEN 'With the championship landscape shifting, the league enters an exciting new era of competition.'
-      ELSE 'With dynasties forming and new challengers emerging, fans now wonder: who will rise next?'
+    CASE 
+      WHEN r.is_redemption = 1 THEN 'With redemption fulfilled and new legends born, the league awaits the next chapter in this saga of triumph.'
+      WHEN ct2.consecutive_titles >= 2 THEN CONCAT('As the ', s.finals_winner_name, ' build a dynasty, rivals sharpen their blades for the next season. Can anyone dethrone them?')
+      WHEN fwr.conference_rank >= 6 THEN 'This Cinderella story has redefined what’s possible. Will this underdog triumph inspire a new wave of contenders?'
+      WHEN tt.total_titles = 1 THEN 'With a new champion crowned, the league enters an electrifying era of competition and ambition.'
+      ELSE 'As legends rise and challengers emerge, the question looms: who will write the next unforgettable chapter?'
     END
   ) AS storyline
 FROM seasons s
@@ -378,15 +486,7 @@ LEFT JOIN conference_redemption cr ON cr.id = s.id
 LEFT JOIN redemption r ON r.id = s.id
 LEFT JOIN awards aw ON aw.season_id = s.id
 LEFT JOIN finals_mvp fm ON fm.season_id = s.id
-LEFT JOIN finals_winner_rank fwr 
-  ON fwr.season_id = s.id AND fwr.team_id = s.finals_winner_id
-LEFT JOIN season_stats stats ON stats.season_id = s.id
-LEFT JOIN LATERAL (
-  SELECT MAX(s2.id) AS redemption_season_id 
-  FROM seasons s2
-  WHERE s2.finals_loser_id = s.finals_winner_id
-    AND s2.id < s.id 
-    AND s2.status = 17
-) r_prev ON true
+LEFT JOIN finals_winner_rank fwr ON fwr.season_id = s.id AND fwr.team_id = s.finals_winner_id
+LEFT JOIN highest_team_score hts ON hts.season_id = s.id
 WHERE s.status > 10 AND s.id = (SELECT MAX(id) FROM seasons WHERE status > 10)
 ORDER BY s.id;

@@ -1391,7 +1391,7 @@ class AwardsController extends Controller
                 );
     
                 // Update player contract and add transaction record
-                $this->upsertCurrentSeasonStoryline();
+                // $this->upsertCurrentSeasonStoryline();
                 // $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
     
                 DB::commit();
@@ -1404,27 +1404,6 @@ class AwardsController extends Controller
                 ]);
             }
         }
-    }
-    private function upsertCurrentSeasonStoryline()
-    {
-        // Get the current season's storyline from the view
-        $storylineData = DB::table('current_season_storyline')->first();
-
-        if (!$storylineData) {
-            return response()->json(['message' => 'No current season storyline found.'], 404);
-        }
-
-        // Perform safe insert or update
-        DB::table('storylines')->updateOrInsert(
-            ['season_id' => $storylineData->season_id], // Unique key
-            [
-                'storyline' => $storylineData->storyline,
-                'updated_at' => now(),
-                'created_at' => now(), // Safe to include; will only apply on insert
-            ]
-        );
-
-        return response()->json(['message' => 'Storyline inserted or updated successfully.']);
     }
     private function processAwardContractExtension($playerStats, $awardName, $seasonId)
     {

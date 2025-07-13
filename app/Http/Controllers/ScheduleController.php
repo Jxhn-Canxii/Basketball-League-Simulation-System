@@ -110,7 +110,6 @@ class ScheduleController extends Controller
         }
     }
 
-
     private function storeTeamSeasonInfo()
     {
         $latestSeasonId = get_current_season_id();
