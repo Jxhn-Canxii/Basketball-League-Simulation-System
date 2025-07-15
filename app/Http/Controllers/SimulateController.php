@@ -15,6 +15,7 @@ use App\Models\Player;
 use App\Models\PlayerGameStats;
 use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\PlayersController;
+use App\Services\WaiverService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Carbon;
@@ -965,10 +966,13 @@ class SimulateController extends Controller
 
             $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
             $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
-
             $this->updateInjuryFreeAgents();
             $this->updateAllTeamStreaks();
             $this->updateHeadToHeadResults($gameData->id);
+
+            $waiverService = new WaiverService();
+            $waiverService->pickUpFreeAgentForTeam($gameData->home_team_id, $gameData->round);
+            $waiverService->pickUpFreeAgentForTeam($gameData->away_team_id, $gameData->round);
             if ($allRoundsSimulatedForSeason) {
                 // Update the season's status to 2
                 $season = Seasons::find($currentSeasonId);
