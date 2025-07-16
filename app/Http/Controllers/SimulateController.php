@@ -970,9 +970,9 @@ class SimulateController extends Controller
             $this->updateAllTeamStreaks();
             $this->updateHeadToHeadResults($gameData->id);
 
-            $waiverService = new WaiverService();
-            $waiverService->pickUpFreeAgentForTeam($gameData->home_team_id, $gameData->round);
-            $waiverService->pickUpFreeAgentForTeam($gameData->away_team_id, $gameData->round);
+            // $waiverService = new WaiverService();
+            // $waiverService->pickUpFreeAgentForTeam($gameData->home_team_id, $gameData->round);
+            // $waiverService->pickUpFreeAgentForTeam($gameData->away_team_id, $gameData->round);
             if ($allRoundsSimulatedForSeason) {
                 // Update the season's status to 2
                 $season = Seasons::find($currentSeasonId);
