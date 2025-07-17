@@ -16,4 +16,4 @@ INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`
 -- Mindanao (Conference 4) – Add 4 Teams
 INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`,`league_id`, `conference_id`,`city`, `description`, `sponsor`, `created_at`, `updated_at`) VALUES
 (61, 'Bulldogs',  'BD',  '003087', 'A3A3A3', 1, 4, 'Kidapawan',    'Bark and Bite!',     'Dogma Sportswear',NOW(), NOW()),
-(62, 'Hornets',   'HRN', '1C2526', '00B2A9', 1, 4, 'Davao del Sur','Buzz to Victory!',   'HexaWasp',      NOW(), NOW());
+(62, 'Hornets',   'HRN', '1C2526', '00B2A9', 1, 4, 'Digos City','Buzz to Victory!',   'HexaWasp',      NOW(), NOW());

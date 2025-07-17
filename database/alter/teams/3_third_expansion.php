@@ -15,5 +15,5 @@ INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`
 
 -- Mindanao (Conference 4) – Final 2 Teams
 INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`,`league_id`, `conference_id`,`city`, `description`, `sponsor`, `created_at`, `updated_at`) VALUES
-(63, 'Rebels',    'RBL', 'EF0107', '1E1E2F', 1, 4, 'Davao del Norte','Defy and Conquer!', 'FreeFront Labs',NOW(), NOW()),
-(64, 'Owls',      'OWL', '0C2340', 'C8102E', 1, 4, 'Surigao del Norte','Hunt by Night!',  'NoctuaTech',    NOW(), NOW());
+(63, 'Rebels',    'RBL', 'EF0107', '1E1E2F', 1, 4, 'Koronadal','Defy and Conquer!', 'FreeFront Labs',NOW(), NOW()),
+(64, 'Owls',      'OWL', '0C2340', 'C8102E', 1, 4, 'Dipolog City','Hunt by Night!',  'NoctuaTech',    NOW(), NOW());

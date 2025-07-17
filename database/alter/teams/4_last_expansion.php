@@ -24,7 +24,7 @@ INSERT INTO `teams` (
 ('Ravens',          'MAN', 'Mandaue',          'Strike with Stealth!',   '000000', '800080', 1, 3, 'ShadowNest',        NOW(), NOW()),
 
 -- Conference 4 (Mindanao)
-('Marlins',         'MRL', 'Koronadal',        'Swim to Triumph!',       '4682B4', 'FF69B4', 1, 4, 'WaveRider Inc.',    NOW(), NOW()),
+('Marlins',         'MRL', 'Sarangani',        'Swim to Triumph!',       '4682B4', 'FF69B4', 1, 4, 'WaveRider Inc.',    NOW(), NOW()),
 ('Black Bulls',     'BBB', 'Basilan',          'Charge with Force!',     '000000', 'B8860B', 1, 4, 'IronHerd',          NOW(), NOW()),
 ('Steels',          'SLU', 'Sulu',             'Forge the Win!',         '4682B4', 'A9A9A9', 1, 4, 'SteelPoint',        NOW(), NOW()),
 ('Cobras',          'VLC', 'Valencia',         'Strike with Precision!', '006400', 'FFD700', 1, 4, 'StrikeLine Tech',   NOW(), NOW());
