@@ -11,7 +11,7 @@ INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`
 (9,  'Athletics', 'ATH', '003831', 'EFB21E', 1, 1, 'San Juan', 'Run to Triumph!', 'MotionTech', NOW(), NOW()),
 (10, 'Vipers', 'VIP', '1D428A', 'C8102E', 1, 1, 'Pasay', 'Strike with Venom!', 'VenomDrive', NOW(), NOW()),
 (11, 'Jaguars',   'JAG', '006778', '9F7925', 1, 1, 'Las Piñas',    'Leap to Dominate!',  'JagX Energy',   NOW(), NOW()),
-(12, 'Red Arrows',  'IMR', 'B22222', 'C0C0C0', 1, 1, 'Imus',   'Straight. Swift. Sure.',   'Imus Flight System',  NOW(), NOW());
+(12, 'Red Arrows',  'IMR', '4E342E', 'C62828', 1, 1, 'Imus',   'Straight. Swift. Sure.',   'Imus Flight System',  NOW(), NOW());
 
 -- North (Conference 2) - Initial 10
 INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`,`league_id`, `conference_id`,`city`, `description`, `sponsor`, `created_at`, `updated_at`) VALUES
