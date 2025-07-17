@@ -8,8 +8,8 @@ INSERT INTO `teams` (
 -- Conference 1 (Luzon)
 ('Angels',          'ACA', 'Angeles City',     'Soar with Grace!',       'FFCC00', '003366', 1, 1, 'AngelCore',         NOW(), NOW()),
 ('Knights',         'KNT', 'Malolos',          'Charge with Valor!',     '333399', 'CCCCCC', 1, 1, 'ValorArmory',       NOW(), NOW()),
-('Rascals',         'RSC', 'West Manila',      'Hustle with Heart!',     'FFCC00', 'FF5733', 1, 1, 'RogueMotion',       NOW(), NOW()),
-('Ducks',        'PTS', 'Pateros',          'One Quack!,One Team!', 'FFD700', '1A1A1A', 1, 1, 'Duckling Foundation',         NOW(), NOW()),
+('Antelopes',     'ANT', 'Antipolo',     'We Rise. We Run.',     '4B0082', 'FFA500', 1, 1, 'RogueMotion',          NOW(), NOW()),
+('Razorbacks',    'VLZ', 'Valenzuela',   'No Fear. No Limits.',  '800000', '444444', 1, 1, 'ValCity Pride Org',    NOW(), NOW()),
 
 -- Conference 2 (Luzon)
 ('Ghosts',          'GHS', 'Bataan',           'Haunt the Court!',       'A9A9A9', '777777', 1, 2, 'PhantomWare',       NOW(), NOW()),
