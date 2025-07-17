@@ -47,7 +47,7 @@ INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`
 INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`,`league_id`, `conference_id`,`city`, `description`, `sponsor`, `created_at`, `updated_at`) VALUES
 (49, 'Pirates', 'PIR', 'FFB612', '34302B', 1, 4, 'Davao City', 'Plunder the Prize!', 'Skullwave', NOW(), NOW()),
 (50, 'Scorpions', 'SCR', '8A4F00', 'FFD700', 1, 4, 'Zamboanga', 'Sting with Force!', 'Scorpex Systems', NOW(), NOW()),
-(51, 'Golds', 'ENM', 'FFD700', '000000', 1, 4, 'Cagayan de Oro', 'Crush the Rivals!', 'Aurix Corp.', NOW(), NOW()),
+(51, 'Thunderhawks', 'THK', '1A1A2E', 'FFD700', 1, 4, 'Cagayan de Oro', 'Strike from Above!', 'VoltEdge Energy', NOW(), NOW())
 (52, 'Reapers', 'RPR', '1B1B1B', 'D50000', 1, 4, 'General Santos', 'Harvest the Win!', 'Darkharvest Ltd.', NOW(), NOW()),
 (53, 'Raiders', 'RAI', '000000', 'A5ACAF', 1, 4, 'Butuan', 'Seize the Victory!', 'BlackFlag Co.', NOW(), NOW()),
 (54, 'Whales', 'WH', '005C5C', 'A1D6E2', 1, 4, 'Tagum', 'Dive to Dominate!', 'OceanCore', NOW(), NOW()),
