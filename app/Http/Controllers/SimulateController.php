@@ -122,7 +122,7 @@ class SimulateController extends Controller
             )
             ->findOrFail($request->schedule_id);
         
-        $this->preGameSetup($gameData);
+       $this->preGameSetup($gameData);
 
         // Fetch current season ID
         $currentSeasonId = $gameData->season_id;
@@ -902,7 +902,7 @@ class SimulateController extends Controller
              'message' => 'Game simulated successfully',
              'game_id' => $gameData->game_id,
              'round' => $gameData->round,
-             'isThisRoundSimulated'=> $isRoundSimulated,
+             'isRoundSimulated'=> $isRoundSimulated,
              // 'data' => $gameResult,
              // 'playerGameStats' => $playerGameStats,
          ]);
@@ -914,7 +914,6 @@ class SimulateController extends Controller
             ], 500);
         }
     }
-
     private function preGameSetup($gameData)
     {
         // Fix roster balance for both teams
@@ -966,7 +965,6 @@ class SimulateController extends Controller
             // $waiverService->pickUpFreeAgentForTeam($gameData->away_team_id, $gameData->round);
         }
     }
-    
     private function handleEndOfRound($round)
     {
         $this->updateInjuryFreeAgents();           // Free agents injury cleanup
@@ -1797,36 +1795,11 @@ class SimulateController extends Controller
     public function getActivePlayersSorted($teamId, $rolePriority, $round)
     {
         $seasonId = get_current_season_id();
-        $previousSeasonId = get_previous_season_id();
+        $previousSeasonId = get_previous_season_id(); // You must implement this
 
         $players = Player::where('team_id', $teamId)
             ->where('is_active', 1)
             ->get();
-
-        if ($players->isEmpty()) {
-            return collect();
-        }
-
-        $playerIds = $players->pluck('id')->all();
-
-        // Batch fetch all stats
-        $seasonStats = DB::table('player_season_stats')
-            ->whereIn('player_id', $playerIds)
-            ->get()
-            ->groupBy('player_id');
-
-        $prevSeasonStats = DB::table('player_game_stats')
-            ->where('season_id', $previousSeasonId)
-            ->whereIn('player_id', $playerIds)
-            ->orderByDesc('id')
-            ->get()
-            ->groupBy('player_id');
-
-        $drafts = DB::table('drafts')
-            ->whereIn('player_id', $playerIds)
-            ->where('season_id', $seasonId)
-            ->get()
-            ->keyBy('player_id');
 
         $playerEfficiencies = [];
 
@@ -1834,24 +1807,32 @@ class SimulateController extends Controller
             $playerId = $player->id;
 
             // Years pro = distinct seasons
-            $yearsPro = isset($seasonStats[$playerId])
-                ? $seasonStats[$playerId]->pluck('season_id')->unique()->count()
-                : 0;
+            $yearsPro = DB::table('player_season_stats')
+                ->where('player_id', $playerId)
+                ->distinct('season_id')
+                ->count('season_id');
 
             // Current season efficiency sum
-            $currentEff = isset($seasonStats[$playerId])
-                ? $seasonStats[$playerId]->sum('eff')
-                : 0;
+            $currentEff = DB::table('player_season_stats')
+                ->where('season_id', $seasonId)
+                ->where('player_id', $playerId)
+                ->sum('eff') ?? 0;
 
             // Last 5 games from previous season (only if early season)
-            $lastFiveGamesEff = isset($prevSeasonStats[$playerId])
-                ? $prevSeasonStats[$playerId]->take(5)->sum('eff')
-                : 0;
+            $lastFiveGamesEff = DB::table('player_game_stats')
+            ->where('season_id', $previousSeasonId)
+            ->where('player_id', $playerId)
+            ->orderByDesc('id')
+            ->limit(5)
+            ->sum('eff') ?? 0;
 
             $totalEff = $currentEff + $lastFiveGamesEff;
 
             // Draft info
-            $draft = $drafts[$playerId] ?? null;
+            $draft = DB::table('drafts')
+                ->where('player_id', $playerId)
+                ->where('season_id', $seasonId)
+                ->first();
 
             $playerEfficiencies[] = [
                 'player' => $player,
@@ -3044,7 +3025,7 @@ class SimulateController extends Controller
         }
     }
 
-    private function updateSeasonStats($playerGameStats, $gameData, $isPlayoff)
+    private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
         if (empty($playerGameStats)) {
             throw new Exception("Player game stats are empty. Cannot update season stats.");
@@ -3062,20 +3043,26 @@ class SimulateController extends Controller
             $bestPlayerId = null;
             $bestEfficiency = -INF;
 
-            // Prepare bulk upsert arrays
-            $playerGameStatsUpserts = [];
-            $playerSeasonStatsUpserts = [];
-            $awardsUpdates = [];
-            $hardshipUpdates = [];
-
             foreach ($playerGameStats as &$stats) {
                 if (isset($stats['passing_rating'])) {
                     unset($stats['passing_rating']);
                 }
 
+                // Update Player Game Stats
+                PlayerGameStats::updateOrCreate(
+                    [
+                        'player_id' => $stats['player_id'],
+                        'game_id' => $stats['game_id'],
+                        'season_id' => $stats['season_id'],
+                        'team_id' => $stats['team_id'],
+                    ],
+                    $stats
+                );
+
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
-                            - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0));
+                            - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
+
                 if ($efficiency > $bestEfficiency) {
                     $bestEfficiency = $efficiency;
                     $bestPlayerId = $stats['player_id'];
@@ -3087,73 +3074,43 @@ class SimulateController extends Controller
                 $stats['assists_game_leader'] = ($stats['assists'] == $maxAssists) ? 1 : 0;
                 $stats['steals_game_leader'] = ($stats['steals'] == $maxSteals) ? 1 : 0;
                 $stats['blocks_game_leader'] = ($stats['blocks'] == $maxBlocks) ? 1 : 0;
-
-                $playerGameStatsUpserts[] = $stats;
             }
 
             // Mark the Best Player of the Game (BPG)
             foreach ($playerGameStats as &$stats) {
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
-
-                // Prepare player_season_stats upsert
-                $playerSeasonStatsUpserts[] = [
-                    'player_id' => $stats['player_id'],
-                    'season_id' => $stats['season_id'],
-                    'team_id' => $stats['team_id'],
-                    'points_game_leader' => $stats['points_game_leader'],
-                    'rebounds_game_leader' => $stats['rebounds_game_leader'],
-                    'assists_game_leader' => $stats['assists_game_leader'],
-                    'steals_game_leader' => $stats['steals_game_leader'],
-                    'blocks_game_leader' => $stats['blocks_game_leader'],
-                    'bpg_game_leader' => $stats['bpg_game_leader'],
-                ];
-
-                // AwardsController and hardship logic must remain per player
+            
                 $storeStats = new AwardsController;
                 $storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
-
+            
+                // Update Player Season Stats (Incrementing Leader Fields)
+                DB::table('player_season_stats')->updateOrInsert(
+                    ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
+                    [
+                        'points_game_leader' => DB::raw("points_game_leader + {$stats['points_game_leader']}"),
+                        'rebounds_game_leader' => DB::raw("rebounds_game_leader + {$stats['rebounds_game_leader']}"),
+                        'assists_game_leader' => DB::raw("assists_game_leader + {$stats['assists_game_leader']}"),
+                        'steals_game_leader' => DB::raw("steals_game_leader + {$stats['steals_game_leader']}"),
+                        'blocks_game_leader' => DB::raw("blocks_game_leader + {$stats['blocks_game_leader']}"),
+                        'bpg_game_leader' => DB::raw("bpg_game_leader + {$stats['bpg_game_leader']}"),
+                    ]
+                );
+            
+                // Reduce hardship contract games for players on temporary contracts
                 $player = DB::table('players')->where('id', $stats['player_id'])->first();
+            
                 if ($player && $player->hardship_contract > 0) {
                     $this->handleHardshipContract($player, $stats);
                 }
+
+               
             }
 
-            // Bulk upsert PlayerGameStats (requires Laravel 8+ or a package)
-            if (!empty($playerGameStatsUpserts)) {
-                foreach ($playerGameStatsUpserts as $row) {
-                    PlayerGameStats::updateOrCreate(
-                        [
-                            'player_id' => $row['player_id'],
-                            'game_id' => $row['game_id'],
-                            'season_id' => $row['season_id'],
-                            'team_id' => $row['team_id'],
-                        ],
-                        $row
-                    );
-                }
-            }
-
-            // Bulk upsert player_season_stats (simulate upsert for each row)
-            if (!empty($playerSeasonStatsUpserts)) {
-                foreach ($playerSeasonStatsUpserts as $row) {
-                    DB::table('player_season_stats')->updateOrInsert(
-                        [
-                            'player_id' => $row['player_id'],
-                            'season_id' => $row['season_id'],
-                            'team_id' => $row['team_id'],
-                        ],
-                        [
-                            'points_game_leader' => DB::raw("points_game_leader + {$row['points_game_leader']}"),
-                            'rebounds_game_leader' => DB::raw("rebounds_game_leader + {$row['rebounds_game_leader']}"),
-                            'assists_game_leader' => DB::raw("assists_game_leader + {$row['assists_game_leader']}"),
-                            'steals_game_leader' => DB::raw("steals_game_leader + {$row['steals_game_leader']}"),
-                            'blocks_game_leader' => DB::raw("blocks_game_leader + {$row['blocks_game_leader']}"),
-                            'bpg_game_leader' => DB::raw("bpg_game_leader + {$row['bpg_game_leader']}"),
-                        ]
-                    );
-                }
-            }
         } catch (Exception $e) {
+            // Log error for debugging
+            // Log::error("Error updating season stats: " . $e->getMessage());
+
+            // Optionally, throw the error again to stop execution
             throw new Exception("Failed to update season stats. Please check logs.".$e->getMessage());
         }
     }
