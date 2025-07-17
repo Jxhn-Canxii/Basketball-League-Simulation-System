@@ -36,7 +36,7 @@ INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`
 (36, 'Monarchs', 'MON', '5A2D81', 'D6AF36', 1, 3, 'Tacloban', 'Rule the Realm!', 'DynastiTech', NOW(), NOW()),
 (37, 'Krakens', 'KRK', '001628', '99D9D9', 1, 3, 'Dumaguete', 'Unleash the Deep!', 'Abyss Corp.', NOW(), NOW()),
 (38, 'Jets', 'JET', '003F2D', '78B833', 1, 3, 'Tagbilaran', 'Soar to Speed!', 'Jetline Systems', NOW(), NOW()),
-(39, 'Northern Stars','NS','006847','A2AAAD',1,3,'Roxas City', 'Shine Unrivaled!', 'Polaris Edge', NOW(), NOW()),
+(39, 'Dolphins', 'DOL', '008E97', 'F58220', 1, 3, 'Roxas City', 'Dive to Victory!', 'BlueWave Co.', NOW(), NOW())
 (40, 'Ninjas', 'NIN', '000000', 'C4CED4', 1, 3, 'Ormoc', 'Strike from Shadows!', 'SilentEdge', NOW(), NOW()),
 (41, 'Dragons', 'DRA', 'B5121B', 'F7B32B', 1, 3, 'Kalibo', 'Breathe the Fire!', 'Ignix Industries', NOW(), NOW()),
 (42, 'Phoenix', 'PHO', '1D1160', 'E56020', 1, 3, 'Catarman', 'Rise from Ashes!', 'Rebirth Energy', NOW(), NOW()),
