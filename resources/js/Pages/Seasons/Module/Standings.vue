@@ -25,6 +25,7 @@
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STRK</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">LAST 5 GAMES</th>
+            <th scope="col" class="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">OPP</th>
           </tr>
         </thead>
         <transition-group 
@@ -107,6 +108,9 @@
                   </span>
                 </template>
               </div>
+            </td>
+            <td class="px-2 py-2 whitespace-nowrap text-left text-sm">
+              {{ team.next_opponent_acronym }}
             </td>
             <!-- <td class="px-2 py-2 whitespace-nowrap">
               <div class="grid grid-cols-3 gap-1 place-items-center w-fit mx-auto text-xs">

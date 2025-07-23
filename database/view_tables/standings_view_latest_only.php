@@ -3,6 +3,19 @@ WITH latest_season AS (
     SELECT MAX(id) AS season_id
     FROM seasons
 ),
+next_games AS (
+    SELECT
+        t.id AS team_id,
+        s.id AS game_id,
+        s.home_id,
+        s.away_id,
+        ROW_NUMBER() OVER (PARTITION BY t.id ORDER BY s.id ASC) AS rn
+    FROM teams t
+    JOIN schedules s
+        ON (t.id = s.home_id OR t.id = s.away_id)
+        AND s.status = 1 -- scheduled but not played
+        AND s.season_id = (SELECT season_id FROM latest_season)
+),
 team_games AS (
     SELECT
         teams.id AS team_id,
@@ -327,8 +340,15 @@ SELECT
         WHEN latest_streak.game_result = 'L' THEN CONCAT('L', latest_streak.streak_length)
         ELSE NULL
     END AS streak_status,
-    COALESCE(last_five_games.last_5, '') AS last_5_games
+    COALESCE(last_five_games.last_5, '') AS last_5_games,
+    opponent.acronym AS next_opponent_acronym,
+    opponent.name AS next_opponent_name
 FROM ranked_team_rankings AS standings
+LEFT JOIN next_games ng ON standings.team_id = ng.team_id AND ng.rn = 1
+LEFT JOIN teams opponent ON (
+    (ng.home_id = standings.team_id AND ng.away_id = opponent.id) OR
+    (ng.away_id = standings.team_id AND ng.home_id = opponent.id)
+)
 LEFT JOIN last_playoff_appearance
     ON standings.team_id = last_playoff_appearance.team_id
 LEFT JOIN seasons_list
