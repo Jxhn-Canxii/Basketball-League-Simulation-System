@@ -339,7 +339,7 @@ class RatingsController extends Controller
 
                 $this->updatePlayerAndCoachAge();
                 $this->promoteRetiredPlayersToCoaches();
-                // $this->upsertCurrentSeasonStoryline();
+
                 // Update season status
                 $season = Seasons::find($seasonId);
                 if ($season) {
@@ -408,6 +408,7 @@ class RatingsController extends Controller
             ]);
     }
 
+    
     public function updateCoachContract($teamId)
     {
         $team = DB::table('teams')->where('id', $teamId)->first();

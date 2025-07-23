@@ -1405,6 +1405,7 @@ class AwardsController extends Controller
             }
         }
     }
+    
     private function processAwardContractExtension($playerStats, $awardName, $seasonId)
     {
         // Step 1: Check if the award is eligible
