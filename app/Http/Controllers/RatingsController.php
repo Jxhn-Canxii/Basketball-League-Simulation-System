@@ -339,7 +339,7 @@ class RatingsController extends Controller
 
                 $this->updatePlayerAndCoachAge();
                 $this->promoteRetiredPlayersToCoaches();
-                $this->upsertCurrentSeasonStoryline();
+                // $this->upsertCurrentSeasonStoryline();
                 // Update season status
                 $season = Seasons::find($seasonId);
                 if ($season) {
@@ -406,31 +406,6 @@ class RatingsController extends Controller
                 'contract_years' => 0,
                 'age' => DB::raw('age + 1'),
             ]);
-    }
-
-    private function upsertCurrentSeasonStoryline()
-    {
-        try {
-            $storylineData = DB::table('current_season_storyline')->first();
-          
-            if (!$storylineData) {
-                return response()->json(['message' => 'No current season storyline found.'], 404);
-            }
-
-            DB::table('storylines')->updateOrInsert(
-                ['season_id' => $storylineData->season_id],
-                [
-                    'storyline'   => $storylineData->storyline,
-                    'updated_at'  => now(),
-                    'created_at'  => now(),
-                ]
-            );
-
-            return true;
-        } catch (\Exception $e) {
-            \Log::error("Failed to upsert storyline: " . $e->getMessage());
-            return response()->json(['error' => 'Failed to upsert storyline','message',$e->getMessage()], 500);
-        }
     }
 
     public function updateCoachContract($teamId)

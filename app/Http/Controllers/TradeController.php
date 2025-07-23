@@ -296,11 +296,9 @@ class TradeController extends Controller
     public function endOffSeasonTradeWindow(){
         $latestSeasonId = get_current_season_id();
 
-        // $storyline = $this->upsertCurrentSeasonStoryline();
-
-         DB::table('seasons')
-                ->where('id',  $latestSeasonId)
-                ->update(['status' => config('timeline.off_season_trade')]);
+        DB::table('seasons')
+            ->where('id',  $latestSeasonId)
+            ->update(['status' => config('timeline.off_season_trade')]);
 
                 return response()->json(['message' => 'Trade window ended!']);
     } 
@@ -391,31 +389,6 @@ class TradeController extends Controller
             'message' => 'Multi-team trade proposals generated successfully.',
             'trades' => $tradeProposals
         ]);
-    }
-    
-    private function upsertCurrentSeasonStoryline()
-    {
-        try {
-            $storylineData = DB::table('current_season_storyline')->first();
-          
-            if (!$storylineData) {
-                return response()->json(['message' => 'No current season storyline found.'], 404);
-            }
-
-            DB::table('storylines')->updateOrInsert(
-                ['season_id' => $storylineData->season_id],
-                [
-                    'storyline'   => $storylineData->storyline,
-                    'updated_at'  => now(),
-                    'created_at'  => now(),
-                ]
-            );
-
-            return true;
-        } catch (\Exception $e) {
-            \Log::error("Failed to upsert storyline: " . $e->getMessage());
-            return response()->json(['error' => 'Failed to upsert storyline','message',$e->getMessage()], 500);
-        }
     }
 
     private function calculatePerformanceScore($player)
