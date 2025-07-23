@@ -296,16 +296,13 @@ class TradeController extends Controller
     public function endOffSeasonTradeWindow(){
         $latestSeasonId = get_current_season_id();
 
-        $storyline = $this->upsertCurrentSeasonStoryline();
+        // $storyline = $this->upsertCurrentSeasonStoryline();
 
-        if($storyline){
-            DB::table('seasons')
+         DB::table('seasons')
                 ->where('id',  $latestSeasonId)
                 ->update(['status' => config('timeline.off_season_trade')]);
 
                 return response()->json(['message' => 'Trade window ended!']);
-        }
-        return  $storyline;
     } 
     public function generateTradeProposals(Request $request)
     {

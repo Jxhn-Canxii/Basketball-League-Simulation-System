@@ -275,7 +275,7 @@ const endTrade = async () => {
     // 1️⃣  fire‑and‑forget: no await here
     Swal.fire({
       title: 'Processing...',
-      text: 'Ending trade and creating season storyline summary...',
+      text: 'Ending trade...',
       icon: 'info',
       allowOutsideClick: false,
       allowEscapeKey: false,
