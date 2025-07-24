@@ -32,3 +32,15 @@ JOIN teams t1 ON d.team_id = t1.id
 WHERE d.pick_number <= 10 AND d.round = 1
 GROUP BY t1.id, t1.name
 ORDER BY team_rank, t1.name;
+
+CREATE OR REPLACE VIEW top_five_picks_ranked AS
+SELECT 
+    ROW_NUMBER() OVER (ORDER BY COUNT(*) DESC, t1.name) AS id,
+    t1.name AS draft_team_name,
+    COUNT(*) AS pick_count,
+    RANK() OVER (ORDER BY COUNT(*) DESC) AS team_rank
+FROM drafts d
+JOIN teams t1 ON d.team_id = t1.id
+WHERE d.pick_number <= 5 AND d.round = 1
+GROUP BY t1.id, t1.name
+ORDER BY team_rank, t1.name;
