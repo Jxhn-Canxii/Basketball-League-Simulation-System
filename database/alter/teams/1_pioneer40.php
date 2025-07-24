@@ -54,6 +54,6 @@ INSERT INTO `teams` (`id`, `name`, `acronym`, `primary_color`, `secondary_color`
 (55, 'Poseidons', 'POS', '003B4F', '00B4D8', 1, 4, 'Surigao City', 'Command the Tides!', 'Trident Co.', NOW(), NOW()),
 (56, 'Cyclones', 'CYC', '4B0082', 'FFD700', 1, 4, 'Cotabato City', 'Spin to Glory!', 'StormVibe Inc.', NOW(), NOW()),
 (57, 'Force', 'FRC', '006BB6', 'ED174C', 1, 4, 'Pagadian City','Charge with Power!', 'CoreForce', NOW(), NOW()),
-(58, 'Astronauts', 'AST', '1A1A40', 'F28C28', 1, 4, ''Kidapawan City', 'Orbit to Victory!', 'Orbitek Systems', NOW(), NOW()),
+(58, 'Apex', 'APX', '1A1A40', 'F28C28', 1, 4, 'Kidapawan City', 'Peak Performance.', 'Summit Dynamics', NOW(), NOW()),
 (59, 'Demons',    'DMN', '0B162A', 'FF3C00', 1, 4, 'Iligan City',  'Unleash the Chaos!', 'Hellspawn Gear',NOW(), NOW()),
 (60, 'Devils',    'DVL', 'D50A0A', '000000', 1, 4, 'Malaybalay',   'Burn with Passion!', 'Infernal Works',NOW(), NOW());
