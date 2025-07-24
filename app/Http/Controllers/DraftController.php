@@ -713,6 +713,8 @@ class DraftController extends Controller
                 'drafts.draft_status'
             )
             ->where('players.draft_id', $latestSeasonId)
+            ->orderBy('drafts.round')
+            ->orderBy('drafts.pick_number')
             ->get();
 
         // Extract player IDs from the draft results to create the rank group
