@@ -1770,7 +1770,7 @@ class SimulateController extends Controller
             $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->team_id); // Get total regular season games for the team
             $requiredRecoveryGames = ceil($totalTeamGames * 0.5); // Waive if injury > 50% of season
 
-            $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonStatus);
+            $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonStatus, $requiredRecoveryGames);
             //can replace injured players until in season trade deadline...
             if ($shouldWaiveThisPlayer) {
                 // Player is waived due to extended injury recovery period
@@ -3416,7 +3416,7 @@ class SimulateController extends Controller
     // }
 
     // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
-    private function shouldWaivePlayer($player, $seasonStatus, $requiredRecoveryGames = 25): bool
+    private function shouldWaivePlayer($player, $seasonStatus, $requiredRecoveryGames)
     {
         // Only consider waiving during first half of season (e.g., before trade deadline)
         if ($seasonStatus > 2) return false;
