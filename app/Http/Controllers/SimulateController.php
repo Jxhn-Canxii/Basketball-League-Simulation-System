@@ -3473,7 +3473,7 @@ class SimulateController extends Controller
         if (
             ($isOldDeclining || $isInjuryProne || $lowMorale || $lowStamina || $poorWorkEthic) &&
             $isExpendableRole &&
-            rand(1, 100) <= 50
+            rand(1, 100) <= 80
         ) {
             return true;
         }
