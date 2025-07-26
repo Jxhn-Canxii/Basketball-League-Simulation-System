@@ -19,6 +19,7 @@ use App\Http\Controllers\SimulateController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\LeadersController;
 use App\Http\Controllers\TradeController;
+use App\Http\Controllers\TestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -257,6 +258,12 @@ Route::middleware('auth')->group(function () {
         Route::patch('', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
+
+    Route::prefix('tests/')->group(function(){
+       Route::get('waive/{team_id}', [TestController::class, 'waiveTeam']);
+       Route::get('waive-scan', [TestController::class, 'waiveScan']);
+    });
+
 });
 
 require __DIR__.'/auth.php';

@@ -1767,10 +1767,7 @@ class SimulateController extends Controller
             }
 
             // **Waive Player if Injury Recovery is Taking Too Long**
-            $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->team_id); // Get total regular season games for the team
-            $requiredRecoveryGames = ceil($totalTeamGames * 0.5); // Waive if injury > 50% of season
-
-            $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonStatus, $requiredRecoveryGames);
+            $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player,$seasonId, $seasonStatus);
             //can replace injured players until in season trade deadline...
             if ($shouldWaiveThisPlayer) {
                 // Player is waived due to extended injury recovery period
@@ -3416,12 +3413,35 @@ class SimulateController extends Controller
     // }
 
     // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
-    private function shouldWaivePlayer($player, $seasonStatus, $requiredRecoveryGames)
+    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): bool
     {
         // Only consider waiving during first half of season (e.g., before trade deadline)
         if ($seasonStatus > 2) return false;
 
-        // Must be a serious injury
+        // How many regular-season games this specific team will play (dynamic)
+        $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->id);
+
+        // % of the season a player must be out before we even consider waiving
+        $rolePctMap = [
+            'star player' => 0.90, // ~90% of the season
+            'all star'    => 0.85,
+            'starter'     => 0.70,
+            'role player' => 0.55,
+            'bench'       => 0.40, // bench guys can be waived earlier
+        ];
+
+        // Fallback % if role is missing/unknown
+        $defaultPct = 0.55;
+
+        $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
+
+        // Convert % to games, clamp to [min,max]
+        $minReq = 4;                                // never below 4 games
+        $maxReq = $totalTeamGames;                  // never above full season
+        $requiredRecoveryGames = (int) ceil($totalTeamGames * $pct);
+        $requiredRecoveryGames = max($minReq, min($requiredRecoveryGames, $maxReq));
+
+        // Must be a serious injury (has missed at least the role-based threshold)
         if ($player->injury_recovery_games < $requiredRecoveryGames) return false;
 
         // Never waive your top talents (franchise anchors)
@@ -3475,14 +3495,15 @@ class SimulateController extends Controller
         return false;
     }
 
-    private function getRegularSeasonGameCount($seasonId, $teamId)
+    private function getRegularSeasonGameCount(int $seasonId, int $playerId): int
     {
-        return DB::table('player_game_stats')
-            ->where('season_id', $seasonId)
-            ->where('team_id', $teamId)
-            ->whereRaw('round REGEXP "^[0-9]+$"')
-            ->selectRaw('COUNT(DISTINCT game_id) as total_games')
-            ->value('total_games');
+        return (int) (
+            DB::table('player_season_stats')
+                ->where('season_id', $seasonId)
+                ->where('player_id', $playerId)
+                ->orderByDesc('id') // get the latest record
+                ->value('total_games_played') ?? 19
+        );
     }
 
     // Add this helper method to get the last round number
