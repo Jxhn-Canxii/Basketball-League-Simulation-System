@@ -214,7 +214,7 @@
         </div>
 
         <!-- Player Statistics Tables -->
-        <h3 class="text-xl font-semibold mb-2 text-white">Player Statistics</h3>
+        <h3 class="text-xl font-semibold mb-2 text-white" v-if="props.showBoxScore">Player Statistics</h3>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4 text-white" v-if="props.showBoxScore">
             <!-- Home Team Player Stats -->
             <div
