@@ -656,7 +656,6 @@ class PlayersController extends Controller
                 'required',
                 'string',
                 'max:30',
-                'unique:players,name',
                 'regex:/[aeiouAEIOU]/',
             ],
             'address' => 'required|string|max:255',
