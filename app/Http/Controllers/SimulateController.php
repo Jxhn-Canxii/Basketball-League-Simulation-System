@@ -3419,10 +3419,7 @@ class SimulateController extends Controller
         if ($seasonStatus > 2) return false;
 
         // How many regular-season games this specific team will play (dynamic)
-        $totalTeamGames = $this->getRegularSeasonGamePlayedCount($seasonId, $player->team_id);
-
-        // Only consider waiving if the team has played more than 4 games
-        if ($totalTeamGames < 3) return false;
+        $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->id);
 
         // % of the season a player must be out before we even consider waiving
         $rolePctMap = [
@@ -3459,7 +3456,7 @@ class SimulateController extends Controller
         }
 
         // Waive protection for players with long-term deals unless clearly declining
-        if ($player->contract_years > 2 && $player->overall_rating > 72) return false;
+        // if ($player->contract_years > 2 && $player->overall_rating > 72) return false;
 
         // Risk categories
         $isOldDeclining = $player->age >= 30 && $player->overall_rating <= 72;
@@ -3476,7 +3473,7 @@ class SimulateController extends Controller
         if (
             ($isOldDeclining || $isInjuryProne || $lowMorale || $lowStamina || $poorWorkEthic) &&
             $isExpendableRole &&
-            rand(1, 100) <= 80
+            rand(1, 100) <= 95
         ) {
             return true;
         }
@@ -3498,18 +3495,16 @@ class SimulateController extends Controller
         return false;
     }
 
-    private function getRegularSeasonGamePlayedCount(int $seasonId, int $teamId): int
+    private function getRegularSeasonGameCount(int $seasonId, int $playerId): int
     {
-        return DB::table('schedules')
-            ->where('season_id', $seasonId)
-            ->where('status', 2) // assuming status 2 = completed regular season game
-            ->where(function ($query) use ($teamId) {
-                $query->where('home_id', $teamId)
-                    ->orWhere('away_id', $teamId);
-            })
-            ->count();
+        return (int) (
+            DB::table('player_season_stats')
+                ->where('season_id', $seasonId)
+                ->where('player_id', $playerId)
+                ->orderByDesc('id') // get the latest record
+                ->value('total_games_played') ?? 19
+        );
     }
-
 
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
