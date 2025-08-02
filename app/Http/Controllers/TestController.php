@@ -153,7 +153,7 @@ class TestController extends Controller
         }
 
         // Waive protection for players with long-term deals unless clearly declining
-        if ($player->contract_years > 2 && $player->overall_rating > 72) return false;
+        // if ($player->contract_years > 2 && $player->overall_rating > 72) return false;
 
         // Risk categories
         $isOldDeclining = $player->age >= 30 && $player->overall_rating <= 72;
@@ -199,7 +199,7 @@ class TestController extends Controller
                 ->where('season_id', $seasonId)
                 ->where('player_id', $playerId)
                 ->orderByDesc('id') // get the latest record
-                ->value('total_games_played') ?? 19
+                ->value('total_games') ?? 19
         );
     }
 

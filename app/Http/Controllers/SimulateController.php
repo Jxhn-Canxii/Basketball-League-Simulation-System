@@ -3502,7 +3502,7 @@ class SimulateController extends Controller
                 ->where('season_id', $seasonId)
                 ->where('player_id', $playerId)
                 ->orderByDesc('id') // get the latest record
-                ->value('total_games_played') ?? 19
+                ->value('total_games') ?? 19
         );
     }
 
