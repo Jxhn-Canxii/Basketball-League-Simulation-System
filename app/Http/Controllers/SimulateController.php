@@ -3419,7 +3419,10 @@ class SimulateController extends Controller
         if ($seasonStatus > 2) return false;
 
         // How many regular-season games this specific team will play (dynamic)
-        $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->id);
+        $totalTeamGames = $this->getRegularSeasonGamePlayedCount($seasonId, $player->team_id);
+
+        // Only consider waiving if the team has played more than 4 games
+        if ($totalTeamGames < 3) return false;
 
         // % of the season a player must be out before we even consider waiving
         $rolePctMap = [
@@ -3495,16 +3498,18 @@ class SimulateController extends Controller
         return false;
     }
 
-    private function getRegularSeasonGameCount(int $seasonId, int $playerId): int
+    private function getRegularSeasonGamePlayedCount(int $seasonId, int $teamId): int
     {
-        return (int) (
-            DB::table('player_season_stats')
-                ->where('season_id', $seasonId)
-                ->where('player_id', $playerId)
-                ->orderByDesc('id') // get the latest record
-                ->value('total_games_played') ?? 19
-        );
+        return DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->where('status', 2) // assuming status 2 = completed regular season game
+            ->where(function ($query) use ($teamId) {
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->count();
     }
+
 
     // Add this helper method to get the last round number
     private function getLastRoundNumber()
