@@ -143,7 +143,7 @@ class TestController extends Controller
         // Never waive top-tier players
         if (
             in_array($player->role, $highLevelRoles) ||
-            $player->overall_rating >= 85
+            $player->overall_rating >= 90
         ) {
             return false;
         }
