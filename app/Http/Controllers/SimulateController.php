@@ -1762,52 +1762,51 @@ class SimulateController extends Controller
 
                     \Log::info("Player {$player->name} has fully recovered from injury.");
                 }
+
+                 // **Waive Player if Injury Recovery is Taking Too Long**
+                $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player,$seasonId, $seasonStatus);
+                //can replace injured players until in season trade deadline...
+                if ($shouldWaiveThisPlayer) {
+                    // Player is waived due to extended injury recovery period
+                    DB::table('transactions')->insert([
+                        'player_id' => $player->id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived due to extended injury recovery period',
+                        'from_team_id' => $player->team_id,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
+
+                    // Set contract to zero, indicating that the player is now waived
+                    DB::table('players')->where('id', $player->id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                    ]);
+
+                    // **Replace Waived Player with Best Free Agent Available**
+                    $replacement = $this->getBestFreeAgentAvailable($player->position);
+                    if ($replacement) {
+                        $contractYears = $this->getContractYearsBasedOnRole($player->role);
+                        DB::table('players')->where('id', $replacement->player_id)->update([
+                            'team_id' => $player->team_id,
+                            'contract_years' => $contractYears,
+                        ]);
+
+                        DB::table('transactions')->insert([
+                            'player_id' => $replacement->player_id,
+                            'season_id' => $seasonId,
+                            'details' => 'Signed as injury replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
+                            'from_team_id' => 0,
+                            'to_team_id' => $player->team_id,
+                            'status' => 'signed',
+                        ]);
+
+                        (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
+                    }
+                }
             } else {
                 \Log::info("Player {$player->name} is not injured.");
             }
-
-            // **Waive Player if Injury Recovery is Taking Too Long**
-            $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player,$seasonId, $seasonStatus);
-            //can replace injured players until in season trade deadline...
-            if ($shouldWaiveThisPlayer) {
-                // Player is waived due to extended injury recovery period
-                DB::table('transactions')->insert([
-                    'player_id' => $player->id,
-                    'season_id' => $seasonId,
-                    'details' => 'Waived due to extended injury recovery period',
-                    'from_team_id' => $player->team_id,
-                    'to_team_id' => 0,
-                    'status' => 'waived',
-                ]);
-
-                // Set contract to zero, indicating that the player is now waived
-                DB::table('players')->where('id', $player->id)->update([
-                    'contract_years' => 0,
-                    'team_id' => 0,
-                ]);
-
-                // **Replace Waived Player with Best Free Agent Available**
-                $replacement = $this->getBestFreeAgentAvailable($player->position);
-                if ($replacement) {
-                    $contractYears = $this->getContractYearsBasedOnRole($player->role);
-                    DB::table('players')->where('id', $replacement->player_id)->update([
-                        'team_id' => $player->team_id,
-                        'contract_years' => $contractYears,
-                    ]);
-
-                    DB::table('transactions')->insert([
-                        'player_id' => $replacement->player_id,
-                        'season_id' => $seasonId,
-                        'details' => 'Signed as injury replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
-                        'from_team_id' => 0,
-                        'to_team_id' => $player->team_id,
-                        'status' => 'signed',
-                    ]);
-
-                    (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
-                }
-            }
-            
         } catch (\Exception $e) {
             \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
         }
@@ -3423,21 +3422,21 @@ class SimulateController extends Controller
 
         // % of the season a player must be out before we even consider waiving
         $rolePctMap = [
-            'star player' => 0.90, // ~90% of the season
-            'all star'    => 0.85,
-            'starter'     => 0.70,
-            'role player' => 0.55,
-            'bench'       => 0.40, // bench guys can be waived earlier
+            'star player' => 0.80, // Reduced from 0.90
+            'all star'    => 0.75, // Reduced from 0.85
+            'starter'     => 0.60, // Reduced from 0.70
+            'role player' => 0.45, // Reduced from 0.55
+            'bench'       => 0.30, // Reduced from 0.40
         ];
 
         // Fallback % if role is missing/unknown
-        $defaultPct = 0.55;
+        $defaultPct = 0.45; // Reduced from 0.55
 
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
 
         // Convert % to games, clamp to [min,max]
-        $minReq = 4;                                // never below 4 games
-        $maxReq = $totalTeamGames;                  // never above full season
+        $minReq = 2;                                // Reduced from 4
+        $maxReq = $totalTeamGames;                  // Never above full season
         $requiredRecoveryGames = (int) ceil($totalTeamGames * $pct);
         $requiredRecoveryGames = max($minReq, min($requiredRecoveryGames, $maxReq));
 
@@ -3447,10 +3446,7 @@ class SimulateController extends Controller
         // Never waive your top talents (franchise anchors)
         if (
             in_array($player->role, ['star player', 'all star']) ||
-            $player->overall_rating >= 80 ||
-            ($player->is_rookie && $player->overall_rating >= 70) ||
-            $player->work_ethic_rating >= 85 ||
-            $player->leadership_rating >= 85
+            $player->overall_rating >= 85 // Increased from 80
         ) {
             return false;
         }
@@ -3473,7 +3469,7 @@ class SimulateController extends Controller
         if (
             ($isOldDeclining || $isInjuryProne || $lowMorale || $lowStamina || $poorWorkEthic) &&
             $isExpendableRole &&
-            rand(1, 100) <= 95
+            rand(1, 100) <= 98 // Increased from 95
         ) {
             return true;
         }
@@ -3482,13 +3478,13 @@ class SimulateController extends Controller
         if (
             $player->role === 'starter' &&
             ($isInjuryProne || $lowMorale || $poorWorkEthic) &&
-            rand(1, 100) <= 25
+            rand(1, 100) <= 35 // Increased from 25
         ) {
             return true;
         }
 
         // Rare chance to simulate tough or chaotic front office decisions
-        if (rand(1, 100) <= 10) {
+        if (rand(1, 100) <= 20) { // Increased from 10
             return true;
         }
 
