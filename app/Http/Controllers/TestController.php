@@ -139,33 +139,35 @@ class TestController extends Controller
         // Must be a serious injury (has missed at least the role-based threshold)
         if ($player->injury_recovery_games < $requiredRecoveryGames) return false;
 
+        $highLevelRoles = ['star player', 'all star'];
         // Never waive top-tier players
         if (
-            in_array($player->role, ['star player', 'all star']) ||
+            in_array($player->role, $highLevelRoles) ||
             $player->overall_rating >= 85
         ) {
             return false;
+        }
+        
+        // star player or all star that is less than 85 ratings is expandable
+        if ($player->injury_recovery_games >= (1.5 * $totalTeamGames) && in_array($player->role, $highLevelRoles)) {
+            return true;
         }
 
         // High chance to waive expendable roles
         $waivableRoles = ['bench', 'role player'];
 
         // Force waive if player is out for more than 1 full season
-        if ($player->injury_recovery_games >= $totalTeamGames &&  in_array($player->role, $waivableRoles)) {
-            return true;
-        }
-
-        if (in_array($player->role, $waivableRoles) && rand(1, 100) <= 90) {
+        if ($player->injury_recovery_games >= $totalTeamGames && in_array($player->role, $waivableRoles) &&  $player->overall_rating < 80) {
             return true;
         }
 
         // Moderate chance to waive injured starter
-        if ($player->role === 'starter' && rand(1, 100) <= 35) {
+        if ($player->role === 'starter' &&  $player->overall_rating < 80 && rand(1, 100) <= 35) {
             return true;
         }
 
         // Rare chaos/GM decision
-        if (rand(1, 100) <= 20) {
+        if (rand(1, 100) <= 30) {
             return true;
         }
 
