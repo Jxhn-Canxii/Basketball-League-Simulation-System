@@ -1739,9 +1739,12 @@ class SimulateController extends Controller
                 // **Injury Recovery Process**
                 $recoveryGamesLeft = $player->injury_recovery_games;
 
+                $totalGamesPerDay = 32;
+                $deductionPerGame = 1 / $totalGamesPerDay; // 0.03125
+
                 if ($recoveryGamesLeft > 0) {
                     // Decrement the recovery games for the injured player
-                    DB::table('players')->where('id', $player->id)->decrement('injury_recovery_games', 1);
+                    DB::table('players')->where('id', $player->id)->decrement('injury_recovery_games', $deductionPerGame);
                     
                 }
 
@@ -1763,7 +1766,18 @@ class SimulateController extends Controller
                     \Log::info("Player {$player->name} has fully recovered from injury.");
                 }
 
-                 // **Waive Player if Injury Recovery is Taking Too Long**
+            } else {
+                \Log::info("Player {$player->name} is not injured.");
+            }
+
+            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
+        } catch (\Exception $e) {
+            \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
+        }
+    }
+
+    private function playerWaiverEvaluator($player, $seasonId, $seasonStatus){
+         // **Waive Player if Injury Recovery is Taking Too Long**
                 $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player,$seasonId, $seasonStatus);
                 //can replace injured players until in season trade deadline...
                 if ($shouldWaiveThisPlayer) {
@@ -1804,12 +1818,6 @@ class SimulateController extends Controller
                         (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
                     }
                 }
-            } else {
-                \Log::info("Player {$player->name} is not injured.");
-            }
-        } catch (\Exception $e) {
-            \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
-        }
     }
 
     public function getActivePlayersSorted($teamId, $rolePriority, $round)
@@ -3412,7 +3420,7 @@ class SimulateController extends Controller
     // }
 
     // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
-    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): bool
+    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus)
     {
         // Only consider waiving during first half of season (e.g., before trade deadline)
         if ($seasonStatus > 2) return false;
@@ -3422,69 +3430,51 @@ class SimulateController extends Controller
 
         // % of the season a player must be out before we even consider waiving
         $rolePctMap = [
-            'star player' => 0.80, // Reduced from 0.90
-            'all star'    => 0.75, // Reduced from 0.85
-            'starter'     => 0.60, // Reduced from 0.70
-            'role player' => 0.45, // Reduced from 0.55
-            'bench'       => 0.30, // Reduced from 0.40
+            'star player' => 0.80,
+            'all star'    => 0.75,
+            'starter'     => 0.60,
+            'role player' => 0.45,
+            'bench'       => 0.30,
         ];
 
-        // Fallback % if role is missing/unknown
-        $defaultPct = 0.45; // Reduced from 0.55
-
+        $defaultPct = 0.45;
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
 
-        // Convert % to games, clamp to [min,max]
-        $minReq = 2;                                // Reduced from 4
-        $maxReq = $totalTeamGames;                  // Never above full season
+        $minReq = 2;
+        $maxReq = $totalTeamGames;
         $requiredRecoveryGames = (int) ceil($totalTeamGames * $pct);
         $requiredRecoveryGames = max($minReq, min($requiredRecoveryGames, $maxReq));
 
         // Must be a serious injury (has missed at least the role-based threshold)
         if ($player->injury_recovery_games < $requiredRecoveryGames) return false;
 
-        // Never waive your top talents (franchise anchors)
+        // Never waive top-tier players
         if (
             in_array($player->role, ['star player', 'all star']) ||
-            $player->overall_rating >= 85 // Increased from 80
+            $player->overall_rating >= 85
         ) {
             return false;
         }
 
-        // Waive protection for players with long-term deals unless clearly declining
-        // if ($player->contract_years > 2 && $player->overall_rating > 72) return false;
-
-        // Risk categories
-        $isOldDeclining = $player->age >= 30 && $player->overall_rating <= 72;
-        $isInjuryProne = $player->injury_prone_percentage >= 70 || count(json_decode($player->injury_history ?? '[]')) >= 3;
-        $lowMorale = $player->morale !== null && $player->morale <= 40;
-        $lowStamina = $player->stamina_rating <= 60;
-        $poorWorkEthic = $player->work_ethic_rating <= 60;
-
-        // Role-based likelihood
+        // High chance to waive expendable roles
         $waivableRoles = ['bench', 'role player'];
-        $isExpendableRole = in_array($player->role, $waivableRoles);
 
-        // High likelihood waiver condition
-        if (
-            ($isOldDeclining || $isInjuryProne || $lowMorale || $lowStamina || $poorWorkEthic) &&
-            $isExpendableRole &&
-            rand(1, 100) <= 98 // Increased from 95
-        ) {
+        // Force waive if player is out for more than 1 full season
+        if ($player->injury_recovery_games >= $totalTeamGames &&  in_array($player->role, $waivableRoles)) {
             return true;
         }
 
-        // Medium likelihood waiver condition (e.g., injured starter)
-        if (
-            $player->role === 'starter' &&
-            ($isInjuryProne || $lowMorale || $poorWorkEthic) &&
-            rand(1, 100) <= 35 // Increased from 25
-        ) {
+        if (in_array($player->role, $waivableRoles) && rand(1, 100) <= 90) {
             return true;
         }
 
-        // Rare chance to simulate tough or chaotic front office decisions
-        if (rand(1, 100) <= 20) { // Increased from 10
+        // Moderate chance to waive injured starter
+        if ($player->role === 'starter' && rand(1, 100) <= 35) {
+            return true;
+        }
+
+        // Rare chaos/GM decision
+        if (rand(1, 100) <= 20) {
             return true;
         }
 
