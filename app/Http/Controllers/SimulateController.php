@@ -1789,11 +1789,6 @@ class SimulateController extends Controller
     {
         $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
 
-        return response()->json([
-            'data' => $shouldWaiveThisPlayer,
-            'error' => 'Description of the error here'
-        ], 400); // 400 is HTTP status code for Bad Request
-
         if ($shouldWaiveThisPlayer) {
             $teamId = $player->team_id; // ✅ Cache before zeroing it
 

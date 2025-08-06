@@ -29,9 +29,15 @@ class TestController extends Controller
         $waivablePlayers = [];
         foreach ($players as $player) {
             if ($this->shouldWaivePlayer($player, $seasonId, $seasonStatus)) {
+                $replacement = $this->getBestFreeAgentAvailable($player->position);
+
                 $waivablePlayers[] = [
                     'player_id' => $player->id,
                     'name' => $player->name ?? $player->full_name ?? null,
+                    'replacement' => $replacement ? [
+                        'name' => $replacement->name ?? $replacement->full_name ?? null,
+                        'overall_rating' => $replacement->overall_rating,
+                    ] : null,
                     'role' => $player->role,
                     'overall_rating' => $player->overall_rating,
                     'age' => $player->age,
@@ -78,9 +84,12 @@ class TestController extends Controller
             foreach ($players as $player) {
                 // $waivablePlayers[] = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
                 if ($this->shouldWaivePlayer($player, $seasonId, $seasonStatus)) {
+                    $replacement = $this->getBestFreeAgentAvailable($player->position);
+
                     $waivablePlayers[] = [
                         'player_id' => $player->id,
                         'name' => $player->name ?? $player->full_name ?? null,
+                        'replacement' => $replacement ?: null,
                         'role' => $player->role,
                         'overall_rating' => $player->overall_rating,
                         'age' => $player->age,
@@ -154,4 +163,123 @@ class TestController extends Controller
         );
     }
 
+      private function getBestFreeAgentAvailable($position)
+    {
+        $positions = explode('/', strtoupper($position)); // Normalize casing
+    
+        // Flexible position filter: match any part of multi-position fields
+        $positionFilter = function ($query) use ($positions) {
+            $query->where(function ($q) use ($positions) {
+                foreach ($positions as $pos) {
+                    $q->orWhere('players.position', 'LIKE', '%' . $pos . '%');
+                }
+            });
+        };
+    
+        // Get latest season id (adjust if your season logic is different)
+        $latestSeasonId = get_current_season_id();
+    
+        // Top 10 by overall_rating
+        $byOverall = DB::table('players')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where($positionFilter)
+            ->select(
+                'players.id as player_id',
+                'players.name',
+                'players.position',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role'
+            )
+            ->orderByDesc('players.overall_rating')
+            ->limit(10)
+            ->get();
+    
+        // Top 10 by awards count
+        $byAwards = DB::table('players')
+            ->leftJoin('season_awards', 'players.id', '=', 'season_awards.player_id')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where($positionFilter)
+            ->select(
+                'players.id as player_id',
+                'players.name',
+                'players.position',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role',
+                DB::raw('COUNT(season_awards.id) as awards_count')
+            )
+            ->groupBy(
+                'players.id',
+                'players.name',
+                'players.position',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role'
+            )
+            ->orderByDesc('awards_count')
+            ->limit(10)
+            ->get();
+    
+        // Top 10 by EFF in latest season
+        $byEff = DB::table('players')
+            ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where('player_season_stats.season_id', $latestSeasonId)
+            ->where($positionFilter)
+            ->select(
+                'players.id as player_id',
+                'players.name',
+                'players.position',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role',
+                'player_season_stats.eff'
+            )
+            ->orderByDesc('player_season_stats.eff')
+            ->limit(10)
+            ->get();
+    
+        // Merge all and deduplicate by player_id
+        $merged = $byOverall->merge($byAwards)->merge($byEff)->unique('player_id')->values();
+    
+        // Return a random player from the merged top candidates
+        if ($merged->isNotEmpty()) {
+            return $merged->random();
+        }
+    
+        // Fallback: any available player at the position
+        return DB::table('players')
+            ->where('players.is_active', 1)
+            ->where('players.is_injured', 0)
+            ->where('players.team_id', 0)
+            ->where($positionFilter)
+            ->select(
+                'players.id as player_id',
+                'players.name',
+                'players.position',
+                'players.team_id',
+                'players.overall_rating',
+                'players.injury_history',
+                'players.age',
+                'players.role'
+            )
+            ->orderByDesc('players.overall_rating')
+            ->limit(1)
+            ->first();
+    }
 }
