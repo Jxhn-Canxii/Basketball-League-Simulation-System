@@ -1744,8 +1744,7 @@ class SimulateController extends Controller
                 // **Injury Recovery Process**
                 $recoveryGamesLeft = $player->injury_recovery_games;
 
-                $totalGamesPerDay = 32;
-                $deductionPerGame = 1 / $totalGamesPerDay; // 0.03125
+                $deductionPerGame = 1; // 0.03125
 
                 if ($recoveryGamesLeft > 0) {
                     // Decrement the recovery games for the injured player
