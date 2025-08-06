@@ -15,7 +15,6 @@ use App\Models\Player;
 use App\Models\PlayerGameStats;
 use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\PlayersController;
-use App\Services\WaiverService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Carbon;
