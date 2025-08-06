@@ -160,7 +160,6 @@ class SimulateController extends Controller
             // ], 400);
         }
 
-
         // Fetch current season ID
         $currentSeasonId = $gameData->season_id;
 
@@ -497,9 +496,11 @@ class SimulateController extends Controller
                 ->update($seasonUpdateData);
         }
 
-        $this->updateAllTeamStreaks();
+        // check if round games is simulated
+        $isRoundsSimulatedForSeason = isRoundSimulated($currentSeasonId, $gameData->round);
+
+        $this->updateTeamStreaks($gameData->id);
         $this->updateHeadToHeadResults($gameData->id);
-        $this->updateInjuryFreeAgents();
 
         $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
         $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
@@ -508,6 +509,10 @@ class SimulateController extends Controller
         $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
 
         $this->updatePlayoffAppearancesForGame($gameData);
+        
+        if($isRoundsSimulatedForSeason){
+            $this->updateInjuryFreeAgents();
+        }
 
         // Prepare the schedule response data it will update team score card only
         $schedule = [
@@ -957,22 +962,22 @@ class SimulateController extends Controller
             $gameData->save();
 
             // Check if all rounds have been simulated for the season
-            $allRoundsSimulatedForSeason = Schedules::where('season_id', $currentSeasonId)
-                ->where('status', 1)
-                ->doesntExist();
+            $allRoundsSimulatedForSeason =  $this->allRoundsSimulatedForSeason($currentSeasonId);
 
+            // check if round games is simulated
+            $isRoundsSimulatedForSeason = isRoundSimulated($currentSeasonId,  $gameData->round);
+             
             $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
-
             $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
             $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
-            $this->updateInjuryFreeAgents();
-            $this->updateAllTeamStreaks();
+            $this->updateTeamStreaks($gameData->id);
             $this->updateHeadToHeadResults($gameData->id);
 
-            // $waiverService = new WaiverService();
-            // $waiverService->pickUpFreeAgentForTeam($gameData->home_team_id, $gameData->round);
-            // $waiverService->pickUpFreeAgentForTeam($gameData->away_team_id, $gameData->round);
+            if($isRoundsSimulatedForSeason){
+                $this->updateInjuryFreeAgents();
+            }
+            
             if ($allRoundsSimulatedForSeason) {
                 // Update the season's status to 2
                 $season = Seasons::find($currentSeasonId);
@@ -2579,12 +2584,12 @@ class SimulateController extends Controller
             'updated_at' => now()
         ]);
     }
-    private function updateAllTeamStreaks()
+    private function updateTeamStreaks($gameid)
     {
         // Fetch all games from the earliest to the latest
         $games = \DB::table('schedule_view')
-            ->where('status', 2)
-            ->orderBy('id', 'asc') // Order by id to process games chronologically
+            ->where('id', $gameid) // Only process games up to the given game ID
+            ->where('status', 2) // Only consider completed games
             ->get();
 
         if ($games->isEmpty()) {
@@ -2597,10 +2602,10 @@ class SimulateController extends Controller
         // Iterate over each game to calculate streaks
         foreach ($games as $game) {
             // Home team processing
-            $this->processGameStreak($teamStreaks, $game->home_id, $game->home_score, $game->away_score, $game->id);
+            $this->processGameStreak($teamStreaks, $game->home_id, $game->winner_id, $game->id);
 
             // Away team processing
-            $this->processGameStreak($teamStreaks, $game->away_id, $game->away_score, $game->home_score, $game->id);
+            $this->processGameStreak($teamStreaks, $game->away_id, $game->winner_id, $game->id);
         }
 
         // Update the streak table for each team
@@ -2640,7 +2645,7 @@ class SimulateController extends Controller
     }
 
     // Modify processGameStreak to track start and end game IDs
-    private function processGameStreak(&$teamStreaks, $teamId, $teamScore, $opponentScore, $gameId)
+    private function processGameStreak(&$teamStreaks, $teamId, $winnerId, $gameId)
     {
         // Initialize streaks for the team if not already set
         if (!isset($teamStreaks[$teamId])) {
@@ -2659,7 +2664,7 @@ class SimulateController extends Controller
         $streak = &$teamStreaks[$teamId]; // Reference to the team's streak data
 
         // Determine if the game is a win or loss
-        $isWin = $teamScore > $opponentScore;
+        $isWin = $teamid == $winnerId;
 
         if ($isWin) {
             if ($streak['is_winning_streak'] === false) {
@@ -3474,6 +3479,34 @@ class SimulateController extends Controller
                       ->orWhereRaw('CAST(round AS UNSIGNED) > 0');  // Ensure it can be cast to number
             })
             ->max(DB::raw('CAST(round AS UNSIGNED)'));  // Convert to number before finding max
+    }
+
+        /**
+     * Check if all rounds have been simulated for the given season.
+     *
+     * @param int $seasonId
+     * @return bool
+     */
+    private function allRoundsSimulatedForSeason(int $seasonId): bool
+    {
+        return !Schedules::where('season_id', $seasonId)
+            ->where('status', '!=', 1)
+            ->exists();
+    }
+
+    /**
+     * Check if a specific round has been simulated for the given season.
+     *
+     * @param int $seasonId
+     * @param int $round
+     * @return bool
+     */
+    private function isRoundSimulated(int $seasonId, int $round): bool
+    {
+        return Schedules::where('season_id', $seasonId)
+            ->where('round', $round)
+            ->where('status', '!=', 1)
+            ->exists();
     }
 
 }
