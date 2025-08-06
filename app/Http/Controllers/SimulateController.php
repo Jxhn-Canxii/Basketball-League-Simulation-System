@@ -3412,38 +3412,21 @@ class SimulateController extends Controller
             }
         }
     }
-    // private function upsertCurrentSeasonStoryline()
-    // {
-    //     // Get the current season's storyline from the view
-    //     $storylineData = DB::table('current_season_storyline')->first();
-
-    //     if (!$storylineData) {
-    //         return response()->json(['message' => 'No current season storyline found.'], 404);
-    //     }
-
-    //     // Perform safe insert or update
-    //     DB::table('storylines')->updateOrInsert(
-    //         ['season_id' => $storylineData->season_id], // Unique key
-    //         [
-    //             'storyline' => $storylineData->storyline,
-    //             'updated_at' => now(),
-    //             'created_at' => now(), // Safe to include; will only apply on insert
-    //         ]
-    //     );
-
-    //     return response()->json(['message' => 'Storyline inserted or updated successfully.']);
-    // }
 
     // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
-    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus)
+    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): bool
     {
-        // Only consider waiving during first half of season (e.g., before trade deadline)
         if ($seasonStatus > 2) return false;
 
-        // How many regular-season games this specific team will play (dynamic)
-        $totalTeamGames = $this->getRegularSeasonGameCount($seasonId, $player->id);
+        if (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) {
+            return false;
+        }
 
-        // % of the season a player must be out before we even consider waiving
+        $seasonStats = $this->getPlayerSeasonStats($player->id, $seasonId);
+        if (!$seasonStats) return false;
+
+        $totalGames = $seasonStats->total_games ?? 1;
+
         $rolePctMap = [
             'star player' => 0.80,
             'all star'    => 0.75,
@@ -3454,17 +3437,101 @@ class SimulateController extends Controller
 
         $defaultPct = 0.45;
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
+        $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        $minReq = 2;
-        $maxReq = $totalTeamGames;
-        $requiredRecoveryGames = (int) ceil($totalTeamGames * $pct);
-        $requiredRecoveryGames = max($minReq, min($requiredRecoveryGames, $maxReq));
+        // Reason 1: Injury
+        if ($player->injury_recovery_games >= $requiredRecoveryGames) return true;
 
-        if ($player->injury_recovery_games >= $requiredRecoveryGames) {
-            return true;
-        }
+        // Reason 2: Extremely low efficiency
+        if ($seasonStats->eff !== null && $seasonStats->eff < 5) return true;
+
+        // Reason 3: Low usage and games played
+        if (
+            $seasonStats->avg_minutes_per_game < 5 &&
+            $seasonStats->avg_points_per_game < 2 &&
+            $seasonStats->avg_rebounds_per_game < 2 &&
+            $seasonStats->total_games_played <= ($totalGames * 0.25)
+        ) return true;
+
+        // Reason 4: Aging player with poor impact
+        if ($player->age >= 34 && $seasonStats->eff < 10) return true;
+
+        // Reason 5: Bad value contract
+        if ($player->contract_years > 1 && $seasonStats->eff < 8) return true;
+
+        // Reason 6: Low morale
+        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10) return true;
+
+        // Reason 7: No improvement from last 2 seasons
+        if ($this->hasNotImproved($player->id, $seasonId)) return true;
+
+        // Reason 8: Fatigue high and underperforming
+        if ($player->fatigue >= 80 && $seasonStats->eff < 7) return true;
+
+        // Reason 9: Morale + injury prone combo
+        if ($player->morale < 40 && $player->injury_prone_percentage > 80) return true;
+
+        // Reason 10: Rebuilding team waiving veteran
+        if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) return true;
 
         return false;
+    }
+
+    private function hasNotImproved(int $playerId, int $currentSeasonId): bool
+    {
+        // Get last two seasons' EFF
+        $pastEff = DB::table('player_season_stats')
+            ->where('player_id', $playerId)
+            ->where('season_id', '<', $currentSeasonId)
+            ->orderByDesc('season_id')
+            ->limit(2)
+            ->pluck('eff')
+            ->toArray();
+
+        // Not enough history to judge
+        if (count($pastEff) < 2) return false;
+
+        // No improvement or declining
+        return $pastEff[0] <= $pastEff[1];
+    }
+
+    private function isRebuildingTeam(int $teamId): bool
+    {
+        $seasonCount = DB::table('seasons')->count();
+
+        $standings = DB::table('standings_view')
+            ->where('team_id', $teamId)
+            ->first();
+
+        if (!$standings) return false;
+
+        $wins = (int) ($standings->wins ?? 0);
+        $losses = (int) ($standings->losses ?? 0);
+        $totalGames = $wins + $losses;
+
+        // Avoid calling a team "rebuilding" too early
+        if ($totalGames < 5) return false;
+
+        $scoreDiff = $standings->score_difference ?? 0;
+        $chemistry = $standings->chemistry ?? 100;
+        $last5 = strtolower($standings->last_5_games ?? '');
+        $recentWins = substr_count($last5, 'w');
+
+        // Flags that apply in all seasons
+        $flags = 0;
+        $flags += $wins < 10 ? 1 : 0;
+        $flags += $scoreDiff < -5 ? 1 : 0;
+        $flags += $chemistry < 50 ? 1 : 0;
+        $flags += $recentWins <= 1 ? 1 : 0;
+
+        // If league has history, add legacy-based flags
+        if ($seasonCount > 1) {
+            $flags += ($standings->championships ?? 0) == 0 ? 1 : 0;
+            $flags += ($standings->playoff_appearances ?? 0) < 2 ? 1 : 0;
+        }
+
+        // You can adjust how many flags are needed (3 is safe)
+        return $flags >= 3;
     }
 
     private function getRegularSeasonGameCount(int $seasonId, int $playerId): int
@@ -3489,6 +3556,14 @@ class SimulateController extends Controller
                       ->orWhereRaw('CAST(round AS UNSIGNED) > 0');  // Ensure it can be cast to number
             })
             ->max(DB::raw('CAST(round AS UNSIGNED)'));  // Convert to number before finding max
+    }
+
+    private function getPlayerSeasonStats(int $playerId, int $seasonId)
+    {
+        return DB::table('player_season_stats')
+            ->where('player_id', $playerId)
+            ->where('season_id', $seasonId)
+            ->first();
     }
 
         /**
