@@ -1571,13 +1571,8 @@ class SimulateController extends Controller
                     $minutes[$player['id']] = 0;
                 }
             }
-            $seasonId = get_current_season_id() ?? 1;
-            $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
             $this->fatigueRate($player, $minutes[$player['id']], $gameId);
-            $this->handleInjuredPlayer($player, $gameId);
-             // Evaluate whether player should be waived based on injury duration and season status
-            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
         }
 
         // Step 4: Normalize to total minutes (usually 240)
@@ -1733,7 +1728,7 @@ class SimulateController extends Controller
         }
     }
 
-   public function handleInjuredPlayer($player, $gameId)
+   public function handleInjuredPlayer($player)
     {
         try {
             // Remove dd() to allow full execution
@@ -1791,8 +1786,9 @@ class SimulateController extends Controller
         if(is_array($player)) {
             $player = (object) $player;
         }
-        
+
         $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
+
 
         if ($shouldWaiveThisPlayer) {
             $teamId = $player->team_id; // ✅ Cache before zeroing it
@@ -1842,7 +1838,8 @@ class SimulateController extends Controller
     {
         $seasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // You must implement this
-
+        $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
+        
         $players = Player::where('team_id', $teamId)
             ->where('is_active', 1)
             ->get();
@@ -1891,6 +1888,10 @@ class SimulateController extends Controller
                     ? array_search($player->role, $rolePriority) 
                     : PHP_INT_MAX,
             ];
+            
+            $this->handleInjuredPlayer($player);
+             // Evaluate whether player should be waived based on injury duration and season status
+            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
         }
 
         // Sort by: total_eff DESC, years_pro DESC, role_priority ASC
