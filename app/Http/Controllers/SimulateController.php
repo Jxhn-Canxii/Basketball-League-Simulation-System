@@ -3460,8 +3460,8 @@ class SimulateController extends Controller
         if (!$seasonStats) {
             return ['waived' => false, 'reason' => 'Missing season stats'];
         }
-        
-        $totalGames = $seasonStats->total_games ?? 1;
+
+        $totalGames = $this->totalTeamGames($seasonId,$player->team_id);
 
         // 📊 Injury or Fatigue
         $rolePctMap = [
@@ -3477,6 +3477,10 @@ class SimulateController extends Controller
 
         if ($requiredRecoveryGames >= $player->injury_recovery_games) {
             return ['waived' => true, 'reason' => 'Injured too long'];
+        }
+
+        if(($seasonStats->total_games_played ?? 0) < 3) {
+            return ['waived' => false, 'reason' => 'Minimum of 3 games played required  for waiver'];
         }
 
         if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
@@ -3640,13 +3644,20 @@ class SimulateController extends Controller
             ->where('team_id', $teamId)
             ->first();
 
-        if (!$stats || ($stats->total_games_played ?? 0) < 3) {
-            return false;
-        }
-
         return $stats;
     }
 
+    private function totalTeamGames($seasonId,$teamId){
+         $gamesPlayedCount = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->where(function ($query) use ($teamId) {
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->count();
+
+        return $gamesPlayedCount;
+    }
 
         /**
      * Check if all rounds have been simulated for the given season.
