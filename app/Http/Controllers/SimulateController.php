@@ -3455,6 +3455,12 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Protected high-pick rookie'];
         }
 
+         // ❌ Missing stats
+        $seasonStats = $this->getPlayerSeasonStats($player->id, $player->team_id, $seasonId);
+        if (!$seasonStats) {
+            return ['waived' => false, 'reason' => 'Missing season stats'];
+        }
+        
         $totalGames = $seasonStats->total_games ?? 1;
 
         // 📊 Injury or Fatigue
@@ -3469,14 +3475,8 @@ class SimulateController extends Controller
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
         $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        if ($player->injury_recovery_games >= $requiredRecoveryGames) {
+        if ($requiredRecoveryGames >= $player->injury_recovery_games) {
             return ['waived' => true, 'reason' => 'Injured too long'];
-        }
-
-        // ❌ Missing stats
-        $seasonStats = $this->getPlayerSeasonStats($player->id, $player->team_id, $seasonId);
-        if (!$seasonStats) {
-            return ['waived' => false, 'reason' => 'Missing season stats'];
         }
 
         if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
