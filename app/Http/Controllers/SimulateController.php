@@ -3599,7 +3599,7 @@ class SimulateController extends Controller
      * @param int $round
      * @return bool
      */
-    private function isRoundSimulated(int $seasonId, int $round): bool
+    private function isRoundSimulated(int $seasonId, $round): bool
     {
         return !Schedules::where('season_id', $seasonId)
             ->where('round', $round)
