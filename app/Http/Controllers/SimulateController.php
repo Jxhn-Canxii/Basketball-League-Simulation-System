@@ -3451,11 +3451,11 @@ class SimulateController extends Controller
         }
 
         // ❌ Missing stats
-        $seasonStats = $this->getPlayerSeasonStats($player->id, $seasonId);
+        $seasonStats = $this->getPlayerSeasonStats($player->id, $player->team_id, $seasonId);
         if (!$seasonStats) {
             return ['waived' => false, 'reason' => 'Missing season stats'];
         }
-        
+
         if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
             return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
         }
@@ -3525,13 +3525,15 @@ class SimulateController extends Controller
             return false;
         }
 
-        // Get last two seasons before current
+        // Get last two full seasons (merging multiple teams per season)
         $pastEff = DB::table('player_season_stats')
+            ->select('season_id', DB::raw('AVG(eff) as avg_eff'))
             ->where('player_id', $playerId)
             ->where('season_id', '<', $currentSeasonId)
+            ->groupBy('season_id')
             ->orderByDesc('season_id')
             ->limit(2)
-            ->pluck('eff')
+            ->pluck('avg_eff')
             ->toArray();
 
         // Not enough history to judge
@@ -3539,9 +3541,10 @@ class SimulateController extends Controller
             return false;
         }
 
-        // No improvement or decline
+        // Check if there's no improvement or decline (latest <= older)
         return $pastEff[0] <= $pastEff[1];
     }
+
 
     private function isRebuildingTeam(int $teamId): bool
     {
@@ -3606,11 +3609,12 @@ class SimulateController extends Controller
             ->max(DB::raw('CAST(round AS UNSIGNED)'));  // Convert to number before finding max
     }
 
-    private function getPlayerSeasonStats(int $playerId, int $seasonId)
+    private function getPlayerSeasonStats(int $playerId,int $teamId, int $seasonId)
     {
         $stats = DB::table('player_season_stats')
             ->where('player_id', $playerId)
             ->where('season_id', $seasonId)
+            ->where('team_id', $teamId)
             ->first();
 
         if (!$stats || ($stats->total_games_played ?? 0) < 3) {
