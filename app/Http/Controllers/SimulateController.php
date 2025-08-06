@@ -498,14 +498,17 @@ class SimulateController extends Controller
         // check if round games is simulated
         $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId, $gameData->round);
 
-        $this->updateTeamStreaks($gameData->id);
-        $this->updateHeadToHeadResults($gameData->id);
-
         $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
         $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
 
         $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
         $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
+
+        $this->updateInjuryAndWaiving($gameData->home_team_id);
+        $this->updateInjuryAndWaiving($gameData->away_team_id);
+
+        $this->updateTeamStreaks($gameData->id);
+        $this->updateHeadToHeadResults($gameData->id);
 
         $this->updatePlayoffAppearancesForGame($gameData);
         
@@ -968,8 +971,13 @@ class SimulateController extends Controller
              
             $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
+
             $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,$gameData->winner_id);
             $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,$gameData->winner_id);
+
+            $this->updateInjuryAndWaiving($gameData->home_team_id);
+            $this->updateInjuryAndWaiving($gameData->away_team_id);
+
             $this->updateTeamStreaks($gameData->id);
             $this->updateHeadToHeadResults($gameData->id);
 
@@ -1839,8 +1847,7 @@ class SimulateController extends Controller
     {
         $seasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // You must implement this
-        $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-
+       
         $players = Player::where('team_id', $teamId)
             ->where('is_active', 1)
             ->get();
@@ -1890,9 +1897,6 @@ class SimulateController extends Controller
                     : PHP_INT_MAX,
             ];
             
-            $this->handleInjuredPlayer($player, $seasonId, $seasonStatus);
-             // Evaluate whether player should be waived based on injury duration and season status
-            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
         }
 
         // Sort by: total_eff DESC, years_pro DESC, role_priority ASC
@@ -3252,7 +3256,22 @@ class SimulateController extends Controller
                 ['chemistry' => $chemistry]
             );
     }
+    private function updateInjuryAndWaiving($teamId)
+    {
+        $seasonId = get_current_season_id();
+        $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
+        if (!$teamId || !$seasonId || !$seasonStatus) {
+            return; // Invalid parameters
+        }
+
+        $players = DB::table('players')->where('team_id', $teamId)->get();
+        foreach ($players as $player) {
+             $this->handleInjuredPlayer($player, $seasonId, $seasonStatus);
+             // Evaluate whether player should be waived based on injury duration and season status
+            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
+        }
+    }
     private function updatePlayerMoraleBasedOnStats($teamId, $winnerId)
     {
         $seasonId = get_current_season_id();
