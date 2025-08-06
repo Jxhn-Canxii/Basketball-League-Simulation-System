@@ -3483,7 +3483,7 @@ class SimulateController extends Controller
         }
 
         $minGamesPlayed = max(3, floor($totalGames * 0.20));
-        if(($seasonStats->total_games_played ?? 0) < $minGamesPlayed) {
+        if(($seasonStats->total_games_played ?? 0) <= $minGamesPlayed) {
             return ['waived' => false, 'reason' => 'Minimum of 3 games played required  for waiver'];
         }
 
