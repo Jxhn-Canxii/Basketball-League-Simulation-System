@@ -142,205 +142,26 @@ class DraftController extends Controller
             }
         }
 
+        $currentSeasonDraft = DB::table('drafts')
+            ->join('teams', 'drafts.team_id', '=', 'teams.id')
+            ->where('drafts.season_id', $currentSeasonId)
+            ->select(
+                'drafts.round',
+                'drafts.pick_number as pick',
+                'teams.name as team_name',
+                'drafts.team_id',
+                'drafts.draft_status',
+                'drafts.player_id'
+            )
+            ->orderBy('drafts.round')
+            ->orderBy('drafts.pick_number')
+            ->get();
+            
         return response()->json([
             'season_id' => $currentSeasonId,
-            'draft_order' => $twoRoundDraftOrder,
+            'draft_order' => $currentSeasonDraft,
             'message' => 'Draft successfully generated.',
         ]);
-    }
-
-    public function draftPlayersV1()
-    {
-        DB::beginTransaction();
-        $draftResults = [];
-        
-        try {
-            $latestSeasonId = get_current_season_id();
-            $currentSeasonId = $latestSeasonId + 1;
-        
-            $teamCount = DB::table('teams')->count();
-        
-            // Get draft order already set in the `drafts` table
-            $draftOrder = DB::table('drafts')
-                ->where('season_id', $currentSeasonId)
-                ->orderBy('round')
-                ->orderBy('pick_number')
-                ->get();
-
-            $draftPlayerCountLimit = count($draftOrder);
-            
-            $draftPlayerCountLimit = (float) $draftPlayerCountLimit + 20; // Limit to 60 players for the draft
-            // Get rookie players eligible for drafting
-            $availablePlayers = collect(DB::table('players')
-                ->where('is_rookie', 1)
-                ->where('team_id', 0)
-                ->where('draft_id', $currentSeasonId)
-                ->where('is_drafted', 0)
-                ->orderBy('overall_rating', 'desc')
-                ->orderBy('age', 'asc') // Prefer younger players
-                ->get());
-
-    
-            // If there aren't enough rookies for the draft, return an error
-            if ($availablePlayers->count() < $draftPlayerCountLimit) {
-                return response()->json([
-                    'error' => true,
-                    'message' => 'Not enough rookies available for the draft.',
-                ], 400);
-            }
-    
-            // Track team position needs (e.g., PG, SG, C, etc.)
-            $teamPositionNeeds = [];
-            foreach ($draftOrder as $pick) {
-                $teamId = $pick->team_id;
-                $team = DB::table('teams')->where('id', $teamId)->first();
-                $teamPositionNeeds[$teamId] = $this->getTeamPositionNeeds($teamId); // Fetch team’s position needs
-            }
-        
-            // Draft players
-            foreach ($draftOrder as $pick) {
-                if ($availablePlayers->isEmpty()) break;
-        
-                $teamId = $pick->team_id;
-                $team = DB::table('teams')->where('id', $teamId)->first();
-    
-                // Get the team’s needed position from the position needs array
-                $neededPositions = array_keys($teamPositionNeeds[$teamId] ?? []);
-
-                $selectedPlayer = $availablePlayers->first(function ($player) use ($neededPositions) {
-                    foreach ($neededPositions as $pos) {
-                        if (strpos($player->position, $pos) !== false) {
-                            return true;
-                        }
-                    }
-                    return false;
-                });
-
-                // If no player matched need, get best available
-                if (!$selectedPlayer) {
-                    $selectedPlayer = $availablePlayers->shift();
-                } else {
-                    // Remove the selected player manually from availablePlayers
-                    $availablePlayers = $availablePlayers->reject(fn($p) => $p->id === $selectedPlayer->id)->values();
-                }
-
-
-    
-                // If no player matches the exact need, select the best available player
-                if (!$selectedPlayer) {
-                    $selectedPlayer = $availablePlayers->shift();
-                }
-    
-                // Random contract assignment based on round and pick number
-                $contractYears = $pick->round === 1
-                    ? ($pick->pick_number <= 10 ? rand(3, 5) : rand(1, 4))
-                    : rand(1, 2);
-    
-                $teamHasSpace = DB::table('players')
-                    ->where('team_id', $teamId)
-                    ->count() < 15;
-    
-                $playerTeamId = $teamHasSpace ? $teamId : 0;
-                $contract = $teamHasSpace ? $contractYears : 0;
-    
-                // Update player information
-                DB::table('players')->where('id', $selectedPlayer->id)->update([
-                    'team_id' => $playerTeamId,
-                    'drafted_team_id' => $teamId,
-                    'is_drafted' => 1,
-                    'draft_order' => $pick->pick_number,
-                    'draft_status' => $pick->draft_status,
-                    'contract_years' => $contract,
-                ]);
-    
-                // Update draft table with the selected player
-                DB::table('drafts')->where([
-                    'season_id' => $currentSeasonId,
-                    'round' => $pick->round,
-                    'pick_number' => $pick->pick_number,
-                ])->update([
-                    'player_id' => $selectedPlayer->id,
-                ]);
-    
-                // Log the draft transaction
-                DB::table('transactions')->insert([
-                    'player_id' => $selectedPlayer->id,
-                    'season_id' => $currentSeasonId,
-                    'from_team_id' => 0,
-                    'to_team_id' => $teamId,
-                    'status' => 'draft',
-                    'details' => "Drafted by {$team->name} in round {$pick->round}, pick {$pick->pick_number}",
-                ]);
-    
-                // If the team has space, sign the player to a rookie contract
-                if ($teamHasSpace) {
-                    DB::table('transactions')->insert([
-                        'player_id' => $selectedPlayer->id,
-                        'season_id' => $currentSeasonId,
-                        'from_team_id' => 0,
-                        'to_team_id' => $teamId,
-                        'status' => 'signed',
-                        'details' => "Signed by {$team->name} to rookie contract ({$contract} years)",
-                    ]);
-                }
-    
-                // Track the draft results
-                $draftResults[] = [
-                    'team_id' => $teamId,
-                    'player_id' => $selectedPlayer->id,
-                    'player_name' => $selectedPlayer->name,
-                    'position' => $selectedPlayer->position,
-                    'age' => $selectedPlayer->age,
-                    'archetype' => $selectedPlayer->type,
-                    'overall_rating' => $selectedPlayer->overall_rating,
-                    'team_name' => $team->name,
-                    'draft_id' => $currentSeasonId,
-                    'draft_order' => $pick->pick_number,
-                    'draft_status' => $pick->draft_status,
-                    'round' => $pick->round,
-                    'pick_number' => $pick->pick_number,
-                ];
-    
-                // Update the team’s position needs after drafting the player
-                $teamPositionNeeds[$teamId] = $this->updateTeamPositionNeeds($teamPositionNeeds[$teamId], $selectedPlayer->position);
-            }
-        
-            // Update remaining rookies that were undrafted
-            DB::table('players')
-                ->where('draft_id', $currentSeasonId)
-                ->where('is_drafted', 0)
-                ->update([
-                    'team_id' => 0,
-                    'contract_years' => 0,
-                    'draft_status' => 'Undrafted',
-                    'is_rookie' => 1,
-                ]);
-        
-            // Update season status to post-draft
-            DB::table('seasons')
-                ->where('id', $latestSeasonId)
-                ->update(['status' => config('timeline.draft')]);
-        
-            DB::commit();
-        
-            return response()->json([
-                'error' => false,
-                'season_id' => $currentSeasonId,
-                'draft_results' => $draftResults,
-                'message' => 'Draft completed successfully.',
-            ], 200);
-        
-        } catch (\Exception $e) {
-            DB::rollBack();
-        
-            \Log::error('Drafting failed', ['exception' => $e]);
-        
-            return response()->json([
-                'error' => true,
-                'message' => 'Drafting failed.',
-                'error_message' => $e->getMessage(),
-            ], 500);
-        }
     }
     
     public function draftPlayers()
