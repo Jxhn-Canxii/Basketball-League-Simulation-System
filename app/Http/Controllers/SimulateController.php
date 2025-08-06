@@ -1770,11 +1770,11 @@ class SimulateController extends Controller
                     \Log::info("Player {$player->name} has fully recovered from injury.");
                 }
 
+                $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
             } else {
                 \Log::info("Player {$player->name} is not injured.");
             }
 
-            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
         } catch (\Exception $e) {
             \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
         }
