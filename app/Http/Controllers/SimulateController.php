@@ -3479,19 +3479,10 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Injured too long'];
         }
 
-        if ($this->hasNotImproved($player->id, $seasonId)) {
-            return ['waived' => true, 'reason' => 'No improvement over past seasons'];
-        }
-
         if ($player->morale < 40 && $player->injury_prone_percentage > 80) {
             return ['waived' => true, 'reason' => 'Morale + injury-prone combo'];
         }
 
-        // 🏗️ Rebuilding teams
-        if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) {
-            return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
-        }
-        
         if(($seasonStats->total_games_played ?? 0) < 3) {
             return ['waived' => false, 'reason' => 'Minimum of 3 games played required  for waiver'];
         }
@@ -3526,6 +3517,14 @@ class SimulateController extends Controller
 
         if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10) {
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
+        }
+
+        if ($this->hasNotImproved($player->id, $seasonId)) {
+            return ['waived' => true, 'reason' => 'No improvement over past seasons'];
+        }
+                // 🏗️ Rebuilding teams
+        if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) {
+            return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
         }
 
         return ['waived' => false, 'reason' => null];
