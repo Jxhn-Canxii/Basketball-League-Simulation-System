@@ -1571,9 +1571,13 @@ class SimulateController extends Controller
                     $minutes[$player['id']] = 0;
                 }
             }
+            $seasonId = get_current_season_id() ?? 1;
+            $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
             $this->fatigueRate($player, $minutes[$player['id']], $gameId);
             $this->handleInjuredPlayer($player, $gameId);
+             // Evaluate whether player should be waived based on injury duration and season status
+            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
         }
 
         // Step 4: Normalize to total minutes (usually 240)
@@ -1776,9 +1780,6 @@ class SimulateController extends Controller
                 \Log::info("Player {$player->name} has fully recovered from injury.");
             }
 
-            // Evaluate whether player should be waived based on injury duration and season status
-            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
-
         } catch (\Exception $e) {
             \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
         }
@@ -1828,6 +1829,8 @@ class SimulateController extends Controller
 
                 (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
             }
+
+            return true;
         }
     }
 
