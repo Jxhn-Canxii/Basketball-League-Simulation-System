@@ -1952,7 +1952,8 @@ class SimulateController extends Controller
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
         $totalGamesPerDay = 32;
-        $deductionPerGame = 4; // 0.03125
+        $deductionPerGame = 0.03125; // Deduct 1/32 of a game
+
         
         $deductInjuryGames = DB::table('players')
             ->where('is_active', 1)
@@ -1979,6 +1980,7 @@ class SimulateController extends Controller
         }
 
     }
+
     public function getBestFreeAgent(Request $request){
         // Validate the request data
         $position = $request->position;
