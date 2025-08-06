@@ -1792,7 +1792,7 @@ class SimulateController extends Controller
             DB::table('transactions')->insert([
                 'player_id' => $player->id,
                 'season_id' => $seasonId,
-                'details' => 'Waived due to extended injury recovery period',
+                'details' => 'Waived due to injury, low performance, or team strategy',
                 'from_team_id' => $teamId,
                 'to_team_id' => 0,
                 'status' => 'waived',
@@ -1816,7 +1816,7 @@ class SimulateController extends Controller
                 DB::table('transactions')->insert([
                     'player_id' => $replacement->player_id,
                     'season_id' => $seasonId,
-                    'details' => 'Signed as injury replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
+                    'details' => 'Signed as replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
                     'from_team_id' => 0,
                     'to_team_id' => $teamId,
                     'status' => 'signed',
