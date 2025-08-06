@@ -1788,6 +1788,10 @@ class SimulateController extends Controller
 
     private function playerWaiverEvaluator($player, $seasonId, $seasonStatus)
     {
+        if(is_array($player)) {
+            $player = (object) $player;
+        }
+        
         $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
 
         if ($shouldWaiveThisPlayer) {
