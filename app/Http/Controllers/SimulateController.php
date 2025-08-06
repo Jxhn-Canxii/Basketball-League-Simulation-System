@@ -3479,7 +3479,15 @@ class SimulateController extends Controller
 
     private function hasNotImproved(int $playerId, int $currentSeasonId): bool
     {
-        // Get last two seasons' EFF
+        // Get the earliest season ID in the system
+        $firstSeasonId = DB::table('seasons')->min('id');
+
+        // If this is the first season, there's no past data to compare
+        if ($currentSeasonId == $firstSeasonId) {
+            return false;
+        }
+
+        // Get last two seasons before current
         $pastEff = DB::table('player_season_stats')
             ->where('player_id', $playerId)
             ->where('season_id', '<', $currentSeasonId)
@@ -3489,9 +3497,11 @@ class SimulateController extends Controller
             ->toArray();
 
         // Not enough history to judge
-        if (count($pastEff) < 2) return false;
+        if (count($pastEff) < 2) {
+            return false;
+        }
 
-        // No improvement or declining
+        // No improvement or decline
         return $pastEff[0] <= $pastEff[1];
     }
 
