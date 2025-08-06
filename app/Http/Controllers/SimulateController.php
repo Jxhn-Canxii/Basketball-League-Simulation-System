@@ -3415,26 +3415,24 @@ class SimulateController extends Controller
     // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
     private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): bool
     {
+        // 🔒 0. Only consider waiving during early season (e.g., before trade deadline)
         if ($seasonStatus > 2) return false;
 
-        //✅ Protect all stars and star player on waivers if contract is greater than or equal to 3
-        if (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) {
+        // 🔒 1. Waiver Protection: High-value players or rookies
+        if (
+            (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) || // Protected stars with long contracts
+            ($player->is_rookie && $this->isHighPickRookie($player->id)) // High-pick rookies are protected
+        ) {
             return false;
         }
 
-        // ✅ Protect high pick rookies from early waivers
-        if ($player->is_rookie && $this->isHighPickRookie($player->id)) {
-            return false;
-        }
-
+        // ❌ 2. Ensure stats are available
         $seasonStats = $this->getPlayerSeasonStats($player->id, $seasonId);
         if (!$seasonStats) return false;
 
-        $gamesPlayed = $seasonStats->total_games_played ?? 0;
-        if ($gamesPlayed < 5) return false; // 🚫 too early to judge
-
         $totalGames = $seasonStats->total_games ?? 1;
 
+        // 📊 3. Injury and Fatigue Based
         $rolePctMap = [
             'star player' => 0.80,
             'all star'    => 0.75,
@@ -3442,48 +3440,37 @@ class SimulateController extends Controller
             'role player' => 0.45,
             'bench'       => 0.30,
         ];
-
         $defaultPct = 0.45;
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
         $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        // Reason 1: Injury
-        if ($player->injury_recovery_games >= $requiredRecoveryGames) return true;
+        if ($player->injury_recovery_games >= $requiredRecoveryGames) return true; // Reason 1: Injury
+        if ($player->fatigue >= 80 && $seasonStats->eff < 7) return true;           // Reason 2: Fatigue + inefficiency
 
-        // Reason 2: Extremely low efficiency
-        if ($seasonStats->eff !== null && $seasonStats->eff < 5) return true;
-
-        // Reason 3: Low usage and games played
+        // 📉 4. Poor Performance Metrics
+        if ($seasonStats->eff !== null && $seasonStats->eff < 5) return true; // Reason 3: Extremely low efficiency
         if (
             $seasonStats->avg_minutes_per_game < 5 &&
             $seasonStats->avg_points_per_game < 2 &&
             $seasonStats->avg_rebounds_per_game < 2 &&
             $seasonStats->total_games_played <= ($totalGames * 0.25)
-        ) return true;
+        ) return true; // Reason 4: Low usage & few games
 
-        // Reason 4: Aging player with poor impact
-        if ($player->age >= 34 && $seasonStats->eff < 10) return true;
+        // 📉 5. Aging or Declining Players
+        if ($player->age >= 34 && $seasonStats->eff < 10) return true; // Reason 5: Old and low impact
+        if ($this->hasNotImproved($player->id, $seasonId)) return true; // Reason 6: No improvement
 
-        // Reason 5: Bad value contract
-        if ($player->contract_years > 1 && $seasonStats->eff < 8) return true;
+        // 💸 6. Bad Contract or Morale Issues
+        if ($player->contract_years > 1 && $seasonStats->eff < 8) return true; // Reason 7: Bad value contract
+        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10) return true; // Reason 8: Low morale
+        if ($player->morale < 40 && $player->injury_prone_percentage > 80) return true; // Reason 9: Injury-prone + morale
 
-        // Reason 6: Low morale
-        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10) return true;
-
-        // Reason 7: No improvement from last 2 seasons
-        if ($this->hasNotImproved($player->id, $seasonId)) return true;
-
-        // Reason 8: Fatigue high and underperforming
-        if ($player->fatigue >= 80 && $seasonStats->eff < 7) return true;
-
-        // Reason 9: Morale + injury prone combo
-        if ($player->morale < 40 && $player->injury_prone_percentage > 80) return true;
-
-        // Reason 10: Rebuilding team waiving veteran
-        if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) return true;
+        // 🏗️ 7. Team Strategy: Rebuilding waives aging veterans
+        if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) return true; // Reason 10
 
         return false;
     }
+
 
     private function isHighPickRookie($playerId): bool
     {
@@ -3589,11 +3576,18 @@ class SimulateController extends Controller
 
     private function getPlayerSeasonStats(int $playerId, int $seasonId)
     {
-        return DB::table('player_season_stats')
+        $stats = DB::table('player_season_stats')
             ->where('player_id', $playerId)
             ->where('season_id', $seasonId)
             ->first();
+
+        if (!$stats || ($stats->total_games_played ?? 0) < 3) {
+            return false;
+        }
+
+        return $stats;
     }
+
 
         /**
      * Check if all rounds have been simulated for the given season.
