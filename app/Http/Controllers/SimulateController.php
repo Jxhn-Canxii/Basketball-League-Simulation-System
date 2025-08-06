@@ -497,7 +497,7 @@ class SimulateController extends Controller
         }
 
         // check if round games is simulated
-        $isRoundsSimulatedForSeason = isRoundSimulated($currentSeasonId, $gameData->round);
+        $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId, $gameData->round);
 
         $this->updateTeamStreaks($gameData->id);
         $this->updateHeadToHeadResults($gameData->id);
@@ -965,7 +965,7 @@ class SimulateController extends Controller
             $allRoundsSimulatedForSeason =  $this->allRoundsSimulatedForSeason($currentSeasonId);
 
             // check if round games is simulated
-            $isRoundsSimulatedForSeason = isRoundSimulated($currentSeasonId,  $gameData->round);
+            $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId,  $gameData->round);
              
             $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
@@ -1952,7 +1952,7 @@ class SimulateController extends Controller
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
         $totalGamesPerDay = 32;
-        $deductionPerGame = 1 / $totalGamesPerDay; // 0.03125
+        $deductionPerGame = 4; // 0.03125
         
         $deductInjuryGames = DB::table('players')
             ->where('is_active', 1)
@@ -2664,7 +2664,7 @@ class SimulateController extends Controller
         $streak = &$teamStreaks[$teamId]; // Reference to the team's streak data
 
         // Determine if the game is a win or loss
-        $isWin = $teamid == $winnerId;
+        $isWin = $teamId == $winnerId;
 
         if ($isWin) {
             if ($streak['is_winning_streak'] === false) {

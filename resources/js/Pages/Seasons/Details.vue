@@ -1,9 +1,9 @@
 <template>
     <div>
-        <Head :title="'Seasons ' + season_id" />
+        <Head :title="'Season ' + season_id" />
 
         <AuthenticatedLayout>
-            <template #header> Seasons {{ season_id }}</template>
+            <template #header> Season {{ season_id }}</template>
             <div
                 class="flex min-w-screen min-h-full bg-white overflow-auto shadow rounded p-2"
             >
@@ -251,6 +251,7 @@ const props = defineProps({
     },
 });
 const season_id = ref(0);
+const season_name = ref('');
 const seasons = ref(0);
 const currentTab = ref("Regular"); // Set the default tab
 const changeTab = (tab) => {
@@ -266,6 +267,11 @@ const seasonsDropdown = async () => {
             season_id: 0,
         });
         seasons.value = response.data;
+
+        season_name.value = seasons.value.find(
+            (season) => season.season_id === season_id.value
+        )?.name || '';
+
     } catch (error) {
         console.error("Error fetching team info:", error);
     }
