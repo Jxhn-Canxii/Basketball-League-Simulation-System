@@ -3475,12 +3475,12 @@ class SimulateController extends Controller
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
         $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        if ($requiredRecoveryGames >= $player->injury_recovery_games) {
-            return ['waived' => true, 'reason' => 'Injured too long'];
-        }
-
         if(($seasonStats->total_games_played ?? 0) < 3) {
             return ['waived' => false, 'reason' => 'Minimum of 3 games played required  for waiver'];
+        }
+
+        if ($requiredRecoveryGames >= $player->injury_recovery_games) {
+            return ['waived' => true, 'reason' => 'Injured too long'];
         }
 
         if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
@@ -3647,8 +3647,10 @@ class SimulateController extends Controller
         return $stats;
     }
 
-    private function totalTeamGames($seasonId,$teamId){
-         $gamesPlayedCount = DB::table('schedules')
+    private function totalTeamGames($seasonId,$teamId)
+    {
+
+        $gamesPlayedCount = DB::table('schedules')
             ->where('season_id', $seasonId)
             ->where(function ($query) use ($teamId) {
                 $query->where('home_id', $teamId)
