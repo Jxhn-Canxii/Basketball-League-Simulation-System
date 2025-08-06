@@ -1728,14 +1728,9 @@ class SimulateController extends Controller
         }
     }
 
-   public function handleInjuredPlayer($player)
+   public function handleInjuredPlayer($player,$seasonId,$seasonStatus)
     {
         try {
-            // Remove dd() to allow full execution
-            \Log::info("Handling injured player: {$player->name} (ID: {$player->id})");
-
-            $seasonId = get_current_season_id() ?? 1;
-            $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
             if (!$player->is_injured) {
                 \Log::info("Player {$player->name} is not injured. No action needed.");
@@ -1839,7 +1834,7 @@ class SimulateController extends Controller
         $seasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // You must implement this
         $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-        
+
         $players = Player::where('team_id', $teamId)
             ->where('is_active', 1)
             ->get();
@@ -1889,7 +1884,7 @@ class SimulateController extends Controller
                     : PHP_INT_MAX,
             ];
             
-            $this->handleInjuredPlayer($player);
+            $this->handleInjuredPlayer($player, $seasonId, $seasonStatus);
              // Evaluate whether player should be waived based on injury duration and season status
             $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
         }
