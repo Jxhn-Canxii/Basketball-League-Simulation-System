@@ -3504,7 +3504,7 @@ class SimulateController extends Controller
      */
     private function isRoundSimulated(int $seasonId, int $round): bool
     {
-        return Schedules::where('season_id', $seasonId)
+        return !Schedules::where('season_id', $seasonId)
             ->where('round', $round)
             ->where('status', '!=', 1)
             ->exists();
