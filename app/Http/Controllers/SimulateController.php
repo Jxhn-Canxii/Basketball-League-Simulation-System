@@ -3425,6 +3425,9 @@ class SimulateController extends Controller
         $seasonStats = $this->getPlayerSeasonStats($player->id, $seasonId);
         if (!$seasonStats) return false;
 
+        $gamesPlayed = $seasonStats->total_games_played ?? 0;
+        if ($gamesPlayed < 5) return false; // 🚫 too early to judge
+
         $totalGames = $seasonStats->total_games ?? 1;
 
         $rolePctMap = [
