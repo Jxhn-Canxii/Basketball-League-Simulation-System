@@ -1780,14 +1780,13 @@ class SimulateController extends Controller
             $player = (object) $player;
         }
 
-        // Now receives an array: ['waived' => bool, 'reason' => string|null]
         $evaluation = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
 
         if ($evaluation['waived']) {
             $reason = $evaluation['reason'] ?? 'No specific reason provided';
-            $teamId = $player->team_id; // ✅ Cache team before clearing
+            $teamId = $player->team_id;
 
-            // 🔁 Log waiver transaction with detailed reason
+            // 🔁 Log waiver transaction
             DB::table('transactions')->insert([
                 'player_id' => $player->id,
                 'season_id' => $seasonId,
@@ -1803,7 +1802,7 @@ class SimulateController extends Controller
                 'team_id' => 0,
             ]);
 
-            // ✅ Sign best available free agent at same position
+            // ✅ Find replacement
             $replacement = $this->getBestFreeAgentAvailable($player->position);
             if ($replacement) {
                 $contractYears = $this->getContractYearsBasedOnRole($player->role);
@@ -1813,10 +1812,15 @@ class SimulateController extends Controller
                     'contract_years' => $contractYears,
                 ]);
 
+                // Check if replacement is same as waived player
+                $replacementDetails = ($replacement->player_id === $player->id)
+                    ? 'Re-signed ' . $player->name . ' after reevaluation. Contract renewed for ' . $contractYears . ' year(s).'
+                    : 'Signed as replacement for ' . $player->name . '. Contract Years: ' . $contractYears;
+
                 DB::table('transactions')->insert([
                     'player_id' => $replacement->player_id,
                     'season_id' => $seasonId,
-                    'details' => 'Signed as replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
+                    'details' => $replacementDetails,
                     'from_team_id' => 0,
                     'to_team_id' => $teamId,
                     'status' => 'signed',
@@ -1828,7 +1832,7 @@ class SimulateController extends Controller
             return true;
         }
 
-        return false; // Explicit return if not waived
+        return false;
     }
 
     public function getActivePlayersSorted($teamId, $rolePriority, $round)
