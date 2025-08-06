@@ -3462,7 +3462,6 @@ class SimulateController extends Controller
         }
 
         $totalGames = $this->totalTeamGames($seasonId,$player->team_id);
-
         // 📊 Injury or Fatigue
         $rolePctMap = [
             'star player' => 0.80,
@@ -3483,7 +3482,8 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Morale + injury-prone combo'];
         }
 
-        if(($seasonStats->total_games_played ?? 0) < 3) {
+        $minGamesPlayed = max(3, floor($totalGames * 0.20));
+        if(($seasonStats->total_games_played ?? 0) < $minGamesPlayed) {
             return ['waived' => false, 'reason' => 'Minimum of 3 games played required  for waiver'];
         }
 
