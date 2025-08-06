@@ -107,27 +107,9 @@ class RatingsController extends Controller
 
             // Waive the last 3 players (remove them from the team)
             foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
-                //Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
-                // Optionally log the waived player transaction if you want to track this
-                if ($playerStat && $playerStat->contract_years <= 1) {
-                    DB::table('transactions')->insert([
-                        'player_id' => $playerStat->player_id,
-                        'season_id' => $seasonId,
-                        'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
-                        'from_team_id' => $teamId,
-                        'to_team_id' => 0,
-                        'status' => 'waived',
-                    ]);
-
-                    DB::table('players')->where('id', $playerStat->player_id)->update([
-                        'contract_years' => 0,
-                        'team_id' => 0,
-                    ]);
-                }else{
-                    Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
-                }
-
+                Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
             }
+
             foreach ($rankedPlayers as $player) {
                 if ($player && $player->hardship_contract > 0) {
                     // Hardship contract expired -> Release player back to free agency
@@ -263,25 +245,6 @@ class RatingsController extends Controller
                     $player->overall_rating *= $penaltyFactor;
 
                     \Log::info('Injury penalty applied', ['player_id' => $player->id]);
-                }
-
-                // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
-                if ($injury && $injury->injury_recovery_games > 10 && $player->contract_years <= 4) {
-                    $waiveChance = rand(1, 100); // Random chance for waiving the player
-                    if ($waiveChance <= 60) { // 50% chance to waive
-                        DB::table('transactions')->insert([
-                            'player_id' => $player->id,
-                            'season_id' => $seasonId,
-                            'details' => 'Waived due to extended injury recovery period',
-                            'from_team_id' => $teamId,
-                            'to_team_id' => 0,
-                            'status' => 'waived',
-                        ]);
-
-                        $player->team_id = 0; // Set team_id to 0 (free agent)
-                        $player->contract_years = 0; // Remove contract
-                        \Log::info('Player waived due to injury recovery period', ['player_id' => $player->id]);
-                    }
                 }
 
                 $performanceData = $this->comparePerformanceBetweenSeasons($player->id);

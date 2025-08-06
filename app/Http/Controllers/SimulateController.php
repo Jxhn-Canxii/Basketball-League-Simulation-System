@@ -3417,7 +3417,13 @@ class SimulateController extends Controller
     {
         if ($seasonStatus > 2) return false;
 
+        //✅ Protect all stars and star player on waivers if contract is greater than or equal to 3
         if (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) {
+            return false;
+        }
+
+        // ✅ Protect high pick rookies from early waivers
+        if ($player->is_rookie && $this->isHighPickRookie($player->id)) {
             return false;
         }
 
@@ -3477,6 +3483,17 @@ class SimulateController extends Controller
         if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) return true;
 
         return false;
+    }
+
+    private function isHighPickRookie($playerId): bool
+    {
+        $draft = DB::table('drafts')
+            ->where('player_id', $playerId)
+            ->first();
+
+        if (!$draft) return false;
+
+        return $draft->round == 1 && $draft->pick_number <= 10;
     }
 
     private function hasNotImproved(int $playerId, int $currentSeasonId): bool
