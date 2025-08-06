@@ -1774,41 +1774,42 @@ class SimulateController extends Controller
         }
     }
 
-
     private function playerWaiverEvaluator($player, $seasonId, $seasonStatus)
     {
-        if(is_array($player)) {
+        if (is_array($player)) {
             $player = (object) $player;
         }
 
-        $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
+        // Now receives an array: ['waived' => bool, 'reason' => string|null]
+        $evaluation = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
 
+        if ($evaluation['waived']) {
+            $reason = $evaluation['reason'] ?? 'No specific reason provided';
+            $teamId = $player->team_id; // ✅ Cache team before clearing
 
-        if ($shouldWaiveThisPlayer) {
-            $teamId = $player->team_id; // ✅ Cache before zeroing it
-
-            // Waive the player
+            // 🔁 Log waiver transaction with detailed reason
             DB::table('transactions')->insert([
                 'player_id' => $player->id,
                 'season_id' => $seasonId,
-                'details' => 'Waived due to injury, low performance, or team strategy',
+                'details' => 'Waived: ' . $reason,
                 'from_team_id' => $teamId,
                 'to_team_id' => 0,
                 'status' => 'waived',
             ]);
 
+            // 🚫 Remove player from team
             DB::table('players')->where('id', $player->id)->update([
                 'contract_years' => 0,
                 'team_id' => 0,
             ]);
 
-            // Replace waived player with best free agent
+            // ✅ Sign best available free agent at same position
             $replacement = $this->getBestFreeAgentAvailable($player->position);
             if ($replacement) {
                 $contractYears = $this->getContractYearsBasedOnRole($player->role);
 
                 DB::table('players')->where('id', $replacement->player_id)->update([
-                    'team_id' => $teamId, // ✅ use saved team ID
+                    'team_id' => $teamId,
                     'contract_years' => $contractYears,
                 ]);
 
@@ -1826,6 +1827,8 @@ class SimulateController extends Controller
 
             return true;
         }
+
+        return false; // Explicit return if not waived
     }
 
     public function getActivePlayersSorted($teamId, $rolePriority, $round)
@@ -3413,26 +3416,25 @@ class SimulateController extends Controller
     }
 
     // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
-    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): bool
+    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): array
     {
-        // 🔒 0. Only consider waiving during early season (e.g., before trade deadline)
-        if ($seasonStatus > 2) return false;
-
-        // 🔒 1. Waiver Protection: High-value players or rookies
-        if (
-            (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) || // Protected stars with long contracts
-            ($player->is_rookie && $this->isHighPickRookie($player->id)) // High-pick rookies are protected
-        ) {
-            return false;
+        if ($seasonStatus > 2) {
+            return ['waived' => false, 'reason' => 'Season too late to waive'];
         }
 
-        // ❌ 2. Ensure stats are available
-        $seasonStats = $this->getPlayerSeasonStats($player->id, $seasonId);
-        if (!$seasonStats) return false;
+        // 🔒 Protected: Star or All-Star with long contract
+        if (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) {
+            return ['waived' => false, 'reason' => 'Protected star/all-star with long contract'];
+        }
+
+        // 🔒 Protected: High-pick rookie
+        if ($player->is_rookie && $this->isHighPickRookie($player->id)) {
+            return ['waived' => false, 'reason' => 'Protected high-pick rookie'];
+        }
 
         $totalGames = $seasonStats->total_games ?? 1;
 
-        // 📊 3. Injury and Fatigue Based
+        // 📊 Injury or Fatigue
         $rolePctMap = [
             'star player' => 0.80,
             'all star'    => 0.75,
@@ -3444,33 +3446,63 @@ class SimulateController extends Controller
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
         $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        if ($player->injury_recovery_games >= $requiredRecoveryGames) return true; // Reason 1: Injury
-        if ($player->fatigue >= 80 && $seasonStats->eff < 7) return true;           // Reason 2: Fatigue + inefficiency
+        if ($player->injury_recovery_games >= $requiredRecoveryGames) {
+            return ['waived' => true, 'reason' => 'Injured too long'];
+        }
 
-        // 📉 4. Poor Performance Metrics
-        if ($seasonStats->eff !== null && $seasonStats->eff < 5) return true; // Reason 3: Extremely low efficiency
+        // ❌ Missing stats
+        $seasonStats = $this->getPlayerSeasonStats($player->id, $seasonId);
+        if (!$seasonStats) {
+            return ['waived' => false, 'reason' => 'Missing season stats'];
+        }
+        
+        if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
+            return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
+        }
+
+        // 📉 Performance
+        if ($seasonStats->eff !== null && $seasonStats->eff < 5) {
+            return ['waived' => true, 'reason' => 'Extremely low efficiency'];
+        }
+
         if (
             $seasonStats->avg_minutes_per_game < 5 &&
             $seasonStats->avg_points_per_game < 2 &&
             $seasonStats->avg_rebounds_per_game < 2 &&
             $seasonStats->total_games_played <= ($totalGames * 0.25)
-        ) return true; // Reason 4: Low usage & few games
+        ) {
+            return ['waived' => true, 'reason' => 'Very low usage and production'];
+        }
 
-        // 📉 5. Aging or Declining Players
-        if ($player->age >= 34 && $seasonStats->eff < 10) return true; // Reason 5: Old and low impact
-        if ($this->hasNotImproved($player->id, $seasonId)) return true; // Reason 6: No improvement
+        // 🧓 Aging or declining
+        if ($player->age >= 34 && $seasonStats->eff < 10) {
+            return ['waived' => true, 'reason' => 'Aging player with poor impact'];
+        }
 
-        // 💸 6. Bad Contract or Morale Issues
-        if ($player->contract_years > 1 && $seasonStats->eff < 8) return true; // Reason 7: Bad value contract
-        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10) return true; // Reason 8: Low morale
-        if ($player->morale < 40 && $player->injury_prone_percentage > 80) return true; // Reason 9: Injury-prone + morale
+        if ($this->hasNotImproved($player->id, $seasonId)) {
+            return ['waived' => true, 'reason' => 'No improvement over past seasons'];
+        }
 
-        // 🏗️ 7. Team Strategy: Rebuilding waives aging veterans
-        if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) return true; // Reason 10
+        // 💸 Contract / Morale
+        if ($player->contract_years > 1 && $seasonStats->eff < 8) {
+            return ['waived' => true, 'reason' => 'Bad value contract'];
+        }
 
-        return false;
+        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10) {
+            return ['waived' => true, 'reason' => 'Low morale and underperforming'];
+        }
+
+        if ($player->morale < 40 && $player->injury_prone_percentage > 80) {
+            return ['waived' => true, 'reason' => 'Morale + injury-prone combo'];
+        }
+
+        // 🏗️ Rebuilding teams
+        if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) {
+            return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
+        }
+
+        return ['waived' => false, 'reason' => null];
     }
-
 
     private function isHighPickRookie($playerId): bool
     {
