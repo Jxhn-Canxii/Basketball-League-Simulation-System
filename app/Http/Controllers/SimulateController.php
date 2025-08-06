@@ -1729,99 +1729,111 @@ class SimulateController extends Controller
         }
     }
 
-    public function handleInjuredPlayer($player, $gameId)
+   public function handleInjuredPlayer($player, $gameId)
     {
         try {
-            if (is_array($player)) {
-                $player = (object) $player;
-            }
+            // Remove dd() to allow full execution
+            \Log::info("Handling injured player: {$player->name} (ID: {$player->id})");
 
             $seasonId = get_current_season_id() ?? 1;
             $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
-            // **If Player is Injured, Process Recovery or Waiving**
-            if ($player->is_injured) {
-                // **Injury Recovery Process**
-                $recoveryGamesLeft = $player->injury_recovery_games;
+            if (!$player->is_injured) {
+                \Log::info("Player {$player->name} is not injured. No action needed.");
+                return;
+            }
 
-                $deductionPerGame = 1; // 0.03125
+            // Player is injured — process injury recovery
+            $deductionPerGame = 1;
 
-                if ($recoveryGamesLeft > 0) {
-                    // Decrement the recovery games for the injured player
-                    DB::table('players')->where('id', $player->id)->decrement('injury_recovery_games', $deductionPerGame);
-                    
-                }
+            if ($player->injury_recovery_games > 0) {
+                // Decrement injury recovery games
+                DB::table('players')->where('id', $player->id)->decrement('injury_recovery_games', $deductionPerGame);
+                $updatedRecoveryGames = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
+                \Log::info("Decremented recovery games for {$player->name}. Remaining: {$updatedRecoveryGames}");
+            } else {
+                $updatedRecoveryGames = $player->injury_recovery_games;
+                \Log::info("No recovery games left for {$player->name}.");
+            }
 
-                // **Check if Player Fully Recovered**
-                if ($recoveryGamesLeft <= 1) {
-                    // Mark the player as recovered
-                    DB::table('players')->where('id', $player->id)->update([
-                        'is_injured' => false,
-                        'injury_type' => null, // Clear injury type
+            // If player fully recovered
+            if ($updatedRecoveryGames <= 0) {
+                DB::table('players')->where('id', $player->id)->update([
+                    'is_injured' => false,
+                    'injury_type' => null,
+                ]);
+
+                // Update injury history recovery date
+                DB::table('injury_histories')
+                    ->where('player_id', $player->id)
+                    ->whereNull('recovery_date')
+                    ->latest()
+                    ->update([
+                        'recovery_date' => now(),
+                        'updated_at' => now(),
                     ]);
 
-                    // Log the recovery event
-                    DB::table('injury_histories')
-                        ->where('player_id', $player->id)
-                        ->whereNull('recovery_date')
-                        ->latest()
-                        ->update(['recovery_date' => now(), 'updated_at' => now()]);
-
-                    \Log::info("Player {$player->name} has fully recovered from injury.");
-                }
-
-                $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
-            } else {
-                \Log::info("Player {$player->name} is not injured.");
+                \Log::info("Player {$player->name} has fully recovered from injury.");
             }
+
+            // Evaluate whether player should be waived based on injury duration and season status
+            $this->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
 
         } catch (\Exception $e) {
             \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
         }
     }
 
-    private function playerWaiverEvaluator($player, $seasonId, $seasonStatus){
-         // **Waive Player if Injury Recovery is Taking Too Long**
-                $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player,$seasonId, $seasonStatus);
-                //can replace injured players until in season trade deadline...
-                if ($shouldWaiveThisPlayer) {
-                    // Player is waived due to extended injury recovery period
-                    DB::table('transactions')->insert([
-                        'player_id' => $player->id,
-                        'season_id' => $seasonId,
-                        'details' => 'Waived due to extended injury recovery period',
-                        'from_team_id' => $player->team_id,
-                        'to_team_id' => 0,
-                        'status' => 'waived',
-                    ]);
 
-                    // Set contract to zero, indicating that the player is now waived
-                    DB::table('players')->where('id', $player->id)->update([
-                        'contract_years' => 0,
-                        'team_id' => 0,
-                    ]);
+    private function playerWaiverEvaluator($player, $seasonId, $seasonStatus)
+    {
+        $shouldWaiveThisPlayer = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
 
-                    // **Replace Waived Player with Best Free Agent Available**
-                    $replacement = $this->getBestFreeAgentAvailable($player->position);
-                    if ($replacement) {
-                        $contractYears = $this->getContractYearsBasedOnRole($player->role);
-                        DB::table('players')->where('id', $replacement->player_id)->update([
-                            'team_id' => $player->team_id,
-                            'contract_years' => $contractYears,
-                        ]);
+        return response()->json([
+            'data' => $shouldWaiveThisPlayer,
+            'error' => 'Description of the error here'
+        ], 400); // 400 is HTTP status code for Bad Request
 
-                        DB::table('transactions')->insert([
-                            'player_id' => $replacement->player_id,
-                            'season_id' => $seasonId,
-                            'details' => 'Signed as injury replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
-                            'from_team_id' => 0,
-                            'to_team_id' => $player->team_id,
-                            'status' => 'signed',
-                        ]);
+        if ($shouldWaiveThisPlayer) {
+            $teamId = $player->team_id; // ✅ Cache before zeroing it
 
-                        (new AwardsController)->storePlayerCurrentSeasonStats($player->team_id, $replacement->player_id);
-                    }
-                }
+            // Waive the player
+            DB::table('transactions')->insert([
+                'player_id' => $player->id,
+                'season_id' => $seasonId,
+                'details' => 'Waived due to extended injury recovery period',
+                'from_team_id' => $teamId,
+                'to_team_id' => 0,
+                'status' => 'waived',
+            ]);
+
+            DB::table('players')->where('id', $player->id)->update([
+                'contract_years' => 0,
+                'team_id' => 0,
+            ]);
+
+            // Replace waived player with best free agent
+            $replacement = $this->getBestFreeAgentAvailable($player->position);
+            if ($replacement) {
+                $contractYears = $this->getContractYearsBasedOnRole($player->role);
+
+                DB::table('players')->where('id', $replacement->player_id)->update([
+                    'team_id' => $teamId, // ✅ use saved team ID
+                    'contract_years' => $contractYears,
+                ]);
+
+                DB::table('transactions')->insert([
+                    'player_id' => $replacement->player_id,
+                    'season_id' => $seasonId,
+                    'details' => 'Signed as injury replacement for ' . $player->name . '. Contract Years: ' . $contractYears,
+                    'from_team_id' => 0,
+                    'to_team_id' => $teamId,
+                    'status' => 'signed',
+                ]);
+
+                (new AwardsController)->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
+            }
+        }
     }
 
     public function getActivePlayersSorted($teamId, $rolePriority, $round)
