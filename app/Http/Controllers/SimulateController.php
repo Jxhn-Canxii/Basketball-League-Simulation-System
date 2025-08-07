@@ -3478,7 +3478,7 @@ class SimulateController extends Controller
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
         $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        if ($player->injury_recovery_games > $requiredRecoveryGames && !$isDev) {
+        if ($player->injury_recovery_games > $requiredRecoveryGames && $player->contract_years <= 2) {
             return ['waived' => true, 'reason' => 'Injured too long'];
         }
 
