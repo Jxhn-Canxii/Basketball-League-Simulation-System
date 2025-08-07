@@ -3467,6 +3467,7 @@ class SimulateController extends Controller
         $hasNotImproved = $this->hasNotImproved($player->id, $seasonId);
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
         $waivable = $player->contract_years <= 2 && !$isDev;
+        $yearsPro = $this->getYearsPro($player->id);
         // 📊 Injury or Fatigue
         $rolePctMap = [
             'star player' => 0.80,
@@ -3514,7 +3515,7 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Aging player with poor impact'];
         }
 
-        if ($player->contract_years > 1 && $seasonStats->eff < 8 && !$isDev) {
+        if ($player->contract_years > 2 && $seasonStats->eff < 8 && !$isDev) {
             return ['waived' => true, 'reason' => 'Bad value contract'];
         }
 
@@ -3522,7 +3523,7 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($hasNotImproved && !$isDev) {
+        if ($hasNotImproved &&  $yearsPro >= 3) {
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
 
