@@ -3466,21 +3466,21 @@ class SimulateController extends Controller
         $potentialScore = $this->calculatePotentialScore($player);
         $hasNotImproved = $this->hasNotImproved($player->id, $seasonId);
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
-        $waivable = $player->contract_years <= 2 && !$isDev;
+        // 📅 Years Pro
         $yearsPro = $this->getYearsPro($player->id);
         // 📊 Injury or Fatigue
         $rolePctMap = [
-            'star player' => 0.80,
-            'all star'    => 0.75,
-            'starter'     => 0.60,
-            'role player' => 0.45,
-            'bench'       => 0.30,
+            'star player' => 1.5,
+            'all star'    => 1,
+            'starter'     => 0.80,
+            'role player' => 0.65,
+            'bench'       => 0.50,
         ];
         $defaultPct = 0.45;
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
         $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        if ($player->injury_recovery_games > $requiredRecoveryGames && $waivable) {
+        if ($player->injury_recovery_games > $requiredRecoveryGames) {
             return ['waived' => true, 'reason' => 'Injured too long'];
         }
 
