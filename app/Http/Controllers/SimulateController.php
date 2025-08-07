@@ -3445,6 +3445,12 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Season too late to waive'];
         }
 
+        $waiveLimit = 5;
+        $currentWaives = $this->countTeamWaivesThisSeason($player->team_id, $seasonId);
+        if ($currentWaives >= $waiveLimit) {
+            return ['waived' => false, 'reason' => 'Max waives reached for team'];
+        }
+
         // 🔒 Protected: Star or All-Star with long contract
         if (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) {
             return ['waived' => false, 'reason' => 'Protected star/all-star with long contract'];
@@ -3528,6 +3534,15 @@ class SimulateController extends Controller
         }
 
         return ['waived' => false, 'reason' => null];
+    }
+
+    private function countTeamWaivesThisSeason(int $teamId, int $seasonId): int
+    {
+        return DB::table('player_transactions')
+            ->where('team_id', $teamId)
+            ->where('season_id', $seasonId)
+            ->where('type', 'waive')
+            ->count();
     }
 
     private function isHighPickRookie($playerId): bool
