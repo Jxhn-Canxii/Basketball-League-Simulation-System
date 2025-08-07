@@ -3466,6 +3466,7 @@ class SimulateController extends Controller
         $potentialScore = $this->calculatePotentialScore($player);
         $hasNotImproved = $this->hasNotImproved($player->id, $seasonId);
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
+        $waivable = $player->contract_years <= 2 && !$isDev;
         // 📊 Injury or Fatigue
         $rolePctMap = [
             'star player' => 0.80,
@@ -3478,7 +3479,7 @@ class SimulateController extends Controller
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
         $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
 
-        if ($player->injury_recovery_games > $requiredRecoveryGames && $player->contract_years <= 2 && !$isDev) {
+        if ($player->injury_recovery_games > $requiredRecoveryGames && $waivable) {
             return ['waived' => true, 'reason' => 'Injured too long'];
         }
 
@@ -3491,11 +3492,11 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Minimum of 3 games played required for waiver'];
         }
 
-        if ($player->fatigue >= 80 && $seasonStats->eff < 7 && !$isDev) {
+        if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
             return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
         }
 
-        if ($seasonStats->eff !== null && $seasonStats->eff < 5 && !$isDev) {
+        if ($seasonStats->eff !== null && $seasonStats->eff < 5 && $waivable) {
             return ['waived' => true, 'reason' => 'Extremely low efficiency'];
         }
 
