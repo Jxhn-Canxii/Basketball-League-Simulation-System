@@ -3438,18 +3438,11 @@ class SimulateController extends Controller
         }
     }
 
-    // This method checks if a player should be waived based on their injury recovery status, season status, contract years, and overall rating.
     private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): array
     {
         if ($seasonStatus > 2) {
             return ['waived' => false, 'reason' => 'Season too late to waive'];
         }
-
-        // $waiveLimit = 5;
-        // $currentWaives = $this->countTeamWaivesThisSeason($player->team_id, $seasonId);
-        // if ($currentWaives >= $waiveLimit) {
-        //     return ['waived' => false, 'reason' => 'Max waives reached for team'];
-        // }
 
         // 🔒 Protected: Star or All-Star with long contract
         if (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) {
@@ -3461,13 +3454,17 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Protected high-pick rookie'];
         }
 
-         // ❌ Missing stats
+        // ❌ Missing stats
         $seasonStats = $this->getPlayerSeasonStats($player->id, $player->team_id, $seasonId);
         if (!$seasonStats) {
             return ['waived' => false, 'reason' => 'Missing season stats'];
         }
 
-        $totalGames = $this->totalTeamGames($seasonId,$player->team_id);
+        $totalGames = $this->totalTeamGames($seasonId, $player->team_id);
+        $isDev = $this->isDevelopmentalPlayer($player);
+        $recentlyDrafted = $this->wasRecentlyDrafted($player->id, $seasonId);
+        $potentialScore = $this->calculatePotentialScore($player);
+
         // 📊 Injury or Fatigue
         $rolePctMap = [
             'star player' => 0.80,
@@ -3489,16 +3486,15 @@ class SimulateController extends Controller
         }
 
         $minGamesPlayed = max(3, floor($totalGames * 0.20));
-        if(($seasonStats->total_games_played ?? 0) <= $minGamesPlayed) {
-            return ['waived' => false, 'reason' => 'Minimum of 3 games played required  for waiver'];
+        if (($seasonStats->total_games_played ?? 0) <= $minGamesPlayed && !$isDev && !$recentlyDrafted) {
+            return ['waived' => false, 'reason' => 'Minimum of 3 games played required for waiver'];
         }
 
-        if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
+        if ($player->fatigue >= 80 && $seasonStats->eff < 7 && !$isDev) {
             return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
         }
 
-        // 📉 Performance
-        if ($seasonStats->eff !== null && $seasonStats->eff < 5) {
+        if ($seasonStats->eff !== null && $seasonStats->eff < 5 && !$isDev) {
             return ['waived' => true, 'reason' => 'Extremely low efficiency'];
         }
 
@@ -3506,43 +3502,86 @@ class SimulateController extends Controller
             $seasonStats->avg_minutes_per_game < 5 &&
             $seasonStats->avg_points_per_game < 2 &&
             $seasonStats->avg_rebounds_per_game < 2 &&
-            $seasonStats->total_games_played <= ($totalGames * 0.25)
+            $seasonStats->total_games_played <= ($totalGames * 0.25) &&
+            !$isDev
         ) {
             return ['waived' => true, 'reason' => 'Very low usage and production'];
         }
 
-        // 🧓 Aging or declining
         if ($player->age >= 34 && $seasonStats->eff < 10) {
             return ['waived' => true, 'reason' => 'Aging player with poor impact'];
         }
 
-        // 💸 Contract / Morale
-        if ($player->contract_years > 1 && $seasonStats->eff < 8) {
+        if ($player->contract_years > 1 && $seasonStats->eff < 8 && !$isDev) {
             return ['waived' => true, 'reason' => 'Bad value contract'];
         }
 
-        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10) {
+        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10 && !$isDev) {
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($this->hasNotImproved($player->id, $seasonId)) {
+        if ($this->hasNotImproved($player->id, $seasonId) && !$isDev) {
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
-                // 🏗️ Rebuilding teams
+
         if ($this->isRebuildingTeam($player->team_id) && $player->age >= 32 && $seasonStats->eff < 12) {
             return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
+        }
+
+        if ($isDev || $recentlyDrafted) {
+            return ['waived' => false, 'reason' => 'Protected developmental or recently drafted player'];
+        }
+
+        if ($potentialScore >= 75) {
+            return ['waived' => false, 'reason' => 'High potential player'];
         }
 
         return ['waived' => false, 'reason' => null];
     }
 
-    private function countTeamWaivesThisSeason(int $teamId, int $seasonId): int
+    private array $playerYearsProCache = [];
+
+    private function getYearsPro(int $playerId): int
     {
-        return DB::table('transactions')
-            ->where('from_team_id', $teamId)
+        if (isset($this->playerYearsProCache[$playerId])) {
+            return $this->playerYearsProCache[$playerId];
+        }
+
+        $yearsPro = DB::table('player_season_stats')
+            ->where('player_id', $playerId)
+            ->distinct()
+            ->count('season_id');
+
+        return $this->playerYearsProCache[$playerId] = $yearsPro;
+    }
+
+    private function isDevelopmentalPlayer($player): bool
+    {
+        $yearsPro = $this->getYearsPro($player->id);
+        return ($player->age <= 23 || $yearsPro <= 2 || $player->is_rookie);
+    }
+
+    private function wasRecentlyDrafted(int $playerId, int $seasonId, int $roundLimit = 2): bool
+    {
+        $draft = DB::table('drafts')
+            ->where('player_id', $playerId)
             ->where('season_id', $seasonId)
-            ->where('status', 'waived')
-            ->count();
+            ->first();
+
+        return $draft && $draft->round <= $roundLimit;
+    }
+
+    private function calculatePotentialScore($player): int
+    {
+        $score = 0;
+
+        if ($player->age <= 23) $score += 30;
+        if ($this->getYearsPro($player->id) <= 2) $score += 20;
+        if ($player->work_ethic_rating >= 75) $score += 20;
+        if ($player->basketball_iq_rating >= 70) $score += 15;
+        if (isset($player->draft_pick_number) && $player->draft_pick_number <= 15) $score += 15;
+
+        return $score; // Max score: 100
     }
 
     private function isHighPickRookie($playerId): bool
