@@ -3492,11 +3492,11 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Minimum of 3 games played required for waiver'];
         }
 
-        if ($player->fatigue >= 80 && $seasonStats->eff < 7) {
+        if ($player->fatigue >= 80 && $seasonStats->eff < 7 && !$isDev) {
             return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
         }
 
-        if ($seasonStats->eff !== null && $seasonStats->eff < 5 && $waivable) {
+        if ($seasonStats->eff !== null && $seasonStats->eff < 5 && !$isDev) {
             return ['waived' => true, 'reason' => 'Extremely low efficiency'];
         }
 
