@@ -3444,8 +3444,9 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Season too late to waive'];
         }
 
+        $protectRoles = ['star player', 'all star', 'starter'];
         // 🔒 Protected: Star or All-Star with long contract
-        if (in_array(strtolower($player->role), ['star player', 'all star']) && $player->contract_years >= 3) {
+        if (in_array(strtolower($player->role), $protectRoles) && $player->contract_years >= 3) {
             return ['waived' => false, 'reason' => 'Protected star/all-star with long contract'];
         }
 
@@ -3546,7 +3547,7 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($hasNotImproved &&  $yearsPro >= 3) {
+        if ($hasNotImproved &&  $yearsPro >= 3 && !in_array(strtolower($player->role), $protectRoles)) {
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
 
@@ -3621,7 +3622,43 @@ class SimulateController extends Controller
         return $draft->round == 1 && $draft->pick_number <= 10;
     }
 
-    private function hasNotImproved(int $playerId, int $currentSeasonId): bool
+    private function $rolePctMap = [
+    'star player' => 0.80,
+    'all star'    => 0.70,
+    'starter'     => 0.60,
+    'role player' => 0.50,
+    'bench'       => 0.40,
+];
+
+$defaultPct = 0.30;
+$pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
+
+// Base total games across contract
+$totalContractGames = $totalGames * max($player->contract_years, 1);
+
+// Cap to avoid excessive tolerance (realism)
+$baseRecoveryGames = ceil($totalContractGames * $pct);
+$maxRecoveryGames = 30;
+$requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
+
+// 🔥 ADJUST BASED ON TALENT
+if ($player->overall_rating >= 90) {
+    $requiredRecoveryGames += 5; // elite talent, more forgiveness
+} elseif ($player->overall_rating >= 80) {
+    $requiredRecoveryGames += 2;
+} elseif ($player->overall_rating <= 70) {
+    $requiredRecoveryGames -= 2; // low-rated, less tolerance
+} elseif ($player->overall_rating <= 60) {
+    $requiredRecoveryGames -= 4; // waiver bait
+}
+
+// Clamp within logical bounds
+$requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
+
+if ($player->injury_recovery_games > $requiredRecoveryGames) {
+    return ['waived' => true, 'reason' => 'Injured too long'];
+}
+(int $playerId, int $currentSeasonId): bool
     {
         // Get the earliest season ID in the system
         $firstSeasonId = DB::table('seasons')->min('id');
