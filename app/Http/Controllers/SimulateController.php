@@ -3539,7 +3539,8 @@ class SimulateController extends Controller
     private function countTeamWaivesThisSeason(int $teamId, int $seasonId): int
     {
         return DB::table('player_transactions')
-            ->where('team_id', $teamId)
+            ->where('from_team_id', $teamId)
+            ->where('to_team_id', $teamId)
             ->where('season_id', $seasonId)
             ->where('type', 'waive')
             ->count();
