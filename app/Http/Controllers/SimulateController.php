@@ -3542,7 +3542,7 @@ class SimulateController extends Controller
             ->where('from_team_id', $teamId)
             ->where('to_team_id', $teamId)
             ->where('season_id', $seasonId)
-            ->where('type', 'waive')
+            ->where('status', 'waived')
             ->count();
     }
 
