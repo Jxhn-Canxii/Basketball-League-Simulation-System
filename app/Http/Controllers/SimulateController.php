@@ -3468,21 +3468,44 @@ class SimulateController extends Controller
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
         // 📅 Years Pro
         $yearsPro = $this->getYearsPro($player->id);
-        // 📊 Injury or Fatigue
+        
         $rolePctMap = [
-            'star player' => 1.5,
-            'all star'    => 1,
-            'starter'     => 0.80,
-            'role player' => 0.65,
-            'bench'       => 0.50,
+            'star player' => 0.80,
+            'all star'    => 0.70,
+            'starter'     => 0.60,
+            'role player' => 0.50,
+            'bench'       => 0.40,
         ];
-        $defaultPct = 0.45;
+
+        $defaultPct = 0.30;
         $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
-        $requiredRecoveryGames = max(2, min(ceil($totalGames * $pct), $totalGames));
+
+        // Base total games across contract
+        $totalContractGames = $totalGames * max($player->contract_years, 1);
+
+        // Cap to avoid excessive tolerance (realism)
+        $baseRecoveryGames = ceil($totalContractGames * $pct);
+        $maxRecoveryGames = 30;
+        $requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
+
+        // 🔥 ADJUST BASED ON TALENT
+        if ($player->overall_rating >= 90) {
+            $requiredRecoveryGames += 5; // elite talent, more forgiveness
+        } elseif ($player->overall_rating >= 80) {
+            $requiredRecoveryGames += 2;
+        } elseif ($player->overall_rating <= 70) {
+            $requiredRecoveryGames -= 2; // low-rated, less tolerance
+        } elseif ($player->overall_rating <= 60) {
+            $requiredRecoveryGames -= 4; // waiver bait
+        }
+
+        // Clamp within logical bounds
+        $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
 
         if ($player->injury_recovery_games > $requiredRecoveryGames) {
             return ['waived' => true, 'reason' => 'Injured too long'];
         }
+
 
         if ($player->morale < 40 && $player->injury_prone_percentage > 80) {
             return ['waived' => true, 'reason' => 'Morale + injury-prone combo'];
