@@ -3751,9 +3751,9 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($hasNotImproved &&  $yearsProWithTeam >= 2 && !in_array(strtolower($player->role), $protectedRoles)) {
-            return ['waived' => true, 'reason' => 'No improvement over past seasons'];
-        }
+        // if ($hasNotImproved &&  $yearsProWithTeam >= 2 && !in_array(strtolower($player->role), $protectedRoles)) {
+        //     return ['waived' => true, 'reason' => 'No improvement over past seasons'];
+        // }
 
         if ($isRebuilding && $player->age >= 32 && $seasonStats->eff < 12) {
             return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
