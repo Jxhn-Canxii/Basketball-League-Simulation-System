@@ -3624,34 +3624,54 @@ class SimulateController extends Controller
 
     private function hasNotImproved(int $playerId, int $currentSeasonId): bool
     {
-        // Get the earliest season ID in the system
+        // Earliest season in DB
         $firstSeasonId = DB::table('seasons')->min('id');
-
-        // If this is the first season, there's no past data to compare
         if ($currentSeasonId == $firstSeasonId) {
             return false;
         }
 
-        // Get last two full seasons (merging multiple teams per season)
-        $pastEff = DB::table('player_season_stats')
-            ->select('season_id', DB::raw('AVG(eff) as avg_eff'))
+        // Last 2 seasons merged by season (all teams combined)
+        $pastSeasons = DB::table('player_season_stats')
+            ->select(
+                'season_id',
+                DB::raw('AVG(eff) as avg_eff'),
+                DB::raw('MAX(role) as role') // pick one role for the season
+            )
             ->where('player_id', $playerId)
             ->where('season_id', '<', $currentSeasonId)
             ->groupBy('season_id')
             ->orderByDesc('season_id')
             ->limit(2)
-            ->pluck('avg_eff')
+            ->get()
             ->toArray();
 
-        // Not enough history to judge
-        if (count($pastEff) < 2) {
+        if (count($pastSeasons) < 2) {
             return false;
         }
 
-        // Check if there's no improvement or decline (latest <= older)
-        return $pastEff[0] <= $pastEff[1];
-    }
+        $latestRole   = strtolower($pastSeasons[0]->role);
+        $previousRole = strtolower($pastSeasons[1]->role);
 
+        // Role hierarchy from best to worst
+        $roleRank = [
+            'star player' => 5,
+            'all star'    => 4,
+            'starter'     => 3,
+            'role player' => 2,
+            'bench'       => 1,
+        ];
+
+        // If the player’s role went DOWN → don't judge
+        if (
+            isset($roleRank[$previousRole], $roleRank[$latestRole]) &&
+            $roleRank[$latestRole] < $roleRank[$previousRole]
+        ) {
+            return false;
+        }
+
+        // Judge if no improvement in efficiency
+        return $pastSeasons[0]->avg_eff <= $pastSeasons[1]->avg_eff;
+    }
 
     private function isRebuildingTeam(int $teamId): bool
     {
