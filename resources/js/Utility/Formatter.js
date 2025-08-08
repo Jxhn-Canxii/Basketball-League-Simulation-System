@@ -18,6 +18,21 @@ export const eliminationFormatter = (type) => {
     // <option value="2">Single Round Robin</option>
     // <option value="3">Double Round Robin</option>
 };
+
+export const gameRoleBadgeClass = (role) => {
+    const normalizedRole = role?.toLowerCase() || '';
+
+    if (['star player', 'all star', 'starter'].includes(normalizedRole)) {
+        return `<span class="inline-block px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full">Starting 5</span>`;
+    }
+
+    if (['role player', 'bench'].includes(normalizedRole)) {
+        return `<span class="inline-block px-2 py-1 text-xs font-semibold text-white bg-gray-500 rounded-full">Off the Bench</span>`;
+    }
+
+    return `<span class="inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-200 rounded-full">Unknown</span>`;
+};
+
 export const roundNameFormatter = (round) => {
     if (typeof round === 'number') {
         return `Round # ${round}`;
