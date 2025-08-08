@@ -12,6 +12,7 @@ return new class extends Migration
         Schema::create('player_game_stats', function (Blueprint $table) {
             $table->id();
             $table->foreignId('season_id')->default(0);
+            $table->string('role');
             $table->string('game_id');
             $table->foreignId('player_id')->default(0);
             $table->foreignId('team_id')->default(0);

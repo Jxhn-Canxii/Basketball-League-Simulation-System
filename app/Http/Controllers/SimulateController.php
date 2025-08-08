@@ -228,6 +228,7 @@ class SimulateController extends Controller
                 'game_id' => $gameData->game_id,
                 'season_id' => $currentSeasonId,
                 'team_id' => $player->team_id,
+                'role' => $player->role,
                 'points' => $points,
                 'rebounds' => $rebounds,
                 'assists' => 0, // Temporary value
@@ -285,6 +286,7 @@ class SimulateController extends Controller
                 'game_id' => $gameData->game_id,
                 'season_id' => $currentSeasonId,
                 'team_id' => $player->team_id,
+                'role' => $player->role,
                 'points' => $points,
                 'rebounds' => $rebounds,
                 'assists' => 0, // Temporary value
@@ -676,6 +678,7 @@ class SimulateController extends Controller
             $homeTeamPlayers = $this->getActivePlayersSorted($gameData->home_team_id, $rolePriority, $gameData->round);
             $awayTeamPlayers = $this->getActivePlayersSorted($gameData->away_team_id, $rolePriority, $gameData->round);
 
+
             $playerGameStats = [];
             $homeMinutes = $this->distributeMinutes($homeTeamPlayers, $totalMinutes, $request->schedule_id);
             $awayMinutes = $this->distributeMinutes($awayTeamPlayers, $totalMinutes, $request->schedule_id);
@@ -721,6 +724,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
                     'assists' => 0, // Temporary value
@@ -779,6 +783,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
                     'assists' => 0, // Temporary value
@@ -1049,6 +1054,7 @@ class SimulateController extends Controller
             'game_id' => $gameData->game_id,
             'season_id' => $seasonId,
             'team_id' => $player->team_id,
+            'role' => $player->role,
             'points' => 0,
             'rebounds' => 0,
             'assists' => 0,
@@ -1856,6 +1862,7 @@ class SimulateController extends Controller
 
         foreach ($players as $player) {
             $playerId = $player->id;
+            $role = $player->role;
 
             // Years pro = distinct seasons
             $yearsPro = DB::table('player_season_stats')
@@ -1887,6 +1894,7 @@ class SimulateController extends Controller
 
             $playerEfficiencies[] = [
                 'player' => $player,
+                'role' => $player->role,
                 'total_eff' => $totalEff,
                 'years_pro' => $yearsPro,
                 'is_rookie' => $draft ? true : false,
@@ -2878,7 +2886,7 @@ class SimulateController extends Controller
         // return response()->json(['message' => 'Player playoff appearance data updated.']);
     }
 
-    private function updateTeamRolesBasedOnStats($teamId, $round)
+    private function updateTeamRolesBasedOnStatsV1($teamId, $round)
     {
         if (!$teamId) return false;
 
@@ -3059,6 +3067,201 @@ class SimulateController extends Controller
         }
     }
 
+    private function updateTeamRolesBasedOnStats($teamId, $round)
+    {
+        if (!$teamId) return false;
+
+        DB::beginTransaction();
+        try {
+            $seasonId = get_current_season_id();
+            $previousSeasonId = $seasonId - 1;
+
+            $playersRaw = DB::table('players')
+                ->where('contract_years', '>', 0)
+                ->where('is_injured', false)
+                ->where('team_id', $teamId)
+                ->select('id', 'role', 'position')
+                ->get();
+
+            $playerEfficiencies = [];
+
+            foreach ($playersRaw as $player) {
+                $playerId = $player->id;
+
+                $yearsPro = DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->distinct('season_id')
+                    ->count('season_id');
+
+                // Current season totals
+                $currentEff = DB::table('player_season_stats')
+                    ->where('season_id', $seasonId)
+                    ->where('player_id', $playerId)
+                    ->sum('eff');
+
+                $gamesPlayed = DB::table('player_game_stats')
+                    ->where('season_id', $seasonId)
+                    ->where('player_id', $playerId)
+                    ->count();
+
+                // PER approximation (EFF per game)
+                $per = $gamesPlayed > 0 ? ($currentEff / $gamesPlayed) : 0;
+
+                // Total EFF including last 5 games of previous season (early season buffer)
+                $totalEff = $currentEff;
+                if ($round <= 5) {
+                    $lastFiveGames = DB::table('player_game_stats')
+                        ->where('season_id', $previousSeasonId)
+                        ->where('player_id', $playerId)
+                        ->orderByDesc('id')
+                        ->limit(5)
+                        ->pluck('eff');
+                    $totalEff += $lastFiveGames->sum();
+                }
+
+                // Draft info
+                $draft = DB::table('drafts')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->first();
+
+                // Hybrid role score: PER weighted higher than EFF/game
+                $roleScore = ($per * 0.6) + (($totalEff / max(1, $gamesPlayed)) * 0.4);
+
+                // Positional weights
+                $positionWeights = [
+                    'PG' => fn($score) => $score * 1.05,
+                    'SG' => fn($score) => $score * 1.03,
+                    'SF' => fn($score) => $score,
+                    'PF' => fn($score) => $score * 1.02,
+                    'C'  => fn($score) => $score * 1.06,
+                ];
+
+                $mainPosition = explode('/', $player->position)[0] ?? 'SF';
+                $weightedScore = isset($positionWeights[$mainPosition])
+                    ? $positionWeights[$mainPosition]($roleScore)
+                    : $roleScore;
+
+                $playerEfficiencies[] = [
+                    'player_id' => $playerId,
+                    'position' => $player->position,
+                    'role' => $player->role,
+                    'role_score' => $weightedScore,
+                    'years_pro' => $yearsPro,
+                    'is_rookie' => $draft ? true : false,
+                    'draft_round' => $draft->round ?? null,
+                    'draft_pick' => $draft->pick_number ?? null,
+                ];
+            }
+
+            // Sort by score first, then years pro
+            $players = collect($playerEfficiencies)->sort(function ($a, $b) {
+                return $b['role_score'] <=> $a['role_score'] ?: $b['years_pro'] <=> $a['years_pro'];
+            })->values();
+
+            // Build starting five
+            $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
+            $startingFive = [];
+            $usedPlayerIds = [];
+
+            foreach ($positions as $neededPosition) {
+                foreach ($players as $player) {
+                    if (in_array($player['player_id'], $usedPlayerIds)) continue;
+                    $playerPositions = explode('/', strtoupper($player['position']));
+                    if (in_array($neededPosition, $playerPositions)) {
+                        $startingFive[] = $player;
+                        $usedPlayerIds[] = $player['player_id'];
+                        break;
+                    }
+                }
+            }
+
+            // Add high-performing rookie to starting five if missing
+            foreach ($players as $player) {
+                if (count($startingFive) >= 5) break;
+                if (!in_array($player['player_id'], $usedPlayerIds)) {
+                    if ($player['is_rookie'] && $player['draft_pick'] && $player['draft_pick'] <= 5) {
+                        $startingFive[] = $player;
+                        $usedPlayerIds[] = $player['player_id'];
+                    }
+                }
+            }
+
+            // Fill to 5 if still lacking
+            foreach ($players as $player) {
+                if (count($startingFive) >= 5) break;
+                if (!in_array($player['player_id'], $usedPlayerIds)) {
+                    $startingFive[] = $player;
+                    $usedPlayerIds[] = $player['player_id'];
+                }
+            }
+
+            // Assign roles
+            usort($startingFive, function ($a, $b) {
+                return $b['role_score'] <=> $a['role_score'] ?: $b['years_pro'] <=> $a['years_pro'];
+            });
+
+            $newRoles = [];
+            $newRoles[$startingFive[0]['player_id']] = 'star player';
+            $roleOrder = ['all star', 'all star', 'starter', 'starter'];
+            foreach (array_slice($startingFive, 1) as $i => $player) {
+                $newRoles[$player['player_id']] = $roleOrder[$i];
+            }
+
+            // Role players
+            $rolePlayerCount = 0;
+            foreach ($players as $player) {
+                if (in_array($player['player_id'], $usedPlayerIds)) continue;
+                if ($rolePlayerCount < 5 || ($player['is_rookie'] && $player['draft_pick'] && $player['draft_pick'] <= 10)) {
+                    $newRoles[$player['player_id']] = 'role player';
+                    $usedPlayerIds[] = $player['player_id'];
+                    $rolePlayerCount++;
+                }
+            }
+
+            // Remaining bench
+            foreach ($players as $player) {
+                if (!in_array($player['player_id'], $usedPlayerIds)) {
+                    $newRoles[$player['player_id']] = 'bench';
+                }
+            }
+
+            // Save role changes
+            foreach ($newRoles as $playerId => $newRole) {
+                $currentRole = collect($playersRaw)->firstWhere('id', $playerId)->role;
+                if ($currentRole !== $newRole) {
+                    $status = $newRole === 'star player' ? 'star player change' : 'role change';
+                    $roundName = is_numeric($round) ? "Round $round" : "Playoffs";
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerId,
+                        'season_id' => $seasonId,
+                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. $roundName",
+                        'from_team_id' => $teamId,
+                        'to_team_id' => $teamId,
+                        'status' => $status,
+                    ]);
+                }
+
+                DB::table('players')->where('id', $playerId)->update(['role' => $newRole]);
+
+                DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
+            }
+
+            DB::commit();
+            return true;
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            \Log::error("Error updating team $teamId roles: " . $e->getMessage());
+            return false;
+        }
+    }
+
     private function updateSeasonStats($playerGameStats,$gameData,$isPlayoff)
     {
         if (empty($playerGameStats)) {
@@ -3076,6 +3279,7 @@ class SimulateController extends Controller
             // Determine Best Player of the Game (BPG) using Efficiency Formula
             $bestPlayerId = null;
             $bestEfficiency = -INF;
+
 
             foreach ($playerGameStats as &$stats) {
                 if (isset($stats['passing_rating'])) {
@@ -3547,7 +3751,7 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($hasNotImproved &&  $yearsPro >= 3 && !in_array(strtolower($player->role), $protectedRoles)) {
+        if ($hasNotImproved &&  $yearsPro >= 2) {
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
 
@@ -3627,29 +3831,43 @@ class SimulateController extends Controller
         // Get the earliest season ID in the system
         $firstSeasonId = DB::table('seasons')->min('id');
 
-        // If this is the first season, there's no past data to compare
         if ($currentSeasonId == $firstSeasonId) {
-            return false;
+            return false; // No past data
         }
 
-        // Get last two full seasons (merging multiple teams per season)
-        $pastEff = DB::table('player_season_stats')
-            ->select('season_id', DB::raw('AVG(eff) as avg_eff'))
-            ->where('player_id', $playerId)
-            ->where('season_id', '<', $currentSeasonId)
-            ->groupBy('season_id')
-            ->orderByDesc('season_id')
+        // Fetch last two full seasons, merging stats across all teams per season
+        $pastSeasons = DB::table('player_season_stats as pss')
+            ->join(DB::raw('(
+                SELECT season_id, player_id, role
+                FROM player_season_stats
+                WHERE id IN (
+                    SELECT MAX(id) 
+                    FROM player_season_stats
+                    GROUP BY season_id, player_id
+                )
+            ) as latest_roles'), function($join) {
+                $join->on('pss.season_id', '=', 'latest_roles.season_id')
+                    ->on('pss.player_id', '=', 'latest_roles.player_id');
+            })
+            ->select(
+                'pss.season_id',
+                DB::raw('AVG(pss.per) as avg_per'), // merges across all teams/roles that season
+                DB::raw('LOWER(latest_roles.role) as role') // final role for that season
+            )
+            ->where('pss.player_id', $playerId)
+            ->where('pss.season_id', '<', $currentSeasonId)
+            ->groupBy('pss.season_id', 'latest_roles.role')
+            ->orderByDesc('pss.season_id')
             ->limit(2)
-            ->pluck('avg_eff')
+            ->get()
             ->toArray();
 
-        // Not enough history to judge
-        if (count($pastEff) < 2) {
-            return false;
+            if (count($pastSeasons) < 2) {
+            return false; // Not enough history
         }
 
-        // Check if there's no improvement or decline (latest <= older)
-        return $pastEff[0] <= $pastEff[1];
+        // Judge only if same or higher role
+        return $latest->avg_per <= $older->avg_per;
     }
 
     private function isRebuildingTeam(int $teamId): bool

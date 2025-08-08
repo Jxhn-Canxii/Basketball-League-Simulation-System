@@ -16,6 +16,7 @@ class PlayerGameStats extends Model
         'season_id',
         'game_id',
         'team_id',
+        'role',
         'minutes',
         'points',
         'rebounds',

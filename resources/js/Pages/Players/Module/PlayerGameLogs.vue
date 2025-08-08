@@ -23,6 +23,7 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Opponent</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Role</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Min</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Points Made">Pts</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider" title="Rebounds Made">Reb</th>
@@ -54,6 +55,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.opponent_team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border"> <span :class="roleBadgeClass(player.role)">{{ player.role }}</span></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rebounds.toFixed(1) }}</td>
@@ -104,7 +106,7 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import axios from "axios";
-import { roundNameFormatter } from "@/Utility/Formatter";
+import { roundNameFormatter,roleBadgeClass } from "@/Utility/Formatter";
 import Paginator from "@/Components/Paginator.vue";
 import ProfileHeader from "./ProfileHeader.vue";
 const props = defineProps({
