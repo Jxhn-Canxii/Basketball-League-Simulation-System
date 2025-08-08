@@ -3669,10 +3669,10 @@ class SimulateController extends Controller
         $isDev = $this->isDevelopmentalPlayer($player);
         $recentlyDrafted = $this->wasRecentlyDrafted($player->id, $seasonId);
         $potentialScore = $this->calculatePotentialScore($player);
-        $hasNotImproved = $this->hasNotImproved($player->id, $seasonId);
+        $hasNotImproved = $this->hasNotImproved($player->id, $player->team_id, $seasonId);
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
         // 📅 Years Pro
-        $yearsPro = $this->getYearsPro($player->id);
+        $yearsProWithTeam = $this->getYearsProWithTeam($player->id,$player->team_id);
         
         $rolePctMap = [
             'star player' => 0.80,
@@ -3751,7 +3751,7 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($hasNotImproved &&  $yearsPro >= 2) {
+        if ($hasNotImproved &&  $yearsProWithTeam >= 2) {
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
 
@@ -3771,6 +3771,7 @@ class SimulateController extends Controller
     }
 
     private array $playerYearsProCache = [];
+    private array $playerYearsProWithTeamCache = [];
 
     private function getYearsPro(int $playerId): int
     {
@@ -3784,6 +3785,21 @@ class SimulateController extends Controller
             ->count('season_id');
 
         return $this->playerYearsProCache[$playerId] = $yearsPro;
+    }
+
+    private function getYearsProWithTeam(int $playerId, int $teamId): int
+    {
+        if (isset($this->playerYearsProCache[$playerId])) {
+            return $this->playerYearsProCache[$playerId];
+        }
+
+        $yearsPro = DB::table('player_season_stats')
+            ->where('player_id', $playerId)
+            ->where('team_id', $teamId)
+            ->distinct()
+            ->count('season_id');
+
+        return $this->playerYearsProWithTeamCache[$playerId] = $yearsPro;
     }
 
     private function isDevelopmentalPlayer($player): bool
@@ -3826,7 +3842,7 @@ class SimulateController extends Controller
         return $draft->round == 1 && $draft->pick_number <= 10;
     }
 
-    private function hasNotImproved(int $playerId, int $currentSeasonId): bool
+    private function hasNotImproved(int $playerId, int $teamId, int $currentSeasonId): bool
     {
         // Get the earliest season ID in the system
         $firstSeasonId = DB::table('seasons')->min('id');
@@ -3855,6 +3871,7 @@ class SimulateController extends Controller
                 DB::raw('LOWER(latest_roles.role) as role') // final role for that season
             )
             ->where('pss.player_id', $playerId)
+            ->where('pss.team_id', $teamId)
             ->where('pss.season_id', '<', $currentSeasonId)
             ->groupBy('pss.season_id', 'latest_roles.role')
             ->orderByDesc('pss.season_id')
