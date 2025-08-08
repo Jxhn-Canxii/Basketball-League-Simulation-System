@@ -3751,7 +3751,7 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($hasNotImproved &&  $yearsProWithTeam >= 2) {
+        if ($hasNotImproved &&  $yearsProWithTeam >= 2 && !in_array(strtolower($player->role), $protectedRoles)) {
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
 
@@ -3857,7 +3857,7 @@ class SimulateController extends Controller
                 SELECT season_id, player_id, role
                 FROM player_season_stats
                 WHERE id IN (
-                    SELECT MAX(id) 
+                    SELECT MAX(id)
                     FROM player_season_stats
                     GROUP BY season_id, player_id
                 )
@@ -3879,9 +3879,13 @@ class SimulateController extends Controller
             ->get()
             ->toArray();
 
-            if (count($pastSeasons) < 2) {
+        if (count($pastSeasons) < 2) {
             return false; // Not enough history
         }
+
+        // Assign the latest and older seasons (latest first because of orderByDesc)
+        $latest = $pastSeasons[0];
+        $older = $pastSeasons[1];
 
         // Judge only if same or higher role
         return $latest->avg_per <= $older->avg_per;
