@@ -118,29 +118,6 @@ class RatingsController extends Controller
                 Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
             }
 
-            // Waive the last 3 players (remove them from the team)
-            foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
-                // Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
-                // Optionally log the waived player transaction if you want to track this
-                if ($playerStat && $playerStat->contract_years <= 1) {
-                    DB::table('transactions')->insert([
-                        'player_id' => $playerStat->player_id,
-                        'season_id' => $seasonId,
-                        'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
-                        'from_team_id' => $teamId,
-                        'to_team_id' => 0,
-                        'status' => 'waived',
-                    ]);
-
-                    DB::table('players')->where('id', $playerStat->player_id)->update([
-                        'contract_years' => 0,
-                        'team_id' => 0,
-                    ]);
-                }
-
-                Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
-            }
-
             foreach ($rankedPlayers as $player) {
                 if ($player && $player->hardship_contract > 0) {
                     // Hardship contract expired -> Release player back to free agency
@@ -380,6 +357,28 @@ class RatingsController extends Controller
                 
             }
 
+             // Waive the last 3 players (remove them from the team)
+            foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
+                // Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
+                // Optionally log the waived player transaction if you want to track this
+                if ($playerStat && $playerStat->contract_years <= 1) {
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerStat->player_id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
+                        'from_team_id' => $teamId,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
+
+                    DB::table('players')->where('id', $playerStat->player_id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                    ]);
+                }
+
+                Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
+            }
             // Show alert if this is the last update
             if ($teamId == $lastTeamId) {
                 \Log::info('Processing last update.');
