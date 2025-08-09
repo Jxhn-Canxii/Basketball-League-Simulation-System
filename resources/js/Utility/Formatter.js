@@ -356,23 +356,20 @@ export const statusBadgeClass = (status, size = 'sm') => {
   return `${baseClasses} ${statusStyles[status] || 'bg-gray-100 text-gray-800 border border-gray-200'}`;
 };
 
-export const playerFormatter = (name) => {
-    const nameParts = name.split(" "); // Split the name into parts
+export const playerFormatter = (name, withDot = true) => {
+    // Remove extra spaces and split into parts
+    const nameParts = name.trim().split(/\s+/);
 
-    // Assume the last part is the surname
-    const firstName = nameParts[0];
-    const surName = nameParts[nameParts.length - 1];
-
-    // Define a maximum length for the surname
-    const maxnameLength = 7; // You can adjust this value as needed
-
-    // Check if the name is too long
-    if (name.length > maxnameLength) {
-        return `${firstName[0]}. ${surName}`; // Format as "F. Surname"
-    } else {
-        return name; // Return the name as is if the surname is not too long
+    // If the name has more than one word, shorten the first to an initial
+    if (nameParts.length > 1) {
+        const initial = withDot ? `${nameParts[0][0]}.` : nameParts[0][0];
+        return `${initial} ${nameParts.slice(1).join(" ")}`;
     }
+
+    // If only one word, return as is
+    return name;
 };
+
 
 export const getTransactionIcon = (status) => {
     switch (status) {
