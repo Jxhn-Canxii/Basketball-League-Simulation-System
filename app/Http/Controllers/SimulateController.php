@@ -3671,9 +3671,7 @@ class SimulateController extends Controller
         $potentialScore = $this->calculatePotentialScore($player);
         $hasNotImproved = $this->hasNotImproved($player->id, $player->team_id, $seasonId);
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
-        // 📅 Years Pro
-        $yearsProWithTeam = $this->getYearsProWithTeam($player->id,$player->team_id);
-        
+ 
         $rolePctMap = [
             'star player' => 0.80,
             'all star'    => 0.70,
@@ -3874,9 +3872,10 @@ class SimulateController extends Controller
             return null; // No prior data
         }
 
-        $yearsProWithTeam = $this->getYearsProWithTeam($playerId, $teamId);
+        // $yearsProWithTeam = $this->getYearsProWithTeam($playerId, $teamId);
+        $yearsPro = $this->getYearsPro($playerId);
 
-        // Fetch last two full seasons stats for this player & team
+        // Fetch last two full seasons stats for this player & team, join players table for age
         $pastSeasons = DB::table('player_season_stats as pss')
             ->join(DB::raw('(
                 SELECT season_id, player_id, role
@@ -3890,18 +3889,18 @@ class SimulateController extends Controller
                 $join->on('pss.season_id', '=', 'latest_stats.season_id')
                     ->on('pss.player_id', '=', 'latest_stats.player_id');
             })
+            ->join('players as p', 'pss.player_id', '=', 'p.id')
             ->select(
                 'pss.season_id',
                 DB::raw('AVG(pss.per) as avg_per'),
                 DB::raw('LOWER(latest_stats.role) as role'),
                 DB::raw('AVG(pss.avg_minutes_per_game) as avg_mpg'),
                 DB::raw('MAX(pss.total_games_played) as games_played'),
-                DB::raw('MAX(pss.age) as age') // Add age if you track it in player_season_stats or join player table if needed
+                'p.age'
             )
             ->where('pss.player_id', $playerId)
-            ->where('pss.team_id', $teamId)
             ->where('pss.season_id', '<', $currentSeasonId)
-            ->groupBy('pss.season_id', 'latest_stats.role')
+            ->groupBy('pss.season_id', 'latest_stats.role', 'p.age')
             ->orderByDesc('pss.season_id')
             ->limit(2)
             ->get()
@@ -3944,7 +3943,7 @@ class SimulateController extends Controller
 
         $improvementIndex = ($perDiffPct * 0.5) + ($roleDiff * 0.3) + ($mpgDiffPct * 0.2) + $agePenalty;
 
-        if ($yearsProWithTeam < 2 && $improvementIndex < 0) {
+        if ($yearsPro < 2 && $improvementIndex < 0) {
             $improvementIndex *= 0.5;
         }
 
