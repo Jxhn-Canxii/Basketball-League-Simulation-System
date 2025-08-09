@@ -20,22 +20,63 @@ export const eliminationFormatter = (type) => {
 };
 
 export const gameRoleBadgeClass = (role, minutes) => {
-    if (minutes === 0) {
-        return `<span class="inline-block px-2 py-1 text-xs font-semibold text-gray-500 bg-yellow-200 rounded-full">Did Not Play</span>`;
+  const baseClasses = 'inline-block rounded-full px-2 py-0.5 text-xs font-medium capitalize shadow-sm transition-colors duration-150';
+
+  if (minutes === 0) {
+    const className = `${baseClasses} bg-gray-200 text-gray-600 border border-gray-300 hover:bg-gray-300`;
+    return `<span class="${className}">Did Not Play</span>`;
+  }
+
+  const normalizedRole = role?.toLowerCase() || '';
+  const isStarter = ['star player', 'all star', 'starter'].includes(normalizedRole);
+  const text = isStarter ? 'Starting 5' : 'Bench';
+
+  const roleStyles = {
+    'star player': {
+      background: 'bg-yellow-500',
+      text: 'text-white',
+      border: 'border border-yellow-400',
+      hover: 'hover:bg-yellow-600',
+    },
+    'all star': {
+      background: 'bg-yellow-500',
+      text: 'text-white',
+      border: 'border border-yellow-400',
+      hover: 'hover:bg-yellow-600',
+    },
+    'starter': {
+      background: 'bg-yellow-500',
+      text: 'text-white',
+      border: 'border border-yellow-400',
+      hover: 'hover:bg-yellow-600',
+    },
+    'role player': {
+      background: 'bg-purple-500',
+      text: 'text-white',
+      border: 'border border-red-400',
+      hover: 'hover:bg-red-600',
+    },
+    'bench': {
+      background: 'bg-purple-500',
+      text: 'text-white',
+      border: 'border border-purple-300',
+      hover: 'hover:bg-purple-600',
     }
+  };
 
-    const normalizedRole = role?.toLowerCase() || '';
+  const style = roleStyles[normalizedRole] || {
+    background: 'bg-gray-200',
+    text: 'text-gray-700',
+    border: 'border border-gray-300',
+    hover: 'hover:bg-gray-300',
+  };
 
-    if (['star player', 'all star', 'starter'].includes(normalizedRole)) {
-        return `<span class="inline-block px-2 py-1 text-xs font-semibold text-white bg-blue-600 rounded-full">Starting 5</span>`;
-    }
+  const className = `${baseClasses} ${style.background} ${style.text} ${style.hover}`;
 
-    if (['role player', 'bench'].includes(normalizedRole)) {
-        return `<span class="inline-block px-2 py-1 text-xs font-semibold text-white bg-gray-500 rounded-full">Off the Bench</span>`;
-    }
-
-    return `<span class="inline-block px-2 py-1 text-xs font-semibold text-gray-800 bg-gray-200 rounded-full">Unknown</span>`;
+  return `<span class="${className}">${text}</span>`;
 };
+
+
 
 export const roundNameFormatter = (round) => {
     if (typeof round === 'number') {
