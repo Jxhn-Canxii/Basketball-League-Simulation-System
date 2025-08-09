@@ -202,7 +202,7 @@ class RatingsController extends Controller
                         DB::table('transactions')->insert([
                             'player_id' => $player->id,
                             'season_id' => $seasonId,
-                            'details' => 'Waived due to extended injury recovery period',
+                            'details' => 'Waived by (' .$teamName.') due to extended injury recovery period',
                             'from_team_id' => $teamId,
                             'to_team_id' => 0,
                             'status' => 'waived',
