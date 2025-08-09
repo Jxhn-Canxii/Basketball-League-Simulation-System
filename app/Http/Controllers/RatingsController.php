@@ -73,6 +73,18 @@ class RatingsController extends Controller
                 'players.name as player_name',
                 'players.contract_years as contract_years', 
                 'players.hardship_contract as hardship_contract', 
+                'players.role as role',
+                'players.age as age',
+                'players.shooting_rating as shooting_rating',
+                'players.defense_rating as defense_rating',
+                'players.passing_rating as passing_rating',
+                'players.rebounding_rating as rebounding_rating',
+                'players.overall_rating as overall_rating',
+                'players.basketball_iq_rating as basketball_iq_rating',
+                'players.injury_prone_percentage as injury_prone_percentage',
+                'players.is_rookie as is_rookie',
+                'players.is_active as is_active',
+                'players.retirement_age as retirement_age',
                 'players.position' // Add any additional player fields
             )
             ->orderByDesc('player_season_stats.eff') // Sort directly in the query
@@ -107,6 +119,24 @@ class RatingsController extends Controller
 
             // Waive the last 3 players (remove them from the team)
             foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
+                // Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
+                // Optionally log the waived player transaction if you want to track this
+                if ($playerStat && $playerStat->contract_years <= 1) {
+                    DB::table('transactions')->insert([
+                        'player_id' => $playerStat->player_id,
+                        'season_id' => $seasonId,
+                        'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
+                        'from_team_id' => $teamId,
+                        'to_team_id' => 0,
+                        'status' => 'waived',
+                    ]);
+
+                    DB::table('players')->where('id', $playerStat->player_id)->update([
+                        'contract_years' => 0,
+                        'team_id' => 0,
+                    ]);
+                }
+
                 Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
             }
 
@@ -128,6 +158,59 @@ class RatingsController extends Controller
                         'to_team_id' => 0, // Free agent pool
                         'status' => 'released-hardship'
                     ]);
+                }
+                
+                $totalGames = $player->total_games ?? 0;
+                $rolePctMap = [
+                    'star player' => 0.80,
+                    'all star'    => 0.70,
+                    'starter'     => 0.60,
+                    'role player' => 0.50,
+                    'bench'       => 0.40,
+                ];
+
+                $defaultPct = 0.30;
+                $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
+
+            // Base total games across contract
+                $totalContractGames = $totalGames * max($player->contract_years, 1);
+
+                // Cap to avoid excessive tolerance (realism)
+                $baseRecoveryGames = ceil($totalContractGames * $pct);
+                $maxRecoveryGames = 30;
+                $requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
+
+                // 🔥 ADJUST BASED ON TALENT
+                if ($player->overall_rating >= 90) {
+                    $requiredRecoveryGames += 5; // elite talent, more forgiveness
+                } elseif ($player->overall_rating >= 80) {
+                    $requiredRecoveryGames += 2;
+                } elseif ($player->overall_rating <= 70) {
+                    $requiredRecoveryGames -= 2; // low-rated, less tolerance
+                } elseif ($player->overall_rating <= 60) {
+                    $requiredRecoveryGames -= 4; // waiver bait
+                }
+
+                // Clamp within logical bounds
+                $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
+
+                 // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
+                if ($injury && $injury->injury_recovery_games > $requiredRecoveryGames) {
+                    $waiveChance = rand(1, 100); // Random chance for waiving the player
+                    if ($waiveChance <= 60) { // 50% chance to waive
+                        DB::table('transactions')->insert([
+                            'player_id' => $player->id,
+                            'season_id' => $seasonId,
+                            'details' => 'Waived due to extended injury recovery period',
+                            'from_team_id' => $teamId,
+                            'to_team_id' => 0,
+                            'status' => 'waived',
+                        ]);
+
+                        $player->team_id = 0; // Set team_id to 0 (free agent)
+                        $player->contract_years = 0; // Remove contract
+                        \Log::info('Player waived due to injury recovery period', ['player_id' => $player->id]);
+                    }
                 }
             }
             // Fetch updated players
