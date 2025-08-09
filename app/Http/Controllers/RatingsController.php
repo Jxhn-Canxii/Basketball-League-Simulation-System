@@ -85,6 +85,7 @@ class RatingsController extends Controller
                 'players.is_rookie as is_rookie',
                 'players.is_active as is_active',
                 'players.retirement_age as retirement_age',
+                'players.injury_recovery_games as injury_recovery_games',
                 'players.position' // Add any additional player fields
             )
             ->orderByDesc('player_season_stats.eff') // Sort directly in the query
