@@ -3751,9 +3751,11 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        // if ($hasNotImproved &&  $yearsProWithTeam >= 2 && !in_array(strtolower($player->role), $protectedRoles)) {
-        //     return ['waived' => true, 'reason' => 'No improvement over past seasons'];
-        // }
+        if ($hasNotImproved) {
+            // If player has not improved over past seasons, waive them
+            // This could be based on a more complex logic comparing stats over multiple seasons
+            return ['waived' => true, 'reason' => 'No improvement over past seasons'];
+        }
 
         if ($isRebuilding && $player->age >= 32 && $seasonStats->eff < 12) {
             return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
@@ -3851,7 +3853,30 @@ class SimulateController extends Controller
             return false; // No past data
         }
 
-        // Fetch last two full seasons, merging stats across all teams per season
+        // Calculate composite improvement index
+        $improvementIndex = $this->calculateImprovementIndex($playerId, $teamId, $currentSeasonId);
+
+        if (is_null($improvementIndex)) {
+            return false; // Not enough data to judge improvement
+        }
+
+        // Threshold to decide if player has not improved enough
+        // Negative value means decline; adjust threshold as needed
+        $declineThreshold = -0.15;
+
+        return $improvementIndex <= $declineThreshold;
+    }
+
+    private function calculateImprovementIndex(int $playerId, int $teamId, int $currentSeasonId): ?float
+    {
+        $firstSeasonId = DB::table('seasons')->min('id');
+        if ($currentSeasonId == $firstSeasonId) {
+            return null; // No prior data
+        }
+
+        $yearsProWithTeam = $this->getYearsProWithTeam($playerId, $teamId);
+
+        // Fetch last two full seasons stats for this player & team
         $pastSeasons = DB::table('player_season_stats as pss')
             ->join(DB::raw('(
                 SELECT season_id, player_id, role
@@ -3861,34 +3886,69 @@ class SimulateController extends Controller
                     FROM player_season_stats
                     GROUP BY season_id, player_id
                 )
-            ) as latest_roles'), function($join) {
-                $join->on('pss.season_id', '=', 'latest_roles.season_id')
-                    ->on('pss.player_id', '=', 'latest_roles.player_id');
+            ) as latest_stats'), function($join) {
+                $join->on('pss.season_id', '=', 'latest_stats.season_id')
+                    ->on('pss.player_id', '=', 'latest_stats.player_id');
             })
             ->select(
                 'pss.season_id',
-                DB::raw('AVG(pss.per) as avg_per'), // merges across all teams/roles that season
-                DB::raw('LOWER(latest_roles.role) as role') // final role for that season
+                DB::raw('AVG(pss.per) as avg_per'),
+                DB::raw('LOWER(latest_stats.role) as role'),
+                DB::raw('AVG(pss.avg_minutes_per_game) as avg_mpg'),
+                DB::raw('MAX(pss.total_games_played) as games_played'),
+                DB::raw('MAX(pss.age) as age') // Add age if you track it in player_season_stats or join player table if needed
             )
             ->where('pss.player_id', $playerId)
             ->where('pss.team_id', $teamId)
             ->where('pss.season_id', '<', $currentSeasonId)
-            ->groupBy('pss.season_id', 'latest_roles.role')
+            ->groupBy('pss.season_id', 'latest_stats.role')
             ->orderByDesc('pss.season_id')
             ->limit(2)
             ->get()
             ->toArray();
 
         if (count($pastSeasons) < 2) {
-            return false; // Not enough history
+            return null; // Not enough data
         }
 
-        // Assign the latest and older seasons (latest first because of orderByDesc)
-        $latest = $pastSeasons[0];
-        $older = $pastSeasons[1];
+        [$latest, $older] = [$pastSeasons[0], $pastSeasons[1]];
 
-        // Judge only if same or higher role
-        return $latest->avg_per <= $older->avg_per;
+        // Require minimum games played threshold to avoid noise (e.g. 20 games)
+        if ($latest->games_played < 20 || $older->games_played < 20) {
+            return null;
+        }
+
+        $roleScores = [
+            'star player' => 5,
+            'all star' => 4,
+            'starter' => 3,
+            'role player' => 2,
+            'bench' => 1,
+        ];
+
+        $latestRoleScore = $roleScores[$latest->role] ?? 1;
+        $olderRoleScore = $roleScores[$older->role] ?? 1;
+
+        $perDiffPct = $older->avg_per > 0 ? ($latest->avg_per - $older->avg_per) / $older->avg_per : 0;
+        $roleDiff = $latestRoleScore - $olderRoleScore;
+        $mpgDiffPct = $older->avg_mpg > 0 ? ($latest->avg_mpg - $older->avg_mpg) / $older->avg_mpg : 0;
+
+        $age = $latest->age ?? 25; // fallback if age missing
+        if ($age < 27) {
+            $agePenalty = 0;
+        } elseif ($age <= 30) {
+            $agePenalty = -0.03 * ($age - 27);
+        } else {
+            $agePenalty = -0.12 - 0.05 * ($age - 30);
+        }
+
+        $improvementIndex = ($perDiffPct * 0.5) + ($roleDiff * 0.3) + ($mpgDiffPct * 0.2) + $agePenalty;
+
+        if ($yearsProWithTeam < 2 && $improvementIndex < 0) {
+            $improvementIndex *= 0.5;
+        }
+
+        return $improvementIndex;
     }
 
     private function isRebuildingTeam(int $teamId): bool
