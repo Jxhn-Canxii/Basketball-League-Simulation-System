@@ -3649,17 +3649,14 @@ class SimulateController extends Controller
         }
 
         $protectedRoles = ['star player', 'all star', 'starter'];
-        // 🔒 Protected: Star or All-Star with long contract
         if (in_array(strtolower($player->role), $protectedRoles) && $player->contract_years >= 3) {
             return ['waived' => false, 'reason' => 'Protected star/all-star with long contract'];
         }
 
-        // 🔒 Protected: High-pick rookie
         if ($player->is_rookie && $this->isHighPickRookie($player->id)) {
             return ['waived' => false, 'reason' => 'Protected high-pick rookie'];
         }
 
-        // ❌ Missing stats
         $seasonStats = $this->getPlayerSeasonStats($player->id, $player->team_id, $seasonId);
         if (!$seasonStats) {
             return ['waived' => false, 'reason' => 'Missing season stats'];
@@ -3671,7 +3668,15 @@ class SimulateController extends Controller
         $potentialScore = $this->calculatePotentialScore($player);
         $hasNotImproved = $this->hasNotImproved($player->id, $player->team_id, $seasonId);
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
- 
+
+        // Role-based tolerance for usage thresholds
+        $role = strtolower($player->role);
+        $usageMinutesThreshold = 7;
+        if (in_array($role, ['bench', 'role player'])) {
+            $usageMinutesThreshold = 5; // more tolerance for bench/role players
+        }
+
+        // Waiver logic for injury and contract remains as before
         $rolePctMap = [
             'star player' => 0.80,
             'all star'    => 0.70,
@@ -3681,34 +3686,28 @@ class SimulateController extends Controller
         ];
 
         $defaultPct = 0.30;
-        $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
+        $pct = $rolePctMap[$role] ?? $defaultPct;
 
-    // Base total games across contract
         $totalContractGames = $totalGames * max($player->contract_years, 1);
-
-        // Cap to avoid excessive tolerance (realism)
         $baseRecoveryGames = ceil($totalContractGames * $pct);
         $maxRecoveryGames = 30;
         $requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
 
-        // 🔥 ADJUST BASED ON TALENT
         if ($player->overall_rating >= 90) {
-            $requiredRecoveryGames += 5; // elite talent, more forgiveness
+            $requiredRecoveryGames += 5;
         } elseif ($player->overall_rating >= 80) {
             $requiredRecoveryGames += 2;
         } elseif ($player->overall_rating <= 70) {
-            $requiredRecoveryGames -= 2; // low-rated, less tolerance
+            $requiredRecoveryGames -= 2;
         } elseif ($player->overall_rating <= 60) {
-            $requiredRecoveryGames -= 4; // waiver bait
+            $requiredRecoveryGames -= 4;
         }
 
-        // Clamp within logical bounds
         $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
 
         if ($player->injury_recovery_games > $requiredRecoveryGames) {
             return ['waived' => true, 'reason' => 'Injured too long'];
         }
-
 
         if ($player->morale < 40 && $player->injury_prone_percentage > 80) {
             return ['waived' => true, 'reason' => 'Morale + injury-prone combo'];
@@ -3719,22 +3718,33 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Minimum of 3 games played required for waiver'];
         }
 
-        if ($player->fatigue >= 80 && $seasonStats->eff < 7 && !$isDev) {
+        // Adjusted efficiency and usage checks with role tolerance and composite scoring
+
+        // 1. Fatigue + efficiency with higher threshold
+        if ($player->fatigue >= 85 && $seasonStats->eff < 6 && !$isDev) {
             return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
         }
 
-        if ($seasonStats->eff !== null && $seasonStats->eff < 5 && !$isDev) {
+        // 2. Extremely low efficiency with stricter cutoff
+        if ($seasonStats->eff !== null && $seasonStats->eff < 4 && !$isDev) {
             return ['waived' => true, 'reason' => 'Extremely low efficiency'];
         }
 
+        // 3. Composite score of usage and efficiency
+        $usageScore = 
+            ($seasonStats->avg_minutes_per_game * 0.5) +
+            ($seasonStats->avg_points_per_game * 0.3) +
+            ($seasonStats->avg_rebounds_per_game * 0.2);
+
+        $compositeScore = $usageScore * ($seasonStats->eff / 10);
+
         if (
-            $seasonStats->avg_minutes_per_game < 5 &&
-            $seasonStats->avg_points_per_game < 2 &&
-            $seasonStats->avg_rebounds_per_game < 2 &&
-            $seasonStats->total_games_played <= ($totalGames * 0.25) &&
+            $compositeScore < 5 &&
+            $seasonStats->avg_minutes_per_game < $usageMinutesThreshold &&
+            $seasonStats->total_games_played <= ($totalGames * 0.30) &&
             !$isDev
         ) {
-            return ['waived' => true, 'reason' => 'Very low usage and production'];
+            return ['waived' => true, 'reason' => 'Low composite efficiency and usage score'];
         }
 
         if ($player->age >= 34 && $seasonStats->eff < 10) {
@@ -3750,8 +3760,6 @@ class SimulateController extends Controller
         }
 
         if ($hasNotImproved) {
-            // If player has not improved over past seasons, waive them
-            // This could be based on a more complex logic comparing stats over multiple seasons
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
 
