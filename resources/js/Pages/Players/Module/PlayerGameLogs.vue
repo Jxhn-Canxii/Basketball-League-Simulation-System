@@ -55,7 +55,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.opponent_team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ roundNameFormatter(isNaN(parseFloat(player.round)) ? player.round : parseFloat(player.round)) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border" v-html="gameRoleBadgeClass(player.role)"></td>
+                            <td class="px-2 py-1 whitespace-nowrap border" v-html="gameRoleBadgeClass(player.role,player.minutes)"></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.points.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rebounds.toFixed(1) }}</td>

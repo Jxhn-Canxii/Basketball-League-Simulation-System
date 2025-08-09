@@ -19,7 +19,11 @@ export const eliminationFormatter = (type) => {
     // <option value="3">Double Round Robin</option>
 };
 
-export const gameRoleBadgeClass = (role) => {
+export const gameRoleBadgeClass = (role, minutes) => {
+    if (minutes === 0) {
+        return `<span class="inline-block px-2 py-1 text-xs font-semibold text-gray-500 bg-yellow-200 rounded-full">Did Not Play</span>`;
+    }
+
     const normalizedRole = role?.toLowerCase() || '';
 
     if (['star player', 'all star', 'starter'].includes(normalizedRole)) {
