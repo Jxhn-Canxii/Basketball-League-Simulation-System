@@ -42,6 +42,7 @@ class ScheduleController extends Controller
             'type' => 'required|in:1,2,3,4,5,6',
             'start' => 'required',
             'league_id' => 'required|exists:leagues,id',
+            'playoff_type' => 'required|in:1,2',
         ]);
         
         DB::beginTransaction();
@@ -80,6 +81,7 @@ class ScheduleController extends Controller
                 'start_playoffs' => $request->start,
                 'league_id' => $request->league_id,
                 'is_conference' => 1,
+                'playoff_type' => $request->playoff_type,
                 'status' => config('timeline.start'),
             ]);
 
@@ -555,6 +557,22 @@ class ScheduleController extends Controller
                 throw new \Exception("Failed to store team season info for team ID {$team->id}: " . $e->getMessage());
             }
         }
+    }
+
+    public function playOffSeriesResults(Request $request)
+    {
+        $seriesId = $request->series_id;
+
+        // Fetch all games in the given series from the view
+        $games = DB::table('schedule_view')
+            ->where('series_id', $seriesId)
+            ->orderBy('game_id', 'asc')
+            ->get();
+
+        return response()->json([
+            'series_id' => $seriesId,
+            'games' => $games
+        ]);
     }
 
 }

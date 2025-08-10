@@ -104,7 +104,7 @@
                 href="#"
                 v-if="!isHide && series.completed"
                 class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-                @click.prevent="isGameResultModalOpen = series.series_id"
+                @click.prevent="isSeriesResultModalOpen = series.series_id"
             >
                 View Results
             </a>
@@ -113,15 +113,27 @@
             </p>
         </div>
     </div>
+    <Modal :show="isSeriesResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
+        <div class="mt-4">
+            <SeriesResult :key="isSeriesResultModalOpen" :series_id="isSeriesResultModalOpen" />
+        </div>
+    </Modal>
 </template>
 
 <script setup>
-import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
+import { useForm } from "@inertiajs/vue3";
+import { ref, onMounted, watch } from "vue";
+import Modal from "@/Components/Modal.vue";
+import Swal from "sweetalert2";
+import axios from "axios";
 import {
     roundNameFormatter,
     roundGridFormatter,
     roundStatusFormatter,
 } from "@/Utility/Formatter.js";
+
+import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
+import SeriesResult from "@/Pages/Seasons/Module/SeriesResult.vue";
 
 const props = defineProps({
     series: {
@@ -138,8 +150,7 @@ const props = defineProps({
     }
 });
 
-const emit = defineEmits(['simulate', 'compare']);
-
+const isSeriesResultModalOpen =  ref(false);
 const getConferenceClass = (homeConference, awayConference) => {
     const conferenceClasses = {
         NCR: "bg-blue-100 text-blue-500",

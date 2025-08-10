@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('schedule/')->group(function(){
         Route::get('', [ScheduleController::class, 'index'])->name('schedule.index');
         Route::post('list-schedules', [ScheduleController::class, 'list'])->name('schedule.list');
+        Route::post('list-playoff-series', [ScheduleController::class, 'playOffSeriesResults'])->name('seasons.playoff.series.info');
         //simulation and scheduling
         Route::post('create-schedule-regular', [ScheduleController::class, 'createSeasonandSchedule'])->name('create.schedule.regular');
     });

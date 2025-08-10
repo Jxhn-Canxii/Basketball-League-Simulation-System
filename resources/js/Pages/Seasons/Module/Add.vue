@@ -91,6 +91,27 @@
                 </div>
                 <div class="mb-4">
                     <label
+                        for="Type"
+                        class="block text-sm font-medium text-gray-700"
+                        >Playoff Type</label
+                    >
+                    <select
+                        name=""
+                        id=""
+                        class="mt-1 p-2 border rounded-md w-full"
+                        v-model="form.playoff_type"
+                    >
+                        <option value="0">Select Playoff Type</option>
+                        <option value="1">Single Elimination</option>
+                        <option value="2">Series</option>
+                    </select>
+                    <InputError
+                        class="mt-2"
+                        :message="form.errors.playoff_type"
+                    />
+                </div>
+                <div class="mb-4">
+                    <label
                         for="FloorNo"
                         class="block text-sm font-medium text-gray-700"
                         >Match Type</label
@@ -173,6 +194,7 @@ const form = useForm({
     seasons_id: 0,
     conference_id: 0,
     match_type: 1,
+    playoff_type: 2,
     errors: [],
 });
 const newSeasonBehavior = () => {

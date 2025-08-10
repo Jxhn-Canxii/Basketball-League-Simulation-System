@@ -79,6 +79,7 @@
                                     v-for="(series, index) in seriesList" 
                                     :key="series.id"
                                     :series="series"
+                                    :series_id="series.series_id"
                                     :roundName="roundName"
                                     :index="index"
                                     @simulate="simulateSeriesGame"
