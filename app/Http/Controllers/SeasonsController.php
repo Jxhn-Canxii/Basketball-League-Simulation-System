@@ -18,11 +18,12 @@ class SeasonsController extends Controller
             'status' => session('status'),
         ]);
     }
-    public function details($season_id)
+    public function details($season_id,$playoff_type)
     {
         return Inertia::render('Seasons/Details', [
             'status' => session('status'),
             'season_id' => $season_id,  // Pass the season_id to the Vue page
+            'playoff_type' => $playoff_type,  // Pass the playoff_type to the Vue page
         ]);
     }
 

@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('round');
             $table->integer('season_id')->constrained()->onDelete('cascade');
             $table->integer('conference_id');
+            $table->integer('series_number');
             $table->integer('home_id')->constrained('teams')->onDelete('cascade');
             $table->integer('home_score')->default(0);
             $table->integer('away_id')->constrained('teams')->onDelete('cascade');

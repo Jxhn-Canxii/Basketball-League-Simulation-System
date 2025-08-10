@@ -194,7 +194,8 @@
                         v-if="currentTab === 'Playoffs' && season_id != 0"
                         class="min-w-full overflow-x-auto"
                     >
-                        <Playoffs :key="season_id" :season_id="season_id" />
+                        <Playoffs v-if="playoff_type == 1" :key="season_id" :season_id="season_id" />
+                        <PlayoffsSeries v-else :key="season_id" :season_id="season_id" />
                     </div>
                     <div
                         v-if="currentTab === 'Leaders' && season_id != 0"
@@ -238,6 +239,7 @@ import axios from "axios";
 
 import Seasons from "@/Pages/Seasons/Module/Season.vue";
 import Playoffs from "@/Pages/Seasons/Module/Playoffs.vue";
+import PlayoffsSeries from "@/Pages/Seasons/Module/PlayoffsSeries.vue";
 import SeasonAwards from "./Module/SeasonAwards.vue";
 import SeasonLeaders from "../Analytics/Module/SeasonLeaders.vue";
 import DraftBoard from "./Module/DraftBoard.vue";
@@ -249,6 +251,7 @@ const props = defineProps({
         default: 0,
         required: true,
     },
+    playoff_type: Number,
 });
 const season_id = ref(0);
 const season_name = ref('');

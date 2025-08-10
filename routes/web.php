@@ -19,6 +19,7 @@ use App\Http\Controllers\SimulateController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\LeadersController;
 use App\Http\Controllers\TradeController;
+use App\Http\Controllers\PlayoffController;
 use App\Http\Controllers\TestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -85,8 +86,10 @@ Route::middleware('auth')->group(function () {
         Route::post('game-regular', [SimulateController::class, 'simulateRegular'])->name('game.simulate.regular');
         Route::post('get-round-schedule-ids', [SimulateController::class, 'getScheduleIds'])->name('game.per.round');
         Route::post('game-per-round', [SimulateController::class, 'simulatePerRound'])->name('game.simulate.round');
-        Route::get('testroles', [SimulateController::class, 'testRoleAssignment'])->name('test.roles');
+
+        Route::post('game-playoff-series', [SimulateController::class, 'simulatePlayoffSeries'])->name('game.simulate.playoff.series');
         
+        Route::get('testroles', [SimulateController::class, 'testRoleAssignment'])->name('test.roles');
         Route::get('test-free-agent/{position}', [SimulateController::class, 'getBestFreeAgent'])->name('get.free.agent');
     });
 
@@ -95,8 +98,12 @@ Route::middleware('auth')->group(function () {
         Route::post('list-schedules', [ScheduleController::class, 'list'])->name('schedule.list');
         //simulation and scheduling
         Route::post('create-schedule-regular', [ScheduleController::class, 'createSeasonandSchedule'])->name('create.schedule.regular');
-        Route::post('create-schedule-playoff', [ScheduleController::class, 'playoffSchedule'])->name('create.schedule.playoff');
+    });
 
+    Route::prefix('playoffs/')->group(function(){
+        Route::post('create-schedule-playoff', [PlayoffController::class, 'playoffSchedule'])->name('create.schedule.playoff');
+        Route::post('conference-playoffs', [PlayoffController::class, 'seasonsPlayoffs'])->name('seasons.playoffs');
+        Route::post('conference-playoffs-series', [PlayoffController::class, 'seasonsPlayoffsSeries'])->name('seasons.playoffs.series');
     });
 
     Route::prefix('leaders/')->group(function(){
@@ -134,7 +141,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('seasons/')->group(function(){
         Route::get('', [SeasonsController::class, 'index'])->name('seasons.index');
-        Route::get('season-details/{season_id}', [SeasonsController::class, 'details'])->name('seasons.details');
+        Route::get('season-details/{season_id}/{playoff_type}', [SeasonsController::class, 'details'])->name('seasons.details');
         Route::post('list-season', [SeasonsController::class, 'list'])->name('seasons.list');
 
         //season info
@@ -165,7 +172,6 @@ Route::middleware('auth')->group(function () {
 
         Route::post('conference-standings', [ConferenceController::class, 'seasonStandings'])->name('conferences.standings');
         Route::post('conference-schedules', [ConferenceController::class, 'seasonSchedules'])->name('conferences.schedules');
-        Route::post('conference-playoffs', [ConferenceController::class, 'seasonsPlayoffs'])->name('conferences.playoffs');
         Route::post('league-conference', [ConferenceController::class, 'leagueConference'])->name('conference.season.dropdown');
 
         Route::post('get-rounds-per-conference', [ConferenceController::class, 'getConferenceRoundNotSimulated'])->name('upcoming.rounds.season.conference');

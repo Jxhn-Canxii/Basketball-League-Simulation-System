@@ -15,7 +15,7 @@ class Seasons extends Model
         'name',
         'league_id',
         'type',
-        'match_type',
+        'playoff_type',
         'start_playoffs',
         'is_conference',
         'status',

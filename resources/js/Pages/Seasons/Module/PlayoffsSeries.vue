@@ -748,11 +748,13 @@ const fetchSeasonPlayoffs = async (type) => {
     try {
         let status = season_info.value.seasons[0].status;
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
-        const response = await axios.post(route("seasons.playoffs"), {
+        let playoff_type = season_info.value.seasons[0].playoff_type;
+        const response = await axios.post(route("seasons.playoffs.series"), {
             season_id: form.seasons_id,
             type: type,
             status: status,
             start: start_playoffs,
+            playoff_type: playoff_type,
         });
 
         if (type === 2) {
@@ -781,7 +783,6 @@ const fetchSeasonPlayoffs = async (type) => {
         });
     }
 };
-
 const simulateGame = async (id, game_id, type, index, round) => {
     try {
         isHide.value = true;
@@ -803,7 +804,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
         });
 
 
-        const response = await axios.post(route("game.simulate.playoff"), {
+        const response = await axios.post(route("game.simulate.playoff.series"), {
             schedule_id: id,
         });
 
