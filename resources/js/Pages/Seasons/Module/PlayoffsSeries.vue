@@ -1,4 +1,3 @@
-```vue
 <template>
     <div
         class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border-b-2 border-dashed"
@@ -7,7 +6,7 @@
         <div class="md:col-span-4 overflow-y-auto">
             <div class="flex justify-between">
                 <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs</h2>
-                 <button
+                <button
                     :disabled="season_info.seasons && season_info.seasons[0].status > 10"
                     :class="season_info.seasons && season_info.seasons[0].status > 10 ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 hover:text-red-900'"
                     @click="simulateFullPlayoffs"
@@ -40,478 +39,71 @@
             >
                 <small>Please click to start play-offs simulation!</small>
             </div>
-            <!-- Display playoff tree -->
+            
+            <!-- Display playoff series -->
             <div class="grid grid-cols-1 gap-6" v-if="season_playoffs.playoffs">
                 <div
-                    v-for="(
-                        roundMatches, roundName
-                    ) in season_playoffs.playoffs"
+                    v-for="(seriesList, roundName) in season_playoffs.playoffs"
                     :key="roundName"
                     class="block"
                 >
-                    <div v-if="season_playoffs.playoffs[roundName].length > 0">
-                        <h3
-                            v-if="season_playoffs.playoffs[roundName].length > 0"
-                            class="text-lg font-semibold mt-4"
-                            :class="{
-                                'text-start text-orange-400': season_playoffs.playoffs[roundName].length > 2,
-                                'text-center text-orange-600': season_playoffs.playoffs[roundName].length <= 2,
-                            }"
-                        >
+                    <div v-if="seriesList.length > 0">
+                        <h3 class="text-lg font-semibold mt-4 text-orange-500">
                             {{ roundNameFormatter(roundName) }}
                         </h3>
-                        <div
-                            class="grid gap-4"
-                            :class="{
-                                'grid-cols-4': season_playoffs.playoffs[roundName].length >= 4,
-                                'grid-cols-2 justify-center': season_playoffs.playoffs[roundName].length === 2,
-                                'grid-cols-1 justify-center max-w-md mx-auto': season_playoffs.playoffs[roundName].length === 1
-                            }"
-                        >
-                            <!-- Add container for centering when 2 cards -->
+                        
+                        <div class="grid gap-4" :class="{
+                            'grid-cols-4': seriesList.length >= 4,
+                            'grid-cols-2 justify-center': seriesList.length === 2,
+                            'grid-cols-1 justify-center max-w-md mx-auto': seriesList.length === 1
+                        }">
+                            <!-- Single series centered -->
                             <div 
-                                v-if="season_playoffs.playoffs[roundName].length === 2"
-                                class="col-span-2 flex justify-center gap-4"
-                            >
-                                <div 
-                                    v-for="(match, mm) in season_playoffs.playoffs[roundName]" 
-                                    :key="match.game_id"
-                                    class="w-full max-w-md"
-                                >
-                                    <!-- Existing card content -->
-                                    <div 
-                                        :style="{
-                                            background: `
-                                                linear-gradient(45deg, 
-                                                    #${match?.home_team?.secondary_color} 0%, 
-                                                    #${match?.home_team?.secondary_color} 50%, 
-                                                    #${match?.home_team?.primary_color} 50%, 
-                                                    #${match?.home_team?.primary_color} 100%
-                                                ),
-                                                linear-gradient(-45deg, 
-                                                    #${match?.away_team?.primary_color} 0%, 
-                                                    #${match?.away_team?.primary_color} 50%, 
-                                                    #${match?.away_team?.secondary_color} 50%, 
-                                                    #${match?.away_team?.secondary_color} 100%
-                                                )`,
-                                            backgroundSize: '50% 100%',
-                                            backgroundPosition: 'left, right',
-                                            backgroundRepeat: 'no-repeat'
-                                        }"
-                                        class="shadow-md rounded-md overflow-hidden"
-                                    >
-                                        <div
-                                            class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
-                                        >
-                                            <div>
-                                                <h3>
-                                                    {{ match.home_team.home_score }}
-                                                </h3>
-                                            </div>
-                                            <div>
-                                                <h3>
-                                                    {{ match.away_team.away_score }}
-                                                </h3>
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="px-1 py-1 flex justify-between items-center"
-                                        >
-                                            <h3>
-                                                <TeamDetails
-                                                :team_id="match.home_team.id" 
-                                                :key="match.home_team.id" 
-                                                :showButton="0"
-                                                :showInfo="false"
-                                                class="text-white text-md uppercase text-wrap text-left"
-                                                :current_conference_rank="match.home_team.conference_rank"
-                                                :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
-                                            </h3>
-                                            <h3>
-                                                <TeamDetails
-                                                    :team_id="match.away_team.id" 
-                                                    :key="match.away_team.id" 
-                                                    :showButton="0"
-                                                    :showInfo="false"
-                                                    class="text-white text-md uppercase text-wrap text-right"
-                                                    :current_conference_rank="match.away_team.conference_rank"
-                                                    :text="`#${match.away_team.overall_rank ?? 'TBD'} ${match.away_team.name ?? 'TBD'}`" />
-                                            </h3>
-                                        </div>
-                                        <div
-                                            class="px-4 text-nowrap text-xs py-0 flex justify-center"
-                                        >
-                                            <span class="px-2 text-xs text-white py-1 rounded">
-                                                {{ roundNameFormatter(roundName) }}
-                                            </span>
-                                        </div>
-                                        <div
-                                            class="border-gray-200 flex justify-between mt-4 mb-4 bg-white"
-                                        >
-                                            <div
-                                                class="px-2 text-nowrap text-xs py-3"
-                                            >
-                                                <span 
-                                                :class="getConferenceClass(match.home_team.conference,match.away_team.conference)"
-                                                class="px-2 shadow py-1 rounded">
-                                                    {{ match.home_team.conference }} #{{
-                                                        match.home_team.conference_rank
-                                                    }}
-                                                    vs {{ match.away_team.conference }} #{{
-                                                        match.away_team.conference_rank
-                                                    }}
-                                                </span>
-                                            </div>
-                                            <div
-                                                class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
-                                            >
-                                                <button
-                                                    class="text-white bg-orange-500 rounded-full px-2 py-1"
-                                                    @click.prevent="
-                                                        compareTeams(
-                                                            match.home_team.id,
-                                                            match.away_team.id
-                                                        )
-                                                    "
-                                                >
-                                                    Compare
-                                                    <i
-                                                        class="fa fa-exchange-alt ml-1"
-                                                    ></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="border-gray-200 flex justify-center">
-                                            <button
-                                                v-if="!isHide && match.winner == 0"
-                                                @click.prevent="
-                                                    simulateGame(
-                                                        match.id,
-                                                        match.game_id,
-                                                        2,
-                                                        mm,
-                                                        roundName
-                                                    )
-                                                "
-                                                class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
-                                            >
-                                                Simulate Game
-                                            </button>
-                                            <a
-                                                href="#"
-                                                v-if="!isHide && match.winner != 0"
-                                                class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-                                                @click.prevent="
-                                                    isGameResultModalOpen =
-                                                        match.game_id
-                                                "
-                                            >
-                                                View Result
-                                            </a>
-                                            <p v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
-                                                Simulating...
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                            <!-- Single card centered -->
-                            <div 
-                                v-if="season_playoffs.playoffs[roundName].length === 1"
+                                v-if="seriesList.length === 1"
                                 class="flex justify-center"
                             >
-                                <div 
-                                    v-for="(match, mm) in season_playoffs.playoffs[roundName]" 
-                                    :key="match.game_id"
-                                    class="w-full max-w-md"
-                                >
-                                    <!-- Existing card content -->
-                                    <div 
-                                        :style="{
-                                            background: `
-                                                linear-gradient(45deg, 
-                                                    #${match?.home_team?.secondary_color} 0%, 
-                                                    #${match?.home_team?.secondary_color} 50%, 
-                                                    #${match?.home_team?.primary_color} 50%, 
-                                                    #${match?.home_team?.primary_color} 100%
-                                                ),
-                                                linear-gradient(-45deg, 
-                                                    #${match?.away_team?.primary_color} 0%, 
-                                                    #${match?.away_team?.primary_color} 50%, 
-                                                    #${match?.away_team?.secondary_color} 50%, 
-                                                    #${match?.away_team?.secondary_color} 100%
-                                                )`,
-                                            backgroundSize: '50% 100%',
-                                            backgroundPosition: 'left, right',
-                                            backgroundRepeat: 'no-repeat'
-                                        }"
-                                        class="shadow-md rounded-md overflow-hidden"
-                                    >
-                                        <div
-                                            class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
-                                        >
-                                            <div>
-                                                <h3>
-                                                    {{ match.home_team.home_score }}
-                                                </h3>
-                                            </div>
-                                            <div>
-                                                <h3>
-                                                    {{ match.away_team.away_score }}
-                                                </h3>
-                                            </div>
-                                        </div>
-                                        <div
-                                            class="px-1 py-1 flex justify-between items-center"
-                                        >
-                                            <h3>
-                                                <TeamDetails
-                                                :team_id="match.home_team.id" 
-                                                :key="match.home_team.id" 
-                                                :showButton="0"
-                                                :showInfo="false"
-                                                class="text-white text-md uppercase text-wrap text-left"
-                                                :current_conference_rank="match.home_team.conference_rank"
-                                                :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
-                                            </h3>
-                                            <h3>
-                                                <TeamDetails
-                                                    :team_id="match.away_team.id" 
-                                                    :key="match.away_team.id" 
-                                                    :showButton="0"
-                                                    :showInfo="false"
-                                                    class="text-white text-md uppercase text-wrap text-right"
-                                                    :current_conference_rank="match.away_team.conference_rank"
-                                                    :text="`#${match.away_team.overall_rank ?? 'TBD'} ${match.away_team.name ?? 'TBD'}`" />
-                                            </h3>
-                                        </div>
-                                        <div
-                                            class="px-4 text-nowrap text-xs py-0 flex justify-center"
-                                        >
-                                            <span class="px-2 text-xs text-white py-1 rounded">
-                                                {{ roundNameFormatter(roundName) }}
-                                            </span>
-                                        </div>
-                                        <div
-                                            class="border-gray-200 flex justify-between mt-4 mb-4 bg-white"
-                                        >
-                                            <div
-                                                class="px-2 text-nowrap text-xs py-3"
-                                            >
-                                                <span 
-                                                :class="getConferenceClass(match.home_team.conference,match.away_team.conference)"
-                                                class="px-2 shadow py-1 rounded">
-                                                    {{ match.home_team.conference }} #{{
-                                                        match.home_team.conference_rank
-                                                    }}
-                                                    vs {{ match.away_team.conference }} #{{
-                                                        match.away_team.conference_rank
-                                                    }}
-                                                </span>
-                                            </div>
-                                            <div
-                                                class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
-                                            >
-                                                <button
-                                                    class="text-white bg-orange-500 rounded-full px-2 py-1"
-                                                    @click.prevent="
-                                                        compareTeams(
-                                                            match.home_team.id,
-                                                            match.away_team.id
-                                                        )
-                                                    "
-                                                >
-                                                    Compare
-                                                    <i
-                                                        class="fa fa-exchange-alt ml-1"
-                                                    ></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div class="border-gray-200 flex justify-center">
-                                            <button
-                                                v-if="!isHide && match.winner == 0"
-                                                @click.prevent="
-                                                    simulateGame(
-                                                        match.id,
-                                                        match.game_id,
-                                                        2,
-                                                        mm,
-                                                        roundName
-                                                    )
-                                                "
-                                                class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
-                                            >
-                                                Simulate Game
-                                            </button>
-                                            <a
-                                                href="#"
-                                                v-if="!isHide && match.winner != 0"
-                                                class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-                                                @click.prevent="
-                                                    isGameResultModalOpen =
-                                                        match.game_id
-                                                "
-                                            >
-                                                View Result
-                                            </a>
-                                            <p v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
-                                                Simulating...
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
+                                <SeriesCard 
+                                    :series="seriesList[0]" 
+                                    :roundName="roundName"
+                                    @simulate="simulateSeriesGame"
+                                    @compare="compareTeams"
+                                />
                             </div>
-                            <!-- Regular grid for 4 or more cards -->
+                            
+                            <!-- Two series side by side -->
                             <div 
-                                v-if="season_playoffs.playoffs[roundName].length >= 4"
-                                v-for="(match, mm) in season_playoffs.playoffs[roundName]"
-                                :key="match.game_id"
-                                class="col-span-1"
+                                v-if="seriesList.length === 2"
+                                class="col-span-2 flex justify-center gap-4"
                             >
-                                <!-- Existing card content -->
-                                <div 
-                                    :style="{
-                                        background: `
-                                            linear-gradient(45deg, 
-                                                #${match?.home_team?.secondary_color} 0%, 
-                                                #${match?.home_team?.secondary_color} 50%, 
-                                                #${match?.home_team?.primary_color} 50%, 
-                                                #${match?.home_team?.primary_color} 100%
-                                            ),
-                                            linear-gradient(-45deg, 
-                                                #${match?.away_team?.primary_color} 0%, 
-                                                #${match?.away_team?.primary_color} 50%, 
-                                                #${match?.away_team?.secondary_color} 50%, 
-                                                #${match?.away_team?.secondary_color} 100%
-                                            )`,
-                                        backgroundSize: '50% 100%',
-                                        backgroundPosition: 'left, right',
-                                        backgroundRepeat: 'no-repeat'
-                                    }"
-                                    class="shadow-md rounded-md overflow-hidden"
-                                >
-                                    <div
-                                        class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
-                                    >
-                                        <div>
-                                            <h3>
-                                                {{ match.home_team.home_score }}
-                                            </h3>
-                                        </div>
-                                        <div>
-                                            <h3>
-                                                {{ match.away_team.away_score }}
-                                            </h3>
-                                        </div>
-                                    </div>
-                                    <div
-                                        class="px-1 py-1 flex justify-between items-center"
-                                    >
-                                        <h3>
-                                            <TeamDetails
-                                            :team_id="match.home_team.id" 
-                                            :key="match.home_team.id" 
-                                            :showButton="0"
-                                            :showInfo="false"
-                                            class="text-white text-md uppercase text-wrap text-left"
-                                            :current_conference_rank="match.home_team.conference_rank"
-                                            :text="`#${match.home_team.overall_rank ?? 'TBD'} ${match.home_team.name ?? 'TBD'}`"/>
-                                        </h3>
-                                        <h3>
-                                            <TeamDetails
-                                                :team_id="match.away_team.id" 
-                                                :key="match.away_team.id" 
-                                                :showButton="0"
-                                                :showInfo="false"
-                                                class="text-white text-md uppercase text-wrap text-right"
-                                                :current_conference_rank="match.away_team.conference_rank"
-                                                :text="`#${match.away_team.overall_rank ?? 'TBD'} ${match.away_team.name ?? 'TBD'}`" />
-                                        </h3>
-                                    </div>
-                                    <div
-                                        class="px-4 text-nowrap text-xs py-0 flex justify-center"
-                                    >
-                                        <span class="px-2 text-xs text-white py-1 rounded">
-                                            {{ roundNameFormatter(roundName) }}
-                                        </span>
-                                    </div>
-                                    <div
-                                        class="border-gray-200 flex justify-between mt-4 mb-4 bg-white"
-                                    >
-                                        <div
-                                            class="px-2 text-nowrap text-xs py-3"
-                                        >
-                                            <span 
-                                            :class="getConferenceClass(match.home_team.conference,match.away_team.conference)"
-                                            class="px-2 shadow py-1 rounded">
-                                                {{ match.home_team.conference }} #{{
-                                                    match.home_team.conference_rank
-                                                }}
-                                                vs {{ match.away_team.conference }} #{{
-                                                    match.away_team.conference_rank
-                                                }}
-                                            </span>
-                                        </div>
-                                        <div
-                                            class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center"
-                                        >
-                                            <button
-                                                class="text-white bg-orange-500 rounded-full px-2 py-1"
-                                                @click.prevent="
-                                                    compareTeams(
-                                                        match.home_team.id,
-                                                        match.away_team.id
-                                                    )
-                                                "
-                                            >
-                                                Compare
-                                                <i
-                                                    class="fa fa-exchange-alt ml-1"
-                                                ></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div class="border-gray-200 flex justify-center">
-                                        <button
-                                            v-if="!isHide && match.winner == 0"
-                                            @click.prevent="
-                                                simulateGame(
-                                                    match.id,
-                                                    match.game_id,
-                                                    2,
-                                                    mm,
-                                                    roundName
-                                                )
-                                            "
-                                            class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
-                                        >
-                                            Simulate Game
-                                        </button>
-                                        <a
-                                            href="#"
-                                            v-if="!isHide && match.winner != 0"
-                                            class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-                                            @click.prevent="
-                                                isGameResultModalOpen =
-                                                    match.game_id
-                                            "
-                                        >
-                                            View Result
-                                        </a>
-                                        <p v-if="isHide && mm == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
-                                            Simulating...
-                                        </p>
-                                    </div>
-                                </div>
+                                <SeriesCard 
+                                    v-for="(series, index) in seriesList" 
+                                    :key="series.id"
+                                    :series="series"
+                                    :roundName="roundName"
+                                    :index="index"
+                                    @simulate="simulateSeriesGame"
+                                    @compare="compareTeams"
+                                    class="w-full max-w-md"
+                                />
                             </div>
+                            
+                            <!-- Four or more series grid -->
+                            <SeriesCard 
+                                v-if="seriesList.length >= 4"
+                                v-for="(series, index) in seriesList"
+                                :key="series.id"
+                                :series="series"
+                                :roundName="roundName"
+                                :index="index"
+                                @simulate="simulateSeriesGame"
+                                @compare="compareTeams"
+                                class="col-span-1"
+                            />
                         </div>
+                        
                         <div
                             class="flex justify-end"
-                            v-if="
-                                !isHide &&
-                                season_playoffs.playoffs[roundName].length > 0
-                            "
+                            v-if="!isHide && seriesList.length > 0"
                         >
                             <button
                                 v-if="
@@ -520,8 +112,7 @@
                                             roundName,
                                             season_info.seasons[0].start_playoffs
                                         ) &&
-                                    season_playoffs.playoffs[roundName].length >
-                                        0 &&
+                                    seriesList.length > 0 &&
                                     roundName != 'finals'
                                 "
                                 @click="createPlayOffSchedule(roundName)"
@@ -536,16 +127,14 @@
             </div>
         </div>
     </div>
+    
+    <!-- Regular season not finished message -->
     <div
         class="flex justify-center min-h-screen items-center border-b-2 border-dashed p-4 bg-white"
          v-if="season_info.seasons && season_info.seasons[0].status == 1 && !loading"
     >
-        <div
-            class="text-center bg-white p-8 rounded-lg shadow-lg border-2 border-red-500"
-        >
-            <p
-                class="text-red-500 font-bold text-3xl md:text-4xl leading-relaxed mb-4"
-            >
+        <div class="text-center bg-white p-8 rounded-lg shadow-lg border-2 border-red-500">
+            <p class="text-red-500 font-bold text-3xl md:text-4xl leading-relaxed mb-4">
                 Not playoffs season yet! Finish the Regular season first.
             </p>
             <p class="text-gray-700 text-lg md:text-xl">
@@ -554,16 +143,19 @@
             </p>
             <div class="mt-6">
                 <a :href="route('seasons.details', { season_id: props.season_id })"
-                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-300"
-                >
+                    class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-300">
                         Go to Regular Season
                 </a>
             </div>
         </div>
     </div>
+    
+    <!-- Loading indicator -->
     <div class="flex justify-center items-center p-4" v-if="loading">
         <p class="text-red-500 font-bold text-2xl">Loading...</p>
     </div>
+    
+    <!-- Modals -->
     <Modal :show="isTeamComparisonModalOpen" :maxWidth="'6xl'" title="Team Comparison" @close="isTeamComparisonModalOpen = false">
         <div class="mt-4">
             <TeamComparison
@@ -573,7 +165,8 @@
             />
         </div>
     </Modal>
-   <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
+    
+    <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
         <div class="mt-4">
             <GameResults :key="isGameResultModalOpen" :game_id="isGameResultModalOpen" />
         </div>
@@ -595,6 +188,7 @@ import {
 import TeamComparison from "@/Pages/Teams/Module/TeamComparison.vue";
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
+import SeriesCard from "@/Pages/Seasons/Module/SeriesCard.vue";
 
 const isAddModalOpen = ref(false);
 const isTeamModalOpen = ref(false);

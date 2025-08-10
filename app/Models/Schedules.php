@@ -11,7 +11,7 @@ class Schedules extends Model
     protected $fillable = [
         'game_id',
         'round',
-        'series_number'
+        'series_number',
         'season_id',
         'conference_id',
         'home_id',

@@ -125,7 +125,7 @@ class PlayoffController extends Controller
                 ->orderBy('playoff_series.round', 'asc')
                 ->get();
 
-            $teamIds = $playoffSchedule->pluck('home_id')->merge($playoffSchedule->pluck('away_id'))->unique();
+            $teamIds = $playoffSeries->pluck('home_team_id')->merge($playoffSeries->pluck('away_team_id'))->unique();
             $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
             $standingsData = DB::table($standingsTable)
                 ->whereIn('team_id', $teamIds)
@@ -134,8 +134,8 @@ class PlayoffController extends Controller
                 ->keyBy('team_id');
 
             foreach ($playoffSeries as $series) {
-                $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
-                $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+                $homeTeamName = $standingsData[$series->home_team_id]->name ?? DB::table('teams')->where('id', $series->home_team_id)->value('name');
+                $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
 
                 // Determine series lead or result
                 $seriesLead = '';
