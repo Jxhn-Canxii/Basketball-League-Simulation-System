@@ -3669,6 +3669,9 @@ class SimulateController extends Controller
         $hasNotImproved = $this->hasNotImproved($player->id, $player->team_id, $seasonId);
         $isRebuilding = $this->isRebuildingTeam($player->team_id);
 
+        $minGamesPlayed = max(3, floor($totalGames * 0.20));
+        $minimumGamesThreshold = ($seasonStats->total_games_played ?? 0) <= $minGamesPlayed;
+
         // Role-based tolerance for usage thresholds
         $role = strtolower($player->role);
         $usageMinutesThreshold = 7;
@@ -3713,20 +3716,14 @@ class SimulateController extends Controller
             return ['waived' => true, 'reason' => 'Morale + injury-prone combo'];
         }
 
-        $minGamesPlayed = max(3, floor($totalGames * 0.20));
-        if (($seasonStats->total_games_played ?? 0) <= $minGamesPlayed) {
-            return ['waived' => false, 'reason' => 'Minimum of 3 games played required for waiver'];
-        }
-
-        // Adjusted efficiency and usage checks with role tolerance and composite scoring
-
+        
         // 1. Fatigue + efficiency with higher threshold
-        if ($player->fatigue >= 85 && $seasonStats->eff < 6 && !$isDev) {
+        if ($player->fatigue >= 85 && $seasonStats->eff < 6 && !$isDev && $minimumGamesThreshold) {
             return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
         }
 
         // 2. Extremely low efficiency with stricter cutoff
-        if ($seasonStats->eff !== null && $seasonStats->eff < 4 && !$isDev) {
+        if ($seasonStats->eff !== null && $seasonStats->eff < 4 && !$isDev && $minimumGamesThreshold) {
             return ['waived' => true, 'reason' => 'Extremely low efficiency'];
         }
 
@@ -3742,28 +3739,28 @@ class SimulateController extends Controller
             $compositeScore < 5 &&
             $seasonStats->avg_minutes_per_game < $usageMinutesThreshold &&
             $seasonStats->total_games_played <= ($totalGames * 0.30) &&
-            !$isDev
+            !$isDev && $minimumGamesThreshold
         ) {
             return ['waived' => true, 'reason' => 'Low composite efficiency and usage score'];
         }
 
-        if ($player->age >= 34 && $seasonStats->eff < 10) {
+        if ($player->age >= 34 && $seasonStats->eff < 10 && $minimumGamesThreshold) {
             return ['waived' => true, 'reason' => 'Aging player with poor impact'];
         }
 
-        if ($player->contract_years > 2 && $seasonStats->eff < 8 && !$isDev) {
+        if ($player->contract_years > 2 && $seasonStats->eff < 8 && !$isDev && $minimumGamesThreshold) {
             return ['waived' => true, 'reason' => 'Bad value contract'];
         }
 
-        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10 && !$isDev) {
+        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10 && !$isDev && $minimumGamesThreshold) {
             return ['waived' => true, 'reason' => 'Low morale and underperforming'];
         }
 
-        if ($hasNotImproved) {
+        if ($hasNotImproved && $minimumGamesThreshold) {
             return ['waived' => true, 'reason' => 'No improvement over past seasons'];
         }
 
-        if ($isRebuilding && $player->age >= 32 && $seasonStats->eff < 12) {
+        if ($isRebuilding && $player->age >= 32 && $seasonStats->eff < 12 && $minimumGamesThreshold) {
             return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
         }
 
