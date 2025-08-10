@@ -18,14 +18,24 @@ class SeasonsController extends Controller
             'status' => session('status'),
         ]);
     }
-    public function details($season_id,$playoff_type)
+
+   public function details($season_id)
     {
+        // Fetch playoff_type for the given season
+        $season = \DB::table('seasons')
+            ->where('id', $season_id)
+            ->select('playoff_type')
+            ->first();
+
+        $playoff_type = $season ? $season->playoff_type : null;
+
         return Inertia::render('Seasons/Details', [
             'status' => session('status'),
-            'season_id' => $season_id,  // Pass the season_id to the Vue page
-            'playoff_type' => $playoff_type,  // Pass the playoff_type to the Vue page
+            'season_id' => $season_id,
+            'playoff_type' => $playoff_type,
         ]);
     }
+
 
     public function list(Request $request)
     {
