@@ -1055,7 +1055,6 @@ class SimulateController extends Controller
          // Save game data and update other tables in a transaction
         $winnerId = $gameData->winner_id;
         DB::transaction(function () use ($gameData, $playerGameStats, $currentSeasonId, $winnerId) {
-            $this->updateSeriesAndSchedule($gameData, $winnerId);
             $this->updateSeasonStats($playerGameStats, $gameData, true);
             $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
@@ -1069,7 +1068,9 @@ class SimulateController extends Controller
 
             $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId,  $gameData->round);
             $isRoundSeriesSimulatedForSeason = $this->isRoundSeriesSimulated($currentSeasonId,  $gameData->round);
-
+            if(!$isRoundSeriesSimulatedForSeason){
+                $this->updateSeriesAndSchedule($gameData, $winnerId);
+            }
             if ($isRoundsSimulatedForSeason) {
                 $this->updateInjuryFreeAgents();
             }
@@ -1085,6 +1086,7 @@ class SimulateController extends Controller
         // Format series response
         $seriesResponse = [
             'id' => $series->id,
+            'game_id' => $gameData->game_id,
             'series_id' => $series->series_id,
             'season_id' => $series->season_id,
             'conference' => $series->conference ?? 'Interconference',
@@ -2725,22 +2727,33 @@ class SimulateController extends Controller
         if (!$series) {
             throw new \Exception("Series not found for series_id: {$gameData->series_id}");
         }
+    
         if ($series->status == 2) {
-            return true;
+            return false; // Series already completed, stop here
         }
+
         // Update wins based on the winner
         $updateData = [
             'home_wins' => $series->home_team_id == $winnerId ? $series->home_wins + 1 : $series->home_wins,
             'away_wins' => $series->away_team_id == $winnerId ? $series->away_wins + 1 : $series->away_wins,
-            'status' => 1,
             'updated_at' => Carbon::now(),
+            'status' => 1, // Default to "in progress"
         ];
 
-        // Check if series is completed (wins equal series_length)
-        if ($updateData['home_wins'] == $series->series_length || $updateData['away_wins'] == $series->series_length) {
-            $updateData['status'] = 2; // Mark series as completed
-            $updateData['winner_team_id'] = $updateData['home_wins'] == $series->series_length ? $series->home_team_id : $series->away_team_id;
-            $updateData['loser_team_id'] = $updateData['home_wins'] == $series->series_length ? $series->away_team_id : $series->home_team_id;
+        // Check if the series is completed
+        if (
+            $updateData['home_wins'] >= $series->best_of ||
+            $updateData['away_wins'] >= $series->best_of
+        ) {
+            $updateData['status'] = 2; // Mark as completed
+
+            if ($updateData['home_wins'] >= $series->best_of) {
+                $updateData['winner_team_id'] = $series->home_team_id;
+                $updateData['loser_team_id'] = $series->away_team_id;
+            } else {
+                $updateData['winner_team_id'] = $series->away_team_id;
+                $updateData['loser_team_id'] = $series->home_team_id;
+            }
         }
 
         // Update playoff_series table
@@ -2748,6 +2761,8 @@ class SimulateController extends Controller
             ->where('series_id', $gameData->series_id)
             ->update($updateData);
 
+
+        // dd($updateData);
         // If series is not completed, insert a new schedule entry
         if ($updateData['status'] != 2) {
             // Count existing games in the series to determine game number
@@ -2762,8 +2777,14 @@ class SimulateController extends Controller
 
             // Generate game_id in format S{seasons.id}-C{conference id}-Series{series.id}-G{game number}
             $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
-            $homeTeam = $seriesNumber % 2 != 0 ?  $series->home_team_id : $series->away_team_id;
-            $awayTeam = $seriesNumber % 2 == 0 ?  $series->away_team_id : $series->home_team_id;
+            $homeTeam = $seriesNumber % 2 != 0 
+                ? $series->home_team_id 
+                : $series->away_team_id;
+
+            $awayTeam = $seriesNumber % 2 == 0 
+                ? $series->away_team_id 
+                : $series->home_team_id;
+
             $newSchedule = [
                 'game_id' => $gameId,
                 'round' => $gameData->round,
@@ -2773,7 +2794,7 @@ class SimulateController extends Controller
                 'away_id' => $awayTeam,
                 'home_score' => 0,
                 'away_score' => 0,
-                'winner_id' => null,
+                'winner_id' => 0,
                 'status' => 1, // Upcoming
                 'series_id' => $gameData->series_id,
                 'created_at' => Carbon::now(),

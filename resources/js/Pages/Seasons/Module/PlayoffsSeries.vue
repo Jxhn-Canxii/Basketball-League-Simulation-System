@@ -410,7 +410,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
         });
 
 
-        isGameResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.id ?? 0;
+        isGameResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.game_id ?? 0;
 
         isHide.value = false;
     } catch (error) {
@@ -486,6 +486,7 @@ const simulateFullPlayoffs = async () => {
       const matches = season_playoffs.value.games[roundName] || [];
 
       if (matches.length === 0) {
+         isGameResultModalOpen.value = false;
         console.log(`No matches found for round ${roundName}, skipping...`);
         currentRoundIndex++;
         continue;

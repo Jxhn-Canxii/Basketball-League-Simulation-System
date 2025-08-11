@@ -513,22 +513,63 @@ class PlayoffController extends Controller
             }
 
             else if ($round == 'play_ins_finals') {
-                $previousRounds = [
-                    'first'  => 'play_ins_elims_round_1',
-                    'second' => 'play_ins_elims_round_2'
-                ];
-
+                // Get the results of the previous play-in rounds to determine the winners and losers
                 foreach ($conferences as $conferenceId) {
-                    $scheduleFinalRound = self::handlePlayInFinals(
-                        $seasonId,
-                        $conferenceId,
-                        $previousRounds,
-                        $round // or 'play_ins_finals'
-                    );
+                    // Get the results of the 7th vs 8th and 9th vs 10th games
+                    // Fetch results for the first round (7th vs 8th)
+                    $round1Results = DB::table('schedules')
+                        ->where('season_id', $seasonId)
+                        ->where('round', 'play_ins_elims_round_1')
+                        ->where('conference_id', $conferenceId)
+                        ->get();
 
-                    $allSchedules = array_merge($allSchedules, $scheduleFinalRound);
+                    // Fetch results for the second round (9th vs 10th)
+                    $round2Results = DB::table('schedules')
+                        ->where('season_id', $seasonId)
+                        ->where('round', 'play_ins_elims_round_2')
+                        ->where('conference_id', $conferenceId)
+                        ->get();
+
+                    // Ensure the results contain at least one game for each round
+                    if ($round1Results->isNotEmpty() && $round2Results->isNotEmpty()) {
+                        // Determine the winner and loser for the 7th vs 8th game
+                        $round1Game = $round1Results->first(); // Assuming one game per round
+                        if ($round1Game->home_score > $round1Game->away_score) {
+                            $winner7vs8 = $round1Game->home_id;
+                            $loser7vs8 = $round1Game->away_id;
+                        } else {
+                            $winner7vs8 = $round1Game->away_id;
+                            $loser7vs8 = $round1Game->home_id;
+                        }
+
+                        // Determine the winner and loser for the 9th vs 10th game
+                        $round2Game = $round2Results->first(); // Assuming one game per round
+                        if ($round2Game->home_score > $round2Game->away_score) {
+                            $winner9vs10 = $round2Game->home_id;
+                            $loser9vs10 = $round2Game->away_id;
+                        } else {
+                            $winner9vs10 = $round2Game->away_id;
+                            $loser9vs10 = $round2Game->home_id;
+                        }
+
+                        // Output or process the winners and losers as needed
+                        // Example:
+
+                    } else {
+                        // Handle cases where there are no results
+
+                    }
+
+
+                    // **Play-In Finals**: The loser of 7th vs 8th faces the winner of 9th vs 10th
+                    $playInFinalsTeams = self::pairTeams([$loser7vs8, $winner9vs10], 2);
+
+                    // Create the schedule for the Play-In Finals
+                    // self::pairTeams($topTeamsByOverallRank, 8)
+                    $schedulePlayInFinals = self::createSchedule($playInFinalsTeams, $seasonId, 'play_ins_finals', $conferenceId);
+                    $allSchedules = array_merge($allSchedules, $schedulePlayInFinals);
                 }
-            }
+            } 
             
             else if ($round == 'interconference_semi_finals' || $round == 'finals') {
                 $pairings = self::generatePairings16($seasonId, 0, $round);
@@ -649,6 +690,9 @@ class PlayoffController extends Controller
             // Load playoff series configuration
             $playoffConfig = config('playoff_series.rounds');
 
+            // Get series length for the given round
+            $seriesLength = $playoffConfig[$round]['series_length'] ?? 3;
+            
             // Get conferences
             $conferences = DB::table('conferences')
                 ->where('league_id', $leagueId)
@@ -709,7 +753,8 @@ class PlayoffController extends Controller
                 }
             } 
             else if ($round == 'interconference_semi_finals' || $round == 'finals') {
-                $pairings = self::generatePairings16($seasonId, 0, $round);
+            
+                $pairings = self::generatePairings16($seasonId, $conferenceId, $round);
                 list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
                     $pairings, 
                     $seasonId, 
@@ -717,27 +762,25 @@ class PlayoffController extends Controller
                     0, 
                     $seriesLength
                 );
+
                 $allSeries = array_merge($allSeries, $seriesData);
                 $allSchedules = array_merge($allSchedules, $scheduleData);
             }
             else if ($round == 'round_of_16') {
-                $seriesLength = isset($playoffConfig[$round]['series_length']) 
-                    ? $playoffConfig[$round]['series_length'] 
-                    : 3; // Default to best-of-3 if not specified
-
                 foreach ($conferences as $conferenceId) {
-                    // Get top 6 teams by overall rank for the conference
+                     // Get the top 6 teams by overall rank for the conference, breaking ties as necessary
                     $conferenceTeams = DB::table('standings_view')
                         ->where('season_id', $seasonId)
                         ->where('conference_id', $conferenceId)
-                        ->orderBy('overall_rank', 'asc')
-                        ->take(6)
+                        ->orderBy('overall_rank', 'asc') // Order by overall rank
+                        ->take(6) // Get exactly 6 teams, breaking ties with the additional criteria
                         ->pluck('team_id')
                         ->toArray();
 
-                    // Handle padding if fewer than 6 teams
+                    // If there are still fewer than 6 teams, ensure that we get the correct padding teams
                     $totalTeams = count($conferenceTeams);
                     if ($totalTeams < 6) {
+                        // Handle the case where there are fewer than 6 teams by padding
                         $paddingNeeded = 6 - $totalTeams;
                         $paddingTeams = DB::table('standings_view')
                             ->where('season_id', $seasonId)
@@ -747,18 +790,28 @@ class PlayoffController extends Controller
                             ->take($paddingNeeded)
                             ->pluck('team_id')
                             ->toArray();
+
                         $conferenceTeams = array_merge($conferenceTeams, $paddingTeams);
                     }
 
-                    $conferenceTeams = array_slice($conferenceTeams, 0, 6);
+                    // Ensure we only have 6 teams, in case of any unforeseen issues
+                    $conferenceTeams = array_slice($conferenceTeams, 0, 6); // Take the first 6 teams
 
-                    // Get play-in winners
+                    // Get the results of the Play-In Elimination Round 1 and Play-In Finals to determine the winners
                     $playInTeams = self::getPlayInEliminationTeams($seasonId, $conferenceId);
-                    $conferenceTeams[6] = $playInTeams['winner_of_7vs8'];
-                    $conferenceTeams[7] = $playInTeams['winner_of_9vs10'];
+
+                    $winnerPlayInRound1 = $playInTeams['winner_of_7vs8']; // Winner of 7th vs 8th (Play-In Elimination Round 1)
+                    $winnerPlayInFinals = $playInTeams['winner_of_9vs10']; // Winner of 9th vs 10th (Play-In Finals)
+
+                    // Add the winners from the Play-In rounds into the 7th and 8th spots
+                    $conferenceTeams[6] = $winnerPlayInRound1; // Place the Play-In Elimination Round 1 winner at 7th
+                    $conferenceTeams[7] = $winnerPlayInFinals; // Place the Play-In Finals winner at 8th
+
+                    // Step 4: Combine the top 6 teams with the play-in winners to form the full list of teams for the round
+                    $topTeamsByOverallRank = $conferenceTeams; // Now this contains the 8 teams (6 top + 2 play-in winners)
 
                     // Generate pairings
-                    $pairings = self::pairTeams($conferenceTeams, 8); 
+                    $pairings = self::pairTeams($topTeamsByOverallRank, 8);
 
                     // Create series and schedule for the round
                     list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
@@ -792,6 +845,7 @@ class PlayoffController extends Controller
                     $allSchedules = array_merge($allSchedules, $scheduleData);
                 }
             }
+
             // Insert series and schedules in a transaction
             try {
                 DB::transaction(function () use ($seasonId, $round, $allSeries, $allSchedules) {
@@ -858,7 +912,7 @@ class PlayoffController extends Controller
                 'home_score' => null,
                 'away_id' => $game['away_id'],
                 'away_score' => null,
-                'winner_id' => null,
+                'winner_id' => 0,
                 'status' => 1,
                 'series_id' => $seriesId, // Use series_id instead of series_number
                 'created_at' => Carbon::now(),
@@ -888,6 +942,8 @@ class PlayoffController extends Controller
 
         foreach ($pairings as $pairing) {
             $seriesId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}";
+            $bestOf = intval(floor($seriesLength / 2) + 1);
+
             $gameId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}-G1";
             // Create playoff series entry
             $seriesData[] = [
@@ -897,7 +953,7 @@ class PlayoffController extends Controller
                 'conference_id' => $conferenceId,
                 'home_team_id' => $pairing['home_id'],
                 'away_team_id' => $pairing['away_id'],
-                'best_of' => $seriesLength,
+                'best_of' => $bestOf,
                 'series_length' => $seriesLength,
                 'home_wins' => 0,
                 'away_wins' => 0,
@@ -916,7 +972,7 @@ class PlayoffController extends Controller
                 'home_score' => null,
                 'away_id' => $pairing['team2'],
                 'away_score' => null,
-                'winner_id' => null,
+                'winner_id' => 0,
                 'status' => 1,
                 'series_id' => $seriesId, // Use series_id instead of series_number
                 'created_at' => now(),
@@ -957,6 +1013,7 @@ class PlayoffController extends Controller
             ->where('id', $seasonId)
             ->update(['status' => $status]);
     }
+    
     private static function getPlayInEliminationTeams($seasonId, $conferenceId)
     {
         // Get the results of the Play-In Elimination Rounds and Finals
