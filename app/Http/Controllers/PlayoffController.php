@@ -838,7 +838,7 @@ class PlayoffController extends Controller
             } 
             else if ($round == 'interconference_semi_finals' || $round == 'finals') {
             
-                $pairings = self::generateSeriesPairings16($seasonId, $conferenceId, $round);
+                $pairings = self::generateSeriesPairings16($seasonId, 0, $round);
                 list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
                     $pairings, 
                     $seasonId, 

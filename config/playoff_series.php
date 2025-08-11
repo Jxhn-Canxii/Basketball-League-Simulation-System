@@ -20,13 +20,10 @@ return [
         'semi_finals' => [
             'series_length' => 7, // Best-of-7
         ],
+        'interconference_semi_finals' => [
+            'series_length' => 7, // Best-of-7
+        ],
         'finals' => [
-            'series_length' => 7, // Best-of-7
-        ],
-        'interconference_finals' => [
-            'series_length' => 7, // Best-of-7
-        ],
-        'grand_finals' => [
             'series_length' => 7, // Best-of-7
         ],
     ],

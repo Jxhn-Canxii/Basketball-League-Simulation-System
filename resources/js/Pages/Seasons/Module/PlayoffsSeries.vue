@@ -277,7 +277,8 @@ const simulateFullPlayoffs = async () => {
 
             if (matches.length === 0) {
                 isGameResultModalOpen.value = false;
-                console.log(`No matches found for round ${roundName}, skipping...`);
+                const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
+                console.log(`Checking matches for round ${roundName}, please wait...`);
                 currentRoundIndex++;
                 continue;
             }
@@ -301,7 +302,7 @@ const simulateFullPlayoffs = async () => {
             // Reset active index after round completes
             activeIndex.value = -1;
 
-            if (roundName !== "finals") {
+            if (roundName !== null) {
                 try {
                     console.log(`Creating schedule for next round after ${roundName}...`);
                     const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
