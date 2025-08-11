@@ -458,7 +458,7 @@ class SimulateController extends Controller
             DB::rollBack();
             return response()->json([
                 'message' => 'The game is postponed ' . $randomReason . '!',
-            ], 500);
+            ], 200);
         }
 
         // Update the scores
@@ -579,7 +579,7 @@ class SimulateController extends Controller
             ->exists();
 
         if ($allSeriesNotFinished) {
-           $this->insertUnfinishedSchedule($request->round, $seasonId);
+           $this->insertUnfinishedSchedule($request->round, $request->season_id);
         }
 
         // Fetch game data
@@ -960,7 +960,7 @@ class SimulateController extends Controller
             DB::rollBack();
             return response()->json([
                 'message' => 'The game is postponed ' . $randomReason . '!',
-            ], 500);
+            ], 200);
         }
 
         // Update the scores
@@ -1543,7 +1543,7 @@ class SimulateController extends Controller
                 DB::rollBack();
                 return response()->json([
                     'message' => 'The game is postponed ' . $randomReason . '!',
-                ], 500);
+                ], 200);
             }
 
             
