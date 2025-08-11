@@ -425,7 +425,7 @@ class PlayoffController extends Controller
             if (!$allPrevRoundsSeriesFinished) {
                 return response()->json([
                     'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
-                ],400);
+                ],200);
             }
 
             if ($currentRoundExists) {
@@ -1092,14 +1092,23 @@ class PlayoffController extends Controller
         }
     }
 
-    private static function updateSeasonPlayoffRound($seasonId,$round){
-
+    private static function updateSeasonPlayoffRound($seasonId, $round)
+    {
         $status = self::roundStatusFormatter($round);
 
-        DB::table('seasons')
+        // Get current status first
+        $currentStatus = DB::table('seasons')
             ->where('id', $seasonId)
-            ->update(['status' => $status]);
+            ->value('status');
+
+        // Only update if current status is NOT 11
+        if ($currentStatus !== 11) {
+            DB::table('seasons')
+                ->where('id', $seasonId)
+                ->update(['status' => $status]);
+        }
     }
+
     
     private static function getPlayInEliminationTeams($seasonId, $conferenceId)
     {

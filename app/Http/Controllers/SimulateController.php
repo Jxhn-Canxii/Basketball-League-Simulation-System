@@ -1057,10 +1057,10 @@ class SimulateController extends Controller
             }
 
             if ($gameData->round === 'semi_finals' && $isRoundSeriesSimulatedForSeason) {
-                $this->updateConferenceChampions($gameData, $winnerId);
+                $this->updateSeriesConferenceChampions($gameData);
             }
             if ($gameData->round === 'finals' && $isRoundSeriesSimulatedForSeason) {
-                $this->updateFinalsWinner($gameData, $winnerTeamId,$winnerTeamSeriesScore, $awayTeamSeriesScore);
+                $this->updateSeriesFinalsWinner($gameData);
             }
         });
 
@@ -2902,6 +2902,77 @@ class SimulateController extends Controller
             ->where('id', $gameData->season_id)
             ->update($columnsToUpdate);
     }
+    
+    private function updateSeriesConferenceChampions($gameData, $winnerId)
+    {
+        // Get series info including home and away team IDs and names, plus conference info
+        $series = DB::table('playoff_series as ps')
+            ->join('teams as home_team', 'ps.home_team_id', '=', 'home_team.id')
+            ->join('teams as away_team', 'ps.away_team_id', '=', 'away_team.id')
+            ->where('ps.series_id', $gameData->series_id)
+            ->select(
+                'ps.*',
+                'home_team.name as home_team_name',
+                'home_team.conference as home_conference',
+                'away_team.name as away_team_name',
+                'away_team.conference as away_conference'
+            )
+            ->first();
+
+        if (!$series) {
+            return; // Series not found
+        }
+
+        // Determine the conference based on home or away conference name from the series table
+        // Assuming the conference relevant to this update is the home team's conference
+        $conferenceName = $series->home_conference;
+
+        // Determine winner's name from the series table based on winnerId
+        $winnerName = null;
+        if ($series->home_team_id === $winnerId) {
+            $winnerName = $series->home_team_name;
+        } elseif ($series->away_team_id === $winnerId) {
+            $winnerName = $series->away_team_name;
+        }
+
+        // Prepare columns to update in the seasons table based on conference
+        $columnsToUpdate = [];
+
+        switch ($conferenceName) {
+            case 'Luzon':
+                $columnsToUpdate = [
+                    'east_champion_id' => $winnerId,
+                    'east_champion_name' => $winnerName,
+                ];
+                break;
+            case 'NCR':
+                $columnsToUpdate = [
+                    'west_champion_id' => $winnerId,
+                    'west_champion_name' => $winnerName,
+                ];
+                break;
+            case 'Visayas':
+                $columnsToUpdate = [
+                    'north_champion_id' => $winnerId,
+                    'north_champion_name' => $winnerName,
+                ];
+                break;
+            case 'Mindanao':
+                $columnsToUpdate = [
+                    'south_champion_id' => $winnerId,
+                    'south_champion_name' => $winnerName,
+                ];
+                break;
+        }
+
+        // Update the seasons table with the champion info for the conference
+        if (!empty($columnsToUpdate)) {
+            DB::table('seasons')
+                ->where('id', $gameData->season_id)
+                ->update($columnsToUpdate);
+        }
+    }
+
     private function getTeamChemistry($seasonId, $teamId)
     {
         return DB::table('team_season_info')
@@ -2954,6 +3025,68 @@ class SimulateController extends Controller
             ]);
     }
 
+    private function updateSeriesFinalsWinner($gameData)
+    {
+        // Get series info including home and away team names and wins
+        $series = DB::table('playoff_series as ps')
+            ->join('teams as home_team', 'ps.home_team_id', '=', 'home_team.id')
+            ->join('teams as away_team', 'ps.away_team_id', '=', 'away_team.id')
+            ->where('ps.series_id', $gameData->series_id)
+            ->select(
+                'ps.*',
+                'home_team.name as home_team_name',
+                'away_team.name as away_team_name'
+            )
+            ->first();
+
+        if (!$series) {
+            return; // Series not found
+        }
+
+        // Finals game IDs in this season involving the two teams
+        $finalsGameIds = DB::table('schedules')
+            ->where('round', 'finals')
+            ->where('season_id', $gameData->season_id)
+            ->where(function ($query) use ($series) {
+                $query->where('home_team_id', $series->home_team_id)
+                    ->orWhere('away_team_id', $series->away_team_id);
+            })
+            ->pluck('game_id')
+            ->toArray();
+
+        // Calculate MVP based on eff average for winner team in finals
+        $mvpPlayer = PlayerGameStats::join('players', 'player_game_stats.player_id', '=', 'players.id')
+            ->whereIn('player_game_stats.game_id', $finalsGameIds)
+            ->where('player_game_stats.team_id', $series->winner_team_id)
+            ->select(
+                'player_game_stats.player_id',
+                'players.name as mvp_name',
+                DB::raw('AVG(player_game_stats.eff) as avg_eff')
+            )
+            ->groupBy('player_game_stats.player_id', 'players.name')
+            ->orderByDesc('avg_eff')
+            ->first();
+
+        $finalsMVP = $mvpPlayer ? $mvpPlayer->mvp_name : null;
+        $finalsMVPId = $mvpPlayer ? $mvpPlayer->player_id : null;
+
+        // Determine if winner is home or away to assign names correctly
+        $homeTeamWins = $series->home_team_id === $winnerId;
+
+        // Update seasons table with finals results using winner_team_id, loser_team_id, and wins
+        DB::table('seasons')
+            ->where('id', $gameData->season_id)
+            ->update([
+                'finals_winner_id'    => $series->winner_team_id,
+                'finals_loser_id'     => $series->loser_team_id,
+                'finals_winner_name'  => $homeTeamWins ? $series->home_team_name : $series->away_team_name,
+                'finals_loser_name'   => $homeTeamWins ? $series->away_team_name : $series->home_team_name,
+                'finals_winner_score' => $homeTeamWins ? $series->home_wins : $series->away_wins,
+                'finals_loser_score'  => $homeTeamWins ? $series->away_wins : $series->home_wins,
+                'finals_mvp'          => $finalsMVP,
+                'finals_mvp_id'       => $finalsMVPId,
+            ]);
+    }
 
     public function fixTeamPositionBalance($teamId)
     {
