@@ -585,7 +585,7 @@ class ScheduleController extends Controller
         // Fetch games in this series
         $playoffSchedule = DB::table('schedule_view')
             ->where('series_id', $seriesId)
-            ->orderBy('game_id', 'asc')
+            ->orderBy('id', 'desc')
             ->get()
             ->toArray();
 
