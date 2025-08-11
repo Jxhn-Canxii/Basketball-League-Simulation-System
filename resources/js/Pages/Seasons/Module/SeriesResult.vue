@@ -80,37 +80,37 @@
                                 <span class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center">
                                     <span class="text-6xl font-bold text-white">{{ seriesBestPlayer.points }}</span>
                                 </span>
-                                <p class="text-xl text-gray-900 font-bold">PTS</p>
+                                <p class="text-xl text-white font-bold">PTS</p>
                             </li>
                             <li class="flex flex-col items-center">
                                 <span class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center">
                                     <span class="text-6xl font-bold text-white">{{ seriesBestPlayer.rebounds }}</span>
                                 </span>
-                                <p class="text-xl text-gray-900 font-bold">REB</p>
+                                <p class="text-xl text-white font-bold">REB</p>
                             </li>
                             <li class="flex flex-col items-center">
                                 <span class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center">
                                     <span class="text-6xl font-bold text-white">{{ seriesBestPlayer.assists }}</span>
                                 </span>
-                                <p class="text-xl text-gray-900 font-bold">AST</p>
+                                <p class="text-xl text-white font-bold">AST</p>
                             </li>
                             <li class="flex flex-col items-center">
                                 <span class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center">
                                     <span class="text-6xl font-bold text-white">{{ seriesBestPlayer.steals }}</span>
                                 </span>
-                                <p class="text-xl text-gray-900 font-bold">STL</p>
+                                <p class="text-xl text-white font-bold">STL</p>
                             </li>
                             <li class="flex flex-col items-center">
                                 <span class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center">
                                     <span class="text-6xl font-bold text-white">{{ seriesBestPlayer.blocks }}</span>
                                 </span>
-                                <p class="text-xl text-gray-900 font-bold">BLK</p>
+                                <p class="text-xl text-white font-bold">BLK</p>
                             </li>
                             <li class="flex flex-col items-center">
                                 <span class="flex-shrink-0 w-25 h-25 p-2 bg-red-600 rounded-full flex items-center justify-center">
                                     <span class="text-6xl font-bold text-white">{{ seriesBestPlayer.turnovers }}</span>
                                 </span>
-                                <p class="text-xl text-gray-900 font-bold">TO</p>
+                                <p class="text-xl text-white font-bold">TO</p>
                             </li>
                         </ul>
                     </div>
