@@ -1021,7 +1021,7 @@ class SimulateController extends Controller
         $standingsTable = ($gameData->season_id == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
         $standingsData = DB::table($standingsTable)
             ->whereIn('team_id', $teamIds)
-            ->where('season_id', $seasonId)
+            ->where('season_id', $gameData->season_id)
             ->get()
             ->keyBy('team_id');
 
