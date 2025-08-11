@@ -2761,7 +2761,7 @@ class SimulateController extends Controller
             $seriesNumber = preg_match('/-Series(\d+)$/', $gameData->series_id, $matches) ? $matches[1] : '1';
 
             // Generate game_id in format S{seasons.id}-C{conference id}-Series{series.id}-G{game number}
-            $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$round}-Series{$seriesNumber}-G{$gameNumber}";
+            $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
             $newSchedule = [
                 'game_id' => $gameId,
                 'round' => $gameData->round,
