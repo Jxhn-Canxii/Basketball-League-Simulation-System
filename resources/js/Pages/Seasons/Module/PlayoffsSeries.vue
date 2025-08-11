@@ -410,7 +410,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
         });
 
 
-        isGameResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.game_id ?? 0;
+        // isGameResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.game_id ?? 0;
 
         isHide.value = false;
     } catch (error) {

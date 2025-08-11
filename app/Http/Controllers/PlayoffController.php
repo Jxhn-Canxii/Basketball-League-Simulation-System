@@ -810,9 +810,11 @@ class PlayoffController extends Controller
                     // Step 4: Combine the top 6 teams with the play-in winners to form the full list of teams for the round
                     $topTeamsByOverallRank = $conferenceTeams; // Now this contains the 8 teams (6 top + 2 play-in winners)
 
+                   
                     // Generate pairings
                     $pairings = self::pairTeams($topTeamsByOverallRank, 8);
 
+                    //  dd($pairings );
                     // Create series and schedule for the round
                     list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
                         $pairings, 
@@ -951,8 +953,8 @@ class PlayoffController extends Controller
                 'season_id' => $seasonId,
                 'round' => $round,
                 'conference_id' => $conferenceId,
-                'home_team_id' => $pairing['home_id'],
-                'away_team_id' => $pairing['away_id'],
+                'home_team_id' => $pairing[0],
+                'away_team_id' => $pairing[1],
                 'best_of' => $bestOf,
                 'series_length' => $seriesLength,
                 'home_wins' => 0,
@@ -968,9 +970,9 @@ class PlayoffController extends Controller
                 'round' => $round,
                 'season_id' => $seasonId,
                 'conference_id' => $conferenceId,
-                'home_id' => $pairing['team1'], // Higher seed as home team
+                'home_id' => $pairing[0], // Higher seed as home team
                 'home_score' => null,
-                'away_id' => $pairing['team2'],
+                'away_id' => $pairing[1],
                 'away_score' => null,
                 'winner_id' => 0,
                 'status' => 1,
