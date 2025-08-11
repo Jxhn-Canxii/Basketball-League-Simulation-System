@@ -410,9 +410,8 @@ const simulateGame = async (id, game_id, type, index, round) => {
         });
 
 
-        isGameResultModalOpen.value = game_id;
+        isGameResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.id ?? 0;
 
-        console.log(game_id);
         isHide.value = false;
     } catch (error) {
         console.error("Error simulating the game:", error);
