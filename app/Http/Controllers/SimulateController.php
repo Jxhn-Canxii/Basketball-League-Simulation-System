@@ -1029,6 +1029,7 @@ class SimulateController extends Controller
         $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
         // Determine series lead or result
         $seriesLead = '';
+        $winnerTeamId = 0;
         if ($series->completed) {
             $winnerName = $series->winner_team_id == $series->home_team_id ? $homeTeamName : $awayTeamName;
             $loserName = $series->winner_team_id == $series->away_team_id ? $awayTeamName : $homeTeamName;
@@ -1052,13 +1053,14 @@ class SimulateController extends Controller
         }
 
          // Save game data and update other tables in a transaction
+        $winnerId = $gameData->winner_id;
         DB::transaction(function () use ($gameData, $playerGameStats, $currentSeasonId, $winnerId) {
             $this->updateSeriesAndSchedule($gameData, $winnerId);
             $this->updateSeasonStats($playerGameStats, $gameData, true);
             $this->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
-            $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId);
-            $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId);
+            $this->updatePlayerMoraleBasedOnStats($gameData->home_team_id,  $winnerId);
+            $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,  $winnerId);
             $this->updateInjuryAndWaiving($gameData->home_team_id);
             $this->updateInjuryAndWaiving($gameData->away_team_id);
             $this->updateTeamStreaks($gameData->id);
@@ -1066,14 +1068,16 @@ class SimulateController extends Controller
             $this->updatePlayoffAppearancesForGame($gameData);
 
             $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId,  $gameData->round);
+            $isRoundSeriesSimulatedForSeason = $this->isRoundSeriesSimulated($currentSeasonId,  $gameData->round);
+
             if ($isRoundsSimulatedForSeason) {
                 $this->updateInjuryFreeAgents();
             }
 
-            if ($gameData->round === 'semi_finals' && $isRoundsSimulatedForSeason) {
-                $this->updateConferenceChampions($gameData, $winnerTeamId);
+            if ($gameData->round === 'semi_finals' && $isRoundSeriesSimulatedForSeason) {
+                $this->updateConferenceChampions($gameData, $winnerId);
             }
-            if ($gameData->round === 'finals' && $isRoundsSimulatedForSeason) {
+            if ($gameData->round === 'finals' && $isRoundSeriesSimulatedForSeason) {
                 $this->updateFinalsWinner($gameData, $winnerTeamId,$winnerTeamSeriesScore, $awayTeamSeriesScore);
             }
         });
@@ -2722,12 +2726,13 @@ class SimulateController extends Controller
             throw new \Exception("Series not found for series_id: {$gameData->series_id}");
         }
         if ($series->status == 2) {
-            throw new \Exception("Series not found for series_id: {$gameData->series_id}");
+            return true;
         }
         // Update wins based on the winner
         $updateData = [
             'home_wins' => $series->home_team_id == $winnerId ? $series->home_wins + 1 : $series->home_wins,
             'away_wins' => $series->away_team_id == $winnerId ? $series->away_wins + 1 : $series->away_wins,
+            'status' => 1,
             'updated_at' => Carbon::now(),
         ];
 
@@ -4713,6 +4718,15 @@ class SimulateController extends Controller
             ->where('round', $round)
             ->where('status', 1)
             ->exists();
+    }
+
+    private function isRoundSeriesSimulated($seasonId,$round){
+
+        return !DB::table('playoff_series')
+                ->where('season_id', $seasonId)
+                ->whereIn('round', $round) // Fetch previous round + current round in one query
+                ->where('status', 1)
+                ->exists();
     }
 
 }

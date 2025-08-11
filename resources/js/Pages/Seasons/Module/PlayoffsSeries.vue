@@ -411,6 +411,8 @@ const simulateGame = async (id, game_id, type, index, round) => {
 
 
         isGameResultModalOpen.value = game_id;
+
+        console.log(game_id);
         isHide.value = false;
     } catch (error) {
         console.error("Error simulating the game:", error);
