@@ -134,7 +134,7 @@
                                             <small class="text-gray-400 block">{{ statLeaders.points.team_name }}</small>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-bold text-2xl">{{ statLeaders.points.points }} pts</p>
+                                            <p class="font-bold text-2xl">{{ statLeaders.points.points?.toFixed(2) }} pts</p>
                                         </div>
                                     </div>
                                 </div>
@@ -152,7 +152,7 @@
                                             <small class="text-gray-400 block">{{ statLeaders.assists.team_name }}</small>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-bold text-2xl">{{ statLeaders.assists.assists }} ast</p>
+                                            <p class="font-bold text-2xl">{{ statLeaders.assists.assists?.toFixed(2) }} ast</p>
                                         </div>
                                     </div>
                                 </div>
@@ -170,7 +170,7 @@
                                             <small class="text-gray-400 block">{{ statLeaders.rebounds.team_name }}</small>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-bold text-2xl">{{ statLeaders.rebounds.rebounds }} reb</p>
+                                            <p class="font-bold text-2xl">{{ statLeaders.rebounds.rebounds?.toFixed(2) }} reb</p>
                                         </div>
                                     </div>
                                 </div>
@@ -188,7 +188,7 @@
                                             <small class="text-gray-400 block">{{ statLeaders.steals.team_name }}</small>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-bold text-2xl">{{ statLeaders.steals.steals }} stl</p>
+                                            <p class="font-bold text-2xl">{{ statLeaders.steals.steals?.toFixed(2) }} stl</p>
                                         </div>
                                     </div>
                                 </div>
@@ -206,7 +206,7 @@
                                             <small class="text-gray-400 block">{{ statLeaders.blocks.team_name }}</small>
                                         </div>
                                         <div class="text-right">
-                                            <p class="font-bold text-2xl">{{ statLeaders.blocks.blocks }} blk</p>
+                                            <p class="font-bold text-2xl">{{ statLeaders.blocks.blocks?.toFixed(2)}} blk</p>
                                         </div>
                                     </div>
                                 </div>
