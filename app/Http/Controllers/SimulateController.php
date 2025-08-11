@@ -2762,15 +2762,17 @@ class SimulateController extends Controller
 
             // Generate game_id in format S{seasons.id}-C{conference id}-Series{series.id}-G{game number}
             $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
+            $homeTeam = $seriesNumber % 2 != 0 ?  $series->home_team_id : $series->away_team_id;
+            $awayTeam = $seriesNumber % 2 == 0 ?  $series->away_team_id : $series->home_team_id;
             $newSchedule = [
                 'game_id' => $gameId,
                 'round' => $gameData->round,
                 'season_id' => $gameData->season_id,
                 'conference_id' => $gameData->conference_id,
-                'home_id' => $series->home_id, // Swap home/away for next game
-                'away_id' => $series->away_id,
-                'home_score' => null,
-                'away_score' => null,
+                'home_id' => $homeTeam, // Swap home/away for next game
+                'away_id' => $awayTeam,
+                'home_score' => 0,
+                'away_score' => 0,
                 'winner_id' => null,
                 'status' => 1, // Upcoming
                 'series_id' => $gameData->series_id,
@@ -4724,7 +4726,7 @@ class SimulateController extends Controller
 
         return !DB::table('playoff_series')
                 ->where('season_id', $seasonId)
-                ->whereIn('round', $round) // Fetch previous round + current round in one query
+                ->where('round', $round) // Fetch previous round + current round in one query
                 ->where('status', 1)
                 ->exists();
     }

@@ -1183,7 +1183,7 @@ class PlayoffController extends Controller
         [$winner9vs10, $loser9vs10] = self::determineWinnerLoser($round2Results->first());
 
         // Create schedule for this conference
-        $pairing = [$winner7vs8, $winner9vs10];
+        $pairing = [$loser7vs8, $winner9vs10];
 
         $pairing = self::pairTeams($pairing, 2);
         return self::createSchedule($pairing, $seasonId, $finalRoundName, $conferenceId);
