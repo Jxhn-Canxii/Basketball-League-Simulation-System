@@ -48,6 +48,7 @@
                                 <SeriesCard 
                                     :series="seriesList[0]"
                                     :roundName="roundName"
+                                    :key="series[0].game_id"
                                 />
                             </div>
                             
@@ -58,7 +59,7 @@
                             >
                                 <SeriesCard 
                                     v-for="(series, index) in seriesList" 
-                                    :key="series.id"
+                                    :key="series.game_id"
                                     :series="series"
                                     :series_id="series.series_id"
                                     :roundName="roundName"

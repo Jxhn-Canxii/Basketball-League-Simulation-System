@@ -2864,8 +2864,8 @@ class SimulateController extends Controller
 
             // Alternate home/away each game
             $swap = $gameNumber % 2 == 0;
-            $homeTeam = $swap ? $series->away_team_id : $series->home_team_id;
-            $awayTeam = $swap ? $series->home_team_id : $series->away_team_id;
+            $homeTeam = $series->home_team_id;
+            $awayTeam = $series->away_team_id;
 
             // Insert new schedule
             DB::table('schedules')->insert([

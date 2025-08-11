@@ -1,7 +1,7 @@
 <template>
-    <SeriesResult v-if="isPlayins" :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" />
+    <!-- <SeriesResult v-if="isPlayins" :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" /> -->
+    <!-- v-else -->
     <div 
-        v-else
         :style="{
             background: `
                 linear-gradient(45deg, 
