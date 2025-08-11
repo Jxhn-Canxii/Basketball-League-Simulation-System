@@ -316,8 +316,17 @@ class PlayoffController extends Controller
                 ->whereIn('round', [$prev_round, $round]) // Fetch previous round + current round in one query
                 ->get();
 
+            $series = DB::table('playoff_series')
+                ->where('season_id', $seasonId)
+                ->whereIn('round', [$prev_round, $round]) // Fetch previous round + current round in one query
+                ->get();
+
             // Check if any previous round is not finished
             $allPrevRoundsFinished = $schedules->where('round', $prev_round)
+                ->every(fn($schedule) => $schedule->status == 2);
+
+            
+            $allPrevRoundsSeriesFinished = $series->where('round', $prev_round)
                 ->every(fn($schedule) => $schedule->status == 2);
 
             // Check if the current round already exists
@@ -326,6 +335,12 @@ class PlayoffController extends Controller
             if (!$allPrevRoundsFinished) {
                 return response()->json([
                     'message' => 'Current round schedule is ongoing. Cannot create schedule for next round.',
+                ], 404);
+            }
+
+            if (!$allPrevRoundsSeriesFinished) {
+                return response()->json([
+                    'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
                 ], 404);
             }
 
@@ -429,6 +444,8 @@ class PlayoffController extends Controller
         // Insert all playoff schedules into the database in a single batch
         try {
             self::insertSchedule($seasonId, $round, $allSchedules);
+
+            self::updateSeasonPlayoffRound($seasonId,$round);
             // If the schedule was inserted successfully, return a success response
             return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
         } catch (Exception $e) {
@@ -578,6 +595,8 @@ class PlayoffController extends Controller
             
             try {
                 self::insertSchedule($seasonId, $round, $allSchedules);
+
+                self::updateSeasonPlayoffRound($seasonId,$round);
                 // If the schedule was inserted successfully, return a success response
                 return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
             } catch (Exception $e) {
@@ -782,6 +801,8 @@ class PlayoffController extends Controller
                     if (!empty($allSchedules)) {
                         self::insertSeriesSchedule($seasonId, $round, $allSchedules);
                     }
+
+                    self::updateSeasonPlayoffRound($seasonId,$round);
                 });
 
                 return response()->json(['success' => true, 'message' => 'Series and schedule inserted successfully']);
@@ -928,6 +949,14 @@ class PlayoffController extends Controller
         }
     }
 
+    private static function updateSeasonPlayoffRound($seasonId,$round){
+
+        $status = self::roundStatusFormatter($round);
+
+        DB::table('seasons')
+            ->where('id', $seasonId)
+            ->update(['status' => $status]);
+    }
     private static function getPlayInEliminationTeams($seasonId, $conferenceId)
     {
         // Get the results of the Play-In Elimination Rounds and Finals
@@ -1279,5 +1308,41 @@ class PlayoffController extends Controller
                 DB::table('player_game_stats')->insert($playerGameStats);
             }
         });
+    }
+
+        private static function roundStatusFormatter($round)
+    {
+
+        switch ($round) {
+            case 'round_of_32':
+                return config('timeline.round_of_32');
+                break;
+            case 'play_ins_elims_round_1':
+                return config('timeline.play_ins_elims_round_1');
+                break;
+            case 'play_ins_elims_round_2':
+                return config('timeline.play_ins_elims_round_2');
+                break;
+            case 'play_ins_finals':
+                return config('timeline.play_ins_finals');
+                break;
+            case 'round_of_16':
+                return config('timeline.round_of_16');
+                break;
+            case 'quarter_finals':
+                return config('timeline.quarter_finals');
+                break;
+            case 'semi_finals':
+                return config('timeline.semi_finals');
+            case 'interconference_semi_finals':
+                return config('timeline.interconference_semi_finals');
+                break;
+            case 'finals':
+                return config('timeline.finals');
+                break;
+            default:
+                return 8;
+                break;
+        }
     }
 }

@@ -516,7 +516,6 @@ class SimulateController extends Controller
         
         if($isRoundsSimulatedForSeason){
             $this->updateInjuryFreeAgents();
-            $this->updateSeasonPlayoffRound($currentSeasonId,$gameData->round);
         }
 
         // Prepare the schedule response data it will update team score card only
@@ -1069,7 +1068,6 @@ class SimulateController extends Controller
             $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId,  $gameData->round);
             if ($isRoundsSimulatedForSeason) {
                 $this->updateInjuryFreeAgents();
-                $this->updateSeasonPlayoffRound($currentSeasonId,$gameData->round);
             }
 
             if ($gameData->round === 'semi_finals' && $isRoundsSimulatedForSeason) {
@@ -1124,14 +1122,6 @@ class SimulateController extends Controller
 
     }
 
-    public function updateSeasonPlayoffRound($seasonId,$round){
-
-        $status = self::roundStatusFormatter($round);
-
-        DB::table('seasons')
-            ->where('id', $seasonId)
-            ->update(['status' => $status]);
-    }
     public function simulateRegular(Request $request)
     {
         // Validate the request data
@@ -1569,7 +1559,6 @@ class SimulateController extends Controller
 
             if($isRoundsSimulatedForSeason){
                 $this->updateInjuryFreeAgents();
-                $this->updateSeasonPlayoffRound($currentSeasonId,$gameData->round);
             }
             
             if ($allRoundsSimulatedForSeason) {
@@ -4698,41 +4687,6 @@ class SimulateController extends Controller
         return $gamesPlayedCount;
     }
 
-    private static function roundStatusFormatter($round)
-    {
-
-        switch ($round) {
-            case 'round_of_32':
-                return config('timeline.round_of_32');
-                break;
-            case 'play_ins_elims_round_1':
-                return config('timeline.play_ins_elims_round_1');
-                break;
-            case 'play_ins_elims_round_2':
-                return config('timeline.play_ins_elims_round_2');
-                break;
-            case 'play_ins_finals':
-                return config('timeline.play_ins_finals');
-                break;
-            case 'round_of_16':
-                return config('timeline.round_of_16');
-                break;
-            case 'quarter_finals':
-                return config('timeline.quarter_finals');
-                break;
-            case 'semi_finals':
-                return config('timeline.semi_finals');
-            case 'interconference_semi_finals':
-                return config('timeline.interconference_semi_finals');
-                break;
-            case 'finals':
-                return config('timeline.finals');
-                break;
-            default:
-                return 8;
-                break;
-        }
-    }
         /**
      * Check if all rounds have been simulated for the given season.
      *
