@@ -1339,6 +1339,16 @@ class PlayoffController extends Controller
         return $pairings;
     }
 
+     private static function pairSeriesTeams($teams, $pairCount)
+    {
+        // Generate pairings based on the teams array
+        $pairings = [];
+        for ($i = 0; $i < $pairCount / 2; $i++) {
+            $pairings[] = [$teams[$i], $teams[$pairCount - $i - 1]];
+        }
+
+        return $pairings;
+    }
     /**
      * Get play-in teams for a given conference, round, and rank range.
      *
