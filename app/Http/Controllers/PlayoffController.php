@@ -45,7 +45,7 @@ class PlayoffController extends Controller
         $type     = $request->type; // 1 = finished playoffs, 2 = single update
 
         $playoffs   = $this->playoffTreeSeries($seasonId, $status, $type, $start);
-        $games   = $this->playoffTree($seasonId, $status, $type, $start);
+        $games   = $this->playoffSeriesGameTree($seasonId, $status, $type, $start);
         $roundOrder = $this->getRoundOrder($start, $type, $status);
 
         return response()->json([
@@ -195,6 +195,102 @@ class PlayoffController extends Controller
         return $tree;
     }
 
+    private function playoffSeriesGameTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
+    {
+        $currentSeasonId = get_current_season_id();
+        $status = $status >= 8 ? 8 : $status;
+
+        // Load formats from config
+        $formats = config('playoff_formats');
+
+        // Auto-pick format if no key is given
+        if (!$formatKey) {
+            foreach ($formats as $key => $format) {
+                if ($format['type'] == $type && $format['start'] == $start) {
+                    $formatKey = $key;
+                    break;
+                }
+            }
+        }
+
+        if (!isset($formats[$formatKey])) {
+            throw new \Exception("Invalid playoff format: {$formatKey}");
+        }
+
+        $format = $formats[$formatKey];
+
+        // Build $roundIndices dynamically if using round_sequence
+        if (isset($format['round_sequence'])) {
+            $roundIndices = self::buildRoundsFromSequence($format['round_sequence']);
+        }
+
+        $currentRounds = $roundIndices[$status] ?? [];
+
+        $tree = [];
+        foreach ($currentRounds as $round) {
+            $tree[$round] = [];
+
+            $playoffSchedule = DB::table('schedules')
+                ->select('game_id', 'home_id', 'away_id', 'home_score', 'away_score', 'round', 'id', 'winner_id')
+                ->where('season_id', $seasonId)
+                ->where('round', $round)
+                ->where('status', 1)
+                ->orderBy('round', 'asc')
+                ->get();
+
+            if ($playoffSchedule->isEmpty()) {
+                continue; // Skip if no games for this round
+            }
+
+            $teamIds = $playoffSchedule->pluck('home_id')->merge($playoffSchedule->pluck('away_id'))->unique();
+            $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+            $standingsData = DB::table($standingsTable)
+                ->whereIn('team_id', $teamIds)
+                ->where('season_id', $seasonId)
+                ->get()
+                ->keyBy('team_id');
+
+            foreach ($playoffSchedule as $game) {
+                $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+                $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+
+                $tree[$round][] = [
+                    'id' => $game->id,
+                    'game_id' => $game->game_id,
+                    'home_team' => [
+                        'id' => $game->home_id,
+                        'name' => $homeTeamName,
+                        'home_score' => $game->home_score,
+                        'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                        'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
+                        'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
+                        'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
+                        'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
+                    ],
+                    'away_team' => [
+                        'id' => $game->away_id,
+                        'name' => $awayTeamName,
+                        'away_score' => $game->away_score,
+                        'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                        'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
+                        'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
+                        'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
+                        'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
+                    ],
+                    'winner' => $game->winner_id,
+                    'season_id' => $seasonId,
+                ];
+            }
+        }
+
+        // Remove empty rounds
+        $tree = array_filter($tree, function ($games) {
+            return !empty($games);
+        });
+
+        return $tree;
+    }
+
     private function playoffTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
     {
         $currentSeasonId = get_current_season_id();
@@ -306,11 +402,10 @@ class PlayoffController extends Controller
 
             // playoff types
             // 1 = by overall rank non series;
-            // 2 = by conference rank non series;
+            // 2 = by conference rank by series;
             // 3 = by conference rank best of 3;
             $playoff_type = $request->playoff_type;
 
-            // Check if all previous rounds are finished and if the current round exists
             $schedules = DB::table('schedules')
                 ->where('season_id', $seasonId)
                 ->whereIn('round', [$prev_round, $round]) // Fetch previous round + current round in one query
@@ -320,11 +415,6 @@ class PlayoffController extends Controller
                 ->where('season_id', $seasonId)
                 ->whereIn('round', [$prev_round, $round]) // Fetch previous round + current round in one query
                 ->get();
-
-            // Check if any previous round is not finished
-            $allPrevRoundsFinished = $schedules->where('round', $prev_round)
-                ->every(fn($schedule) => $schedule->status == 2);
-
             
             $allPrevRoundsSeriesFinished = $series->where('round', $prev_round)
                 ->every(fn($schedule) => $schedule->status == 2);
@@ -332,22 +422,16 @@ class PlayoffController extends Controller
             // Check if the current round already exists
             $currentRoundExists = $schedules->where('round', $round)->isNotEmpty();
 
-            if (!$allPrevRoundsFinished) {
+            if (!$allPrevRoundsSeriesFinished) {
                 return response()->json([
-                    'message' => 'Current round schedule is ongoing. Cannot create schedule for next round.',
-                ], 404);
+                    'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
+                ],400);
             }
-
-            // if (!$allPrevRoundsSeriesFinished) {
-            //     return response()->json([
-            //         'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
-            //     ]);
-            // }
 
             if ($currentRoundExists) {
                 return response()->json([
                     'message' => 'Round schedule already created',
-                ], 200);
+                ],200);
             }
 
             // Retrieve the league_id from the seasons table
@@ -869,7 +953,6 @@ class PlayoffController extends Controller
             return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => __LINE__], 400);
         }
     }
-
     /**
      * Create playoff series and schedule for play-in rounds (best-of-1)
      */
@@ -941,12 +1024,10 @@ class PlayoffController extends Controller
             ? DB::table('conferences')->where('id', $conferenceId)->value('name') 
             : 'Interconference';
 
-
         foreach ($pairings as $pairing) {
             $seriesId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}";
             $bestOf = intval(floor($seriesLength / 2) + 1);
 
-            $gameId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}-G1";
             // Create playoff series entry
             $seriesData[] = [
                 'series_id' => $seriesId,
@@ -964,22 +1045,26 @@ class PlayoffController extends Controller
                 'updated_at' => now(),
             ];
 
-            // Create schedule entry for game one
-            $scheduleData[] = [
-                'game_id' => $gameId,
-                'round' => $round,
-                'season_id' => $seasonId,
-                'conference_id' => $conferenceId,
-                'home_id' => $pairing[0], // Higher seed as home team
-                'home_score' => null,
-                'away_id' => $pairing[1],
-                'away_score' => null,
-                'winner_id' => 0,
-                'status' => 1,
-                'series_id' => $seriesId, // Use series_id instead of series_number
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            // Create schedule entries for all games in the series
+            for ($gameNum = 1; $gameNum <= $bestOf; $gameNum++) {
+                $gameId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}-G{$gameNum}";
+
+                $scheduleData[] = [
+                    'game_id' => $gameId,
+                    'round' => $round,
+                    'season_id' => $seasonId,
+                    'conference_id' => $conferenceId,
+                    'home_id' => $pairing[0], // Initially higher seed is home
+                    'home_score' => null,
+                    'away_id' => $pairing[1],
+                    'away_score' => null,
+                    'winner_id' => 0,
+                    'status' => 1,
+                    'series_id' => $seriesId,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+            }
 
             $seriesIndex++;
         }

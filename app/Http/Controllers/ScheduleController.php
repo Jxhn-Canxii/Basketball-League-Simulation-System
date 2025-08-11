@@ -565,18 +565,36 @@ class ScheduleController extends Controller
         $seasonId = $request->season_id;
         $currentSeasonId = get_current_season_id();
 
-        // Fetch all games in the given series from the view
+        // Get playoff series info with team names and colors
+        $seriesInfo = DB::table('playoff_series as ps')
+            ->leftJoin('teams as ht', 'ps.home_team_id', '=', 'ht.id')
+            ->leftJoin('teams as at', 'ps.away_team_id', '=', 'at.id')
+            ->select(
+                'ps.*',
+                'ht.name as home_team_name',
+                'ht.primary_color as home_primary_color',
+                'ht.secondary_color as home_secondary_color',
+                'at.name as away_team_name',
+                'at.primary_color as away_primary_color',
+                'at.secondary_color as away_secondary_color'
+            )
+            ->where('ps.series_id', $seriesId)
+            ->where('ps.season_id', $seasonId)
+            ->first();
+
+        // Fetch games in this series
         $playoffSchedule = DB::table('schedule_view')
             ->where('series_id', $seriesId)
             ->orderBy('game_id', 'asc')
             ->get()
             ->toArray();
 
-        $games = [];  // <-- Initialize here
-
+        $games = [];
         $teamIds = collect($playoffSchedule)->pluck('home_id')->merge(
             collect($playoffSchedule)->pluck('away_id')
         )->unique();
+
+        // Standings source
         $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
         $standingsData = DB::table($standingsTable)
             ->whereIn('team_id', $teamIds)
@@ -616,10 +634,135 @@ class ScheduleController extends Controller
             ];
         }
 
+        $statLeaders = DB::table('player_game_stats as pgs')
+            ->join('players as p', 'pgs.player_id', '=', 'p.id')
+            ->join('teams as t', 'pgs.team_id', '=', 't.id')
+            ->leftJoin('drafts as d', 'p.draft_id', '=', 'd.id')
+            ->leftJoin('teams as dt', 'p.drafted_team_id', '=', 'dt.id')
+            ->select(
+                'pgs.player_id',
+                'p.name as player_name',
+                'pgs.team_id',
+                't.name as team_name',
+                't.primary_color',
+                't.secondary_color',
+                DB::raw('AVG(points) as total_points'),
+                DB::raw('AVG(rebounds) as total_rebounds'),
+                DB::raw('AVG(assists) as total_assists'),
+                DB::raw('AVG(steals) as total_steals'),
+                DB::raw('AVG(blocks) as total_blocks'),
+                DB::raw('AVG(eff) as total_eff'),
+                DB::raw('AVG(turnovers) as total_turnovers'),
+                'p.age',
+                'p.position',
+                'p.role',
+                DB::raw('AVG(pgs.minutes) as total_minutes'),
+                'p.draft_id',
+                DB::raw("COALESCE(d.draft_status, 'Undrafted') as draft_status"),
+                'dt.acronym as drafted_team_acro',
+
+                // Your new award flags with subqueries:
+                DB::raw("CASE WHEN p.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = p.id LIMIT 1) THEN 1 ELSE 0 END as is_finals_mvp"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Best Defensive Player') THEN 1 ELSE 0 END) AS is_defensive_poy"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Sixth Man of the Year') THEN 1 ELSE 0 END) AS is_sixth_man"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Rookie of the Season') THEN 1 ELSE 0 END) AS is_rookie_poy"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Most Improved Player') THEN 1 ELSE 0 END) AS is_most_improved"),
+                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Best Overall Player') THEN 1 ELSE 0 END) AS is_season_mvp")
+            )
+            ->whereIn('pgs.game_id', collect($playoffSchedule)->pluck('game_id'))
+            ->groupBy(
+                'pgs.player_id',
+                'p.name',
+                'pgs.team_id',
+                't.name',
+                'p.age',
+                'p.position',
+                'p.role',
+                'p.draft_id',
+                'draft_status',
+                'dt.acronym',
+                'is_finals_mvp',
+                'is_defensive_poy',
+                'is_sixth_man',
+                'is_rookie_poy',
+                'is_most_improved',
+                'is_season_mvp'
+            )
+            ->get();
+
+
+        // Calculate stat leaders with qualification thresholds
+        $leaders = [
+            'points' => $statLeaders->sortByDesc('total_points')->first(),
+            'assists' => $statLeaders->sortByDesc('total_assists')->first(),
+            'rebounds' => $statLeaders->sortByDesc('total_rebounds')->first(),
+            'steals' => $statLeaders->sortByDesc('total_steals')->first(),
+            'blocks' => $statLeaders->sortByDesc('total_blocks')->first(),
+            'eff' => $statLeaders->sortByDesc('total_eff')->first()
+        ];
+
+        // Series Best Player formatted like your example
+        $best = $statLeaders->sortByDesc('total_eff')->first();
+        $seriesBestPlayer = [
+            'game_id'           => $playoffSchedule[0]->game_id ?? null,
+            'name'              => $best->player_name,
+            'team'              => $best->team_name,
+            'age'               => $best->age,
+            'position'          => $best->position,
+            'points'            => (float) $best->total_points,
+            'assists'           => (float) $best->total_assists,
+            'rebounds'          => (float) $best->total_rebounds,
+            'steals'            => (float) $best->total_steals,
+            'blocks'            => (float) $best->total_blocks,
+            'turnovers'         => (float) $best->total_turnovers,
+            'fouls'             => null, // add if needed from DB
+            'role'              => $best->role,
+            'minutes'           => $best->total_minutes,
+            'draft_id'          => $best->draft_id,
+            'draft_status'      => $best->draft_status,
+            'drafted_team_acro' => $best->drafted_team_acro,
+            'is_finals_mvp'     => $best->is_finals_mvp,
+            'is_season_mvp'     => $best->is_season_mvp,
+            'is_defensive_poy'  => $best->is_defensive_poy,
+            'is_rookie_poy'     => $best->is_rookie_poy,
+            'is_most_improved'  => $best->is_most_improved,
+            'secondary_color' => $best->secondary_color,
+            'primary_color' => $best->primary_color,
+        ];
+
+
+        // Last finished game in the series
+        $lastFinishedGame = DB::table('schedule_view')
+            ->where('series_id', $seriesId)
+            ->where('status', 2) // finished
+            ->orderBy('id', 'desc')
+            ->first();
+
+        $lastFinishedGameId = $lastFinishedGame->game_id ?? null;
+
+        // Compute series lead text
+        if ($seriesInfo->home_wins == $seriesInfo->away_wins) {
+            $seriesLead = "Series Tied {$seriesInfo->home_wins}-{$seriesInfo->away_wins}";
+        } else {
+            $homeTeamName = $seriesInfo->home_team_name;
+            $awayTeamName = $seriesInfo->away_team_name;
+
+            $leaderName = $seriesInfo->home_wins > $seriesInfo->away_wins ? $homeTeamName : $awayTeamName;
+            $leadWins = max($seriesInfo->home_wins, $seriesInfo->away_wins);
+            $trailWins = min($seriesInfo->home_wins, $seriesInfo->away_wins);
+            $seriesLead = "{$leaderName} Leads {$leadWins}-{$trailWins}";
+        }
+
         return response()->json([
             'series_id' => $seriesId,
-            'games' => $games
+            'series_info' => $seriesInfo,
+            'games' => $games,
+            'player_stat_leaders' => $leaders,
+            'series_best_player' => $seriesBestPlayer,
+            'last_finished_game_id' => $lastFinishedGameId,
+            'series_lead' => $seriesLead
         ]);
     }
+
 
 }

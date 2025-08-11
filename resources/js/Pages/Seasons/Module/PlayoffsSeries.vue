@@ -80,7 +80,7 @@
                             />
                         </div>
                         
-                        <div
+                        <!-- <div
                             class="flex justify-end"
                             v-if="!isHide && seriesList.length > 0"
                         >
@@ -100,7 +100,7 @@
                                 End
                                 {{ roundNameFormatter(roundName) }}
                             </button>
-                        </div>
+                        </div> -->
                     </div>
                 </div>
             </div>
@@ -150,6 +150,11 @@
             <GameResults :key="isGameResultModalOpen" :game_id="isGameResultModalOpen" />
         </div>
     </Modal>
+    <Modal :show="isSeriesResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isSeriesResultModalOpen = false">
+        <div class="mt-4">
+            <SeriesResult :key="isSeriesResultModalOpen" :series_id="isSeriesResultModalOpen" :season_id="props.season_id" />
+        </div>
+    </Modal>
 </template>
 
 <script setup>
@@ -172,6 +177,7 @@ import SeriesCard from "@/Pages/Seasons/Module/SeriesCard.vue";
 const isAddModalOpen = ref(false);
 const isTeamModalOpen = ref(false);
 const isTeamComparisonModalOpen = ref(false);
+const isSeriesResultModalOpen = ref(false);
 const isGameResultModalOpen = ref(false);
 const loading = ref(false);
 const change_key = ref(localStorage.getItem("season-key"));
@@ -412,6 +418,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
 
 
         // isGameResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.game_id ?? 0;
+        isSeriesResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.series_id ?? 0;
 
         isHide.value = false;
     } catch (error) {

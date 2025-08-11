@@ -102,14 +102,11 @@
             >
                 View Results
             </a>
-            <p v-if="isHide && index == activeIndex" class="bg-slate-900 rounded-t text-red-500 px-2 hover:bg-slate-300 text-sm font-bold">
-                Simulating...
-            </p>
         </div>
     </div>
     <Modal :show="isSeriesResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isSeriesResultModalOpen = false">
         <div class="mt-4">
-            <SeriesResult :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" />
+            <SeriesResult v-if="series.series_id" :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" />
         </div>
     </Modal>
 </template>

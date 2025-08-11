@@ -571,17 +571,6 @@ class SimulateController extends Controller
             ], 400); // 400 - Bad Request is more appropriate for this scenario
         }
 
-        // First, check if ALL playoff series in this round are completed
-        $allSeriesNotFinished = !DB::table('playoff_series')
-            ->where('season_id', $request->season_id)
-            ->where('round', $request->round)
-            ->where('status', '!=', 2) // Not finished yet
-            ->exists();
-
-        if ($allSeriesNotFinished) {
-           $this->insertUnfinishedSchedule($request->round, $request->season_id);
-        }
-
         // Fetch game data
         $gameData = Schedules::join('teams as home', 'schedules.home_id', '=', 'home.id')
             ->join('teams as away', 'schedules.away_id', '=', 'away.id')
@@ -2757,115 +2746,57 @@ class SimulateController extends Controller
         // dd($updateData);
         // If series is not completed, insert a new schedule entry
         if ($updateData['status'] != 2) {
-            // Count existing games in the series to determine game number
+            // Count finished games
             $gameCount = DB::table('schedules')
                 ->where('series_id', $gameData->series_id)
-                ->where('status', 2)
-                ->count();
-            $gameNumber = $gameCount + 1; // Increment for the new game
-
-            // Extract series number from series_id (e.g., 'Series1' from 'play_ins_elims_round_1-East-Series1')
-            $seriesNumber = preg_match('/-Series(\d+)$/', $gameData->series_id, $matches) ? $matches[1] : '1';
-
-            // Generate game_id in format S{seasons.id}-C{conference id}-Series{series.id}-G{game number}
-            $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
-            $homeTeam = $seriesNumber % 2 != 0 
-                ? $series->home_team_id 
-                : $series->away_team_id;
-
-            $awayTeam = $seriesNumber % 2 == 0 
-                ? $series->away_team_id 
-                : $series->home_team_id;
-
-            $newSchedule = [
-                'game_id' => $gameId,
-                'round' => $gameData->round,
-                'season_id' => $gameData->season_id,
-                'conference_id' => $gameData->conference_id,
-                'home_id' => $homeTeam, // Swap home/away for next game
-                'away_id' => $awayTeam,
-                'home_score' => 0,
-                'away_score' => 0,
-                'winner_id' => 0,
-                'status' => 1, // Upcoming
-                'series_id' => $gameData->series_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ];
-
-            DB::table('schedules')->insert($newSchedule);
-        }
-    }
-
-    private function insertUnfinishedSchedule($round, $seasonId)
-    {
-        // Get all unfinished series for this round & season
-        $unfinishedSeries = DB::table('playoff_series')
-            ->where('round', $round)
-            ->where('season_id', $seasonId)
-            ->where('status', '!=', 2) // Not finished
-            ->get();
-
-        if ($unfinishedSeries->isEmpty()) {
-            return false; // No series to update
-        }
-
-        foreach ($unfinishedSeries as $series) {
-
-            // ✅ Skip if a team has already reached the best_of wins
-            if ($series->home_wins >= $series->best_of || $series->away_wins >= $series->best_of) {
-                continue;
-            }
-
-            // ✅ Skip if there is already a pending game for this series
-            $hasPendingGame = DB::table('schedules')
-                ->where('series_id', $series->series_id)
-                ->where('status', 1) // Upcoming
-                ->exists();
-
-            if ($hasPendingGame) {
-                continue;
-            }
-
-            // Count existing finished games to determine next game number
-            $gameCount = DB::table('schedules')
-                ->where('series_id', $series->series_id)
-                ->where('status', 2) // Finished games
+                ->where('status', 2) // completed
                 ->count();
 
-            $gameNumber = $gameCount + 1;
+            // Count total scheduled games (played + upcoming)
+            $totalGames = DB::table('schedules')
+                ->where('series_id', $gameData->series_id)
+                ->count();
 
-            // Extract series number from series_id
-            preg_match('/-Series(\d+)$/', $series->series_id, $matches);
-            $seriesNumber = $matches[1] ?? '1';
+            // Count unfinished games (winner_id = 0)
+            $unfinishedGames = DB::table('schedules')
+                ->where('series_id', $gameData->series_id)
+                ->where('status', 1)
+                ->count();
 
-            // Generate game_id format
-            $gameId = "S{$series->season_id}-C{$series->conference_id}-R{$series->round}-Series{$seriesNumber}-G{$gameNumber}";
+            // Check if series still alive
+            $seriesStillAlive = $updateData['home_wins'] < $series->best_of &&
+                                $updateData['away_wins'] < $series->best_of;
 
-            // Alternate home/away each game
-            $swap = $gameNumber % 2 == 0;
-            $homeTeam = $series->home_team_id;
-            $awayTeam = $series->away_team_id;
+            // Insert next game only if series is alive, 
+            // total games < series length, and no unfinished games exist
+            if ($seriesStillAlive && $totalGames < $series->series_length && $unfinishedGames === 0) {
 
-            // Insert new schedule
-            DB::table('schedules')->insert([
-                'game_id' => $gameId,
-                'round' => $series->round,
-                'season_id' => $series->season_id,
-                'conference_id' => $series->conference_id,
-                'home_id' => $homeTeam,
-                'away_id' => $awayTeam,
-                'home_score' => 0,
-                'away_score' => 0,
-                'winner_id' => 0,
-                'status' => 1, // Upcoming
-                'series_id' => $series->series_id,
-                'created_at' => Carbon::now(),
-                'updated_at' => Carbon::now(),
-            ]);
+                $gameNumber = $totalGames + 1;
+
+                $seriesNumber = preg_match('/-Series(\d+)$/', $gameData->game_id, $matches) ? $matches[1] : '1';
+
+                $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
+
+                $newSchedule = [
+                    'game_id' => $gameId,
+                    'round' => $gameData->round,
+                    'season_id' => $gameData->season_id,
+                    'conference_id' => $gameData->conference_id,
+                    'home_id' => $series->home_team_id,
+                    'away_id' => $series->away_team_id,
+                    'home_score' => 0,
+                    'away_score' => 0,
+                    'winner_id' => 0,
+                    'status' => 1, // upcoming
+                    'series_id' => $gameData->series_id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                ];
+
+                DB::table('schedules')->insert($newSchedule);
+            }
         }
 
-        return true;
     }
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
