@@ -985,26 +985,6 @@ class SimulateController extends Controller
             ], 404);
         }
 
-        $updateData = [
-            'home_wins' => $series->home_team_id == $gameData->winner_id ? $series->home_wins + 1 : $series->home_wins,
-            'away_wins' => $series->away_team_id ==$gameData->winner_id ? $series->away_wins + 1 : $series->away_wins,
-            'updated_at' => Carbon::now(),
-        ];
-
-        // Check if series is completed
-        $winsNeeded = $series->series_length;
-        if ($updateData['home_wins'] == $winsNeeded || $updateData['home_wins'] == $winsNeeded) {
-            $updateData['status'] = 2; // Mark series as completed
-            $updateData['winner_team_id'] = $updateData['home_wins'] >= $winsNeeded ? $series->home_team_id : $series->away_team_id;
-            $updateData['loser_team_id'] = $updateData['away_wins'] >= $winsNeeded ? $series->away_team_id : $series->home_team_id;
-        }else{
-
-        }
-
-        DB::table('playoff_series')
-            ->where('series_id', $gameData->series_id)
-            ->update($updateData);
-
         // Fetch updated series data
         $series = DB::table('playoff_series')
             ->select(

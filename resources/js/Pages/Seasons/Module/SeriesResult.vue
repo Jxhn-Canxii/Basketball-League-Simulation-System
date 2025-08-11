@@ -33,6 +33,7 @@ const props = defineProps({
 
 const isGameResultModalOpen = ref(false);
 const series_info = ref([]);
+const series_count = ref(0);
 
 const fetchSeriesInfo = async () => {
     try {
@@ -41,6 +42,7 @@ const fetchSeriesInfo = async () => {
             season_id: props.season_id,
         });
         series_info.value = response.data.games;
+        series_count.value = series_info.value?.length ?? 0;
     } catch (error) {
         console.error("Error fetching series information:", error);
         Swal.fire({
