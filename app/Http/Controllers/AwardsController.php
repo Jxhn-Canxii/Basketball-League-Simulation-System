@@ -31,10 +31,14 @@ class AwardsController extends Controller
         $latestSeasonId = get_current_season_id() ?? 1;
 
         // Get all players from the team
-        $players = DB::table('players')
-            ->where('team_id', '>', 0)  // Ensure team_id is greater than 0
-            ->where('is_active', true)  // Ensure the player is active
+        $players = DB::table('players as p')
+            ->join('player_game_stats as pgs', 'p.id', '=', 'pgs.player_id')
+            ->where('p.team_id', '>', 0)
+            ->where('p.is_active', true)
+            ->select('p.*')
+            ->distinct()
             ->get();
+
 
         foreach ($players as $player) {
             // Check if the player has stats in player_game_stats for the latest season

@@ -838,7 +838,7 @@ class PlayoffController extends Controller
             } 
             else if ($round == 'interconference_semi_finals' || $round == 'finals') {
             
-                $pairings = self::generatePairings16($seasonId, $conferenceId, $round);
+                $pairings = self::generateSeriesPairings16($seasonId, $conferenceId, $round);
                 list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
                     $pairings, 
                     $seasonId, 
@@ -896,7 +896,7 @@ class PlayoffController extends Controller
 
                    
                     // Generate pairings
-                    $pairings = self::pairTeams($topTeamsByOverallRank, 8);
+                    $pairings = self::pairSeriesTeams($topTeamsByOverallRank, 8);
 
                     //  dd($pairings );
                     // Create series and schedule for the round
@@ -916,7 +916,7 @@ class PlayoffController extends Controller
                 foreach ($conferences as $conferenceId) {
                     
                     // Generate pairings
-                    $pairings = self::generatePairings16($seasonId, $conferenceId, $round);
+                    $pairings = self::generateSeriesPairings16($seasonId, $conferenceId, $round);
 
                     // Create series and schedule for the round
                     list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
@@ -1228,6 +1228,38 @@ class PlayoffController extends Controller
         return $pairings;
     }
 
+    private static function generateSeriesPairings16($seasonId, $conferenceId, $round)
+    {
+        // Initialize pairings array
+        $pairings = [];
+
+        // Generate pairings based on the round
+        switch ($round) {
+            case 'quarter_finals':
+                // Pair the teams for quarter-finals
+                $winners = self::getSeriesWinnersOfRound('round_of_16', $seasonId, $conferenceId);
+                $pairings = self::pairTeams($winners, 4);
+                break;
+            case 'semi_finals':
+                // Pair the winners of quarter-finals for semi-finals
+                $winners = self::getSeriesWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
+                $pairings = self::pairTeams($winners, 2);
+                break;
+            case 'interconference_semi_finals':
+                // Pair the winners of semi-finals for finals
+                $winners = self::getSeriesWinnersOfRound('semi_finals', $seasonId, $conferenceId);
+
+                $pairings = self::pairTeams($winners, 4);
+                break;
+            case 'finals':
+                // Pair the winners of semi-finals for finals
+                $winners = self::getSeriesWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
+                $pairings = self::pairTeams($winners, 2);
+                break;
+        }
+
+        return $pairings;
+    }
 
     private static function getWinnersOfRound($round, $seasonId, $conferenceId)
     {
@@ -1244,6 +1276,35 @@ class PlayoffController extends Controller
         }
 
         $winners = $query->pluck('winner_id')->toArray();
+
+        // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','quarter_finals','round_of_16'])) {
+            $winners = DB::table('standings_view')
+                ->where('season_id', $seasonId)
+                ->whereIn('team_id', $winners)
+                ->orderBy('overall_rank', 'asc')
+                ->pluck('team_id')
+                ->toArray();
+        }
+
+        return $winners;
+    }
+
+     private static function getSeriesWinnersOfRound($round, $seasonId, $conferenceId)
+    {
+        $winners = [];
+
+        // Build base query depending on round
+        $query = DB::table('playoff_series')
+            ->where('round', $round)
+            ->where('season_id', $seasonId);
+
+        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
+            // Filter by conference only if not special round
+            $query->where('conference_id', $conferenceId);
+        }
+
+        $winners = $query->pluck('winner_team_id')->toArray();
 
         // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
         if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','quarter_finals','round_of_16'])) {
