@@ -218,8 +218,8 @@ const simulateGame = async (id, game_id, type, index, round) => {
 
         season_playoffs.value.playoffs[round][index] = response.data.series;
 
-        isSeriesResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.series_id ?? 0;
-        
+        // isSeriesResultModalOpen.value = season_playoffs.value.playoffs[round][index]?.series_id ?? 0;
+
         Swal.close();
         Swal.fire({
             icon: "success",
