@@ -3,22 +3,24 @@
     <!-- Existing card content -->
     <div
       :style="{
-        background: `
-        linear-gradient(45deg, 
-            #${match?.home_team?.secondary_color} 0%, 
-            #${match?.home_team?.secondary_color} 50%, 
-            #${match?.home_team?.primary_color} 50%, 
-            #${match?.home_team?.primary_color} 100%
-        ),
-        linear-gradient(-45deg, 
-            #${match?.away_team?.primary_color} 0%, 
-            #${match?.away_team?.primary_color} 50%, 
-            #${match?.away_team?.secondary_color} 50%, 
-            #${match?.away_team?.secondary_color} 100%
-        )`,
-        backgroundSize: '50% 100%',
-        backgroundPosition: 'left, right',
-        backgroundRepeat: 'no-repeat',
+          background: `
+              linear-gradient(45deg, 
+                  ${
+                  (match.winner !== match.home_team?.id && match.winner !== null)
+                      ? '#b0b0b0 0%, #888888 50%, #666666 50%, #444444 100%'
+                      : `#${match.home_team?.secondary_color} 0%, #${match.home_team?.secondary_color} 50%, #${match.home_team?.primary_color} 50%, #${match.home_team?.primary_color} 100%`
+                  }
+              ),
+              linear-gradient(-45deg, 
+                  ${
+                  (match.winner !== match.away_team?.id && match.winner !== null)
+                      ? '#b0b0b0 0%, #888888 50%, #666666 50%, #444444 100%'
+                      : `#${match.away_team?.primary_color} 0%, #${match.away_team?.primary_color} 50%, #${match.away_team?.secondary_color} 50%, #${match.away_team?.secondary_color} 100%`
+                  }
+              )`,
+          backgroundSize: '50% 100%',
+          backgroundPosition: 'left, right',
+          backgroundRepeat: 'no-repeat'
       }"
       class="shadow-md rounded-md overflow-hidden"
     >
