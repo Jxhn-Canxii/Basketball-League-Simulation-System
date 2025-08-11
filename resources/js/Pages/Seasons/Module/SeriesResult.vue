@@ -11,10 +11,18 @@
                     v-for="(match, index) in series_info"
                     :key="match.id || index"
                     @click="isGameResultModalOpen = match.game_id"
-                    class="cursor-pointer hover:scale-105 transition"
+                    class="relative cursor-pointer hover:scale-105 transition"
                 >
-                    <ScoreCard :match="match" />
+                <ScoreCard :match="match" />
+
+                <!-- Floating game number pill -->
+                <div
+                    class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-red-600 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg select-none pointer-events-none"
+                >
+                    Game #{{ match.game_number }}
                 </div>
+                </div>
+
 
                 <!-- TBD placeholders -->
                 <div
