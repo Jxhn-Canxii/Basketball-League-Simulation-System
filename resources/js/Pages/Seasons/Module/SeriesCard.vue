@@ -1,5 +1,7 @@
 <template>
+    <SeriesResult v-if="isPlayins" :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" />
     <div 
+        v-else
         :style="{
             background: `
                 linear-gradient(45deg, 
@@ -93,18 +95,10 @@
         
         <!-- Action buttons -->
         <div class="border-gray-200 flex justify-center">
-            <button
-                v-if="!isHide && !series.completed"
-                @click.prevent="$emit('simulate', series.id, series.series_id, index, roundName)"
-                class="bg-slate-900 rounded-t text-orange-500 px-2 hover:bg-slate-300 text-sm font-bold"
-            >
-                Simulate Game
-            </button>
             <a
                 href="#"
-                v-if="!isHide && series.completed"
                 class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-                @click.prevent="isSeriesResultModalOpen = series.series_id"
+                @click.prevent="isSeriesResultModalOpen = true"
             >
                 View Results
             </a>
@@ -113,16 +107,16 @@
             </p>
         </div>
     </div>
-    <Modal :show="isSeriesResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
+    <Modal :show="isSeriesResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isSeriesResultModalOpen = false">
         <div class="mt-4">
-            <SeriesResult :key="isSeriesResultModalOpen" :series_id="isSeriesResultModalOpen" />
+            <SeriesResult :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" />
         </div>
     </Modal>
 </template>
 
 <script setup>
 import { useForm } from "@inertiajs/vue3";
-import { ref, onMounted, watch } from "vue";
+import { ref, reactive, onMounted, watch } from "vue";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import axios from "axios";
@@ -147,10 +141,11 @@ const props = defineProps({
     index: {
         type: Number,
         default: 0
-    }
+    },
 });
 
 const isSeriesResultModalOpen =  ref(false);
+const isPlayins = reactive(['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals'].includes(props.roundName));
 const getConferenceClass = (homeConference, awayConference) => {
     const conferenceClasses = {
         NCR: "bg-blue-100 text-blue-500",

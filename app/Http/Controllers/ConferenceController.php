@@ -150,6 +150,7 @@ class ConferenceController extends Controller
         $excludedRounds = config('playoffs');
         $itemsPerPage = $request->itemsperpage ?: 6;
         $currentPage = $request->page_num ?: 1;
+        $currentSeasonId = get_current_season_id();
     
         // Calculate offset for pagination based on current page
         $offset = ($currentPage - 1) * $itemsPerPage;
@@ -193,6 +194,49 @@ class ConferenceController extends Controller
             ->get()
             ->toArray();
     
+           $teamIds = collect($schedules)->pluck('home_id')->merge(
+                collect($schedules)->pluck('away_id')
+            )->unique();
+
+            $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+            $standingsData = DB::table($standingsTable)
+                ->whereIn('team_id', $teamIds)
+                ->where('season_id', $seasonId)
+                ->get()
+                ->keyBy('team_id');
+
+            $games = [];
+            foreach ($schedules as $game) {
+                $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+                $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+
+                $games[] = [
+                    'id' => $game->id,
+                    'game_id' => $game->game_id,
+                    'home_team' => [
+                        'id' => $game->home_id,
+                        'name' => $homeTeamName,
+                        'home_score' => $game->home_score,
+                        'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                        'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
+                        'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
+                        'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
+                        'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
+                    ],
+                    'away_team' => [
+                        'id' => $game->away_id,
+                        'name' => $awayTeamName,
+                        'away_score' => $game->away_score,
+                        'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                        'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
+                        'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
+                        'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
+                        'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
+                    ],
+                    'winner' => $game->winner_id,
+                    'season_id' => $seasonId,
+                ];
+            }
         // Check if all non-final rounds are simulated
         $allRoundsSimulated = DB::table('schedule_view')
             ->where('season_id', $seasonId)
@@ -201,7 +245,7 @@ class ConferenceController extends Controller
             ->doesntExist();
     
         return response()->json([
-            'schedules' => $schedules,
+            'schedules' => $games,
             'is_simulated' => $allRoundsSimulated,
             'current_page' => $currentPage,
             'total_pages' => $totalPages,

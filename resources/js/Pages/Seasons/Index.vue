@@ -284,7 +284,7 @@
                                     class="border border-gray-200 px-1 py-4 text-center text-xs text-nowrap"
                                 >
                                     <div class="flex justify-center items-center">
-                                        <a :href="route('seasons.details', { season_id: season.id })" class="px-2 py-2 bg-blue-500 rounded-l font-bold text-md text-white shadow">
+                                        <a :href="route('seasons.details', { season_id: season.id, playoff_type: season.playoff_type })" class="px-2 py-2 bg-blue-500 rounded-l font-bold text-md text-white shadow">
                                             <i class="fa fa-list"></i>
                                             Season
                                         </a>

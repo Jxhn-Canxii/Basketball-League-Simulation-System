@@ -5,7 +5,7 @@
     >
         <div class="md:col-span-4 overflow-y-auto">
             <div class="flex justify-between">
-                <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs</h2>
+                <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs Series</h2>
                 <button
                     :disabled="season_info.seasons && season_info.seasons[0].status > 10"
                     :class="season_info.seasons && season_info.seasons[0].status > 10 ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-500 hover:bg-red-600 hover:text-red-900'"
@@ -15,23 +15,6 @@
                 >
                     Simulate Full Playoffs
                 </button>
-            </div>
-            <div
-                class="flex justify-center"
-                v-if="season_info.seasons && season_info.seasons[0].status == 2"
-            >
-                <button
-                    v-if="!isHide"
-                    @click="createPlayOffSchedule('start')"
-                    class="text-white bg-red-500 bg-gradient-to-br p-3 shadow rounded-full font-bold text-md text-nowrap hover:text-indigo-900"
-                >
-                    Start Play-offs
-                </button>
-                <div class="flex justify-center" v-else>
-                    <p class="text-red-500 animate-pulse">
-                        Preparing Playoff Schedules
-                    </p>
-                </div>
             </div>
             <div
                 class="flex justify-center text-red-500 pt-4"
@@ -63,10 +46,8 @@
                                 class="flex justify-center"
                             >
                                 <SeriesCard 
-                                    :series="seriesList[0]" 
+                                    :series="seriesList[0]"
                                     :roundName="roundName"
-                                    @simulate="simulateSeriesGame"
-                                    @compare="compareTeams"
                                 />
                             </div>
                             
@@ -82,8 +63,6 @@
                                     :series_id="series.series_id"
                                     :roundName="roundName"
                                     :index="index"
-                                    @simulate="simulateSeriesGame"
-                                    @compare="compareTeams"
                                     class="w-full max-w-md"
                                 />
                             </div>
@@ -96,8 +75,6 @@
                                 :series="series"
                                 :roundName="roundName"
                                 :index="index"
-                                @simulate="simulateSeriesGame"
-                                @compare="compareTeams"
                                 class="col-span-1"
                             />
                         </div>
@@ -272,6 +249,7 @@ const createPlayOffScheduleAuto = async (round) => {
     try {
         let prev_round = round;
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
+        let playoff_type = season_info.value.seasons[0].playoff_type;
         round = roundStatusFormatter(round, start_playoffs, is_play_ins.value);
 
         Swal.fire({
@@ -289,6 +267,8 @@ const createPlayOffScheduleAuto = async (round) => {
             round: round,
             prev_round: prev_round,
             start: start_playoffs,
+            playoff_type: playoff_type,
+
         });
 
         isHide.value = true;
@@ -341,6 +321,9 @@ const fetchSeasonInfo = async (id) => {
 
 const fetchSeasonPlayoffs = async (type) => {
     try {
+       
+       console.log('haos');
+
         let status = season_info.value.seasons[0].status;
         let start_playoffs = season_info.value.seasons[0].start_playoffs;
         let playoff_type = season_info.value.seasons[0].playoff_type;
@@ -362,6 +345,17 @@ const fetchSeasonPlayoffs = async (type) => {
             season_playoffs.value.playoffs = {
                 ...season_playoffs.value.playoffs,
                 ...response.data.playoffs,
+            };
+
+            if (
+                typeof season_playoffs.value.games !== "object" ||
+                season_playoffs.value.games === null
+            ) {
+                season_playoffs.value.games = {};
+            }
+            season_playoffs.value.games = {
+                ...season_playoffs.value.games,
+                ...response.data.games,
             };
         } else {
             loading.value = true;
@@ -403,7 +397,7 @@ const simulateGame = async (id, game_id, type, index, round) => {
             schedule_id: id,
         });
 
-        season_playoffs.value.playoffs[round][index] = response.data.schedule;
+        season_playoffs.value.playoffs[round][index] = response.data.series;
 
         Swal.close();
         Swal.fire({
@@ -447,123 +441,109 @@ const getConferenceClass = (home_conference, away_conference) => {
 };
 
 const simulateFullPlayoffs = async () => {
-    try {
-        isHide.value = true;
-        loading.value = true;
+  try {
+    isHide.value = true;
+    loading.value = true;
 
-        Swal.fire({
-            title: "Simulating Playoffs...",
-            text: "Please wait while the entire playoff is being simulated.",
-            icon: "info",
-            allowOutsideClick: false,
-            didOpen: () => {
-                Swal.showLoading();
-            },
-        });
+    Swal.fire({
+      title: "Simulating Playoffs...",
+      text: "Please wait while the entire playoff is being simulated.",
+      icon: "info",
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
-        const roundOrder = [
-            'play_ins_elims_round_1',
-            'play_ins_elims_round_2',
-            'play_ins_finals',
-            'round_of_16',
-            'quarter_finals',
-            'semi_finals',
-            'interconference_semi_finals',
-            'finals'
-        ];
+    const roundOrder = [
+      "play_ins_elims_round_1",
+      "play_ins_elims_round_2",
+      "play_ins_finals",
+      "round_of_16",
+      "quarter_finals",
+      "semi_finals",
+      "interconference_semi_finals",
+      "finals",
+    ];
 
-        let currentRoundIndex = 0;
-        let initialRound = 'start';
+    let currentRoundIndex = 0;
+    let initialRound = "start";
 
-        // Initialize playoffs if not started
-        if (season_info.value.seasons[0].status == 2) {
-            await createPlayOffScheduleAuto(initialRound);
-        }
-
-        while (currentRoundIndex < roundOrder.length) {
-            const roundName = roundOrder[currentRoundIndex];
-
-            // Refresh latest data
-            await fetchSeasonInfo(form.seasons_id);
-            await fetchSeasonPlayoffs(is_play_ins.value);
-
-            // Check if round has matches
-            if (
-                !season_playoffs.value.playoffs[roundName] ||
-                season_playoffs.value.playoffs[roundName].length === 0
-            ) {
-                try {
-                    const scheduleResponse = await createPlayOffScheduleAuto(roundName);
-
-                    // If schedule already created, log and continue
-                    if (typeof scheduleResponse === 'string' &&
-                        scheduleResponse.toLowerCase().includes("already created")) {
-                        console.log(`Schedule for ${roundName} already exists. Proceeding.`);
-                    } else {
-                        await fetchSeasonPlayoffs(is_play_ins.value);
-                    }
-                } catch (scheduleError) {
-                    console.warn(`Failed to create schedule for ${roundName}:`, scheduleError);
-                }
-            }
-
-            // Get updated matches
-            const matches = season_playoffs.value.playoffs[roundName] || [];
-            if (matches.length === 0) {
-                currentRoundIndex++;
-                continue;
-            }
-
-            // Simulate each game
-            for (let index = 0; index < matches.length; index++) {
-                const match = matches[index];
-                if (match.winner == 0) {
-                    await simulateGame(match.id, match.game_id, 2, index, roundName);
-                    await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
-                }
-            }
-
-            // Try to advance to next round if not finals
-            if (roundName !== 'finals') {
-                try {
-                    const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
-                    if (typeof nextRoundResponse === 'string' &&
-                        nextRoundResponse.toLowerCase().includes("already created")) {
-                        console.log(`Next round after ${roundName} already scheduled.`);
-                    }
-                } catch (advanceError) {
-                    console.warn(`Could not advance from ${roundName}:`, advanceError);
-                }
-            }
-
-            currentRoundIndex++;
-        }
-
-        // Final refresh
-        await fetchSeasonInfo(form.seasons_id);
-        await fetchSeasonPlayoffs(2);
-
-        Swal.close();
-        Swal.fire({
-            icon: "success",
-            title: "Playoffs Completed!",
-            text: "The entire playoff simulation has finished successfully.",
-        });
-
-    } catch (error) {
-        console.error("Error simulating full playoffs:", error);
-        Swal.close();
-        Swal.fire({
-            icon: "error",
-            title: "Error!",
-            text: error.response?.data?.message || "Failed to simulate playoffs.",
-        });
-    } finally {
-        isHide.value = false;
-        loading.value = false;
+    // Initialize playoffs if not started
+    if (season_info.value.seasons[0].status == 2) {
+      await createPlayOffScheduleAuto(initialRound);
     }
-};
 
+    while (currentRoundIndex < roundOrder.length) {
+      const roundName = roundOrder[currentRoundIndex];
+      console.log("Processing round:", roundName);
+
+      // Refresh latest season info and playoffs data
+      await fetchSeasonInfo(form.seasons_id);
+      await fetchSeasonPlayoffs(is_play_ins.value);
+
+      const matches = season_playoffs.value.games[roundName] || [];
+
+      if (matches.length === 0) {
+        console.log(`No matches found for round ${roundName}, skipping...`);
+        currentRoundIndex++;
+        continue;
+      }
+
+      // Simulate ALL games in this round first
+      for (let i = 0; i < matches.length; i++) {
+        const match = matches[i];
+        if (match.winner === 0) {
+          console.log(`Simulating game ${match.game_id}...`);
+          await simulateGame(match.id, match.game_id, 2, i, roundName);
+          await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
+        } else {
+          console.log(`Game ${match.game_id} already finished with winner: ${match.winner}`);
+        }
+      }
+
+      // After simulating all games, create schedule for next round if not finals
+      if (roundName !== "finals") {
+        try {
+          console.log(`Creating schedule for next round after ${roundName}...`);
+          const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
+          if (
+            typeof nextRoundResponse === "string" &&
+            nextRoundResponse.toLowerCase().includes("already created")
+          ) {
+            console.log(`Schedule after ${roundName} already exists.`);
+          }
+        } catch (scheduleError) {
+          console.warn(`Error creating schedule after ${roundName}:`, scheduleError);
+        }
+      }
+
+      currentRoundIndex++;
+    }
+
+    // Final data refresh
+    await fetchSeasonInfo(form.seasons_id);
+    await fetchSeasonPlayoffs(is_play_ins.value);
+
+    Swal.close();
+    Swal.fire({
+      icon: "success",
+      title: "Playoffs Completed!",
+      text: "The entire playoff simulation has finished successfully.",
+    });
+  } catch (error) {
+    console.error("Error simulating full playoffs:", error);
+    Swal.close();
+    Swal.fire({
+      icon: "error",
+      title: "Error!",
+      text: error.response?.data?.message || "Failed to simulate playoffs.",
+    });
+  } finally {
+    isHide.value = false;
+    loading.value = false;
+  }
+};
 
 watch(
     () => props.season_id,

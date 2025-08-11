@@ -251,10 +251,14 @@ const props = defineProps({
         default: 0,
         required: true,
     },
-    playoff_type: Number,
+    playoff_type:  {
+        type: [Number,String],
+        default: 0,
+        required: true,
+    },
 });
 const season_id = ref(0);
-const season_name = ref('');
+const season_info = ref([]);
 const seasons = ref(0);
 const currentTab = ref("Regular"); // Set the default tab
 const changeTab = (tab) => {
@@ -263,6 +267,7 @@ const changeTab = (tab) => {
 const loadSeason = () => {
     season_id.value = props.season_id;
     seasonsDropdown();
+    fetchSeasonInfo();
 };
 const seasonsDropdown = async () => {
     try {
@@ -271,12 +276,18 @@ const seasonsDropdown = async () => {
         });
         seasons.value = response.data;
 
-        season_name.value = seasons.value.find(
-            (season) => season.season_id === season_id.value
-        )?.name || '';
-
     } catch (error) {
         console.error("Error fetching team info:", error);
+    }
+};
+const fetchSeasonInfo = async () => {
+    try {
+        const response = await axios.post(route("seasons.info"), {
+            season_id: props.season_id,
+        });
+        season_info.value = response.data;
+    } catch (error) {
+        console.error("Error fetching season information:", error);
     }
 };
 onMounted(() => {

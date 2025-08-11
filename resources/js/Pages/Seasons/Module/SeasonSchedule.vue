@@ -184,11 +184,9 @@
             class="grid sm:col-span-1 md:grid-cols-2 gap-6"
         >
             <ScoreCard
-                v-for="(game, index) in data.schedules"
+                v-for="(match, index) in data.schedules"
                 :key="index"
-                :game="game"
-                :isSimulating="isHide"
-                @view-result="isGameResultModalOpen = $event"
+                :match="match"
             /> 
         </div>
         <div v-if="loadingSchedules">
@@ -213,12 +211,7 @@
                 @page_num="handlePagination"
             />
         </div>
-    </div>
-    <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
-        <div class="mt-4">
-            <GameResults :game_id="isGameResultModalOpen" />
-        </div>
-    </Modal>
+    </div>                                                                      
     <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'" title="In Season Trade" @close="isTradeModalOpen = false">
         <div class="p-3 block">
             <Trade

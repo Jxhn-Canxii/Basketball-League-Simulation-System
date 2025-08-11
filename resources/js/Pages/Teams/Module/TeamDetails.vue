@@ -177,11 +177,11 @@ const props = defineProps({
     },
     text: String,
     hexPrimaryColor: {
-        type: String,
+        type: [String,Boolean],
         default: false,
     },
     hexSecondaryColor: {
-        type: String,
+        type: [String,Boolean],
         default: false,
     },
     showInfo: {

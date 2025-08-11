@@ -562,12 +562,59 @@ class ScheduleController extends Controller
     public function playOffSeriesResults(Request $request)
     {
         $seriesId = $request->series_id;
+        $seasonId = $request->season_id;
+        $currentSeasonId = get_current_season_id();
 
         // Fetch all games in the given series from the view
-        $games = DB::table('schedule_view')
+        $playoffSchedule = DB::table('schedule_view')
             ->where('series_id', $seriesId)
             ->orderBy('game_id', 'asc')
-            ->get();
+            ->get()
+            ->toArray();
+
+        $games = [];  // <-- Initialize here
+
+        $teamIds = collect($playoffSchedule)->pluck('home_id')->merge(
+            collect($playoffSchedule)->pluck('away_id')
+        )->unique();
+        $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+        $standingsData = DB::table($standingsTable)
+            ->whereIn('team_id', $teamIds)
+            ->where('season_id', $seasonId)
+            ->get()
+            ->keyBy('team_id');
+
+        foreach ($playoffSchedule as $game) {
+            $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+            $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+
+            $games[] = [
+                'id' => $game->id,
+                'game_id' => $game->game_id,
+                'home_team' => [
+                    'id' => $game->home_id,
+                    'name' => $homeTeamName,
+                    'home_score' => $game->home_score,
+                    'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->home_id]->primary_color ?? '000000',
+                    'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '000000',
+                ],
+                'away_team' => [
+                    'id' => $game->away_id,
+                    'name' => $awayTeamName,
+                    'away_score' => $game->away_score,
+                    'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->away_id]->primary_color ?? '000000',
+                    'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '000000',
+                ],
+                'winner' => $game->winner_id,
+                'season_id' => $seasonId,
+            ];
+        }
 
         return response()->json([
             'series_id' => $seriesId,
