@@ -373,64 +373,59 @@ class RecordsController extends Controller
     
     public function updatePlayerPlayoffAppearances(Request $request)
     {
-        // Retrieve player playoff statistics across ALL seasons
         $playerData = DB::table('players AS p')
-            ->leftJoin('player_game_stats AS pg', 'p.id', '=', 'pg.player_id')
-            ->leftJoin('schedules AS s', 'pg.game_id', '=', 's.game_id')
-            ->leftJoin('teams AS t', 'pg.team_id', '=', 't.id')
-            ->leftJoin('teams AS t2', 'p.team_id', '=', 't2.id')
-            ->leftJoin(DB::raw('(SELECT DISTINCT player_id, season_id FROM player_game_stats) AS all_s'), 'all_s.player_id', '=', 'p.id')
-            ->leftJoin('player_season_stats AS pss', function($join) {
-                $join->on('pss.player_id', '=', 'p.id');
-            })
-            ->leftJoin('seasons AS ss', 'ss.id', '=', 's.season_id') // use s.season_id for accurate finals_winner_id
-            ->whereIn('s.round', [
+            ->leftJoin('player_series_appearances AS psa', 'p.id', '=', 'psa.player_id')
+            ->leftJoin('seasons AS ss', 'ss.id', '=', 'psa.season_id')
+            ->leftJoin('player_season_stats AS pss', 'pss.player_id', '=', 'p.id')
+            ->leftJoin('teams AS t', 'p.team_id', '=', 't.id')
+            ->whereIn('psa.round', [
                 'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
                 'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
                 'interconference_semi_finals', 'finals'
             ])
             ->select([
                 'p.id AS player_id',
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "play_ins_elims_round_1" THEN s.game_id END) AS play_ins_elims_round_1_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "play_ins_elims_round_2" THEN s.game_id END) AS play_ins_elims_round_2_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "play_ins_finals" THEN s.game_id END) AS play_ins_finals_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "round_of_32" THEN s.game_id END) AS round_of_32_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "round_of_16" THEN s.game_id END) AS round_of_16_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "quarter_finals" THEN s.game_id END) AS quarter_finals_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "semi_finals" THEN s.game_id END) AS semi_finals_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "interconference_semi_finals" THEN s.game_id END) AS interconference_semi_finals_appearances'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" THEN s.game_id END) AS finals_appearances'),
-                DB::raw('COUNT(DISTINCT s.game_id) AS total_playoff_appearances'),
-                DB::raw('COUNT(DISTINCT s.season_id) AS seasons_played_in_playoffs'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "play_ins_elims_round_1" THEN psa.series_identifier END) AS play_ins_elims_round_1_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "play_ins_elims_round_2" THEN psa.series_identifier END) AS play_ins_elims_round_2_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "play_ins_finals" THEN psa.series_identifier END) AS play_ins_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "round_of_32" THEN psa.series_identifier END) AS round_of_32_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "round_of_16" THEN psa.series_identifier END) AS round_of_16_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "quarter_finals" THEN psa.series_identifier END) AS quarter_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "semi_finals" THEN psa.series_identifier END) AS semi_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "interconference_semi_finals" THEN psa.series_identifier END) AS interconference_semi_finals_appearances'),
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "finals" THEN psa.series_identifier END) AS finals_appearances'),
+                DB::raw('COUNT(DISTINCT psa.series_identifier) AS total_playoff_appearances'),
+                DB::raw('COUNT(DISTINCT psa.season_id) AS seasons_played_in_playoffs'),
                 DB::raw('COUNT(DISTINCT pss.season_id) AS total_seasons_played'),
-                DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" AND pg.team_id = ss.finals_winner_id THEN s.game_id END) AS championships_won')
+                DB::raw('COUNT(DISTINCT CASE WHEN psa.round = "finals" AND t.id = ss.finals_winner_id THEN psa.season_id END) AS championships_won')
             ])
             ->groupBy('p.id')
             ->get();
 
-        foreach ($playerData as $data) {
-            DB::table('player_playoff_appearances')->updateOrInsert(
-                ['player_id' => $data->player_id],
-                [
-                    'play_ins_elims_round_1_appearances' => $data->play_ins_elims_round_1_appearances,
-                    'play_ins_elims_round_2_appearances' => $data->play_ins_elims_round_2_appearances,
-                    'play_ins_finals_appearances' => $data->play_ins_finals_appearances,
-                    'round_of_32_appearances' => $data->round_of_32_appearances,
-                    'round_of_16_appearances' => $data->round_of_16_appearances,
-                    'quarter_finals_appearances' => $data->quarter_finals_appearances,
-                    'semi_finals_appearances' => $data->semi_finals_appearances,
-                    'interconference_semi_finals_appearances' => $data->interconference_semi_finals_appearances,
-                    'finals_appearances' => $data->finals_appearances,
-                    'total_playoff_appearances' => $data->total_playoff_appearances,
-                    'seasons_played_in_playoffs' => $data->seasons_played_in_playoffs,
-                    'total_seasons_played' => $data->total_seasons_played,
-                    'championships_won' => $data->championships_won
-                ]
-            );
-        }
+        DB::transaction(function () use ($playerData) {
+            foreach ($playerData as $data) {
+                DB::table('player_playoff_appearances')->updateOrInsert(
+                    ['player_id' => $data->player_id],
+                    [
+                        'play_ins_elims_round_1_appearances' => $data->play_ins_elims_round_1_appearances,
+                        'play_ins_elims_round_2_appearances' => $data->play_ins_elims_round_2_appearances,
+                        'play_ins_finals_appearances' => $data->play_ins_finals_appearances,
+                        'round_of_32_appearances' => $data->round_of_32_appearances,
+                        'round_of_16_appearances' => $data->round_of_16_appearances,
+                        'quarter_finals_appearances' => $data->quarter_finals_appearances,
+                        'semi_finals_appearances' => $data->semi_finals_appearances,
+                        'interconference_semi_finals_appearances' => $data->interconference_semi_finals_appearances,
+                        'finals_appearances' => $data->finals_appearances,
+                        'total_playoff_appearances' => $data->total_playoff_appearances,
+                        'seasons_played_in_playoffs' => $data->seasons_played_in_playoffs,
+                        'total_seasons_played' => $data->total_seasons_played,
+                        'championships_won' => $data->championships_won
+                    ]
+                );
+            }
+        });
 
-        return response()->json(['message' => 'Playoff appearances updated for all players across all seasons.']);
+        return response()->json(['message' => 'Playoff appearances updated for all players across all seasons based on series data.']);
     }
-
     
 }
