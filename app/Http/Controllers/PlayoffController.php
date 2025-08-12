@@ -46,13 +46,23 @@ class PlayoffController extends Controller
 
         $playoffs   = $this->playoffTreeSeries($seasonId, $status, $type, $start);
         $games   = $this->playoffSeriesGameTree($seasonId, $status, $type, $start);
+        $lastRound = $this->getLastRound($seasonId);
         $roundOrder = $this->getRoundOrder($start, $type, $status);
 
         return response()->json([
             'playoffs'=> $playoffs,
             'games'=> $games,
             'round_order' => $roundOrder,
+            'latest_round_simulated' => $lastRound,
         ]);
+    }
+
+    private function getLastRound($seasonId) {
+
+       return \DB::table('schedules')
+        ->where('season_id', $seasonId)
+        ->where('status', '!=', 1)
+        ->max('round');
     }
 
     private function getRoundOrder($start, $type)

@@ -361,7 +361,7 @@
                     <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" @newSeason="handleTradeSeason" />
                 </div>
             </Modal>
-            <Modal :show="isCoachSigningModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isCoachSigningModalOpen} Coach Signing`" @close="isCoachSigningModalOpen = false">
+            <Modal :show="isCoachSigningModalOpen" :maxWidth="'fullscreen'" :title="`Season Coach Signing`" @close="isCoachSigningModalOpen = false">
                 <div class="mt-4 p-3 block">
                     <FreeAgentsCoach :showControls="true" :key="isCoachSigningModalOpen" @newSeason="handleTradeSeason"  />
                 </div>

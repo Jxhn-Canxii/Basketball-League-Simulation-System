@@ -1052,14 +1052,15 @@ class SimulateController extends Controller
             if(!$isRoundSeriesSimulatedForSeason){
                 $this->updateSeriesAndSchedule($gameData, $winnerId);
             }
-            if ($isRoundsSimulatedForSeason) {
+            if ($isRoundsSimulatedForSeason) 
+            {
                 $this->updateInjuryFreeAgents();
             }
 
-            if ($gameData->round === 'semi_finals' && $isRoundSeriesSimulatedForSeason) {
+            if ($gameData->round === 'semi_finals') {
                 $this->updateSeriesConferenceChampions($gameData);
             }
-            if ($gameData->round === 'finals' && $isRoundSeriesSimulatedForSeason) {
+            if ($gameData->round === 'finals') {
                 $this->updateSeriesFinalsWinner($gameData);
             }
         });
@@ -2917,6 +2918,7 @@ class SimulateController extends Controller
                 'away_team.name as away_team_name',
                 'away_team.conference as away_conference'
             )
+            ->where('ps.status',2)
             ->first();
 
         if (!$series) {
@@ -3037,6 +3039,7 @@ class SimulateController extends Controller
                 'home_team.name as home_team_name',
                 'away_team.name as away_team_name'
             )
+            ->where('ps.status',2)
             ->first();
 
         if (!$series) {

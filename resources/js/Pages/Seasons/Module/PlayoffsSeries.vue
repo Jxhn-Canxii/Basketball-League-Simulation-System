@@ -7,9 +7,9 @@
       <div class="flex justify-between" v-if="!isSimulating">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs Series</h2>
         <button
-          :disabled="season_info.seasons && season_info.seasons[0].status > 10"
+          :disabled="season_info.seasons && season_info.seasons[0].status > 11"
           :class="
-            season_info.seasons && season_info.seasons[0].status > 10
+            season_info.seasons && season_info.seasons[0].status > 11
               ? 'bg-gray-500 cursor-not-allowed'
               : 'bg-red-500 hover:bg-red-600 hover:text-red-900'
           "
@@ -202,18 +202,18 @@ const simulateGame = async (id, game_id, type, index, round) => {
     active_index.value = index;
 
     Swal.fire({
-      title: "Simulating...",
-      text: "Please wait while the game is being simulated.",
-      icon: "info",
-      toast: true,
-      position: "top",
-      showConfirmButton: false,
-      allowOutsideClick: true,
-      allowEscapeKey: true,
-      timerProgressBar: true,
-      didOpen: (toast) => {
-        Swal.showLoading();
-      },
+        title: "Simulating...",
+        text: "Please wait while the game is being simulated.",
+        icon: "info",
+        toast: true,
+        position: "top-end", // top-right corner
+        showConfirmButton: false,
+        allowOutsideClick: false, // usually better to block closing during simulation
+        allowEscapeKey: false,
+        timerProgressBar: true,
+        didOpen: () => {
+            Swal.showLoading();
+        },
     });
 
     const response = await axios.post(route("game.simulate.playoff.series"), {
@@ -253,92 +253,104 @@ const simulateGame = async (id, game_id, type, index, round) => {
 
 const simulateFullPlayoffs = async () => {
   try {
-    isSimulating.value = true; // Start simulation
+    console.log("=== STARTING FULL PLAYOFF SIMULATION ===");
+
+    isSimulating.value = true;
     isHide.value = true;
     loading.value = true;
 
     Swal.fire({
-      title: "Simulating Playoffs...",
-      text: "Please wait while the entire playoff is being simulated.",
+      toast: true,
+      position: "top-end",
       icon: "info",
+      title: "Simulating Playoffs...",
+      text: "Please wait while the playoff is being simulated.",
+      showConfirmButton: false,
+      timerProgressBar: true,
       allowOutsideClick: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
+      didOpen: () => Swal.showLoading(),
     });
 
-    let currentRoundIndex = 0;
-    let initialRound = "start";
+    await fetchSeasonInfo(form.seasons_id);
+    await fetchSeasonPlayoffs(is_play_ins.value);
 
-    if (season_info.value.seasons[0].status == 2) {
-      await createPlayOffScheduleAuto(initialRound);
+    const lastRoundSimulated = season_playoffs.value.last_round_simulated || null;
+    console.log(`[INFO] Last round simulated: ${lastRoundSimulated}`);
+
+    let startIndex = 0;
+    if (lastRoundSimulated) {
+      const lastIndex = roundOrder.findIndex(r => r === lastRoundSimulated);
+      startIndex = lastIndex >= 0 ? lastIndex + 1 : 0;
     }
 
-    while (currentRoundIndex < roundOrder.length) {
+    // If nothing has been simulated yet, create schedule for first round
+    if (!lastRoundSimulated && season_info.value.seasons[0].status == 2) {
+      console.log("[ACTION] Creating playoff schedule for first round...");
+      await createPlayOffScheduleAuto(roundOrder[startIndex]);
+    }
+
+    console.log(`[INFO] Starting simulation from round index ${startIndex} (${roundOrder[startIndex] || "END"})`);
+
+    // Only loop through the remaining rounds after last_round_simulated
+    for (let currentRoundIndex = startIndex; currentRoundIndex < roundOrder.length; currentRoundIndex++) {
       const roundName = roundOrder[currentRoundIndex];
-      console.log("Processing round:", roundName);
+      console.log(`\n=== ROUND ${currentRoundIndex + 1}: ${roundName} ===`);
 
-      await fetchSeasonInfo(form.seasons_id);
+      // Always create schedule for current round
+      try {
+        console.log(`[SCHEDULE] Creating schedule for ${roundName}...`);
+        const scheduleResp = await createPlayOffScheduleAuto(roundName);
+        if (typeof scheduleResp === "string" && scheduleResp.toLowerCase().includes("already created")) {
+          console.log(`[INFO] Schedule for ${roundName} already exists.`);
+        }
+      } catch (err) {
+        console.warn(`[ERROR] Failed to create schedule for ${roundName}:`, err);
+      }
+
       await fetchSeasonPlayoffs(is_play_ins.value);
-
       const matches = season_playoffs.value.games[roundName] || [];
 
       if (matches.length === 0) {
-        console.log(`No matches found for round ${roundName}, skipping...`);
-        currentRoundIndex++;
+        console.log(`[SKIP] No matches for ${roundName}, moving to next round...`);
         continue;
       }
 
+      // Simulate only games without winners
       for (let i = 0; i < matches.length; i++) {
         const match = matches[i];
-        if (match.winner === 0) {
-          active_index.value = i;
-          const series_id = await simulateGame(match.id, match.game_id, 2, i, roundName);
-          await fetchSeasonPlayoffs(is_play_ins.value);
-
-          active_series_id.value = series_id;
-          showGameResults.value = false;
-          seriesResultFinished.value = false;
-
-          // Wait until SeriesResult emits 'finish'
-          await new Promise((resolve) => {
-            const checkFinish = () => {
-              if (seriesResultFinished.value) {
-                resolve();
-              } else {
-                setTimeout(checkFinish, 8000);
-              }
-            };
-            checkFinish();
-          });
-
-          // Optional: small delay after finishing load (e.g. 1.5 seconds)
-          await new Promise((r) => setTimeout(r, 1500));
-
-          showGameResults.value = true;
+        if (match.winner !== 0) {
+          console.log(`[SKIP] Game already has a winner, skipping...`);
+          continue;
         }
+
+        console.log(`[SIMULATE] Simulating Game ID ${match.game_id}...`);
+        active_index.value = i;
+        const series_id = await simulateGame(match.id, match.game_id, 2, i, roundName);
+
+        await fetchSeasonPlayoffs(is_play_ins.value);
+        active_series_id.value = series_id;
+        showGameResults.value = false;
+        seriesResultFinished.value = false;
+
+        await new Promise(resolve => {
+          const checkFinish = () => {
+            if (seriesResultFinished.value) {
+              resolve();
+            } else {
+              setTimeout(checkFinish, 8000);
+            }
+          };
+          checkFinish();
+        });
+
+        await new Promise(r => setTimeout(r, 1500));
+        showGameResults.value = true;
       }
 
       active_index.value = -1;
-
-      if (roundName !== "finals") {
-        try {
-          console.log(`Creating schedule for next round after ${roundName}...`);
-          const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
-          if (
-            typeof nextRoundResponse === "string" &&
-            nextRoundResponse.toLowerCase().includes("already created")
-          ) {
-            console.log(`Schedule after ${roundName} already exists.`);
-          }
-        } catch (scheduleError) {
-          console.warn(`Error creating schedule after ${roundName}:`, scheduleError);
-        }
-      }
-
-      currentRoundIndex++;
     }
 
+    console.log("\n=== ALL ROUNDS COMPLETE ===");
     await fetchSeasonInfo(form.seasons_id);
     await fetchSeasonPlayoffs(is_play_ins.value);
 
@@ -346,10 +358,11 @@ const simulateFullPlayoffs = async () => {
     Swal.fire({
       icon: "success",
       title: "Playoffs Completed!",
-      text: "The entire playoff simulation has finished successfully.",
+      text: "The playoff simulation has finished successfully.",
     });
+
   } catch (error) {
-    console.error("Error simulating full playoffs:", error);
+    console.error("[ERROR] Simulation failed:", error);
     Swal.close();
     Swal.fire({
       icon: "error",
@@ -359,9 +372,11 @@ const simulateFullPlayoffs = async () => {
   } finally {
     isHide.value = false;
     loading.value = false;
-    isSimulating.value = false; // End simulation
+    isSimulating.value = false;
+    console.log("=== SIMULATION END ===");
   }
 };
+
 
 const createPlayOffScheduleAuto = async (round) => {
   try {

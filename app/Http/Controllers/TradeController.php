@@ -295,7 +295,6 @@ class TradeController extends Controller
     }
     public function endOffSeasonTradeWindow(){
         $latestSeasonId = get_current_season_id();
-
         $storyline = $this->upsertCurrentSeasonStoryline();
 
         if($storyline){
