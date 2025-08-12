@@ -4,7 +4,7 @@
     v-if="season_info.seasons && season_info.seasons[0].status > 1 && !loading"
   >
     <div class="md:col-span-4 overflow-y-auto">
-      <div class="flex justify-between">
+      <div class="flex justify-between" v-if="!isSimulating">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs Series</h2>
         <button
           :disabled="season_info.seasons && season_info.seasons[0].status > 10"
