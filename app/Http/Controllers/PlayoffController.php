@@ -1004,9 +1004,9 @@ class PlayoffController extends Controller
                 'season_id' => $seasonId,
                 'conference_id' => $conferenceId,
                 'home_id' => $game['home_id'], // Higher seed as home team
-                'home_score' => null,
+                'home_score' => 0,
                 'away_id' => $game['away_id'],
-                'away_score' => null,
+                'away_score' => 0,
                 'winner_id' => 0,
                 'status' => 1,
                 'series_id' => $seriesId, // Use series_id instead of series_number

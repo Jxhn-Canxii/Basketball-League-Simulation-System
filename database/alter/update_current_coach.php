@@ -8,3 +8,6 @@ SET
     career_losses = 0,
     team_id = 0,
     winning_percentage = 0
+
+
+UPDATE `teams` SET `coach_id`=0

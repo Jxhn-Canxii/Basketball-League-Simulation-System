@@ -67,7 +67,8 @@
       <!-- Right Column -->
       <div class="col-span-1 flex flex-col h-full">
         <!-- Top 1/4: Best Player -->
-        <div class="flex-none min-h-[25%] border-b border-gray-300 py-4">
+        <button type="button" @click.prevent="showBestPlayer = !showBestPlayer">{{ showBestPlayer ? 'Show Series Stat Leaders' : 'Show Best Player' }}</button>
+        <div class="flex-none min-h-[25%] border-b border-gray-300 py-4" v-if="showBestPlayer">
           <div class="flex justify-between">
             <h3 class="font-bold mb-2">Series Best Player</h3>
             <h3 lass="font-bold mb-2 text-red-500">
@@ -175,7 +176,7 @@
         </div>
 
         <!-- Bottom 3/4: Stat Leaders -->
-        <div class="flex-1 overflow-y-auto py-4">
+        <div class="flex-1 overflow-y-auto py-4" v-else>
           <h3 class="text-lg font-semibold mb-2 mt-2">Stat Leaders</h3>
           <div class="min-w-full shadow-lg border-gray-300 p-4">
             <ul class="space-y-4">
@@ -379,7 +380,7 @@ const seriesBestPlayer = ref({});
 const seriesMeta = ref({});
 const seriesLead = ref("");
 const loading = ref(false);
-
+const showBestPlayer = ref(true);
 const fetchSeriesInfo = async () => {
   try {
     loading.value = true;
