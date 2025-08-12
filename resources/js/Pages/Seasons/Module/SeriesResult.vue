@@ -1,7 +1,7 @@
 <template>
     <div class="p-4 border rounded bg-white" v-if="series_info && !loading">
         <!-- 3-column grid -->
-        <div class="grid grid-cols-4 gap-4">
+        <div class="grid grid-cols-5 gap-4">
             
             <!-- Left: Games List & TBDs -->
             <div class="col-span-1 space-y-2">
@@ -39,7 +39,7 @@
             </div>
 
             <!-- Right: Game Result & Stats -->
-            <div class="col-span-2 space-y-4">
+            <div class="col-span-3 space-y-4">
                 <!-- Game Result -->
                 <GameResults
                     v-if="isGameResultModalOpen"
@@ -126,8 +126,8 @@
                 </div>
 
                 <!-- Bottom 3/4: Stat Leaders -->
-                <div class="flex-1 overflow-y-auto p-4">
-                    <h3 class="text-lg font-semibold mb-2">Stat Leaders</h3>
+                <div class="flex-1 overflow-y-auto py-4">
+                    <h3 class="text-lg font-semibold mb-2 mt-2">Stat Leaders</h3>
                     <div class="min-w-full shadow-lg border-gray-300 p-4">
                         <ul class="space-y-4">
                             <!-- Points -->
