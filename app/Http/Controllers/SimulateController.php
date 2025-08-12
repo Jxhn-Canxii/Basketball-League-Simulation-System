@@ -2778,17 +2778,28 @@ class SimulateController extends Controller
 
                 $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
 
+                // Get home/away pattern for the series
+                $homePattern = $this->getHomePattern($series->best_of);
+
+                if ($homePattern[$gameNumber - 1] === 'H') {
+                    $homeId = $series->home_team_id;
+                    $awayId = $series->away_team_id;
+                } else {
+                    $homeId = $series->away_team_id;
+                    $awayId = $series->home_team_id;
+                }
+
                 $newSchedule = [
                     'game_id' => $gameId,
                     'round' => $gameData->round,
                     'season_id' => $gameData->season_id,
                     'conference_id' => $gameData->conference_id,
-                    'home_id' => $series->home_team_id,
-                    'away_id' => $series->away_team_id,
+                    'home_id' => $homeId,
+                    'away_id' => $awayId,
                     'home_score' => 0,
                     'away_score' => 0,
                     'winner_id' => 0,
-                    'status' => 1, // upcoming
+                    'status' => 1,
                     'series_id' => $gameData->series_id,
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now(),
@@ -2796,9 +2807,23 @@ class SimulateController extends Controller
 
                 DB::table('schedules')->insert($newSchedule);
             }
+
         }
 
     }
+
+    private function getHomePattern($bestOf)
+    {
+        switch ($bestOf) {
+            case 1: return ['H']; // single game
+            case 3: return ['H', 'A', 'H']; // 1-1-1 format
+            case 5: return ['H', 'H', 'A', 'A', 'H']; // 2-2-1
+            case 7: return ['H', 'H', 'A', 'A', 'H', 'A', 'H']; // 2-2-1-1-1
+            default:
+                throw new \Exception("No home/away pattern for best-of-$bestOf series.");
+        }
+    }
+
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName) {
         // Retrieve all active players for the specified team

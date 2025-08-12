@@ -1050,13 +1050,25 @@ class PlayoffController extends Controller
                 'series_length' => $seriesLength,
                 'home_wins' => 0,
                 'away_wins' => 0,
-                'status' => 1, // Integer status
+                'status' => 1,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
 
+            // Define home/away pattern
+            $homePattern = self::getHomePattern($seriesLength);
+
             // Create schedule entries for all games in the series
             for ($gameNum = 1; $gameNum <= $bestOf; $gameNum++) {
+                // Decide who is home based on pattern
+                if ($homePattern[$gameNum - 1] === 'H') {
+                    $homeId = $pairing[0];
+                    $awayId = $pairing[1];
+                } else {
+                    $homeId = $pairing[1];
+                    $awayId = $pairing[0];
+                }
+
                 $gameId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}-G{$gameNum}";
 
                 $scheduleData[] = [
@@ -1064,10 +1076,10 @@ class PlayoffController extends Controller
                     'round' => $round,
                     'season_id' => $seasonId,
                     'conference_id' => $conferenceId,
-                    'home_id' => $pairing[0], // Initially higher seed is home
-                    'home_score' => null,
-                    'away_id' => $pairing[1],
-                    'away_score' => null,
+                    'home_id' => $homeId,
+                    'home_score' => 0,
+                    'away_id' => $awayId,
+                    'away_score' => 0,
                     'winner_id' => 0,
                     'status' => 1,
                     'series_id' => $seriesId,
@@ -1081,6 +1093,23 @@ class PlayoffController extends Controller
 
         return [$seriesData, $scheduleData];
     }
+
+/**
+ * Get home/away pattern for the given series length
+ * 'H' means higher seed home, 'A' means lower seed home
+ */
+private static function getHomePattern($bestOf)
+{
+    switch ($bestOf) {
+        case 1: return ['H']; // single game
+        case 3: return ['H', 'A', 'H']; // 1-1-1
+        case 5: return ['H', 'H', 'A', 'A', 'H']; // 2-2-1
+        case 7: return ['H', 'H', 'A', 'A', 'H', 'A', 'H']; // 2-2-1-1-1
+        default:
+            throw new \Exception("No home/away pattern for best-of-$bestOf series.");
+    }
+}
+
 
     /**
      * Insert playoff series into playoff_series table
