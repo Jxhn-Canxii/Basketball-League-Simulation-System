@@ -564,7 +564,6 @@ const simulateFullPlayoffs = async () => {
     }
 };
 
-
 watch(
     () => props.season_id,
     async (n, o) => {

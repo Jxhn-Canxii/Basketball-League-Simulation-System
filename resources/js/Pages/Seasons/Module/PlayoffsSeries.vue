@@ -4,7 +4,7 @@
     v-if="season_info.seasons && season_info.seasons[0].status > 1 && !loading"
   >
     <div class="md:col-span-4 overflow-y-auto">
-      <div class="flex justify-between" v-if="!isSimulating">
+      <div class="flex justify-between" v-if="!isHide">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs Series</h2>
         <button
           :disabled="season_info.seasons && season_info.seasons[0].status > 10"
@@ -244,94 +244,121 @@ const simulateGame = async (id, game_id, type, index, round) => {
 };
 
 const simulateFullPlayoffs = async () => {
-  try {
-    isSimulating.value = true;
-    isHide.value = true;
-    loading.value = true;
+    try {
+        isHide.value = true;
+        loading.value = true;
 
-    Swal.fire({
-      toast: true,
-      position: "top-end",
-      icon: "info",
-      title: "Simulating Playoffs...",
-      showConfirmButton: false,
-      timerProgressBar: true,
-      allowOutsideClick: false,
-      didOpen: () => Swal.showLoading(),
-    });
+        Swal.fire({
+            title: "Simulating Playoffs...",
+            text: "Please wait while the entire playoff is being simulated.",
+            icon: "info",
+            allowOutsideClick: false,
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
 
-    if (season_info.value.seasons[0].status <= 2) {
-      await createPlayOffScheduleAuto("start");
-      await fetchSeasonPlayoffs(is_play_ins.value);
-    }
+        const roundOrder = [
+            'play_ins_elims_round_1',
+            'play_ins_elims_round_2',
+            'play_ins_finals',
+            'round_of_16',
+            'quarter_finals',
+            'semi_finals',
+            'interconference_semi_finals',
+            'finals'
+        ];
 
-    for (let i = 0; i < roundOrder.length; i++) {
-      const round = roundOrder[i];
+        let currentRoundIndex = 0;
+        let initialRound = 'start';
 
-      // Loop simulating all games in the current round
-      while (season_playoffs.value.games[round]?.length > 0) {
-        const gamesToSimulate = season_playoffs.value.games[round];
-
-        for (let j = 0; j < gamesToSimulate.length; j++) {
-          const game = gamesToSimulate[j];
-
-          active_index.value = j;
-          active_series_id.value = game.series_id;
-          showGameResults.value = false;
-          seriesResultFinished.value = false;
-
-          await simulateGame(game.id, game.game_id, 2, j, round);
-
-          // await fetchSeasonPlayoffs(is_play_ins.value);
-
-          // // Wait for series result UI to finish if needed
-          // await new Promise(resolve => {
-          //   const check = () => {
-          //     if (seriesResultFinished.value) resolve();
-          //     else setTimeout(check, 8000);
-          //   };
-          //   check();
-          // });
-
-          // await new Promise(r => setTimeout(r, 1500));
-          // showGameResults.value = true;
+        // Initialize playoffs if not started
+        if (season_info.value.seasons[0].status == 2) {
+            await createPlayOffScheduleAuto(initialRound);
         }
 
-        // Refresh playoffs after simulating all games in this batch
-        await fetchSeasonPlayoffs(is_play_ins.value);
-      }
+        while (currentRoundIndex < roundOrder.length) {
+            const roundName = roundOrder[currentRoundIndex];
 
-      // Now that current round has NO games left to simulate, create next round schedule
-      if (round !== "finals") {
-        const res = await createPlayOffScheduleAuto(round);
-        await fetchSeasonPlayoffs(is_play_ins.value);
-        // Handle possible "previous round ongoing" messages as needed,
-        // or simply wait and retry if schedule not created
-      }
+            // Refresh latest data
+            await fetchSeasonInfo(form.seasons_id);
+            await fetchSeasonPlayoffs(is_play_ins.value);
 
-      active_index.value = -1;
-      active_series_id.value = null;
+            // Check if round has matches
+            if (
+                !season_playoffs.value.playoffs[roundName] ||
+                season_playoffs.value.playoffs[roundName].length === 0
+            ) {
+                try {
+                    const scheduleResponse = await createPlayOffScheduleAuto(roundName);
+
+                    // If schedule already created, log and continue
+                    if (typeof scheduleResponse === 'string' &&
+                        scheduleResponse.toLowerCase().includes("already created")) {
+                        console.log(`Schedule for ${roundName} already exists. Proceeding.`);
+                    } else {
+                        await fetchSeasonPlayoffs(is_play_ins.value);
+                    }
+                } catch (scheduleError) {
+                    console.warn(`Failed to create schedule for ${roundName}:`, scheduleError);
+                }
+            }
+
+            // Get updated matches
+            const matches = season_playoffs.value.games[roundName] || [];
+            if (matches.length === 0) {
+                currentRoundIndex++;
+                continue;
+            }
+
+            // Simulate each game
+            for (let index = 0; index < matches.length; index++) {
+                const match = matches[index];
+                if (match.winner == 0) {
+                    await simulateGame(match.id, match.game_id, 2, index, roundName);
+                    await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
+                }
+            }
+
+            // Try to advance to next round if not finals
+            if (roundName !== 'finals') {
+                try {
+                    const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
+                    if (typeof nextRoundResponse === 'string' &&
+                        nextRoundResponse.toLowerCase().includes("already created")) {
+                        console.log(`Next round after ${roundName} already scheduled.`);
+                    }
+                } catch (advanceError) {
+                    console.warn(`Could not advance from ${roundName}:`, advanceError);
+                }
+            }
+
+            currentRoundIndex++;
+        }
+
+        // Final refresh
+        await fetchSeasonInfo(form.seasons_id);
+        await fetchSeasonPlayoffs(2);
+
+        Swal.close();
+        Swal.fire({
+            icon: "success",
+            title: "Playoffs Completed!",
+            text: "The entire playoff simulation has finished successfully.",
+        });
+
+    } catch (error) {
+        console.error("Error simulating full playoffs:", error);
+        Swal.close();
+        Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: error.response?.data?.message || "Failed to simulate playoffs.",
+        });
+    } finally {
+        isHide.value = false;
+        loading.value = false;
     }
-
-    Swal.close();
-    Swal.fire({
-      icon: "success",
-      title: "Playoffs Simulation Completed",
-      text: "All rounds simulated successfully.",
-    });
-  } catch (err) {
-    console.error(err);
-    Swal.close();
-    Swal.fire({
-      icon: "error",
-      title: "Error during simulation",
-      text: err.message || "Unknown error",
-    });
-  } finally {
-    isHide.value = false;
-    loading.value = false;
-    isSimulating.value = false;
-  }
 };
 
 const createPlayOffScheduleAuto = async (round) => {
