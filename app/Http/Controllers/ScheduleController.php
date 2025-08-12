@@ -600,8 +600,8 @@ class ScheduleController extends Controller
             ->keyBy('team_id');
 
         foreach ($playoffSchedule as $game) {
-            $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
-            $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+            $homeTeamName = optional($standingsData[$game->home_id])->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+            $awayTeamName = optional($standingsData[$game->away_id])->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
 
             $game_number = substr($game->game_id, -1);
             $games[] = [
@@ -612,21 +612,21 @@ class ScheduleController extends Controller
                     'id' => $game->home_id,
                     'name' => $homeTeamName,
                     'home_score' => $game->home_score,
-                    'conference' => $standingsData[$game->home_id]->conference_name ?? null,
-                    'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
-                    'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
-                    'primary_color' => $standingsData[$game->home_id]->primary_color ?? '000000',
-                    'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '000000',
+                    'conference' => optional($standingsData[$game->home_id])->conference_name,
+                    'conference_rank' => optional($standingsData[$game->home_id])->conference_rank,
+                    'overall_rank' => optional($standingsData[$game->home_id])->overall_rank,
+                    'primary_color' => optional($standingsData[$game->home_id])->primary_color ?? '000000',
+                    'secondary_color' => optional($standingsData[$game->home_id])->secondary_color ?? '000000',
                 ],
                 'away_team' => [
                     'id' => $game->away_id,
                     'name' => $awayTeamName,
                     'away_score' => $game->away_score,
-                    'conference' => $standingsData[$game->away_id]->conference_name ?? null,
-                    'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
-                    'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
-                    'primary_color' => $standingsData[$game->away_id]->primary_color ?? '000000',
-                    'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '000000',
+                    'conference' => optional($standingsData[$game->away_id])->conference_name,
+                    'conference_rank' => optional($standingsData[$game->away_id])->conference_rank,
+                    'overall_rank' => optional($standingsData[$game->away_id])->overall_rank,
+                    'primary_color' => optional($standingsData[$game->away_id])->primary_color ?? '000000',
+                    'secondary_color' => optional($standingsData[$game->away_id])->secondary_color ?? '000000',
                 ],
                 'winner' => $game->winner_id,
                 'season_id' => $seasonId,
@@ -660,7 +660,6 @@ class ScheduleController extends Controller
                 DB::raw("COALESCE(d.draft_status, 'Undrafted') as draft_status"),
                 'dt.acronym as drafted_team_acro',
 
-                // Your new award flags with subqueries:
                 DB::raw("CASE WHEN p.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = p.id LIMIT 1) THEN 1 ELSE 0 END as is_finals_mvp"),
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Best Defensive Player') THEN 1 ELSE 0 END) AS is_defensive_poy"),
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Sixth Man of the Year') THEN 1 ELSE 0 END) AS is_sixth_man"),
@@ -689,53 +688,49 @@ class ScheduleController extends Controller
             )
             ->get();
 
-
-
         $seriesBestPlayer = [];
         $leaders = [];
-        // Series Best Player formatted like your example
-        if($statLeaders){
 
-            // Calculate stat leaders with qualification thresholds
+        if ($statLeaders && $statLeaders->isNotEmpty()) {
             $leaders = [
                 'points' => $statLeaders->sortByDesc('total_points')->first(),
                 'assists' => $statLeaders->sortByDesc('total_assists')->first(),
                 'rebounds' => $statLeaders->sortByDesc('total_rebounds')->first(),
                 'steals' => $statLeaders->sortByDesc('total_steals')->first(),
                 'blocks' => $statLeaders->sortByDesc('total_blocks')->first(),
-                'eff' => $statLeaders->sortByDesc('total_eff')->first()
+                'eff' => $statLeaders->sortByDesc('total_eff')->first(),
             ];
 
             $best = $statLeaders->sortByDesc('total_eff')->first();
 
             $seriesBestPlayer = [
                 'game_id'           => $playoffSchedule[0]->game_id ?? null,
-                'name'              => $best->player_name ?? 0,
-                'team'              => $best->team_name,
-                'age'               => $best->age,
-                'position'          => $best->position,
+                'name'              => $best->player_name ?? '',
+                'team'              => $best->team_name ?? '',
+                'age'               => $best->age ?? null,
+                'position'          => $best->position ?? '',
                 'points'            => (int) number_format($best->total_points, 2),
                 'assists'           => (int) number_format($best->total_assists, 2),
                 'rebounds'          => (int) number_format($best->total_rebounds, 2),
                 'steals'            => (int) number_format($best->total_steals, 2),
                 'blocks'            => (int) number_format($best->total_blocks, 2),
                 'turnovers'         => (int) number_format($best->total_turnovers, 2),
-                'fouls'             => null, // add if needed from DB
-                'role'              => $best->role,
-                'minutes'           => $best->total_minutes,
-                'draft_id'          => $best->draft_id,
-                'draft_status'      => $best->draft_status,
-                'drafted_team_acro' => $best->drafted_team_acro,
-                'is_finals_mvp'     => $best->is_finals_mvp,
-                'is_season_mvp'     => $best->is_season_mvp,
-                'is_defensive_poy'  => $best->is_defensive_poy,
-                'is_rookie_poy'     => $best->is_rookie_poy,
-                'is_most_improved'  => $best->is_most_improved,
-                'secondary_color' => $best->secondary_color,
-                'primary_color' => $best->primary_color,
+                'fouls'             => null,
+                'role'              => $best->role ?? '',
+                'minutes'           => $best->total_minutes ?? 0,
+                'draft_id'          => $best->draft_id ?? null,
+                'draft_status'      => $best->draft_status ?? 'Undrafted',
+                'drafted_team_acro' => $best->drafted_team_acro ?? '',
+                'is_finals_mvp'     => $best->is_finals_mvp ?? 0,
+                'is_season_mvp'     => $best->is_season_mvp ?? 0,
+                'is_defensive_poy'  => $best->is_defensive_poy ?? 0,
+                'is_rookie_poy'     => $best->is_rookie_poy ?? 0,
+                'is_most_improved'  => $best->is_most_improved ?? 0,
+                'secondary_color'   => $best->secondary_color ?? '000000',
+                'primary_color'     => $best->primary_color ?? '000000',
             ];
         }
-       
+
         // Last finished game in the series
         $lastFinishedGame = DB::table('schedule_view')
             ->where('series_id', $seriesId)
@@ -768,4 +763,5 @@ class ScheduleController extends Controller
             'series_lead' => $seriesLead
         ]);
     }
+
 }

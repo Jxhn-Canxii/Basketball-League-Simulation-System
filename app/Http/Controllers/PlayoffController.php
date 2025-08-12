@@ -48,13 +48,22 @@ class PlayoffController extends Controller
         $games   = $this->playoffSeriesGameTree($seasonId, $status, $type, $start);
         $lastRound = $this->getLastRound($seasonId);
         $roundOrder = $this->getRoundOrder($start, $type, $status);
-
+        // $isRoundSeriesSimulated = $this->isRoundSeriesSimulated($seasonId);
         return response()->json([
             'playoffs' => $playoffs,
             'games' => $games,
             'round_order' => $roundOrder,
             'latest_round_simulated' => $lastRound,
+            // 'round_simulated' => $isRoundSeriesSimulated
         ]);
+    }
+
+    private function isRoundSeriesSimulated($seasonId,$round) {
+        return !DB::table('playoff_series')
+            ->where('season_id', $seasonId)
+            ->where('round', $round) // Fetch previous round + current round in one query
+            ->where('status', 1)
+            ->exists();
     }
 
     private function getLastRound($seasonId)
@@ -439,19 +448,28 @@ class PlayoffController extends Controller
             $allPrevRoundsSeriesFinished = $series->where('round', $prev_round)
                 ->every(fn($schedule) => $schedule->status == 2);
 
+            $allRoundsSeriesFinished = $series->where('round', $round)
+                ->every(fn($schedule) => $schedule->status == 2);
+
             // Check if the current round already exists
             $currentRoundExists = $schedules->where('round', $round)->isNotEmpty();
 
             if (!$allPrevRoundsSeriesFinished) {
                 return response()->json([
+                    'message' => 'Previous round series schedule is ongoing. Cannot create series schedule for this round.',
+                ], 500);
+            }
+
+            if (!$allRoundsSeriesFinished) {
+                return response()->json([
                     'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
-                ], 400);
+                ], 500);
             }
 
             if ($currentRoundExists) {
                 return response()->json([
                     'message' => 'Round schedule already created',
-                ], 400);
+                ], 500);
             }
 
             // Retrieve the league_id from the seasons table
