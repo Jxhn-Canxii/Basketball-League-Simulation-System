@@ -21,14 +21,14 @@
         </button>
       </div>
       <!-- Show SeriesResult inline when simulating -->
-      <!-- <div v-if="isSimulating && active_series_id !== 0" class="pt-4">
+      <div v-if="showSeriesResult && active_series_id !== 0" class="pt-4">
         <SeriesResult
           :key="active_series_id"
           :series_id="active_series_id"
           :season_id="props.season_id"
           @finish="onSeriesResultFinish"
         />
-      </div> -->
+      </div>
 
       <!-- Show playoff series list when NOT simulating -->
       <div v-if="season_playoffs.playoffs">
@@ -139,7 +139,7 @@
 
 <script setup>
 import { useForm } from "@inertiajs/vue3";
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, onUnmounted } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";
 
@@ -149,6 +149,7 @@ import { roundNameFormatter, roundStatusFormatter } from "@/Utility/Formatter.js
 
 const isHide = ref(false);
 const showGameResults = ref(true);
+const showSeriesResult = ref(true);
 const seriesResultFinished = ref(false);
 const loading = ref(false);
 const active_index = ref(-1);
@@ -157,7 +158,7 @@ const season_info = ref(false);
 const season_playoffs = ref(false);
 const is_play_ins = ref(false);
 const isSimulating = ref(false);
-
+const flipTimer = ref(null);
 const form = useForm({
   seasons_id: 0,
 });
@@ -216,6 +217,25 @@ const simulateGame = async (id, game_id, type, index, round) => {
 
     active_series_id.value = season_playoffs.value.playoffs[round][index]?.series_id;
     Swal.close();
+
+
+    if (flipTimer.value) clearInterval(flipTimer.value);
+
+    let flipCount = 0;
+
+    flipTimer.value = setInterval(() => {
+      showSeriesResult.value = !showSeriesResult.value;
+      flipCount++;
+
+      if (flipCount >= 2) {  // Stop after 2 flips
+        clearInterval(flipTimer.value);
+        flipTimer.value = null;
+      }
+    }, 10000);
+
+    // Wait 8 seconds for 2 flips (optional if you need to wait here)
+    await new Promise((resolve) => setTimeout(resolve, 8000));
+
 
     Swal.fire({
       icon: "success",
@@ -505,4 +525,11 @@ onMounted(async () => {
   await fetchSeasonInfo(props.season_id);
   await fetchSeasonPlayoffs(2);
 });
+
+onUnmounted(() => {
+      if (flipTimer.value) {
+          clearInterval(flipTimer.value);
+          flipTimer.value = null;
+      }
+  });
 </script>

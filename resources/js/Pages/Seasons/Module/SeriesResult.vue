@@ -1,86 +1,26 @@
 <template>
   <div class="p-4 border rounded bg-white" v-if="series_info && !loading">
     <!-- 3-column grid -->
-    <div class="grid grid-cols-5 gap-4">
-      <!-- Left: Games List & TBDs -->
-      <div class="col-span-1 space-y-2">
-        <!-- Title -->
-        <h2 class="text-xl font-bold mb-4">Series Results</h2>
-
-        <div
-          v-if="series_info.length > 0"
-          v-for="(match, index) in series_info"
-          :key="match.id || index"
-          @click="isGameResultModalOpen = match.game_id"
-          class="relative cursor-pointer hover:scale-105 transition"
-        >
-          <div
-            class="flex items-center justify-between p-3 rounded-lg shadow-md mb-2 bg-white"
-          >
-            <!-- Home Team -->
-            <div
-              class="flex flex-col items-center flex-1 text-center text-white rounded-lg p-2"
-              :style="{
-                backgroundColor:
-                  match.winner === match.home_team.id
-                    ? `#${match.home_team.primary_color}`
-                    : '#9ca3af',
-              }"
-            >
-              <span class="text-sm font-medium">{{ match.home_team.name }}</span>
-              <span class="text-lg font-bold">{{ match.home_team.home_score }}</span>
-            </div>
-
-            <!-- Game Number -->
-            <div class="flex flex-col items-center w-16">
-              <span class="text-xs font-bold">Game {{ match.game_number }}</span>
-              <span class="text-xs text-gray-500">vs</span>
-            </div>
-
-            <!-- Away Team -->
-            <div
-              class="flex flex-col items-center flex-1 text-center text-white rounded-lg p-2"
-              :style="{
-                backgroundColor:
-                  match.winner === match.away_team.id
-                    ? `#${match.away_team.primary_color}`
-                    : '#9ca3af',
-              }"
-            >
-              <span class="text-sm font-medium">{{ match.away_team.name }}</span>
-              <span class="text-lg font-bold">{{ match.away_team.away_score }}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right: Game Result & Stats -->
-      <div class="col-span-3 space-y-4">
-        <!-- Game Result -->
-        <GameResults
-          v-if="isGameResultModalOpen"
-          :key="isGameResultModalOpen"
-          :game_id="isGameResultModalOpen"
-          :showBoxScore="false"
-        />
-      </div>
-      <!-- Right Column -->
-      <div class="col-span-1 flex flex-col h-full">
+    <div class="grid grid-cols-5 gap-3">
+      <!-- Left Column -->
+      <div class="col-span-1 flex flex-col h-full bg-gray-50 p-4 rounded">
         <!-- Top 1/4: Best Player -->
-        <button type="button" @click.prevent="showBestPlayer = !showBestPlayer">{{ showBestPlayer ? 'Show Series Stat Leaders' : 'Show Best Player' }}</button>
-        <div class="flex-none min-h-[25%] border-b border-gray-300 py-4" v-if="showBestPlayer">
+        <button type="button" class="text-red-500 font-bold underline" @click.prevent="showBestPlayer = !showBestPlayer">
+          {{ showBestPlayer ? "Show Series Stat Leaders" : "Show Best Player" }}
+        </button>
+        <div
+          class="flex-none min-h-[25%] border-b border-gray-300 py-4"
+          v-if="showBestPlayer"
+        >
           <div class="flex justify-between">
-            <h3 class="font-bold mb-2">Series Best Player</h3>
-            <h3 lass="font-bold mb-2 text-red-500">
-              {{ seriesLead || "Loading series info..." }}
-            </h3>
+            <h3 class="font-bold mb-2 text-lg">Series Best Player</h3>
           </div>
           <div
             v-if="seriesBestPlayer?.name"
             :style="{
               backgroundColor: '#' + (seriesBestPlayer?.primary_color || 'cccccc'),
             }"
-            class="h-full flex flex-col items-center justify-center"
+            class="h-full flex flex-col items-center justify-center rounded"
           >
             <p
               class="text-4xl font-extrabold mb-1 relative text-nowrap text-white"
@@ -178,7 +118,7 @@
         <!-- Bottom 3/4: Stat Leaders -->
         <div class="flex-1 overflow-y-auto py-4" v-else>
           <h3 class="text-lg font-semibold mb-2 mt-2">Stat Leaders</h3>
-          <div class="min-w-full shadow-lg border-gray-300 p-4">
+          <div class="min-w-full border-gray-300 p-4">
             <ul class="space-y-4">
               <!-- Points -->
               <li
@@ -328,6 +268,75 @@
             </ul>
           </div>
         </div>
+      </div>
+      <!-- Right: Game Result & Stats -->
+      <div class="col-span-4 space-y-4">
+        <!-- Game Result -->
+        <div class="block">
+          <p class="font-bold text-xl mb-4">{{ seriesLead }}</p>
+          <GameResults
+            v-if="isGameResultModalOpen"
+            :key="isGameResultModalOpen"
+            :game_id="isGameResultModalOpen"
+            :showBoxScore="false"
+          />
+        </div>
+        <!-- Games List & TBDs -->
+        <div class="block">
+          <!-- Title -->
+          <h2 class="text-xl font-bold mb-4">{{ seriesLead }}</h2>
+
+          <div
+            v-if="series_info.length > 0"
+            class="flex flex-row space-x-4 overflow-x-auto"
+          >
+            <div
+              v-for="(match, index) in series_info"
+              :key="match.id || index"
+              @click="isGameResultModalOpen = match.game_id"
+              class="relative cursor-pointer hover:scale-105 transition min-w-[200px] border-2"
+            >
+              <div
+                class="flex items-center justify-between p-3 rounded-lg shadow-md bg-white"
+              >
+                <!-- Home Team -->
+                <div
+                  class="flex flex-col items-center flex-1 text-center text-white rounded-lg p-2"
+                  :style="{
+                    backgroundColor:
+                      match.winner === match.home_team.id
+                        ? `#${match.home_team.primary_color}`
+                        : '#9ca3af',
+                  }"
+                >
+                  <span class="text-sm font-medium">{{ match.home_team.name }}</span>
+                  <span class="text-lg font-bold">{{ match.home_team.home_score }}</span>
+                </div>
+
+                <!-- Game Number -->
+                <div class="flex flex-col items-center w-16">
+                  <span class="text-xs font-bold">Game {{ match.game_number }}</span>
+                  <span class="text-xs text-gray-500">vs</span>
+                </div>
+
+                <!-- Away Team -->
+                <div
+                  class="flex flex-col items-center flex-1 text-center text-white rounded-lg p-2"
+                  :style="{
+                    backgroundColor:
+                      match.winner === match.away_team.id
+                        ? `#${match.away_team.primary_color}`
+                        : '#9ca3af',
+                  }"
+                >
+                  <span class="text-sm font-medium">{{ match.away_team.name }}</span>
+                  <span class="text-lg font-bold">{{ match.away_team.away_score }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>

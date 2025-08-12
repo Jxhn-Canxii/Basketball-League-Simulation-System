@@ -211,7 +211,12 @@
                 @page_num="handlePagination"
             />
         </div>
-    </div>                                                                      
+    </div>
+    <!-- <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isGameResultModalOpen = false">
+        <div class="mt-4">
+            <GameResults :game_id="isGameResultModalOpen" />
+        </div>
+    </Modal> -->
     <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'" title="In Season Trade" @close="isTradeModalOpen = false">
         <div class="p-3 block">
             <Trade

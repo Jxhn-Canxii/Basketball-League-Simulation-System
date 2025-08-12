@@ -2820,7 +2820,7 @@ class SimulateController extends Controller
                 $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
 
                 // Get home/away pattern for the series
-                $homePattern = $this->getHomePattern($series->best_of);
+                $homePattern = $this->getHomePattern($series->series_length);
 
                 if ($homePattern[$gameNumber - 1] === 'H') {
                     $homeId = $series->home_team_id;
