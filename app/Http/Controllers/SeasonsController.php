@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Http\Controllers;
 
 use App\Models\Seasons;
@@ -18,7 +19,7 @@ class SeasonsController extends Controller
             'status' => session('status'),
         ]);
     }
-    public function details($season_id,$playoff_type)
+    public function details($season_id, $playoff_type)
     {
         return Inertia::render('Seasons/Details', [
             'status' => session('status'),
@@ -34,13 +35,13 @@ class SeasonsController extends Controller
 
         // Join the teams table to retrieve conference names
         $query->leftJoin('teams as winner', 'seasons.finals_winner_id', '=', 'winner.id')
-              ->leftJoin('teams as loser', 'seasons.finals_loser_id', '=', 'loser.id')
-              ->leftJoin('teams as weakest', 'seasons.weakest_id', '=', 'weakest.id')
-              ->leftJoin('teams as champion', 'seasons.champion_id', '=', 'champion.id')
-              ->leftJoin('conferences as winner_conference', 'winner.conference_id', '=', 'winner_conference.id')
-              ->leftJoin('conferences as loser_conference', 'loser.conference_id', '=', 'loser_conference.id')
-              ->leftJoin('conferences as weakest_conference', 'weakest.conference_id', '=', 'weakest_conference.id')
-              ->leftJoin('conferences as champion_conference', 'champion.conference_id', '=', 'champion_conference.id');
+            ->leftJoin('teams as loser', 'seasons.finals_loser_id', '=', 'loser.id')
+            ->leftJoin('teams as weakest', 'seasons.weakest_id', '=', 'weakest.id')
+            ->leftJoin('teams as champion', 'seasons.champion_id', '=', 'champion.id')
+            ->leftJoin('conferences as winner_conference', 'winner.conference_id', '=', 'winner_conference.id')
+            ->leftJoin('conferences as loser_conference', 'loser.conference_id', '=', 'loser_conference.id')
+            ->leftJoin('conferences as weakest_conference', 'weakest.conference_id', '=', 'weakest_conference.id')
+            ->leftJoin('conferences as champion_conference', 'champion.conference_id', '=', 'champion_conference.id');
 
         // Retrieve search query from request
         $searchQuery = $request->search;
@@ -76,9 +77,9 @@ class SeasonsController extends Controller
 
         // Retrieve seasons data with pagination after applying search filter
         $seasons = $query->offset($offset)
-                         ->limit($perPage)
-                         ->select('seasons.*', 'winner_conference.name as winner_conference_name', 'loser_conference.name as loser_conference_name', 'weakest_conference.name as weakest_conference_name', 'champion_conference.name as champion_conference_name')
-                         ->get();
+            ->limit($perPage)
+            ->select('seasons.*', 'winner_conference.name as winner_conference_name', 'loser_conference.name as loser_conference_name', 'weakest_conference.name as weakest_conference_name', 'champion_conference.name as champion_conference_name')
+            ->get();
 
         $isNewSeason = $this->isNewSeason();
 
@@ -125,7 +126,7 @@ class SeasonsController extends Controller
 
         // Retrieve seasons based on the provided league_id
         $seasonsQuery = Seasons::where('league_id', $request->league_id)
-                                 ->orderBy('id', 'desc'); // Order by ID in descending order
+            ->orderBy('id', 'desc'); // Order by ID in descending order
 
         // Get the total count of seasons
         $totalSeasons = $seasonsQuery->count();
@@ -146,7 +147,7 @@ class SeasonsController extends Controller
         $offset = ($pageNum - 1) * $perPage;
 
         // Retrieve seasons for the current page
-        $seasons = $seasonsQuery->skip($offset)->take($perPage)->get(['id', 'name','finals_winner_name']);
+        $seasons = $seasonsQuery->skip($offset)->take($perPage)->get(['id', 'name', 'finals_winner_name']);
 
         // Prepare the page numbers for pagination
         $pageNumbers = range($pageNum, min($totalPages, $pageNum + 2));
@@ -188,11 +189,11 @@ class SeasonsController extends Controller
             ->where('id', $seasonId)
             ->select('type')
             ->first();
-    
+
         if (!$season) {
             throw new \Exception("Season with ID {$seasonId} not found.");
         }
-    
+
         // Fetch conferences
         $conferences = DB::table('conferences')
             ->join('seasons', 'conferences.league_id', '=', 'seasons.league_id')
@@ -200,14 +201,14 @@ class SeasonsController extends Controller
             ->select('conferences.id as conference_id', 'conferences.name as conference_name')
             ->distinct()
             ->get();
-    
+
         // Convert to array for modification
         $conferences = $conferences->toArray();
-    
+
         $conferenceChampions = [];
         foreach ($conferences as $conference) {
             $champions = self::championsperconference($conference->conference_id);
-    
+
             $championshipSeasons = [];
             foreach ($champions as $champion) {
                 $championshipSeasons[] = [
@@ -215,9 +216,9 @@ class SeasonsController extends Controller
                     'team_name' => $champion->finals_winner_name
                 ];
             }
-    
+
             $championCount = count($championshipSeasons);
-    
+
             $conferenceChampions[] = [
                 'id' => $conference->conference_id,
                 'name' => $conference->conference_name,
@@ -225,7 +226,7 @@ class SeasonsController extends Controller
                 'championship_season' => $championshipSeasons
             ];
         }
-    
+
         return $conferenceChampions;
     }
     public function seasonStoryLine(Request $request)
@@ -243,13 +244,12 @@ class SeasonsController extends Controller
 
         // Return the storylines as a JSON response
         return response()->json($storylines);
-
     }
-    public function getSeasonsDropdown ()
+    public function getSeasonsDropdown()
     {
         // Fetch all seasons with their id and name, ordered by the latest season_id
         $seasons = DB::table('seasons')
-            ->select('id as season_id', 'name','status as status')
+            ->select('id as season_id', 'name', 'status as status')
             ->orderBy('id', 'desc') // Order by season_id in descending order
             ->get();
 
@@ -261,14 +261,15 @@ class SeasonsController extends Controller
     private function championsPerConference($conference_id)
     {
         $result = DB::table('teams')
-                ->join('seasons', 'teams.id', '=', 'seasons.finals_winner_id')
-                ->where('teams.conference_id',$conference_id)
-                ->select('seasons.finals_winner_name', 'seasons.name as season_name')
-                ->get();
+            ->join('seasons', 'teams.id', '=', 'seasons.finals_winner_id')
+            ->where('teams.conference_id', $conference_id)
+            ->select('seasons.finals_winner_name', 'seasons.name as season_name')
+            ->get();
         return $result;
     }
 
-    private function isNewSeason() {
+    private function isNewSeason()
+    {
         // Get the total count of seasons
         $totalSeasons = DB::table('seasons')->count();
 
@@ -289,22 +290,16 @@ class SeasonsController extends Controller
             return 2; //update player status update to 10
         } elseif ($lastSeasonStatus == config('timeline.player_update')) {
             return 3; //player rookie drafting update
-        }
-        elseif ($lastSeasonStatus == config('timeline.draft')) {
+        } elseif ($lastSeasonStatus == config('timeline.draft')) {
             return 4; //player signing
-        }
-        elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
+        } elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
             return 5; // player trade
-        }
-        elseif ($lastSeasonStatus == config('timeline.player_signings')) {
+        } elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 6; // new season
-        }
-        elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
+        } elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
             return 7; // new season
         }
         // Optionally, you can return a default value if no status matches
         return null;
     }
-
-
 }

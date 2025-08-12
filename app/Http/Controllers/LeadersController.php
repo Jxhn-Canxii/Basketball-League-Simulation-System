@@ -126,7 +126,7 @@ class LeadersController extends Controller
                 DB::raw('SUM(player_season_stats.total_points) as total_points'), // Sum total points across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id','players.draft_id')
+            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_points')
             ->limit(10)
             ->get();
@@ -142,7 +142,7 @@ class LeadersController extends Controller
                 DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'), // Sum total rebounds across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id','players.draft_id')
+            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_rebounds')
             ->limit(10)
             ->get();
@@ -158,7 +158,7 @@ class LeadersController extends Controller
                 DB::raw('SUM(player_season_stats.total_assists) as total_assists'), // Sum total assists across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id','players.draft_id')
+            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_assists')
             ->limit(10)
             ->get();
@@ -174,7 +174,7 @@ class LeadersController extends Controller
                 DB::raw('SUM(player_season_stats.total_steals) as total_steals'), // Sum total steals across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id','players.draft_id')
+            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_steals')
             ->limit(10)
             ->get();
@@ -190,7 +190,7 @@ class LeadersController extends Controller
                 DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'), // Sum total blocks across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id','players.draft_id')
+            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_blocks')
             ->limit(10)
             ->get();
@@ -217,15 +217,15 @@ class LeadersController extends Controller
         // Highest Assists in a Single Game
         $topSingleAssists = DB::table('top_10_single_game_assists')
             ->get();
-        
+
         // Highest Blocks in a Single Game
         $topSingleBlocks = DB::table('top_10_single_game_blocks')
             ->get();
-    
+
         // Highest Steals in a Single Game
         $topSingleSteals = DB::table('top_10_single_game_steals')
             ->get();
-            
+
         // Return data as a JSON response
         return response()->json([
             'topSinglePoints' => $topSinglePoints,
@@ -418,5 +418,4 @@ class LeadersController extends Controller
             'data' => $topPlayers,
         ]);
     }
-
 }

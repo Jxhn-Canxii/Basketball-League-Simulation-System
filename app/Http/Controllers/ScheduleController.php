@@ -44,7 +44,7 @@ class ScheduleController extends Controller
             'league_id' => 'required|exists:leagues,id',
             'playoff_type' => 'required|in:1,2',
         ]);
-        
+
         DB::beginTransaction();
 
         try {
@@ -63,10 +63,10 @@ class ScheduleController extends Controller
                     $this->createHybridRoundRobinScheduleByConference($nextSeasonid, $request->league_id);
                     break;
                 case 5:
-                    $this->createCustomRoundRobinScheduleByConference($nextSeasonid, $request->league_id,5);
+                    $this->createCustomRoundRobinScheduleByConference($nextSeasonid, $request->league_id, 5);
                     break;
                 case 6:
-                    $this->createCustomRoundRobinScheduleByConference($nextSeasonid, $request->league_id,10);
+                    $this->createCustomRoundRobinScheduleByConference($nextSeasonid, $request->league_id, 10);
                     break;
                 case 1:
                     throw new \Exception('Single Elimination not available for this season type.');
@@ -157,7 +157,7 @@ class ScheduleController extends Controller
                     }
                     $roundCounter++; // Increment round number after each round
                 }
-              
+
                 // Generate matches for each round 2nd leg
                 for ($round = 0; $round < ($numTeams - 1); $round++) {
                     for ($i = 0; $i < $numTeams / 2; $i++) {
@@ -191,12 +191,10 @@ class ScheduleController extends Controller
                     }
                     $roundCounter++; // Increment round number after each round
                 }
-                
-                
+
+
                 // Save matches to the database
                 Schedules::insert($matches);
-                
-                
             }
 
             DB::commit(); // Commit transaction if all operations succeed
@@ -261,10 +259,9 @@ class ScheduleController extends Controller
                     }
                     $roundCounter++; // Increment round number after each round
                 }
-                
+
                 // Save matches to the database
                 Schedules::insert($matches);
-            
             }
 
             DB::commit(); // Commit transaction if all operations succeed
@@ -338,7 +335,7 @@ class ScheduleController extends Controller
             throw $e;
         }
     }
-    
+
     private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId, $maxInterGames = 5)
     {
         DB::beginTransaction();
@@ -711,12 +708,12 @@ class ScheduleController extends Controller
             'team'              => $best->team_name,
             'age'               => $best->age,
             'position'          => $best->position,
-            'points'            => (int) number_format($best->total_points,2),
-            'assists'           => (int) number_format($best->total_assists,2),
-            'rebounds'          => (int) number_format($best->total_rebounds,2),
-            'steals'            => (int) number_format($best->total_steals,2),
-            'blocks'            => (int) number_format($best->total_blocks,2),
-            'turnovers'         => (int) number_format($best->total_turnovers,2),
+            'points'            => (int) number_format($best->total_points, 2),
+            'assists'           => (int) number_format($best->total_assists, 2),
+            'rebounds'          => (int) number_format($best->total_rebounds, 2),
+            'steals'            => (int) number_format($best->total_steals, 2),
+            'blocks'            => (int) number_format($best->total_blocks, 2),
+            'turnovers'         => (int) number_format($best->total_turnovers, 2),
             'fouls'             => null, // add if needed from DB
             'role'              => $best->role,
             'minutes'           => $best->total_minutes,
@@ -765,6 +762,4 @@ class ScheduleController extends Controller
             'series_lead' => $seriesLead
         ]);
     }
-
-
 }

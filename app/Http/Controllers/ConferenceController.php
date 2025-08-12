@@ -151,10 +151,10 @@ class ConferenceController extends Controller
         $itemsPerPage = $request->itemsperpage ?: 6;
         $currentPage = $request->page_num ?: 1;
         $currentSeasonId = get_current_season_id();
-    
+
         // Calculate offset for pagination based on current page
         $offset = ($currentPage - 1) * $itemsPerPage;
-    
+
         // Get total count first
         $totalSchedules = DB::table('schedule_view')
             ->where('season_id', $seasonId)
@@ -162,20 +162,20 @@ class ConferenceController extends Controller
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
                     $q->where('home_id', $teamId)
-                      ->orWhere('away_id', $teamId);
+                        ->orWhere('away_id', $teamId);
                 });
             })
             ->whereNotIn('round', $excludedRounds)
             ->count();
-    
+
         $totalPages = ceil($totalSchedules / $itemsPerPage);
-    
+
         // Reset to first page if requested page is too high
         if ($offset >= $totalSchedules) {
             $offset = 0;
             $currentPage = 1;
         }
-    
+
         // Fetch the actual schedule data
         $schedules = DB::table('schedule_view')
             ->where('season_id', $seasonId)
@@ -183,7 +183,7 @@ class ConferenceController extends Controller
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
                     $q->where('home_id', $teamId)
-                      ->orWhere('away_id', $teamId);
+                        ->orWhere('away_id', $teamId);
                 });
             })
             ->whereNotIn('round', $excludedRounds)
@@ -193,57 +193,57 @@ class ConferenceController extends Controller
             ->take($itemsPerPage)
             ->get()
             ->toArray();
-    
-           $teamIds = collect($schedules)->pluck('home_id')->merge(
-                collect($schedules)->pluck('away_id')
-            )->unique();
 
-            $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
-            $standingsData = DB::table($standingsTable)
-                ->whereIn('team_id', $teamIds)
-                ->where('season_id', $seasonId)
-                ->get()
-                ->keyBy('team_id');
+        $teamIds = collect($schedules)->pluck('home_id')->merge(
+            collect($schedules)->pluck('away_id')
+        )->unique();
 
-            $games = [];
-            foreach ($schedules as $game) {
-                $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
-                $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+        $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+        $standingsData = DB::table($standingsTable)
+            ->whereIn('team_id', $teamIds)
+            ->where('season_id', $seasonId)
+            ->get()
+            ->keyBy('team_id');
 
-                $games[] = [
-                    'id' => $game->id,
-                    'game_id' => $game->game_id,
-                    'home_team' => [
-                        'id' => $game->home_id,
-                        'name' => $homeTeamName,
-                        'home_score' => $game->home_score,
-                        'conference' => $standingsData[$game->home_id]->conference_name ?? null,
-                        'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
-                        'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
-                        'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
-                        'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
-                    ],
-                    'away_team' => [
-                        'id' => $game->away_id,
-                        'name' => $awayTeamName,
-                        'away_score' => $game->away_score,
-                        'conference' => $standingsData[$game->away_id]->conference_name ?? null,
-                        'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
-                        'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
-                        'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
-                        'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
-                    ],
-                    'winner' => $game->winner_id,
-                    'season_id' => $seasonId,
-                ];
-            }
+        $games = [];
+        foreach ($schedules as $game) {
+            $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+            $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+
+            $games[] = [
+                'id' => $game->id,
+                'game_id' => $game->game_id,
+                'home_team' => [
+                    'id' => $game->home_id,
+                    'name' => $homeTeamName,
+                    'home_score' => $game->home_score,
+                    'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
+                    'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
+                ],
+                'away_team' => [
+                    'id' => $game->away_id,
+                    'name' => $awayTeamName,
+                    'away_score' => $game->away_score,
+                    'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
+                    'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
+                ],
+                'winner' => $game->winner_id,
+                'season_id' => $seasonId,
+            ];
+        }
         // Check if all non-final rounds are simulated
         $allRoundsSimulated = DB::table('schedule_view')
             ->where('season_id', $seasonId)
             ->whereNotIn('round', $excludedRounds)
             ->where('status', 1)
             ->doesntExist();
-    
+
         return response()->json([
             'schedules' => $games,
             'is_simulated' => $allRoundsSimulated,
@@ -252,27 +252,28 @@ class ConferenceController extends Controller
             'total_count' => $totalSchedules,
         ]);
     }
-    
-    public function getConferenceRoundNotSimulated(Request $request){
+
+    public function getConferenceRoundNotSimulated(Request $request)
+    {
         $seasonId = $request->season_id;
         $conferenceId = $request->conference_id;
         $excludedRounds = config('playoffs');
 
         $rounds = DB::table('schedules')
-        ->where('season_id', $seasonId)
-        ->where('conference_id', $conferenceId)
-        ->whereNotIn('round', $excludedRounds)
-        ->where('status', 1)  // Filter to include only rounds with status = 1
-        ->distinct('round')
-        ->orderByRaw('CAST(round AS UNSIGNED) ASC')  // Order by round as an integer
-        ->pluck('round'); // Get a list of distinct rounds
-    
+            ->where('season_id', $seasonId)
+            ->where('conference_id', $conferenceId)
+            ->whereNotIn('round', $excludedRounds)
+            ->where('status', 1)  // Filter to include only rounds with status = 1
+            ->distinct('round')
+            ->orderByRaw('CAST(round AS UNSIGNED) ASC')  // Order by round as an integer
+            ->pluck('round'); // Get a list of distinct rounds
+
         $isFullySimulated = !DB::table('schedules')
-        ->where('season_id', $seasonId)
-        ->where('conference_id', $conferenceId)
-        ->whereNotIn('round', $excludedRounds)
-        ->where('status', '!=', 2) // Check if any game is not yet simulated
-        ->exists(); // If no such games exist, the conference is fully simulated
+            ->where('season_id', $seasonId)
+            ->where('conference_id', $conferenceId)
+            ->whereNotIn('round', $excludedRounds)
+            ->where('status', '!=', 2) // Check if any game is not yet simulated
+            ->exists(); // If no such games exist, the conference is fully simulated
 
         // if ($rounds->isEmpty()) {
         //     return response()->json([
@@ -291,15 +292,15 @@ class ConferenceController extends Controller
         $seasonId = $request->season_id;
         $excludedRounds = config('playoffs');
 
-          // Get the list of distinct rounds in the season (excluding the ones in $excludedRounds)
+        // Get the list of distinct rounds in the season (excluding the ones in $excludedRounds)
         $rounds = DB::table('schedules')
-          ->where('season_id', $seasonId)
-          ->whereNotIn('round', $excludedRounds)
-          ->where('status', 1)  // Filter to include only rounds with status = 1
-          ->distinct('round')
-          ->orderByRaw('CAST(round AS UNSIGNED) ASC')  // Order by round as an integer
-          ->pluck('round'); // Get a list of distinct rounds
-       
+            ->where('season_id', $seasonId)
+            ->whereNotIn('round', $excludedRounds)
+            ->where('status', 1)  // Filter to include only rounds with status = 1
+            ->distinct('round')
+            ->orderByRaw('CAST(round AS UNSIGNED) ASC')  // Order by round as an integer
+            ->pluck('round'); // Get a list of distinct rounds
+
 
         // Determine if the season is fully simulated
         $isFullySimulated = DB::table('schedules')
@@ -322,7 +323,7 @@ class ConferenceController extends Controller
         ]);
     }
 
-    
+
     private function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0

@@ -156,14 +156,14 @@ class DraftController extends Controller
             ->orderBy('drafts.round')
             ->orderBy('drafts.pick_number')
             ->get();
-            
+
         return response()->json([
             'season_id' => $currentSeasonId,
             'draft_order' => $currentSeasonDraft,
             'message' => 'Draft successfully generated.',
         ]);
     }
-    
+
     public function draftPlayers()
     {
         DB::beginTransaction();
@@ -271,7 +271,7 @@ class DraftController extends Controller
                         })
                         ->where(function ($q) {
                             $q->where('p.contract_years', '<=', 1)
-                            ->orWhere('stats.eff', '<', 10);
+                                ->orWhere('stats.eff', '<', 10);
                         })
                         ->orderBy('stats.eff', 'asc')
                         ->select('p.id', 'p.name')
@@ -380,7 +380,6 @@ class DraftController extends Controller
                 'draft_results' => $draftResults,
                 'message' => 'Draft completed successfully.',
             ], 200);
-
         } catch (\Exception $e) {
             DB::rollBack();
             \Log::error('Drafting failed', ['exception' => $e]);
@@ -402,7 +401,7 @@ class DraftController extends Controller
             'PF' => 3,
             'C'  => 3,
         ];
-    
+
         // Initialize counters
         $positionCount = [
             'PG' => 0,
@@ -411,10 +410,10 @@ class DraftController extends Controller
             'PF' => 0,
             'C'  => 0,
         ];
-    
+
         // Fetch players on the team
         $roster = DB::table('players')->where('team_id', $teamId)->get();
-    
+
         foreach ($roster as $player) {
             $positions = explode('/', $player->position);
             foreach ($positions as $pos) {
@@ -423,7 +422,7 @@ class DraftController extends Controller
                 }
             }
         }
-    
+
         // Find unmet needs
         $needs = [];
         foreach ($required as $pos => $minCount) {
@@ -431,10 +430,10 @@ class DraftController extends Controller
                 $needs[$pos] = $minCount - $positionCount[$pos];
             }
         }
-    
+
         return $needs; // returns ['PG' => 1, 'C' => 2] etc.
     }
-    
+
 
     private function updateTeamPositionNeeds($currentNeeds, $playerPosition)
     {
@@ -453,7 +452,7 @@ class DraftController extends Controller
         return $currentNeeds;
     }
 
-    
+
     public function rookieDraftees(Request $request)
     {
         // Get pagination parameters from the request
@@ -594,13 +593,13 @@ class DraftController extends Controller
         })->sort(function ($a, $b) {
             // Calculate ranking scores for player A
             $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
-                      $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
-                      $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
+                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
 
             // Calculate ranking scores for player B
             $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
-                      $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
-                      $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
+                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
 
             // Factor in total games played and minutes played for ranking score
             // Example: Multiply score by total games played and average minutes played to give it weight
@@ -683,9 +682,15 @@ class DraftController extends Controller
             ->leftJoin('seasons AS ss', 'ss.id', '=', 'all_s.season_id') // Join with player_season_stats to count distinct season_id
             ->where('all_s.season_id', $seasonId)  // Filter by season_id
             ->whereIn('s.round', [
-                'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
-                'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
-                'interconference_semi_finals', 'finals'
+                'play_ins_elims_round_1',
+                'play_ins_elims_round_2',
+                'play_ins_finals',
+                'round_of_32',
+                'round_of_16',
+                'quarter_finals',
+                'semi_finals',
+                'interconference_semi_finals',
+                'finals'
             ])
             ->where('s.season_id', $seasonId) // Ensure we're filtering by the correct season in the schedules table
             ->select([
@@ -701,17 +706,17 @@ class DraftController extends Controller
                 DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" THEN s.game_id END) AS finals_appearances'),
                 DB::raw('COUNT(DISTINCT s.game_id) AS total_playoff_appearances'),
                 DB::raw('COUNT(DISTINCT CASE WHEN s.round IN ("play_ins_elims_round_1", "play_ins_elims_round_2", "play_ins_finals", "round_of_32", "round_of_16", "quarter_finals", "semi_finals", "interconference_semi_finals", "finals") THEN s.season_id END) AS seasons_played_in_playoffs'),
-                
+
                 // Counting distinct seasons from player_season_stats
                 DB::raw('COUNT(DISTINCT pss.season_id) AS total_seasons_played'),
-                
+
                 // Championship check: Compare pg.team_id with finals_winner_id in the finals round
                 DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" AND pg.team_id = ss.finals_winner_id THEN s.game_id END) AS championships_won')
             ])
             ->groupBy('p.id', 'all_s.season_id') // Group by both player and season to avoid over-counting
             ->get();
 
-    
+
         // Insert or update the data for each player in the player_playoff_appearances table
         foreach ($playerData as $data) {
             DB::table('player_playoff_appearances')->updateOrInsert(
@@ -738,14 +743,14 @@ class DraftController extends Controller
 
         return true;
     }
-    
+
     private function determineContractYears($role)
     {
         switch ($role) {
             case 'star player':
                 return rand(3, 7);
             case 'all star':
-                    return rand(3, 5);
+                return rand(3, 5);
             case 'starter':
                 return rand(1, 5);
             case 'role player':

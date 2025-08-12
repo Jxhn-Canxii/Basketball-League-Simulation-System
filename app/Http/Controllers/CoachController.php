@@ -8,7 +8,7 @@ use Inertia\Inertia;
 
 class CoachController extends Controller
 {
-    
+
     // Read all coaches
     public function index()
     {
@@ -21,35 +21,35 @@ class CoachController extends Controller
     {
         // Retrieve search query from request
         $searchQuery = $request->search;
-    
+
         // Query builder for coaches with join on teams
         $query = DB::table('coaches')
             ->leftJoin('teams', 'coaches.team_id', '=', 'teams.id')
             ->select('coaches.*', 'teams.name as team_name');
-    
+
         // Apply search filter if search query is provided
         if ($searchQuery) {
-            $query->where(function($q) use ($searchQuery) {
+            $query->where(function ($q) use ($searchQuery) {
                 $q->where('teams.name', 'like', '%' . $searchQuery . '%')
-                  ->orWhere('coaches.name', 'like', '%' . $searchQuery . '%');
+                    ->orWhere('coaches.name', 'like', '%' . $searchQuery . '%');
             });
         }
-    
+
         // Get total count of records before pagination
         $totalCount = $query->count();
-    
+
         // Set the number of records to display per page
         $perPage = 10;
-    
+
         // Calculate the total number of pages
         $totalPages = ceil($totalCount / $perPage);
-    
+
         // Get the current page from the request, default to 1 if not provided
         $currentPage = $request->page_num ?? 1;
-    
+
         // Calculate the offset for pagination
         $offset = ($currentPage - 1) * $perPage;
-    
+
         // Clone the query before applying pagination (important)
         $coaches = (clone $query)
             ->orderBy('is_active', 'desc') // active
@@ -57,12 +57,12 @@ class CoachController extends Controller
             ->offset($offset)
             ->limit($perPage)
             ->get();
-    
+
         $latestSeason = get_current_season_id();
-    
+
         $teamsWithoutCoach = DB::table('teams')->select('name')->where('coach_id', 0)->get();
         $teamsWithoutCoachCount =  $teamsWithoutCoach->count();
-        
+
         return response()->json([
             'coaches' => $coaches,
             'total_pages' => $totalPages,
@@ -74,7 +74,7 @@ class CoachController extends Controller
             'teams_without_coach_count' =>  $teamsWithoutCoachCount,
         ]);
     }
-    
+
     // Create a new coach
     public function addFreeAgentCoach(Request $request)
     {
@@ -85,9 +85,9 @@ class CoachController extends Controller
 
         // Get the current season ID
         $currentSeasonId = get_current_season_id();
-        $age = rand(35,45);
-        $retirement_age = rand(50,65);
-        $coachIq = rand(75,99);
+        $age = rand(35, 45);
+        $retirement_age = rand(50, 65);
+        $coachIq = rand(75, 99);
         // Insert the new coach into the database
         $coachId = DB::table('coaches')->insertGetId([
             'name' => $request->name,
@@ -103,7 +103,7 @@ class CoachController extends Controller
         ]);
 
 
-        return response()->json(['message' => 'Coach '.$request->name.' has applied for the coaching pool.'], 201);
+        return response()->json(['message' => 'Coach ' . $request->name . ' has applied for the coaching pool.'], 201);
     }
 
     public function endCoachSignings()
@@ -132,19 +132,19 @@ class CoachController extends Controller
     public function assignFreeAgentCoaches()
     {
         $currentSeasonId = get_current_season_id() ?? 1;
-    
+
         $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
         $teamCount = $teamsWithoutCoach->count();
         $maxCoachesToQuery = $teamCount + 10;
 
         if ($teamsWithoutCoach->isEmpty()) {
             $this->endCoachSignings();
-    
+
             return response()->json([
                 'message' => 'No teams need a coach. Ended coach signings.'
             ], 400);
         }
-    
+
         $freeCoaches = DB::table('coaches')
             ->where('team_id', 0)
             ->where('is_active', 1)
@@ -161,31 +161,31 @@ class CoachController extends Controller
             ->limit($maxCoachesToQuery)
             ->get()
             ->shuffle(); // Randomize after limiting
-    
+
         if ($freeCoaches->isEmpty()) {
             return response()->json([
                 'message' => 'No free agent coaches available. Please invite coaches for applications.'
             ], 400);
         }
-    
+
         $assigned = [];
         $freeCoachesArray = $freeCoaches->toArray();
-    
+
         // Start Transaction
         DB::beginTransaction();
-    
+
         try {
             foreach ($teamsWithoutCoach as $team) {
                 $coach = array_shift($freeCoachesArray);
-    
+
                 if ($coach) {
                     $contractYears = rand(3, 7);
-    
+
                     // Update team
                     DB::table('teams')
                         ->where('id', $team->id)
                         ->update(['coach_id' => $coach->id]);
-    
+
                     // Update coach
                     DB::table('coaches')
                         ->where('id', $coach->id)
@@ -193,7 +193,7 @@ class CoachController extends Controller
                             'team_id' => $team->id,
                             'contract_years' => $contractYears
                         ]);
-    
+
                     // Insert into transactions
                     DB::table('transactions')->insert([
                         'player_id' => 0,
@@ -205,7 +205,7 @@ class CoachController extends Controller
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]);
-    
+
                     $assigned[] = [
                         'team_id' => $team->id,
                         'coach_id' => $coach->id,
@@ -214,22 +214,22 @@ class CoachController extends Controller
                     break;
                 }
             }
-    
+
             DB::commit(); // Everything good
-    
+
             return response()->json([
                 'message' => 'Coaches assigned successfully.',
                 'assigned' => $assigned,
             ]);
         } catch (\Exception $e) {
             DB::rollBack(); // Something went wrong, cancel everything
-    
+
             return response()->json([
                 'message' => 'Failed to assign coaches. Error: ' . $e->getMessage()
             ], 500);
         }
     }
-    
+
 
     public function fixDuplicateCoaches()
     {
@@ -243,7 +243,7 @@ class CoachController extends Controller
         foreach ($grouped as $teamId => $teamCoaches) {
             if ($teamCoaches->count() > 1) {
                 // Sort by (career_wins + career_losses) DESC
-                $sorted = $teamCoaches->sortByDesc(function($coach) {
+                $sorted = $teamCoaches->sortByDesc(function ($coach) {
                     return $coach->career_wins + $coach->career_losses;
                 });
 
@@ -268,5 +268,4 @@ class CoachController extends Controller
 
         return response()->json(['message' => 'Duplicate coaches fixed successfully!']);
     }
-
 }

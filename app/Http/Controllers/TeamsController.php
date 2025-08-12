@@ -207,7 +207,7 @@ class TeamsController extends Controller
 
         return response()->json($teamTransactionHistory);
     }
-   
+
     private function getSeasonHistory($teamId, $page, $itemsPerPage)
     {
         // Calculate the offset for pagination
@@ -295,7 +295,7 @@ class TeamsController extends Controller
         ];
     }
 
-    private function getTeamCoachSeasonInfo($seasonId,$teamId)
+    private function getTeamCoachSeasonInfo($seasonId, $teamId)
     {
         // Fetch the team_season_info along with the coach's name for the given season
         $teamCoachInfo = DB::table('team_season_info')
@@ -320,7 +320,7 @@ class TeamsController extends Controller
     {
         // Calculate the offset for pagination
         $offset = ($page - 1) * $itemsPerPage;
-    
+
         // Fetch transaction history related to the team (either from_team_id or to_team_id)
         $transactionQuery = DB::table('transactions')
             ->select(
@@ -338,55 +338,55 @@ class TeamsController extends Controller
             ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
             ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
             ->join('players', 'transactions.player_id', '=', 'players.id');
-        
+
         // Apply team filtering based on status
         $transactionQuery->where(function ($query) use ($teamId) {
             $query->where('transactions.status', 'signed')
                 ->where('transactions.to_team_id', '=', $teamId)
                 ->orWhere(function ($q) use ($teamId) {
                     $q->where('transactions.status', '!=', 'signed')
-                    ->where(function ($subQuery) use ($teamId) {
-                        $subQuery->where('transactions.from_team_id', '=', $teamId)
+                        ->where(function ($subQuery) use ($teamId) {
+                            $subQuery->where('transactions.from_team_id', '=', $teamId)
                                 ->orWhere('transactions.to_team_id', '=', $teamId);
-                    });
+                        });
                 });
         });
-        
+
         // Exclude "transfer" status
         $transactionQuery->where('transactions.status', '!=', 'transfer')
-                        ->where('transactions.status', '!=', 'role change');
-        
+            ->where('transactions.status', '!=', 'role change');
+
         // Sorting
         $transactionQuery->orderBy('transactions.season_id', 'desc')
             ->orderBy('transactions.id', 'desc')
             ->offset($offset)
             ->limit($itemsPerPage);
-        
+
         $transactionHistory = $transactionQuery->get();
-        
+
         // Get the total number of transactions for the team
         $totalItemsQuery = DB::table('transactions');
-        
+
         $totalItemsQuery->where(function ($query) use ($teamId) {
             $query->where('transactions.status', 'signed')
                 ->where('transactions.to_team_id', '=', $teamId)
                 ->orWhere(function ($q) use ($teamId) {
                     $q->where('transactions.status', '!=', 'signed')
-                    ->where(function ($subQuery) use ($teamId) {
-                        $subQuery->where('transactions.from_team_id', '=', $teamId)
+                        ->where(function ($subQuery) use ($teamId) {
+                            $subQuery->where('transactions.from_team_id', '=', $teamId)
                                 ->orWhere('transactions.to_team_id', '=', $teamId);
-                    });
+                        });
                 });
         });
-        
+
         $totalItemsQuery->where('transactions.status', '!=', 'transfer');
-        
+
         $totalItems = $totalItemsQuery->count();
-    
-    
+
+
         // Calculate the total number of pages
         $totalPages = ceil($totalItems / $itemsPerPage);
-    
+
         return [
             'transactions' => $transactionHistory,
             'total_items' => $totalItems,
@@ -395,7 +395,7 @@ class TeamsController extends Controller
             'total_pages' => $totalPages
         ];
     }
-    
+
     public function teamLastSeason(Request $request)
     {
         $teamId = $request->team_id;
@@ -454,8 +454,8 @@ class TeamsController extends Controller
     {
         return DB::table('teams')
             ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
-            ->join('coaches', 'teams.coach_id', '=', 'coaches.id','left')
-            ->select('teams.name as team_name', 'teams.acronym','coaches.name as coach_name','teams.sponsor as sponsor','coaches.winning_percentage as coach_winning', 'teams.id','teams.city','teams.description','teams.primary_color','teams.secondary_color', 'conferences.name as conference_name')
+            ->join('coaches', 'teams.coach_id', '=', 'coaches.id', 'left')
+            ->select('teams.name as team_name', 'teams.acronym', 'coaches.name as coach_name', 'teams.sponsor as sponsor', 'coaches.winning_percentage as coach_winning', 'teams.id', 'teams.city', 'teams.description', 'teams.primary_color', 'teams.secondary_color', 'conferences.name as conference_name')
             ->where('teams.id', $teamId)
             ->get();
     }
@@ -496,7 +496,8 @@ class TeamsController extends Controller
                     });
             })
             ->where('standings_snapshots.team_id', $teamId)
-            ->groupBy('standings_snapshots.id',
+            ->groupBy(
+                'standings_snapshots.id',
                 'standings_snapshots.team_id',
                 'standings_snapshots.team_name',
                 'standings_snapshots.team_city',
@@ -770,10 +771,10 @@ class TeamsController extends Controller
             ->where(function ($query) {
                 // Check for playoff rounds based on the season's start playoffs
                 $query->where(function ($subQuery) {
-                        // Playoff round of 16 if start playoffs is 16
-                        $subQuery->where('seasons.start_playoffs', '=', 16)
-                            ->where('schedules.round', '=', 'round_of_16');
-                    })
+                    // Playoff round of 16 if start playoffs is 16
+                    $subQuery->where('seasons.start_playoffs', '=', 16)
+                        ->where('schedules.round', '=', 'round_of_16');
+                })
                     ->orWhere(function ($subQuery) {
                         // Playoff round of 32 if start playoffs is 32
                         $subQuery->where('seasons.start_playoffs', '=', 32)
@@ -783,7 +784,8 @@ class TeamsController extends Controller
                     ->orWhere(function ($subQuery) {
                         // Check if the team is part of play-in rounds 1 or 2
                         $subQuery->whereIn('schedules.round', [
-                            'play_ins_elims_round_1', 'play_ins_elims_round_2'
+                            'play_ins_elims_round_1',
+                            'play_ins_elims_round_2'
                         ]);
                     });
             })
@@ -851,7 +853,7 @@ class TeamsController extends Controller
             ->limit(4) // Limit to top 3 rivals
             ->pluck('opponent_name');
     }
-    
+
 
     private function getWinLossRecords($teamId)
     {
@@ -872,9 +874,9 @@ class TeamsController extends Controller
             ->orderByDesc('total_games') // Sort by total games (wins + losses) in descending order
             ->limit(5) // Get only the top 5 records
             ->get();
-    
+
         $records = [];
-    
+
         foreach ($results as $record) {
             $records[] = [
                 'team_id' => $record->team_id,
@@ -888,30 +890,30 @@ class TeamsController extends Controller
                 'away_id' => $record->wins < $record->losses ? $teamId : null
             ];
         }
-    
+
         return $records;
     }
-    
-    
+
+
 
     public static function countTeamOnePicksAndCheckChampion(Request $request)
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',
             'season_id' => 'nullable|integer',
-        ]); 
-    
+        ]);
+
         // If validation passes, the $teamId is valid
         $teamId = $request->team_id;
-        
+
         // Get the most recent season (the latest season by id)
         $latestSeasonId = get_current_season_id();
-    
+
         // If season_id is greater than 0, override the latest season with the provided season_id
         if ((int) $request->season_id > 0) {
             $latestSeasonId = (int) $request->season_id;  // Make sure this is an integer
         }
-    
+
         if (!$latestSeasonId) {
             return [
                 'team_one_pick_count' => 0,
@@ -927,12 +929,12 @@ class TeamsController extends Controller
                 'overall_rank' => null,
             ];
         }
-    
+
         // Get the previous season by selecting the season with id = latestSeasonId - 1
         $previousSeason = DB::table('seasons')
             ->where('id', $latestSeasonId - 1)
             ->first();
-    
+
         if (!$previousSeason) {
             return [
                 'team_one_pick_count' => 0,
@@ -948,13 +950,13 @@ class TeamsController extends Controller
                 'overall_rank' => null,
             ];
         }
-    
+
         // Check if the team is the defending champion in the previous season
         $isDefendingChampion = DB::table('seasons')
             ->where('champion_id', $teamId)
             ->where('id', $previousSeason->id)  // Check for the previous season by id
             ->exists();
-    
+
         // Count the number of team #1 picks where draft_status ends with 'R1 P1'
         $teamOnePickCount = DB::table('player_season_stats')
             ->join('players', 'players.id', '=', 'player_season_stats.player_id') // Joining player_season_stats with players table
@@ -963,13 +965,13 @@ class TeamsController extends Controller
             ->where('players.draft_status', 'like', '%R1 P1') // Check for 'R1 P1' draft status
             ->count();
 
-    
+
         // Check if the team is considered the weakest in the previous season
         $isWeakest = DB::table('seasons')
             ->where('weakest_id', $teamId)
             ->where('id', $previousSeason->id)  // Check for the previous season by id
             ->exists();
-    
+
         // Count how many times the team has been the Finals MVP
         $finalsMvpCount = DB::table('seasons')
             ->join('player_season_stats', 'player_season_stats.player_id', '=', 'seasons.finals_mvp_id')  // Join on MVP player_id
@@ -983,7 +985,7 @@ class TeamsController extends Controller
             ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
             ->where('season_awards.award_name', 'Best Overall Player')  // Ensure the player played in the current season
             ->count();
-    
+
         $defensivePlayerOfTheSeasonCount = DB::table('season_awards')
             ->join('player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
             ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
@@ -999,7 +1001,7 @@ class TeamsController extends Controller
             ->count();
         // Check if the team is a conference champion in any conference (West, East, North, South)
         $isConferenceChampion = DB::table('seasons')
-            ->where(function($query) use ($teamId) {
+            ->where(function ($query) use ($teamId) {
                 $query->where('west_champion_id', $teamId)
                     ->orWhere('east_champion_id', $teamId)
                     ->orWhere('north_champion_id', $teamId)
@@ -1007,28 +1009,28 @@ class TeamsController extends Controller
             })
             ->where('id', $previousSeason->id)  // Check for the previous season by id
             ->exists();
-    
+
         // Check if the team is the finals champion
         $isFinalsChampion = DB::table('seasons')
             ->where('finals_winner_id', $teamId)
             ->where('id', $previousSeason->id)  // Check for the previous season by id
             ->exists();
-    
+
         // Check if the team is a finalist (winner or loser in the finals)
         $isFinalist = DB::table('seasons')
-            ->where(function($query) use ($teamId) {
+            ->where(function ($query) use ($teamId) {
                 $query->where('finals_winner_id', $teamId)
                     ->orWhere('finals_loser_id', $teamId);
             })
             ->where('id', $previousSeason->id)  // Check for the previous season by id
             ->exists();
-    
+
         // Check the conference overall rank from the standings_view for the previous season
         $conferenceRank = DB::table('standings_view')
             ->where('team_id', $teamId)
             ->where('season_id', $previousSeason->id)
             ->value('conference_rank');  // Assuming 'conference_rank' is a column in 'standings_view'
-    
+
         return [
             'team_one_pick_count' => $teamOnePickCount,
             'is_defending_champion' => $isDefendingChampion,
@@ -1045,7 +1047,7 @@ class TeamsController extends Controller
             'curr_season' => $latestSeasonId,
         ];
     }
-    
+
     // Store a newly created resource in storage.
     public function add(Request $request)
     {
@@ -1114,20 +1116,21 @@ class TeamsController extends Controller
         return redirect()->route('teams.index');
     }
 
-    public function getTeamsByConference(Request $request) {
+    public function getTeamsByConference(Request $request)
+    {
         $conferenceId = $request->conference_id;
-    
+
         // Validate if conference_id is provided
         if (!$conferenceId) {
             return response()->json(['error' => 'conference_id is required'], 400);
         }
-    
+
         $teams = DB::table('teams')
             ->select('id', 'name')
             ->where('conference_id', $conferenceId)
-            ->orderBy('name','asc')
+            ->orderBy('name', 'asc')
             ->get();
-    
+
         return response()->json($teams);
     }
 }

@@ -102,49 +102,49 @@ class AnalyticsController extends Controller
     {
         // Count total players
         $totalPlayers = DB::table('players')->count();
-    
+
         // Count active players
         $activePlayers = DB::table('players')
             ->where('is_active', 1)
             ->count();
-    
+
         // Count retired players
         $retiredPlayers = DB::table('players')
             ->where('is_active', 0)
             ->count();
-    
+
         // Count rookie players
         $rookiePlayers = DB::table('players')
             ->where('is_rookie', 1)
             ->count();
-    
+
         // Count free agents
         $freeAgents = DB::table('players')
             ->where('is_active', 1)
             ->where('team_id', 0)
             ->count();
-    
+
         // Count active players in teams (team_id > 0)
         $activePlayersInTeams = DB::table('players')
             ->where('is_active', 1)
             ->where('team_id', '>', 0)
             ->count();
-    
+
         // Count total teams (assuming teams have players, based on team_id > 0)
         $totalTeams = DB::table('teams')
             ->count();
-    
+
         // Define max roster size
         $maxRosterSize = 15;
-    
+
         // Calculate total available slots
         $totalAvailableSlots = ($totalTeams * $maxRosterSize) - $activePlayersInTeams;
-    
+
         // Fetch summary data
         $positionSummary = DB::table('active_player_position_summary_with_warning_and_needed')
             ->first();
-    
-    
+
+
         return response()->json([
             'total_players' => $totalPlayers,
             'active_players' => $activePlayers,
@@ -156,7 +156,7 @@ class AnalyticsController extends Controller
             'position_summary' => $positionSummary, // Include the extra table result here
         ]);
     }
-    
+
 
     public function getSeasonLeaders(Request $request)
     {
@@ -261,7 +261,7 @@ class AnalyticsController extends Controller
             })
             ->map(function ($stats) use ($seasonId) {
                 // Get the total number of games played by the team
-                 // Get the total number of games played by the team
+                // Get the total number of games played by the team
                 $totalGames = $stats->total_games ?? 0;
 
                 // Calculate how many games the player has played
@@ -333,12 +333,10 @@ class AnalyticsController extends Controller
     {
         // Query the draft_player_statistics view and order by latest ID
         $statistics = DB::table('draft_player_statistics')
-                        ->orderBy('draft_id', 'desc')
-                        ->get();
+            ->orderBy('draft_id', 'desc')
+            ->get();
 
         // Return the result as JSON
         return response()->json($statistics);
     }
-
-
 }

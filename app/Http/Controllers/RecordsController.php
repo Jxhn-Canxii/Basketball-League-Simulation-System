@@ -44,7 +44,7 @@ class RecordsController extends Controller
                     ->orWhere('teams.id', '=', 'seasons.finals_loser_id');
             })
             ->leftJoin('conferences', 'teams.conference_id', '=', 'conferences.id') // Join conferences table
-            ->groupBy('teams.id', 'teams.name', 'teams.acronym','teams.primary_color','teams.secondary_color', 'conferences.name') // Group by team columns and conference name
+            ->groupBy('teams.id', 'teams.name', 'teams.acronym', 'teams.primary_color', 'teams.secondary_color', 'conferences.name') // Group by team columns and conference name
             ->havingRaw('COALESCE(championships, 0) > 0 OR COALESCE(runnerups, 0) > 0'); // Filter teams with at least one championship or runner-up
 
 
@@ -100,9 +100,9 @@ class RecordsController extends Controller
             ->orderByDesc('total_games') // Sort by total games (wins + losses) in descending order
             ->limit(10) // Get only the top 5 records
             ->get();
-    
+
         $records = [];
-    
+
         foreach ($results as $record) {
             $records[] = [
                 'team_id' => $record->team_id,
@@ -247,7 +247,7 @@ class RecordsController extends Controller
             )
             ->leftJoin('players', 'player_season_stats.player_id', '=', 'players.id') // Join players
             ->leftJoin('teams', 'teams.id', '=', 'players.team_id') // Join players
-            ->groupBy('players.id', 'players.name','teams.name')                                  // Group by player_id and player_name
+            ->groupBy('players.id', 'players.name', 'teams.name')                                  // Group by player_id and player_name
             ->orderBy('total_stat', 'desc')                                          // Order by total_stat in descending order
             ->skip($offset)                                                          // Offset for pagination
             ->take($perPage)                                                         // Limit results per page
@@ -258,7 +258,7 @@ class RecordsController extends Controller
                 return $item;
             });
 
-    
+
 
         // Count total unique players with stats
         $totalCount = DB::table('player_season_stats')
@@ -370,7 +370,7 @@ class RecordsController extends Controller
 
         return response()->json($response);
     }
-    
+
     public function updatePlayerPlayoffAppearances(Request $request)
     {
         $playerData = DB::table('players AS p')
@@ -379,9 +379,15 @@ class RecordsController extends Controller
             ->leftJoin('player_season_stats AS pss', 'pss.player_id', '=', 'p.id')
             ->leftJoin('teams AS t', 'p.team_id', '=', 't.id')
             ->whereIn('psa.round', [
-                'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
-                'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
-                'interconference_semi_finals', 'finals'
+                'play_ins_elims_round_1',
+                'play_ins_elims_round_2',
+                'play_ins_finals',
+                'round_of_32',
+                'round_of_16',
+                'quarter_finals',
+                'semi_finals',
+                'interconference_semi_finals',
+                'finals'
             ])
             ->select([
                 'p.id AS player_id',
@@ -427,5 +433,4 @@ class RecordsController extends Controller
 
         return response()->json(['message' => 'Playoff appearances updated for all players across all seasons based on series data.']);
     }
-    
 }

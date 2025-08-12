@@ -12,7 +12,7 @@ class LeaguesController extends Controller
     //
     public function index()
     {
-        return Inertia::render('Leagues/Index',[
+        return Inertia::render('Leagues/Index', [
             'status' => session('status'),
         ]);
     }
@@ -39,7 +39,7 @@ class LeaguesController extends Controller
             $query->where('name', 'like', '%' . $searchQuery . '%');
         }
 
-         // Exclude league with ID 2
+        // Exclude league with ID 2
         $query->where('id', '!=', 2);
 
         // Get total count of records before pagination
@@ -59,8 +59,8 @@ class LeaguesController extends Controller
 
         // Retrieve leagues data with pagination
         $leagues = $query->offset($offset)
-                         ->limit($perPage)
-                         ->get();
+            ->limit($perPage)
+            ->get();
 
         return response()->json([
             'leagues' => $leagues,
@@ -94,7 +94,8 @@ class LeaguesController extends Controller
 
         return redirect()->route('leagues.index');
     }
-    public function dropdown(){
+    public function dropdown()
+    {
         $leagues = Leagues::all(['id', 'name']); // Fetch only id and name columns
         return response()->json($leagues);
     }
@@ -129,5 +130,4 @@ class LeaguesController extends Controller
 
         return response()->json(['message' => 'Tables reseted successfully']);
     }
-
 }

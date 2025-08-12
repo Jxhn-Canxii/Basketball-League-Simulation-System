@@ -218,28 +218,28 @@ class AwardsController extends Controller
         try {
             // Get the latest season ID or default to 1 if none exists
             $latestSeasonId = get_current_season_id() ?? 1;
-    
+
             // Fetch the specified player from the team
             $player = DB::table('players')
                 ->where('team_id', $teamId)
                 ->where('id', $playerId)
                 ->where('is_active', true)
                 ->first();
-    
+
             if (!$player) {
                 return response()->json(['error' => 'Player not found or inactive'], 404);
             }
-    
+
             // Query to count the total games played for a team in a given season
             $gamesPlayedCount = self::totalRegularSeasonGames($latestSeasonId, $teamId);
-    
+
             // Check if the player has stats in the latest season
             $hasStats = DB::table('player_game_stats')
                 ->where('player_id', $player->id)
                 ->where('team_id', $teamId)
                 ->where('season_id', $latestSeasonId)
                 ->exists();
-    
+
             if ($hasStats) {
                 // Calculate the player's aggregated stats for the latest season
                 $playerStats = DB::table('player_game_stats')
@@ -309,13 +309,13 @@ class AwardsController extends Controller
                     'avg_fouls_per_game' => 0,
                 ];
             }
-    
+
             // Fetch the player's role and position for the specified season
             $playerRating = DB::table('player_ratings')
                 ->where('player_id', $player->id)
                 ->where('season_id', $latestSeasonId)
                 ->first();
-    
+
             // Insert or update the player's season stats in the player_season_stats table
             DB::table('player_season_stats')->updateOrInsert(
                 [
@@ -356,7 +356,7 @@ class AwardsController extends Controller
                     'updated_at' => now(),
                 ]
             );
-    
+
             return response()->json(['message' => 'Player season stats stored successfully.']);
         } catch (\Exception $e) {
             // Log the error and return a generic error response
@@ -364,29 +364,29 @@ class AwardsController extends Controller
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }
-    
+
     public static function storePlayerNextSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
             $latestSeasonId = get_current_season_id() ?? 0;
             $nextSeasonId = $latestSeasonId + 1;
-    
+
             // Fetch the player
             $player = DB::table('players')
                 ->where('team_id', $teamId)
                 ->where('id', $playerId)
                 ->where('is_active', true)
                 ->first();
-    
+
             if (!$player) {
                 return response()->json(['error' => 'Player not found or inactive'], 404);
             }
-            
+
             // Fetch player rating if available
             // $playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
             $role = $player->role; // Default role if rating doesn't exist
-    
+
             // Data to insert/update
             $data = [
                 'player_id' => $player->id,
@@ -422,8 +422,8 @@ class AwardsController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
-    
-             // Return data before insertion for debugging
+
+            // Return data before insertion for debugging
             // return response()->json([
             //     'message' => 'Attempting to insert/update player season stats',
             //     'player_id' => $player->id,
@@ -431,7 +431,7 @@ class AwardsController extends Controller
             //     'season_id' => $nextSeasonId,
             //     'data' => $data
             // ]);
-    
+
             // Save to database
             DB::table('player_season_stats')->updateOrInsert(
                 [
@@ -447,35 +447,34 @@ class AwardsController extends Controller
             //     return response()->json(['message' => "Failed storing stats for Player ID: {$playerId}",'data' => $data]);
             // }
 
-            return response()->json(['message' => "Stored stats for Player ID: {$playerId}",'data' => $data]);
-    
+            return response()->json(['message' => "Stored stats for Player ID: {$playerId}", 'data' => $data]);
         } catch (\Exception $e) {
             \Log::error('Error in storeplayernextseasonstats: ' . $e->getMessage());
-            return response()->json(['error' =>$e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-    
+
     public static function storePlayerCurrentSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
             $latestSeasonId = get_current_season_id() ?? 0;
-    
+
             // Fetch the player
             $player = DB::table('players')
                 ->where('team_id', $teamId)
                 ->where('id', $playerId)
                 ->where('is_active', true)
                 ->first();
-    
+
             if (!$player) {
                 return response()->json(['error' => 'Player not found or inactive'], 404);
             }
-            
+
             // Fetch player rating if available
             //$playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
             $role = $player->role; // Default role if rating doesn't exist
-    
+
             // Data to insert/update
             $data = [
                 'player_id' => $player->id,
@@ -511,8 +510,8 @@ class AwardsController extends Controller
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
-    
-             // Return data before insertion for debugging
+
+            // Return data before insertion for debugging
             // return response()->json([
             //     'message' => 'Attempting to insert/update player season stats',
             //     'player_id' => $player->id,
@@ -520,7 +519,7 @@ class AwardsController extends Controller
             //     'season_id' => $nextSeasonId,
             //     'data' => $data
             // ]);
-    
+
             // Save to database
             DB::table('player_season_stats')->updateOrInsert(
                 [
@@ -536,11 +535,10 @@ class AwardsController extends Controller
             //     return response()->json(['message' => "Failed storing stats for Player ID: {$playerId}",'data' => $data]);
             // }
 
-            return response()->json(['message' => "Stored stats for Player ID: {$playerId}",'data' => $data]);
-    
+            return response()->json(['message' => "Stored stats for Player ID: {$playerId}", 'data' => $data]);
         } catch (\Exception $e) {
             \Log::error('Error in storeplayernextseasonstats: ' . $e->getMessage());
-            return response()->json(['error' =>$e->getMessage()], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 
@@ -833,11 +831,11 @@ class AwardsController extends Controller
         $advancedAwards = [
             // Most Complete Player (Triple-Double Machine)
             'Triple-Double Machine' => $eligiblePlayerStats->filter(function ($stats) {
-                return $stats->avg_points_per_game >= 10 && 
-                       $stats->avg_rebounds_per_game >= 10 && 
-                       $stats->avg_assists_per_game >= 10;
+                return $stats->avg_points_per_game >= 10 &&
+                    $stats->avg_rebounds_per_game >= 10 &&
+                    $stats->avg_assists_per_game >= 10;
             })->first(),
-    
+
             // Best Shooter (True Shooting Percentage Leader)
             'Shooting Efficiency Leader' => $eligiblePlayerStats
                 ->filter(function ($stats) {
@@ -845,12 +843,12 @@ class AwardsController extends Controller
                 })
                 ->sortByDesc('ts_percent')
                 ->first(),
-    
+
             // Most Efficient Player (PER Leader)
             'Player Efficiency Leader' => $eligiblePlayerStats
                 ->sortByDesc('per')
                 ->first(),
-    
+
             // Perfect Attendance Award
             'Perfect Attendance Award' => $eligiblePlayerStats
                 ->filter(function ($stats) {
@@ -858,12 +856,12 @@ class AwardsController extends Controller
                 })
                 ->sortByDesc('total_minutes_played')
                 ->first(),
-    
+
             // Best All-Around Player (Based on EFF)
             'Most Versatile Player' => $eligiblePlayerStats
                 ->sortByDesc('eff')
                 ->first(),
-    
+
             // Game Leaders Awards
             'Points Game Leader' => $eligiblePlayerStats
                 ->filter(function ($stats) {
@@ -871,28 +869,28 @@ class AwardsController extends Controller
                 })
                 ->sortByDesc('points_game_leader')
                 ->first(),
-    
+
             'Rebounds Game Leader' => $eligiblePlayerStats
                 ->filter(function ($stats) {
                     return $stats->rebounds_game_leader > 0;
                 })
                 ->sortByDesc('rebounds_game_leader')
                 ->first(),
-    
+
             'Assists Game Leader' => $eligiblePlayerStats
                 ->filter(function ($stats) {
                     return $stats->assists_game_leader > 0;
                 })
                 ->sortByDesc('assists_game_leader')
                 ->first(),
-    
+
             'Blocks Game Leader' => $eligiblePlayerStats
                 ->filter(function ($stats) {
                     return $stats->blocks_game_leader > 0;
                 })
                 ->sortByDesc('blocks_game_leader')
                 ->first(),
-    
+
             'Steals Game Leader' => $eligiblePlayerStats
                 ->filter(function ($stats) {
                     return $stats->steals_game_leader > 0;
@@ -900,11 +898,11 @@ class AwardsController extends Controller
                 ->sortByDesc('steals_game_leader')
                 ->first(),
         ];
-    
+
         // Insert advanced awards
         foreach ($advancedAwards as $awardName => $player) {
             if ($player) {
-                $description = match($awardName) {
+                $description = match ($awardName) {
                     'Triple-Double Machine' => 'Player averaging triple-double for the season',
                     'Shooting Efficiency Leader' => 'Player with highest true shooting percentage (min. 300 attempts)',
                     'Player Efficiency Leader' => 'Player with highest Player Efficiency Rating (PER)',
@@ -917,7 +915,7 @@ class AwardsController extends Controller
                     'Steals Game Leader' => 'Player with most steals in a single game',
                     default => 'Outstanding statistical achievement'
                 };
-                
+
                 $this->insertAward($player, $awardName, $description, $latestSeasonId);
             }
         }
@@ -1133,11 +1131,11 @@ class AwardsController extends Controller
             $advancedAwards = [
                 // Most Complete Player (Triple-Double Machine)
                 'Triple-Double Machine' => $eligiblePlayerStats->filter(function ($stats) {
-                    return $stats->avg_points_per_game >= 10 && 
-                           $stats->avg_rebounds_per_game >= 10 && 
-                           $stats->avg_assists_per_game >= 10;
+                    return $stats->avg_points_per_game >= 10 &&
+                        $stats->avg_rebounds_per_game >= 10 &&
+                        $stats->avg_assists_per_game >= 10;
                 })->first(),
-        
+
                 // Best Shooter (True Shooting Percentage Leader)
                 'Shooting Efficiency Leader' => $eligiblePlayerStats
                     ->filter(function ($stats) {
@@ -1145,17 +1143,17 @@ class AwardsController extends Controller
                     })
                     ->sortByDesc('ts_percent')
                     ->first(),
-        
+
                 // Most Efficient Player (PER Leader)
                 'Player Efficiency Leader' => $eligiblePlayerStats
                     ->sortByDesc('per')
                     ->first(),
-        
+
                 // Best All-Around Player (Based on EFF)
                 'Most Versatile Player' => $eligiblePlayerStats
                     ->sortByDesc('eff')
                     ->first(),
-        
+
                 // Game Leaders Awards
                 'Points Game Leader' => $eligiblePlayerStats
                     ->filter(function ($stats) {
@@ -1163,28 +1161,28 @@ class AwardsController extends Controller
                     })
                     ->sortByDesc('points_game_leader')
                     ->first(),
-        
+
                 'Rebounds Game Leader' => $eligiblePlayerStats
                     ->filter(function ($stats) {
                         return $stats->rebounds_game_leader > 0;
                     })
                     ->sortByDesc('rebounds_game_leader')
                     ->first(),
-        
+
                 'Assists Game Leader' => $eligiblePlayerStats
                     ->filter(function ($stats) {
                         return $stats->assists_game_leader > 0;
                     })
                     ->sortByDesc('assists_game_leader')
                     ->first(),
-        
+
                 'Blocks Game Leader' => $eligiblePlayerStats
                     ->filter(function ($stats) {
                         return $stats->blocks_game_leader > 0;
                     })
                     ->sortByDesc('blocks_game_leader')
                     ->first(),
-        
+
                 'Steals Game Leader' => $eligiblePlayerStats
                     ->filter(function ($stats) {
                         return $stats->steals_game_leader > 0;
@@ -1192,11 +1190,11 @@ class AwardsController extends Controller
                     ->sortByDesc('steals_game_leader')
                     ->first(),
             ];
-        
+
             // Insert advanced awards
             foreach ($advancedAwards as $awardName => $player) {
                 if ($player) {
-                    $description = match($awardName) {
+                    $description = match ($awardName) {
                         'Triple-Double Machine' => 'Player averaging triple-double for the season',
                         'Shooting Efficiency Leader' => 'Player with highest true shooting percentage (min. 300 attempts)',
                         'Player Efficiency Leader' => 'Player with highest Player Efficiency Rating (PER)',
@@ -1208,7 +1206,7 @@ class AwardsController extends Controller
                         'Steals Game Leader' => 'Player with most steals in a single game',
                         default => 'Outstanding statistical achievement'
                     };
-                    
+
                     $this->insertAward($player, $awardName, $description, $latestSeasonId);
                 }
             }
@@ -1254,7 +1252,7 @@ class AwardsController extends Controller
         if ($playerStats) {
             try {
                 DB::beginTransaction();
-    
+
                 // Insert award
                 DB::table('season_awards')->updateOrInsert(
                     [
@@ -1269,11 +1267,11 @@ class AwardsController extends Controller
                         'updated_at' => now(),
                     ]
                 );
-    
+
                 // Update player contract and add transaction record
                 // $this->upsertCurrentSeasonStoryline();
                 // $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
-    
+
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
@@ -1285,7 +1283,7 @@ class AwardsController extends Controller
             }
         }
     }
-    
+
     private function processAwardContractExtension($playerStats, $awardName, $seasonId)
     {
         // Step 1: Check if the award is eligible
@@ -1351,38 +1349,38 @@ class AwardsController extends Controller
     {
         // Fetch data from the view table directly
         $mvpList = DB::table('finals_mvp_with_stats')  // Assuming this is the name of the view
-                    ->select(
-                        'player_id',
-                        'player_name',
-                        'player_role',
-                        'current_team_names',
-                        'mvp_winning_team_names',
-                        'awards_won',
-                        'is_active',
-                        'total_games',
-                        'total_games_played',
-                        'avg_minutes_per_game',
-                        'avg_points_per_game',
-                        'avg_rebounds_per_game',
-                        'avg_assists_per_game',
-                        'avg_steals_per_game',
-                        'avg_blocks_per_game',
-                        'avg_turnovers_per_game',
-                        'avg_fouls_per_game',
-                        'total_points',
-                        'total_rebounds',
-                        'total_assists',
-                        'total_steals',
-                        'total_blocks',
-                        'total_turnovers',
-                        'total_fouls',
-                        'stats_created_at',
-                        'stats_updated_at'
-                    )
-                    ->where('player_id','!=',null)
-                    ->orderByDesc('stats_created_at')  // Ensure it's ordered by most recent stats
-                    ->get();
-    
+            ->select(
+                'player_id',
+                'player_name',
+                'player_role',
+                'current_team_names',
+                'mvp_winning_team_names',
+                'awards_won',
+                'is_active',
+                'total_games',
+                'total_games_played',
+                'avg_minutes_per_game',
+                'avg_points_per_game',
+                'avg_rebounds_per_game',
+                'avg_assists_per_game',
+                'avg_steals_per_game',
+                'avg_blocks_per_game',
+                'avg_turnovers_per_game',
+                'avg_fouls_per_game',
+                'total_points',
+                'total_rebounds',
+                'total_assists',
+                'total_steals',
+                'total_blocks',
+                'total_turnovers',
+                'total_fouls',
+                'stats_created_at',
+                'stats_updated_at'
+            )
+            ->where('player_id', '!=', null)
+            ->orderByDesc('stats_created_at')  // Ensure it's ordered by most recent stats
+            ->get();
+
         // Return the data as a JSON response
         return response()->json($mvpList);
     }
@@ -1401,9 +1399,15 @@ class AwardsController extends Controller
             ->leftJoin('seasons AS ss', 'ss.id', '=', 'all_s.season_id') // Join with player_season_stats to count distinct season_id
             ->where('all_s.season_id', $seasonId)  // Filter by season_id
             ->whereIn('s.round', [
-                'play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals',
-                'round_of_32', 'round_of_16', 'quarter_finals', 'semi_finals',
-                'interconference_semi_finals', 'finals'
+                'play_ins_elims_round_1',
+                'play_ins_elims_round_2',
+                'play_ins_finals',
+                'round_of_32',
+                'round_of_16',
+                'quarter_finals',
+                'semi_finals',
+                'interconference_semi_finals',
+                'finals'
             ])
             ->where('s.season_id', $seasonId) // Ensure we're filtering by the correct season in the schedules table
             ->select([
@@ -1419,17 +1423,17 @@ class AwardsController extends Controller
                 DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" THEN s.game_id END) AS finals_appearances'),
                 DB::raw('COUNT(DISTINCT s.game_id) AS total_playoff_appearances'),
                 DB::raw('COUNT(DISTINCT CASE WHEN s.round IN ("play_ins_elims_round_1", "play_ins_elims_round_2", "play_ins_finals", "round_of_32", "round_of_16", "quarter_finals", "semi_finals", "interconference_semi_finals", "finals") THEN s.season_id END) AS seasons_played_in_playoffs'),
-                
+
                 // Counting distinct seasons from player_season_stats
                 DB::raw('COUNT(DISTINCT pss.season_id) AS total_seasons_played'),
-                
+
                 // Championship check: Compare pg.team_id with finals_winner_id in the finals round
                 DB::raw('COUNT(DISTINCT CASE WHEN s.round = "finals" AND pg.team_id = ss.finals_winner_id THEN s.game_id END) AS championships_won')
             ])
             ->groupBy('p.id', 'all_s.season_id') // Group by both player and season to avoid over-counting
             ->get();
 
-    
+
         // Insert or update the data for each player in the player_playoff_appearances table
         foreach ($playerData as $data) {
             DB::table('player_playoff_appearances')->updateOrInsert(
@@ -1454,7 +1458,7 @@ class AwardsController extends Controller
             );
         }
 
-        return response()->json(['message' => 'Success update in season '. $seasonId]);
+        return response()->json(['message' => 'Success update in season ' . $seasonId]);
     }
     public static function totalRegularSeasonGames($seasonId, $teamId)
     {

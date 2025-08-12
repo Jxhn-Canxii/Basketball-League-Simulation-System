@@ -49,7 +49,7 @@ class GameController extends Controller
                 'message' => 'Game not found',
             ], 404);
         }
-        
+
         $playerStats = \DB::table('player_game_stats')
             ->where('player_game_stats.game_id', $game_id)
             ->leftJoin('players as p', 'player_game_stats.player_id', '=', 'p.id') // Alias for players table
@@ -182,15 +182,15 @@ class GameController extends Controller
         // Get all player stats with calculated percentages
         $playerStats = $playerStats->map(function ($stat) {
             // Calculate shooting percentages
-            $stat->field_goal_percent = $stat->field_goal_attempts > 0 
+            $stat->field_goal_percent = $stat->field_goal_attempts > 0
                 ? round(($stat->field_goals_made / $stat->field_goal_attempts) * 100, 1)
                 : 0;
 
-            $stat->three_point_percent = $stat->three_point_attempts > 0 
+            $stat->three_point_percent = $stat->three_point_attempts > 0
                 ? round(($stat->three_pointers_made / $stat->three_point_attempts) * 100, 1)
                 : 0;
 
-            $stat->free_throw_percent = $stat->free_throw_attempts > 0 
+            $stat->free_throw_percent = $stat->free_throw_attempts > 0
                 ? round(($stat->free_throws_made / $stat->free_throw_attempts) * 100, 1)
                 : 0;
 
@@ -252,7 +252,7 @@ class GameController extends Controller
         $bestWinningTeamPlayer = $winningTeamPlayersStats
             ->sortByDesc('eff')
             ->first();
-    
+
 
 
         // Fetch player details for the best player of the winning team if exists
@@ -289,11 +289,11 @@ class GameController extends Controller
 
         // Query to get head-to-head record
         $headToHeadRecord = $this->getHeadToHeadRecord($game->home_id, $game->away_id);
-    
+
         $homeTeamPlayersArray = [];
         $awayTeamPlayersArray = [];
 
-        if($show_stats){
+        if ($show_stats) {
             // Fetch all players that might be relevant to the game (ignoring team_id here)
             $players = \DB::table('players')
                 ->whereIn('id', $playerStats->pluck('player_id')->toArray())
@@ -313,24 +313,24 @@ class GameController extends Controller
 
             $homeTeamPlayersArray = $homeTeamPlayers->map(function ($player) use ($playerStats) {
                 $stats = $playerStats->get($player->id);
-            
+
                 // Field goal percentage, 2-point percentage, 3-point percentage, and free throw percentage calculation
                 $fgPercentage = $stats && $stats->field_goal_attempts ? ($stats->field_goals_made / $stats->field_goal_attempts) * 100 : 0;
                 $twoPPercentage = $stats && $stats->two_point_attempts ? ($stats->two_pointers_made / $stats->two_point_attempts) * 100 : 0;
                 $threePPercentage = $stats && $stats->three_point_attempts ? ($stats->three_pointers_made / $stats->three_point_attempts) * 100 : 0;
                 $ftPercentage = $stats && $stats->free_throw_attempts ? ($stats->free_throws_made / $stats->free_throw_attempts) * 100 : 0;
-            
+
                 // Calculate a composite score based on various stats (weights are customizable)
                 $compositeScore = (
-                    ($stats->points * 1) + 
-                    ($stats->assists * 1.5) + 
-                    ($stats->rebounds * 1.2) + 
-                    ($stats->steals * 2) + 
-                    ($stats->blocks * 2) - 
-                    ($stats->turnovers * 1) - 
+                    ($stats->points * 1) +
+                    ($stats->assists * 1.5) +
+                    ($stats->rebounds * 1.2) +
+                    ($stats->steals * 2) +
+                    ($stats->blocks * 2) -
+                    ($stats->turnovers * 1) -
                     ($stats->fouls * 0.5)
                 );
-            
+
                 return [
                     'player_id' => $player->id,
                     'team_id' => $player->team_id,
@@ -366,28 +366,28 @@ class GameController extends Controller
                     'composite_score' => $compositeScore  // Add composite score to the array
                 ];
             })->sortByDesc('composite_score')->values()->toArray();  // Sort by composite score in descending order
-            
+
             // Convert away team player stats to an array, including those with no recorded stats
             $awayTeamPlayersArray = $awayTeamPlayers->map(function ($player) use ($playerStats) {
                 $stats = $playerStats->get($player->id);
-            
+
                 // Field goal percentage, 2-point percentage, 3-point percentage, and free throw percentage calculation
                 $fgPercentage = $stats && $stats->field_goal_attempts ? ($stats->field_goals_made / $stats->field_goal_attempts) * 100 : 0;
                 $twoPPercentage = $stats && $stats->two_point_attempts ? ($stats->two_pointers_made / $stats->two_point_attempts) * 100 : 0;
                 $threePPercentage = $stats && $stats->three_point_attempts ? ($stats->three_pointers_made / $stats->three_point_attempts) * 100 : 0;
                 $ftPercentage = $stats && $stats->free_throw_attempts ? ($stats->free_throws_made / $stats->free_throw_attempts) * 100 : 0;
-            
+
                 // Calculate a composite score based on various stats (weights are customizable)
                 $compositeScore = (
-                    ($stats->points * 1) + 
-                    ($stats->assists * 1.5) + 
-                    ($stats->rebounds * 1.2) + 
-                    ($stats->steals * 2) + 
-                    ($stats->blocks * 2) - 
-                    ($stats->turnovers * 1) - 
+                    ($stats->points * 1) +
+                    ($stats->assists * 1.5) +
+                    ($stats->rebounds * 1.2) +
+                    ($stats->steals * 2) +
+                    ($stats->blocks * 2) -
+                    ($stats->turnovers * 1) -
                     ($stats->fouls * 0.5)
                 );
-            
+
                 return [
                     'player_id' => $player->id,
                     'team_id' => $player->team_id,
@@ -435,10 +435,10 @@ class GameController extends Controller
             ->where('seasons.id', $game->season_id)
             ->select('seasons.name as season_name', 'leagues.id as league_id', 'leagues.name as league_name')
             ->first();
-    
+
         $seasonName = $seasonData->season_name;
         $leagueName = $seasonData->league_name;
-    
+
         // Format data for box score
         $boxScore = [
             'game_id' => $game->game_id,
@@ -485,7 +485,8 @@ class GameController extends Controller
             'box_score' => $boxScore,
         ]);
     }
-    private function getStatsLeaders($seasonId) {
+    private function getStatsLeaders($seasonId)
+    {
         // List of possible stat types to randomize (both averages and totals)
         $statTypes = [
             'avg_points_per_game' => 'points per game',
@@ -503,11 +504,11 @@ class GameController extends Controller
             'total_turnovers' => 'total turnovers',
             'total_fouls' => 'total fouls'
         ];
-    
+
         // Randomly pick a stat type (this now includes total stats as well)
         $randomStatKey = array_rand($statTypes);
         $statType = $statTypes[$randomStatKey]; // Get the readable stat name (e.g., 'points', 'steals')
-    
+
         // Step 1: Retrieve the overall leader with the highest stat for the season
         $overallLeader = DB::table('player_season_stats')
             ->select(
@@ -544,7 +545,7 @@ class GameController extends Controller
             ->orderByDesc($randomStatKey) // Order by the randomized stat key (which could be a total or avg stat)
             ->limit(1)
             ->first();
-    
+
         // Step 2: Retrieve the rookie leader with the highest stat for the season
         $rookieLeader = DB::table('player_season_stats')
             ->select(
@@ -582,23 +583,23 @@ class GameController extends Controller
             ->orderByDesc($randomStatKey) // Order by the randomized stat key (which could be a total or avg stat)
             ->limit(1)
             ->first();
-    
+
         // Step 3: Handle case where either leader could be null
         $leaders = collect([$overallLeader, $rookieLeader])->filter(); // Filter out nulls
-        
+
         if ($leaders->isEmpty()) {
             return null; // No valid leaders found
         }
-    
+
         // Randomly select the leader
         $selectedLeader = $leaders->random();
-    
+
         // Step 4: Fetch the selected stat value dynamically
         $statValue = $selectedLeader ? $selectedLeader->{$randomStatKey} : 0;
-        
+
         // Build the message
         $message =  ($selectedLeader->is_rookie ? "Rookie" : "Overall") . " Season Leader in " . ucfirst($statType);
-    
+
         // Prepare the response data
         $responseData = [
             'player_name' => $selectedLeader->player_name,
@@ -608,13 +609,14 @@ class GameController extends Controller
             'stat_value' => $statValue,
             'message' => $message,
         ];
-    
+
         return $responseData;
     }
-    
-    private function getIngameInjury($gameId) {
+
+    private function getIngameInjury($gameId)
+    {
         return DB::table('injured_players_view as i')
-            ->select('i.*','p.role','p.position')
+            ->select('i.*', 'p.role', 'p.position')
             ->join('players as p', 'i.player_id', '=', 'p.id') // Join with player_ratings table
             ->where('game_id', $gameId)
             ->get();
@@ -640,7 +642,7 @@ class GameController extends Controller
             ->get();
 
         if ($teamRatings->isEmpty()) {
-            return response()->json(['message' => 'No team ratings found for this season','season_id' => $seasonId], 404);
+            return response()->json(['message' => 'No team ratings found for this season', 'season_id' => $seasonId], 404);
         }
 
         return $teamRatings[0];
@@ -725,5 +727,4 @@ class GameController extends Controller
             'draws' => $headToHead->draws,
         ];
     }
-
 }

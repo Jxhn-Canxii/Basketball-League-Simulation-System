@@ -156,17 +156,17 @@ class TestController extends Controller
     {
         return (int) (
             DB::table('player_season_stats')
-                ->where('season_id', $seasonId)
-                ->where('player_id', $playerId)
-                ->orderByDesc('id') // get the latest record
-                ->value('total_games') ?? 19
+            ->where('season_id', $seasonId)
+            ->where('player_id', $playerId)
+            ->orderByDesc('id') // get the latest record
+            ->value('total_games') ?? 19
         );
     }
 
-      private function getBestFreeAgentAvailable($position)
+    private function getBestFreeAgentAvailable($position)
     {
         $positions = explode('/', strtoupper($position)); // Normalize casing
-    
+
         // Flexible position filter: match any part of multi-position fields
         $positionFilter = function ($query) use ($positions) {
             $query->where(function ($q) use ($positions) {
@@ -175,10 +175,10 @@ class TestController extends Controller
                 }
             });
         };
-    
+
         // Get latest season id (adjust if your season logic is different)
         $latestSeasonId = get_current_season_id();
-    
+
         // Top 10 by overall_rating
         $byOverall = DB::table('players')
             ->where('players.is_active', 1)
@@ -198,7 +198,7 @@ class TestController extends Controller
             ->orderByDesc('players.overall_rating')
             ->limit(10)
             ->get();
-    
+
         // Top 10 by awards count
         $byAwards = DB::table('players')
             ->leftJoin('season_awards', 'players.id', '=', 'season_awards.player_id')
@@ -230,7 +230,7 @@ class TestController extends Controller
             ->orderByDesc('awards_count')
             ->limit(10)
             ->get();
-    
+
         // Top 10 by EFF in latest season
         $byEff = DB::table('players')
             ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
@@ -253,15 +253,15 @@ class TestController extends Controller
             ->orderByDesc('player_season_stats.eff')
             ->limit(10)
             ->get();
-    
+
         // Merge all and deduplicate by player_id
         $merged = $byOverall->merge($byAwards)->merge($byEff)->unique('player_id')->values();
-    
+
         // Return a random player from the merged top candidates
         if ($merged->isNotEmpty()) {
             return $merged->random();
         }
-    
+
         // Fallback: any available player at the position
         return DB::table('players')
             ->where('players.is_active', 1)

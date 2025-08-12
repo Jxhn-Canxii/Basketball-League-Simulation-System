@@ -38,8 +38,8 @@ class RatingsController extends Controller
             \Log::info('Received request:', ['team_id' => $teamId, 'is_last' => $isLast]);
 
             // Fetch all active players, filtered by team_id if provided
-           $query = Player::where('is_active', 1)
-                    ->where('age', '<=', 65);
+            $query = Player::where('is_active', 1)
+                ->where('age', '<=', 65);
 
             if ($teamId) {
                 $query->where('team_id', $teamId);
@@ -54,7 +54,6 @@ class RatingsController extends Controller
                 $team = Teams::find($teamId);
                 if ($team) {
                     $teamName = $team->name;
-                
                 }
                 $this->updateCoachContract($teamId);
             }
@@ -63,43 +62,43 @@ class RatingsController extends Controller
             $declinedPlayers = [];
             $reSignedPlayers = []; // Track re-signed players
 
-           // Fetch player statistics for the current season
+            // Fetch player statistics for the current season
             $stats = DB::table('player_season_stats')
-            ->join('players', 'players.id', '=', 'player_season_stats.player_id') // Join on player ID
-            ->where('player_season_stats.season_id', $seasonId)
-            ->where('players.team_id', $teamId)
-            ->select(
-                'player_season_stats.*', 
-                'players.name as player_name',
-                'players.contract_years as contract_years', 
-                'players.hardship_contract as hardship_contract', 
-                'players.role as role',
-                'players.age as age',
-                'players.shooting_rating as shooting_rating',
-                'players.defense_rating as defense_rating',
-                'players.passing_rating as passing_rating',
-                'players.rebounding_rating as rebounding_rating',
-                'players.overall_rating as overall_rating',
-                'players.basketball_iq_rating as basketball_iq_rating',
-                'players.injury_prone_percentage as injury_prone_percentage',
-                'players.is_rookie as is_rookie',
-                'players.is_active as is_active',
-                'players.retirement_age as retirement_age',
-                'players.injury_recovery_games as injury_recovery_games',
-                'players.position' // Add any additional player fields
-            )
-            ->orderByDesc('player_season_stats.eff') // Sort directly in the query
-            ->get();
+                ->join('players', 'players.id', '=', 'player_season_stats.player_id') // Join on player ID
+                ->where('player_season_stats.season_id', $seasonId)
+                ->where('players.team_id', $teamId)
+                ->select(
+                    'player_season_stats.*',
+                    'players.name as player_name',
+                    'players.contract_years as contract_years',
+                    'players.hardship_contract as hardship_contract',
+                    'players.role as role',
+                    'players.age as age',
+                    'players.shooting_rating as shooting_rating',
+                    'players.defense_rating as defense_rating',
+                    'players.passing_rating as passing_rating',
+                    'players.rebounding_rating as rebounding_rating',
+                    'players.overall_rating as overall_rating',
+                    'players.basketball_iq_rating as basketball_iq_rating',
+                    'players.injury_prone_percentage as injury_prone_percentage',
+                    'players.is_rookie as is_rookie',
+                    'players.is_active as is_active',
+                    'players.retirement_age as retirement_age',
+                    'players.injury_recovery_games as injury_recovery_games',
+                    'players.position' // Add any additional player fields
+                )
+                ->orderByDesc('player_season_stats.eff') // Sort directly in the query
+                ->get();
 
             // Rank players and assign roles
             $rankedPlayers = $stats->values();
 
-           // Assign the top 3 players as "star player"
+            // Assign the top 3 players as "star player"
             $rankedPlayers->take(1)->each(function ($playerStat) {
                 Player::where('id', $playerStat->player_id)->update(['role' => 'star player']);
             });
-             // Assign the next 2 players as "all star"
-             $rankedPlayers->slice(1, 2)->each(function ($playerStat) {
+            // Assign the next 2 players as "all star"
+            $rankedPlayers->slice(1, 2)->each(function ($playerStat) {
                 Player::where('id', $playerStat->player_id)->update(['role' => 'all star']);
             });
 
@@ -126,18 +125,18 @@ class RatingsController extends Controller
                         'contract_years' => 0, // Reset contract
                         'hardship_contract' => 0 // Clear hardship flag
                     ]);
-        
+
                     // Log transaction
                     DB::table('transactions')->insert([
                         'player_id' => $player->player_id,
-                        'season_id' =>$player->season_id,
+                        'season_id' => $player->season_id,
                         'details' => 'Released to clear roster spot for the next season (hardship-exception player).',
                         'from_team_id' => $player->team_id,
                         'to_team_id' => 0, // Free agent pool
                         'status' => 'released-hardship'
                     ]);
                 }
-                
+
                 $totalGames = $player->total_games ?? 0;
                 $rolePctMap = [
                     'star player' => 0.80,
@@ -150,7 +149,7 @@ class RatingsController extends Controller
                 $defaultPct = 0.30;
                 $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
 
-            // Base total games across contract
+                // Base total games across contract
                 $totalContractGames = $totalGames * max($player->contract_years, 1);
 
                 // Cap to avoid excessive tolerance (realism)
@@ -172,14 +171,14 @@ class RatingsController extends Controller
                 // Clamp within logical bounds
                 $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
 
-                 // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
+                // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
                 if ($player->injury_recovery_games > $requiredRecoveryGames) {
                     $waiveChance = rand(1, 100); // Random chance for waiving the player
                     if ($waiveChance <= 60) { // 50% chance to waive
                         DB::table('transactions')->insert([
                             'player_id' => $player->id,
                             'season_id' => $seasonId,
-                            'details' => 'Waived by (' .$teamName.') due to extended injury recovery period',
+                            'details' => 'Waived by (' . $teamName . ') due to extended injury recovery period',
                             'from_team_id' => $teamId,
                             'to_team_id' => 0,
                             'status' => 'waived',
@@ -260,7 +259,7 @@ class RatingsController extends Controller
                         DB::table('transactions')->insert([
                             'player_id' => $player->id,
                             'season_id' => $seasonId,
-                            'details' => 'Re-signed with ' . $teamName.' For contract extension of '. $player->contract_years .' years',
+                            'details' => 'Re-signed with ' . $teamName . ' For contract extension of ' . $player->contract_years . ' years',
                             'from_team_id' => $player->team_id,
                             'to_team_id' => $player->team_id,
                             'status' => 'resigned',
@@ -354,10 +353,9 @@ class RatingsController extends Controller
 
                 // Log the updated ratings
                 $this->logPlayerRatings($player, $seasonId);
-                
             }
 
-             // Waive the last 3 players (remove them from the team)
+            // Waive the last 3 players (remove them from the team)
             foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
                 // Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
                 // Optionally log the waived player transaction if you want to track this
@@ -365,7 +363,7 @@ class RatingsController extends Controller
                     DB::table('transactions')->insert([
                         'player_id' => $playerStat->player_id,
                         'season_id' => $seasonId,
-                        'details' => 'Waived by (' .$teamName.') to clear roster spot for the next season.',
+                        'details' => 'Waived by (' . $teamName . ') to clear roster spot for the next season.',
                         'from_team_id' => $teamId,
                         'to_team_id' => 0,
                         'status' => 'waived',
@@ -454,7 +452,7 @@ class RatingsController extends Controller
             ]);
     }
 
-    
+
     public function updateCoachContract($teamId)
     {
         $team = DB::table('teams')->where('id', $teamId)->first();
@@ -499,8 +497,8 @@ class RatingsController extends Controller
                 'updated_at' => now(),
             ]);
 
-    
-    
+
+
 
         if ($newContractYears == 0) {
             $latestSeasonId = get_current_season_id();
@@ -519,7 +517,7 @@ class RatingsController extends Controller
                         'coach_id' => 0,
                         'updated_at' => now(),
                     ]);
-                
+
                 DB::table('coaches')
                     ->where('id', $coachId)
                     ->update([
@@ -616,7 +614,7 @@ class RatingsController extends Controller
                 ->where('player_id', $player->id)
                 ->exists();
             $retirementAge = rand($player->age + 5, 65);
-            
+
             if (!$alreadyCoach) {
                 DB::table('coaches')->insert([
                     'name' => $player->name,
@@ -691,7 +689,7 @@ class RatingsController extends Controller
             $player->overall_rating = ($player->shooting_rating + $player->defense_rating + $player->passing_rating + $player->rebounding_rating) / 4;
         }
     }
-    
+
     private function logPlayerRatings($player, $seasonId)
     {
         // Check if the player ratings for the current season already exist
@@ -813,5 +811,4 @@ class RatingsController extends Controller
             'performance_change' => $performanceChange, // How much the player improved or declined
         ];
     }
-
 }
