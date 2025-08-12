@@ -458,13 +458,13 @@ class PlayoffController extends Controller
             if (!$allPrevRoundsSeriesFinished) {
                 return response()->json([
                     'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
-                ],200);
+                ],400);
             }
 
             if ($currentRoundExists) {
                 return response()->json([
                     'message' => 'Round schedule already created',
-                ],200);
+                ],400);
             }
 
             // Retrieve the league_id from the seasons table
