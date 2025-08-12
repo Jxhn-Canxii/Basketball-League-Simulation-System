@@ -276,35 +276,42 @@ const simulateFullPlayoffs = async () => {
 
     if (season_info.value.seasons[0].status <= 2) {
       await createPlayOffScheduleAuto(initialRound);
+      await fetchSeasonPlayoffs(is_play_ins.value);
     }
 
     while (currentRoundIndex < roundOrder.length) {
       const roundName = roundOrder[currentRoundIndex];
+      const isLastRoundSimulated = season_playoffs.value.latest_round_simulated;
       console.log("Processing round:", roundName);
 
       await fetchSeasonInfo(form.seasons_id);
       await fetchSeasonPlayoffs(is_play_ins.value);
 
       const playoffs = season_playoffs.value.playoffs[roundName] || [];
-      if (playoffs.length === 0) {
-          console.log(`No matches found for round ${roundName}, skipping...`);
-          currentRoundIndex++;
-          continue;
+      const matches = season_playoffs.value.games[roundName] || [];
+
+      if (matches.length === 0 && roundName !== isLastRoundSimulated) {
+        console.log(`No matches found for round ${roundName}, skipping...`);
+        currentRoundIndex++;
+        continue;
       }
-      
+      if (matches.length === 0 && roundName === isLastRoundSimulated) {
+        // Try to create schedule again if latest round simulated but no matches
+        await createPlayOffScheduleAuto(initialRound);
+        continue;
+      }
+
       for (let i = 0; i < playoffs.length; i++) {
-        const playoffs = playoffs[i];
-        const playoffRoundName = playoffs.round;
-        const matches = season_playoffs.value.games[playoffRoundName] || [];
-        for (let i = 0; i < matches.length; i++) {
-          const match = matches[i];
+        const playoffSeries = playoffs[i];
+        for (let j = 0; j < matches.length; j++) {
+          const match = matches[j];
           if (match.winner === 0) {
-            active_index.value = i;
+            active_index.value = j;
             const series_id = await simulateGame(
               match.id,
               match.game_id,
               2,
-              i,
+              j,
               roundName
             );
 
@@ -333,16 +340,24 @@ const simulateFullPlayoffs = async () => {
           }
         }
       }
+
       active_index.value = -1;
 
       if (roundName !== "finals") {
         try {
           console.log(`Creating schedule for next round after ${roundName}...`);
           const nextRoundResponse = await createPlayOffScheduleAuto(roundName);
+          if (!nextRoundResponse.success) {
+            console.warn(`Cannot create next round schedule: ${nextRoundResponse.message}`);
+            await fetchSeasonInfo(form.seasons_id);
+            await fetchSeasonPlayoffs(is_play_ins.value);
+            break;
+          }
           if (
-            typeof nextRoundResponse === "string" &&
-            nextRoundResponse.toLowerCase().includes("already created")
+            nextRoundResponse.message.toLowerCase().includes("already created")
           ) {
+            await fetchSeasonInfo(form.seasons_id);
+            await fetchSeasonPlayoffs(is_play_ins.value)
             console.log(`Schedule after ${roundName} already exists.`);
           }
         } catch (scheduleError) {
@@ -409,18 +424,32 @@ const createPlayOffScheduleAuto = async (round) => {
       text: response.data.message,
     });
 
-    return response.data.message;
+    return { success: true, message: response.data.message };
   } catch (error) {
-    console.error("Error creating playoff schedule:", error);
     Swal.close();
+
+    const errorMsg = error.response?.data?.message || "Failed to create playoff schedule.";
+
+    if (errorMsg.toLowerCase().includes("already created")) {
+      console.log("Schedule already created for round:", round);
+      return { success: true, message: errorMsg };
+    }
+
+    if (errorMsg.toLowerCase().includes("current round series schedule is ongoing")) {
+      console.log("Current round series ongoing. Can't create next round schedule yet:", round);
+      return { success: false, message: errorMsg };
+    }
+
     Swal.fire({
       icon: "error",
       title: "Error!",
-      text: error.response?.data?.message || "Failed to create playoff schedule.",
+      text: errorMsg,
     });
+
     throw error;
   }
 };
+
 
 const fetchSeasonInfo = async (id) => {
   try {
@@ -503,7 +532,8 @@ watch(
   }
 );
 
-onMounted(() => {
-  fetchSeasonInfo(props.season_id);
+onMounted(async () => {
+  await fetchSeasonInfo(props.season_id);
+  await fetchSeasonPlayoffs(2);
 });
 </script>

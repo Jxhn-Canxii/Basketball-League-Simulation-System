@@ -20,7 +20,7 @@ use Carbon\Carbon;
 
 class PlayoffController extends Controller
 {
-    
+
     public function seasonsplayoffs(Request $request)
     {
         $seasonId = $request->season_id;
@@ -50,19 +50,20 @@ class PlayoffController extends Controller
         $roundOrder = $this->getRoundOrder($start, $type, $status);
 
         return response()->json([
-            'playoffs'=> $playoffs,
-            'games'=> $games,
+            'playoffs' => $playoffs,
+            'games' => $games,
             'round_order' => $roundOrder,
             'latest_round_simulated' => $lastRound,
         ]);
     }
 
-    private function getLastRound($seasonId) {
+    private function getLastRound($seasonId)
+    {
 
-       return \DB::table('schedules')
-        ->where('season_id', $seasonId)
-        ->where('status', '!=', 1)
-        ->max('round');
+        return \DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->where('status', '!=', 1)
+            ->max('round');
     }
 
     private function getRoundOrder($start, $type)
@@ -102,17 +103,22 @@ class PlayoffController extends Controller
 
         $format = $formats[$formatKey];
 
-        // Build $roundIndices dynamically if using round_sequence
+        // Correct usage: get current rounds array directly from buildRoundsFromSequence
         if (isset($format['round_sequence'])) {
-            $roundIndices = $this->buildRoundsFromSequence($format['round_sequence'],$status);
+            $currentRounds = $this->buildRoundsFromSequence($format['round_sequence'], $status);
+        } else {
+            $currentRounds = [];
         }
 
-        $currentRounds = $roundIndices[$status] ?? [];
+        // Debug: log current rounds to verify they are populated
+        // \Log::debug('Current rounds for status '.$status.':', $currentRounds);
 
-        // Fetch data and build tree
+        // Initialize tree structure
         $tree = [];
+
         foreach ($currentRounds as $round) {
             $tree[$round] = [];
+
             $playoffSeries = DB::table('playoff_series')
                 ->select(
                     'playoff_series.id',
@@ -138,7 +144,9 @@ class PlayoffController extends Controller
                 ->get();
 
             $teamIds = $playoffSeries->pluck('home_team_id')->merge($playoffSeries->pluck('away_team_id'))->unique();
+
             $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+
             $standingsData = DB::table($standingsTable)
                 ->whereIn('team_id', $teamIds)
                 ->where('season_id', $seasonId)
@@ -205,7 +213,7 @@ class PlayoffController extends Controller
         return $tree;
     }
 
-       private function playoffSeriesGameTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
+    private function playoffSeriesGameTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
     {
         try {
             $currentSeasonId = get_current_season_id();
@@ -230,6 +238,7 @@ class PlayoffController extends Controller
 
             $format = $formats[$formatKey];
 
+
             // Build $roundIndices dynamically using round_sequence
             if (isset($format['round_sequence'])) {
                 $roundIndices = $this->buildRoundsFromSequence($format['round_sequence'], $status);
@@ -250,7 +259,7 @@ class PlayoffController extends Controller
                     ->get();
 
                 if ($playoffSchedule->isEmpty()) {
-                    Log::info("No games found for round {$round} in season {$seasonId}.");
+                    // Log::info("No games found for round {$round} in season {$seasonId}.");
                     continue; // Skip if no games for this round
                 }
 
@@ -302,37 +311,15 @@ class PlayoffController extends Controller
             });
 
             return $tree;
-
         } catch (\Exception $e) {
-            Log::error("Error in playoffSeriesGameTree: {$e->getMessage()}", [
-                'season_id' => $seasonId,
-                'status' => $status,
-                'format_key' => $formatKey,
-                'trace' => $e->getTraceAsString(),
-            ]);
+            // Log::error("Error in playoffSeriesGameTree: {$e->getMessage()}", [
+            //     'season_id' => $seasonId,
+            //     'status' => $status,
+            //     'format_key' => $formatKey,
+            //     'trace' => $e->getTraceAsString(),
+            // ]);
             throw $e; // Rethrow to allow caller to handle
         }
-    }
-
-    private function buildRoundsFromSequence($roundSequence, $status)
-    {
-        // Map status to cumulative rounds for single_elim_16_with_playins
-        $statusToRounds = [
-            1 => ['play_ins_elims_round_1'],
-            2 => ['play_ins_elims_round_1'],
-            3 => ['play_ins_elims_round_1'],
-            4 => ['play_ins_elims_round_1'],
-            5 => ['play_ins_elims_round_1', 'play_ins_elims_round_2'],
-            6 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals'],
-            7 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16'],
-            8 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals'],
-            9 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals'],
-            10 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals'],
-            11 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals','finals'],
-        ];
-
-        // Return rounds up to the given status, default to all rounds if status is invalid
-        return $statusToRounds[$status] ?? $roundSequence;
     }
 
     private function playoffTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
@@ -361,7 +348,7 @@ class PlayoffController extends Controller
 
         // NEW: Build $roundIndices dynamically if using round_sequence
         if (isset($format['round_sequence'])) {
-            $roundIndices = $this->buildRoundsFromSequence($format['round_sequence'],$status);
+            $roundIndices = $this->buildRoundsFromSequence($format['round_sequence'], $status);
         }
 
         $currentRounds = $roundIndices[$status] ?? [];
@@ -448,7 +435,7 @@ class PlayoffController extends Controller
                 ->where('season_id', $seasonId)
                 ->whereIn('round', [$prev_round, $round]) // Fetch previous round + current round in one query
                 ->get();
-            
+
             $allPrevRoundsSeriesFinished = $series->where('round', $prev_round)
                 ->every(fn($schedule) => $schedule->status == 2);
 
@@ -458,13 +445,13 @@ class PlayoffController extends Controller
             if (!$allPrevRoundsSeriesFinished) {
                 return response()->json([
                     'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
-                ],400);
+                ], 400);
             }
 
             if ($currentRoundExists) {
                 return response()->json([
                     'message' => 'Round schedule already created',
-                ],400);
+                ], 400);
             }
 
             // Retrieve the league_id from the seasons table
@@ -562,7 +549,7 @@ class PlayoffController extends Controller
         try {
             self::insertSchedule($seasonId, $round, $allSchedules);
 
-            self::updateSeasonPlayoffRound($seasonId,$round);
+            self::updateSeasonPlayoffRound($seasonId, $round);
             // If the schedule was inserted successfully, return a success response
             return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
         } catch (Exception $e) {
@@ -574,12 +561,12 @@ class PlayoffController extends Controller
     private static function playoffScheduleByConference($request)
     {
         // Retrieve inputs
-        try{
+        try {
             $seasonId = $request->season_id;
             $round = $request->round;
             $start = $request->start;
 
-        
+
             // Update season champions and losers if needed
             if ($start == 16 && $round === 'play_ins_elims_round_1') {
                 self::updateSeasonChampionsAndLosers($seasonId);
@@ -620,16 +607,12 @@ class PlayoffController extends Controller
                     $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
                     $allSchedules = array_merge($allSchedules, $scheduleFirstRound);
                 }
-            }
-            
-            else if ($round == 'play_ins_elims_round_2') {
+            } else if ($round == 'play_ins_elims_round_2') {
                 foreach ($conferences as $conferenceId) {
                     $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
                     $allSchedules = array_merge($allSchedules, $scheduleFirstRound);
                 }
-            }
-
-            else if ($round == 'play_ins_finals') {
+            } else if ($round == 'play_ins_finals') {
                 // Get the results of the previous play-in rounds to determine the winners and losers
                 foreach ($conferences as $conferenceId) {
                     // Get the results of the 7th vs 8th and 9th vs 10th games
@@ -686,13 +669,10 @@ class PlayoffController extends Controller
                     $schedulePlayInFinals = self::createSchedule($playInFinalsTeams, $seasonId, 'play_ins_finals', $conferenceId);
                     $allSchedules = array_merge($allSchedules, $schedulePlayInFinals);
                 }
-            } 
-            
-            else if ($round == 'interconference_semi_finals' || $round == 'finals') {
+            } else if ($round == 'interconference_semi_finals' || $round == 'finals') {
                 $pairings = self::generatePairings16($seasonId, 0, $round);
                 $allSchedules = self::createSchedule($pairings, $seasonId, $round, 0);
-            } 
-            else {
+            } else {
                 //round of 32,round of 36 and quarter finals
                 // Determine the number of top teams to select per conference
 
@@ -750,22 +730,20 @@ class PlayoffController extends Controller
                 }
             }
             // Insert all playoff schedules into the database in a single batch
-            
+
             try {
                 self::insertSchedule($seasonId, $round, $allSchedules);
 
-                self::updateSeasonPlayoffRound($seasonId,$round);
+                self::updateSeasonPlayoffRound($seasonId, $round);
                 // If the schedule was inserted successfully, return a success response
                 return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
             } catch (Exception $e) {
                 // If an exception occurred (due to duplicate schedule), return an error response
                 return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
-                
             }
         } catch (Exception $e) {
             // If an exception occurred (due to duplicate schedule), return an error response
             return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
-            
         }
     }
 
@@ -809,7 +787,7 @@ class PlayoffController extends Controller
 
             // Get series length for the given round
             $seriesLength = $playoffConfig[$round]['series_length'] ?? 3;
-            
+
             // Get conferences
             $conferences = DB::table('conferences')
                 ->where('league_id', $leagueId)
@@ -819,34 +797,32 @@ class PlayoffController extends Controller
             if ($round == 'play_ins_elims_round_1') {
                 foreach ($conferences as $conferenceId) {
                     $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
-                    
+
                     list($seriesData, $scheduleData) = self::createPlayInSeriesAndSchedule(
                         $scheduleFirstRound,
                         $seasonId,
                         $round,
                         $conferenceId
                     );
-                    
+
                     $allSeries = array_merge($allSeries, $seriesData);
                     $allSchedules = array_merge($allSchedules, $scheduleData);
                 }
-            } 
-            else if ($round == 'play_ins_elims_round_2') {
+            } else if ($round == 'play_ins_elims_round_2') {
                 foreach ($conferences as $conferenceId) {
                     $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [9, 10], 2, $round);
-                    
+
                     list($seriesData, $scheduleData) = self::createPlayInSeriesAndSchedule(
                         $scheduleFirstRound,
                         $seasonId,
                         $round,
                         $conferenceId
                     );
-                    
+
                     $allSeries = array_merge($allSeries, $seriesData);
                     $allSchedules = array_merge($allSchedules, $scheduleData);
                 }
-            } 
-            else if ($round == 'play_ins_finals') {
+            } else if ($round == 'play_ins_finals') {
                 $previousRounds = [
                     'first' => 'play_ins_elims_round_1',
                     'second' => 'play_ins_elims_round_2'
@@ -868,24 +844,22 @@ class PlayoffController extends Controller
                     $allSeries = array_merge($allSeries, $seriesData);
                     $allSchedules = array_merge($allSchedules, $scheduleData);
                 }
-            } 
-            else if ($round == 'interconference_semi_finals' || $round == 'finals') {
-            
+            } else if ($round == 'interconference_semi_finals' || $round == 'finals') {
+
                 $pairings = self::generateSeriesPairings16($seasonId, 0, $round);
                 list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
-                    $pairings, 
-                    $seasonId, 
-                    $round, 
-                    0, 
+                    $pairings,
+                    $seasonId,
+                    $round,
+                    0,
                     $seriesLength
                 );
 
                 $allSeries = array_merge($allSeries, $seriesData);
                 $allSchedules = array_merge($allSchedules, $scheduleData);
-            }
-            else if ($round == 'round_of_16') {
+            } else if ($round == 'round_of_16') {
                 foreach ($conferences as $conferenceId) {
-                     // Get the top 6 teams by overall rank for the conference, breaking ties as necessary
+                    // Get the top 6 teams by overall rank for the conference, breaking ties as necessary
                     $conferenceTeams = DB::table('standings_view')
                         ->where('season_id', $seasonId)
                         ->where('conference_id', $conferenceId)
@@ -927,36 +901,35 @@ class PlayoffController extends Controller
                     // Step 4: Combine the top 6 teams with the play-in winners to form the full list of teams for the round
                     $topTeamsByOverallRank = $conferenceTeams; // Now this contains the 8 teams (6 top + 2 play-in winners)
 
-                   
+
                     // Generate pairings
                     $pairings = self::pairSeriesTeams($topTeamsByOverallRank, 8);
 
                     //  dd($pairings );
                     // Create series and schedule for the round
                     list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
-                        $pairings, 
-                        $seasonId, 
-                        $round, 
-                        $conferenceId, 
+                        $pairings,
+                        $seasonId,
+                        $round,
+                        $conferenceId,
                         $seriesLength
                     );
 
                     $allSeries = array_merge($allSeries, $seriesData);
                     $allSchedules = array_merge($allSchedules, $scheduleData);
                 }
-            }
-            else {
+            } else {
                 foreach ($conferences as $conferenceId) {
-                    
+
                     // Generate pairings
                     $pairings = self::generateSeriesPairings16($seasonId, $conferenceId, $round);
 
                     // Create series and schedule for the round
                     list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
-                        $pairings, 
-                        $seasonId, 
-                        $round, 
-                        $conferenceId, 
+                        $pairings,
+                        $seasonId,
+                        $round,
+                        $conferenceId,
                         $seriesLength
                     );
 
@@ -975,7 +948,7 @@ class PlayoffController extends Controller
                         self::insertSeriesSchedule($seasonId, $round, $allSchedules);
                     }
 
-                    self::updateSeasonPlayoffRound($seasonId,$round);
+                    self::updateSeasonPlayoffRound($seasonId, $round);
                 });
 
                 return response()->json(['success' => true, 'message' => 'Series and schedule inserted successfully']);
@@ -995,8 +968,8 @@ class PlayoffController extends Controller
         $formattedSchedule = [];
         $seriesIndex = 1;
         // Get conference name (e.g., "East") or use "Interconference" for conferenceId = 0
-        $conferenceName = $conferenceId 
-            ? DB::table('conferences')->where('id', $conferenceId)->value('name') 
+        $conferenceName = $conferenceId
+            ? DB::table('conferences')->where('id', $conferenceId)->value('name')
             : 'Interconference';
 
         foreach ($scheduleData as $game) {
@@ -1053,8 +1026,8 @@ class PlayoffController extends Controller
         $seriesIndex = 1;
 
         // Get conference name (use "Interconference" for conferenceId = 0)
-        $conferenceName = $conferenceId 
-            ? DB::table('conferences')->where('id', $conferenceId)->value('name') 
+        $conferenceName = $conferenceId
+            ? DB::table('conferences')->where('id', $conferenceId)->value('name')
             : 'Interconference';
 
         foreach ($pairings as $pairing) {
@@ -1117,21 +1090,25 @@ class PlayoffController extends Controller
         return [$seriesData, $scheduleData];
     }
 
-/**
- * Get home/away pattern for the given series length
- * 'H' means higher seed home, 'A' means lower seed home
- */
-private static function getHomePattern($bestOf)
-{
-    switch ($bestOf) {
-        case 1: return ['H']; // single game
-        case 3: return ['H', 'A', 'H']; // 1-1-1
-        case 5: return ['H', 'H', 'A', 'A', 'H']; // 2-2-1
-        case 7: return ['H', 'H', 'A', 'A', 'H', 'A', 'H']; // 2-2-1-1-1
-        default:
-            throw new \Exception("No home/away pattern for best-of-$bestOf series.");
+    /**
+     * Get home/away pattern for the given series length
+     * 'H' means higher seed home, 'A' means lower seed home
+     */
+    private static function getHomePattern($bestOf)
+    {
+        switch ($bestOf) {
+            case 1:
+                return ['H']; // single game
+            case 3:
+                return ['H', 'A', 'H']; // 1-1-1
+            case 5:
+                return ['H', 'H', 'A', 'A', 'H']; // 2-2-1
+            case 7:
+                return ['H', 'H', 'A', 'A', 'H', 'A', 'H']; // 2-2-1-1-1
+            default:
+                throw new \Exception("No home/away pattern for best-of-$bestOf series.");
+        }
     }
-}
 
 
     /**
@@ -1139,8 +1116,28 @@ private static function getHomePattern($bestOf)
      */
     private static function insertPlayoffSeries($seasonId, $round, $seriesData)
     {
-        if (!empty($seriesData)) {
-            DB::table('playoff_series')->insert($seriesData);
+        if (empty($seriesData)) {
+            return;
+        }
+
+        // Extract all series_ids from the array of seriesData rows
+        $seriesIds = array_map(fn($s) => $s['series_id'], $seriesData);
+
+        // Query existing series with matching season_id, round, and series_id
+        $existingSeriesIds = DB::table('playoff_series')
+            ->where('season_id', $seasonId)
+            ->where('round', $round)
+            ->whereIn('series_id', $seriesIds)
+            ->pluck('series_id')
+            ->toArray();
+
+        // Filter out duplicates to insert only new series
+        $toInsert = array_filter($seriesData, function ($series) use ($existingSeriesIds) {
+            return !in_array($series['series_id'], $existingSeriesIds);
+        });
+
+        if (!empty($toInsert)) {
+            DB::table('playoff_series')->insert($toInsert);
         }
     }
 
@@ -1149,8 +1146,30 @@ private static function getHomePattern($bestOf)
      */
     private static function insertSeriesSchedule($seasonId, $round, $scheduleData)
     {
-        if (!empty($scheduleData)) {
-            DB::table('schedules')->insert($scheduleData);
+        if (empty($scheduleData)) {
+            return;
+        }
+
+        // Assuming each schedule row has a unique 'game_id' or 'series_id' — adjust accordingly
+        // Let's assume 'game_id' is the unique key here
+
+        $gameIds = array_map(fn($s) => $s['game_id'], $scheduleData);
+
+        // Get existing game_ids for this season and round
+        $existingGameIds = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->where('round', $round)
+            ->whereIn('game_id', $gameIds)
+            ->pluck('game_id')
+            ->toArray();
+
+        // Filter to insert only new schedule entries
+        $toInsert = array_filter($scheduleData, function ($schedule) use ($existingGameIds) {
+            return !in_array($schedule['game_id'], $existingGameIds);
+        });
+
+        if (!empty($toInsert)) {
+            DB::table('schedules')->insert($toInsert);
         }
     }
 
@@ -1171,7 +1190,7 @@ private static function getHomePattern($bestOf)
         }
     }
 
-    
+
     private static function getPlayInEliminationTeams($seasonId, $conferenceId)
     {
         // Get the results of the Play-In Elimination Rounds and Finals
@@ -1182,7 +1201,7 @@ private static function getHomePattern($bestOf)
             ->where('conference_id', $conferenceId)
             ->where('status', 2)
             ->first();
-    
+
         $playInFinalsResults = DB::table('schedules')
             ->select('winner_id')
             ->where('season_id', $seasonId)
@@ -1190,7 +1209,7 @@ private static function getHomePattern($bestOf)
             ->where('conference_id', $conferenceId)
             ->where('status', 2)
             ->first();
-    
+
         // Ensure there are results before accessing them
         if (!$playInRound1Results || !$playInFinalsResults) {
             return [
@@ -1198,13 +1217,13 @@ private static function getHomePattern($bestOf)
                 'winner_of_9vs10' => null,
             ];
         }
-    
+
         return [
             'winner_of_7vs8' => $playInRound1Results->winner_id,
             'winner_of_9vs10' => $playInFinalsResults->winner_id,
         ];
     }
-    
+
 
     private static function updateSeasonChampionsAndLosers($seasonId)
     {
@@ -1258,7 +1277,7 @@ private static function getHomePattern($bestOf)
             case 'finals':
                 // Pair the winners of semi-finals for finals
                 $winners = self::getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
-                
+
                 $pairings = self::pairTeams($winners, 2);
                 break;
         }
@@ -1349,7 +1368,7 @@ private static function getHomePattern($bestOf)
         $winners = $query->pluck('winner_id')->toArray();
 
         // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
-        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','quarter_finals','round_of_16'])) {
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals', 'quarter_finals', 'round_of_16'])) {
             $winners = DB::table('standings_view')
                 ->where('season_id', $seasonId)
                 ->whereIn('team_id', $winners)
@@ -1361,7 +1380,7 @@ private static function getHomePattern($bestOf)
         return $winners;
     }
 
-     private static function getSeriesWinnersOfRound($round, $seasonId, $conferenceId)
+    private static function getSeriesWinnersOfRound($round, $seasonId, $conferenceId)
     {
         $winners = [];
 
@@ -1378,7 +1397,7 @@ private static function getHomePattern($bestOf)
         $winners = $query->pluck('winner_team_id')->toArray();
 
         // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
-        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','quarter_finals','round_of_16'])) {
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals', 'quarter_finals', 'round_of_16'])) {
             $winners = DB::table('standings_view')
                 ->where('season_id', $seasonId)
                 ->whereIn('team_id', $winners)
@@ -1401,7 +1420,7 @@ private static function getHomePattern($bestOf)
         return $pairings;
     }
 
-     private static function pairSeriesTeams($teams, $pairCount)
+    private static function pairSeriesTeams($teams, $pairCount)
     {
         // Generate pairings based on the teams array
         $pairings = [];
@@ -1533,9 +1552,9 @@ private static function getHomePattern($bestOf)
             if (!empty($existingGameIds)) {
                 $existingGameIdsStr = implode(', ', $existingGameIds);
                 return response()->json([
-                    'success' => false, 
+                    'success' => false,
                     'message' => "Duplicate game_id(s) found: {$existingGameIdsStr}. No schedules were inserted.",
-                ],500);
+                ], 500);
                 // throw new \Exception("Duplicate game_id(s) found: {$existingGameIdsStr}. No schedules were inserted.");
             }
 
@@ -1596,7 +1615,7 @@ private static function getHomePattern($bestOf)
         });
     }
 
-        private static function roundStatusFormatter($round)
+    private static function roundStatusFormatter($round)
     {
 
         switch ($round) {
@@ -1630,5 +1649,26 @@ private static function getHomePattern($bestOf)
                 return 8;
                 break;
         }
+    }
+
+    private function buildRoundsFromSequence($roundSequence, $status)
+    {
+        // Map status to cumulative rounds for single_elim_16_with_playins
+        $statusToRounds = [
+            1 => ['play_ins_elims_round_1'],
+            2 => ['play_ins_elims_round_1'],
+            3 => ['play_ins_elims_round_1'],
+            4 => ['play_ins_elims_round_1'],
+            5 => ['play_ins_elims_round_1', 'play_ins_elims_round_2'],
+            6 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals'],
+            7 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16'],
+            8 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals'],
+            9 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals'],
+            10 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals'],
+            11 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals', 'finals'],
+        ];
+
+        // Return rounds up to the given status, default to all rounds if status is invalid
+        return $statusToRounds[$status] ?? $roundSequence;
     }
 }

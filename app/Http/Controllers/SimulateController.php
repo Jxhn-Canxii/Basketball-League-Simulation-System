@@ -65,9 +65,9 @@ class SimulateController extends Controller
 
     public function simulatePlayoff(Request $request)
     {
-        DB::beginTransaction(); // Start transaction
+        // DB::beginTransaction(); // Start transaction
 
-        try {
+        // try {
             // Validate the request data
             $request->validate([
                 'schedule_id' => 'required|exists:schedules,id',
@@ -553,24 +553,24 @@ class SimulateController extends Controller
                 'message' => 'Game simulated successfully',
                 'schedule' => $schedule
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack(); // Rollback transaction on error
+        // } catch (\Exception $e) {
+        //     DB::rollBack(); // Rollback transaction on error
 
-            \Log::error('Failed to update playoffs', ['exception' => $e]);
+        //     \Log::error('Failed to update playoffs', ['exception' => $e]);
 
-            return response()->json([
-                'error' => true,
-                'message' => 'Failed to update playoffs.',
-                'error_message' => $e->getMessage(), // Display the exception message
-            ], 500);
-        }
+        //     return response()->json([
+        //         'error' => true,
+        //         'message' => 'Failed to update playoffs.',
+        //         'error_message' => $e->getMessage(), // Display the exception message
+        //     ], 500);
+        // }
     }
 
     public function simulatePlayoffSeries(Request $request)
     {
-        DB::beginTransaction(); // Start transaction
+        // DB::beginTransaction(); // Start transaction
 
-        try {
+        // try {
             // Validate the request data
             $request->validate([
                 'schedule_id' => 'required|exists:schedules,id',
@@ -1123,24 +1123,24 @@ class SimulateController extends Controller
                 'message' => 'Game simulated successfully',
                 'series' => $seriesResponse
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack(); // Rollback transaction on error
+        // } catch (\Exception $e) {
+        //     DB::rollBack(); // Rollback transaction on error
 
-            \Log::error('Failed to update playoffs', ['exception' => $e]);
+        //     \Log::error('Failed to update playoffs', ['exception' => $e]);
 
-            return response()->json([
-                'error' => true,
-                'message' => 'Failed to update playoffs.',
-                'error_message' => $e->getMessage(), // Display the exception message
-            ], 500);
-        }
+        //     return response()->json([
+        //         'error' => true,
+        //         'message' => 'Failed to update playoffs.',
+        //         'error_message' => $e->getMessage(), // Display the exception message
+        //     ], 500);
+        // }
     }
 
     public function simulateRegular(Request $request)
     {
-        DB::beginTransaction(); // Start transaction
+        // DB::beginTransaction(); // Start transaction
 
-        try {
+        // try {
             // Validate the request data
             $request->validate([
                 'schedule_id' => 'required|exists:schedules,id',
@@ -1598,12 +1598,12 @@ class SimulateController extends Controller
                 // 'data' => $gameResult,
                 // 'playerGameStats' => $playerGameStats,
             ]);
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return response()->json([
-                'message' => 'An error occurred: ' . $e->getMessage(),
-            ], 500);
-        }
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     return response()->json([
+        //         'message' => 'An error occurred: ' . $e->getMessage(),
+        //     ], 500);
+        // }
     }
 
     private function updatePlayoffQualifiedFlags()

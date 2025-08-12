@@ -690,46 +690,52 @@ class ScheduleController extends Controller
             ->get();
 
 
-        // Calculate stat leaders with qualification thresholds
-        $leaders = [
-            'points' => $statLeaders->sortByDesc('total_points')->first(),
-            'assists' => $statLeaders->sortByDesc('total_assists')->first(),
-            'rebounds' => $statLeaders->sortByDesc('total_rebounds')->first(),
-            'steals' => $statLeaders->sortByDesc('total_steals')->first(),
-            'blocks' => $statLeaders->sortByDesc('total_blocks')->first(),
-            'eff' => $statLeaders->sortByDesc('total_eff')->first()
-        ];
 
+        $seriesBestPlayer = [];
+        $leaders = [];
         // Series Best Player formatted like your example
-        $best = $statLeaders->sortByDesc('total_eff')->first();
-        $seriesBestPlayer = [
-            'game_id'           => $playoffSchedule[0]->game_id ?? null,
-            'name'              => $best->player_name,
-            'team'              => $best->team_name,
-            'age'               => $best->age,
-            'position'          => $best->position,
-            'points'            => (int) number_format($best->total_points, 2),
-            'assists'           => (int) number_format($best->total_assists, 2),
-            'rebounds'          => (int) number_format($best->total_rebounds, 2),
-            'steals'            => (int) number_format($best->total_steals, 2),
-            'blocks'            => (int) number_format($best->total_blocks, 2),
-            'turnovers'         => (int) number_format($best->total_turnovers, 2),
-            'fouls'             => null, // add if needed from DB
-            'role'              => $best->role,
-            'minutes'           => $best->total_minutes,
-            'draft_id'          => $best->draft_id,
-            'draft_status'      => $best->draft_status,
-            'drafted_team_acro' => $best->drafted_team_acro,
-            'is_finals_mvp'     => $best->is_finals_mvp,
-            'is_season_mvp'     => $best->is_season_mvp,
-            'is_defensive_poy'  => $best->is_defensive_poy,
-            'is_rookie_poy'     => $best->is_rookie_poy,
-            'is_most_improved'  => $best->is_most_improved,
-            'secondary_color' => $best->secondary_color,
-            'primary_color' => $best->primary_color,
-        ];
+        if($statLeaders){
 
+            // Calculate stat leaders with qualification thresholds
+            $leaders = [
+                'points' => $statLeaders->sortByDesc('total_points')->first(),
+                'assists' => $statLeaders->sortByDesc('total_assists')->first(),
+                'rebounds' => $statLeaders->sortByDesc('total_rebounds')->first(),
+                'steals' => $statLeaders->sortByDesc('total_steals')->first(),
+                'blocks' => $statLeaders->sortByDesc('total_blocks')->first(),
+                'eff' => $statLeaders->sortByDesc('total_eff')->first()
+            ];
 
+            $best = $statLeaders->sortByDesc('total_eff')->first();
+
+            $seriesBestPlayer = [
+                'game_id'           => $playoffSchedule[0]->game_id ?? null,
+                'name'              => $best->player_name ?? 0,
+                'team'              => $best->team_name,
+                'age'               => $best->age,
+                'position'          => $best->position,
+                'points'            => (int) number_format($best->total_points, 2),
+                'assists'           => (int) number_format($best->total_assists, 2),
+                'rebounds'          => (int) number_format($best->total_rebounds, 2),
+                'steals'            => (int) number_format($best->total_steals, 2),
+                'blocks'            => (int) number_format($best->total_blocks, 2),
+                'turnovers'         => (int) number_format($best->total_turnovers, 2),
+                'fouls'             => null, // add if needed from DB
+                'role'              => $best->role,
+                'minutes'           => $best->total_minutes,
+                'draft_id'          => $best->draft_id,
+                'draft_status'      => $best->draft_status,
+                'drafted_team_acro' => $best->drafted_team_acro,
+                'is_finals_mvp'     => $best->is_finals_mvp,
+                'is_season_mvp'     => $best->is_season_mvp,
+                'is_defensive_poy'  => $best->is_defensive_poy,
+                'is_rookie_poy'     => $best->is_rookie_poy,
+                'is_most_improved'  => $best->is_most_improved,
+                'secondary_color' => $best->secondary_color,
+                'primary_color' => $best->primary_color,
+            ];
+        }
+       
         // Last finished game in the series
         $lastFinishedGame = DB::table('schedule_view')
             ->where('series_id', $seriesId)

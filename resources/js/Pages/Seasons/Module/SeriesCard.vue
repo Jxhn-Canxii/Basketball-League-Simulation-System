@@ -98,7 +98,7 @@
         </div>
         
         <!-- Action buttons -->
-        <div class="border-gray-200 flex justify-center">
+        <div class="border-gray-200 flex justify-center" v-if="series.home_team.wins > 0 || series.away_team.wins > 0">
             <a
                 href="#"
                 class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
