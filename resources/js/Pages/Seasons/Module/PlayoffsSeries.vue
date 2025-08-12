@@ -21,17 +21,17 @@
         </button>
       </div>
       <!-- Show SeriesResult inline when simulating -->
-      <div v-if="isSimulating && active_series_id !== 0" class="pt-4">
+      <!-- <div v-if="isSimulating && active_series_id !== 0" class="pt-4">
         <SeriesResult
           :key="active_series_id"
           :series_id="active_series_id"
           :season_id="props.season_id"
           @finish="onSeriesResultFinish"
         />
-      </div>
+      </div> -->
 
       <!-- Show playoff series list when NOT simulating -->
-      <div v-else-if="season_playoffs.playoffs && showGameResults">
+      <div v-if="season_playoffs.playoffs">
         <div
           v-for="(seriesList, roundName) in season_playoffs.playoffs"
           :key="roundName"
@@ -282,19 +282,19 @@ const simulateFullPlayoffs = async () => {
 
           await simulateGame(game.id, game.game_id, 2, j, round);
 
-          await fetchSeasonPlayoffs(is_play_ins.value);
+          // await fetchSeasonPlayoffs(is_play_ins.value);
 
-          // Wait for series result UI to finish if needed
-          await new Promise(resolve => {
-            const check = () => {
-              if (seriesResultFinished.value) resolve();
-              else setTimeout(check, 8000);
-            };
-            check();
-          });
+          // // Wait for series result UI to finish if needed
+          // await new Promise(resolve => {
+          //   const check = () => {
+          //     if (seriesResultFinished.value) resolve();
+          //     else setTimeout(check, 8000);
+          //   };
+          //   check();
+          // });
 
-          await new Promise(r => setTimeout(r, 1500));
-          showGameResults.value = true;
+          // await new Promise(r => setTimeout(r, 1500));
+          // showGameResults.value = true;
         }
 
         // Refresh playoffs after simulating all games in this batch
@@ -304,6 +304,7 @@ const simulateFullPlayoffs = async () => {
       // Now that current round has NO games left to simulate, create next round schedule
       if (round !== "finals") {
         const res = await createPlayOffScheduleAuto(round);
+        await fetchSeasonPlayoffs(is_play_ins.value);
         // Handle possible "previous round ongoing" messages as needed,
         // or simply wait and retry if schedule not created
       }
