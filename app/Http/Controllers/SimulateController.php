@@ -2973,7 +2973,7 @@ class SimulateController extends Controller
             ->update($columnsToUpdate);
     }
 
-    private function updateSeriesConferenceChampions($gameData, $winnerId)
+    private function updateSeriesConferenceChampions($gameData)
     {
         // Get series info including home and away team IDs and names, plus conference info
         $series = DB::table('playoff_series as ps')
@@ -2997,7 +2997,7 @@ class SimulateController extends Controller
         // Determine the conference based on home or away conference name from the series table
         // Assuming the conference relevant to this update is the home team's conference
         $conferenceName = $series->home_conference;
-
+        $winnerId = $series->winning_team_id;
         // Determine winner's name from the series table based on winnerId
         $winnerName = null;
         if ($series->home_team_id === $winnerId) {
