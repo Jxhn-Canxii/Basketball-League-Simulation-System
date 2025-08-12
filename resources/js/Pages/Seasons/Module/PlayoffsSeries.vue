@@ -257,20 +257,19 @@ const simulateFullPlayoffs = async () => {
     isHide.value = true;
     loading.value = true;
 
-   Swal.fire({
-        toast: true,
-        position: 'top-end', // top-right corner
-        icon: 'info',
-        title: 'Simulating Playoffs...',
-        text: 'Please wait while the entire playoff is being simulated.',
-        showConfirmButton: false,
-        timerProgressBar: true,
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading();
-        },
+    Swal.fire({
+      toast: true,
+      position: "top-end", // top-right corner
+      icon: "info",
+      title: "Simulating Playoffs...",
+      text: "Please wait while the entire playoff is being simulated.",
+      showConfirmButton: false,
+      timerProgressBar: true,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      },
     });
-
 
     let currentRoundIndex = 0;
     let initialRound = "start";
@@ -286,44 +285,54 @@ const simulateFullPlayoffs = async () => {
       await fetchSeasonInfo(form.seasons_id);
       await fetchSeasonPlayoffs(is_play_ins.value);
 
-      const matches = season_playoffs.value.games[roundName] || [];
-
-      if (matches.length === 0) {
-        console.log(`No matches found for round ${roundName}, skipping...`);
-        currentRoundIndex++;
-        continue;
+      const playoffs = season_playoffs.value.playoffs[roundName] || [];
+      if (playoffs.length === 0) {
+          console.log(`No matches found for round ${roundName}, skipping...`);
+          currentRoundIndex++;
+          continue;
       }
+      
+      for (let i = 0; i < playoffs.length; i++) {
+        const playoffs = playoffs[i];
+        const playoffRoundName = playoffs.round;
+        const matches = season_playoffs.value.games[playoffRoundName] || [];
+        for (let i = 0; i < matches.length; i++) {
+          const match = matches[i];
+          if (match.winner === 0) {
+            active_index.value = i;
+            const series_id = await simulateGame(
+              match.id,
+              match.game_id,
+              2,
+              i,
+              roundName
+            );
 
-      for (let i = 0; i < matches.length; i++) {
-        const match = matches[i];
-        if (match.winner === 0) {
-          active_index.value = i;
-          const series_id = await simulateGame(match.id, match.game_id, 2, i, roundName);
-          await fetchSeasonPlayoffs(is_play_ins.value);
+            await fetchSeasonPlayoffs(is_play_ins.value);
 
-          active_series_id.value = series_id;
-          showGameResults.value = false;
-          seriesResultFinished.value = false;
+            active_series_id.value = series_id;
+            showGameResults.value = false;
+            seriesResultFinished.value = false;
 
-          // Wait until SeriesResult emits 'finish'
-          await new Promise((resolve) => {
-            const checkFinish = () => {
-              if (seriesResultFinished.value) {
-                resolve();
-              } else {
-                setTimeout(checkFinish, 8000);
-              }
-            };
-            checkFinish();
-          });
+            // Wait until SeriesResult emits 'finish'
+            await new Promise((resolve) => {
+              const checkFinish = () => {
+                if (seriesResultFinished.value) {
+                  resolve();
+                } else {
+                  setTimeout(checkFinish, 8000);
+                }
+              };
+              checkFinish();
+            });
 
-          // Optional: small delay after finishing load (e.g. 1.5 seconds)
-          await new Promise((r) => setTimeout(r, 1500));
+            // Optional: small delay after finishing load (e.g. 1.5 seconds)
+            await new Promise((r) => setTimeout(r, 1500));
 
-          showGameResults.value = true;
+            showGameResults.value = true;
+          }
         }
       }
-
       active_index.value = -1;
 
       if (roundName !== "finals") {

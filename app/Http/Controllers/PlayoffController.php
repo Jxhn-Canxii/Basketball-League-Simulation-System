@@ -104,7 +104,7 @@ class PlayoffController extends Controller
 
         // Build $roundIndices dynamically if using round_sequence
         if (isset($format['round_sequence'])) {
-            $roundIndices = self::buildRoundsFromSequence($format['round_sequence']);
+            $roundIndices = $this->buildRoundsFromSequence($format['round_sequence'],$status);
         }
 
         $currentRounds = $roundIndices[$status] ?? [];
@@ -205,100 +205,134 @@ class PlayoffController extends Controller
         return $tree;
     }
 
-    private function playoffSeriesGameTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
+       private function playoffSeriesGameTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
     {
-        $currentSeasonId = get_current_season_id();
-        $status = $status >= 8 ? 8 : $status;
+        try {
+            $currentSeasonId = get_current_season_id();
+            $status = $status >= 8 ? 8 : $status;
 
-        // Load formats from config
-        $formats = config('playoff_formats');
+            // Load formats from config
+            $formats = config('playoff_formats');
 
-        // Auto-pick format if no key is given
-        if (!$formatKey) {
-            foreach ($formats as $key => $format) {
-                if ($format['type'] == $type && $format['start'] == $start) {
-                    $formatKey = $key;
-                    break;
+            // Auto-pick format if no key is given
+            if (!$formatKey) {
+                foreach ($formats as $key => $format) {
+                    if ($format['type'] == $type && $format['start'] == $start) {
+                        $formatKey = $key;
+                        break;
+                    }
                 }
             }
-        }
 
-        if (!isset($formats[$formatKey])) {
-            throw new \Exception("Invalid playoff format: {$formatKey}");
-        }
-
-        $format = $formats[$formatKey];
-
-        // Build $roundIndices dynamically if using round_sequence
-        if (isset($format['round_sequence'])) {
-            $roundIndices = self::buildRoundsFromSequence($format['round_sequence']);
-        }
-
-        $currentRounds = $roundIndices[$status] ?? [];
-
-        $tree = [];
-        foreach ($currentRounds as $round) {
-            $tree[$round] = [];
-
-            $playoffSchedule = DB::table('schedules')
-                ->select('game_id', 'home_id', 'away_id', 'home_score', 'away_score', 'round', 'id', 'winner_id')
-                ->where('season_id', $seasonId)
-                ->where('round', $round)
-                ->where('status', 1)
-                ->orderBy('round', 'asc')
-                ->get();
-
-            if ($playoffSchedule->isEmpty()) {
-                continue; // Skip if no games for this round
+            if (!isset($formats[$formatKey])) {
+                throw new \Exception("Invalid playoff format: {$formatKey}");
             }
 
-            $teamIds = $playoffSchedule->pluck('home_id')->merge($playoffSchedule->pluck('away_id'))->unique();
-            $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
-            $standingsData = DB::table($standingsTable)
-                ->whereIn('team_id', $teamIds)
-                ->where('season_id', $seasonId)
-                ->get()
-                ->keyBy('team_id');
+            $format = $formats[$formatKey];
 
-            foreach ($playoffSchedule as $game) {
-                $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
-                $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
-
-                $tree[$round][] = [
-                    'id' => $game->id,
-                    'game_id' => $game->game_id,
-                    'home_team' => [
-                        'id' => $game->home_id,
-                        'name' => $homeTeamName,
-                        'home_score' => $game->home_score,
-                        'conference' => $standingsData[$game->home_id]->conference_name ?? null,
-                        'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
-                        'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
-                        'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
-                        'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
-                    ],
-                    'away_team' => [
-                        'id' => $game->away_id,
-                        'name' => $awayTeamName,
-                        'away_score' => $game->away_score,
-                        'conference' => $standingsData[$game->away_id]->conference_name ?? null,
-                        'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
-                        'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
-                        'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
-                        'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
-                    ],
-                    'winner' => $game->winner_id,
-                    'season_id' => $seasonId,
-                ];
+            // Build $roundIndices dynamically using round_sequence
+            if (isset($format['round_sequence'])) {
+                $roundIndices = $this->buildRoundsFromSequence($format['round_sequence'], $status);
+            } else {
+                throw new \Exception("No round_sequence defined for format: {$formatKey}");
             }
+
+            $tree = [];
+            foreach ($roundIndices as $round) {
+                $tree[$round] = [];
+
+                $playoffSchedule = DB::table('schedules')
+                    ->select('game_id', 'home_id', 'away_id', 'home_score', 'away_score', 'round', 'id', 'winner_id')
+                    ->where('season_id', $seasonId)
+                    ->where('round', $round)
+                    ->where('status', 1)
+                    ->orderBy('round', 'asc')
+                    ->get();
+
+                if ($playoffSchedule->isEmpty()) {
+                    Log::info("No games found for round {$round} in season {$seasonId}.");
+                    continue; // Skip if no games for this round
+                }
+
+                $teamIds = $playoffSchedule->pluck('home_id')->merge($playoffSchedule->pluck('away_id'))->unique();
+                $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+                $standingsData = DB::table($standingsTable)
+                    ->whereIn('team_id', $teamIds)
+                    ->where('season_id', $seasonId)
+                    ->get()
+                    ->keyBy('team_id');
+
+                foreach ($playoffSchedule as $game) {
+                    $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+                    $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+
+                    $tree[$round][] = [
+                        'id' => $game->id,
+                        'game_id' => $game->game_id,
+                        'round' => $game->round,
+                        'home_team' => [
+                            'id' => $game->home_id,
+                            'name' => $homeTeamName,
+                            'home_score' => $game->home_score,
+                            'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                            'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
+                            'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
+                            'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
+                            'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
+                        ],
+                        'away_team' => [
+                            'id' => $game->away_id,
+                            'name' => $awayTeamName,
+                            'away_score' => $game->away_score,
+                            'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                            'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
+                            'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
+                            'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
+                            'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
+                        ],
+                        'winner' => $game->winner_id,
+                        'season_id' => $seasonId,
+                    ];
+                }
+            }
+
+            // Remove empty rounds
+            $tree = array_filter($tree, function ($games) {
+                return !empty($games);
+            });
+
+            return $tree;
+
+        } catch (\Exception $e) {
+            Log::error("Error in playoffSeriesGameTree: {$e->getMessage()}", [
+                'season_id' => $seasonId,
+                'status' => $status,
+                'format_key' => $formatKey,
+                'trace' => $e->getTraceAsString(),
+            ]);
+            throw $e; // Rethrow to allow caller to handle
         }
+    }
 
-        // Remove empty rounds
-        $tree = array_filter($tree, function ($games) {
-            return !empty($games);
-        });
+    private function buildRoundsFromSequence($roundSequence, $status)
+    {
+        // Map status to cumulative rounds for single_elim_16_with_playins
+        $statusToRounds = [
+            1 => ['play_ins_elims_round_1'],
+            2 => ['play_ins_elims_round_1'],
+            3 => ['play_ins_elims_round_1'],
+            4 => ['play_ins_elims_round_1'],
+            5 => ['play_ins_elims_round_1', 'play_ins_elims_round_2'],
+            6 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals'],
+            7 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16'],
+            8 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals'],
+            9 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals'],
+            10 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals'],
+            11 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals','finals'],
+        ];
 
-        return $tree;
+        // Return rounds up to the given status, default to all rounds if status is invalid
+        return $statusToRounds[$status] ?? $roundSequence;
     }
 
     private function playoffTree($seasonId, $status, $type, $start, $formatKey = 'single_elim_16_with_playins')
@@ -327,7 +361,7 @@ class PlayoffController extends Controller
 
         // NEW: Build $roundIndices dynamically if using round_sequence
         if (isset($format['round_sequence'])) {
-            $roundIndices = self::buildRoundsFromSequence($format['round_sequence']);
+            $roundIndices = $this->buildRoundsFromSequence($format['round_sequence'],$status);
         }
 
         $currentRounds = $roundIndices[$status] ?? [];
@@ -388,17 +422,6 @@ class PlayoffController extends Controller
         return $tree;
     }
 
-    private static function buildRoundsFromSequence(array $sequence)
-    {
-        $rounds = [];
-        $totalStatuses = count($sequence);
-
-        for ($status = 1; $status <= $totalStatuses; $status++) {
-            $rounds[$status] = array_slice($sequence, 0, $status);
-        }
-
-        return $rounds;
-    }
 
     //start playoff algo
     public static function playoffSchedule(Request $request)
