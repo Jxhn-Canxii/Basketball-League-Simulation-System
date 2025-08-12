@@ -25,7 +25,7 @@
 
 
                 <!-- TBD placeholders -->
-                <div
+                <!-- <div
                     v-for="n in Math.max(0, ((seriesMeta?.series_length || 0) - series_info.length))"
                     :key="'tbd-' + n"
                     class="bg-gray-200 text-gray-500 text-lg h-56 flex items-center justify-center rounded"
@@ -35,7 +35,7 @@
                         : 'GAME ' + (series_info.length + n) + ' TBD' 
                     }}
 
-                </div>
+                </div> -->
             </div>
 
             <!-- Right: Game Result & Stats -->
@@ -245,6 +245,7 @@ import { roundNameFormatter, roleBadgeClass, playerFormatter } from "@/Utility/F
 import ScoreCard from "@/Pages/Seasons/Module/ScoreCard.vue";
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
 
+const emits = defineEmits(['finish']);
 const props = defineProps({
     series_id: [String, Number],
     season_id: [String, Number],
@@ -317,6 +318,7 @@ const fetchSeriesInfo = async () => {
     };
 
     loading.value = false;
+    emits('finish',props.series_id);
     // Default GameResult to last finished game
     if (lastFinishedGameId.value) {
       isGameResultModalOpen.value = lastFinishedGameId.value;
