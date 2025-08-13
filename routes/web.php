@@ -105,6 +105,7 @@ Route::middleware('auth')->group(function () {
         Route::post('create-schedule-playoff', [PlayoffController::class, 'playoffSchedule'])->name('create.schedule.playoff');
         Route::post('conference-playoffs', [PlayoffController::class, 'seasonsPlayoffs'])->name('seasons.playoffs');
         Route::post('conference-playoffs-series', [PlayoffController::class, 'seasonsPlayoffsSeries'])->name('seasons.playoffs.series');
+        Route::post('conference-playoffs-pending-games', [PlayoffController::class, 'getPlayoffPendingGames'])->name('seasons.playoffs.pending.games');
     });
 
     Route::prefix('leaders/')->group(function(){

@@ -5,12 +5,11 @@
       <!-- Left Column -->
       <div class="col-span-1 flex flex-col h-full bg-gray-50 p-4 rounded">
         <!-- Top 1/4: Best Player -->
-        <button type="button" class="text-red-500 font-bold underline" @click.prevent="showBestPlayer = !showBestPlayer">
+        <!-- <button type="button" class="text-red-500 font-bold underline" @click.prevent="showBestPlayer = !showBestPlayer">
           {{ showBestPlayer ? "Show Series Stat Leaders" : "Show Best Player" }}
-        </button>
+        </button> -->
         <div
           class="flex-none min-h-[25%] border-b border-gray-300 py-4"
-          v-if="showBestPlayer"
         >
           <div class="flex justify-between">
             <h3 class="font-bold mb-2 text-lg">Series Best Player</h3>
@@ -116,7 +115,7 @@
         </div>
 
         <!-- Bottom 3/4: Stat Leaders -->
-        <div class="flex-1 overflow-y-auto py-4" v-else>
+        <div class="flex-1 overflow-y-auto py-4">
           <h3 class="text-lg font-semibold mb-2 mt-2">Stat Leaders</h3>
           <div class="min-w-full border-gray-300 p-4">
             <ul class="space-y-4">
@@ -278,7 +277,7 @@
             v-if="isGameResultModalOpen"
             :key="isGameResultModalOpen"
             :game_id="isGameResultModalOpen"
-            :showBoxScore="false"
+            :showBoxScore="true"
           />
         </div>
         <!-- Games List & TBDs -->
@@ -288,7 +287,7 @@
 
           <div
             v-if="series_info.length > 0"
-            class="flex flex-row space-x-4 overflow-x-auto"
+            class="grid grid-cols-4 gap-4"
           >
             <div
               v-for="(match, index) in series_info"

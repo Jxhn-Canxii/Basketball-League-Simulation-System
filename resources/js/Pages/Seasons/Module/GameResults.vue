@@ -286,7 +286,7 @@
                         >
                             <th class="py-2 px-3 text-xs">Name</th>
                             <th class="py-2 px-3 text-xs">Pos</th>
-                            <th class="py-2 px-3 text-xs">Role</th>
+                            <th class="py-2 px-3 text-xs" hidden>Role</th>
                             <th class="px-2 py-3 text-xs text-right">Min</th>
                             <th class="px-2 py-3 text-xs text-right" title="Points Made">Pts</th>
                             <th class="px-2 py-3 text-xs text-right" title="Rebounds Made">Reb</th>
@@ -324,7 +324,7 @@
                             <td class="py-1 px-3">
                                 {{ player.position }}
                             </td>
-                            <td class="py-1 px-3">
+                            <td class="py-1 px-3 text-nowrap" hidden>
                                 <span :class="roleBadgeClass(player.role)">{{
                                     player.role
                                 }}</span>
@@ -446,7 +446,7 @@
                         >
                             <th class="py-2 px-3 text-xs">Name</th>
                             <th class="py-2 px-3 text-xs">Pos</th>
-                            <th class="py-2 px-3 text-xs">Role</th>
+                            <th class="py-2 px-3 text-xs" hidden>Role</th>
                             <th class="px-2 py-3 text-xs text-right">Min</th>
                             <th class="px-2 py-3 text-xs text-right" title="Points Made">Pts</th>
                             <th class="px-2 py-3 text-xs text-right" title="Rebounds Made">Reb</th>
@@ -474,7 +474,7 @@
                             }"
                             class="border-b hover:bg-gray-600 text-xs"
                         >
-                            <td class="py-1 px-3">
+                            <td class="py-1 px-3 text-wrap">
                                 {{ player.name }}
                                 <sup>
                                     {{ player.is_rookie ? "R" : "V" }} 
@@ -484,7 +484,7 @@
                             <td class="py-1 px-3">
                                 {{ player.position }}
                             </td>
-                            <td class="py-1 px-3">
+                            <td class="py-1 px-3" hidden>
                                 <span :class="roleBadgeClass(player.role)">{{
                                     player.role
                                 }}</span>

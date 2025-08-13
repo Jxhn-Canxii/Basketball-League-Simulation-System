@@ -1,6 +1,4 @@
 <template>
-    <!-- <SeriesResult v-if="isPlayins" :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" /> -->
-    <!-- v-else -->
     <div 
         :style="{
             background: `
@@ -73,7 +71,7 @@
         <!-- Round name -->
         <div class="px-4 text-nowrap text-xs py-0 flex justify-center">
             <span class="px-2 text-xs text-white py-1 rounded bg-black bg-opacity-50">
-                {{ roundNameFormatter(roundName) }}
+                {{ roundNameFormatter(series.round) }}
             </span>
         </div>
         
@@ -108,7 +106,7 @@
             </a>
         </div>
     </div>
-    <Modal :show="isSeriesResultModalOpen" :maxWidth="'fullscreen'" title="Game Results" @close="isSeriesResultModalOpen = false">
+    <Modal :show="isSeriesResultModalOpen" :maxWidth="'fullscreen'" :title="series.series_lead" @close="isSeriesResultModalOpen = false">
         <div class="mt-4">
             <SeriesResult v-if="series.series_id" :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" />
         </div>
@@ -135,18 +133,9 @@ const props = defineProps({
         type: Object,
         required: true
     },
-    roundName: {
-        type: String,
-        required: true
-    },
-    index: {
-        type: Number,
-        default: 0
-    },
 });
 
 const isSeriesResultModalOpen =  ref(false);
-const isPlayins = reactive(['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals'].includes(props.roundName));
 const getConferenceClass = (homeConference, awayConference) => {
     const conferenceClasses = {
         NCR: "bg-blue-100 text-blue-500",

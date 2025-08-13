@@ -803,6 +803,7 @@ class TeamsController extends Controller
                     ->orWhere('home_id', $teamId);
             })
             ->join('seasons', 'schedules.season_id', '=', 'seasons.id')
+            ->distinct('season.id')
             ->orderByDesc('seasons.id') // Order by season ID in descending order
             ->pluck('seasons.name');
     }

@@ -2979,16 +2979,19 @@ class SimulateController extends Controller
         $series = DB::table('playoff_series as ps')
             ->join('teams as home_team', 'ps.home_team_id', '=', 'home_team.id')
             ->join('teams as away_team', 'ps.away_team_id', '=', 'away_team.id')
+            ->join('conferences as home_conf', 'home_team.conference_id', '=', 'home_conf.id')
+            ->join('conferences as away_conf', 'away_team.conference_id', '=', 'away_conf.id')
             ->where('ps.series_id', $gameData->series_id)
+            ->where('ps.status', 2)
             ->select(
                 'ps.*',
                 'home_team.name as home_team_name',
-                'home_team.conference as home_conference',
+                'home_conf.name as home_conference',
                 'away_team.name as away_team_name',
-                'away_team.conference as away_conference'
+                'away_conf.name as away_conference'
             )
-            ->where('ps.status', 2)
             ->first();
+
 
         if (!$series) {
             return; // Series not found
@@ -2997,7 +3000,7 @@ class SimulateController extends Controller
         // Determine the conference based on home or away conference name from the series table
         // Assuming the conference relevant to this update is the home team's conference
         $conferenceName = $series->home_conference;
-        $winnerId = $series->winning_team_id;
+        $winnerId = $series->winner_team_id;
         // Determine winner's name from the series table based on winnerId
         $winnerName = null;
         if ($series->home_team_id === $winnerId) {
@@ -3120,8 +3123,8 @@ class SimulateController extends Controller
             ->where('round', 'finals')
             ->where('season_id', $gameData->season_id)
             ->where(function ($query) use ($series) {
-                $query->where('home_team_id', $series->home_team_id)
-                    ->orWhere('away_team_id', $series->away_team_id);
+                $query->where('home_id', $series->home_team_id)
+                    ->orWhere('away_id', $series->away_team_id);
             })
             ->pluck('game_id')
             ->toArray();
@@ -3143,7 +3146,7 @@ class SimulateController extends Controller
         $finalsMVPId = $mvpPlayer ? $mvpPlayer->player_id : null;
 
         // Determine if winner is home or away to assign names correctly
-        $homeTeamWins = $series->home_team_id === $winnerId;
+        $homeTeamWins = $series->winner_team_id == $series->home_team_id;
 
         // Update seasons table with finals results using winner_team_id, loser_team_id, and wins
         DB::table('seasons')

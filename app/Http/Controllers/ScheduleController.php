@@ -578,11 +578,11 @@ class ScheduleController extends Controller
             ->where('ps.series_id', $seriesId)
             ->where('ps.season_id', $seasonId)
             ->first();
-
+   
         // Fetch games in this series
         $playoffSchedule = DB::table('schedule_view')
             ->where('series_id', $seriesId)
-            ->orderBy('id', 'desc')
+            ->orderBy('id', 'asc')
             ->get()
             ->toArray();
 
