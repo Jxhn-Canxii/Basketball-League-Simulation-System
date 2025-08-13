@@ -1396,32 +1396,20 @@ class PlayersController extends Controller
         // Fetch championship count and season names
         $championships = \DB::table('seasons')
             ->join('player_game_stats', 'seasons.id', '=', 'player_game_stats.season_id')
-            ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id')
-            ->join('teams', 'player_game_stats.team_id', '=', 'teams.id')
-            ->select('seasons.name as season_name', 'seasons.finals_winner_name as championship_team')
+            ->join('playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
+            ->join('teams as team', 'player_game_stats.team_id', '=', 'team.id')
+            ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
+            ->select(
+                'seasons.id as season_id',
+                'seasons.name as season_name',
+                'winner_team.name as championship_team'
+            )
             ->where('player_game_stats.player_id', $playerId)
-            ->where('schedules.round', 'finals')
-            ->whereColumn('seasons.id', 'player_game_stats.season_id')
-            ->whereExists(function ($query) use ($playerId) {
-                $query->select(\DB::raw(1))
-                    ->from('schedules as s')
-                    ->join('player_game_stats as pg', 's.game_id', '=', 'pg.game_id')
-                    ->where('pg.team_id', '=', \DB::raw('player_game_stats.team_id'))
-                    ->where('s.round', 'finals')
-                    ->where('pg.player_id', $playerId)
-                    ->whereColumn('pg.season_id', 'player_game_stats.season_id')
-                    ->where(function ($q) {
-                        $q->where(function ($q) {
-                            $q->whereColumn('s.home_id', 'player_game_stats.team_id')
-                                ->whereColumn('s.home_score', '>', 's.away_score');
-                        })
-                            ->orWhere(function ($q) {
-                                $q->whereColumn('s.away_id', 'player_game_stats.team_id')
-                                    ->whereColumn('s.away_score', '>', 's.home_score');
-                            });
-                    });
-            })
-            ->groupBy('seasons.name', 'seasons.finals_winner_name')
+            ->where('playoff_series.round', 'finals')
+            ->where('playoff_series.status', 2) // Series is finished
+            ->whereColumn('playoff_series.winner_team_id', 'player_game_stats.team_id') // Match columns correctly
+            ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
+            ->distinct()
             ->get();
 
         // Fetch conference championships (using playoff_series table)
@@ -1437,11 +1425,12 @@ class PlayersController extends Controller
             )
             ->where('player_game_stats.player_id', $playerId)
             ->where('playoff_series.round', 'semi_finals')
-            ->where('playoff_series.winner_team_id', '=', 'player_game_stats.team_id')
-            ->where('playoff_series.status', 2) // Ensure series is finished
+            ->where('playoff_series.status', 2) // Series is finished
+            ->whereColumn('playoff_series.winner_team_id', 'player_game_stats.team_id') // Match columns correctly
             ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
             ->distinct()
             ->get();
+
 
         // Fetch career high stats
         $careerHighs = \DB::table('player_game_stats')
