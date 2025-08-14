@@ -4863,7 +4863,7 @@ class SimulateController extends Controller
         // Fetch draft pick for the winning team
         $draftPick = DB::table('drafts as d')
             ->join('players as p', 'd.player_id', '=', 'p.id')
-            ->select('p.name as player_name', 'd.round', 'd.pick_number')
+            ->select('p.name as player_name', 'd.round', 'd.pick_number', 'd.season_id as draft_season')
             ->where('d.team_id', $game->winner_id)
             ->where('d.season_id', $game->season_id)
             ->first();
@@ -4880,6 +4880,47 @@ class SimulateController extends Controller
             ->where('s.team_id', $loserId)
             ->where('s.season_id', $game->season_id)
             ->first();
+
+        // Fetch top performer for the winning team
+        $topPerformer = DB::table('player_game_stats as pgs')
+            ->join('players as p', 'pgs.player_id', '=', 'p.id')
+            ->leftJoin('drafts as d', function ($join) use ($game) {
+                $join->on('p.id', '=', 'd.player_id')
+                    ->where('d.season_id', '=', $game->season_id);
+            })
+            ->select(
+                'p.name as player_name',
+                'pgs.points',
+                'pgs.rebounds',
+                'pgs.assists',
+                'pgs.steals',
+                'pgs.blocks',
+                'd.season_id as draft_season'
+            )
+            ->where('pgs.game_id', $game->game_id)
+            ->where('pgs.team_id', $game->winner_id)
+            ->orderBy('pgs.points', 'desc')
+            ->orderBy('pgs.rebounds', 'desc')
+            ->orderBy('pgs.assists', 'desc')
+            ->first();
+
+        // Determine if top performer is a rookie and has a "good" stat line
+        $isRookie = $topPerformer && $topPerformer->draft_season == $game->season_id;
+        $isGoodStatLine = $topPerformer && (
+            ($topPerformer->points >= 20) || // 20+ points
+            ($topPerformer->rebounds >= 10) || // 10+ rebounds
+            ($topPerformer->assists >= 10) || // 10+ assists
+            ($topPerformer->points >= 15 && $topPerformer->rebounds >= 10) || // Double-double
+            ($topPerformer->points >= 15 && $topPerformer->assists >= 10)
+        );
+        $isRareStatLine = $topPerformer && (
+            ($topPerformer->points >= 40) || // 40+ points
+            ($topPerformer->points >= 10 && $topPerformer->rebounds >= 10 && $topPerformer->assists >= 10) || // Triple-double
+            ($topPerformer->rebounds >= 20) || // 20+ rebounds
+            ($topPerformer->assists >= 20) || // 20+ assists
+            ($topPerformer->steals >= 7) || // 7+ steals
+            ($topPerformer->blocks >= 7) // 7+ blocks
+        );
 
         // Determine if this is a top-vs-worst matchup
         $isTopVsWorst = false;
@@ -4915,16 +4956,9 @@ class SimulateController extends Controller
             ->where('pgs.is_injured', true)
             ->get();
 
-        // Random headline templates, keeping original structure
+        // Random headline templates
         $headlineTemplates = [];
-        if ($draftPick) {
-            $headlineTemplates = [
-                "{player} Shines as {winner} Crushes {loser} {home_score}-{away_score} in Round {round}",
-                "{winner}'s {player} Steals the Show in {home_score}-{away_score} Rout of {loser}",
-                "Rookie {player} Powers {winner} to {home_score}-{away_score} Win Over {loser} in Round {round}",
-                "{player} Leads {winner} to {home_score}-{away_score} Triumph in Round {round} Thriller",
-            ];
-        } elseif ($winnerStats && preg_match('/W5/', $winnerStats->streak_status)) {
+        if ($winnerStats && preg_match('/W5/', $winnerStats->streak_status)) {
             $headlineTemplates = [
                 "{winner} Stuns {loser} {home_score}-{away_score} in Round {round} Thriller, Extends W5 Streak",
                 "{winner} Dominates {loser} {home_score}-{away_score} in Round {round} Showdown, Keeps W5 Streak",
@@ -5023,30 +5057,66 @@ class SimulateController extends Controller
 
         // Conditional content starters
         $contentStarters = [];
-        if ($draftPick) {
-            $contentStarters = [
-                "In a dazzling Round {round} performance, {winner}'s rookie sensation {player} led the charge, securing a {home_score}-{away_score} victory over {loser}.",
-                "Round {round} belonged to {winner}, with draft pick {player} delivering a standout performance in a {home_score}-{away_score} rout of {loser}.",
-                "{winner} leaned on their star rookie {player} in Round {round}, clinching a {home_score}-{away_score} win against {loser}.",
-            ];
-        } elseif ($scoreMargin > 15) {
-            $contentStarters = [
-                "In a Round {round} beatdown, {winner} obliterated {loser} with a commanding {home_score}-{away_score} scoreline.",
-                "{winner} unleashed a Round {round} onslaught, crushing {loser} {home_score}-{away_score} in a one-sided affair.",
-                "Round {round} saw {winner} dominate {loser} {home_score}-{away_score}, leaving no doubt about their superiority.",
-            ];
+        if ($scoreMargin > 15) {
+            if ($isRookie && $isGoodStatLine && $topPerformer) {
+                $contentStarters = [
+                    "Rookie sensation {player} erupted for {points} points, {rebounds} rebounds, and {assists} assists, leading {winner} to a {home_score}-{away_score} rout of {loser} in Round {round}.",
+                    "First-year star {player}’s {points}-point, {rebounds}-rebound performance powered {winner} to a {home_score}-{away_score} blowout over {loser} in Round {round}.",
+                    "Rookie {player} dazzled with {points} points and {assists} assists, fueling {winner}’s {home_score}-{away_score} domination of {loser} in Round {round}.",
+                ];
+            } elseif ($isRareStatLine && $topPerformer) {
+                $contentStarters = [
+                    "Led by {player}’s {points} points, {rebounds} rebounds, and {assists} assists, {winner} obliterated {loser} {home_score}-{away_score} in a Round {round} beatdown.",
+                    "{player}’s {points}-point explosion fueled {winner}’s {home_score}-{away_score} rout of {loser} in Round {round}.",
+                    "With {player} dropping {points} points and {assists} assists, {winner} dominated {loser} {home_score}-{away_score} in Round {round}.",
+                ];
+            } else {
+                $contentStarters = [
+                    "In a Round {round} beatdown, {winner} obliterated {loser} with a commanding {home_score}-{away_score} scoreline.",
+                    "{winner} unleashed a Round {round} onslaught, crushing {loser} {home_score}-{away_score} in a one-sided affair.",
+                    "Round {round} saw {winner} dominate {loser} {home_score}-{away_score}, leaving no doubt about their superiority.",
+                ];
+            }
         } elseif ($scoreMargin <= 5) {
-            $contentStarters = [
-                "In a heart-stopping Round {round} clash, {winner} edged out {loser} {home_score}-{away_score} in a nail-biting finish.",
-                "{winner} survived a Round {round} thriller, squeaking past {loser} {home_score}-{away_score} in a photo finish.",
-                "Round {round} delivered drama as {winner} narrowly defeated {loser} {home_score}-{away_score} in a tense battle.",
-            ];
+            if ($isRookie && $isGoodStatLine && $topPerformer) {
+                $contentStarters = [
+                    "Rookie {player}’s {points} points, {rebounds} rebounds, and {assists} assists lifted {winner} to a thrilling {home_score}-{away_score} win over {loser} in Round {round}.",
+                    "First-year standout {player} delivered {points} points and {assists} assists, guiding {winner} to a {home_score}-{away_score} nail-biter over {loser} in Round {round}.",
+                    "Rookie sensation {player} shone with {points} points and {rebounds} rebounds, pushing {winner} past {loser} {home_score}-{away_score} in Round {round}.",
+                ];
+            } elseif ($isRareStatLine && $topPerformer) {
+                $contentStarters = [
+                    "{player}’s {points} points, {rebounds} rebounds, and {assists} assists propelled {winner} to a thrilling {home_score}-{away_score} win over {loser} in Round {round}.",
+                    "In a heart-stopping Round {round} clash, {winner}, led by {player}’s {points} points and {assists} assists, edged out {loser} {home_score}-{away_score}.",
+                    "{player}’s {points}-point, {rebounds}-rebound performance powered {winner} past {loser} {home_score}-{away_score} in Round {round}.",
+                ];
+            } else {
+                $contentStarters = [
+                    "In a heart-stopping Round {round} clash, {winner} edged out {loser} {home_score}-{away_score} in a nail-biting finish.",
+                    "{winner} survived a Round {round} thriller, squeaking past {loser} {home_score}-{away_score} in a photo finish.",
+                    "Round {round} delivered drama as {winner} narrowly defeated {loser} {home_score}-{away_score} in a tense battle.",
+                ];
+            }
         } else {
-            $contentStarters = [
-                "In an electrifying Round {round} matchup, {winner} showcased their prowess, securing a {home_score}-{away_score} win over {loser}.",
-                "Round {round} delivered a spectacle as {winner} clinched a {home_score}-{away_score} victory against {loser}.",
-                "Fans were treated to a Round {round} thriller as {winner} powered past {loser} with a {home_score}-{away_score} scoreline.",
-            ];
+            if ($isRookie && $isGoodStatLine && $topPerformer) {
+                $contentStarters = [
+                    "Rookie {player} led with {points} points, {rebounds} rebounds, and {assists} assists, driving {winner} to a {home_score}-{away_score} victory over {loser} in Round {round}.",
+                    "First-year star {player}’s {points} points and {assists} assists sparked {winner} to a {home_score}-{away_score} win over {loser} in Round {round}.",
+                    "Rookie sensation {player} delivered {points} points and {rebounds} rebounds, powering {winner} to a {home_score}-{away_score} triumph over {loser} in Round {round}.",
+                ];
+            } elseif ($isRareStatLine && $topPerformer) {
+                $contentStarters = [
+                    "{player}’s {points} points, {rebounds} rebounds, and {assists} assists led {winner} to a {home_score}-{away_score} victory over {loser} in Round {round}.",
+                    "With {player} posting {points} points and {assists} assists, {winner} secured a {home_score}-{away_score} win over {loser} in Round {round}.",
+                    "{player}’s {points}-point, {rebounds}-rebound effort powered {winner} to a {home_score}-{away_score} triumph over {loser} in Round {round}.",
+                ];
+            } else {
+                $contentStarters = [
+                    "In an electrifying Round {round} matchup, {winner} showcased their prowess, securing a {home_score}-{away_score} win over {loser}.",
+                    "Round {round} delivered a spectacle as {winner} clinched a {home_score}-{away_score} victory against {loser}.",
+                    "Fans were treated to a Round {round} thriller as {winner} powered past {loser} with a {home_score}-{away_score} scoreline.",
+                ];
+            }
         }
 
         // Conditional content middles, prioritizing streak_status
@@ -5079,7 +5149,6 @@ class SimulateController extends Controller
                 "With {chemistry} chemistry, {winner} executed with precision, outmaneuvering {loser} at every turn.",
             ];
         } else {
-
             if ($isLast3Rounds) {
                 // Upset scenario: lower-ranked team beats a higher-ranked team
                 if ($winnerStats->conference_rank > $loserStats->conference_rank) {
@@ -5113,9 +5182,7 @@ class SimulateController extends Controller
         }
 
         // Content enders
-
         $contentEnders = [];
-
         if ($draftPick) {
             $contentEnders[] = "With {$draftPick->player_name} emerging as a cornerstone, {$game->winner_team} looks poised for a strong finish to the regular season.";
             $contentEnders[] = "{$draftPick->player_name}’s breakout performance could be the key to {$game->winner_team}'s playoff push.";
@@ -5134,9 +5201,8 @@ class SimulateController extends Controller
                 $streak = $matches[1];
                 $contentEnders[] = "{$game->winner_team} extends their {$streak}-game winning streak, gaining momentum for the postseason.";
             }
-            
-            if ($isLast3Rounds) {
 
+            if ($isLast3Rounds) {
                 // Winner is a top contender in the conference
                 if ($winnerStats->conference_rank <= 6) {
                     $contentEnders[] = "{$game->winner_team} keeps their playoff hopes alive, defeating {$loser} as the regular season nears its end.";
@@ -5155,9 +5221,8 @@ class SimulateController extends Controller
                 if ($loserStats->is_defending_champion) {
                     $contentEnders[] = "{$game->winner_team} shocks the defending champion {$loser}, potentially altering the playoff picture in their conference!";
                 }
-
-            } else { // Case 2: Not last 3 rounds — regular season news
-
+            } else {
+                // Case 2: Not last 3 rounds — regular season news
                 // Winner is defending champion
                 if ($winnerStats->is_defending_champion) {
                     $contentEnders[] = "{$game->winner_team}, the defending champion, continues to assert their dominance in the conference.";
@@ -5203,8 +5268,18 @@ class SimulateController extends Controller
 
         // Build content with random segments
         $content = str_replace(
-            ['{round}', '{winner}', '{loser}', '{home_score}', '{away_score}', '{player}'],
-            [$game->round, $game->winner_team, $loser, $game->home_score, $game->away_score, $draftPick ? $draftPick->player_name : ''],
+            ['{round}', '{winner}', '{loser}', '{home_score}', '{away_score}', '{player}', '{points}', '{rebounds}', '{assists}'],
+            [
+                $game->round,
+                $game->winner_team,
+                $loser,
+                $game->home_score,
+                $game->away_score,
+                $topPerformer ? $topPerformer->player_name : ($draftPick ? $draftPick->player_name : ''),
+                $topPerformer ? $topPerformer->points : 'N/A',
+                $topPerformer ? $topPerformer->rebounds : 'N/A',
+                $topPerformer ? $topPerformer->assists : 'N/A',
+            ],
             $contentStarters[array_rand($contentStarters)]
         ) . ' ' . str_replace(
             ['{winner}', '{loser}', '{ppg}', '{win_percentage}', '{chemistry}', '{score_difference}', '{wins}', '{losses}', '{conference_rank}'],
