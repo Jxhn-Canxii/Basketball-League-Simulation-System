@@ -12,10 +12,10 @@ return [
 
     'rounds' => [
         'round_of_16' => [
-            'series_length' => 3, // Best-of-3
+            'series_length' => 7, // Best-of-3
         ],
         'quarter_finals' => [
-            'series_length' => 5, // Best-of-5
+            'series_length' => 7, // Best-of-5
         ],
         'semi_finals' => [
             'series_length' => 7, // Best-of-7

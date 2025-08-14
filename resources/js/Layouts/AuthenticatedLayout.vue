@@ -5,11 +5,11 @@
         <div class="flex flex-1 flex-col overflow-hidden">
             <Header />
 
-            <main class="flex justify-center overflow-y-auto min-h-screen bg-red-200">
-                <div class="container m-2 overflow-hidden px-2 py-4">
-                    <h3 class="mb-4 text-3xl font-medium text-gray-700">
+            <main class="flex justify-center overflow-y-auto min-h-screen min-w-screen bg-red-200">
+                <div class="container m-0 w-screen overflow-hidden px-2 py-0">
+                    <!-- <h3 class="mb-4 text-3xl font-medium text-gray-700">
                         <slot name="header" />
-                    </h3>
+                    </h3> -->
 
                     <slot />
                 </div>

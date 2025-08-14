@@ -10,7 +10,7 @@
                 <div
                     class="bg-white overflow-hidden shadow-sm sm:rounded-lg min-w-screen min-h-full p-2"
                 >
-                    <div class="w-screen mb-2 flex overflow-x-auto border-b-2">
+                    <div class="w-screen mb-0 flex overflow-x-auto border-b-2">
                         <ul class="flex flex-wrap">
                             <li
                                 class="whitespace-nowrap group flex items-center px-3 py-2 cursor-pointer relative flex-shrink-0 max-w-xs"
