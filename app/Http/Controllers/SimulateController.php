@@ -4870,13 +4870,13 @@ class SimulateController extends Controller
 
         // Fetch team stats from standings_view for both teams
         $winnerStats = DB::table('standings_view as s')
-            ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.streak_status','s.is_defending_champion','s.next_opponent_name','s.championships','s.conference_championships','s.playoff_appearances')
+            ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.overall_rank','s.streak_status','s.is_defending_champion','s.next_opponent_name','s.championships','s.conference_championships','s.playoff_appearances')
             ->where('s.team_id', $game->winner_id)
             ->where('s.season_id', $game->season_id)
             ->first();
 
         $loserStats = DB::table('standings_view as s')
-           ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.streak_status','s.is_defending_champion','s.next_opponent_name','s.championships','s.conference_championships','s.playoff_appearances')
+           ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.overall_rank','s.streak_status','s.is_defending_champion','s.next_opponent_name','s.championships','s.conference_championships','s.playoff_appearances')
             ->where('s.team_id', $loserId)
             ->where('s.season_id', $game->season_id)
             ->first();
