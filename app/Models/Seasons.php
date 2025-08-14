@@ -29,6 +29,7 @@ class Seasons extends Model
         'champion_name',
         'weakest_id',
         'weakest_name',
+        'total_regular_games',
         'created_at',
         'updated_at',
     ];

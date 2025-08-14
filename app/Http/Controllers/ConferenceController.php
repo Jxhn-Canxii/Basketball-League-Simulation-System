@@ -105,10 +105,17 @@ class ConferenceController extends Controller
             return $team;
         });
 
+        $latestNews = DB::table('game_news')
+            ->select('id', 'game_id', 'season_id', 'round', 'title', 'content', 'created_at', 'updated_at')
+             ->where('season_id', $seasonId)
+            ->orderBy('id', 'desc')
+            ->first();
+
         // Return the standings along with the conference name
         return response()->json([
             'standings' => $standings,
             'conference_name' => $conference ? $conference->name : 'N/A', // Check if conference exists
+            'latest_news' => $latestNews,
         ]);
     }
 

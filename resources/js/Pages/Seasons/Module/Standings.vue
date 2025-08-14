@@ -135,7 +135,9 @@
         </transition-group>
       </table>
     </div>
-
+    <div v-if="season_standings.latest_news" class="bg-gray-50 p-4 space-y-3 flex justify-center rounded shadow-md absolute top-0 right-0 z-1000">
+      <GameNews :data="season_standings.latest_news" />
+    </div>
     <!-- Season Summary -->
     <div v-if="season_info.seasons" class="bg-gray-50 p-4 space-y-3">
       <h3 class="font-semibold text-gray-700 mb-2">Season Highlights</h3>
@@ -168,6 +170,7 @@ import Modal from "@/Components/Modal.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
 import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";
+import GameNews from "@/Pages/Seasons/Module/GameNews.vue";
 
 const season_standings = ref(false);
 const loadingStandings = ref(false);

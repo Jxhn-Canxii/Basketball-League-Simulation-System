@@ -10,6 +10,7 @@ use App\Http\Controllers\SeasonsController;
 use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\PlayersController;
 use App\Http\Controllers\CoachController;
+use App\Http\Controllers\NewsController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\RatingsController;
 use App\Http\Controllers\AwardsController;
@@ -121,6 +122,11 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('ratings/')->group(function(){
         Route::post('update-player-status', [RatingsController::class, 'updateActivePlayers'])->name('update.player.status');
+    });
+
+    Route::prefix('news/')->group(function(){
+        Route::post('get-all-game-news', [AnalyticsController::class, 'getAllNews'])->name('game.news.list');
+        Route::post('get-game-news', [AnalyticsController::class, 'getNewsByGameId'])->name('game.news');
     });
 
     Route::prefix('analytics/')->group(function(){

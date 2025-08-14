@@ -439,10 +439,16 @@ class GameController extends Controller
         $seasonName = $seasonData->season_name;
         $leagueName = $seasonData->league_name;
 
+        $gameNews = DB::table('game_news')
+            ->select('id', 'game_id', 'season_id', 'round', 'title', 'content', 'created_at', 'updated_at')
+             ->where('game_id', $game->game_id)
+            ->first();
+
         // Format data for box score
         $boxScore = [
             'game_id' => $game->game_id,
             'round' => $game->round,
+            'news' =>  $gameNews,
             'injury' => $injury,
             'league_leaders' => $randomSeasonStatsLeaders,
             'home_team' => [

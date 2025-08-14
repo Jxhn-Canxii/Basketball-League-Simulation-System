@@ -74,6 +74,13 @@ class ScheduleController extends Controller
                     throw new \Exception('Invalid season type.');
             }
 
+           $totalRegularGames = DB::table('schedules')
+                ->where('season_id', $nextSeasonid)
+                ->where('conference_id', 1) // specify the conference
+                ->whereRaw('round REGEXP "^[0-9]+$"')   // only numeric rounds
+                ->count();
+
+
             $season = Seasons::create([
                 'id' => $nextSeasonid,
                 'name' => $request->season_name,
@@ -83,6 +90,7 @@ class ScheduleController extends Controller
                 'is_conference' => 1,
                 'playoff_type' => $request->playoff_type,
                 'status' => config('timeline.start'),
+                'total_regular_games' => $totalRegularGames,
             ]);
 
             // Store team season info (make sure this throws exception if it fails)

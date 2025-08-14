@@ -677,7 +677,18 @@
                 </div>
             </div>
             <!-- Stat Leaders Section: 3/4 Width -->
-            <div class="w-full md:w-1/2 p-2 bg-white">
+            <div v-if="showGameNews" class="w-full md:w-1/2 p-2 bg-white flex items-center justify-center relative">
+                <a @click.prevent="showGameNews = false" class="top-2 right-2 absolute">
+                    <i class="fa fa-2x fa-list-check"></i>
+                </a>
+                <div class="block">
+                    <GameNews :key="gameNews.id" :data="gameNews" />
+                </div>
+            </div>
+            <div v-else class="w-full md:w-1/2 p-2 bg-white relative">
+                <a @click.prevent="showGameNews = true" class="top-2 right-2 absolute">
+                    <i class="fa fa-2x fa-newspaper"></i>
+                </a>
                 <h3 class="text-lg font-semibold mb-2">Stat Leaders</h3>
                 <div class="min-w-full shadow-lg border-gray-300 p-4">
                     <ul class="space-y-4">
@@ -880,6 +891,8 @@ import Swal from "sweetalert2";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 import DepthChartRow from "@/Pages/Teams/Module/DepthChartRow.vue";
+import GameNews from "@/Pages/Seasons/Module/GameNews.vue";
+
 const props = defineProps({
     game_id: {
         type: String,
@@ -898,8 +911,10 @@ const bestPlayer = ref(null);
 const statLeaders = ref([]);
 const injuredPlayers =ref([]);
 const seasonLeaders = ref([]);
+const showGameNews = ref(false);
 const showAwayDepthChart = ref(false);
 const showHomeDepthChart = ref(false);
+const gameNews = ref([]);
 // Fetch the box score data
 const time = ref(0); // Timer in seconds
 const interval = ref(null); // Stores interval ID
@@ -947,6 +962,7 @@ const fetchBoxScore = async () => {
         statLeaders.value = data.stat_leaders;
         injuredPlayers.value = data.injury;
         seasonLeaders.value = data.league_leaders;
+        gameNews.value = data.news;
         gameFinished.value = true;
         // stopTimer(); // Stop the timer when the game finishes
     } catch (error) {
