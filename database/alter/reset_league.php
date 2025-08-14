@@ -7,6 +7,7 @@ TRUNCATE TABLE team_season_info;
 TRUNCATE TABLE players;
 TRUNCATE TABLE player_game_stats;
 TRUNCATE TABLE player_playoff_appearances;
+TRUNCATE TABLE player_series_appearances;
 TRUNCATE TABLE player_ratings;
 TRUNCATE TABLE playoff_series;
 TRUNCATE TABLE player_season_stats;
