@@ -231,6 +231,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'is_injured' => $player->is_injured,
                     'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
@@ -289,6 +290,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'is_injured' => $player->is_injured,
                     'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
@@ -736,6 +738,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'is_injured' => $player->is_injured,
                     'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
@@ -794,6 +797,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'is_injured' => $player->is_injured,
                     'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
@@ -1308,6 +1312,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'is_injured' => $player->is_injured,
                     'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
@@ -1367,6 +1372,7 @@ class SimulateController extends Controller
                     'game_id' => $gameData->game_id,
                     'season_id' => $currentSeasonId,
                     'team_id' => $player->team_id,
+                    'is_injured' => $player->is_injured,
                     'role' => $player->role,
                     'points' => $points,
                     'rebounds' => $rebounds,
@@ -1637,6 +1643,7 @@ class SimulateController extends Controller
             'game_id' => $gameData->game_id,
             'season_id' => $seasonId,
             'team_id' => $player->team_id,
+            'is_injured' => $player->is_injured,
             'role' => $player->role,
             'points' => 0,
             'rebounds' => 0,
@@ -2817,8 +2824,6 @@ class SimulateController extends Controller
 
                 $seriesNumber = preg_match('/-Series(\d+)$/', $gameData->game_id, $matches) ? $matches[1] : '1';
 
-                $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}";
-
                 // Get home/away pattern for the series
                 $homePattern = $this->getHomePattern($series->series_length);
 
@@ -2829,6 +2834,8 @@ class SimulateController extends Controller
                     $homeId = $series->away_team_id;
                     $awayId = $series->home_team_id;
                 }
+
+                $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}-{$homeId}v{$awayId}";
 
                 $newSchedule = [
                     'game_id' => $gameId,

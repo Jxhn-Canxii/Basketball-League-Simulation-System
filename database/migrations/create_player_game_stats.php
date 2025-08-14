@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('game_id');
             $table->foreignId('player_id')->default(0);
             $table->foreignId('team_id')->default(0);
+            $table->boolean('is_injured')->default(0);
             $table->float('minutes')->default(0);
             $table->integer('points')->default(0);
             $table->integer('rebounds')->default(0);
