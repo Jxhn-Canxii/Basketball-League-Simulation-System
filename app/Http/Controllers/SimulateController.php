@@ -4975,7 +4975,7 @@ class SimulateController extends Controller
             ];
         } else {
             // Check if the match impacts the #1 conference spot
-            $isNumberOneMatch = $winnerStats->conference_rank == 1 || $loserStats->conference_rank == 1;
+            $isNumberOneMatch = ($winnerStats->conference_rank == 1 && $loserStats->conference_rank == 2) || ($winnerStats->conference_rank == 2 && $loserStats->conference_rank == 1);
             
             if ($winnerStats->is_defending_champion) {
                  if ($isNumberOneMatch) {
