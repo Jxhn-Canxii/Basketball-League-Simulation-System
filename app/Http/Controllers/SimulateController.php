@@ -4974,8 +4974,18 @@ class SimulateController extends Controller
                 "{winner} (#1) Dominates Worst-Ranked {loser} {home_score}-{away_score} in Round {round} Showdown",
             ];
         } else {
+            // Check if the match impacts the #1 conference spot
+            $isNumberOneMatch = $winnerStats->conference_rank == 1 || $loserStats->conference_rank == 1;
+            
             if ($winnerStats->is_defending_champion) {
-                if ($scoreMargin <= 3) {
+                 if ($isNumberOneMatch) {
+                    $headlineTemplates = [
+                        "Defending Champs {winner} Hold Onto #1 Spot by Edging {loser} {home_score}-{away_score}",
+                        "{winner} Secures Top Conference Position with {home_score}-{away_score} Win Over {loser}",
+                        "Champion {winner} Maintains #1 Rank After Narrow Victory Against {loser} {home_score}-{away_score}",
+                    ];
+                } 
+                else if ($scoreMargin <= 3) {
                     // Close match, defending champion wins
                     $headlineTemplates = [
                         "Defending Champs {winner} Edge Out {loser} {home_score}-{away_score} in Round {round} Thriller",
@@ -5000,8 +5010,15 @@ class SimulateController extends Controller
                         "Defending Champs {winner} Annihilate {loser} {home_score}-{away_score} in Round {round}",
                     ];
                 }
-            } elseif ($loserStats->is_defending_champion) {
-                if ($scoreMargin <= 3) {
+            } 
+            elseif ($loserStats->is_defending_champion) {
+                if ($isNumberOneMatch) {
+                    $headlineTemplates = [
+                        "{winner} Shakes Up #1 Spot by Defeating Defending Champs {loser} {home_score}-{away_score}",
+                        "Upset Alert: {winner} Tops Defending Champion {loser} {home_score}-{away_score} in Round {round}",
+                    ];
+                } 
+                elseif ($scoreMargin <= 3) {
                     // Close match, defending champion loses
                     $headlineTemplates = [
                         "{winner} Stuns Defending Champs {loser} {home_score}-{away_score} in Round {round} Thriller",
@@ -5026,8 +5043,15 @@ class SimulateController extends Controller
                         "{winner} Annihilates Defending Champs {loser} {home_score}-{away_score} in Round {round} Upset",
                     ];
                 }
-            } else {
-                if ($scoreMargin <= 3) {
+            } 
+            else {
+                if ($isNumberOneMatch) {
+                    $headlineTemplates = [
+                        "{winner} Battles {loser} for #1 Conference Spot, Wins {home_score}-{away_score}",
+                        "{winner} Climbs to Top Conference Rank with {home_score}-{away_score} Win Over {loser}",
+                    ];
+                } 
+                elseif ($scoreMargin <= 3) {
                     // Close match, no defending champion
                     $headlineTemplates = [
                         "{winner} Edges Out {loser} {home_score}-{away_score} in Nail-Biting Round {round}",
