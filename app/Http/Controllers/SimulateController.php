@@ -516,7 +516,7 @@ class SimulateController extends Controller
 
         $this->updateTeamStreaks($gameData->id);
         $this->updateHeadToHeadResults($gameData->id);
-        $this->createGameNewsFromGame($gameData->id);
+        // $this->createGameNewsFromGame($gameData->id);
 
         $this->updatePlayoffAppearancesForGame($gameData);
 
@@ -1068,7 +1068,7 @@ class SimulateController extends Controller
             $this->updateTeamStreaks($gameData->id);
             $this->updateHeadToHeadResults($gameData->id);
             $this->updatePlayoffAppearancesForGame($gameData);
-            $this->createGameNewsFromGame($gameData->id);
+            // $this->createGameNewsFromGame($gameData->id);
 
             $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId,  $gameData->round);
             $isRoundSeriesSimulatedForSeason = $this->isRoundSeriesSimulated($currentSeasonId,  $gameData->round);
