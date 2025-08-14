@@ -135,7 +135,7 @@
         </transition-group>
       </table>
     </div>
-    <div v-if="season_standings.latest_news" class="bg-gray-50 p-4 space-y-3 flex justify-center rounded shadow-md absolute top-0 right-0 z-1000">
+    <div v-if="season_standings.latest_news && season_info[0].status < 2" class="bg-gray-50 p-4 space-y-3 flex justify-center rounded shadow-md absolute top-0 right-0 z-1000">
       <GameNews :data="season_standings.latest_news" />
     </div>
     <!-- Season Summary -->

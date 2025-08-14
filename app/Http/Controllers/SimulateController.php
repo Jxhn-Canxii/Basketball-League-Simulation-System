@@ -4870,13 +4870,13 @@ class SimulateController extends Controller
 
         // Fetch team stats from standings_view for both teams
         $winnerStats = DB::table('standings_view as s')
-            ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.overall_rank','s.streak_status','s.is_defending_champion','s.next_opponent_name','s.championships','s.conference_championships','s.playoff_appearances')
+            ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.overall_rank', 's.streak_status', 's.is_defending_champion', 's.next_opponent_name', 's.championships', 's.conference_championships', 's.playoff_appearances')
             ->where('s.team_id', $game->winner_id)
             ->where('s.season_id', $game->season_id)
             ->first();
 
         $loserStats = DB::table('standings_view as s')
-           ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.overall_rank','s.streak_status','s.is_defending_champion','s.next_opponent_name','s.championships','s.conference_championships','s.playoff_appearances')
+            ->select('s.wins', 's.losses', 's.home_ppg', 's.score_difference', 's.conference_rank', 's.overall_rank', 's.streak_status', 's.is_defending_champion', 's.next_opponent_name', 's.championships', 's.conference_championships', 's.playoff_appearances')
             ->where('s.team_id', $loserId)
             ->where('s.season_id', $game->season_id)
             ->first();
@@ -4940,12 +4940,85 @@ class SimulateController extends Controller
                 "{winner} (#1) Dominates Worst-Ranked {loser} {home_score}-{away_score} in Round {round} Showdown",
             ];
         } else {
-            $headlineTemplates = [
-                "{winner} Stuns {loser} in {home_score}-{away_score} Thriller, Round {round}",
-                "{winner} Dominates {loser} {home_score}-{away_score} in Round {round} Showdown",
-                "{winner} Edges Out {loser} {home_score}-{away_score} in Nail-Biting Round {round}",
-                "{winner} Overpowers {loser} {home_score}-{away_score} in Round {round} Clash",
-            ];
+            if ($winnerStats->is_defending_champion) {
+                if ($scoreMargin <= 3) {
+                    // Close match, defending champion wins
+                    $headlineTemplates = [
+                        "Defending Champs {winner} Edge Out {loser} {home_score}-{away_score} in Round {round} Thriller",
+                        "Reigning Champs {winner} Squeak Past {loser} {home_score}-{away_score} in Tight Round {round}",
+                        "Champion {winner} Survives {loser} {home_score}-{away_score} in Nail-Biting Round {round}",
+                        "Defending Champs {winner} Hold Off {loser} {home_score}-{away_score} in Close Round {round}",
+                    ];
+                } elseif ($scoreMargin <= 7) {
+                    // Moderate win, defending champion wins
+                    $headlineTemplates = [
+                        "Defending Champs {winner} Defeat {loser} {home_score}-{away_score} in Round {round} Victory",
+                        "Reigning Champs {winner} Outplay {loser} {home_score}-{away_score} in Round {round} Showdown",
+                        "Champion {winner} Secures {home_score}-{away_score} Win Over {loser} in Round {round}",
+                        "Defending Champs {winner} Prevail Over {loser} {home_score}-{away_score} in Round {round}",
+                    ];
+                } else {
+                    // Dominant win, defending champion wins
+                    $headlineTemplates = [
+                        "Defending Champs {winner} Crush {loser} {home_score}-{away_score} in Round {round} Rout",
+                        "Reigning Champs {winner} Overwhelm {loser} {home_score}-{away_score} in Round {round} Triumph",
+                        "Champion {winner} Demolish {loser} {home_score}-{away_score} in Round {round} Blowout",
+                        "Defending Champs {winner} Annihilate {loser} {home_score}-{away_score} in Round {round}",
+                    ];
+                }
+            } elseif ($loserStats->is_defending_champion) {
+                if ($scoreMargin <= 3) {
+                    // Close match, defending champion loses
+                    $headlineTemplates = [
+                        "{winner} Stuns Defending Champs {loser} {home_score}-{away_score} in Round {round} Thriller",
+                        "{winner} Upsets Reigning Champs {loser} {home_score}-{away_score} in Tight Round {round}",
+                        "{winner} Shocks Champion {loser} {home_score}-{away_score} in Nail-Biting Round {round}",
+                        "{winner} Edges Out Defending Champs {loser} {home_score}-{away_score} in Close Round {round}",
+                    ];
+                } elseif ($scoreMargin <= 7) {
+                    // Moderate win, defending champion loses
+                    $headlineTemplates = [
+                        "{winner} Defeats Reigning Champs {loser} {home_score}-{away_score} in Round {round} Upset",
+                        "{winner} Outplays Defending Champs {loser} {home_score}-{away_score} in Round {round} Showdown",
+                        "{winner} Secures {home_score}-{away_score} Win Over Champion {loser} in Round {round}",
+                        "{winner} Overcomes Defending Champs {loser} {home_score}-{away_score} in Round {round}",
+                    ];
+                } else {
+                    // Dominant win, defending champion loses
+                    $headlineTemplates = [
+                        "{winner} Crushes Defending Champs {loser} {home_score}-{away_score} in Round {round} Shocker",
+                        "{winner} Overwhelms Reigning Champs {loser} {home_score}-{away_score} in Round {round} Rout",
+                        "{winner} Demolishes Champion {loser} {home_score}-{away_score} in Round {round} Blowout",
+                        "{winner} Annihilates Defending Champs {loser} {home_score}-{away_score} in Round {round} Upset",
+                    ];
+                }
+            } else {
+                if ($scoreMargin <= 3) {
+                    // Close match, no defending champion
+                    $headlineTemplates = [
+                        "{winner} Edges Out {loser} {home_score}-{away_score} in Nail-Biting Round {round}",
+                        "{winner} Squeaks Past {loser} {home_score}-{away_score} in Tight Round {round} Finish",
+                        "{winner} Holds Off {loser} {home_score}-{away_score} in Thrilling Round {round}",
+                        "{winner} Survives {loser} {home_score}-{away_score} in Close Round {round} Battle",
+                    ];
+                } elseif ($scoreMargin <= 7) {
+                    // Moderate win, no defending champion
+                    $headlineTemplates = [
+                        "{winner} Defeats {loser} {home_score}-{away_score} in Solid Round {round} Victory",
+                        "{winner} Outplays {loser} {home_score}-{away_score} in Round {round} Showdown",
+                        "{winner} Secures {home_score}-{away_score} Win Over {loser} in Round {round}",
+                        "{winner} Prevails Over {loser} {home_score}-{away_score} in Round {round} Clash",
+                    ];
+                } else {
+                    // Dominant win, no defending champion
+                    $headlineTemplates = [
+                        "{winner} Crushes {loser} {home_score}-{away_score} in Round {round} Rout",
+                        "{winner} Overwhelms {loser} {home_score}-{away_score} in Dominant Round {round}",
+                        "{winner} Demolishes {loser} {home_score}-{away_score} in Round {round} Blowout",
+                        "{winner} Annihilates {loser} {home_score}-{away_score} in Round {round} Triumph",
+                    ];
+                }
+            }
         }
 
         // Conditional content starters
@@ -5006,14 +5079,41 @@ class SimulateController extends Controller
                 "With {chemistry} chemistry, {winner} executed with precision, outmaneuvering {loser} at every turn.",
             ];
         } else {
-            $contentMiddles = [
-                "{winner}’s high-octane offense, averaging {ppg} points at home, tore through {loser}’s defense.",
-                "{winner}’s {wins}-{losses} record and #{conference_rank} conference rank reflect their playoff-contending form.",
-            ];
+
+            if ($isLast3Rounds) {
+                // Upset scenario: lower-ranked team beats a higher-ranked team
+                if ($winnerStats->conference_rank > $loserStats->conference_rank) {
+                    $contentMiddles[] = "In a stunning upset, #{$winnerStats->conference_rank} {$game->winner_team} toppled #{$loserStats->conference_rank} {$loser} in Round {$game->round}, shaking up the playoff picture!";
+                }
+
+                // Winner beats a defending champion
+                if ($loserStats->is_defending_champion) {
+                    $contentMiddles[] = "{$game->winner_team} pulled off a monumental win over the defending champions, {$loser}, potentially altering postseason hopes!";
+                }
+
+                // Winner is defending champion themselves
+                if ($winnerStats->is_defending_champion) {
+                    $contentMiddles[] = "{$game->winner_team}, the defending champions, showed they can still dominate, holding a #{$winnerStats->conference_rank} conference rank.";
+                }
+
+                // Playoff contention for non-defending champions
+                if (!$winnerStats->is_defending_champion) {
+                    if ($winnerStats->conference_rank <= 4) {
+                        $contentMiddles[] = "{$game->winner_team} strengthens their playoff position with a #{$winnerStats->conference_rank} conference rank.";
+                    } elseif ($winnerStats->conference_rank <= 10) {
+                        $contentMiddles[] = "{$game->winner_team} is battling for a play-in spot, currently sitting at #{$winnerStats->conference_rank} in the conference.";
+                    } else {
+                        $contentMiddles[] = "{$game->winner_team} continues fighting, but with a #{$winnerStats->conference_rank} rank, postseason hopes are slim.";
+                    }
+                }
+            } else {
+                // Early/mid-season news
+                $contentMiddles[] = "{$game->winner_team} improved their standing with a Round {$game->round} victory, now holding #{$winnerStats->conference_rank} in the conference.";
+            }
         }
 
         // Content enders
-        
+
         $contentEnders = [];
 
         if ($draftPick) {
@@ -5021,9 +5121,6 @@ class SimulateController extends Controller
             $contentEnders[] = "{$draftPick->player_name}’s breakout performance could be the key to {$game->winner_team}'s playoff push.";
         } else {
             // Base statements
-            $contentEnders[] = "This victory cements {$game->winner_team}’s status as a competitive force in the regular season.";
-            $contentEnders[] = "The win keeps {$game->winner_team} in strong contention as the season nears its climax.";
-
             // Conditional enhancements
             if ($winnerStats->is_defending_champion) {
                 $contentEnders[] = "{$game->winner_team} proves they can defend their crown with another solid win.";
@@ -5037,30 +5134,61 @@ class SimulateController extends Controller
                 $streak = $matches[1];
                 $contentEnders[] = "{$game->winner_team} extends their {$streak}-game winning streak, gaining momentum for the postseason.";
             }
-
+            
             if ($isLast3Rounds) {
-                // Last 3 rounds: playoff/play-in context
-                if ($winnerStats->conference_rank <= 4) {
-                    $contentEnders[] = "{$game->winner_team} secures a crucial victory to strengthen their playoff position, next facing {$winnerStats->next_opponent_name}.";
-                } elseif ($winnerStats->conference_rank <= 8) {
-                    $contentEnders[] = "{$game->winner_team} keeps their play-in hopes alive with a key win over {$loserStats->team_name}.";
-                } else {
-                    $contentEnders[] = "{$game->winner_team} fights to improve their standings, remaining in the hunt for postseason qualification.";
+
+                // Winner is a top contender in the conference
+                if ($winnerStats->conference_rank <= 6) {
+                    $contentEnders[] = "{$game->winner_team} keeps their playoff hopes alive, defeating {$loser} as the regular season nears its end.";
+                } 
+                // Winner is a low-ranked team
+                else {
+                    $contentEnders[] = "Despite being lower in the conference standings, {$game->winner_team} earns a crucial win against {$loser}, keeping their faint playoff hopes alive.";
                 }
-            } else {
-                // Not last 3 rounds: regular conditions
-                if ($winnerStats->conference_rank == 1) {
-                    $contentEnders[] = "{$game->winner_team} remains on top of their conference, next facing {$winnerStats->next_opponent_name}.";
+
+                // Loser is a top contender — now in danger
+                if ($loserStats->conference_rank <= 6 && $loserStats->conference_rank > $winnerStats->conference_rank) {
+                    $contentEnders[] = "The loss puts {$loser} in danger of dropping out of playoff contention, while {$game->winner_team} climbs in the conference race.";
                 }
-                if ($winnerStats->overall_rank == 1) {
-                    $contentEnders[] = "{$game->winner_team} continues to lead the league, showing consistency and strength in the regular season.";
+
+                // Upset vs defending champion
+                if ($loserStats->is_defending_champion) {
+                    $contentEnders[] = "{$game->winner_team} shocks the defending champion {$loser}, potentially altering the playoff picture in their conference!";
+                }
+
+            } else { // Case 2: Not last 3 rounds — regular season news
+
+                // Winner is defending champion
+                if ($winnerStats->is_defending_champion) {
+                    $contentEnders[] = "{$game->winner_team}, the defending champion, continues to assert their dominance in the conference.";
+                } 
+                // Winner is top-ranked
+                elseif ($winnerStats->conference_rank == 1) {
+                    $contentEnders[] = "{$game->winner_team} remains atop their conference, next facing {$winnerStats->next_opponent_name}.";
+                } 
+                // Winner is mid-ranked (playoff contender)
+                elseif ($winnerStats->conference_rank >= 2 && $winnerStats->conference_rank <= 6) {
+                    $contentEnders[] = "The win keeps {$game->winner_team} in strong playoff contention, aiming for a higher seed.";
+                } 
+                // Winner is low-ranked (struggling)
+                else {
+                    $contentEnders[] = "Despite their lower ranking, {$game->winner_team} secures a vital victory to stay competitive in the conference.";
+                }
+
+                // Upset scenarios
+                if ($loserStats->is_defending_champion && $winnerStats->conference_rank > $loserStats->conference_rank) {
+                    $contentEnders[] = "{$game->winner_team} pulls off an upset over defending champion {$loser}, shaking up the playoff picture.";
+                } 
+                // Non-champion upset: low-rank team beats higher-rank team
+                elseif ($winnerStats->conference_rank > $loserStats->conference_rank) {
+                    $contentEnders[] = "In a surprising result, lower-ranked {$game->winner_team} defeats higher-ranked {$loser}, making waves in the conference standings.";
                 }
             }
-
             // Highlight experienced teams
             if ($winnerStats->playoff_appearances > 5) {
                 $contentEnders[] = "Veteran experience shines as {$game->winner_team} adds another regular season win to their impressive track record.";
             }
+
             if ($winnerStats->championships > 0) {
                 $contentEnders[] = "With past championships fueling their confidence, {$game->winner_team} remains a team to watch this season.";
             }
