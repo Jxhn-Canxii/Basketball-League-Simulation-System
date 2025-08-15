@@ -410,7 +410,10 @@ const simulateFullPlayoffs = async () => {
 
         while (currentRoundIndex < roundOrder.length) {
             const roundName = roundOrder[currentRoundIndex];
-
+            const isCompleted = season_playoffs.value.playoffs[roundName]?.completed;
+            if(isCompleted){
+                continue;
+            }
             // Refresh latest data
             await fetchSeasonInfo(form.seasons_id);
             await fetchSeasonPlayoffs(is_play_ins.value);
@@ -422,10 +425,13 @@ const simulateFullPlayoffs = async () => {
             ) {
                 try {
                     const scheduleResponse = await createPlayOffScheduleAuto(roundName);
-
+                    
                     // If schedule already created, log and continue
                     if (typeof scheduleResponse === 'string' &&
                         scheduleResponse.toLowerCase().includes("already created")) {
+                        if(!isCompleted){
+                            await fetchSeasonPlayoffs(is_play_ins.value);
+                        }
                         console.log(`Schedule for ${roundName} already exists. Proceeding.`);
                     } else {
                         await fetchSeasonPlayoffs(is_play_ins.value);

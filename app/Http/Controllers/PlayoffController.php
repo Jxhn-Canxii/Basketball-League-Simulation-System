@@ -573,9 +573,9 @@ class PlayoffController extends Controller
 
             }
 
-            // if (!$allRoundsSeriesFinished) {
+            // if (!$allPrevRoundsSeriesFinished) {
             //     return response()->json([
-            //         'message' => 'Current round series schedule is ongoing. Cannot create series schedule for next round.',
+            //         'message' => 'Prev round series schedule is ongoing. Cannot create series schedule for next round.',
             //     ], 500);
             // }
 
