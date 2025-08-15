@@ -42,6 +42,10 @@ class Player extends Model
         'leadership_rating', // New
         'work_ethic_rating', // New
         'overall_rating',
+        'loyalty_rating',
+        'satisfaction_rating',
+        'ambition_rating',
+        'negotation_skill_rating',
         'draft_id',
         'draft_order',
         'drafted_team_id',

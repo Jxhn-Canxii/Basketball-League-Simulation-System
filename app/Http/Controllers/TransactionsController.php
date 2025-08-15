@@ -552,6 +552,164 @@ class TransactionsController extends Controller
         }
     }
 
+    public function autoAssignFreeAgents()
+    {
+        $seasonId = get_current_season_id() ?? 0;
+        $currentSeasonId = $seasonId + 1;
+
+        $minimumPositionCounts = [
+            'PG' => 3,
+            'SG' => 3,
+            'SF' => 3,
+            'PF' => 3,
+            'C'  => 3,
+        ];
+
+        // Step 1: Check position availability
+        $positionCheck = $this->checkPositionAvailability();
+        if ($positionCheck !== true) return $positionCheck;
+
+        // Step 2: Get all active free agents
+        $activePlayers = DB::table('players')
+            ->where('is_active', 1)
+            ->where('team_id', 0)
+            ->select('id', 'name', 'position', 'role', 'overall_rating', 'loyalty_rating', 'satisfaction_rating', 'ambition_rating')
+            ->get();
+
+        // Step 3: Get last snapshot for team credibility
+        $teamsCredibility = DB::table('standings_snapshots as s1')
+            ->select('s1.team_id', 's1.overall_rank', 's1.chemistry', 's1.is_defending_champion')
+            ->whereRaw('s1.id = (SELECT MAX(s2.id) FROM standings_snapshots s2 WHERE s2.team_id = s1.team_id)')
+            ->get()
+            ->keyBy('team_id');
+
+        // Step 4: Get teams with fewer than 15 players
+        $teams = DB::table('teams')
+            ->leftJoin('players', 'teams.id', '=', 'players.team_id')
+            ->select('teams.id', 'teams.name', DB::raw('COUNT(players.id) as player_count'))
+            ->groupBy('teams.id', 'teams.name')
+            ->havingRaw('COUNT(players.id) < 15')
+            ->get();
+
+        // Step 5: Sort teams by credibility (weaker teams get priority)
+        $teams = $teams->sortBy(function ($team) use ($teamsCredibility) {
+            $cred = $teamsCredibility[$team->id] ?? null;
+            if (!$cred) return 100;
+            $rankScore = 100 - ($cred->overall_rank ?? 50);
+            $chemScore = 50 - ($cred->chemistry ?? 50);
+            $championPenalty = $cred->is_defending_champion ? -20 : 0;
+            return $rankScore + $chemScore + $championPenalty;
+        });
+
+        $usedPlayerIds = [];
+
+        // Step 6: Assign players
+        foreach ($teams as $team) {
+            $teamPosCounts = $this->getTeamPositionCounts($team->id);
+            $currentPlayerCount = $team->player_count;
+
+            // Fill minimum position requirements first
+            foreach ($minimumPositionCounts as $position => $minRequired) {
+                while (($teamPosCounts[$position] ?? 0) < $minRequired && $currentPlayerCount < 15) {
+                    $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, $position, $usedPlayerIds);
+                    if (!$player) break;
+
+                    $this->assignPlayerWithTransaction($player, $team, $currentSeasonId, $seasonId);
+                    $usedPlayerIds[] = $player->id;
+
+                    foreach (explode('/', $player->position) as $pos) {
+                        $teamPosCounts[$pos] = ($teamPosCounts[$pos] ?? 0) + 1;
+                    }
+                    $currentPlayerCount++;
+                }
+            }
+
+            // Fill remaining spots with best compatible players
+            while ($currentPlayerCount < 15) {
+                $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, null, $usedPlayerIds);
+                if (!$player) break;
+
+                $this->assignPlayerWithTransaction($player, $team, $currentSeasonId, $seasonId);
+                foreach (explode('/', $player->position) as $pos) {
+                    $teamPosCounts[$pos] = ($teamPosCounts[$pos] ?? 0) + 1;
+                }
+                $usedPlayerIds[] = $player->id;
+                $currentPlayerCount++;
+            }
+        }
+
+        return response()->json([
+            'message' => 'Players assigned based on ratings, team compatibility, and personality.',
+            'remaining_players' => count($activePlayers) - count($usedPlayerIds),
+        ]);
+    }
+
+    /**
+     * Private helper: Select best compatible player for a team
+     */
+    private function selectBestCompatiblePlayer($players, $team, $teamPosCounts, $targetPosition, $usedPlayerIds)
+    {
+        $candidates = $players->whereNotIn('id', $usedPlayerIds)
+            ->filter(function ($p) use ($teamPosCounts, $targetPosition) {
+                if ($targetPosition) {
+                    $positions = explode('/', $p->position);
+                    if (!in_array($targetPosition, $positions)) return false;
+                }
+
+                // Avoid overloading stars
+                $teamStarCount = DB::table('players')
+                    ->where('team_id', $team->id)
+                    ->whereIn('role', ['star player', 'all star'])
+                    ->count();
+
+                if ($teamStarCount >= 3 && $p->role == 'star player') return false;
+
+                // Personality check
+                $joinChance = $p->loyalty_rating * 0.2
+                    + $p->satisfaction_rating * 0.2
+                    + $p->ambition_rating * 0.2
+                    + rand(0, 20);
+
+                return $joinChance >= 50;
+            });
+
+        return $candidates->sortByDesc('overall_rating')->first();
+    }
+
+    /**
+     * Private helper: Assign a player to a team with a DB transaction
+     */
+    private function assignPlayerWithTransaction($player, $team, $currentSeasonId, $seasonId)
+    {
+        $contractYears = $this->determineContractYears($player->role);
+        $teamId = $team->id;
+        $teamName = $team->name;
+
+        DB::beginTransaction();
+        try {
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'team_id' => $teamId,
+                    'contract_years' => $contractYears,
+                ]);
+
+            DB::table('transactions')->insert([
+                'player_id' => $player->id,
+                'season_id' => $currentSeasonId,
+                'details' => $player->name . ' signed with ' . $teamName . ' for ' . $contractYears . ' years.',
+                'from_team_id' => 0,
+                'to_team_id' => $teamId,
+                'status' => 'signed',
+            ]);
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollback();
+            throw $e;
+        }
+    }
+
     public function getTeamPositionCounts($teamId)
     {
         $positionCounts = DB::table('players')

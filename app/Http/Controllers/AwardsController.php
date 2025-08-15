@@ -1270,7 +1270,7 @@ class AwardsController extends Controller
 
                 // Update player contract and add transaction record
                 // $this->upsertCurrentSeasonStoryline();
-                // $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
+                $this->processAwardContractExtension($playerStats, $awardName, $seasonId);
 
                 DB::commit();
             } catch (\Exception $e) {
@@ -1301,30 +1301,39 @@ class AwardsController extends Controller
             return;
         }
 
-        // Step 2: Check if player has fewer than 3 years on their contract
-        $contractYears = DB::table('players')
-            ->where('id', $playerStats->player_id)
-            ->value('contract_years');
-
-        if ($contractYears >= 5) {
+        // Step 2: Get player info
+        $player = DB::table('players')->where('id', $playerStats->player_id)->first();
+        if (!$player || $player->team_id == 0 || $player->contract_years > 3) {
             return;
         }
 
-        // Step 3: Check how many extensions the player already received this season
+        // Step 3: Check existing extensions this season
         $existingExtensions = DB::table('transactions')
             ->where('player_id', $playerStats->player_id)
             ->where('season_id', $seasonId)
             ->where('status', 'contract extension')
             ->count();
+        if ($existingExtensions >= 2) return;
 
-        if ($existingExtensions >= 2) {
-            return;
+        // Step 4: Determine chance to sign extension (0-100)
+        $chanceToSign = (
+            0.4 * $player->loyalty_rating +
+            0.3 * $player->satisfaction_rating +
+            0.2 * $player->ambition_rating +
+            0.1 * $player->negotiation_skill_rating
+        );
+
+        if (rand(1, 100) > $chanceToSign) return; // Player refused
+
+        // Step 5: Determine extension years based on award type
+        $defensiveAwards = ['Best Defensive Player'];
+        if (in_array($awardName, $defensiveAwards)) {
+            $extensionYears = rand(3, 5);
+        } else {
+            $extensionYears = 3; // Overall / other awards max 3 years
         }
 
-        // Step 4: Apply extension
-        $extensionYears = rand(3, 5); // Or fixed value if you prefer
-
-        // Update contract years
+        // Step 6: Apply extension
         DB::table('players')
             ->where('id', $playerStats->player_id)
             ->update([
@@ -1332,7 +1341,7 @@ class AwardsController extends Controller
                 'updated_at' => now()
             ]);
 
-        // Log the extension transaction
+        // Step 7: Log transaction
         DB::table('transactions')->insert([
             'player_id' => $playerStats->player_id,
             'season_id' => $seasonId,

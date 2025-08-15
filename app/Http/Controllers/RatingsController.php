@@ -240,45 +240,87 @@ class RatingsController extends Controller
 
 
                 // Check if contract_years is 0
-                if ($player->contract_years == 0) {
-                    // Determine if the player re-signs
-                    $reSignChance = match ($player->role) {
+                if ($player->contract_years <= 2) {
+                    // 1. Calculate re-sign chance based on ratings
+                    $baseChance = 50;
+                    $reSignChance = $baseChance
+                        + ($player->loyalty_rating * 0.3)
+                        + ($player->satisfaction_rating * 0.4)
+                        - ($player->ambition_rating * 0.2)
+                        + ($player->negotiation_skill_rating * 0.1);
+
+                    $reSignChance = min(95, max(5, round($reSignChance)));
+
+                    // 2. Determine release condition
+                    $releaseCondition = false;
+
+                    // Role-based performance threshold
+                    $roleThreshold = match ($player->role) {
                         'star player' => 70,
-                        'all star' => 60,
-                        'starter' => 50,
-                        'role player' => 30,
-                        'bench' => 10,
+                        'all star' => 65,
+                        'starter' => 60,
+                        'role player' => 50,
+                        'bench' => 40,
                         default => 50,
                     };
+                    if ($player->overall_rating < $roleThreshold) $releaseCondition = true;
 
-                    if (mt_rand(1, 100) > $reSignChance) {
-                        // Player re-signs, assign contract length based on role
-                        $player->contract_years += $this->getContractYearsBasedOnRole($player->role);
-                        $reSignedPlayers[] = $player; // Track re-signed player
+                    // Low work ethic or loyalty
+                    if ($player->work_ethic_rating < 40 || $player->loyalty_rating < 30) $releaseCondition = true;
 
+                    // Age and durability
+                    if ($player->age >= 35 && $player->overall_rating < 60) $releaseCondition = true;
+
+                    // Morale or injury-prone players
+                    if ($player->morale < 30 || $player->injury_prone_percentage > 60) $releaseCondition = true;
+
+                    // 3. Determine outcome
+                    if ($releaseCondition) {
+                        // Release player
                         DB::table('transactions')->insert([
                             'player_id' => $player->id,
                             'season_id' => $seasonId,
-                            'details' => 'Re-signed with ' . $teamName . ' For contract extension of ' . $player->contract_years . ' years',
-                            'from_team_id' => $player->team_id,
-                            'to_team_id' => $player->team_id,
-                            'status' => 'resigned',
-                        ]);
-                    } else {
-
-                        DB::table('transactions')->insert([
-                            'player_id' => $player->id,
-                            'season_id' => $seasonId,
-                            'details' => 'Released by ' . $teamName,
+                            'details' => "Released by {$teamName}",
                             'from_team_id' => $player->team_id,
                             'to_team_id' => 0,
                             'status' => 'released',
+                            'created_at' => now(),
+                            'updated_at' => now(),
                         ]);
-
                         $player->contract_years = 0;
                         $player->team_id = 0;
+                    } elseif (mt_rand(1, 100) <= $reSignChance) {
+                        // Player accepts re-sign
+                        $extensionYears = $this->getContractYearsBasedOnRole($player->role);
+                        $player->contract_years += $extensionYears;
+                        $reSignedPlayers[] = $player;
+
+                        DB::table('transactions')->insert([
+                            'player_id' => $player->id,
+                            'season_id' => $seasonId,
+                            'details' => "Re-signed with {$teamName} for contract extension of {$extensionYears} year(s)",
+                            'from_team_id' => $player->team_id,
+                            'to_team_id' => $player->team_id,
+                            'status' => 'resigned',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    } else {
+                        // Player declines but stays
+                        DB::table('transactions')->insert([
+                            'player_id' => $player->id,
+                            'season_id' => $seasonId,
+                            'details' => "Declined to re-sign with {$teamName}",
+                            'from_team_id' => $player->team_id,
+                            'to_team_id' => $player->team_id,
+                            'status' => 'declined',
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                        // Do not change contract_years or team_id
                     }
                 }
+
 
                 // Determine if the player should have an injury_prone_percentage of 0
                 // if (rand(1, 100) <= 30) {
