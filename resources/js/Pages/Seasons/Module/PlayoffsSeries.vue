@@ -407,15 +407,23 @@ const simulateFullPlayoffs = async () => {
         if (season_info.value.seasons[0].status == 2) {
             await createPlayOffScheduleAuto(initialRound);
         }
-
+        console.log(roundOrder);
         while (currentRoundIndex < roundOrder.length) {
-            const roundName = roundOrder[currentRoundIndex];
+            let roundName = roundOrder[currentRoundIndex];
+            let start_playoffs = season_info.value.seasons[0].start_playoffs;
+            let prevRound = roundStatusFormatter(roundOrder[currentRoundIndex], start_playoffs, is_play_ins.value);
+
+            const isPrevRoundCompleted = season_playoffs.value.playoffs[prevRound]?.completed;
             const isCompleted = season_playoffs.value.playoffs[roundName]?.completed;
-            if(isCompleted){
-                 console.log(`${roundName}  Completed:${isCompleted} skipping...`);
-                 currentRoundIndex++; // Move to the next round
-                continue;
+            if(isPrevRoundCompleted){
+                console.log(`${prevRound}  Prev Round Completed:${isCompleted} skipping...`);
+                if(isCompleted){
+                    console.log(`${prevRound}  Prev Round Completed:${isCompleted} skipping...`);
+                    currentRoundIndex++; // Move to the next round
+                    continue;
+                }
             }
+            console.log(`Current ${roundName}`);
             // Refresh latest data
             await fetchSeasonInfo(form.seasons_id);
             await fetchSeasonPlayoffs(is_play_ins.value);
@@ -423,7 +431,7 @@ const simulateFullPlayoffs = async () => {
             // Check if round has matches
             if (
                 !season_playoffs.value.playoffs[roundName] ||
-                season_playoffs.value.playoffs[roundName].length === 0
+                season_playoffs.value.playoffs[roundName]?.series?.length === 0
             ) {
                 try {
                     const scheduleResponse = await createPlayOffScheduleAuto(roundName);
@@ -432,6 +440,7 @@ const simulateFullPlayoffs = async () => {
                     if (typeof scheduleResponse === 'string' &&
                         scheduleResponse.toLowerCase().includes("already created")) {
                         if(!isCompleted){
+                            console.log(isCompleted);
                             await fetchSeasonPlayoffs(is_play_ins.value);
                         }
                         console.log(`Schedule for ${roundName} already exists. Proceeding... status:${isCompleted}`);

@@ -4625,6 +4625,7 @@ class SimulateController extends Controller
                 'p.age'
             )
             ->where('pss.player_id', $playerId)
+            ->where('pss.team_id', $teamId)
             ->where('pss.season_id', '<', $currentSeasonId)
             ->groupBy('pss.season_id', 'latest_stats.role', 'p.age')
             ->orderByDesc('pss.season_id')
