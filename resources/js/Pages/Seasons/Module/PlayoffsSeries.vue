@@ -412,6 +412,8 @@ const simulateFullPlayoffs = async () => {
             const roundName = roundOrder[currentRoundIndex];
             const isCompleted = season_playoffs.value.playoffs[roundName]?.completed;
             if(isCompleted){
+                 console.log(`${roundName}  Completed:${isCompleted} skipping...`);
+                 currentRoundIndex++; // Move to the next round
                 continue;
             }
             // Refresh latest data
@@ -432,7 +434,7 @@ const simulateFullPlayoffs = async () => {
                         if(!isCompleted){
                             await fetchSeasonPlayoffs(is_play_ins.value);
                         }
-                        console.log(`Schedule for ${roundName} already exists. Proceeding.`);
+                        console.log(`Schedule for ${roundName} already exists. Proceeding... status:${isCompleted}`);
                     } else {
                         await fetchSeasonPlayoffs(is_play_ins.value);
                     }
