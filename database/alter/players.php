@@ -54,3 +54,17 @@ ADD COLUMN negotiation_skill_rating TINYINT GENERATED ALWAYS AS (
     ))
 ) STORED;
 
+ALTER TABLE players
+ADD COLUMN bashing_factor TINYINT GENERATED ALWAYS AS (
+    LEAST(100, GREATEST(0,
+        ROUND(
+            (strength_rating * 0.3) +
+            (athleticism_rating * 0.2) +
+            (100 - basketball_iq_rating) * 0.25 +  -- Lower IQ = more aggression
+            (100 - work_ethic_rating) * 0.15 +   -- Poor work ethic = more bashing
+            IF(injury_prone_percentage > 70, 10, 0) +  -- Injury-prone players more aggressive
+            IF(is_rookie, 5, 0)                     -- Rookies get slight boost
+        )
+    ))
+) STORED COMMENT '0-100 scale of player aggression/controversy';
+

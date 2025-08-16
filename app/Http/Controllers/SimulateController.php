@@ -219,12 +219,12 @@ class SimulateController extends Controller
             $freeThrowAttempts = $shotStats['free_throw_attempts'];
             $freeThrowMade = $shotStats['free_throw_made'];
 
-            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+            $points = $this->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
 
             // Simulate other stats
-            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor, $fouls);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -278,12 +278,12 @@ class SimulateController extends Controller
             $freeThrowAttempts = $shotStats['free_throw_attempts'];
             $freeThrowMade = $shotStats['free_throw_made'];
 
-            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+            $points = $this->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
 
             // Simulate other stats
-            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor, $fouls);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -727,12 +727,12 @@ class SimulateController extends Controller
             $freeThrowAttempts = $shotStats['free_throw_attempts'];
             $freeThrowMade = $shotStats['free_throw_made'];
 
-            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+            $points = $this->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
 
             // Simulate other stats
-            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor, $fouls);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -786,12 +786,12 @@ class SimulateController extends Controller
             $freeThrowAttempts = $shotStats['free_throw_attempts'];
             $freeThrowMade = $shotStats['free_throw_made'];
 
-            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+            $points = $this->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
 
             // Simulate other stats
-            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor, $fouls);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -1302,12 +1302,12 @@ class SimulateController extends Controller
             $freeThrowAttempts = $shotStats['free_throw_attempts'];
             $freeThrowMade = $shotStats['free_throw_made'];
 
-            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+            $points = $this->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
 
             // Simulate other stats
-            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor, $fouls);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -1362,12 +1362,12 @@ class SimulateController extends Controller
             $freeThrowMade = $shotStats['free_throw_made'];
 
 
-            $points = $this->calculatePoints($twoPointMade, $threePointMade, $freeThrowMade);
+            $points = $this->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
 
             // Simulate other stats
-            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor);
-            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor);
-            $steals = $this->calculateSteals($player, $minutes, $performanceFactor);
+            $rebounds = $this->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
+            $blocks = $this->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
+            $steals = $this->calculateSteals($player, $minutes, $performanceFactor, $fouls);
 
             $playerGameStats[] = [
                 'player_id' => $player->id,
@@ -1772,21 +1772,6 @@ class SimulateController extends Controller
         return floor($combinedImpact / 30);
     }
 
-
-    private function calculatePoints($twoPointMade, $threePointMade, $freeThrowsMade)
-    {
-        $points = ($twoPointMade * 2) + ($threePointMade * 3) + $freeThrowsMade;
-        return max($points, 0);
-    }
-
-    private function calculateRebounds($player, $minutes, $performanceFactor)
-    {
-        $reboundPerMinute = 0.3 + (
-            ($player->rebounding_rating * 0.6 + $player->athleticism_rating * 0.3 + $player->basketball_iq_rating * 0.1) / 300
-        );
-        return round($reboundPerMinute * $minutes * $performanceFactor / 2);
-    }
-
     private function calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact)
     {
         if ($minutes === 0) return 0;
@@ -1810,46 +1795,182 @@ class SimulateController extends Controller
         $turnovers = round($minutes * $adjustedRate * $performanceFactor);
         return min($turnovers, 8);
     }
+    /**
+     * Fetches Coach IQ and Team Chemistry for a player's team.
+     * 
+     * @param int $teamId
+     * @return array ['coach_iq' => int, 'chemistry' => int]
+     */
+    private function getTeamCoachAndChemistry(int $teamId): array
+    {
+        $teamSeasonInfo = DB::table('team_season_info')
+            ->where('team_id', $teamId)
+            ->select('coach_iq', 'chemistry')
+            ->first();
 
-    private function calculateFoul($player, $minutes, $performanceFactor, $defensiveImpact)
+        return [
+            'coach_iq' => $teamSeasonInfo->coach_iq ?? 50, // Default if missing
+            'chemistry' => $teamSeasonInfo->chemistry ?? 50,
+        ];
+    }
+
+    private function calculateFoul(Player $player, int $minutes, float $performanceFactor, float $defensiveImpact): int
     {
         if ($minutes === 0) return 0;
 
-        $baseRates = [
-            'PG' => 0.04,
-            'SG' => 0.05,
-            'SF' => 0.06,
+        // 1. BASE FOUL RATE BY POSITION/ROLE (Primary driver)
+        $positionRates = [
+            'PG' => 0.03,  // Point guards foul least
+            'SG' => 0.04,
+            'SF' => 0.05,
             'PF' => 0.07,
-            'C'  => 0.08,
+            'C'  => 0.09   // Big men foul most
         ];
 
-        $positions = explode('/', $player->position ?? 'SF');
+        // Handle multi-position roles (e.g., "PG/SG")
+        $positions = explode('/', $player->role ?? $player->position ?? 'SF');
         $baseRate = collect($positions)
-            ->map(fn($pos) => $baseRates[trim($pos)] ?? 0.06)
+            ->map(fn($pos) => $positionRates[trim($pos)] ?? 0.05)
             ->average();
 
-        $foulControl = ($player->defense_rating + $player->basketball_iq_rating + $player->athleticism_rating) / 3;
-        $adjustedRate = $baseRate + ($defensiveImpact / 200) * (100 - $foulControl) / 100;
+        // 2. PLAYER ATTRIBUTE MODIFIERS (Weighted contributions)
+        $controlFactors = [
+            'positive' => [
+                'basketball_iq_rating' => 0.25,  // Smart players foul less
+                'work_ethic_rating'    => 0.20,  // Disciplined players
+                'stamina_rating'       => 0.15,  // Better conditioning
+                'morale'               => 0.15,  // Happy players
+                'leadership_rating'    => 0.10   // On-court decision making
+            ],
+            'negative' => [
+                'bashing_factor'      => 0.30,  // Aggressive players foul more
+                'fatigue'             => 0.25,  // Tired players
+                'injury_prone_percentage' => 0.10 // Injury-prone players
+            ]
+        ];
 
-        $fouls = round($minutes * $adjustedRate * $performanceFactor);
-        return min($fouls, 6);
-    }
-
-    private function calculateBlocks($player, $minutes, $performanceFactor)
-    {
-        $blocksPerMinute = 0.3 + (
-            ($player->blocks_rating * 0.5 + $player->athleticism_rating * 0.3 + $player->defense_rating * 0.2) / 200
+        // Calculate control score (0-100 scale)
+        $positiveScore = array_reduce(
+            array_keys($controlFactors['positive']),
+            fn($carry, $attr) => $carry + ($player->$attr * $controlFactors['positive'][$attr]),
+            0
         );
-        return round($blocksPerMinute * $minutes * $performanceFactor / 4);
+
+        $negativeScore = array_reduce(
+            array_keys($controlFactors['negative']),
+            fn($carry, $attr) => $carry + ($player->$attr * $controlFactors['negative'][$attr]),
+            0
+        );
+
+        $controlScore = ($positiveScore - $negativeScore) / 100;
+
+        // 3. DYNAMIC MODIFIERS
+        $defensiveAggression = ($player->defense_rating / 100) * ($defensiveImpact / 100);
+        $fatiguePenalty = 1 + ($player->fatigue / 100); // 1.0-2.0 multiplier
+        $rookiePenalty = $player->is_rookie ? 1.15 : 1.0; // Rookies foul 15% more
+
+        // 4. FINAL FOUL CALCULATION
+        $adjustedRate = $baseRate
+            * (1 + $defensiveAggression)  // Aggressive defense
+            * (1.5 - $controlScore)       // Control score impact
+            * $fatiguePenalty             // Fatigue effect
+            * $rookiePenalty;             // Rookie adjustment
+
+        // 5. APPLY PERFORMANCE FACTOR & RANDOMNESS
+        $fouls = round($minutes * $adjustedRate * $performanceFactor) + rand(-1, 1);
+
+        // 6. SPECIAL CASES
+        // Injured players foul more carelessly
+        if ($player->is_injured) {
+            $fouls += rand(0, 1);
+        }
+
+        // "Hack-a-Shaq" rule: Poor FT shooters get targeted
+        if ($player->free_throw_rating < 50 && rand(1, 100) > 70) {
+            $fouls += 1;
+        }
+
+        return min(max($fouls, 0), 6); // Clamp to 0-6 fouls
     }
 
-    private function calculateSteals($player, $minutes, $performanceFactor)
+    private function calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowsMade, $fouls)
     {
-        $stealsPerMinute = 0.3 + (
-            ($player->steals_rating * 0.4 + $player->defense_rating * 0.3 + $player->basketball_iq_rating * 0.2 + $player->athleticism_rating * 0.1) / 200
-        );
-        return round($stealsPerMinute * $minutes * $performanceFactor / 4);
+        // Base points
+        $points = ($twoPointMade * 2) + ($threePointMade * 3) + $freeThrowsMade;
+
+        // Foul trouble lowers aggressiveness (less shot attempts)
+        $foulPenalty = max(0, 1 - ($fouls * 0.05));
+
+        // Work ethic + stamina help players maintain scoring despite fouls
+        $resilience = ($player->work_ethic_rating + $player->stamina_rating) / 200; // 0 - 1
+
+        return max(round($points * ($foulPenalty + ($resilience * 0.1))), 0);
     }
+
+    private function calculateRebounds(Player $player, int $minutes, float $performanceFactor, int $fouls): int
+    {
+        // Base rate with stronger position adjustment
+        $positionWeights = [
+            'C' => 0.25,
+            'PF' => 0.22,
+            'SF' => 0.18,
+            'SG' => 0.15,
+            'PG' => 0.12
+        ];
+        $positionFactor = $positionWeights[$player->position] ?? 0.18;
+
+        $reboundPerMinute = min(
+            0.45, // Hard cap to prevent outliers
+            $positionFactor * (
+                ($player->rebounding_rating * 0.7 +
+                    $player->athleticism_rating * 0.2 +
+                    $player->strength_rating * 0.1) / 100
+            )
+        );
+
+        // More severe foul penalty
+        $foulPenalty = max(0.3, 1 - ($fouls * 0.12));
+
+        return round($reboundPerMinute * $minutes * $performanceFactor * $foulPenalty);
+    }
+
+    private function calculateBlocks(Player $player, int $minutes, float $performanceFactor, int $fouls): int
+    {
+        // Position-based caps
+        $positionCaps = ['C' => 0.40, 'PF' => 0.35, 'SF' => 0.25, 'SG' => 0.15, 'PG' => 0.10];
+
+        $blocksPerMinute = min(
+            $positionCaps[$player->position] ?? 0.20,
+            ($player->blocks_rating * 0.6 +
+                $player->athleticism_rating * 0.25 +
+                $player->defense_rating * 0.15) / 250
+        );
+
+        // Stronger foul impact
+        $foulPenalty = max(0.2, 1 - ($fouls * 0.15));
+
+        return round($blocksPerMinute * $minutes * $performanceFactor * $foulPenalty);
+    }
+
+    private function calculateSteals(Player $player, int $minutes, float $performanceFactor, int $fouls): int
+    {
+        // More conservative base rate
+        $stealsPerMinute = min(
+            0.30, // Absolute max
+            ($player->steals_rating * 0.5 +
+                $player->basketball_iq_rating * 0.3 +
+                $player->athleticism_rating * 0.2) / 300
+        );
+
+        // Fouls hurt steals more
+        $foulPenalty = max(0.4, 1 - ($fouls * 0.08));
+
+        // Leadership reduces reckless steals
+        $discipline = 1 - ($player->leadership_rating / 500);
+
+        return round($stealsPerMinute * $minutes * $performanceFactor * $foulPenalty * $discipline);
+    }
+
     // $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers,$homeChemistry, true, true);
     private function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry = 50, $isClutchTime = false, $isHomeAdvantage)
     {
@@ -4977,16 +5098,15 @@ class SimulateController extends Controller
         } else {
             // Check if the match impacts the #1 conference spot
             $isNumberOneMatch = ($winnerStats->conference_rank == 1 && $loserStats->conference_rank == 2) || ($winnerStats->conference_rank == 2 && $loserStats->conference_rank == 1);
-            
+
             if ($winnerStats->is_defending_champion) {
-                 if ($isNumberOneMatch) {
+                if ($isNumberOneMatch) {
                     $headlineTemplates = [
                         "Defending Champs {winner} Hold Onto #1 Spot by Edging {loser} {home_score}-{away_score}",
                         "{winner} Secures Top Conference Position with {home_score}-{away_score} Win Over {loser}",
                         "Champion {winner} Maintains #1 Rank After Narrow Victory Against {loser} {home_score}-{away_score}",
                     ];
-                } 
-                else if ($scoreMargin <= 3) {
+                } else if ($scoreMargin <= 3) {
                     // Close match, defending champion wins
                     $headlineTemplates = [
                         "Defending Champs {winner} Edge Out {loser} {home_score}-{away_score} in Round {round} Thriller",
@@ -5011,15 +5131,13 @@ class SimulateController extends Controller
                         "Defending Champs {winner} Annihilate {loser} {home_score}-{away_score} in Round {round}",
                     ];
                 }
-            } 
-            elseif ($loserStats->is_defending_champion) {
+            } elseif ($loserStats->is_defending_champion) {
                 if ($isNumberOneMatch) {
                     $headlineTemplates = [
                         "{winner} Shakes Up #1 Spot by Defeating Defending Champs {loser} {home_score}-{away_score}",
                         "Upset Alert: {winner} Tops Defending Champion {loser} {home_score}-{away_score} in Round {round}",
                     ];
-                } 
-                elseif ($scoreMargin <= 3) {
+                } elseif ($scoreMargin <= 3) {
                     // Close match, defending champion loses
                     $headlineTemplates = [
                         "{winner} Stuns Defending Champs {loser} {home_score}-{away_score} in Round {round} Thriller",
@@ -5044,15 +5162,13 @@ class SimulateController extends Controller
                         "{winner} Annihilates Defending Champs {loser} {home_score}-{away_score} in Round {round} Upset",
                     ];
                 }
-            } 
-            else {
+            } else {
                 if ($isNumberOneMatch) {
                     $headlineTemplates = [
                         "{winner} Battles {loser} for #1 Conference Spot, Wins {home_score}-{away_score}",
                         "{winner} Climbs to Top Conference Rank with {home_score}-{away_score} Win Over {loser}",
                     ];
-                } 
-                elseif ($scoreMargin <= 3) {
+                } elseif ($scoreMargin <= 3) {
                     // Close match, no defending champion
                     $headlineTemplates = [
                         "{winner} Edges Out {loser} {home_score}-{away_score} in Nail-Biting Round {round}",
@@ -5231,7 +5347,7 @@ class SimulateController extends Controller
                 // Winner is a top contender in the conference
                 if ($winnerStats->conference_rank <= 6) {
                     $contentEnders[] = "{$game->winner_team} keeps their playoff hopes alive, defeating {$loser} as the regular season nears its end.";
-                } 
+                }
                 // Winner is a low-ranked team
                 else {
                     $contentEnders[] = "Despite being lower in the conference standings, {$game->winner_team} earns a crucial win against {$loser}, keeping their faint playoff hopes alive.";
@@ -5251,15 +5367,15 @@ class SimulateController extends Controller
                 // Winner is defending champion
                 if ($winnerStats->is_defending_champion) {
                     $contentEnders[] = "{$game->winner_team}, the defending champion, continues to assert their dominance in the conference.";
-                } 
+                }
                 // Winner is top-ranked
                 elseif ($winnerStats->conference_rank == 1) {
                     $contentEnders[] = "{$game->winner_team} remains atop their conference, next facing {$winnerStats->next_opponent_name}.";
-                } 
+                }
                 // Winner is mid-ranked (playoff contender)
                 elseif ($winnerStats->conference_rank >= 2 && $winnerStats->conference_rank <= 6) {
                     $contentEnders[] = "The win keeps {$game->winner_team} in strong playoff contention, aiming for a higher seed.";
-                } 
+                }
                 // Winner is low-ranked (struggling)
                 else {
                     $contentEnders[] = "Despite their lower ranking, {$game->winner_team} secures a vital victory to stay competitive in the conference.";
@@ -5268,7 +5384,7 @@ class SimulateController extends Controller
                 // Upset scenarios
                 if ($loserStats->is_defending_champion && $winnerStats->conference_rank > $loserStats->conference_rank) {
                     $contentEnders[] = "{$game->winner_team} pulls off an upset over defending champion {$loser}, shaking up the playoff picture.";
-                } 
+                }
                 // Non-champion upset: low-rank team beats higher-rank team
                 elseif ($winnerStats->conference_rank > $loserStats->conference_rank) {
                     $contentEnders[] = "In a surprising result, lower-ranked {$game->winner_team} defeats higher-ranked {$loser}, making waves in the conference standings.";
