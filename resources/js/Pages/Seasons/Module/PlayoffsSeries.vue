@@ -21,14 +21,14 @@
         </button>
       </div>
       <!-- Show SeriesResult inline when simulating -->
-      <!-- <div v-if="showSeriesResult && active_series_id !== 0" class="pt-4">
+      <div v-if="showSeriesResult && active_series_id !== 0" class="pt-4">
         <SeriesResult
           :key="active_series_id"
           :series_id="active_series_id"
           :season_id="props.season_id"
           @finish="onSeriesResultFinish"
         />
-      </div> -->
+      </div>
 
       <!-- Show playoff series list when NOT simulating -->
       <div v-if="season_playoffs.playoffs">
@@ -124,6 +124,7 @@ const isAddModalOpen = ref(false);
 const isTeamModalOpen = ref(false);
 const isTeamComparisonModalOpen = ref(false);
 const isGameResultModalOpen = ref(false);
+const showSeriesResult = ref(false);
 const loading = ref(false);
 const change_key = ref(localStorage.getItem("season-key"));
 const isHide = ref(false);
@@ -131,6 +132,7 @@ const activeIndex = ref(0);
 const season_info = ref(false);
 const season_playoffs = ref(false);
 const is_play_ins = ref(false);
+const active_series_id = ref(false);
 const form = useForm({
     seasons_id: 0,
 });
@@ -208,6 +210,7 @@ const createPlayOffSchedule = async (round) => {
         throw error; // Rethrow to allow caller to handle
     }
 };
+
 const createPlayOffScheduleAuto = async (round) => {
     try {
         let prev_round = round;
@@ -343,6 +346,8 @@ const simulateGame = async (id, game_id, type, index, round) => {
         });
 
         season_playoffs.value.playoffs[round][index] = response.data.schedule;
+
+        active_series_id.value = season_playoffs.value.playoffs[round][index]?.series_id ?? 0;
 
         Swal.close();
         Swal.fire({

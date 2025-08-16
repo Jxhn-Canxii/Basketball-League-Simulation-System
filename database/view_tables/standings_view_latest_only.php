@@ -83,7 +83,7 @@ streaks AS (
             season_id,
             game_result,
             game_id,
-            ROW_NUMBER() OVER (PARTITION BY team_id, season_id ORDER BY game_id) -
+            ROW_NUMBER() OVER (PARTITION BY team_id, season_id ORDER BY game_id) - 
             ROW_NUMBER() OVER (PARTITION BY team_id, season_id, game_result ORDER BY game_id) AS streak_id
         FROM team_games
         WHERE game_result IS NOT NULL
@@ -272,56 +272,52 @@ team_season_info AS (
 finals_appearances AS (
     SELECT
         teams.id AS team_id,
-        COUNT(DISTINCT schedules.season_id) AS finals_appearances
+        COUNT(DISTINCT playoff_series.season_id) AS finals_appearances
     FROM
         teams
     JOIN
-        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+        playoff_series ON teams.id = playoff_series.home_team_id OR teams.id = playoff_series.away_team_id
     WHERE
-        schedules.round = 'finals'
+        playoff_series.round = 'finals'
     GROUP BY
         teams.id
 ),
 conference_finals_appearances AS (
     SELECT
         teams.id AS team_id,
-        COUNT(DISTINCT schedules.season_id) AS conference_finals_appearance
+        COUNT(DISTINCT playoff_series.season_id) AS conference_finals_appearances
     FROM
         teams
     JOIN
-        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+        playoff_series ON teams.id = playoff_series.home_team_id OR teams.id = playoff_series.away_team_id
     WHERE
-        schedules.round = 'semi_finals'
+        playoff_series.round = 'semi_finals'
     GROUP BY
         teams.id
 ),
 championships AS (
     SELECT
         teams.id AS team_id,
-        COUNT(DISTINCT schedules.season_id) AS championships
+        COUNT(DISTINCT playoff_series.season_id) AS championships
     FROM
         teams
     JOIN
-        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+        playoff_series ON teams.id = playoff_series.home_team_id OR teams.id = playoff_series.away_team_id
     WHERE
-        schedules.round = 'finals' AND
-        ((schedules.home_score > schedules.away_score AND schedules.home_id = teams.id) OR
-         (schedules.away_score > schedules.home_score AND schedules.away_id = teams.id))
+        playoff_series.round = 'finals' AND playoff_series.winner_team_id = teams.id
     GROUP BY
         teams.id
 ),
 conference_championships AS (
     SELECT
         teams.id AS team_id,
-        COUNT(DISTINCT schedules.season_id) AS championships
+        COUNT(DISTINCT playoff_series.season_id) AS conference_championships
     FROM
         teams
     JOIN
-        schedules ON teams.id = schedules.home_id OR teams.id = schedules.away_id
+        playoff_series ON teams.id = playoff_series.home_team_id OR teams.id = playoff_series.away_team_id
     WHERE
-        schedules.round = 'semi_finals' AND
-        ((schedules.home_score > schedules.away_score AND schedules.home_id = teams.id) OR
-         (schedules.away_score > schedules.home_score AND schedules.away_id = teams.id))
+        playoff_series.round = 'semi_finals' AND playoff_series.winner_team_id = teams.id
     GROUP BY
         teams.id
 )
@@ -332,8 +328,8 @@ SELECT
     COALESCE(seasons_list.season_name, '') AS last_playoff_season_name,
     COALESCE(playoff_appearances.playoff_appearances, 0) AS playoff_appearances,
     COALESCE(finals_appearances.finals_appearances, 0) AS finals_appearances,
-    COALESCE(conference_finals_appearances.conference_finals_appearance, 0) AS conference_finals_appearances,
-    COALESCE(conference_championships.championships, 0) AS conference_championships,
+    COALESCE(conference_finals_appearances.conference_finals_appearances, 0) AS conference_finals_appearances,
+    COALESCE(conference_championships.conference_championships, 0) AS conference_championships,
     COALESCE(championships.championships, 0) AS championships,
     CASE
         WHEN latest_streak.game_result = 'W' THEN CONCAT('W', latest_streak.streak_length)
