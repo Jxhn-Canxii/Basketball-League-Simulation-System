@@ -2958,7 +2958,7 @@ class SimulateController extends Controller
                     $awayId = $series->home_team_id;
                 }
 
-                $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-G{$gameNumber}-{$homeId}v{$awayId}";
+                $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-{$homeId}v{$awayId}-G{$gameNumber}";
 
                 $newSchedule = [
                     'game_id' => $gameId,

@@ -1,6 +1,7 @@
 CREATE OR REPLACE VIEW schedule_view AS
             SELECT
                 s.*,
+                s.game_number as game_number_formatted,
                 s.series_id as series_id_number,
                 t_home.name AS home_team_name,
                 t_away.name AS away_team_name,

@@ -1199,7 +1199,7 @@ class PlayoffController extends Controller
                     $awayId = $pairing[0];
                 }
 
-                $gameId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}-G{$gameNum}-{$homeId}v{$awayId}";
+                $gameId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}-{$homeId}v{$awayId}-G{$gameNum}";
 
                 $scheduleData[] = [
                     'game_id' => $gameId,

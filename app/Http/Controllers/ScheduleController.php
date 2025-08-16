@@ -611,7 +611,7 @@ class ScheduleController extends Controller
             $homeTeamName = optional($standingsData[$game->home_id])->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
             $awayTeamName = optional($standingsData[$game->away_id])->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
 
-            $game_number = substr($game->game_id, -1);
+            $game_number = $game->game_number_formatted;
             $games[] = [
                 'id' => $game->id,
                 'game_id' => $game->game_id,
