@@ -65,4 +65,5 @@ LEFT JOIN standings_snapshots prev
     ON s.team_id = prev.team_id
     AND prev.season_id = s.season_id - 1
 INNER JOIN teams t
-    ON s.team_id = t.id;
+    ON s.team_id = t.id
+ORDER BY reputation_score DESC;

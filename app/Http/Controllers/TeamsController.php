@@ -458,12 +458,48 @@ class TeamsController extends Controller
     }
     private function getTeamInfo($teamId)
     {
-        return DB::table('teams')
-            ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
-            ->join('coaches', 'teams.coach_id', '=', 'coaches.id', 'left')
-            ->select('teams.name as team_name', 'teams.acronym', 'coaches.name as coach_name', 'teams.sponsor as sponsor', 'coaches.winning_percentage as coach_winning', 'teams.id', 'teams.city', 'teams.description', 'teams.primary_color', 'teams.secondary_color', 'conferences.name as conference_name')
-            ->where('teams.id', $teamId)
-            ->get();
+        $teamData = DB::table('teams')
+        ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
+        ->leftJoin('coaches', 'teams.coach_id', '=', 'coaches.id')
+        ->join('team_reputation_view', 'teams.id', '=', 'team_reputation_view.team_id')
+        ->select(
+            'teams.id',
+            'teams.name as team_name',
+            'teams.acronym',
+            'teams.city',
+            DB::raw("CASE teams.market_size 
+                        WHEN 1 THEN 'Small' 
+                        WHEN 2 THEN 'Medium' 
+                        WHEN 3 THEN 'Large' 
+                        ELSE 'Unknown' 
+                    END as market_size"),
+            'teams.sponsor',
+            'teams.description',
+            'teams.primary_color',
+            'teams.secondary_color',
+            'conferences.name as conference_name',
+            'coaches.name as coach_name',
+            'coaches.winning_percentage as coach_winning',
+
+            // From team_reputation_view
+            'team_reputation_view.season_id',
+            'team_reputation_view.wins',
+            'team_reputation_view.chemistry',
+            'team_reputation_view.prev_wins',
+            'team_reputation_view.prev_rank',
+            'team_reputation_view.prev_chemistry',
+            'team_reputation_view.wins_diff',
+            'team_reputation_view.streak_status',
+            'team_reputation_view.rank_improvement',
+            'team_reputation_view.chemistry_diff',
+            'team_reputation_view.reputation_score',
+            'team_reputation_view.estimated_fans'
+        )
+        ->where('teams.id', $teamId)
+        ->get();
+
+        return $teamData;
+
     }
 
     private function getTeamStreaks($teamId)

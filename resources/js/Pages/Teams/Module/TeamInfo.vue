@@ -1,37 +1,81 @@
 <template>
-<div class="team-info px-0 px-4 text-white min-h-screen" v-if="team_info && team_info.teams"  :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
-    <div class="flex justify-between p-3 border-b border-gray-200 rounded" 
-    :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
-    >
-        <div class="flex space-x-2 items-center">
-            <div
-                v-if="team_info.teams.primary_color && team_info.teams.secondary_color"
-                class="w-5 h-5 border border-white"
-                :style="{
-                    background: 'linear-gradient(135deg, #' + team_info.teams.primary_color + ' 50%, #' + team_info.teams.secondary_color + ' 50%)'
-                }"
-            ></div>
-            <h2
-                class="text-xl font-semibold"
-            >
-               {{ team_info.teams.city ?? "-" }} {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
-            </h2>
-            <span>Coach: {{ team_info.teams.coach_name }} ( {{ team_info.teams.coach_winning }}%)</span>
-        </div>
-        <div class="flex justify-end p-0">
+<div class="team-info px-0 px-4 text-white min-h-screen" v-if="team_info && team_info.teams && !loading"  :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+    <div class="flex justify-between p-3 border-b border-gray-200 rounded items-center"
+    :style="{ backgroundColor: '#' + team_info.teams.secondary_color }"
+>
+    <!-- Left Side -->
+    <div class="flex space-x-3 items-center">
+        <!-- Color Swatch -->
         <div
-            class="trapezoid-right bg-white px-2 py-2"
-            style="width: 300px;"
-        >
-            <h2
-            :style="{ color: '#' + team_info.teams.primary_color }"
-            class="text-3xl font-bold text-right text-nowrap"
-            >
-            {{ team_info.teams.sponsor }}
+            v-if="team_info.teams.primary_color && team_info.teams.secondary_color"
+            class="w-5 h-5 border border-white"
+            :style="{
+                background: 'linear-gradient(135deg, #' + team_info.teams.primary_color + ' 50%, #' + team_info.teams.secondary_color + ' 50%)'
+            }"
+        ></div>
+
+        <!-- Team Info -->
+        <div class="flex flex-col">
+            <h2 class="text-xl font-semibold leading-5">
+                {{ team_info.teams.city ?? "-" }} {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
             </h2>
+            <span class="text-sm text-gray-100">
+                Coach: {{ team_info.teams.coach_name }} ({{ team_info.teams.coach_winning }}%)
+            </span>
         </div>
+
+        <!-- Reputation Metrics -->
+        <div class="flex flex-wrap items-center space-x-3 text-sm ml-4 bg-white p-2 rounded-full">
+            <!-- Market Size -->
+            <span class="bg-blue-400 text-gray-50 px-2 py-0.5 flex items-center rounded-full font-medium">
+                {{ team_info.teams.market_size }}
+            </span>
+
+            <!-- Estimated Fans -->
+            <span class="flex items-center space-x-1">
+                <i class="fas fa-users text-yellow-300"></i>
+                <span class="text-gray-500">{{ team_info.teams.estimated_fans.toLocaleString() }}</span>
+            </span>
+
+            <!-- Reputation Score -->
+            <span class="flex items-center space-x-1">
+                <i class="fas fa-chart-line text-green-300"></i>
+                <span class="text-gray-500">{{ team_info.teams.reputation_score?.toFixed(2) }}</span>
+            </span>
+
+            <!-- Streak Status -->
+            <span
+                class="flex items-center space-x-1"
+                :class="{
+                    'text-green-300': team_info.teams.streak_status?.toLowerCase().startsWith('w'),
+                    'text-red-400': !team_info.teams.streak_status?.toLowerCase().startsWith('w')
+                }"
+            >
+                <i class="fas fa-fire"></i>
+                <span>{{ team_info.teams.streak_status }}</span>
+            </span>
+
+            <!-- Chemistry -->
+            <span class="flex items-center space-x-1 text-blue-300">
+                <i class="fas fa-flask"></i>
+                <span>{{ team_info.teams.chemistry }}</span>
+            </span>
         </div>
     </div>
+
+    <!-- Right Side: Sponsor -->
+    <div class="flex justify-end p-0">
+        <div class="trapezoid-right bg-white px-2 py-2" style="width: 300px;">
+            <h2
+                :style="{ color: '#' + team_info.teams.primary_color }"
+                class="text-3xl font-bold text-right text-nowrap"
+            >
+                {{ team_info.teams.sponsor }}
+            </h2>
+        </div>
+    </div>
+</div>
+
     <div class="mt-4 grid md:grid-cols-5 grid-cols-1 gap-4 p-4  rounded" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }" v-if="team_info">
         <div>
             <h3 class="text-md font-semibold text-white">
@@ -634,6 +678,48 @@
         </p>
     </div>
 </div>
+<div class="space-y-4 animate-pulse bg-gray-100 p-4 rounded shadow" v-else>
+    <!-- Row 1: Header (Team name, coach, sponsor) -->
+    <div class="flex justify-between items-center">
+        <!-- Left: team name and coach -->
+        <div class="flex space-x-3 items-center">
+            <div class="w-5 h-5 bg-gray-300 rounded border border-white"></div>
+            <div class="flex flex-col space-y-1">
+                <div class="h-4 w-40 bg-gray-300 rounded"></div> <!-- Team name -->
+                <div class="h-3 w-28 bg-gray-300 rounded"></div> <!-- Coach name -->
+            </div>
+        </div>
+
+        <!-- Right: sponsor -->
+        <div class="w-[300px] bg-white p-2 trapezoid-right">
+            <div class="h-6 w-full bg-gray-300 rounded"></div>
+        </div>
+    </div>
+
+    <!-- Row 2: Stats badges (market size, fans, rep, streak, chemistry) -->
+    <div class="flex space-x-3">
+        <div class="h-5 w-20 bg-gray-300 rounded-full"></div>
+        <div class="h-5 w-24 bg-gray-300 rounded-full"></div>
+        <div class="h-5 w-24 bg-gray-300 rounded-full"></div>
+        <div class="h-5 w-24 bg-gray-300 rounded-full"></div>
+        <div class="h-5 w-24 bg-gray-300 rounded-full"></div>
+    </div>
+
+    <!-- Row 3: Description -->
+    <div class="space-y-2">
+        <div class="h-3 w-3/4 bg-gray-300 rounded"></div>
+        <div class="h-3 w-2/3 bg-gray-300 rounded"></div>
+        <div class="h-3 w-1/2 bg-gray-300 rounded"></div>
+    </div>
+
+    <!-- Row 4: Color preview swatches -->
+    <div class="flex space-x-2">
+        <div class="w-8 h-8 bg-gray-300 rounded border border-white"></div>
+        <div class="w-8 h-8 bg-gray-300 rounded border border-white"></div>
+        <div class="w-8 h-8 bg-gray-300 rounded border border-white"></div>
+    </div>
+</div>
+
 </template>
 
 <script setup>
@@ -651,6 +737,7 @@ const props = defineProps({
     }
 });
 
+const loading = ref(false);
 const team_info = ref(false);
 const team_season_standings = ref(false);
 const team_season_finals = ref(false);
@@ -672,6 +759,7 @@ onMounted(() => {
 });
 const fetchDataForTeam = async (id) => {
     try {
+        loading.value = true;
         await fetchTeamInfo(id);
         await fetchTeamLastSeason(id);
         await fetchTeamMatchesHead2Head(id);
@@ -679,6 +767,7 @@ const fetchDataForTeam = async (id) => {
         await fetchTeamRivals(id);
         await fetchTeamSeasonStandings(id);
         await fetchTeamSeasonFinals(id);
+        loading.value = false;
     } catch (error) {
         console.error("Error fetching data for team:", error);
     }

@@ -3,14 +3,22 @@
         <button
             @click.prevent="showTeamDetails()"
             v-if="props.showButton == 1"
-            :class="{
-                'opacity-25': isTeamModalOpen,
-            }"
-            :disabled="isTeamModalOpen"
-            class="px-2 py-2 bg-blue-500 font-bold text-md float-center text-white shadow"
+            :class="[
+                'px-2 py-2 bg-blue-500 font-bold text-md float-center text-white shadow flex items-center space-x-2',
+                { 'opacity-50 cursor-not-allowed': isTeamModalOpen || loading }
+            ]"
+            :disabled="isTeamModalOpen || loading"
         >
-            <i class="fa fa-eye"></i> {{ props.text ?? 'View' }}
+            <template v-if="loading">
+                <i class="fas fa-spinner fa-spin"></i>
+                <span>Loading...</span>
+            </template>
+            <template v-else>
+                <i class="fa fa-eye"></i>
+                <span>{{ props.text ?? 'View' }}</span>
+            </template>
         </button>
+
         <div  v-if="props.showButton == 0" :class="props.isTitleCenter ? 'justify-center' : 'justify-start'" class="flex items-center space-x-1 px-2">
             <div
                 v-if="props.hexPrimaryColor && props.hexSecondaryColor"
