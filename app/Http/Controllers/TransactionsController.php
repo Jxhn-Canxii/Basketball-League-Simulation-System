@@ -565,25 +565,21 @@ class TransactionsController extends Controller
             'C'  => 3,
         ];
 
-        // Step 1: Check position availability
         $positionCheck = $this->checkPositionAvailability();
         if ($positionCheck !== true) return $positionCheck;
 
-        // Step 2: Get all active free agents
         $activePlayers = DB::table('players')
             ->where('is_active', 1)
             ->where('team_id', 0)
             ->select('id', 'name', 'position', 'role', 'overall_rating', 'loyalty_rating', 'satisfaction_rating', 'ambition_rating')
             ->get();
 
-        // Step 3: Get last snapshot for team credibility
-        $teamsCredibility = DB::table('standings_snapshots as s1')
-            ->select('s1.team_id', 's1.overall_rank', 's1.chemistry', 's1.is_defending_champion')
-            ->whereRaw('s1.id = (SELECT MAX(s2.id) FROM standings_snapshots s2 WHERE s2.team_id = s1.team_id)')
+        // Load team reputation view
+        $teamsReputation = DB::table('team_reputation_view')
+            ->select('team_id', 'reputation_score', 'chemistry', 'is_defending_champion', 'overall_rank')
             ->get()
             ->keyBy('team_id');
 
-        // Step 4: Get teams with fewer than 15 players
         $teams = DB::table('teams')
             ->leftJoin('players', 'teams.id', '=', 'players.team_id')
             ->select('teams.id', 'teams.name', DB::raw('COUNT(players.id) as player_count'))
@@ -591,27 +587,23 @@ class TransactionsController extends Controller
             ->havingRaw('COUNT(players.id) < 15')
             ->get();
 
-        // Step 5: Sort teams by credibility (weaker teams get priority)
-        $teams = $teams->sortBy(function ($team) use ($teamsCredibility) {
-            $cred = $teamsCredibility[$team->id] ?? null;
-            if (!$cred) return 100;
-            $rankScore = 100 - ($cred->overall_rank ?? 50);
-            $chemScore = 50 - ($cred->chemistry ?? 50);
-            $championPenalty = $cred->is_defending_champion ? -20 : 0;
-            return $rankScore + $chemScore + $championPenalty;
+        // Sort teams by lowest reputation_score
+        $teams = $teams->sortBy(function ($team) use ($teamsReputation) {
+            $cred = $teamsReputation[$team->id] ?? null;
+            return $cred->reputation_score ?? 1000; // lower score = weaker team
         });
 
         $usedPlayerIds = [];
 
-        // Step 6: Assign players
         foreach ($teams as $team) {
             $teamPosCounts = $this->getTeamPositionCounts($team->id);
             $currentPlayerCount = $team->player_count;
+            $cred = $teamsReputation[$team->id] ?? null;
 
-            // Fill minimum position requirements first
+            // Fill minimum positional requirements
             foreach ($minimumPositionCounts as $position => $minRequired) {
                 while (($teamPosCounts[$position] ?? 0) < $minRequired && $currentPlayerCount < 15) {
-                    $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, $position, $usedPlayerIds);
+                    $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, $position, $usedPlayerIds, $cred);
                     if (!$player) break;
 
                     $this->assignPlayerWithTransaction($player, $team, $currentSeasonId, $seasonId);
@@ -624,9 +616,9 @@ class TransactionsController extends Controller
                 }
             }
 
-            // Fill remaining spots with best compatible players
+            // Fill remaining slots
             while ($currentPlayerCount < 15) {
-                $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, null, $usedPlayerIds);
+                $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, null, $usedPlayerIds, $cred);
                 if (!$player) break;
 
                 $this->assignPlayerWithTransaction($player, $team, $currentSeasonId, $seasonId);
@@ -639,7 +631,7 @@ class TransactionsController extends Controller
         }
 
         return response()->json([
-            'message' => 'Players assigned based on ratings, team compatibility, and personality.',
+            'message' => 'Players assigned based on ratings, reputation, and personality.',
             'remaining_players' => count($activePlayers) - count($usedPlayerIds),
         ]);
     }
@@ -647,10 +639,10 @@ class TransactionsController extends Controller
     /**
      * Private helper: Select best compatible player for a team
      */
-    private function selectBestCompatiblePlayer($players, $team, $teamPosCounts, $targetPosition, $usedPlayerIds)
+    private function selectBestCompatiblePlayer($players, $team, $teamPosCounts, $targetPosition, $usedPlayerIds, $cred = null)
     {
         $candidates = $players->whereNotIn('id', $usedPlayerIds)
-            ->filter(function ($p) use ($teamPosCounts, $targetPosition) {
+            ->filter(function ($p) use ($team, $teamPosCounts, $targetPosition, $cred) {
                 if ($targetPosition) {
                     $positions = explode('/', $p->position);
                     if (!in_array($targetPosition, $positions)) return false;
@@ -662,19 +654,32 @@ class TransactionsController extends Controller
                     ->whereIn('role', ['star player', 'all star'])
                     ->count();
 
-                if ($teamStarCount >= 3 && $p->role == 'star player') return false;
+                if ($teamStarCount >= 3 && $p->role === 'star player') return false;
 
-                // Personality check
+                // === Team Credibility Influence ===
+                $credibilityScore = 0;
+                if ($cred) {
+                    // Lower reputation score = weaker team
+                    $credibilityScore += (100 - ($cred->reputation_score ?? 50)) * 0.3;
+                    $credibilityScore += ($cred->chemistry ?? 50) * 0.2;
+                    if ($cred->is_defending_champion ?? false) {
+                        $credibilityScore += 10;
+                    }
+                }
+
+                // === Personality Influence ===
                 $joinChance = $p->loyalty_rating * 0.2
                     + $p->satisfaction_rating * 0.2
                     + $p->ambition_rating * 0.2
-                    + rand(0, 20);
+                    + $credibilityScore
+                    + rand(0, 20); // Add randomness
 
-                return $joinChance >= 50;
+                return $joinChance >= 60; // Raise threshold slightly with added influence
             });
 
         return $candidates->sortByDesc('overall_rating')->first();
     }
+
 
     /**
      * Private helper: Assign a player to a team with a DB transaction

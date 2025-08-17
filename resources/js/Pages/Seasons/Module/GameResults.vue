@@ -538,7 +538,7 @@
         <!-- Best Player of the Game -->
         <div class="block md:flex bg-white rounded">
             <!-- Best Player Section: 1/4 Width -->
-            <div class="w-full md:w-1/2 p-2">
+            <div class="w-full md:w-1/2 p-2 shadow-md">
                 <h3 class="text-lg font-semibold mb-1">Player of the Game</h3>
                 <div
                     v-if="bestPlayer"
