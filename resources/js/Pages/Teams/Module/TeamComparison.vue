@@ -334,7 +334,7 @@
             <!-- Display latest matches section -->
             <div class="grid grid-cols-1 gap-4 mt-3" v-if="!matchesLoading">
                 <h2 class="text-lg font-semibold text-gray-800">
-                    Latest Matches
+                    Last 10 Matches
                 </h2>
                 <table class="min-w-full divide-y divide-gray-200 p-2">
                     <thead class="bg-gray-50 text-nowrap">

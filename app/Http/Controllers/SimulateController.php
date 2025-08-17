@@ -1154,7 +1154,7 @@ class SimulateController extends Controller
 
         $isGameFinished = DB::table('schedules')
             ->where('id', $request->schedule_id)
-            ->where('status', config('timeline.play_offs'))  // Fetch previous round and current round in one query
+            ->where('status', 2)  // Fetch previous round and current round in one query
             ->exists(); // Use exists() for a boolean result
 
         if ($isGameFinished) {
@@ -1586,7 +1586,7 @@ class SimulateController extends Controller
             // Update the season's status to 2
             $season = Seasons::find($currentSeasonId);
             if ($season) {
-                $season->status = 2;
+                $season->status = config('timeline.play_offs');
                 $season->save();
 
                 $this->saveStandingsSnapshot();
@@ -4486,7 +4486,8 @@ class SimulateController extends Controller
 
     private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): array
     {
-        if ($seasonStatus > 2) {
+        ///can sign and waive player until the half of the regular season only
+        if ($seasonStatus > 1) {
             return ['waived' => false, 'reason' => 'Season too late to waive'];
         }
 
@@ -5259,7 +5260,7 @@ class SimulateController extends Controller
                 ];
             }
         }
-
+        
         // Conditional content middles, prioritizing streak_status
         $contentMiddles = [];
         if ($winnerStats && preg_match('/W(\d+)/', $winnerStats->streak_status, $matches) && $matches[1] >= 3) {
@@ -5323,81 +5324,76 @@ class SimulateController extends Controller
         }
 
         // Content enders
+        // Base statements
+        // Conditional enhancements
         $contentEnders = [];
-        if ($draftPick) {
-            $contentEnders[] = "With {$draftPick->player_name} emerging as a cornerstone, {$game->winner_team} looks poised for a strong finish to the regular season.";
-            $contentEnders[] = "{$draftPick->player_name}’s breakout performance could be the key to {$game->winner_team}'s playoff push.";
-        } else {
-            // Base statements
-            // Conditional enhancements
-            if ($winnerStats->is_defending_champion) {
-                $contentEnders[] = "{$game->winner_team} proves they can defend their crown with another solid win.";
+        if ($winnerStats->is_defending_champion) {
+            $contentEnders[] = "{$game->winner_team} proves they can defend their crown with another solid win.";
+        }
+
+        if ($loserStats->is_defending_champion) {
+            $contentEnders[] = "{$game->winner_team} pulls off a statement win over the defending champion, shaking up the standings.";
+        }
+
+        if ($winnerStats->streak_status && preg_match('/W(\d+)/', $winnerStats->streak_status, $matches) && $matches[1] >= 3) {
+            $streak = $matches[1];
+            $contentEnders[] = "{$game->winner_team} extends their {$streak}-game winning streak, gaining momentum for the postseason.";
+        }
+
+        if ($isLast3Rounds) {
+            // Winner is a top contender in the conference
+            if ($winnerStats->conference_rank <= 6) {
+                $contentEnders[] = "{$game->winner_team} keeps their playoff hopes alive, defeating {$loser} as the regular season nears its end.";
+            }
+            // Winner is a low-ranked team
+            else {
+                $contentEnders[] = "Despite being lower in the conference standings, {$game->winner_team} earns a crucial win against {$loser}, keeping their faint playoff hopes alive.";
             }
 
+            // Loser is a top contender — now in danger
+            if ($loserStats->conference_rank <= 6 && $loserStats->conference_rank > $winnerStats->conference_rank) {
+                $contentEnders[] = "The loss puts {$loser} in danger of dropping out of playoff contention, while {$game->winner_team} climbs in the conference race.";
+            }
+
+            // Upset vs defending champion
             if ($loserStats->is_defending_champion) {
-                $contentEnders[] = "{$game->winner_team} pulls off a statement win over the defending champion, shaking up the standings.";
+                $contentEnders[] = "{$game->winner_team} shocks the defending champion {$loser}, potentially altering the playoff picture in their conference!";
+            }
+        } else {
+            // Case 2: Not last 3 rounds — regular season news
+            // Winner is defending champion
+            if ($winnerStats->is_defending_champion) {
+                $contentEnders[] = "{$game->winner_team}, the defending champion, continues to assert their dominance in the conference.";
+            }
+            // Winner is top-ranked
+            elseif ($winnerStats->conference_rank == 1) {
+                $contentEnders[] = "{$game->winner_team} remains atop their conference, next facing {$winnerStats->next_opponent_name}.";
+            }
+            // Winner is mid-ranked (playoff contender)
+            elseif ($winnerStats->conference_rank >= 2 && $winnerStats->conference_rank <= 6) {
+                $contentEnders[] = "The win keeps {$game->winner_team} in strong playoff contention, aiming for a higher seed.";
+            }
+            // Winner is low-ranked (struggling)
+            else {
+                $contentEnders[] = "Despite their lower ranking, {$game->winner_team} secures a vital victory to stay competitive in the conference.";
             }
 
-            if ($winnerStats->streak_status && preg_match('/W(\d+)/', $winnerStats->streak_status, $matches) && $matches[1] >= 3) {
-                $streak = $matches[1];
-                $contentEnders[] = "{$game->winner_team} extends their {$streak}-game winning streak, gaining momentum for the postseason.";
+            // Upset scenarios
+            if ($loserStats->is_defending_champion && $winnerStats->conference_rank > $loserStats->conference_rank) {
+                $contentEnders[] = "{$game->winner_team} pulls off an upset over defending champion {$loser}, shaking up the playoff picture.";
             }
-
-            if ($isLast3Rounds) {
-                // Winner is a top contender in the conference
-                if ($winnerStats->conference_rank <= 6) {
-                    $contentEnders[] = "{$game->winner_team} keeps their playoff hopes alive, defeating {$loser} as the regular season nears its end.";
-                }
-                // Winner is a low-ranked team
-                else {
-                    $contentEnders[] = "Despite being lower in the conference standings, {$game->winner_team} earns a crucial win against {$loser}, keeping their faint playoff hopes alive.";
-                }
-
-                // Loser is a top contender — now in danger
-                if ($loserStats->conference_rank <= 6 && $loserStats->conference_rank > $winnerStats->conference_rank) {
-                    $contentEnders[] = "The loss puts {$loser} in danger of dropping out of playoff contention, while {$game->winner_team} climbs in the conference race.";
-                }
-
-                // Upset vs defending champion
-                if ($loserStats->is_defending_champion) {
-                    $contentEnders[] = "{$game->winner_team} shocks the defending champion {$loser}, potentially altering the playoff picture in their conference!";
-                }
-            } else {
-                // Case 2: Not last 3 rounds — regular season news
-                // Winner is defending champion
-                if ($winnerStats->is_defending_champion) {
-                    $contentEnders[] = "{$game->winner_team}, the defending champion, continues to assert their dominance in the conference.";
-                }
-                // Winner is top-ranked
-                elseif ($winnerStats->conference_rank == 1) {
-                    $contentEnders[] = "{$game->winner_team} remains atop their conference, next facing {$winnerStats->next_opponent_name}.";
-                }
-                // Winner is mid-ranked (playoff contender)
-                elseif ($winnerStats->conference_rank >= 2 && $winnerStats->conference_rank <= 6) {
-                    $contentEnders[] = "The win keeps {$game->winner_team} in strong playoff contention, aiming for a higher seed.";
-                }
-                // Winner is low-ranked (struggling)
-                else {
-                    $contentEnders[] = "Despite their lower ranking, {$game->winner_team} secures a vital victory to stay competitive in the conference.";
-                }
-
-                // Upset scenarios
-                if ($loserStats->is_defending_champion && $winnerStats->conference_rank > $loserStats->conference_rank) {
-                    $contentEnders[] = "{$game->winner_team} pulls off an upset over defending champion {$loser}, shaking up the playoff picture.";
-                }
-                // Non-champion upset: low-rank team beats higher-rank team
-                elseif ($winnerStats->conference_rank > $loserStats->conference_rank) {
-                    $contentEnders[] = "In a surprising result, lower-ranked {$game->winner_team} defeats higher-ranked {$loser}, making waves in the conference standings.";
-                }
+            // Non-champion upset: low-rank team beats higher-rank team
+            elseif ($winnerStats->conference_rank > $loserStats->conference_rank) {
+                $contentEnders[] = "In a surprising result, lower-ranked {$game->winner_team} defeats higher-ranked {$loser}, making waves in the conference standings.";
             }
-            // Highlight experienced teams
-            if ($winnerStats->playoff_appearances > 5) {
-                $contentEnders[] = "Veteran experience shines as {$game->winner_team} adds another regular season win to their impressive track record.";
-            }
+        }
+        // Highlight experienced teams
+        if ($winnerStats->playoff_appearances > 5) {
+            $contentEnders[] = "Veteran experience shines as {$game->winner_team} adds another regular season win to their impressive track record.";
+        }
 
-            if ($winnerStats->championships > 0) {
-                $contentEnders[] = "With past championships fueling their confidence, {$game->winner_team} remains a team to watch this season.";
-            }
+        if ($winnerStats->championships > 0) {
+            $contentEnders[] = "With past championships fueling their confidence, {$game->winner_team} remains a team to watch this season.";
         }
 
         // Select random phrases

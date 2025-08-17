@@ -108,14 +108,20 @@ class TeamsController extends Controller
             'latestSeason' => $latestSeason,
         ];
     }
+
     private function getLatestSeason($teamId, $seasonId)
     {
-        return DB::table('standings_view')
-            ->select('*') // Select the necessary fields from season_view
+        $latestSeasonId = get_current_season_id();
+
+        $table = ($seasonId == $latestSeasonId) ? 'standings_view' : 'standings_snapshots';
+
+        return DB::table($table)
+            ->select('*') // Optionally specify only necessary fields
             ->where('team_id', $teamId)
             ->where('season_id', $seasonId)
-            ->get(); // Get the latest season record
+            ->get();
     }
+
 
     public function getLast10MatchResults($season_id, $homeId, $awayId)
     {
@@ -642,20 +648,20 @@ class TeamsController extends Controller
         }
     }
 
-    private function getFinalsStats($teamId)
+    private function getFinalsStats(int $teamId)
     {
-        return DB::table('schedules')
-            ->where(function ($query) use ($teamId) {
-                $query->where('away_id', $teamId)
-                    ->orWhere('home_id', $teamId);
-            })
+        return DB::table('playoff_series')
             ->where('round', 'finals')
-            ->selectRaw('SUM(CASE WHEN round = "finals" AND (away_id = ? AND away_score > home_score OR home_id = ? AND home_score > away_score) THEN 1 ELSE 0 END) AS finals_wins', [$teamId, $teamId])
-            ->selectRaw('SUM(CASE WHEN round = "finals" AND (away_id = ? AND away_score < home_score OR home_id = ? AND home_score < away_score) THEN 1 ELSE 0 END) AS finals_losses', [$teamId, $teamId])
-            ->selectRaw('COUNT(CASE WHEN round = "finals" THEN 1 END) AS finals_appearances')
+            ->where(function ($q) use ($teamId) {
+                $q->where('home_team_id', $teamId)
+                ->orWhere('away_team_id', $teamId);
+            })
+            ->selectRaw('SUM(CASE WHEN winner_team_id = ? THEN 1 ELSE 0 END) AS finals_wins', [$teamId])
+            ->selectRaw('SUM(CASE WHEN loser_team_id = ? THEN 1 ELSE 0 END) AS finals_losses', [$teamId])
+            ->selectRaw('COUNT(*) AS finals_appearances')
             ->first();
     }
-
+    
     private function getRoundStats($teamId)
     {
         return DB::table('schedules')

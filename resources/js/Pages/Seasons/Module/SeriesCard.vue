@@ -87,7 +87,7 @@
             <div class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center">
                 <button
                     class="text-white bg-orange-500 rounded-full px-2 py-1"
-                    @click.prevent="$emit('compare', series.home_team.id, series.away_team.id)"
+                    @click.prevent="compareTeams(series.home_team.id, series.away_team.id)"
                 >
                     Compare
                     <i class="fa fa-exchange-alt ml-1"></i>
@@ -111,6 +111,12 @@
             <SeriesResult v-if="series.series_id" :key="series.series_id" :series_id="series.series_id" :season_id="series.season_id" />
         </div>
     </Modal>
+     <Modal :show="isTeamComparisonModalOpen" :maxWidth="'6xl'" :title="series.series_lead" @close="isTeamComparisonModalOpen = false">
+        <div class="mt-4">
+           <TeamComparison :key="comparison.season_id" :season_id="comparison.season_id" :home_id="comparison.home_id" :away_id="comparison.away_id"   />
+        </div>
+    </Modal>
+    
 </template>
 
 <script setup>
@@ -127,6 +133,7 @@ import {
 
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 import SeriesResult from "@/Pages/Seasons/Module/SeriesResult.vue";
+import TeamComparison from "@/Pages/Teams/Module/TeamComparison.vue";
 
 const props = defineProps({
     series: {
@@ -136,6 +143,21 @@ const props = defineProps({
 });
 
 const isSeriesResultModalOpen =  ref(false);
+const isTeamComparisonModalOpen = ref(false);
+const comparison = useForm({
+    season_id: 0,
+    home_id: 0,
+    away_id: 0,
+});
+
+const compareTeams = (home_id, away_id) => {
+    // console.log(props.series);
+    comparison.season_id = props.series.season_id;
+    comparison.home_id = home_id;
+    comparison.away_id = away_id;
+    isTeamComparisonModalOpen.value = true;
+};
+
 const getConferenceClass = (homeConference, awayConference) => {
     const conferenceClasses = {
         NCR: "bg-blue-100 text-blue-500",

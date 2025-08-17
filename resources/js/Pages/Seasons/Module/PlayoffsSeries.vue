@@ -113,7 +113,6 @@ import {
     roundStatusFormatter,
 } from "@/Utility/Formatter.js";
 
-import TeamComparison from "@/Pages/Teams/Module/TeamComparison.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
@@ -158,13 +157,6 @@ const roundOrder = [
     'interconference_semi_finals',
     'finals'
 ];
-
-const compareTeams = (home_id, away_id) => {
-    comparison.season_id = props.season_id;
-    comparison.home_id = home_id;
-    comparison.away_id = away_id;
-    isTeamComparisonModalOpen.value = true;
-};
 
 const createPlayOffSchedule = async (round) => {
     try {

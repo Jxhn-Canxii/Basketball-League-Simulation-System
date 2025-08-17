@@ -583,7 +583,7 @@ class PlayoffController extends Controller
                 self::processOngoingSeriesSchedules($seasonId, $round);
                 return response()->json([
                     'message' => 'Round schedule already created',
-                ], 200);
+                ], 500);
             }
 
             // Retrieve the league_id from the seasons table
