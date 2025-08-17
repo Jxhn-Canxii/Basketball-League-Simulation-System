@@ -902,6 +902,10 @@ const props = defineProps({
         type: Boolean,
         default: true,
     },
+    showGameNews:{
+        type: Boolean,
+        default: false,
+    }
 });
 const showPlayerProfileModal = ref(false);
 const isTeamRosterModalOpen = ref(false);
@@ -1013,6 +1017,7 @@ const formatInjuredPlayers = (player) => {
 
 onMounted(() => {
     fetchBoxScore();
+    showGameNews.value = props.showGameNews;
 });
 </script>
 

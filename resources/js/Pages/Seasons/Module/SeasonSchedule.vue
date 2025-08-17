@@ -88,7 +88,7 @@
     <div class="block px-2" v-if="isHide">
         <transition name="fade" mode="out-in">
             <div v-if="showGameResults && activeGameId != 0" :key="'game-' + activeGameId">
-                <GameResults :game_id="activeGameId" :showBoxScore="false" />
+                <GameResults :game_id="activeGameId" :showBoxScore="false" :showGameNews="true" />
             </div>
             <div v-else-if="!showGameResults && activeGameId != 0" :key="'transactions-' + activeGameId">
                 <RecentTransactions :key="activeGameId"/>
