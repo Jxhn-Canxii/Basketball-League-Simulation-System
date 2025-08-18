@@ -73,11 +73,34 @@ class ConferenceController extends Controller
             ->first();
 
         // Fetch standings filtered by season_id and conference_id
-        $standings = DB::table($table)
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
-            ->orderByDesc('wins') // Order by wins in descending order
-            ->orderBy('conference_rank', 'asc') // If wins are tied, order by conference_rank ascending
+        // $standings = DB::table($table)
+        //     ->where('season_id', $seasonId)
+        //     ->where('conference_id', $conferenceId)
+        //     ->orderByDesc('wins') // Order by wins in descending order
+        //     ->orderBy('conference_rank', 'asc') // If wins are tied, order by conference_rank ascending
+        //     ->get();
+
+        $standings = DB::table($table . ' as s')
+            ->join('team_reputation_view as trv', function ($join) use ($seasonId) {
+                $join->on('s.team_id', '=', 'trv.team_id');
+            })
+            ->where('s.season_id', $seasonId)
+            ->where('s.conference_id', $conferenceId)
+            ->orderByDesc('s.wins')
+            ->orderBy('s.conference_rank', 'asc')
+            ->select([
+                's.*', // All columns from standings
+                'trv.reputation_score',
+                'trv.estimated_fans',
+                'trv.streak_status',
+                'trv.chemistry',
+                'trv.wins_diff',
+                'trv.rank_improvement',
+                'trv.chemistry_diff',
+                'trv.prev_wins',
+                'trv.prev_rank',
+                'trv.prev_chemistry'
+            ])
             ->get();
 
         // Get all-time conference_rank = 1 and overall_rank = 1 counts per team

@@ -1586,7 +1586,7 @@ class SimulateController extends Controller
             // Update the season's status to 2
             $season = Seasons::find($currentSeasonId);
             if ($season) {
-                $season->status = config('timeline.play_offs');
+                $season->status = 2;
                 $season->save();
 
                 $this->saveStandingsSnapshot();

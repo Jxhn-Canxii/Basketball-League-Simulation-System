@@ -62,7 +62,8 @@
                     (team.finals_appearances > 0 ? team.finals_appearances + 'x National Finals Appearances\n' : '') +
                     (team.championships > 0 ? team.championships + 'x National Championships\n' : '') +
                     (team.overall_rank_count > 0 ? team.overall_rank_count + 'x National Ranked #1\n' : '') +
-                    (team.conference_rank_count > 0 ? team.conference_rank_count + 'x Conference Ranked #1' : '')
+                    (team.conference_rank_count > 0 ? team.conference_rank_count + 'x Conference Ranked #1\n' : '') +
+                    'Estimated Fans: ' + (team.estimated_fans?.toLocaleString() + ' Fans')
                   "
                   :team_id="team.team_id"
                   :showInfo="props.showLegend"
