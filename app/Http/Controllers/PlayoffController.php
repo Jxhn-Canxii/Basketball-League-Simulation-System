@@ -567,17 +567,19 @@ class PlayoffController extends Controller
 
             $getOngoingRound = self::getOngoingRound($seasonId);
 
-            if (!empty($getOngoingRound)) {
-                self::processOngoingSeriesSchedules($seasonId, $getOngoingRound);
-                self::updateSeasonPlayoffRound($seasonId, $getOngoingRound);
+            // if (!empty($getOngoingRound)) {
+            //     self::processOngoingSeriesSchedules($seasonId, $getOngoingRound);
+            //     self::updateSeasonPlayoffRound($seasonId, $getOngoingRound);
 
-            }
-
-            // if (!$allPrevRoundsSeriesFinished) {
-            //     return response()->json([
-            //         'message' => 'Prev round series schedule is ongoing. Cannot create series schedule for next round.',
-            //     ], 500);
             // }
+
+            if (!$allPrevRoundsSeriesFinished) {
+                self::processOngoingSeriesSchedules($seasonId, $getOngoingRound);
+                
+                return response()->json([
+                    'message' => 'Prev round series schedule is ongoing. Cannot create series schedule for next round.',
+                ], 500);
+            }
 
             if ($currentRoundExists) {
                 self::processOngoingSeriesSchedules($seasonId, $round);
