@@ -260,9 +260,10 @@ class PlayoffController extends Controller
             $games = [];
             
             $playoffSchedule = DB::table('schedules')
-                ->select('id', 'game_id', 'season_id', 'round')
+                ->select('id', 'game_id', 'season_id', 'round','series_id','game_number')
                 ->where('season_id', $seasonId)
                 ->where('status', 1)
+                ->orderBy('game_number', 'asc')
                 ->orderBy('round', 'asc')
                 ->get();
 
@@ -573,13 +574,13 @@ class PlayoffController extends Controller
 
             // }
 
-            if (!$allPrevRoundsSeriesFinished) {
-                self::processOngoingSeriesSchedules($seasonId, $prev_round);
+            // if (!$allPrevRoundsSeriesFinished) {
+            //     self::processOngoingSeriesSchedules($seasonId, $prev_round);
                 
-                return response()->json([
-                    'message' => 'Prev round series schedule is ongoing. Cannot create series schedule for next round.',
-                ], 500);
-            }
+            //     return response()->json([
+            //         'message' => 'Prev round series schedule is ongoing. Cannot create series schedule for next round.',
+            //     ], 500);
+            // }
 
             if ($currentRoundExists) {
                 self::processOngoingSeriesSchedules($seasonId, $round);
@@ -1191,7 +1192,7 @@ class PlayoffController extends Controller
             $homePattern = self::getHomePattern($seriesLength);
 
             // Create schedule entries for all games in the series
-            for ($gameNum = 1; $gameNum <= $bestOf; $gameNum++) {
+            for ($gameNum = 1; $gameNum <= $seriesLength; $gameNum++) {
                 // Decide who is home based on pattern
                 if ($homePattern[$gameNum - 1] === 'H') {
                     $homeId = $pairing[0];

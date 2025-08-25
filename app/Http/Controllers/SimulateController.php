@@ -632,6 +632,18 @@ class SimulateController extends Controller
             )
             ->findOrFail($request->schedule_id);
 
+        $isSeriesFinished = DB::table('playoff_series')
+            ->where('series_id', $gameData->series_id)
+            ->where('status', 2)
+            ->first();
+
+        if ($isSeriesFinished) {
+            return response()->json([
+                'error' => true,
+                'message' => 'This playoff series is already finished.'
+            ], 400);
+        }
+        
         $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
         $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
 
@@ -2914,89 +2926,7 @@ class SimulateController extends Controller
             ->where('series_id', $gameData->series_id)
             ->update($updateData);
 
-
-        // dd($updateData);
-        // If series is not completed, insert a new schedule entry
-        if ($updateData['status'] != 2) {
-            // Count finished games
-            $gameCount = DB::table('schedules')
-                ->where('series_id', $gameData->series_id)
-                ->where('status', 2) // completed
-                ->count();
-
-            // Count total scheduled games (played + upcoming)
-            $totalGames = DB::table('schedules')
-                ->where('series_id', $gameData->series_id)
-                ->count();
-
-            // Count unfinished games (winner_id = 0)
-            $unfinishedGames = DB::table('schedules')
-                ->where('series_id', $gameData->series_id)
-                ->where('status', 1)
-                ->count();
-
-            // Check if series still alive
-            $seriesStillAlive = $updateData['home_wins'] < $series->best_of &&
-                $updateData['away_wins'] < $series->best_of;
-
-            // Insert next game only if series is alive, 
-            // total games < series length, and no unfinished games exist
-            if ($seriesStillAlive && $totalGames < $series->series_length && $unfinishedGames === 0) {
-
-                $gameNumber = $totalGames + 1;
-
-                $seriesNumber = preg_match('/-Series(\d+)$/', $gameData->game_id, $matches) ? $matches[1] : '1';
-
-                // Get home/away pattern for the series
-                $homePattern = $this->getHomePattern($series->series_length);
-
-                if ($homePattern[$gameNumber - 1] === 'H') {
-                    $homeId = $series->home_team_id;
-                    $awayId = $series->away_team_id;
-                } else {
-                    $homeId = $series->away_team_id;
-                    $awayId = $series->home_team_id;
-                }
-
-                $gameId = "S{$gameData->season_id}-C{$gameData->conference_id}-R{$gameData->round}-Series{$seriesNumber}-{$homeId}v{$awayId}-G{$gameNumber}";
-
-                $newSchedule = [
-                    'game_id' => $gameId,
-                    'round' => $gameData->round,
-                    'season_id' => $gameData->season_id,
-                    'conference_id' => $gameData->conference_id,
-                    'home_id' => $homeId,
-                    'away_id' => $awayId,
-                    'home_score' => 0,
-                    'away_score' => 0,
-                    'winner_id' => 0,
-                    'status' => 1,
-                    'series_id' => $gameData->series_id,
-                    'created_at' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                ];
-
-                DB::table('schedules')->insert($newSchedule);
-            }
-        }
     }
-
-    private function getHomePattern($bestOf)
-    {
-        switch ($bestOf) {
-            case 1:
-                return ['H']; // single game
-            case 3:
-                return ['H', 'A', 'H']; // 1-1-1 format
-            case 5:
-                return ['H', 'H', 'A', 'A', 'H']; // 2-2-1
-            case 7:
-                return ['H', 'H', 'A', 'A', 'H', 'A', 'H']; // 2-2-1-1-1
-            default:
-                throw new \Exception("No home/away pattern for best-of-$bestOf series.");
-        }
-    }
-
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName)
     {

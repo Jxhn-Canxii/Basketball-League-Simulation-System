@@ -377,7 +377,7 @@ class RecordsController extends Controller
             ->leftJoin('player_series_appearances AS psa', 'p.id', '=', 'psa.player_id')
             ->leftJoin('seasons AS ss', 'ss.id', '=', 'psa.season_id')
             ->leftJoin('player_season_stats AS pss', 'pss.player_id', '=', 'p.id')
-            ->leftJoin('teams AS t', 'p.team_id', '=', 't.id')
+            ->leftJoin('teams AS t', 'pss.team_id', '=', 't.id')
             ->whereIn('psa.round', [
                 'play_ins_elims_round_1',
                 'play_ins_elims_round_2',
