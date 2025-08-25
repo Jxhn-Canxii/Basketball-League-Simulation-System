@@ -998,7 +998,7 @@ class SimulateController extends Controller
             DB::rollBack();
             return response()->json([
                 'message' => 'The game is postponed ' . $randomReason . '!',
-            ], 200);
+            ], 400);
         }
 
         // Update the scores
