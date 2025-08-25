@@ -641,7 +641,7 @@ class SimulateController extends Controller
             return response()->json([
                 'error' => true,
                 'message' => 'This playoff series is already finished.'
-            ], 400);
+            ], 200);
         }
 
         // Check previous game in same series
@@ -655,7 +655,7 @@ class SimulateController extends Controller
                 return response()->json([
                     'error' => true,
                     'message' => 'Previous game in this series is not yet finished.'
-                ], 400);
+                ], 200);
             }
         }
 
