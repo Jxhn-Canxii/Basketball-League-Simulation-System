@@ -465,9 +465,29 @@ const simulateFullPlayoffs = async () => {
             // Simulate each game
             for (let index = 0; index < matches.length; index++) {
                 const match = matches[index];
-                await simulateGame(match.id, match.game_id, 2, index, roundName);
-                await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
+                try {
+                    await simulateGame(match.id, match.game_id, 2, index, roundName);
+                    await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
+                } catch (error) {
+                    console.error(`Error simulating game ${match.id} in ${roundName}:`, error);
+
+                    // Reload pending games so we can retry safely
+                    await fetchSeasonPlayoffs(is_play_ins.value);
+
+                    // Show error but do NOT exit entire playoffs loop
+                    Swal.fire({
+                        icon: "error",
+                        title: "Game Simulation Error",
+                        text: error.response?.data?.message || `Failed to simulate game ${match.id}. Retrying...`,
+                    });
+
+                    // Important: break the inner loop so we stay on this round,
+                    // but do not increment currentRoundIndex (retry same round next cycle)
+                    index = matches.length; // break out of inner loop
+                    currentRoundIndex--;    // force stay in same round
+                }
             }
+
 
             // Try to advance to next round if not finals
             if (roundName !== 'finals') {
