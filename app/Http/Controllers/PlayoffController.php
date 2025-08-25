@@ -582,7 +582,7 @@ class PlayoffController extends Controller
             // }
 
             if ($currentRoundExists) {
-                self::processOngoingSeriesSchedules($seasonId, $round);
+                // self::processOngoingSeriesSchedules($seasonId, $round);
                 return response()->json([
                     'message' => 'Round schedule already created',
                 ], 500);
