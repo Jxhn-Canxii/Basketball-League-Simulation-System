@@ -643,7 +643,22 @@ class SimulateController extends Controller
                 'message' => 'This playoff series is already finished.'
             ], 400);
         }
-        
+
+        // Check previous game in same series
+        if ($gameData->game_number > 1) {
+            $prevGame = DB::table('schedules')
+                ->where('series_id', $gameData->series_id)
+                ->where('game_number', $gameData->game_number - 1)
+                ->first();
+
+            if ($prevGame && $prevGame->status != 2) {
+                return response()->json([
+                    'error' => true,
+                    'message' => 'Previous game in this series is not yet finished.'
+                ], 400);
+            }
+        }
+
         $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
         $this->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
 
