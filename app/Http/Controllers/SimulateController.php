@@ -1094,7 +1094,7 @@ class SimulateController extends Controller
             $this->updateInjuryAndWaiving($gameData->away_team_id);
             $this->updateTeamStreaks($gameData->id);
             $this->updateHeadToHeadResults($gameData->id);
-            $this->updatePlayoffAppearancesForGame($gameData);
+            $this->updatePlayoffSeriesAppearancesForGame($gameData);
             // $this->createGameNewsFromGame($gameData->id);
 
             $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId,  $gameData->round);
@@ -3780,7 +3780,122 @@ class SimulateController extends Controller
 
         $seasonId = $gameData->season_id;
         $round = $gameData->round;
+
+        // ✅ Winner team comes directly from schedules (single-elims assumption)
         $winnerTeamId = $gameData->winner_id;
+
+        // Fetch player's team_id
+        $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
+        if (!$playerTeamId) {
+            \Log::error("No team_id found for player_id: $playerId");
+            return;
+        }
+
+        $roundColumnMap = [
+            'play_ins_elims_round_1' => 'play_ins_elims_round_1_appearances',
+            'play_ins_elims_round_2' => 'play_ins_elims_round_2_appearances',
+            'play_ins_finals' => 'play_ins_finals_appearances',
+            'round_of_32' => 'round_of_32_appearances',
+            'round_of_16' => 'round_of_16_appearances',
+            'quarter_finals' => 'quarter_finals_appearances',
+            'semi_finals' => 'semi_finals_appearances',
+            'interconference_semi_finals' => 'interconference_semi_finals_appearances',
+            'finals' => 'finals_appearances',
+        ];
+
+        if (!isset($roundColumnMap[$round])) {
+            \Log::warning("Invalid playoff round: $round");
+            return; // Not a tracked playoff round
+        }
+
+        $columnToIncrement = $roundColumnMap[$round];
+
+        // Use a transaction for database consistency
+        DB::transaction(function () use ($playerId, $columnToIncrement, $round, $playerTeamId, $winnerTeamId, $seriesIdentifier, $gameData) {
+
+            // Check if the player has already been credited for this series
+            $existingAppearance = DB::table('player_series_appearances')
+                ->where('player_id', $playerId)
+                ->where('series_identifier', $seriesIdentifier)
+                ->exists();
+
+            if ($existingAppearance) {
+                \Log::info("Player $playerId already credited for series $seriesIdentifier");
+                return; // Skip if appearance already recorded
+            }
+
+            // Record the series appearance
+            DB::table('player_series_appearances')->insert([
+                'player_id' => $playerId,
+                'series_identifier' => $seriesIdentifier,
+                'season_id' => $gameData->season_id,
+                'round' => $round,
+                'created_at' => now(),
+            ]);
+
+            // Ensure player record exists in player_playoff_appearances
+            DB::table('player_playoff_appearances')->updateOrInsert(
+                ['player_id' => $playerId],
+                []
+            );
+
+            // Increment specific round appearance
+            DB::table('player_playoff_appearances')
+                ->where('player_id', $playerId)
+                ->increment($columnToIncrement);
+
+            // Increment total playoff appearances
+            DB::table('player_playoff_appearances')
+                ->where('player_id', $playerId)
+                ->increment('total_playoff_appearances');
+
+            // ✅ Handle championship win in finals (single-elims assumption)
+            if ($round === 'finals' && $winnerTeamId && $playerTeamId == $winnerTeamId) {
+                \Log::info("Incrementing championships_won for player $playerId, team $playerTeamId won");
+                DB::table('player_playoff_appearances')
+                    ->where('player_id', $playerId)
+                    ->increment('championships_won');
+            } else {
+                \Log::info("Championship not incremented: round=$round, playerTeamId=$playerTeamId, winnerTeamId=$winnerTeamId");
+            }
+        });
+    }
+
+    public function updatePlayoffSeriesAppearancesForGame($gameData)
+    {
+        $homeId = $gameData->home_team_id;
+        $awayId = $gameData->away_team_id;
+        $seasonId = $gameData->season_id;
+        $round = $gameData->round;
+
+        // Generate a unique series identifier (sorted to ensure consistency)
+        $teamIds = [$homeId, $awayId];
+        sort($teamIds); // Sort to ensure consistent series ID regardless of home/away order
+        $seriesIdentifier = implode('_', [$seasonId, $round, $teamIds[0], $teamIds[1]]);
+
+        // Get unique player IDs from both teams
+        $playerIds = DB::table('players')
+            ->whereIn('team_id', [$homeId, $awayId])
+            ->pluck('id')
+            ->unique();
+
+        foreach ($playerIds as $playerId) {
+            $this->updatePlayerPlayoffSeriesAppearance($playerId, $gameData, $seriesIdentifier);
+        }
+    }
+
+    public function updatePlayerPlayoffSeriesAppearance($playerId, $gameData, $seriesIdentifier)
+    {
+        if (!$playerId || !$gameData || !$seriesIdentifier) {
+            \Log::error("Invalid input: playerId=$playerId, gameData=" . json_encode($gameData) . ", seriesIdentifier=$seriesIdentifier");
+            return;
+        }
+
+        $seasonId = $gameData->season_id;
+        $round = $gameData->round;
+        $winnerTeamId = DB::table('playoff_series')
+            ->where('series_id', $gameData->series_id)
+            ->value('winner_team_id');
 
         // Fetch player's team_id
         $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
