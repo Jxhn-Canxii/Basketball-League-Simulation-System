@@ -63,7 +63,7 @@
                     (team.championships > 0 ? team.championships + 'x National Championships\n' : '') +
                     (team.overall_rank_count > 0 ? team.overall_rank_count + 'x National Ranked #1\n' : '') +
                     (team.conference_rank_count > 0 ? team.conference_rank_count + 'x Conference Ranked #1\n' : '') +
-                    'Estimated Fans: ' + (team.estimated_fans?.toLocaleString() + ' Fans')
+                    'Estimated Fans: ' + (numberFormatter(team.estimated_fans ?? 0) + ' Fans')
                   "
                   :team_id="team.team_id"
                   :showInfo="props.showLegend"
@@ -168,6 +168,7 @@ import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";
 import Modal from "@/Components/Modal.vue";
+import { numberFormatter } from "@/Utility/Formatter.js";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
 import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";

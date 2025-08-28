@@ -24,7 +24,7 @@ SELECT
     (COALESCE(prev.overall_rank, s.overall_rank) - s.overall_rank) AS rank_improvement,
     (s.chemistry - COALESCE(prev.chemistry, s.chemistry)) AS chemistry_diff,
 
-    -- Reputation Score
+    -- Reputation Score (still useful for sorting/analytics)
     ROUND(
         (s.wins * 0.16) +
         (s.playoff_appearances * 0.12) +
@@ -34,29 +34,33 @@ SELECT
         (CASE WHEN s.is_defending_champion = 1 THEN 10 ELSE 0 END) * 0.08 +
         (s.chemistry * 0.10) +
         (CASE WHEN s.streak_status = 'win' THEN 5 ELSE 0 END) * 0.05 +
-
         ((s.wins - COALESCE(prev.wins, s.wins)) * 0.25) +
         ((COALESCE(prev.overall_rank, s.overall_rank) - s.overall_rank) * 0.3) +
         ((s.chemistry - COALESCE(prev.chemistry, s.chemistry)) * 0.15)
     , 2) AS reputation_score,
 
-    -- Fanbase Estimate (scaled with market size, no negatives)
+    -- NBA/PH-Style Fanbase Estimate (millions scale)
     FLOOR(
-        GREATEST(
-            0,
+        (
+            -- Achievements (50%)
             (
-                (s.wins * 0.16) +
+                (s.wins * 0.18) +
                 (s.playoff_appearances * 0.12) +
                 (s.finals_appearances * 0.10) +
-                (s.conference_championships * 0.10) +
-                (s.championships * 0.20) +
-                (CASE WHEN s.is_defending_champion = 1 THEN 10 ELSE 0 END) * 0.08 +
-                (s.chemistry * 0.10) +
-                (CASE WHEN s.streak_status = 'win' THEN 5 ELSE 0 END) * 0.05 +
-                ((s.wins - COALESCE(prev.wins, s.wins)) * 0.25) +
-                ((COALESCE(prev.overall_rank, s.overall_rank) - s.overall_rank) * 0.3) +
-                ((s.chemistry - COALESCE(prev.chemistry, s.chemistry)) * 0.15)
-            ) * t.market_size * 1000 -- Multiply by market size and a scale factor
+                (s.championships * 0.25)
+            ) * 20000 * 0.5
+
+            +
+            -- Market Size (40%)
+            (t.market_size * 2000000) * 0.4
+
+            +
+            -- Momentum / Bandwagon (10%)
+            (
+                (CASE WHEN s.is_defending_champion = 1 THEN 500000 ELSE 0 END) +
+                (s.chemistry * 10000) +
+                (CASE WHEN s.streak_status = 'win' THEN 200000 ELSE 0 END)
+            ) * 0.1
         )
     ) AS estimated_fans
 
@@ -66,4 +70,4 @@ LEFT JOIN standings_snapshots prev
     AND prev.season_id = s.season_id - 1
 INNER JOIN teams t
     ON s.team_id = t.id
-ORDER BY reputation_score DESC;
+ORDER BY estimated_fans DESC;

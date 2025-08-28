@@ -34,7 +34,7 @@
             <!-- Estimated Fans -->
             <span class="flex items-center space-x-1">
                 <i class="fas fa-users text-yellow-300"></i>
-                <span class="text-gray-500">{{ team_info.teams.estimated_fans.toLocaleString() }}</span>
+                <span class="text-gray-500">{{ numberFormatter(team_info.teams.estimated_fans ?? 0) }}</span>
             </span>
 
             <!-- Reputation Score -->
@@ -725,7 +725,7 @@
 <script setup>
 import { Head, useForm } from "@inertiajs/vue3";
 import InputError from "@/Components/InputError.vue";
-import { roundNameFormatter } from "@/Utility/Formatter";
+import { roundNameFormatter, numberFormatter } from "@/Utility/Formatter";
 import { ref, onMounted, computed, watch  } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";

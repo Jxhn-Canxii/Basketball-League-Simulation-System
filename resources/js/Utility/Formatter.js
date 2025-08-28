@@ -291,6 +291,7 @@ export const generateRandomKey = () => {
     }
     return result;
 };
+
 export const moneyFormatter = (amount) => {
     // Check if amount is not a valid number
     if (isNaN(amount) || amount === null || amount === undefined) {
@@ -299,6 +300,15 @@ export const moneyFormatter = (amount) => {
     // Convert amount to number and format with commas for thousands separator
     return Number(amount).toLocaleString('en-US', {maximumFractionDigits: 2});
 }
+
+export const numberFormatter = (amount) => {
+    if (isNaN(amount) || amount === null || amount === undefined) {
+        return ''; // Return empty string
+    }
+    return Number(amount).toLocaleString('en-US'); 
+};
+
+
 export const playerStatusClass = (isActive) => {
     return isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";
 };
