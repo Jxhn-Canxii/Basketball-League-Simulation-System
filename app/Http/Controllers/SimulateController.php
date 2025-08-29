@@ -3917,6 +3917,16 @@ class SimulateController extends Controller
                 ->where('series_identifier', $seriesIdentifier)
                 ->exists();
 
+            // Handle championship win in finals
+            if ($round === 'finals' && $winnerTeamId && $playerTeamId == $winnerTeamId) {
+                \Log::info("Incrementing championships_won for player $playerId, team $playerTeamId won");
+                DB::table('player_playoff_appearances')
+                    ->where('player_id', $playerId)
+                    ->increment('championships_won');
+            } else {
+                \Log::info("Championship not incremented: round=$round, playerTeamId=$playerTeamId, winnerTeamId=$winnerTeamId");
+            }
+
             if ($existingAppearance) {
                 \Log::info("Player $playerId already credited for series $seriesIdentifier");
                 return; // Skip if appearance already recorded
@@ -3947,16 +3957,6 @@ class SimulateController extends Controller
                 ->where('player_id', $playerId)
                 ->increment('total_playoff_appearances');
         });
-
-        // Handle championship win in finals
-        if ($round === 'finals' && $winnerTeamId && $playerTeamId == $winnerTeamId) {
-            \Log::info("Incrementing championships_won for player $playerId, team $playerTeamId won");
-            DB::table('player_playoff_appearances')
-                ->where('player_id', $playerId)
-                ->increment('championships_won');
-        } else {
-            \Log::info("Championship not incremented: round=$round, playerTeamId=$playerTeamId, winnerTeamId=$winnerTeamId");
-        }
     }
 
     private function updateTeamRolesBasedOnStats($teamId, $round)
