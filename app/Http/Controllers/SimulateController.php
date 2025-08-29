@@ -3562,115 +3562,101 @@ class SimulateController extends Controller
             'updated_at' => now()
         ]);
     }
+
     private function updateTeamStreaks($gameid)
     {
-        // Fetch all games from the earliest to the latest
+        // Fetch all completed games up to the given game ID
         $games = \DB::table('schedule_view')
-            ->where('id', $gameid) // Only process games up to the given game ID
-            ->where('status', 2) // Only consider completed games
+            ->where('id', '<=', $gameid)
+            ->where('status', 2)
+            ->orderBy('id', 'asc') // Ensure chronological order
             ->get();
 
         if ($games->isEmpty()) {
-            return; // No games to process
+            \Log::warning("No completed games found up to gameid $gameid");
+            return;
         }
 
-        // Initialize an array to store streak information for each team
         $teamStreaks = [];
 
-        // Iterate over each game to calculate streaks
         foreach ($games as $game) {
-            // Home team processing
-            $this->processGameStreak($teamStreaks, $game->home_id, $game->winner_id, $game->id);
+            // Validate game data
+            if (empty($game->winner_id)) {
+                \Log::warning("Skipping game $game->id: No valid winner_id");
+                continue;
+            }
 
-            // Away team processing
+            $this->processGameStreak($teamStreaks, $game->home_id, $game->winner_id, $game->id);
             $this->processGameStreak($teamStreaks, $game->away_id, $game->winner_id, $game->id);
         }
 
-        // Update the streak table for each team
         foreach ($teamStreaks as $teamId => $streak) {
-            // Fetch the existing streak record for the team
             $streakRecord = \DB::table('streak')->where('team_id', $teamId)->first();
 
-            if ($streakRecord) {
-                // Update the best streak if the current one is greater
-                if ($streak['best_winning_streak'] > $streakRecord->best_winning_streak) {
-                    \DB::table('streak')->where('team_id', $teamId)->update([
-                        'best_winning_streak' => $streak['best_winning_streak'],
-                        'best_winning_streak_start_id' => $streak['best_winning_streak_start_id'],
-                        'best_winning_streak_end_id' => $streak['best_winning_streak_end_id'],
-                    ]);
+            $data = [
+                'best_winning_streak' => $streak['best_winning_streak'],
+                'best_winning_streak_start_id' => $streak['best_winning_streak_start_id'],
+                'best_winning_streak_end_id' => $streak['best_winning_streak_end_id'],
+                'best_losing_streak' => $streak['best_losing_streak'],
+                'best_losing_streak_start_id' => $streak['best_losing_streak_start_id'],
+                'best_losing_streak_end_id' => $streak['best_losing_streak_end_id'],
+            ];
+
+            try {
+                if ($streakRecord) {
+                    \DB::table('streak')->where('team_id', $teamId)->update($data);
+                } else {
+                    \DB::table('streak')->insert(array_merge(['team_id' => $teamId], $data));
                 }
-                if ($streak['best_losing_streak'] > $streakRecord->best_losing_streak) {
-                    \DB::table('streak')->where('team_id', $teamId)->update([
-                        'best_losing_streak' => $streak['best_losing_streak'],
-                        'best_losing_streak_start_id' => $streak['best_losing_streak_start_id'],
-                        'best_losing_streak_end_id' => $streak['best_losing_streak_end_id'],
-                    ]);
-                }
-            } else {
-                // Insert a new record if none exists for the team
-                \DB::table('streak')->insert([
-                    'team_id' => $teamId,
-                    'best_winning_streak' => $streak['best_winning_streak'],
-                    'best_losing_streak' => $streak['best_losing_streak'],
-                    'best_winning_streak_start_id' => $streak['best_winning_streak_start_id'],
-                    'best_winning_streak_end_id' => $streak['best_winning_streak_end_id'],
-                    'best_losing_streak_start_id' => $streak['best_losing_streak_start_id'],
-                    'best_losing_streak_end_id' => $streak['best_losing_streak_end_id'],
-                ]);
+            } catch (\Exception $e) {
+                \Log::error("Failed to update streak for team $teamId: " . $e->getMessage());
             }
         }
     }
 
-    // Modify processGameStreak to track start and end game IDs
     private function processGameStreak(&$teamStreaks, $teamId, $winnerId, $gameId)
     {
-        // Initialize streaks for the team if not already set
-        if (!isset($teamStreaks[$teamId])) {
+        if (!isset($teamStreacks[$teamId])) {
             $teamStreaks[$teamId] = [
                 'current_streak' => 0,
                 'is_winning_streak' => null,
                 'best_winning_streak' => 0,
                 'best_losing_streak' => 0,
-                'best_winning_streak_start_id' => 0,
-                'best_winning_streak_end_id' => 0,
-                'best_losing_streak_start_id' => 0,
-                'best_losing_streak_end_id' => 0,
+                'best_winning_streak_start_id' => null,
+                'best_winning_streak_end_id' => null,
+                'best_losing_streak_start_id' => null,
+                'best_losing_streak_end_id' => null,
             ];
         }
 
-        $streak = &$teamStreaks[$teamId]; // Reference to the team's streak data
+        $streak = &$teamStreaks[$teamId];
 
-        // Determine if the game is a win or loss
         $isWin = $teamId == $winnerId;
 
         if ($isWin) {
-            if ($streak['is_winning_streak'] === false) {
-                // Streak direction changed from losing to winning
+            if ($streak['is_winning_streak'] === false || $streak['is_winning_streak'] === null) {
                 $streak['current_streak'] = 1;
-                $streak['best_winning_streak_start_id'] = $gameId; // Start of new winning streak
-                $streak['best_losing_streak_start_id'] = 0; // Reset losing streak
-                $streak['best_losing_streak_end_id'] = 0; // Reset losing streak
+                $streak['best_winning_streak_start_id'] = $gameId;
             } else {
-                // Continue winning streak
                 $streak['current_streak']++;
             }
             $streak['is_winning_streak'] = true;
-            $streak['best_winning_streak'] = max($streak['best_winning_streak'], $streak['current_streak']);
-            $streak['best_winning_streak_end_id'] = $gameId; // Update end of winning streak
+            if ($streak['current_streak'] > $streak['best_winning_streak']) {
+                $streak['best_winning_streak'] = $streak['current_streak'];
+                $streak['best_winning_streak_end_id'] = $gameId;
+            }
         } else {
-            if ($streak['is_winning_streak'] === true) {
-                // Streak direction changed from winning to losing
+            if ($streak['is_winning_streak'] === true || $streak['is_winning_streak'] === null) {
                 $streak['current_streak'] = 1;
-                $streak['best_losing_streak_start_id'] = $gameId; // Start of new losing streak
-                $streak['best_winning_streak_end_id'] = 0; // Reset winning streak
+                $streak['best_losing_streak_start_id'] = $gameId;
             } else {
-                // Continue losing streak
                 $streak['current_streak']++;
             }
             $streak['is_winning_streak'] = false;
-            $streak['best_losing_streak'] = max($streak['best_losing_streak'], $streak['current_streak']);
-            $streak['best_losing_streak_end_id'] = $gameId; // Update end of losing streak
+            if ($streak['current_streak'] > $streak['best_losing_streak']) {
+                $streak['best_losing_streak'] = $streak['current_streak'];
+                $streak['best_losing_streak_end_id'] = $gameId;
+            }
         }
     }
 

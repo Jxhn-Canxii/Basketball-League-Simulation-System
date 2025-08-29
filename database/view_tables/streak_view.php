@@ -12,57 +12,55 @@ SELECT
     s.created_at,
     s.updated_at,
 
-    -- Get opponent name for the best winning streak
+    -- Get opponent name for the best winning streak (last game)
     (SELECT
         CASE
             WHEN sv.home_id = s.team_id THEN t2.name
             ELSE t2.name
         END
-     FROM
-        schedule_view sv
-     JOIN
-        teams t2 ON (sv.home_id = t2.id OR sv.away_id = t2.id)
-     WHERE
-        sv.id = s.best_winning_streak_end_id
+     FROM schedule_view sv
+     JOIN teams t2 ON (sv.home_id = t2.id OR sv.away_id = t2.id)
+     WHERE sv.id = s.best_winning_streak_end_id
      LIMIT 1) AS last_winning_opponent,
 
-    -- Get opponent name for the best losing streak
+    -- Get opponent name for the best losing streak (last game)
     (SELECT
         CASE
             WHEN sv.home_id = s.team_id THEN t2.name
             ELSE t2.name
         END
-     FROM
-        schedule_view sv
-     JOIN
-        teams t2 ON (sv.home_id = t2.id OR sv.away_id = t2.id)
-     WHERE
-        sv.id = s.best_losing_streak_end_id
+     FROM schedule_view sv
+     JOIN teams t2 ON (sv.home_id = t2.id OR sv.away_id = t2.id)
+     WHERE sv.id = s.best_losing_streak_end_id
      LIMIT 1) AS last_losing_opponent,
 
-    -- Get the season name for the winning streak
-    (SELECT
-        se.name
-     FROM
-        schedule_view sv
-     JOIN
-        seasons se ON sv.season_id = se.id
-     WHERE
-        sv.id = s.best_winning_streak_end_id
-     LIMIT 1) AS winning_streak_season,
+    -- Get the SEASON NAME for the WINNING streak START
+    (SELECT se.name
+     FROM schedule_view sv
+     JOIN seasons se ON sv.season_id = se.id
+     WHERE sv.id = s.best_winning_streak_start_id
+     LIMIT 1) AS winning_streak_start_season,
 
-    -- Get the season name for the losing streak
-    (SELECT
-        se.name
-     FROM
-        schedule_view sv
-     JOIN
-        seasons se ON sv.season_id = se.id
-     WHERE
-        sv.id = s.best_losing_streak_end_id
-     LIMIT 1) AS losing_streak_season
+    -- Get the SEASON NAME for the WINNING streak END
+    (SELECT se.name
+     FROM schedule_view sv
+     JOIN seasons se ON sv.season_id = se.id
+     WHERE sv.id = s.best_winning_streak_end_id
+     LIMIT 1) AS winning_streak_end_season,
 
-FROM
-    streak s
-JOIN
-    teams t ON s.team_id = t.id;
+    -- Get the SEASON NAME for the LOSING streak START
+    (SELECT se.name
+     FROM schedule_view sv
+     JOIN seasons se ON sv.season_id = se.id
+     WHERE sv.id = s.best_losing_streak_start_id
+     LIMIT 1) AS losing_streak_start_season,
+
+    -- Get the SEASON NAME for the LOSING streak END
+    (SELECT se.name
+     FROM schedule_view sv
+     JOIN seasons se ON sv.season_id = se.id
+     WHERE sv.id = s.best_losing_streak_end_id
+     LIMIT 1) AS losing_streak_end_season
+
+FROM streak s
+JOIN teams t ON s.team_id = t.id;
