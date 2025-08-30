@@ -1979,6 +1979,23 @@ class SimulateController extends Controller
         return round($rebounds);
     }
 
+    private function calculateBlocks(Player $player, int $minutes, float $performanceFactor, int $fouls): int
+    {
+        // Position-based caps
+        $positionCaps = ['C' => 0.40, 'PF' => 0.35, 'SF' => 0.25, 'SG' => 0.15, 'PG' => 0.10];
+
+        $blocksPerMinute = min(
+            $positionCaps[$player->position] ?? 0.20,
+            ($player->blocks_rating * 0.6 +
+                $player->athleticism_rating * 0.25 +
+                $player->defense_rating * 0.15) / 250
+        );
+
+        // Stronger foul impact
+        $foulPenalty = max(0.2, 1 - ($fouls * 0.15));
+
+        return round($blocksPerMinute * $minutes * $performanceFactor * $foulPenalty);
+    }
 
     private function calculateSteals(Player $player, int $minutes, float $performanceFactor, int $fouls): int
     {
