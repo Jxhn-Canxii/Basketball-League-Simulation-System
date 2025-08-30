@@ -1936,48 +1936,49 @@ class SimulateController extends Controller
 
     private function calculateRebounds(Player $player, int $minutes, float $performanceFactor, int $fouls): int
     {
-        // Base rate with stronger position adjustment
+        // Position weights tuned to NBA averages
         $positionWeights = [
-            'C' => 0.25,
-            'PF' => 0.22,
-            'SF' => 0.18,
-            'SG' => 0.15,
-            'PG' => 0.12
+            'C' => 0.35,  // Centers
+            'PF' => 0.30, 
+            'SF' => 0.20, 
+            'SG' => 0.15, 
+            'PG' => 0.10  
         ];
-        $positionFactor = $positionWeights[$player->position] ?? 0.18;
+        $positionFactor = $positionWeights[$player->position] ?? 0.20;
 
+        // Base rebound per minute (keeps averages realistic)
         $reboundPerMinute = min(
-            0.45, // Hard cap to prevent outliers
+            0.70, // hard cap (≈25 boards in 36 mins normally)
             $positionFactor * (
-                ($player->rebounding_rating * 0.7 +
-                    $player->athleticism_rating * 0.2 +
-                    $player->strength_rating * 0.1) / 100
+                ($player->rebounding_rating * 0.65 +
+                $player->athleticism_rating * 0.25 +
+                $player->strength_rating * 0.10) / 100
             )
         );
 
-        // More severe foul penalty
-        $foulPenalty = max(0.3, 1 - ($fouls * 0.12));
+        // Softer foul penalty
+        $foulPenalty = max(0.5, 1 - ($fouls * 0.08));
 
-        return round($reboundPerMinute * $minutes * $performanceFactor * $foulPenalty);
+        // Normal expected rebounds
+        $rebounds = $reboundPerMinute * $minutes * $performanceFactor * $foulPenalty;
+
+        // --- RARE REBOUND SPIKES ---
+        // Super rare chance for historic rebounding nights
+        $spikeChance = mt_rand(1, 1000000); // 1 in a million base chance
+        if ($spikeChance <= 3) { 
+            // Only elite rebounders can spike
+            if ($player->rebounding_rating > 90 && $player->position === 'C') {
+                // Wilt/Rodman type spike
+                $rebounds += rand(10, 18); 
+            } elseif ($player->rebounding_rating > 85) {
+                // Strong PF rebounder type spike
+                $rebounds += rand(6, 12);
+            }
+        }
+
+        return round($rebounds);
     }
 
-    private function calculateBlocks(Player $player, int $minutes, float $performanceFactor, int $fouls): int
-    {
-        // Position-based caps
-        $positionCaps = ['C' => 0.40, 'PF' => 0.35, 'SF' => 0.25, 'SG' => 0.15, 'PG' => 0.10];
-
-        $blocksPerMinute = min(
-            $positionCaps[$player->position] ?? 0.20,
-            ($player->blocks_rating * 0.6 +
-                $player->athleticism_rating * 0.25 +
-                $player->defense_rating * 0.15) / 250
-        );
-
-        // Stronger foul impact
-        $foulPenalty = max(0.2, 1 - ($fouls * 0.15));
-
-        return round($blocksPerMinute * $minutes * $performanceFactor * $foulPenalty);
-    }
 
     private function calculateSteals(Player $player, int $minutes, float $performanceFactor, int $fouls): int
     {
