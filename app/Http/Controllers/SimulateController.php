@@ -1920,6 +1920,33 @@ class SimulateController extends Controller
         return min(max($fouls, 0), 6); // Clamp to 0-6 fouls
     }
 
+    private function poissonRandomizer(float $lambda): int
+    {
+        // For small lambda (<30) use direct Knuth method
+        if ($lambda <= 0) {
+            return 0;
+        }
+        if ($lambda < 30.0) {
+            $L = exp(-$lambda);
+            $p = 1.0;
+            $k = 0;
+            while ($p > $L) {
+                $k++;
+                // mt_rand returns int — scale to (0,1]
+                $p *= mt_rand() / mt_getrandmax();
+            }
+            return $k - 1;
+        }
+
+        // For large lambda use normal approximation (mu=lambda, sigma=sqrt(lambda))
+        // sample standard normal using Box-Muller
+        $u1 = mt_rand() / mt_getrandmax();
+        $u2 = mt_rand() / mt_getrandmax();
+        $z = sqrt(-2.0 * log($u1)) * cos(2.0 * M_PI * $u2);
+        $sample = (int) round($lambda + sqrt($lambda) * $z);
+        return max(0, $sample);
+    }
+
     private function calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowsMade, $fouls)
     {
         // Base points
@@ -1938,46 +1965,45 @@ class SimulateController extends Controller
     {
         // Position weights tuned to NBA averages
         $positionWeights = [
-            'C' => 0.35,  // Centers
-            'PF' => 0.30, 
-            'SF' => 0.20, 
-            'SG' => 0.15, 
-            'PG' => 0.10  
+            'C' => 0.35,
+            'PF' => 0.30,
+            'SF' => 0.20,
+            'SG' => 0.15,
+            'PG' => 0.10
         ];
         $positionFactor = $positionWeights[$player->position] ?? 0.20;
 
-        // Base rebound per minute (keeps averages realistic)
+        // Base per-minute expected rebounds (ceiling keeps averages realistic)
         $reboundPerMinute = min(
-            0.70, // hard cap (≈25 boards in 36 mins normally)
+            0.70,
             $positionFactor * (
                 ($player->rebounding_rating * 0.65 +
                 $player->athleticism_rating * 0.25 +
-                $player->strength_rating * 0.10) / 100
+                $player->strength_rating * 0.10) / 100.0
             )
         );
 
-        // Softer foul penalty
+        // Softer foul penalty (players still rebound with fouls)
         $foulPenalty = max(0.5, 1 - ($fouls * 0.08));
 
-        // Normal expected rebounds
-        $rebounds = $reboundPerMinute * $minutes * $performanceFactor * $foulPenalty;
+        // Expected (lambda) rebounds
+        $expected = $reboundPerMinute * $minutes * $performanceFactor * $foulPenalty;
 
-        // --- RARE REBOUND SPIKES ---
-        // Super rare chance for historic rebounding nights
-        $spikeChance = mt_rand(1, 1000000); // 1 in a million base chance
-        if ($spikeChance <= 3) { 
-            // Only elite rebounders can spike
-            if ($player->rebounding_rating > 90 && $player->position === 'C') {
-                // Wilt/Rodman type spike
-                $rebounds += rand(10, 18); 
-            } elseif ($player->rebounding_rating > 85) {
-                // Strong PF rebounder type spike
-                $rebounds += rand(6, 12);
-            }
+        // --- Monster spike gating (ultra-rare) ---
+        // Example: base 0.0005 ~ 1 in 2000. Adjust as needed.
+        $monsterChance = 0.0005;
+        $spike = 0;
+        if (mt_rand() / mt_getrandmax() < $monsterChance && $player->rebounding_rating >= 88 && in_array($player->position, ['C','PF'])) {
+            // Add spike to expected before sampling (so stochastic)
+            $expected += rand(10, 18);
         }
 
-        return round($rebounds);
+        //actual rebounds from Poisson(lambda = expected)
+        $actual = $this->poissonRandomizer($expected);
+
+        return (int) $actual;
     }
+
 
     private function calculateBlocks(Player $player, int $minutes, float $performanceFactor, int $fouls): int
     {
@@ -1994,7 +2020,12 @@ class SimulateController extends Controller
         // Stronger foul impact
         $foulPenalty = max(0.2, 1 - ($fouls * 0.15));
 
-        return round($blocksPerMinute * $minutes * $performanceFactor * $foulPenalty);
+        $expected = round($blocksPerMinute * $minutes * $performanceFactor * $foulPenalty);
+
+        //actual blocks from Poisson(lambda = expected)
+        $actual = $this->poissonRandomizer($expected);
+
+        return (int) $actual;
     }
 
     private function calculateSteals(Player $player, int $minutes, float $performanceFactor, int $fouls): int
@@ -2013,7 +2044,12 @@ class SimulateController extends Controller
         // Leadership reduces reckless steals
         $discipline = 1 - ($player->leadership_rating / 500);
 
-        return round($stealsPerMinute * $minutes * $performanceFactor * $foulPenalty * $discipline);
+        $expected = round($stealsPerMinute * $minutes * $performanceFactor * $foulPenalty * $discipline);
+
+         //actual steals from Poisson(lambda = expected)
+        $actual = $this->poissonRandomizer($expected);
+
+        return (int) $actual;
     }
 
     // $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers,$homeChemistry, true, true);
