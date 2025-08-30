@@ -1947,6 +1947,19 @@ class SimulateController extends Controller
         return max(0, $sample);
     }
 
+    // Helper: binomial randomizer
+    private function binomialRandomizer(int $n, float $p): int
+    {
+        if ($n <= 0 || $p <= 0.0) return 0;
+        if ($p >= 1.0) return $n;
+
+        $success = 0;
+        for ($i = 0; $i < $n; $i++) {
+            if (mt_rand() / mt_getrandmax() < $p) $success++;
+        }
+        return $success;
+    }
+
     private function calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowsMade, $fouls)
     {
         // Base points
@@ -2145,9 +2158,9 @@ class SimulateController extends Controller
             $fatigueFactor * $injuryFactor * $moraleFactor
         );
 
-        $twoPointMade = min(rand(0, round($adjustedTwoPointAttempts * $twoPointAccuracy)), $adjustedTwoPointAttempts);
-        $threePointMade = min(rand(0, round($adjustedThreePointAttempts * $threePointAccuracy)), $adjustedThreePointAttempts);
-        $freeThrowMade = min(rand(0, round($adjustedFreeThrowAttempts * $freeThrowAccuracy)), $adjustedFreeThrowAttempts);
+        $twoPointMade = $this->binomialRandomizer($adjustedTwoPointAttempts, min(0.75, $twoPointAccuracy));
+        $threePointMade = $this->binomialRandomizer($adjustedThreePointAttempts, min(0.55, $threePointAccuracy));
+        $freeThrowMade = $this->binomialRandomizer($adjustedFreeThrowAttempts, min(0.95, $freeThrowAccuracy));
 
         // Cap scoring to a realistic points per minute
         $estimatedPoints = ($twoPointMade * 2) + ($threePointMade * 3) + $freeThrowMade;
