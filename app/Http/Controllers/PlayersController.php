@@ -975,7 +975,7 @@ class PlayersController extends Controller
        // Assign position
         if ($selectedArchetype === 'generational') {
             // Generational players can be anything
-            $hybrids = ['PG', 'SG', 'SF', 'PF', 'C', 'PG/SG', 'SG/SF', 'SF/PF', 'PF/C', 'Point Forward'];
+            $hybrids = ['PG', 'SG', 'SF', 'PF', 'C', 'PG/SG', 'SG/SF', 'SF/PF', 'PF/C', 'PG/PF','PG/C','SG/C','SF/C','PG/SF'];
             $position = $hybrids[array_rand($hybrids)];
         } else {
             if ($passing >= 85) {

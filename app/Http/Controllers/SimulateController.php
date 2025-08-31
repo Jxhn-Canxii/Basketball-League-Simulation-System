@@ -1094,7 +1094,6 @@ class SimulateController extends Controller
             $this->updateInjuryAndWaiving($gameData->away_team_id);
             $this->updateTeamStreaks($gameData->id);
             $this->updateHeadToHeadResults($gameData->id);
-            $this->updatePlayoffSeriesAppearancesForGame($gameData);
             // $this->createGameNewsFromGame($gameData->id);
 
             $isRoundsSimulatedForSeason = $this->isRoundSimulated($currentSeasonId,  $gameData->round);
@@ -1112,6 +1111,8 @@ class SimulateController extends Controller
             if ($gameData->round === 'finals') {
                 $this->updateSeriesFinalsWinner($gameData);
             }
+
+            $this->updatePlayoffSeriesAppearancesForGame($gameData);
         });
 
         // Format series response
@@ -3976,23 +3977,28 @@ class SimulateController extends Controller
 
         $columnToIncrement = $roundColumnMap[$round];
 
-        // Use a transaction for database consistency
         DB::transaction(function () use ($playerId, $columnToIncrement, $round, $playerTeamId, $winnerId, $seriesIdentifier, $gameData) {
-            // Check if the player has already been credited for this series
+            // Check if already recorded
             $existingAppearance = DB::table('player_series_appearances')
                 ->where('player_id', $playerId)
                 ->where('series_identifier', $seriesIdentifier)
                 ->exists();
 
-            // Handle championship win in finals
+                        // Championship win condition: finals + winner + completed series
             if ($round === 'finals' && $winnerId && $playerTeamId == $winnerId) {
-                DB::table('player_playoff_appearances')
-                    ->where('player_id', $playerId)
-                    ->increment('championships_won');
+                $isSeriesFinished = DB::table('playoff_series')
+                    ->where('series_id', $gameData->series_id)
+                    ->where('status', 2);
+
+                if ($isSeriesFinished) {
+                    DB::table('player_playoff_appearances')
+                        ->where('player_id', $playerId)
+                        ->increment('championships_won');
+                }
             }
 
             if ($existingAppearance) {
-                return; // Skip if appearance already recorded
+                return;
             }
 
             // Record the series appearance
@@ -4004,13 +4010,13 @@ class SimulateController extends Controller
                 'created_at' => now(),
             ]);
 
-            // Ensure player record exists in player_playoff_appearances
+            // Ensure record exists in player_playoff_appearances
             DB::table('player_playoff_appearances')->updateOrInsert(
                 ['player_id' => $playerId],
                 []
             );
 
-            // Increment specific round appearance
+            // Increment round appearance
             DB::table('player_playoff_appearances')
                 ->where('player_id', $playerId)
                 ->increment($columnToIncrement);
@@ -4021,6 +4027,7 @@ class SimulateController extends Controller
                 ->increment('total_playoff_appearances');
         });
     }
+
 
     private function updateTeamRolesBasedOnStats($teamId, $round)
     {
