@@ -65,7 +65,7 @@
 
     <!-- Right Side: Sponsor -->
     <div class="flex justify-end p-0">
-        <div class="trapezoid-right bg-white px-2 py-2" style="width: 300px;">
+        <div class="trapezoid-right bg-white px-2 py-2" style="width: 500px;">
             <h2
                 :style="{ color: '#' + team_info.teams.primary_color }"
                 class="text-3xl font-bold text-right text-nowrap"
