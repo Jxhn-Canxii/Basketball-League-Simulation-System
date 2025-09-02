@@ -3984,13 +3984,16 @@ class SimulateController extends Controller
                 ->where('series_identifier', $seriesIdentifier)
                 ->exists();
 
-                        // Championship win condition: finals + winner + completed series
-            if ($round === 'finals' && $winnerId && $playerTeamId == $winnerId) {
-                $isSeriesFinished = DB::table('playoff_series')
+            // Championship win condition: finals + winner + completed series
+            if ($round === 'finals' && $playerTeamId) {
+                // Get the series data
+                $series = DB::table('playoff_series')
                     ->where('series_id', $gameData->series_id)
-                    ->where('status', 2);
+                    ->where('status', 2) // finished
+                    ->first();
 
-                if ($isSeriesFinished) {
+                // Check if the player's team is the series winner
+                if ($series && $series->winner_id == $playerTeamId) {
                     DB::table('player_playoff_appearances')
                         ->where('player_id', $playerId)
                         ->increment('championships_won');

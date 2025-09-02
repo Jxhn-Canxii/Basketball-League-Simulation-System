@@ -1062,7 +1062,7 @@ class PlayersController extends Controller
             'player_season_stats.season_id',
             'player_ratings.overall_rating',
             'seasons.name as season_name', // Select season name
-            \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY teams.name ASC) as team_names'), // Concatenate team names, ordered
+            \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY player_season_stats.id ASC) as team_names'), // Concatenate team names, ordered
             \DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
             \DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
             \DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
