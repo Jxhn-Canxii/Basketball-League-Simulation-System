@@ -4084,7 +4084,7 @@ class SimulateController extends Controller
                     ->first();
 
                 // Check if the player's team is the series winner
-                if ($series && $series->winner_id == $playerTeamId) {
+                if ($series && $series->winner_team_id == $playerTeamId) {
                     DB::table('player_playoff_appearances')
                         ->where('player_id', $playerId)
                         ->increment('championships_won');
