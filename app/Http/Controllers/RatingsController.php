@@ -287,6 +287,7 @@ class RatingsController extends Controller
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
+
                         $player->contract_years = 0;
                         $player->team_id = 0;
                     } elseif (mt_rand(1, 100) <= $reSignChance) {
@@ -317,6 +318,10 @@ class RatingsController extends Controller
                             'created_at' => now(),
                             'updated_at' => now(),
                         ]);
+
+                        if ($player->contract_years <= 0) {
+                            $player->team_id = 0;
+                        }
                         // Do not change contract_years or team_id
                     }
                 }
