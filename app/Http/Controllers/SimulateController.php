@@ -2576,46 +2576,137 @@ class SimulateController extends Controller
     public function handleInjuredPlayer($player, $seasonId, $seasonStatus)
     {
         try {
-
-            if (!$player->is_injured) {
-                \Log::info("Player {$player->name} is not injured. No action needed.");
+            // Check if player is already retired or inactive
+            if (!$player->is_active) {
+                \Log::info("Player {$player->name} is already inactive or retired. No action needed.");
                 return;
             }
 
-            // Player is injured — process injury recovery
-            $deductionPerGame = 1;
+            // Track if retirement age was adjusted due to severe injury
+            $retirementReason = 'reached retirement age';
+            $injuryHistoryCount = 0;
 
-            if ($player->injury_recovery_games > 0) {
-                // Decrement injury recovery games
-                DB::table('players')->where('id', $player->id)->decrement('injury_recovery_games', $deductionPerGame);
-                $updatedRecoveryGames = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
-                \Log::info("Decremented recovery games for {$player->name}. Remaining: {$updatedRecoveryGames}");
-            } else {
-                $updatedRecoveryGames = $player->injury_recovery_games;
-                \Log::info("No recovery games left for {$player->name}.");
-            }
+            // Handle injury if player is injured
+            if ($player->is_injured) {
+                // Process injury recovery
+                $deductionPerGame = 1;
 
-            // If player fully recovered
-            if ($updatedRecoveryGames <= 0) {
-                DB::table('players')->where('id', $player->id)->update([
-                    'is_injured' => false,
-                    'injury_type' => null,
-                ]);
+                if ($player->injury_recovery_games > 0) {
+                    // Decrement injury recovery games
+                    DB::table('players')->where('id', $player->id)->decrement('injury_recovery_games', $deductionPerGame);
+                    $updatedRecoveryGames = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
+                    \Log::info("Decremented recovery games for {$player->name}. Remaining: {$updatedRecoveryGames}");
+                } else {
+                    $updatedRecoveryGames = $player->injury_recovery_games;
+                    \Log::info("No recovery games left for {$player->name}.");
+                }
 
-                // Update injury history recovery date
-                DB::table('injury_histories')
+                // Load injury config
+                $injuries = config('injuries');
+                $currentInjury = $player->injury_type;
+
+                // Define severe injury criteria
+                $severeInjuryThreshold = [
+                    'recovery_games' => 15, // Severe if recovery takes 15+ games
+                    'performance_impact' => 0.3, // Severe if performance impact is 30% or less
+                ];
+                $injuryHistoryThreshold = 5; // Threshold for "too many" injuries
+                $retirementAgeReduction = 2; // Years to reduce retirement age
+                $minimumRetirementAge = max($player->age, 30); // Minimum retirement age
+
+                // Non-injury factors that shouldn't affect retirement age
+                $nonInjuryFactors = [
+                    'resting', 'suspension', 'personal_reason', 'logistics_issue',
+                    'family_emergency', 'contract_dispute', 'mental_health',
+                    'player_protest', 'travel_fatigue'
+                ];
+
+                // Check if the current injury is severe and not a non-injury factor
+                $isSevereInjury = false;
+                if (array_key_exists($currentInjury, $injuries) && !in_array($currentInjury, $nonInjuryFactors)) {
+                    $injuryDetails = $injuries[$currentInjury];
+                    if ($injuryDetails['recovery_games'] >= $severeInjuryThreshold['recovery_games'] ||
+                        $injuryDetails['performance_impact'] <= $severeInjuryThreshold['performance_impact']) {
+                        $isSevereInjury = true;
+                    }
+                }
+
+                // Get injury history count
+                $injuryHistoryCount = DB::table('injury_histories')
                     ->where('player_id', $player->id)
-                    ->whereNull('recovery_date')
-                    ->latest()
-                    ->update([
-                        'recovery_date' => now(),
-                        'updated_at' => now(),
+                    ->count();
+
+                // Adjust retirement age if injury is severe and injury history is high
+                if ($isSevereInjury && $injuryHistoryCount > $injuryHistoryThreshold) {
+                    $newRetirementAge = max($player->retirement_age - $retirementAgeReduction, $minimumRetirementAge);
+                    if ($newRetirementAge < $player->retirement_age) {
+                        DB::table('players')->where('id', $player->id)->update([
+                            'retirement_age' => $newRetirementAge,
+                            'updated_at' => now(),
+                        ]);
+                        \Log::info("Adjusted retirement age for {$player->name} from {$player->retirement_age} to {$newRetirementAge} due to severe injury ({$currentInjury}) and high injury history ({$injuryHistoryCount} injuries).");
+                        // Update player object and retirement reason
+                        $player->retirement_age = $newRetirementAge;
+                        $retirementReason = "severe injury history ({$injuryHistoryCount} injuries)";
+                    }
+                }
+
+                // If player fully recovered
+                if ($updatedRecoveryGames <= 0) {
+                    DB::table('players')->where('id', $player->id)->update([
+                        'is_injured' => false,
+                        'injury_type' => null,
                     ]);
 
-                \Log::info("Player {$player->name} has fully recovered from injury.");
+                    // Update injury history recovery date
+                    DB::table('injury_histories')
+                        ->where('player_id', $player->id)
+                        ->whereNull('recovery_date')
+                        ->latest()
+                        ->update([
+                            'recovery_date' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                    \Log::info("Player {$player->name} has fully recovered from injury.");
+                }
+            }
+
+            // Check for forced retirement
+            if ($player->age >= $player->retirement_age) {
+                // Get team name for transaction log
+                $teamName = $player->team_id
+                    ? DB::table('teams')->where('id', $player->team_id)->value('name') ?? 'Unknown Team'
+                    : 'No Team';
+
+                // Create detailed transaction message
+                $details = "{$player->name} retired from the league at age {$player->age} (retirement age: {$player->retirement_age}) due to {$retirementReason}. Last team: {$teamName}";
+                if ($retirementReason === 'severe injury history') {
+                    $details .= " (injury count: {$injuryHistoryCount})";
+                }
+
+                // Update player to retired status
+                DB::table('players')->where('id', $player->id)->update([
+                    'is_active' => false,
+                    'team_id' => null,
+                    'updated_at' => now(),
+                ]);
+
+                // Log retirement in transactions table
+                DB::table('transactions')->insert([
+                    'player_id' => $player->id,
+                    'season_id' => $seasonId,
+                    'details' => $details,
+                    'from_team_id' => $player->team_id ?? 0,
+                    'to_team_id' => 0,
+                    'status' => 'retired',
+                ]);
+
+                \Log::info("Player {$player->name} has been forced to retire due to {$retirementReason}.");
+                return;
             }
         } catch (\Exception $e) {
-            \Log::error("Error handling injured player {$player->id}: " . $e->getMessage());
+            \Log::error("Error handling player {$player->id}: " . $e->getMessage());
         }
     }
 
