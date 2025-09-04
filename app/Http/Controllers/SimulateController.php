@@ -3411,6 +3411,9 @@ class SimulateController extends Controller
 
     public function fixTeamPositionBalance($teamId)
     {
+        //remove positional balance functions
+        return true;
+
         $seasonId = get_current_season_id();
         $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
 
