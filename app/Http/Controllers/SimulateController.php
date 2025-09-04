@@ -3432,7 +3432,7 @@ class SimulateController extends Controller
             return response()->json(['error' => 'Team not found in view.'], 404);
         }
 
-        $minimumPlayersPerPosition = 3;
+        $minimumPlayersPerPosition = 1;
         $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val)->toArray();
         $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < $minimumPlayersPerPosition);
         $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > $minimumPlayersPerPosition);
