@@ -3412,7 +3412,7 @@ class SimulateController extends Controller
     public function fixTeamPositionBalance($teamId)
     {
         //remove positional balance functions
-        return true;
+        // return true;
 
         $seasonId = get_current_season_id();
         $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -3432,9 +3432,10 @@ class SimulateController extends Controller
             return response()->json(['error' => 'Team not found in view.'], 404);
         }
 
+        $minimumPlayersPerPosition = 3;
         $posCounts = collect($counts)->only($positions)->map(fn($val) => (int) $val)->toArray();
-        $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < 3);
-        $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > 3);
+        $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < $minimumPlayersPerPosition);
+        $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > $minimumPlayersPerPosition);
 
         // =============== CASE 1: Roster < 15 ====================
         if ($rosterCount < 15) {
@@ -3477,7 +3478,7 @@ class SimulateController extends Controller
                 for ($i = 0; $i < $missing; $i++) {
                     $overflow = $positionsOverfilled->sortDesc()->keys()->first();
 
-                    if (!$overflow || $posCounts[$overflow] <= 3) break;
+                    if (!$overflow || $posCounts[$overflow] <= $minimumPlayersPerPosition) break;
 
                     // Try to trade first
                     $tradeData = $this->findTradePlayer($teamId, $position, $seasonId, $posCounts);
