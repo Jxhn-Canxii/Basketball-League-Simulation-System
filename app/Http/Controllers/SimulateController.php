@@ -1993,8 +1993,8 @@ class SimulateController extends Controller
             0.70,
             $positionFactor * (
                 ($player->rebounding_rating * 0.65 +
-                $player->athleticism_rating * 0.25 +
-                $player->strength_rating * 0.10) / 100.0
+                    $player->athleticism_rating * 0.25 +
+                    $player->strength_rating * 0.10) / 100.0
             )
         );
 
@@ -2008,7 +2008,7 @@ class SimulateController extends Controller
         // Example: base 0.0005 ~ 1 in 2000. Adjust as needed.
         $monsterChance = 0.0005;
         $spike = 0;
-        if (mt_rand() / mt_getrandmax() < $monsterChance && $player->rebounding_rating >= 88 && in_array($player->position, ['C','PF'])) {
+        if (mt_rand() / mt_getrandmax() < $monsterChance && $player->rebounding_rating >= 88 && in_array($player->position, ['C', 'PF'])) {
             // Add spike to expected before sampling (so stochastic)
             $expected += rand(10, 18);
         }
@@ -2061,7 +2061,7 @@ class SimulateController extends Controller
 
         $expected = round($stealsPerMinute * $minutes * $performanceFactor * $foulPenalty * $discipline);
 
-         //actual steals from Poisson(lambda = expected)
+        //actual steals from Poisson(lambda = expected)
         $actual = $this->poissonRandomizer($expected);
 
         return (int) $actual;
@@ -2616,17 +2616,25 @@ class SimulateController extends Controller
 
                 // Non-injury factors that shouldn't affect retirement age
                 $nonInjuryFactors = [
-                    'resting', 'suspension', 'personal_reason', 'logistics_issue',
-                    'family_emergency', 'contract_dispute', 'mental_health',
-                    'player_protest', 'travel_fatigue'
+                    'resting',
+                    'suspension',
+                    'personal_reason',
+                    'logistics_issue',
+                    'family_emergency',
+                    'contract_dispute',
+                    'mental_health',
+                    'player_protest',
+                    'travel_fatigue'
                 ];
 
                 // Check if the current injury is severe and not a non-injury factor
                 $isSevereInjury = false;
                 if (array_key_exists($currentInjury, $injuries) && !in_array($currentInjury, $nonInjuryFactors)) {
                     $injuryDetails = $injuries[$currentInjury];
-                    if ($injuryDetails['recovery_games'] >= $severeInjuryThreshold['recovery_games'] ||
-                        $injuryDetails['performance_impact'] <= $severeInjuryThreshold['performance_impact']) {
+                    if (
+                        $injuryDetails['recovery_games'] >= $severeInjuryThreshold['recovery_games'] ||
+                        $injuryDetails['performance_impact'] <= $severeInjuryThreshold['performance_impact']
+                    ) {
                         $isSevereInjury = true;
                     }
                 }
@@ -3104,7 +3112,6 @@ class SimulateController extends Controller
         DB::table('playoff_series')
             ->where('series_id', $gameData->series_id)
             ->update($updateData);
-
     }
 
     private function updateFinalsBonusContract($teamId, $seasonId, $teamName)
@@ -4696,11 +4703,12 @@ class SimulateController extends Controller
 
     private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): array
     {
-        ///can sign and waive player until the half of the regular season only
+        // Waivers only allowed in first half of season
         if ($seasonStatus > 1) {
             return ['waived' => false, 'reason' => 'Season too late to waive'];
         }
 
+        // Protect key players
         $protectedRoles = ['star player', 'all star', 'starter'];
         if (in_array(strtolower($player->role), $protectedRoles) && $player->contract_years >= 3) {
             return ['waived' => false, 'reason' => 'Protected star/all-star with long contract'];
@@ -4710,29 +4718,32 @@ class SimulateController extends Controller
             return ['waived' => false, 'reason' => 'Protected high-pick rookie'];
         }
 
+        if ($this->isDevelopmentalPlayer($player) || $this->wasRecentlyDrafted($player->id, $seasonId)) {
+            return ['waived' => false, 'reason' => 'Protected developmental or recently drafted player'];
+        }
+
+        if ($this->calculatePotentialScore($player) >= 75) {
+            return ['waived' => false, 'reason' => 'High potential player'];
+        }
+
+        // Get season stats and team games
         $seasonStats = $this->getPlayerSeasonStats($player->id, $player->team_id, $seasonId);
         if (!$seasonStats) {
             return ['waived' => false, 'reason' => 'Missing season stats'];
         }
 
         $totalGames = $this->totalTeamGames($seasonId, $player->team_id);
-        $isDev = $this->isDevelopmentalPlayer($player);
-        $recentlyDrafted = $this->wasRecentlyDrafted($player->id, $seasonId);
-        $potentialScore = $this->calculatePotentialScore($player);
-        $hasNotImproved = $this->hasNotImproved($player->id, $player->team_id, $seasonId);
-        $isRebuilding = $this->isRebuildingTeam($player->team_id);
-
-        $minGamesPlayed = max(3, floor($totalGames * 0.20));
+        $minGamesPlayed = max(3, floor($totalGames * 0.20)); // 20% of team games
         $hasPlayedMinimumGames = ($seasonStats->total_games_played ?? 0) >= $minGamesPlayed;
 
-        // Role-based tolerance for usage thresholds
+        // Role-based usage threshold
         $role = strtolower($player->role);
         $usageMinutesThreshold = 7;
         if (in_array($role, ['bench', 'role player'])) {
-            $usageMinutesThreshold = 5; // more tolerance for bench/role players
+            $usageMinutesThreshold = 5; // More tolerance for bench/role players
         }
 
-        // Waiver logic for injury and contract remains as before
+        // Injury-based waiver (aligned with handleInjuredPlayer and injuries.php)
         $rolePctMap = [
             'star player' => 0.80,
             'all star'    => 0.70,
@@ -4740,7 +4751,6 @@ class SimulateController extends Controller
             'role player' => 0.50,
             'bench'       => 0.40,
         ];
-
         $defaultPct = 0.30;
         $pct = $rolePctMap[$role] ?? $defaultPct;
 
@@ -4758,71 +4768,56 @@ class SimulateController extends Controller
         } elseif ($player->overall_rating <= 60) {
             $requiredRecoveryGames -= 4;
         }
-
         $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
 
         if ($player->injury_recovery_games > $requiredRecoveryGames) {
             return ['waived' => true, 'reason' => 'Injured too long'];
         }
 
-        if ($player->morale < 40 && $player->injury_prone_percentage > 80) {
-            return ['waived' => true, 'reason' => 'Morale + injury-prone combo'];
+        // Combined criteria for efficiency and improvement (stricter to reduce waivers)
+        $isRebuilding = $this->isRebuildingTeam($player->team_id);
+        $hasNotImproved = $this->hasNotImproved($player->id, $player->team_id, $seasonId);
+
+        // Adjusted efficiency threshold (from eff < 4 to eff < 6)
+        if ($seasonStats->eff !== null && $seasonStats->eff < 6 && $hasNotImproved && $hasPlayedMinimumGames && !$isRebuilding) {
+            return ['waived' => true, 'reason' => 'Low efficiency and no improvement'];
         }
 
-
-        // 1. Fatigue + efficiency with higher threshold
-        if ($player->fatigue >= 85 && $seasonStats->eff < 6 && !$isDev && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'High fatigue and underperforming'];
-        }
-
-        // 2. Extremely low efficiency with stricter cutoff
-        if ($seasonStats->eff !== null && $seasonStats->eff < 4 && !$isDev && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Extremely low efficiency'];
-        }
-
-        // 3. Composite score of usage and efficiency
-        $usageScore =
-            ($seasonStats->avg_minutes_per_game * 0.5) +
+        // Adjusted composite score (from < 5 to < 7)
+        $usageScore = ($seasonStats->avg_minutes_per_game * 0.5) +
             ($seasonStats->avg_points_per_game * 0.3) +
             ($seasonStats->avg_rebounds_per_game * 0.2);
-
         $compositeScore = $usageScore * ($seasonStats->eff / 10);
 
         if (
-            $compositeScore < 5 &&
-            $seasonStats->avg_minutes_per_game < $usageMinutesThreshold &&
-            $seasonStats->total_games_played <= ($totalGames * 0.30) &&
-            !$isDev && $hasPlayedMinimumGames
+            $compositeScore < 7 && $seasonStats->avg_minutes_per_game < $usageMinutesThreshold &&
+            $seasonStats->total_games_played <= ($totalGames * 0.30) && $hasNotImproved && $hasPlayedMinimumGames
         ) {
-            return ['waived' => true, 'reason' => 'Low composite efficiency and usage score'];
+            return ['waived' => true, 'reason' => 'Low composite efficiency and no improvement'];
         }
 
-        if ($player->age >= 34 && $seasonStats->eff < 10 && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Aging player with poor impact'];
-        }
-
-        if ($player->contract_years > 2 && $seasonStats->eff < 8 && !$isDev && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Bad value contract'];
-        }
-
-        if ($player->morale !== null && $player->morale < 30 && $seasonStats->eff < 10 && !$isDev && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Low morale and underperforming'];
-        }
-
-        if ($hasNotImproved && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'No improvement over past seasons'];
-        }
-
+        // Rebuilding team: waive veterans with moderate performance
         if ($isRebuilding && $player->age >= 32 && $seasonStats->eff < 12 && $hasPlayedMinimumGames) {
             return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
         }
 
-        if ($isDev || $recentlyDrafted) {
-            return ['waived' => false, 'reason' => 'Protected developmental or recently drafted player'];
+        // High fatigue or morale issues (require multiple conditions)
+        if ($player->fatigue >= 85 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
+            return ['waived' => true, 'reason' => 'High fatigue and underperforming with no improvement'];
         }
 
-        if ($potentialScore >= 75) {
-            return ['waived' => false, 'reason' => 'High potential player'];
+        if ($player->morale !== null && $player->morale < 40 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
+            return ['waived' => true, 'reason' => 'Low morale and underperforming with no improvement'];
+        }
+
+        // Aging players (stricter criteria)
+        if ($player->age >= 34 && $seasonStats->eff < 10 && $hasNotImproved && $hasPlayedMinimumGames) {
+            return ['waived' => true, 'reason' => 'Aging player with poor impact and no improvement'];
+        }
+
+        // Bad value contract (require no improvement)
+        if ($player->contract_years > 2 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
+            return ['waived' => true, 'reason' => 'Bad value contract with no improvement'];
         }
 
         return ['waived' => false, 'reason' => null];
@@ -4902,7 +4897,7 @@ class SimulateController extends Controller
 
     private function hasNotImproved(int $playerId, int $teamId, int $currentSeasonId): bool
     {
-        // Get the earliest season ID in the system
+        // Get the earliest season ID
         $firstSeasonId = DB::table('seasons')->min('id');
 
         if ($currentSeasonId == $firstSeasonId) {
@@ -4913,12 +4908,49 @@ class SimulateController extends Controller
         $improvementIndex = $this->calculateImprovementIndex($playerId, $teamId, $currentSeasonId);
 
         if (is_null($improvementIndex)) {
-            return false; // Not enough data to judge improvement
+            // Handle players with no recent prior season data
+            $seasonStats = $this->getPlayerSeasonStats($playerId, $teamId, $currentSeasonId);
+            if (!$seasonStats || $seasonStats->total_games_played < max(3, floor($seasonStats->total_games * 0.15))) {
+                return false; // Not enough current season data
+            }
+
+            // Role-based efficiency threshold, adjusted for injuries
+            $role = strtolower($seasonStats->role ?? 'bench');
+            $effThresholds = [
+                'star player' => 18,
+                'all star' => 15,
+                'starter' => 12,
+                'role player' => 10,
+                'bench' => 8,
+            ];
+            $effThreshold = $effThresholds[$role] ?? 8;
+
+            // Check injury history for adjustment
+            $injuryCount = DB::table('injury_histories')
+                ->where('player_id', $playerId)
+                ->where('season_id', '<', $currentSeasonId)
+                ->whereNull('recovery_date')
+                ->count();
+            $effThreshold += $injuryCount * 1; // Increase threshold for each unrecovered injury
+
+            // Also check per-minute efficiency
+            $perPerMinute = $seasonStats->per / max($seasonStats->avg_minutes_per_game, 1);
+            $perThresholds = [
+                'star player' => 0.8,
+                'all star' => 0.7,
+                'starter' => 0.6,
+                'role player' => 0.5,
+                'bench' => 0.4,
+            ];
+            $perThreshold = $perThresholds[$role] ?? 0.4;
+
+            return $seasonStats->eff < $effThreshold && $perPerMinute < $perThreshold;
         }
 
-        // Threshold to decide if player has not improved enough
-        // Negative value means decline; adjust threshold as needed
-        $declineThreshold = -0.15;
+        // Dynamic decline threshold based on role
+        $seasonStats = $this->getPlayerSeasonStats($playerId, $teamId, $currentSeasonId);
+        $role = strtolower($seasonStats->role ?? 'bench');
+        $declineThreshold = in_array($role, ['bench', 'role player']) ? -0.10 : -0.15;
 
         return $improvementIndex <= $declineThreshold;
     }
@@ -4930,31 +4962,38 @@ class SimulateController extends Controller
             return null; // No prior data
         }
 
-        // $yearsProWithTeam = $this->getYearsProWithTeam($playerId, $teamId);
         $yearsPro = $this->getYearsPro($playerId);
 
-        // Fetch last two full seasons stats for this player & team, join players table for age
+        // Fetch stats from last played season and one prior
         $pastSeasons = DB::table('player_season_stats as pss')
             ->join(DB::raw('(
-                SELECT season_id, player_id, role
+            SELECT season_id, player_id, role
+            FROM player_season_stats
+            WHERE id IN (
+                SELECT MAX(id)
                 FROM player_season_stats
-                WHERE id IN (
-                    SELECT MAX(id)
-                    FROM player_season_stats
-                    GROUP BY season_id, player_id
-                )
-            ) as latest_stats'), function ($join) {
+                GROUP BY season_id, player_id
+            )
+        ) as latest_stats'), function ($join) {
                 $join->on('pss.season_id', '=', 'latest_stats.season_id')
                     ->on('pss.player_id', '=', 'latest_stats.player_id');
             })
             ->join('players as p', 'pss.player_id', '=', 'p.id')
+            ->leftJoin('injury_histories as ih', function ($join) use ($currentSeasonId) {
+                $join->on('pss.player_id', '=', 'ih.player_id')
+                    ->where('ih.season_id', '<', $currentSeasonId)
+                    ->whereNull('ih.recovery_date');
+            })
             ->select(
                 'pss.season_id',
-                DB::raw('AVG(pss.per) as avg_per'),
+                DB::raw('AVG(pss.per / NULLIF(pss.avg_minutes_per_game, 0)) as per_per_minute'),
                 DB::raw('LOWER(latest_stats.role) as role'),
                 DB::raw('AVG(pss.avg_minutes_per_game) as avg_mpg'),
                 DB::raw('MAX(pss.total_games_played) as games_played'),
-                'p.age'
+                DB::raw('MAX(pss.total_games) as total_games'),
+                'p.age',
+                DB::raw('COUNT(ih.id) as injury_count'),
+                DB::raw('AVG(pss.eff) as avg_eff')
             )
             ->where('pss.player_id', $playerId)
             ->where('pss.team_id', $teamId)
@@ -4965,17 +5004,40 @@ class SimulateController extends Controller
             ->get()
             ->toArray();
 
-        if (count($pastSeasons) < 2) {
-            return null; // Not enough data
-        }
-
-        [$latest, $older] = [$pastSeasons[0], $pastSeasons[1]];
-
-        // Require minimum games played threshold to avoid noise (e.g. 20 games)
-        if ($latest->games_played < 20 || $older->games_played < 20) {
+        // Check for no prior data
+        if (count($pastSeasons) < 1) {
             return null;
         }
 
+        $latestSeason = $pastSeasons[0];
+        $olderSeason = count($pastSeasons) > 1 ? $pastSeasons[1] : null;
+
+        // Dynamic minimum games
+        $minGamesPlayed = max(3, floor($latestSeason->total_games * 0.15));
+        if ($latestSeason->games_played < $minGamesPlayed) {
+            return null;
+        }
+
+        // Handle non-consecutive seasons
+        if ($latestSeason->season_id < $currentSeasonId - 1) {
+            return null; // Trigger current season eff/per check in hasNotImproved
+        }
+
+        // If only one prior season, return null
+        if (!$olderSeason) {
+            return null;
+        }
+
+        // Require similar minutes (within 25%) and minimum games for older season
+        $olderMinGamesPlayed = max(3, floor($olderSeason->total_games * 0.15));
+        if (
+            $olderSeason->games_played < $olderMinGamesPlayed ||
+            ($olderSeason->avg_mpg > 0 && abs($latestSeason->avg_mpg - $olderSeason->avg_mpg) / $olderSeason->avg_mpg > 0.25)
+        ) {
+            return null;
+        }
+
+        // Role scores
         $roleScores = [
             'star player' => 5,
             'all star' => 4,
@@ -4984,14 +5046,19 @@ class SimulateController extends Controller
             'bench' => 1,
         ];
 
-        $latestRoleScore = $roleScores[$latest->role] ?? 1;
-        $olderRoleScore = $roleScores[$older->role] ?? 1;
+        $latestRoleScore = $roleScores[$latestSeason->role] ?? 1;
+        $olderRoleScore = $roleScores[$olderSeason->role] ?? 1;
 
-        $perDiffPct = $older->avg_per > 0 ? ($latest->avg_per - $older->avg_per) / $older->avg_per : 0;
+        // Per-minute efficiency difference
+        $perDiffPct = $olderSeason->per_per_minute > 0 ? ($latestSeason->per_per_minute - $olderSeason->per_per_minute) / $olderSeason->per_per_minute : 0;
         $roleDiff = $latestRoleScore - $olderRoleScore;
-        $mpgDiffPct = $older->avg_mpg > 0 ? ($latest->avg_mpg - $older->avg_mpg) / $older->avg_mpg : 0;
+        $mpgDiffPct = $olderSeason->avg_mpg > 0 ? ($latestSeason->avg_mpg - $olderSeason->avg_mpg) / $olderSeason->avg_mpg : 0;
 
-        $age = $latest->age ?? 25; // fallback if age missing
+        // Injury adjustment (using injuries.php performance_impact approximation)
+        $injuryPenalty = $latestSeason->injury_count > 0 ? -0.05 * $latestSeason->injury_count : 0;
+
+        // Age penalty
+        $age = $latestSeason->age ?? 25;
         if ($age < 27) {
             $agePenalty = 0;
         } elseif ($age <= 30) {
@@ -5000,10 +5067,11 @@ class SimulateController extends Controller
             $agePenalty = -0.12 - 0.05 * ($age - 30);
         }
 
-        $improvementIndex = ($perDiffPct * 0.5) + ($roleDiff * 0.3) + ($mpgDiffPct * 0.2) + $agePenalty;
+        // Calculate improvement index with reduced role weight
+        $improvementIndex = ($perDiffPct * 0.65) + ($roleDiff * 0.05) + ($mpgDiffPct * 0.2) + $agePenalty + $injuryPenalty;
 
         if ($yearsPro < 2 && $improvementIndex < 0) {
-            $improvementIndex *= 0.5;
+            $improvementIndex *= 0.5; // Leniency for young players
         }
 
         return $improvementIndex;
@@ -5470,7 +5538,7 @@ class SimulateController extends Controller
                 ];
             }
         }
-        
+
         // Conditional content middles, prioritizing streak_status
         $contentMiddles = [];
         if ($winnerStats && preg_match('/W(\d+)/', $winnerStats->streak_status, $matches) && $matches[1] >= 3) {
