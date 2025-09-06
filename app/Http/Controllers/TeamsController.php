@@ -245,6 +245,7 @@ class TeamsController extends Controller
             ->join('seasons', 'seasons.id', '=', 'standings_snapshots.season_id')
             ->leftJoin('schedules', function ($join) use ($teamId) {
                 $join->on('schedules.season_id', '=', 'standings_snapshots.season_id')
+                    ->where('schedules.status', 2) // only finished games
                     ->where(function ($query) use ($teamId) {
                         $query->where('schedules.home_id', '=', $teamId)
                             ->orWhere('schedules.away_id', '=', $teamId);
@@ -623,7 +624,6 @@ class TeamsController extends Controller
         $roundInfo = DB::table('schedules')
             ->select('round', 'home_score', 'away_score', 'home_id', 'away_id')
             ->where('id', $lastRoundPlayedId)
-            ->where('status', 2)
             ->first();
 
         if (!$roundInfo) {
