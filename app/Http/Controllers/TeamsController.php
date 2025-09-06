@@ -623,6 +623,7 @@ class TeamsController extends Controller
         $roundInfo = DB::table('schedules')
             ->select('round', 'home_score', 'away_score', 'home_id', 'away_id')
             ->where('id', $lastRoundPlayedId)
+            ->where('status', 2)
             ->first();
 
         if (!$roundInfo) {
