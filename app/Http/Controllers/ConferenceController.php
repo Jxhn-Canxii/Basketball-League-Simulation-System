@@ -138,7 +138,7 @@ class ConferenceController extends Controller
                     $r->avg_assists_per_game,
                     $r->avg_rebounds_per_game
                 );
-            })->implode(',');
+            })->implode('\n');
 
             return $team;
         });
