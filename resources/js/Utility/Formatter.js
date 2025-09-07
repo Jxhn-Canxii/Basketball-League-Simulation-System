@@ -308,6 +308,8 @@ export const numberFormatter = (amount) => {
     return Number(amount).toLocaleString('en-US'); 
 };
 
+export const formatHex = (hex) => hex ? (hex.startsWith('#') ? hex : `#${hex}`) : '';
+
 
 export const playerStatusClass = (isActive) => {
     return isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800";

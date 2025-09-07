@@ -116,7 +116,7 @@ class ConferenceController extends Controller
             ->toArray();
 
         // Add the all-time conference_rank = 1 and overall_rank = 1 counts to each team's standings
-        $standings = $standings->map(function ($team) use ($rankCounts) {
+        $standings = $standings->map(function ($team) use ($rankCounts, $seasonId) {
             $team->conference_rank_count   = $rankCounts[$team->team_id]->conference_rank_1_count ?? 0;
             $team->conference_top_3_count  = $rankCounts[$team->team_id]->conference_top_3_count ?? 0;
             $team->overall_rank_count      = $rankCounts[$team->team_id]->overall_rank_1_count ?? 0;
@@ -124,21 +124,41 @@ class ConferenceController extends Controller
              // Get rookies + stats for this team
             $rookies = DB::table('players as p')
                 ->join('player_season_stats as ps', 'p.id', '=', 'ps.player_id')
-                ->where('p.team_id', $team->team_id)
-                ->where('p.is_rookie', 1)
+                ->where('ps.team_id', $team->team_id)
+                ->where('p.draft_id', $seasonId) // Only rookies drafted in this season
+                ->where('ps.season_id', $seasonId)
                 ->select('p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
+                ->orderByDesc('ps.eff')
                 ->get();
 
-            // Format rookies as "Name(23.4ppg,3.1apg,5.2rpg)"
+            // Get best player by highest eff
+            $bestPlayer = DB::table('players as p')
+                ->join('player_season_stats as ps', 'p.id', '=', 'ps.player_id')
+                ->where('ps.team_id', $team->team_id)
+                ->where('ps.season_id', $seasonId)
+                ->select('p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game', 'ps.eff')
+                ->orderByDesc('ps.eff')
+                ->first();
+
+            // Format rookies as "Name (23.4ppg, 3.1apg, 5.2rpg)"
             $team->rookies = $rookies->map(function ($r) {
                 return sprintf(
-                    "%s(%.1fppg,%.1fapg,%.1frpg)",
+                    "%s (%.1fppg, %.1fapg, %.1frpg)",
                     $r->name,
                     $r->avg_points_per_game,
                     $r->avg_assists_per_game,
                     $r->avg_rebounds_per_game
                 );
-            })->implode('\n');
+            })->implode('%%');
+
+            // Format best player as "Name (23.4ppg, 3.1apg, 5.2rpg)"
+            $team->best_player = $bestPlayer ? sprintf(
+                "%s (%.1fppg, %.1fapg, %.1frpg)",
+                $bestPlayer->name,
+                $bestPlayer->avg_points_per_game,
+                $bestPlayer->avg_assists_per_game,
+                $bestPlayer->avg_rebounds_per_game
+            ) : null;
 
             return $team;
         });

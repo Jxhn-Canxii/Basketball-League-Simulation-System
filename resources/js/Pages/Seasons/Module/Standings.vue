@@ -52,31 +52,19 @@
                     style="font-size: 1em;"
                   ></i>
                 </span>
-                <TeamDetails
-                  :title="
-                    'Team ' + team.team_city +' '+ team.team_name + ' Achievements ' + '\n' +
-                    (team.playoff_appearances ? team.playoff_appearances + 'x Playoff Appearances' : 'No Playoff Appearances') + '\n' +
-                    'Last Playoff: ' + (team.last_playoff_season_name ?? 'None') + '\n' +
-                    (team.conference_finals_appearances > 0 ? team.conference_finals_appearances + 'x Conference Finals Appearances\n' : '') +
-                    (team.conference_championships > 0 ? team.conference_championships + 'x Conference Championships\n' : '') +
-                    (team.finals_appearances > 0 ? team.finals_appearances + 'x National Finals Appearances\n' : '') +
-                    (team.championships > 0 ? team.championships + 'x National Championships\n' : '') +
-                    (team.overall_rank_count > 0 ? team.overall_rank_count + 'x National Ranked #1\n' : '') +
-                    (team.conference_rank_count > 0 ? team.conference_rank_count + 'x Conference Ranked #1\n' : '') +
-                    (team.conference_top_3_count > 0 ? team.conference_top_3_count + 'x Conference Ranked Top 3\n' : '') +
-                    (team.rookies ?  'Rookies: ' + team.rookies + '\n' : '') +
-                    'Estimated Fans: ' + (numberFormatter(team.estimated_fans ?? 0) + ' Fans')
-                  "
-                  :team_id="team.team_id"
-                  :showInfo="props.showLegend"
-                  :current_conference_rank="team.conference_rank"
-                  :season_id="team.season_id"
-                  class="text-sm text-black"
-                  :hexPrimaryColor="team.primary_color"
-                  :hexSecondaryColor="team.secondary_color"
-                  :showButton="0"
-                  :text="`${team.team_city} ${team.team_name}`"
-                />
+                <Tooltip :content="teamAchievements(team)">
+                  <TeamDetails
+                    :team_id="team.team_id"
+                    :showInfo="props.showLegend"
+                    :current_conference_rank="team.conference_rank"
+                    :season_id="team.season_id"
+                    class="text-sm text-black"
+                    :hexPrimaryColor="team.primary_color"
+                    :hexSecondaryColor="team.secondary_color"
+                    :showButton="0"
+                    :text="`${team.team_city} ${team.team_name}`"
+                  />
+                </Tooltip>
                 <span v-if="team.is_defending_champion == 1">
                   <i class="fa fa-trophy text-yellow-600"></i>
                 </span>
@@ -170,7 +158,8 @@ import { ref, onMounted } from "vue";
 import Swal from "sweetalert2";
 import axios from "axios";
 import Modal from "@/Components/Modal.vue";
-import { numberFormatter } from "@/Utility/Formatter.js";
+import { numberFormatter, formatHex } from "@/Utility/Formatter.js";
+import Tooltip from "@/Components/Tooltip.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
 import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";
@@ -360,6 +349,79 @@ const getChemistryTitle = (chemistry) => {
   if (chemistry >= 20) return 'Poor Chemistry';
   return 'Very Poor Chemistry';
 }
+
+const teamAchievements = (team) => {
+  if (!team) return '';
+  // Card UI blocks
+  let achievementsRows = '';
+  if (team.playoff_appearances > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-trophy text-yellow-300'></span><span class='font-semibold text-indigo-100'>${team.playoff_appearances}x Playoff Appearances</span></div>`;
+  if (team.last_playoff_season_name)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-history text-indigo-200'></span><span class='font-semibold text-indigo-100'>Last Playoff:</span> <span class='text-indigo-100'>${team.last_playoff_season_name}</span></div>`;
+  if (team.conference_finals_appearances > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-flag-checkered text-indigo-200'></span><span class='font-semibold text-indigo-100'>${team.conference_finals_appearances}x Conference Finals Appearances</span></div>`;
+  if (team.conference_championships > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-trophy text-yellow-300'></span><span class='font-semibold text-indigo-100'>${team.conference_championships}x Conference Championships</span></div>`;
+  if (team.finals_appearances > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-medal text-indigo-200'></span><span class='font-semibold text-indigo-100'>${team.finals_appearances}x National Finals Appearances</span></div>`;
+  if (team.championships > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-trophy text-yellow-300'></span><span class='font-semibold text-indigo-100'>${team.championships}x National Championships</span></div>`;
+  if (team.overall_rank_count > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-star text-yellow-200'></span><span class='font-semibold text-indigo-100'>${team.overall_rank_count}x National Ranked #1</span></div>`;
+  if (team.conference_rank_count > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-star text-yellow-200'></span><span class='font-semibold text-indigo-100'>${team.conference_rank_count}x Conference Ranked #1</span></div>`;
+  if (team.conference_top_3_count > 0)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-medal text-indigo-200'></span><span class='font-semibold text-indigo-100'>${team.conference_top_3_count}x Conference Ranked Top 3</span></div>`;
+  if (team.estimated_fans)
+    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-users text-yellow-200'></span><span class='font-semibold text-indigo-100'>Estimated Fans:</span> <span class='text-indigo-100'>${numberFormatter(team.estimated_fans)} Fans</span></div>`;
+
+  // Best player block
+  let bestPlayerBlock = '';
+  if (team.best_player) {
+    bestPlayerBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
+      <span class='fa fa-user text-yellow-200'></span>
+      <span class='font-semibold text-indigo-100'>Best Player:</span>
+      <span class='text-indigo-100'>${team.best_player}</span>
+    </div>`;
+  }
+
+  // Rookies block
+  let rookiesBlock = '';
+  if (team.rookies) {
+    const rookiesArr = team.rookies.split('%%').map(r => r.trim()).filter(r => r);
+    if (rookiesArr.length > 0) {
+      rookiesBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
+        <span class='fa fa-user-plus text-yellow-200'></span>
+        <span class='font-semibold text-indigo-100'>Rookies:</span>
+      </div>
+      <div class='ml-7 flex flex-col gap-1'>
+        ${rookiesArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
+      </div>`;
+    }
+  }
+
+  if (!achievementsRows && !bestPlayerBlock && !rookiesBlock) return '';
+
+  // Use team colors for gradient bg
+  const primary = team.primary_color ? formatHex(team.primary_color) : '#312e81';
+  const secondary = team.secondary_color ? formatHex(team.secondary_color) : '#6366f1';
+  const cardBg = `background: linear-gradient(135deg, ${primary} 60%, ${secondary} 100%)`;
+
+  return `
+    <div class="p-3 text-sm rounded-lg shadow-lg border border-indigo-700 inline-block w-auto max-w-[100vw]" style="${cardBg}">
+      <h3 class="text-lg font-bold mb-2 flex items-center gap-2 text-yellow-200">
+        <span class='fa fa-basketball-ball text-yellow-200'></span>
+        <span class='text-indigo-100'>${team.team_city} ${team.team_name}</span>
+      </h3>
+      <div class="grid grid-cols-1 gap-1">
+        ${achievementsRows}
+        ${bestPlayerBlock}
+        ${rookiesBlock}
+      </div>
+    </div>
+  `;
+};
+
 </script>
 
 <style>
