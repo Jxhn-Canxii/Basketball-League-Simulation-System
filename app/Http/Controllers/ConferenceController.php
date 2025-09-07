@@ -104,39 +104,45 @@ class ConferenceController extends Controller
             ->get();
 
         // Get all-time conference_rank = 1 and overall_rank = 1 counts per team
-        $conferenceNumber1Counts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
+        $rankCounts = DB::table('standings_snapshots')
             ->where('conference_id', $conferenceId)
             ->select('team_id')
             ->selectRaw('SUM(conference_rank = 1) as conference_rank_1_count')
-            ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
-            ->groupBy('team_id')
-            ->pluck('conference_rank_1_count', 'team_id')
-            ->toArray();
-
-        $conferenceTop3Counts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
-            ->where('conference_id', $conferenceId)
-            ->select('team_id')
             ->selectRaw('SUM(conference_rank <= 3) as conference_top_3_count')
             ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
             ->groupBy('team_id')
-            ->pluck('conference_top_3_count', 'team_id')
-            ->toArray();
-
-        $overallCounts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
-            ->where('conference_id', $conferenceId)
-            ->select('team_id')
-            ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
-            ->groupBy('team_id')
-            ->pluck('overall_rank_1_count', 'team_id')
+            ->get()
+            ->keyBy('team_id')
             ->toArray();
 
         // Add the all-time conference_rank = 1 and overall_rank = 1 counts to each team's standings
-        $standings = $standings->map(function ($team) use ($conferenceNumber1Counts, $conferenceTop3Counts, $overallCounts) {
-            $team->conference_rank_count = isset($conferenceNumber1Counts[$team->team_id]) ? (int)$conferenceNumber1Counts[$team->team_id] : 0;
-            $team->overall_rank_count = isset($overallCounts[$team->team_id]) ? (int)$overallCounts[$team->team_id] : 0;
-            $team->conference_top_3_count = isset($conferenceTop3Counts[$team->team_id]) ? (int)$conferenceTop3Counts[$team->team_id] : 0;
+        $standings = $standings->map(function ($team) use ($rankCounts) {
+            $team->conference_rank_count   = $rankCounts[$team->team_id]->conference_rank_1_count ?? 0;
+            $team->conference_top_3_count  = $rankCounts[$team->team_id]->conference_top_3_count ?? 0;
+            $team->overall_rank_count      = $rankCounts[$team->team_id]->overall_rank_1_count ?? 0;
+
+             // Get rookies + stats for this team
+            $rookies = DB::table('players as p')
+                ->join('player_season_stats as ps', 'p.id', '=', 'ps.player_id')
+                ->where('p.team_id', $team->team_id)
+                ->where('p.is_rookie', 1)
+                ->select('p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
+                ->get();
+
+            // Format rookies as "Name(23.4ppg,3.1apg,5.2rpg)"
+            $team->rookies = $rookies->map(function ($r) {
+                return sprintf(
+                    "%s(%.1fppg,%.1fapg,%.1frpg)",
+                    $r->name,
+                    $r->avg_points_per_game,
+                    $r->avg_assists_per_game,
+                    $r->avg_rebounds_per_game
+                );
+            })->implode(',');
+
             return $team;
         });
+
 
         $latestNews = DB::table('game_news')
             ->select('id', 'game_id', 'season_id', 'round', 'title', 'content', 'created_at', 'updated_at')
