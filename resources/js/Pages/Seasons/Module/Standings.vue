@@ -63,6 +63,7 @@
                     (team.championships > 0 ? team.championships + 'x National Championships\n' : '') +
                     (team.overall_rank_count > 0 ? team.overall_rank_count + 'x National Ranked #1\n' : '') +
                     (team.conference_rank_count > 0 ? team.conference_rank_count + 'x Conference Ranked #1\n' : '') +
+                    (team.conference_top_3_count > 0 ? team.conference_top_3_count + 'x Conference Ranked Top 3\n' : '') +
                     'Estimated Fans: ' + (numberFormatter(team.estimated_fans ?? 0) + ' Fans')
                   "
                   :team_id="team.team_id"

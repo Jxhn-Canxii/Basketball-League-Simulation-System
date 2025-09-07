@@ -104,13 +104,22 @@ class ConferenceController extends Controller
             ->get();
 
         // Get all-time conference_rank = 1 and overall_rank = 1 counts per team
-        $rankCounts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
+        $conferenceNumber1Counts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
             ->where('conference_id', $conferenceId)
             ->select('team_id')
             ->selectRaw('SUM(conference_rank = 1) as conference_rank_1_count')
             ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
             ->groupBy('team_id')
             ->pluck('conference_rank_1_count', 'team_id')
+            ->toArray();
+
+        $conferenceTop3Counts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
+            ->where('conference_id', $conferenceId)
+            ->select('team_id')
+            ->selectRaw('SUM(conference_rank <= 3) as conference_top_3_count')
+            ->selectRaw('SUM(overall_rank = 1) as overall_rank_1_count')
+            ->groupBy('team_id')
+            ->pluck('conference_top_3_count', 'team_id')
             ->toArray();
 
         $overallCounts = DB::table('standings_snapshots') // Always use snapshots for historical rank counts
@@ -122,9 +131,10 @@ class ConferenceController extends Controller
             ->toArray();
 
         // Add the all-time conference_rank = 1 and overall_rank = 1 counts to each team's standings
-        $standings = $standings->map(function ($team) use ($rankCounts, $overallCounts) {
-            $team->conference_rank_count = isset($rankCounts[$team->team_id]) ? (int)$rankCounts[$team->team_id] : 0;
+        $standings = $standings->map(function ($team) use ($conferenceNumber1Counts, $conferenceTop3Counts, $overallCounts) {
+            $team->conference_rank_count = isset($conferenceNumber1Counts[$team->team_id]) ? (int)$conferenceNumber1Counts[$team->team_id] : 0;
             $team->overall_rank_count = isset($overallCounts[$team->team_id]) ? (int)$overallCounts[$team->team_id] : 0;
+            $team->conference_top_3_count = isset($conferenceTop3Counts[$team->team_id]) ? (int)$conferenceTop3Counts[$team->team_id] : 0;
             return $team;
         });
 
