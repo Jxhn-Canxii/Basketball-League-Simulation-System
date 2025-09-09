@@ -1062,7 +1062,9 @@ class PlayersController extends Controller
             'player_season_stats.season_id',
             'player_ratings.overall_rating',
             'seasons.name as season_name', // Select season name
-            \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY player_season_stats.id ASC) as team_names'), // Concatenate team names, ordered
+            \DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY player_season_stats.id ASC) as team_names'),
+            \DB::raw('GROUP_CONCAT(DISTINCT teams.primary_color ORDER BY player_season_stats.id ASC) as team_primary_colors'),
+            \DB::raw('GROUP_CONCAT(DISTINCT teams.secondary_color ORDER BY player_season_stats.id ASC) as team_secondary_colors'),
             \DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
             \DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
             \DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
@@ -1124,6 +1126,8 @@ class PlayersController extends Controller
                 'player_name' => $stats->player_name,
                 'player_role' => $stats->player_role,
                 'team_names' => $stats->team_names, // Concatenated team names
+                'team_primary_colors' => $stats->team_primary_colors,
+                'team_secondary_colors' => $stats->team_secondary_colors,
                 'season_id' => $stats->season_id,
                 'overall_rating' => $stats->overall_rating,
                 'season_name' => $stats->season_name, // Season name
@@ -1193,6 +1197,8 @@ class PlayersController extends Controller
                 'players.name as player_name',
                 'players.team_id',
                 'teams.name as team_name',
+                'teams.primary_color as team_primary_color',
+                'teams.secondary_color as team_secondary_color',
                 'teams.conference_id',
                 'player_game_stats.season_id',
                 'player_ratings.overall_rating',
@@ -1253,6 +1259,8 @@ class PlayersController extends Controller
                 'player_name' => $stats->player_name,
                 'overall_rating' => $stats->overall_rating,
                 'team_name' => $stats->team_name,
+                'team_primary_color' => $stats->team_primary_color,
+                'team_secondary_color' => $stats->team_secondary_color,
                 'team_id' => $stats->team_id,
                 'conference_id' => $stats->conference_id,
                 'role' => $stats->role, // Add player role
