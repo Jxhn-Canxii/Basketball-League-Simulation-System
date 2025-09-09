@@ -40,6 +40,7 @@ const props = defineProps({
 let seasonChartInstance = null; // Reference to the season chart instance
 const standings = ref([]); // Standings data fetched from API
 const selectedTeam = ref(''); // Selected team for filtering
+const loading = ref(false); // Loading state
 
 // Computed property to get unique team names for the dropdown
 const uniqueTeams = computed(() => {
