@@ -345,59 +345,103 @@ const series = ref([]);
 const loading = ref(true);
 const activeTab = ref("games");
 
-const homeWins = computed(
-  () => matches.value.filter((m) => m.home_id === m.winner_id).length
-);
-const awayWins = computed(
-  () => matches.value.filter((m) => m.away_id === m.winner_id).length
+const homeWins = computed(() =>
+  matches.value.filter((m) => m.winner_id === props.home_id).length
 );
 
+const awayWins = computed(() =>
+  matches.value.filter((m) => m.winner_id === props.away_id).length
+);
+// Current streak for props.home_id vs props.away_id
+const streak = computed(() => {
+  if (!matches.value.length) return null;
+
+  let currentStreak = 0;
+  let lastResult = null;
+
+  for (const m of matches.value) {
+    if (m.winner_id === props.home_id) {
+      if (lastResult === "W") {
+        currentStreak++;
+      } else {
+        currentStreak = 1;
+        lastResult = "W";
+      }
+    } else if (m.winner_id === props.away_id) {
+      if (lastResult === "L") {
+        currentStreak++;
+      } else {
+        currentStreak = 1;
+        lastResult = "L";
+      }
+    }
+  }
+
+  return `${currentStreak}${lastResult}`;
+});
+
+// Biggest win margins
 const biggestWinMarginHome = computed(() => {
   return Math.max(
     ...matches.value
-      .filter((m) => m.home_id === m.winner_id)
-      .map((m) => m.home_score - m.away_score),
+      .filter((m) => m.winner_id === props.home_id)
+      .map((m) => Math.abs(m.home_score - m.away_score)),
     0
   );
 });
+
 const biggestWinMarginAway = computed(() => {
   return Math.max(
     ...matches.value
-      .filter((m) => m.away_id === m.winner_id)
-      .map((m) => m.away_score - m.home_score),
+      .filter((m) => m.winner_id === props.away_id)
+      .map((m) => Math.abs(m.home_score - m.away_score)),
     0
   );
 });
+
+// Biggest losing margins
 const biggestLoseMarginHome = computed(() => {
   return Math.max(
     ...matches.value
-      .filter((m) => m.home_id !== m.winner_id)
-      .map((m) => m.away_score - m.home_score),
+      .filter((m) => m.winner_id !== props.home_id)
+      .map((m) => Math.abs(m.home_score - m.away_score)),
     0
   );
 });
+
 const biggestLoseMarginAway = computed(() => {
   return Math.max(
     ...matches.value
-      .filter((m) => m.away_id !== m.winner_id)
-      .map((m) => m.home_score - m.away_score),
+      .filter((m) => m.winner_id !== props.away_id)
+      .map((m) => Math.abs(m.home_score - m.away_score)),
     0
   );
 });
-const mostPointsScored = computed(() => {
-  return Math.max(...matches.value.map((m) => Math.max(m.home_score, m.away_score)), 0);
-});
-const lowestPointsScored = computed(() => {
-  return Math.min(...matches.value.map((m) => Math.min(m.home_score, m.away_score)), 0);
-});
 
-function getStreak(arr, teamKey, winKey) {
+// Points extremes
+const mostPointsScored = computed(() =>
+  Math.max(
+    ...matches.value.map((m) => Math.max(m.home_score, m.away_score)),
+    0
+  )
+);
+
+const lowestPointsScored = computed(() =>
+  Math.min(
+    ...matches.value.map((m) => Math.min(m.home_score, m.away_score)),
+    0
+  )
+);
+
+// Helper for streaks (team-based, not home/away based)
+function getStreak(arr, teamId) {
   let maxWin = 0,
     maxLoss = 0,
     curWin = 0,
     curLoss = 0;
-  for (let i = 0; i < arr.length; i++) {
-    if (arr[i][teamKey] === arr[i][winKey]) {
+
+  for (const m of arr) {
+    if (m.winner_id === teamId) {
       curWin++;
       maxWin = Math.max(maxWin, curWin);
       curLoss = 0;
@@ -409,18 +453,24 @@ function getStreak(arr, teamKey, winKey) {
   }
   return { maxWin, maxLoss };
 }
-const mostConsecutiveWinsHome = computed(() => {
-  return getStreak(matches.value, "home_id", "winner_id").maxWin;
-});
-const mostConsecutiveWinsAway = computed(() => {
-  return getStreak(matches.value, "away_id", "winner_id").maxWin;
-});
-const mostConsecutiveLossesHome = computed(() => {
-  return getStreak(matches.value, "home_id", "winner_id").maxLoss;
-});
-const mostConsecutiveLossesAway = computed(() => {
-  return getStreak(matches.value, "away_id", "winner_id").maxLoss;
-});
+
+// Consecutive streaks
+const mostConsecutiveWinsHome = computed(() =>
+  getStreak(matches.value, props.home_id).maxWin
+);
+
+const mostConsecutiveWinsAway = computed(() =>
+  getStreak(matches.value, props.away_id).maxWin
+);
+
+const mostConsecutiveLossesHome = computed(() =>
+  getStreak(matches.value, props.home_id).maxLoss
+);
+
+const mostConsecutiveLossesAway = computed(() =>
+  getStreak(matches.value, props.away_id).maxLoss
+);
+
 
 const getMatchAndSeriesHistory = async () => {
   loading.value = true;
