@@ -111,7 +111,7 @@ export const roundNameFormatter = (round) => {
             return 'The Finals'
             break;
         default:
-            return round;
+            return `Round # ${round}`;
             break;
     }
 }
@@ -575,4 +575,19 @@ export const formatAwardText = (award) => {
     });
 
     return formattedText;
+};
+
+export const gradientStyle = (primary, secondary) => {
+  const p = primary ? `#${primary}` : '#312e81';
+  const s = secondary ? `#${secondary}` : '#6366f1';
+  return `background: linear-gradient(90deg, ${p} 0%, ${s} 100%); color: #fff;`;
+};
+
+export const teamGradient = (team) => {
+    if (team) {
+        const primary = team.primary_color || '312e81';
+        const secondary = team.secondary_color || '6366f1';
+        return `background: linear-gradient(90deg, #${primary} 0%, #${secondary} 100%); color: #fff;`;
+    }
+    return '';
 };

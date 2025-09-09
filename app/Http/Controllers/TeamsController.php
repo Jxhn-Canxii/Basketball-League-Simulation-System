@@ -82,10 +82,12 @@ class TeamsController extends Controller
         $away_id = $request->away_id;
         $season_id = $request->season_id;
 
-        $matches = self::getLast10MatchResults($season_id, $home_id, $away_id);
+        $matches = self::getLastMatchResults($season_id, $home_id, $away_id);
+        $series = self::getTeamSeriesResults($season_id, $home_id, $away_id);
 
         return response()->json([
             'matches' => $matches,
+            'series' => $series,
         ]);
     }
     public function currentseasonstatistics($teamId, $seasonId)
@@ -122,32 +124,136 @@ class TeamsController extends Controller
             ->get();
     }
 
-
-    public function getLast10MatchResults($season_id, $homeId, $awayId)
+    public function getLastMatchResults($season_id, $homeId, $awayId)
     {
-        // Query to retrieve last 10 match results
         $matchResults = DB::table('schedule_view')
+            ->select(
+                'schedule_view.id',
+                'schedule_view.season_id',
+                'schedule_view.round',
+                'schedule_view.home_id',
+                'schedule_view.away_id',
+                'schedule_view.home_score',
+                'schedule_view.away_score',
+                'schedule_view.status',
+                'schedule_view.winner_id',
+                'schedule_view.created_at',
+
+                // Home team info
+                'home.name as home_name',
+                'home.acronym as home_acronym',
+                'home.primary_color as home_primary_color',
+                'home.secondary_color as home_secondary_color',
+
+                // Away team info
+                'away.name as away_name',
+                'away.acronym as away_acronym',
+                'away.primary_color as away_primary_color',
+                'away.secondary_color as away_secondary_color',
+
+                // Winner info
+                'winner.name as winner_name',
+                'winner.acronym as winner_acronym',
+
+                // Result summary
+                DB::raw("CONCAT(
+                    winner.acronym, ' def. ',
+                    CASE WHEN winner_id = home_id THEN away.acronym ELSE home.acronym END,
+                    ' ',
+                    CASE WHEN winner_id = home_id THEN home_score ELSE away_score END,
+                    '-',
+                    CASE WHEN winner_id = home_id THEN away_score ELSE home_score END
+                ) as result_summary")
+            )
+            ->join('teams as home', 'schedule_view.home_id', '=', 'home.id')
+            ->join('teams as away', 'schedule_view.away_id', '=', 'away.id')
+            ->leftJoin('teams as winner', 'schedule_view.winner_id', '=', 'winner.id')
             ->where(function ($query) use ($homeId, $awayId, $season_id) {
-                $query->where('season_id', '<=', $season_id) // Filter by season_id less than or equal to the specified value
+                $query->where(function ($q) use ($homeId, $awayId, $season_id) {
+                    $q->where('season_id', '<=', $season_id)
                     ->where('home_id', $homeId)
-                    ->where('away_id', $awayId)
-                    ->whereRaw('round NOT REGEXP "^[0-9]+$"'); // Exclude rounds that are not numbers
-            })
-            ->orWhere(function ($query) use ($homeId, $awayId, $season_id) {
-                $query->where('season_id', '<=', $season_id) // Filter by season_id less than or equal to the specified value
+                    ->where('away_id', $awayId);
+                })
+                ->orWhere(function ($q) use ($homeId, $awayId, $season_id) {
+                    $q->where('season_id', '<=', $season_id)
                     ->where('home_id', $awayId)
-                    ->where('away_id', $homeId)
-                    ->whereRaw('round NOT REGEXP "^[0-9]+$"'); // Exclude rounds that are not numbers
+                    ->where('away_id', $homeId);
+                });
             })
-            ->orderByDesc('created_at') // Order by created_at in descending order to get the latest results first
-            ->take(10) // Limit the results to 10
-            ->get(); // Retrieve the results as a collection
+            ->where('schedule_view.status', 2) // applies to both conditions
+            ->orderByDesc('schedule_view.id')
+            ->get();
 
         return $matchResults;
     }
 
+    public function getTeamSeriesResults($season_id, $homeId, $awayId)
+    {
+        $seriesResults = DB::table('playoff_series')
+            ->select(
+                'playoff_series.id',
+                'playoff_series.season_id',
+                'playoff_series.conference_id',
+                'playoff_series.round',
+                'playoff_series.series_id',
+                'playoff_series.home_team_id',
+                'playoff_series.away_team_id',
+                'playoff_series.best_of',
+                'playoff_series.home_wins',
+                'playoff_series.away_wins',
+                'playoff_series.series_length',
+                'playoff_series.status',
+                'playoff_series.winner_team_id',
+                'playoff_series.loser_team_id',
+                'playoff_series.created_at',
+                'playoff_series.updated_at',
 
+                // Home team info
+                'home.name as home_name',
+                'home.acronym as home_acronym',
+                'home.primary_color as home_primary_color',
+                'home.secondary_color as home_secondary_color',
 
+                // Away team info
+                'away.name as away_name',
+                'away.acronym as away_acronym',
+                'away.primary_color as away_primary_color',
+                'away.secondary_color as away_secondary_color',
+
+                // Winner / loser
+                'winner.name as winner_name',
+                'winner.acronym as winner_acronym',
+                'loser.name as loser_name',
+                'loser.acronym as loser_acronym',
+
+                // Series result string like "EAG wins 4-2"
+                DB::raw("CONCAT(
+                winner.acronym, ' wins ', 
+                CASE WHEN winner_team_id = home_team_id THEN home_wins ELSE away_wins END,
+                '-', 
+                CASE WHEN loser_team_id = home_team_id THEN home_wins ELSE away_wins END
+            ) as result_summary")
+            )
+            ->join('teams as home', 'playoff_series.home_team_id', '=', 'home.id')
+            ->join('teams as away', 'playoff_series.away_team_id', '=', 'away.id')
+            ->leftJoin('teams as winner', 'playoff_series.winner_team_id', '=', 'winner.id')
+            ->leftJoin('teams as loser', 'playoff_series.loser_team_id', '=', 'loser.id')
+            ->where(function ($query) use ($homeId, $awayId, $season_id) {
+                $query->where('season_id', '<=', $season_id)
+                    ->where('home_team_id', $homeId)
+                    ->where('away_team_id', $awayId);
+            })
+            ->orWhere(function ($query) use ($homeId, $awayId, $season_id) {
+                $query->where('season_id', '<=', $season_id)
+                    ->where('home_team_id', $awayId)
+                    ->where('away_team_id', $homeId);
+            })
+            ->orderByDesc('playoff_series.created_at')
+            ->take(10)
+            ->get();
+
+        return $seriesResults;
+    }
 
     public function teamInfo(Request $request)
     {
@@ -460,47 +566,46 @@ class TeamsController extends Controller
     private function getTeamInfo($teamId)
     {
         $teamData = DB::table('teams')
-        ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
-        ->leftJoin('coaches', 'teams.coach_id', '=', 'coaches.id')
-        ->join('team_reputation_view', 'teams.id', '=', 'team_reputation_view.team_id')
-        ->select(
-            'teams.id',
-            'teams.name as team_name',
-            'teams.acronym',
-            'teams.city',
-            DB::raw("CASE teams.market_size 
+            ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
+            ->leftJoin('coaches', 'teams.coach_id', '=', 'coaches.id')
+            ->join('team_reputation_view', 'teams.id', '=', 'team_reputation_view.team_id')
+            ->select(
+                'teams.id',
+                'teams.name as team_name',
+                'teams.acronym',
+                'teams.city',
+                DB::raw("CASE teams.market_size 
                         WHEN 1 THEN 'Small' 
                         WHEN 2 THEN 'Medium' 
                         WHEN 3 THEN 'Large' 
                         ELSE 'Unknown' 
                     END as market_size"),
-            'teams.sponsor',
-            'teams.description',
-            'teams.primary_color',
-            'teams.secondary_color',
-            'conferences.name as conference_name',
-            'coaches.name as coach_name',
-            'coaches.winning_percentage as coach_winning',
+                'teams.sponsor',
+                'teams.description',
+                'teams.primary_color',
+                'teams.secondary_color',
+                'conferences.name as conference_name',
+                'coaches.name as coach_name',
+                'coaches.winning_percentage as coach_winning',
 
-            // From team_reputation_view
-            'team_reputation_view.season_id',
-            'team_reputation_view.wins',
-            'team_reputation_view.chemistry',
-            'team_reputation_view.prev_wins',
-            'team_reputation_view.prev_rank',
-            'team_reputation_view.prev_chemistry',
-            'team_reputation_view.wins_diff',
-            'team_reputation_view.streak_status',
-            'team_reputation_view.rank_improvement',
-            'team_reputation_view.chemistry_diff',
-            'team_reputation_view.reputation_score',
-            'team_reputation_view.estimated_fans'
-        )
-        ->where('teams.id', $teamId)
-        ->get();
+                // From team_reputation_view
+                'team_reputation_view.season_id',
+                'team_reputation_view.wins',
+                'team_reputation_view.chemistry',
+                'team_reputation_view.prev_wins',
+                'team_reputation_view.prev_rank',
+                'team_reputation_view.prev_chemistry',
+                'team_reputation_view.wins_diff',
+                'team_reputation_view.streak_status',
+                'team_reputation_view.rank_improvement',
+                'team_reputation_view.chemistry_diff',
+                'team_reputation_view.reputation_score',
+                'team_reputation_view.estimated_fans'
+            )
+            ->where('teams.id', $teamId)
+            ->get();
 
         return $teamData;
-
     }
 
     private function getTeamStreaks($teamId)
@@ -691,14 +796,14 @@ class TeamsController extends Controller
             ->where('round', 'finals')
             ->where(function ($q) use ($teamId) {
                 $q->where('home_team_id', $teamId)
-                ->orWhere('away_team_id', $teamId);
+                    ->orWhere('away_team_id', $teamId);
             })
             ->selectRaw('SUM(CASE WHEN winner_team_id = ? THEN 1 ELSE 0 END) AS finals_wins', [$teamId])
             ->selectRaw('SUM(CASE WHEN loser_team_id = ? THEN 1 ELSE 0 END) AS finals_losses', [$teamId])
             ->selectRaw('COUNT(*) AS finals_appearances')
             ->first();
     }
-    
+
     private function getRoundStats($teamId)
     {
         return DB::table('schedules')

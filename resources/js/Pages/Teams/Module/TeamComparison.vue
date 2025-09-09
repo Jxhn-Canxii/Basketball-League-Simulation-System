@@ -7,20 +7,22 @@
         <div class="block">
             <div class="grid grid-cols-2 gap-4">
                 <!-- Home Team Stats -->
-                <div class="border p-4 team-stats" v-if="!homeLoading">
+                <div class="border p-4 team-stats" v-if="!homeLoading" >
                     <!-- Content shown when home team data is loaded -->
-                    <h3 class="text-lg font-semibold" v-if="home.teams && home.latestSeason">
-                        {{ home.teams.team_name }} ({{
-                            home.latestSeason[0].wins
-                        }}
-                        - {{ home.latestSeason[0].losses }})
-                    </h3>
-                    <span
-                        v-if="home.teams"
-                        class="bg-blue-500 text-white shadow px-2 py-1 mb-3 inline-block rounded-full text-xs font-semibold"
-                    >
-                        {{ home.teams.conference_name }} Conference   <sup>{{ home.latestSeason[0].streak_status }}</sup>
-                    </span>
+                    <div :style="teamGradient(home.teams)" class="flex justify-between items-center mb-2 p-3 rounded-t-2xl">
+                         <h3 class="text-lg font-semibold" v-if="home.teams && home.latestSeason">
+                            {{ home.teams.team_name }} ({{
+                                home.latestSeason[0].wins
+                            }}
+                            - {{ home.latestSeason[0].losses }})
+                        </h3>
+                        <span
+                            v-if="home.teams"
+                            class="bg-blue-500 text-white shadow px-2 py-1 mb-3 inline-block rounded-full text-xs font-semibold"
+                        >
+                            {{ home.teams.conference_name }} Conference   <sup>{{ home.latestSeason[0].streak_status }}</sup>
+                        </span>
+                    </div>
                     <!-- Display all-time stats -->
                     <div class="stat" v-if="home.allTimeStats">
                         <p>All-Time Wins:</p>
@@ -172,18 +174,20 @@
                 <!-- Away Team Stats -->
                 <div class="border p-4 team-stats" v-if="!awayLoading">
                     <!-- Content shown when away team data is loaded -->
-                    <h3 class="text-lg font-semibold" v-if="away.teams && away.latestSeason">
-                        {{ away.teams.team_name }} ({{
-                            away.latestSeason[0].wins
-                        }}
-                        - {{ away.latestSeason[0].losses }})
-                    </h3>
-                    <span
-                        v-if="away.teams"
-                        class="bg-red-500 text-white shadow px-2 py-1 mb-3 inline-block rounded-full text-xs font-semibold"
-                    >
-                        {{ away.teams.conference_name }} Conference <sup>{{ away.latestSeason[0].streak_status }}</sup>
-                    </span>
+                    <div :style="teamGradient(away.teams)" class="flex justify-between items-center mb-2 p-3 rounded-t-2xl">
+                        <h3 class="text-lg font-semibold" v-if="away.teams && away.latestSeason">
+                            {{ away.teams.team_name }} ({{
+                                away.latestSeason[0].wins
+                            }}
+                            - {{ away.latestSeason[0].losses }})
+                        </h3>
+                        <span
+                            v-if="away.teams"
+                            class="bg-red-500 text-white shadow px-2 py-1 mb-3 inline-block rounded-full text-xs font-semibold"
+                        >
+                            {{ away.teams.conference_name }} Conference <sup>{{ away.latestSeason[0].streak_status }}</sup>
+                        </span>
+                    </div>
                     <!-- Display all-time stats -->
                     <div class="stat" v-if="away.allTimeStats">
                         <p>All-Time Wins:</p>
@@ -332,117 +336,7 @@
                 <!-- End of Away Team Stats -->
             </div>
             <!-- Display latest matches section -->
-            <div class="grid grid-cols-1 gap-4 mt-3" v-if="!matchesLoading">
-                <h2 class="text-lg font-semibold text-gray-800">
-                    Last 10 Matches
-                </h2>
-                <table class="min-w-full divide-y divide-gray-200 p-2">
-                    <thead class="bg-gray-50 text-nowrap">
-                        <tr>
-                            <th
-                                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                                Season
-                            </th>
-                            <th
-                                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                                Round
-                            </th>
-                            <th
-                                class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                                Home Team
-                            </th>
-                            <th
-                                class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                                Score
-                            </th>
-                            <th
-                                class="px-2 py-2 text-right text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                                Away Team
-                            </th>
-                            <th
-                                class="px-2 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                            >
-                                Status
-                            </th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <!-- Iterate over matches data -->
-                        <tr
-                            v-for="(match, index) in matches"
-                            :key="match.id"
-                            class="hover:bg-gray-200"
-                        >
-                            <td class="px-2 py-2 whitespace-nowrap border">
-                                {{ match.season_name }}
-                            </td>
-                            <td class="px-2 py-2 whitespace-nowrap border">
-                                {{ roundNameFormatter(match.round) }}
-                            </td>
-                            <td
-                                class="px-2 py-2 whitespace-nowrap border text-right"
-                            >
-                                <span
-                                    :class="{
-                                        'font-semibold':
-                                            match.home_score > match.away_score,
-                                    }"
-                                >
-                                    {{ match.home_team_name }}
-                                </span>
-                            </td>
-                            <td
-                                class="px-2 py-2 whitespace-nowrap border text-right"
-                            >
-                                <span
-                                    :class="{
-                                        'font-semibold':
-                                            match.home_score > match.away_score,
-                                    }"
-                                >
-                                    {{ match.home_score }} -
-                                    {{ match.away_score }}
-                                </span>
-                            </td>
-                            <td
-                                class="px-2 py-2 whitespace-nowrap border text-right"
-                            >
-                                <span
-                                    :class="{
-                                        'font-semibold':
-                                            match.away_score > match.home_score,
-                                    }"
-                                >
-                                    {{ match.away_team_name }}
-                                </span>
-                            </td>
-                            <td class="px-2 py-2 whitespace-nowrap border">
-                                <span
-                                    v-if="match.status === 2"
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
-                                >
-                                    Completed
-                                </span>
-                                <span
-                                    v-else
-                                    class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-yellow-100 text-yellow-800"
-                                >
-                                    In Progress
-                                </span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="border p-4 team-stats text-center mt-4" v-else>
-                <!-- Loading state for matches -->
-                <p class="text-gray-500 font-semibold">Loading Matches...</p>
-            </div>
+            <MatchAndSeriesHistory :key="props.home_id" :home_id="props.home_id" :away_id="props.away_id" :season_id="props.season_id" />
         </div>
         <!-- End of Team Comparison Section -->
     </div>
@@ -451,16 +345,15 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import axios from "axios";
-import { roundNameFormatter } from "@/Utility/Formatter";
+import { roundNameFormatter, teamGradient } from "@/Utility/Formatter";
 import StatButton from "./StatButton.vue";
+import MatchAndSeriesHistory from "./MatchAndSeriesHistory.vue";
 
 // Reactive variables for data and loading states
 const home = ref([]);
 const away = ref([]);
-const matches = ref([]);
 const homeLoading = ref(true); // Loading state for home team
 const awayLoading = ref(true); // Loading state for away team
-const matchesLoading = ref(true); // Loading state for matches
 
 // Props passed to the component
 const props = defineProps({
@@ -478,10 +371,6 @@ const props = defineProps({
     },
 });
 
-// Fetch data on component mount
-onMounted(() => {
-    fetchDataForTeam(props.home_id, props.away_id, props.season_id);
-});
 
 // Function to fetch all necessary data
 const fetchDataForTeam = async (home_id, away_id, season_id) => {
@@ -489,12 +378,10 @@ const fetchDataForTeam = async (home_id, away_id, season_id) => {
         await Promise.all([
             fetchHomeTeamInfo(home_id, season_id),
             fetchAwayTeamInfo(away_id, season_id),
-            fetchGameMatchHistory(home_id, away_id, season_id),
         ]);
         // Set loading states to false once all data is loaded
         homeLoading.value = false;
         awayLoading.value = false;
-        matchesLoading.value = false;
     } catch (error) {
         console.error("Error fetching data for team:", error);
     }
@@ -526,20 +413,6 @@ const fetchAwayTeamInfo = async (team_id, season_id) => {
     }
 };
 
-// Function to fetch match history between home and away teams
-const fetchGameMatchHistory = async (home_id, away_id, season_id) => {
-    try {
-        const response = await axios.post(route("match.history"), {
-            home_id: home_id,
-            away_id: away_id,
-            season_id: season_id,
-        });
-        matches.value = response.data.matches;
-    } catch (error) {
-        console.error("Error fetching match history:", error);
-    }
-};
-
 // Function to calculate win rate based on all time stats
 const calculateWinRate = (stats) => {
     const totalGames =
@@ -548,6 +421,12 @@ const calculateWinRate = (stats) => {
         ? 0
         : ((parseFloat(stats.all_time_wins) / totalGames) * 100).toFixed(2);
 };
+
+// Fetch data on component mount
+onMounted(() => {
+    fetchDataForTeam(props.home_id, props.away_id, props.season_id);
+});
+
 </script>
 
 <style scoped>
