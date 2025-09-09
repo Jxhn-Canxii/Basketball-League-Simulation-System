@@ -2,7 +2,7 @@
     <!-- Top 10 players module -->
     <div
         class="inline-block min-w-full min-h-screen overflow-hidden rounded p-4"
-        v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
+        v-if="team_info.teams && !loading" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
     >
         <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
             {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
@@ -248,6 +248,12 @@
             </div> -->
         </div>
     </div>
+    <div v-else class="flex items-center justify-center h-64">
+        <div class="text-center">
+            <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+            <p class="mt-2 text-gray-500">Loading top players...</p>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -261,6 +267,8 @@ const props = defineProps({
 });
 const players = ref([]);
 const team_info = ref([]);
+const loading = ref(false);
+
 const fetchTeamInfo = async (id) => {
     try {
         const response = await axios.post(route("teams.info"), {
@@ -273,13 +281,16 @@ const fetchTeamInfo = async (id) => {
 };
 const fetchTopPlayers = async () => {
     try {
+        loading.value = true;
         const response = await axios.post(
             route("best.team.players.alltime"),
             {team_id: props.team_id,}
         );
         players.value = response.data;
+        loading.value = false;
         console.log('loaded top 10 module');
     } catch (error) {
+        loading.value = false;
         console.error("Error fetching filtered players:", error);
     }
 };

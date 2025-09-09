@@ -1,5 +1,5 @@
 <template>
-    <div class="team-info p-4" v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+    <div class="team-info p-4" v-if="team_info.teams && !loading" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
         <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
             {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
         </h2>
@@ -47,6 +47,12 @@
             </div>
         </div>
     </div>
+    <div v-else class="flex items-center justify-center h-64">
+        <div class="text-center">
+            <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+            <p class="mt-2 text-gray-500">Loading team transaction history...</p>
+        </div>
+    </div>
     <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
         <div class="p-6 block">
             <!-- Image Section -->
@@ -75,7 +81,7 @@ const props = defineProps({
 const showPlayerProfileModal = ref(false);
 const team_info = ref([]);
 const team_history = ref([]);
-
+const loading = ref(false);
 const search = ref({
     page_num: 1,
     search: "",
@@ -99,9 +105,12 @@ const fetchTeamInfo = async () => {
 const fetchTeamTransactionHistory = async () => {
     try {
         search.value.team_id = props.team_id;
+        loading.value = true;
         const response = await axios.post(route("teams.transaction.history"),search.value);
         team_history.value = response.data;
+        loading.value = false;
     } catch (error) {
+        loading.value = false;
         console.error("Error fetching team info:", error);
     }
 };

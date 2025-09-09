@@ -1311,6 +1311,8 @@ class PlayersController extends Controller
             ->where('players.id', $playerId)
             ->select(
                 'players.id as player_id',
+                'teams.primary_color',
+                'teams.secondary_color',
                 'players.type as archetype',
                 'players.hardship_contract',
                 'players.position as position',

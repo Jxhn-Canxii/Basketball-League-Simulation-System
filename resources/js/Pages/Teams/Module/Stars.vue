@@ -2,7 +2,7 @@
     <!-- Top 10 players module -->
     <div
         class="inline-block min-w-full min-h-screen overflow-hidden rounded p-4"
-        v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
+        v-if="team_info.teams && !loading" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }"
     >
         <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
             {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
@@ -205,6 +205,12 @@
                     @page_num="handlePagination"
                 />
             </div> -->
+        </div>
+    </div>
+    <div v-else class="flex items-center justify-center h-64">
+        <div class="text-center">
+            <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+            <p class="mt-2 text-gray-500">Loading season star players...</p>
         </div>
     </div>
    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">

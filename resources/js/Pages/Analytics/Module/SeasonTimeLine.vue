@@ -1,5 +1,5 @@
 <template>
-    <div class="grid gap-6 mb-8 md:grid-cols-1 xl:grid-cols-1 overflow-auto shadow">
+    <div class="grid gap-6 mb-8 md:grid-cols-1 xl:grid-cols-1 overflow-auto shadow" v-if="standings && standings.datasets && standings.datasets.length && !loading">
         <div class="p-6 bg-white rounded-lg shadow-md">
             <h2 class="text-lg font-semibold text-gray-800">Team Season Progression</h2>
 
@@ -11,6 +11,12 @@
             </select>
 
             <canvas id="seasonProgressionChart" class="mt-4"></canvas>
+        </div>
+    </div>
+    <div v-else class="flex items-center justify-center h-64">
+        <div class="text-center">
+            <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+            <p class="mt-2 text-gray-500">Loading season progression data...</p>
         </div>
     </div>
 </template>
@@ -48,9 +54,12 @@ const showChart = async () => {
 
 const fetchAllStandings = async () => {
     try {
+        loading.value = true;
         const response = await axios.post(route("analytics.standings", { conference_id: props.isConference,team_id: props.teamId }));
         standings.value = response.data; // Store fetched standings data
+        loading.value = false;
     } catch (error) {
+        loading.value = false;
         console.error("Error fetching standings:", error);
     }
 };

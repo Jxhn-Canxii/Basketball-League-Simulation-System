@@ -1,13 +1,20 @@
 <template>
     <!-- Player Profile and Playoff Performance in One Row -->
-    <div class="flex flex-col md:flex-row gap-6" v-if="!isLoading">
+    <div class="flex flex-col md:flex-row gap-6 p-4 rounded" 
+    :style="{
+    background:
+        main_performance.player_details.primary_color && main_performance.player_details.secondary_color
+        ? `linear-gradient(180deg, #${main_performance.player_details.primary_color}, #${main_performance.player_details.secondary_color})`
+        : '#f9fafb',
+    }"
+    v-if="!isLoading && main_performance.player_details">
         <!-- Player Details Section -->
         <div
             class="player-details mb-6 flex-2"
             v-if="main_performance.player_details"
         >
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 flex items-center"
             >
                 <i class="fa fa-user text-blue-500 mr-2"></i>
                 Player Details
@@ -57,7 +64,7 @@
                 </p>
             </div>
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-bar-chart text-orange-500 mr-2"></i>
                 Draft Details
@@ -96,7 +103,7 @@
                 </p>
             </div>
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-list text-red-500 mr-2"></i>
                 League Experience
@@ -137,7 +144,7 @@
             </div>
            
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-file-contract text-green-500 mr-2"></i>
                 Contracts
@@ -165,7 +172,7 @@
         <!-- Playoff Performance Section -->
         <div class="playoff-performance mb-6 flex-2">
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 flex items-center"
             >
                 <i class="fa fa-network-wired text-purple-500 mr-2"></i>
                 Playoff
@@ -209,7 +216,7 @@
                 <p>No playoff performance data available.</p>
             </div>
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-chart-line text-purple-500 mr-2"></i>
                 Career Highs
@@ -268,7 +275,7 @@
                 <p>No career highs data available.</p>
             </div>
              <h3
-                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-users text-red-500 mr-2"></i>
                 Player Projection
@@ -309,7 +316,7 @@
 
         <div class="awards mb-6 flex-1 text-nowrap">
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 flex items-center"
             >
                 <i class="fa fa-trophy text-yellow-500 mr-2"></i>
                 Championships ({{  main_performance.national_championships?.length + main_performance.conference_championships?.length + main_performance.national_overall_champions?.length + main_performance.conference_overall_champions?.length }})
@@ -411,7 +418,7 @@
                 <p>No championship available.</p>
             </div>
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-star text-yellow-500 mr-2"></i>
                 MVP
@@ -438,7 +445,7 @@
                 <p>No MVP data available.</p>
             </div>
             <h3
-                class="text-md font-semibold text-gray-700 mb-2 mt-4 flex items-center"
+                class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center"
             >
                 <i class="fa fa-medal text-yellow-500 mr-2"></i>
                 Awards

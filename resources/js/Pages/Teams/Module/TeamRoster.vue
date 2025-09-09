@@ -1,5 +1,5 @@
 <template>
-    <div class="team-roster p-4 min-h-screen" v-if="team_info.teams" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
+    <div class="team-roster p-4 min-h-screen" v-if="team_info.teams && !loading" :style="{ backgroundColor: '#'+team_info.teams.secondary_color, }">
         <h2 class="text-xl font-semibold text-white" v-if="team_info.teams">
             {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
         </h2>
@@ -1205,6 +1205,12 @@
             </div>
         </Modal>
     </div>
+    <div v-else class="flex items-center justify-center h-64">
+        <div class="text-center">
+            <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+            <p class="mt-2 text-gray-500">Loading team roster...</p>
+        </div>
+    </div>
 </template>
 
 <script setup>
@@ -1224,9 +1230,10 @@ const props = defineProps({
 });
 const showExtendModal = ref(false);
 const showTransferred = ref(true);
+const loading = ref(false);
+const showPlayerProfileModal = ref(false);
 const currentTab = ref('all');
 const viewType = ref('roster');
-const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);
 const additionalYears = ref(1);
 const newPlayerName = ref("");
@@ -1318,12 +1325,15 @@ const fetchTeamInfo = async (id) => {
 const fetchTeamRoster = async (id) => {
     try {
         team_roster.value = [];
+        loading.value = true;
         const response = await axios.post(route("players.team.roster"), {
             team_id: id,
             season_id: season_id.value,
         });
         team_roster.value = response.data;
+        loading.value = false;
     } catch (error) {
+        loading.value = false;
         console.error("Error fetching team info:", error);
     }
 };
