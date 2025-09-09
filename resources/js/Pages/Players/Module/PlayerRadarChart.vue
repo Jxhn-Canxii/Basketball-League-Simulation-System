@@ -1,5 +1,5 @@
 <template>
-  <div class="flex overflow-auto shadow">
+  <div class="flex overflow-auto w-full shadow">
     <div class="p-6 bg-white rounded-lg shadow-md">
       <canvas :id="'playerRatingsChart'+props.playerRatings.player_id+chart_id"></canvas>
       <p class="text-center">{{ props.playerRatings.overall_rating }} Overall</p>
