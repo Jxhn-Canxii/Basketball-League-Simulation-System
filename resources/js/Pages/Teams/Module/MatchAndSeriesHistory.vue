@@ -10,7 +10,7 @@
         "
         @click="activeTab = 'games'"
       >
-        Last 10 Games
+        Recent Games
       </button>
       <button
         class="px-4 py-2 focus:outline-none font-semibold text-sm border-b-2"
@@ -21,7 +21,7 @@
         "
         @click="activeTab = 'series'"
       >
-        Series History
+        Series History ({{ series?.length ?? 0 }})
       </button>
       <button
         class="px-4 py-2 focus:outline-none font-semibold text-sm border-b-2"
@@ -37,7 +37,7 @@
     </div>
     <div v-if="activeTab === 'games'">
       <div v-if="!loading && matches && matches.length" class="grid grid-cols-1 gap-4">
-        <h2 class="text-lg font-semibold text-gray-800">Last 10 Games</h2>
+        <h2 class="text-lg font-semibold text-gray-800">Recent Games</h2>
         <div class="mb-2 text-base font-bold text-center">
           Head to Head:
           <span
