@@ -28,6 +28,11 @@
                             <option value="PF">Power Forward</option>
                             <option value="C">Center</option>
                         </select>
+                        <select class="mt-1 mb-2 p-2 border rounded w-full" v-model="search.injury_status" @change="fetchAllPlayers()">
+                            <option value="2">All</option>
+                            <option value="1">Injured</option>
+                            <option value="0">Healthy</option>
+                        </select>
                     </div>
                   
                     <div v-if="data.players?.length === 0" class="text-center text-gray-500">No player found.</div>
@@ -138,6 +143,7 @@ const search = ref({
     total: 0,
     search: '',
     position: '',
+    injury_status: '2', // 2 means all, 1 means injured, 0 means healthy
     itemsperpage: 10,
 });
 const teams = ref([]);

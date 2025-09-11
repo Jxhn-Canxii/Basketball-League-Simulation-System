@@ -414,6 +414,7 @@ class PlayersController extends Controller
         $currentPage = $request->input('page_num', 1); // Current page number
         $search = $request->input('search', ''); // Search term
         $position = $request->input('position', ''); // Search term
+        $injuryStatus = $request->input('injury_status', '2'); // 2 means all, 1 means injured, 0 means healthy
         // Calculate the offset for the query
         $offset = ($currentPage - 1) * $perPage;
 
@@ -486,6 +487,9 @@ class PlayersController extends Controller
         }
         if ($position) {
             $query->where('players.position', 'like', "%{$position}%");
+        }
+        if ($injuryStatus !== '2') {
+            $query->where('players.is_injured', $injuryStatus);
         }
         // Add sorting by is_active status, then by role priority
         $query->orderBy('players.is_active', 'desc') // Active players first
