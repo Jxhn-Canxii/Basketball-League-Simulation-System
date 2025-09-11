@@ -91,7 +91,11 @@ class TradeController extends Controller
                 'player_to.role as player_to_role',
                 'player_to.id as player_to_id',
                 'team_to.id as to_team_id',
-                'team_to.name as to_team'
+                'team_to.name as to_team',
+                'team_from.primary_color as from_team_primary_color',
+                'team_to.primary_color as to_team_primary_color',
+                'team_from.secondary_color as from_team_secondary_color',
+                'team_to.secondary_color as to_team_secondary_color'
             )
             ->where('trade_proposals.status', 'approved')
             ->where('trade_proposals.type', $tradeType)

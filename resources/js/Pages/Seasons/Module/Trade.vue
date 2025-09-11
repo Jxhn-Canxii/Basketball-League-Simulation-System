@@ -142,7 +142,7 @@
                     class="border p-4 rounded-lg shadow-md">
                         <div class="mt-4 flex justify-between items-center">
                             <div 
-                             :style="
+                            :style="
                                 gradientStyle(
                                 proposal?.to_team_primary_color,
                                 proposal?.to_team_primary_color,
@@ -164,12 +164,12 @@
                             </div>
 
                             <div 
-                            :style="
+                             :style="
                                 gradientStyle(
                                 proposal?.from_team_primary_color,
-                                proposal?.from_team_secondary_color,
                                 proposal?.from_team_primary_color,
-                                proposal?.from_team_secondary_color
+                                proposal?.from_team_primary_color,
+                                proposal?.from_team_primary_color,
                                 )
                             "
                             class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
