@@ -41,12 +41,30 @@
             <!-- Display proposals by selected category -->
             <div v-if="proposalsByCategory[selectedCategory].length > 0">
                 <div class="grid grid-cols-2 gap-4">
-                    <div v-for="(proposal, index) in proposalsByCategory[selectedCategory]" :key="proposal.id" class="border p-4 rounded-lg bg-white shadow-md">
+                    <div v-for="(proposal, index) in proposalsByCategory[selectedCategory]" :key="proposal.id" 
+                    :style="
+                        gradientStyle(
+                        proposal?.to_team_secondary_color,
+                        proposal?.to_team_primary_color,
+                        proposal?.from_team_primary_color,
+                        proposal?.from_team_secondary_color
+                        )
+                    "
+                    class="border p-4 rounded-lg shadow-md">
                         <div class="mt-4 flex justify-between items-center">
-                            <div class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
+                            <div 
+                            :style="
+                                gradientStyle(
+                                proposal?.to_team_primary_color,
+                                proposal?.to_team_primary_color,
+                                proposal?.to_team_primary_color,
+                                proposal?.to_team_primary_color,
+                                )
+                            "
+                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
                                 <h4 class="text-center font-semibold text-lg">{{ proposal.player_from_name }}</h4>
-                                <p class="text-center text-gray-500">{{ proposal.from_team }} to {{ proposal.to_team }}</p>
-                                <p class="text-center text-gray-500">{{ proposal.player_from_role }}</p>
+                                <p class="text-center text-white">{{ proposal.from_team }} to {{ proposal.to_team }}</p>
+                                <p class="text-center text-white">{{ proposal.player_from_role }}</p>
                                 <div class="flex justify-center items-center mt-2">
                                     <a href="#" @click.prevent="showProfile(proposal.player_from_id)" class="text-blue-500 underline">View Profile</a>
                                 </div>
@@ -56,10 +74,19 @@
                                 <span class="text-gray-600 font-semibold">→</span>
                             </div>
 
-                            <div class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
+                            <div 
+                            :style="
+                                gradientStyle(
+                                proposal?.from_team_primary_color,
+                                proposal?.from_team_primary_color,
+                                proposal?.from_team_primary_color,
+                                proposal?.from_team_primary_color,
+                                )
+                            "
+                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
                                 <h4 class="text-center font-semibold text-lg">{{ proposal.player_to_name }}</h4>
-                                <p class="text-center text-gray-500">{{ proposal.to_team }} to {{ proposal.from_team }}</p>
-                                <p class="text-center text-gray-500">{{ proposal.player_to_role }}</p>
+                                <p class="text-center text-white">{{ proposal.to_team }} to {{ proposal.from_team }}</p>
+                                <p class="text-center text-white">{{ proposal.player_to_role }}</p>
                                 <div class="flex justify-center items-center mt-2">
                                     <a href="#" @click.prevent="showProfile(proposal.player_to_id)" class="text-blue-500 underline">View Profile</a>
                                 </div>
@@ -84,7 +111,7 @@
 
             <!-- Show if no proposals available for the selected category -->
             <div v-else>
-                <p class="text-center text-gray-500">No trade proposals available for this category.</p>
+                <p class="text-center text-white">No trade proposals available for this category.</p>
             </div>
         </div>
         <div v-if="approved.length > 0  && current_season > 0" >
@@ -103,12 +130,30 @@
             <!-- Display proposals by selected category -->
             <div v-if="approvedByCategory[selectedCategory].length > 0">
                 <div class="grid grid-cols-2 gap-4">
-                    <div v-for="(proposal, index) in approvedByCategory[selectedCategory]" :key="proposal.id" class="border p-4 rounded-lg bg-white shadow-md">
+                    <div v-for="(proposal, index) in approvedByCategory[selectedCategory]" :key="proposal.id" 
+                    :style="
+                        gradientStyle(
+                        proposal?.to_team_secondary_color,
+                        proposal?.to_team_primary_color,
+                        proposal?.from_team_primary_color,
+                        proposal?.from_team_secondary_color
+                        )
+                    "
+                    class="border p-4 rounded-lg shadow-md">
                         <div class="mt-4 flex justify-between items-center">
-                            <div class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
+                            <div 
+                             :style="
+                                gradientStyle(
+                                proposal?.to_team_primary_color,
+                                proposal?.to_team_primary_color,
+                                proposal?.to_team_primary_color,
+                                proposal?.to_team_primary_color,
+                                )
+                            "
+                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
                                 <h4 class="text-center font-semibold text-lg">{{ proposal.player_from_name }}</h4>
-                                <p class="text-center text-gray-500">{{ proposal.from_team }} to {{ proposal.to_team }}</p>
-                                <p class="text-center text-gray-500">{{ proposal.player_from_role }}</p>
+                                <p class="text-center text-white">{{ proposal.from_team }} to {{ proposal.to_team }}</p>
+                                <p class="text-center text-white">{{ proposal.player_from_role }}</p>
                                 <div class="flex justify-center items-center mt-2">
                                     <a href="#" @click.prevent="showProfile(proposal.player_from_id)" class="text-blue-500 underline">View Profile</a>
                                 </div>
@@ -118,10 +163,19 @@
                                 <span class="text-gray-600 font-semibold">→</span>
                             </div>
 
-                            <div class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
+                            <div 
+                            :style="
+                                gradientStyle(
+                                proposal?.from_team_primary_color,
+                                proposal?.from_team_secondary_color,
+                                proposal?.from_team_primary_color,
+                                proposal?.from_team_secondary_color
+                                )
+                            "
+                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
                                 <h4 class="text-center font-semibold text-lg">{{ proposal.player_to_name }}</h4>
-                                <p class="text-center text-gray-500">{{ proposal.to_team }} to {{ proposal.from_team }}</p>
-                                <p class="text-center text-gray-500">{{ proposal.player_to_role }}</p>
+                                <p class="text-center text-white">{{ proposal.to_team }} to {{ proposal.from_team }}</p>
+                                <p class="text-center text-white">{{ proposal.player_to_role }}</p>
                                 <div class="flex justify-center items-center mt-2">
                                     <a href="#" @click.prevent="showProfile(proposal.player_to_id)" class="text-blue-500 underline">View Profile</a>
                                 </div>
@@ -146,7 +200,7 @@
 
             <!-- Show if no proposals available for the selected category -->
             <div v-else>
-                <p class="text-center text-gray-500">No trade proposals available for this category.</p>
+                <p class="text-center text-white">No trade proposals available for this category.</p>
             </div>
         </div>
     </div>
@@ -165,7 +219,7 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import Modal from "@/Components/Modal.vue";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
-
+import { gradientStyle } from  "@/Utility/Formatter";
 const emits = defineEmits(["newSeason"]);
 const props = defineProps({
     isOffSeason:{
