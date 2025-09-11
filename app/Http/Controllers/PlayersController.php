@@ -2393,9 +2393,9 @@ class PlayersController extends Controller
             $roundLabel = $this->formatRound($item->round);
 
             if ($item->team_id == $item->home_id) {
-                $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->away_team} while playing for {$item->home_team}";
+                $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->away_team}";
             } else {
-                $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->home_team} while playing for {$item->away_team}";
+                $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->home_team}";
             }
 
             return $item;
