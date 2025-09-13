@@ -2313,10 +2313,10 @@ class SimulateController extends Controller
         // Step 1: Sit injured players
         $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
 
-
+        $maxDNPs = 3;
         // Step 2: Fill remaining DNP slots, but protect star players and all-stars
-        if ($dnpPlayers->count() < 2) {
-            $remainingSlots = 2 - $dnpPlayers->count();
+        if ($dnpPlayers->count() < $maxDNPs) {
+            $remainingSlots = $maxDNPs - $dnpPlayers->count();
             $additionalDNP = $sorted
                 ->reject(
                     fn($p) =>

@@ -282,4 +282,14 @@ class TestController extends Controller
             ->limit(1)
             ->first();
     }
+
+    public function redisTest()
+    {
+        
+        $value = config()->get('cache.default');
+
+        return response()->json([
+            'cache' => $value,
+        ]);
+    }
 }

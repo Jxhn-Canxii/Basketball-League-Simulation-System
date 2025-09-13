@@ -276,6 +276,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('tests/')->group(function(){
        Route::get('waive/{team_id}', [TestController::class, 'waiveTeam']);
        Route::get('waive-scan', [TestController::class, 'waiveScan']);
+       Route::get('redis-test', [TestController::class, 'redisTest']);
     });
 
 });
