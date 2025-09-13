@@ -68,3 +68,26 @@ ADD COLUMN bashing_factor TINYINT GENERATED ALWAYS AS (
     ))
 ) STORED COMMENT '0-100 scale of player aggression/controversy';
 
+
+ALTER TABLE players ADD COLUMN years_pro INT DEFAULT 0;
+
+
+
+DELIMITER $$
+
+CREATE TRIGGER after_insert_player_season_stats
+AFTER INSERT ON player_season_stats
+FOR EACH ROW
+BEGIN
+  UPDATE players
+  SET years_pro = (
+    SELECT COUNT(DISTINCT season_id)
+    FROM player_season_stats
+    WHERE player_id = NEW.player_id
+  )
+  WHERE id = NEW.player_id;
+END$$
+
+DELIMITER ;
+
+
