@@ -2390,7 +2390,7 @@ class PlayersController extends Controller
 
         // Map results and add details using roundFormat()
         $injuryHistory = $injuryHistory->map(function ($item) {
-            $roundLabel = $this->formatRound($item->round);
+            $roundLabel = $this->formatRound($item->round,$item->game_number);
 
             if ($item->team_id == $item->home_id) {
                 $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->away_team}";
@@ -2648,11 +2648,11 @@ class PlayersController extends Controller
         return 0; // Fallback (should never happen)
     }
 
-    private function formatRound($round)
+    private function formatRound($round, $game_number)
     {
         switch ($round) {
             case 'play_ins_elims_round_1':
-                return 'Conference Play-ins (7th vs 8th)';
+                return 'Conference Play-ins (7th vs 8th)'; 
             case 'play_ins_elims_round_2':
                 return 'Conference Play-ins (9th vs 10th)';
             case 'play_ins_elims':
@@ -2660,17 +2660,17 @@ class PlayersController extends Controller
             case 'play_ins_finals':
                 return 'Conference Play-ins Finals';
             case 'round_of_32':
-                return 'Conference Round of 32';
+                return 'Conference Round of 32 Game ' . $game_number;
             case 'round_of_16':
-                return 'Conference Round of 16';
+                return 'Conference Round of 16 Game ' . $game_number;
             case 'quarter_finals':
-                return 'Conference Quarterfinals';
+                return 'Conference Quarterfinals Game ' . $game_number;
             case 'semi_finals':
-                return 'Conference Semi-Finals';
+                return 'Conference Semi-Finals Game ' . $game_number;
             case 'interconference_semi_finals':
-                return 'The Big 4';
+                return 'The Big 4 (Semifinals) Game ' . $game_number;
             case 'finals':
-                return 'The Finals';
+                return 'The Finals Game ' . $game_number;
             default:
                 return "Round # {$round}";
         }

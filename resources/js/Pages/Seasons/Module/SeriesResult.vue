@@ -292,10 +292,11 @@
             <div
               v-for="(match, index) in series_info"
               :key="match.id || index"
-              @click="isGameResultModalOpen = match.game_id"
+              @click="match.winner != 0 ? isGameResultModalOpen = match.game_id : null"
               class="relative cursor-pointer hover:scale-105 transition min-w-[200px] border-2"
             >
               <div
+                v-if="match.winner != 0"
                 class="flex items-center justify-between p-3 rounded-lg shadow-md bg-white"
               >
                 <!-- Home Team -->
