@@ -34,7 +34,7 @@
                     <th :class="getThClass('player_name')">Player</th>
                     <th>Status</th>
                     <th>Current Team</th>
-                    <th>Team Played (Playoffs)</th>
+                    <!-- <th>Team Played (Playoffs)</th> -->
                     <th :class="getThClass('playoff_appearances')" class="text-right">Playoffs</th>
                     <th class="text-right">Play-ins (10th vs 9th)</th>
                     <th class="text-right">Play-ins (8th vs 7th)</th>
@@ -70,11 +70,11 @@
                             {{ player.current_team_name ?? "-" }}
                         </p>
                     </td>
-                    <td>
+                    <!-- <td>
                         <p class="text-gray-900 whitespace-nowrap truncate">
                             {{ player.teams_played_for_in_playoffs ?? "-" }}
                         </p>
-                    </td>
+                    </td> -->
                     <td class="text-right">{{ player.total_playoff_appearances }}</td>
                     <td class="text-right">{{ player.play_ins_elims_round_1_appearances }}</td>
                     <td class="text-right">{{ player.play_ins_elims_round_2_appearances }}</td>
