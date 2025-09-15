@@ -42,26 +42,32 @@
             </tr>
         </thead>
         <tbody>
-            <tr v-for="team in top_teams.data" v-if="top_teams.total_pages" :key="team.id" class="text-gray-700">
-                <td class="border-b border-gray-200 bg-white px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.name }}</p>
+            <tr v-for="team in top_teams.data" v-if="top_teams.total_pages" :key="team.id" 
+            :style="{
+            background: team.primary_color && team.secondary_color
+                ? 'linear-gradient(to right, #' + team.primary_color + ', #' + team.primary_color + ')'
+                : '#9ca3af'
+            }"
+            class="text-white">
+                <td class="border-b border-gray-200 px-3 py-3 text-md">
+                    <p class="whitespace-no-wrap uppercase">{{ team.name }}</p>
                 </td>
-                <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
+                <td class="border-b border-gray-200 text-center px-3 py-3 text-xs">
                     <span class="inline-flex items-center text-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                         {{ team.conference }}
                     </span>
                 </td>
-                <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.total_wins ?? 0 }}</p>
+                <td class="border-b border-gray-200 text-center px-3 py-3 text-xs">
+                    <p class="whitespace-no-wrap uppercase">{{ team.total_wins ?? 0 }}</p>
                 </td>
-                <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.total_losses ?? 0 }}</p>
+                <td class="border-b border-gray-200 text-center px-3 py-3 text-xs">
+                    <p class="whitespace-no-wrap uppercase">{{ team.total_losses ?? 0 }}</p>
                 </td>
-                <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ moneyFormatter(team.win_rate ?? 0) }} %</p>
+                <td class="border-b border-gray-200 text-center px-3 py-3 text-xs">
+                    <p class="whitespace-no-wrap uppercase">{{ moneyFormatter(team.win_rate ?? 0) }} %</p>
                 </td>
                 <!-- <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.best_season ?? '-' }} ({{ team.best_win_loss ?? '-' }})</p>
+                    <p class="whitespace-no-wrap uppercase">{{ team.best_season ?? '-' }} ({{ team.best_win_loss ?? '-' }})</p>
                 </td>
                 <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
                     <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.worst_season ?? '-' }} ({{ team.worst_win_loss ?? '-' }})</p>

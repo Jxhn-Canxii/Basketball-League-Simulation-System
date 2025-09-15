@@ -15,27 +15,34 @@
     <table class="w-full">
         <thead>
             <tr class="border-b bg-gray-50 text-left  text-nowrap text-xs font-semibold uppercase tracking-wide text-gray-500">
-                <th class="border-b-2 border-gray-200 bg-gray-100 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
+                <th class="border-b-2 border-gray-200 bg-gray-100 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                     Team
                 </th>
-                <th class="border-b-2 border-gray-200 bg-gray-100 py-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                <th class="border-b-2 border-gray-200 bg-gray-100 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                     # of Championship
                 </th>
-                <th class="border-b-2 border-gray-200 bg-gray-100 py-2 text-center text-xs font-semibold uppercase tracking-wider text-gray-600">
+                <th class="border-b-2 border-gray-200 bg-gray-100 px-3 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">
                     Last Appearance
                 </th>
             </tr>
         </thead>
         <tbody>
-            <tr v-for="team in champions.data" v-if="champions.total_pages" :title="'Conference:'+team.conference_name+', Last Appearance:'+team.last_finals_appearance" :key="team.id" class="text-gray-700">
-                <td class="border-b border-gray-200 bg-white px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.name }} ({{ team.acronym }})</p>
+            <tr v-for="team in champions.data" v-if="champions.total_pages" 
+            class="text-white"
+            :style="{
+            background: team.primary_color && team.secondary_color
+                ? 'linear-gradient(to right, #' + team.primary_color + ', #' + team.primary_color + ')'
+                : '#9ca3af'
+            }"
+            :title="'Conference:'+team.conference_name+', Last Appearance:'+team.last_finals_appearance" :key="team.id">
+                <td class="border-b border-gray-200 px-3 py-3 text-md text-left">
+                    <p class="whitespace-no-wrap uppercase font-bold">{{ team.name }} ({{ team.acronym }})</p>
                 </td>
-                <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.championships }}</p>
+                <td class="border-b border-gray-200 px-3 py-3 text-xs text-left">
+                    <p class="whitespace-no-wrap uppercase">{{ team.championships }}</p>
                 </td>
-                <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
-                    <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.last_finals_appearance }}</p>
+                <td class="border-b border-gray-200 px-3 py-3 text-xs text-left">
+                    <p class="whitespace-no-wrap uppercase">{{ team.last_finals_appearance }}</p>
                 </td>
 
             </tr>

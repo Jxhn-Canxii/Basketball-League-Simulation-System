@@ -1,13 +1,13 @@
 <template>
     <div class="bg-white inline-block min-w-full overflow-hidden rounded shadow p-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">All-Time Team Scorers</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">All-Time Team Stats</h3>
         <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
             <!-- Search Bar -->
             <div class="w-full sm:w-1/2 relative">
                 <input
                     type="search"
-                    v-model="search_topscorers.search"
-                    @input.prevent="fetchTopScorers()"
+                    v-model="search_topstats.search"
+                    @input.prevent="filterTopStats()"
                     placeholder="Enter player or team name"
                     class="p-2 border rounded w-full text-sm"
                 />
@@ -16,8 +16,8 @@
             <!-- Sort Dropdown -->
             <div class="w-full sm:w-1/4">
                 <select
-                    v-model="search_topscorers.sort_by"
-                    @change="fetchTopScorers()"
+                    v-model="search_topstats.sort_by"
+                    @change="filterTopStats()"
                     class="p-2 border rounded w-full text-sm"
                 >
                     <option value="total_points">Sort by Points</option>
@@ -48,19 +48,24 @@
                     <tr
                         v-for="team in top_scorers.data"
                         v-if="top_scorers.total_pages"
-                        :key="generateRandomKey()"
-                        class="text-gray-700"
+                        :key="team.id"
+                        class="text-white"
+                        :style="{
+                        background: team.primary_color && team.secondary_color
+                            ? 'linear-gradient(to right, #' + team.primary_color + ', #' + team.primary_color + ')'
+                            : '#9ca3af'
+                        }"
                     >
-                        <td class="border-b border-gray-200 bg-white px-3 py-3 text-xs">
-                            <p class="text-gray-900 whitespace-no-wrap uppercase">{{ team.name }}</p>
+                        <td class="border-b border-gray-200 px-3 py-3 text-md">
+                            <p class="whitespace-no-wrap uppercase">{{ team.name }}</p>
                         </td>
-                        <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
+                        <td class="border-b border-gray-200 text-center px-3 py-3 text-xs">
                             <span class="inline-flex items-center text-nowrap px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                 {{ team.conference }}
                             </span>
                         </td>
-                        <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-xs">
-                            <p class="text-gray-900 whitespace-no-wrap uppercase">{{ moneyFormatter(team.total_points) }}</p>
+                        <td class="border-b border-gray-200 text-center px-3 py-3 text-xs">
+                            <p class="whitespace-no-wrap uppercase">{{ moneyFormatter(team.total_points) }}</p>
                         </td>
                     </tr>
                     <tr v-else>
@@ -75,9 +80,9 @@
         <div class="flex w-full overflow-auto mt-4">
             <Paginator
                 v-if="top_scorers.total"
-                :page_number="search_topscorers.page_num"
+                :page_number="search_topstats.page_num"
                 :total_rows="top_scorers.total ?? 0"
-                :itemsperpage="search_topscorers.itemsperpage"
+                :itemsperpage="search_topstats.itemsperpage"
                 @page_num="handleTopScorerPagination"
             />
         </div>
@@ -90,16 +95,16 @@ import Paginator from "@/Components/Paginator.vue";
 import { moneyFormatter, generateRandomKey } from "@/Utility/Formatter";
 
 const top_scorers = ref([]);
-const search_topscorers = ref({
+const search_topstats = ref({
     page_num: 1,
     itemsperpage: 10,
     sort_by: "total_points", // Default sorting by total points
     search: "",
 });
 
-const fetchTopScorers = async () => {
+const filterTopStats = async () => {
     try {
-        const response = await axios.post(route("records.team.topscorer"), search_topscorers.value);
+        const response = await axios.post(route("records.team.topscorer"), search_topstats.value);
         top_scorers.value = response.data;
     } catch (error) {
         console.error("Error fetching top scorers:", error);
@@ -107,11 +112,11 @@ const fetchTopScorers = async () => {
 };
 
 const handleTopScorerPagination = (page_num) => {
-    search_topscorers.value.page_num = page_num;
-    fetchTopScorers();
+    search_topstats.value.page_num = page_num;
+    filterTopStats();
 };
 
 onMounted(() => {
-    fetchTopScorers();
+    filterTopStats();
 });
 </script>

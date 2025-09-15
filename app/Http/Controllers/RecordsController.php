@@ -242,6 +242,9 @@ class RecordsController extends Controller
             ->select(
                 'players.id as player_id',
                 'players.name as player_name',
+                'players.is_active as is_active',
+                'teams.secondary_color',
+                'teams.primary_color',
                 'teams.name as team_name',
                 DB::raw("SUM(player_season_stats.$sortBy) as total_stat") // Aggregate the chosen stat for each player
             )

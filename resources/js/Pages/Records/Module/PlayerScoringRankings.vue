@@ -1,6 +1,6 @@
 <template>
     <div class="bg-white inline-block min-w-full overflow-hidden rounded shadow p-4">
-        <h3 class="text-lg font-semibold text-gray-800 mb-4">All-Time Top Scorer</h3>
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">All-Time Top Stats</h3>
 
         <!-- Search and Sorting Controls -->
         <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-2">
@@ -43,10 +43,10 @@
             <table class="w-full table-auto border-collapse">
                 <thead>
                     <tr lass="border-b bg-gray-50 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
-                        <th class="border-b-2 border-gray-200 bg-gray-100 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Rank</th>
-                        <th class="border-b-2 border-gray-200 bg-gray-100 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Player</th>
-                        <th class="border-b-2 border-gray-200 bg-gray-100 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Team</th>
-                        <th class="border-b-2 border-gray-200 bg-gray-100 py-2 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Score</th>
+                        <th class="border-b-2 border-gray-200 bg-gray-100 py-3 px-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Rank</th>
+                        <th class="border-b-2 border-gray-200 bg-gray-100 py-3 px-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Player</th>
+                        <th class="border-b-2 border-gray-200 bg-gray-100 py-3 px-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Team</th>
+                        <th class="border-b-2 border-gray-200 bg-gray-100 py-3 px-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-600">Score</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -54,12 +54,17 @@
                         v-for="(player, index) in leaders.data"
                         v-if="leaders.total_pages"
                         :key="player.id"
-                        class="text-gray-700"
+                        class="text-white"
+                        :style="{
+                        background: player.primary_color && player.secondary_color
+                            ? 'linear-gradient(to right, #' + player.primary_color + ', #' + player.primary_color + ')'
+                            : '#9ca3af'
+                        }"
                     >
-                        <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-sm">{{ player.rank }}</td>
-                        <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-sm">{{ player.player_name }}</td>
-                        <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-sm">{{ player.team_name ?? '-' }}</td>
-                        <td class="border-b border-gray-200 bg-white text-center px-3 py-3 text-sm">
+                        <td class="border-b border-gray-200 text-left px-3 py-3 text-sm">{{ player.rank }}</td>
+                        <td class="border-b border-gray-200 text-left px-3 py-3 text-md font-bold" :class="player.is_active ? '' : 'text-red-500'">{{ player.player_name }} <sup>{{ player.is_active ? 'A' : 'R'}}</sup></td>
+                        <td class="border-b border-gray-200 text-left px-3 py-3 text-sm">{{ player.team_name ?? '-' }}</td>
+                        <td class="border-b border-gray-200 text-left px-3 py-3 text-sm font-bold   ">
                             {{ moneyFormatter(player.total_stat) }}
                         </td>
                     </tr>

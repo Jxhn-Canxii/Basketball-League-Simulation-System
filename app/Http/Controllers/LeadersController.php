@@ -122,6 +122,7 @@ class LeadersController extends Controller
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
+                'players.is_active as is_active',
                 'teams.name as team_name',
                 DB::raw('SUM(player_season_stats.total_points) as total_points'), // Sum total points across all seasons
                 'players.id as player_id'
@@ -138,6 +139,7 @@ class LeadersController extends Controller
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
+                'players.is_active as is_active',
                 'teams.name as team_name',
                 DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'), // Sum total rebounds across all seasons
                 'players.id as player_id'
@@ -154,6 +156,7 @@ class LeadersController extends Controller
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
+                'players.is_active as is_active',
                 'teams.name as team_name',
                 DB::raw('SUM(player_season_stats.total_assists) as total_assists'), // Sum total assists across all seasons
                 'players.id as player_id'
@@ -170,6 +173,7 @@ class LeadersController extends Controller
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
+                'players.is_active as is_active',
                 'teams.name as team_name',
                 DB::raw('SUM(player_season_stats.total_steals) as total_steals'), // Sum total steals across all seasons
                 'players.id as player_id'
@@ -186,6 +190,7 @@ class LeadersController extends Controller
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
+                'players.is_active as is_active',
                 'teams.name as team_name',
                 DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'), // Sum total blocks across all seasons
                 'players.id as player_id'
