@@ -1,5 +1,7 @@
 <?php
 
+ini_set('max_execution_time', 0); // Unlimited execution time
+
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
