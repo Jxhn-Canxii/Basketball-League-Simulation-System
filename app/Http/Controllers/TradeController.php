@@ -1,8 +1,8 @@
 <?php
 
-ini_set('max_execution_time', 0); // Unlimited execution time
-
 namespace App\Http\Controllers;
+
+ini_set('max_execution_time', 0); // Unlimited execution time
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;

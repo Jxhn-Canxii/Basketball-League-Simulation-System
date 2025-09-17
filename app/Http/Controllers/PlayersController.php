@@ -937,7 +937,7 @@ class PlayersController extends Controller
                 'two_point_rating' => [95, 99],
                 'three_point_rating' => [95, 99],
                 'free_throw_rating' => [95, 99],
-                'health_rating' => [0, 10]
+                'health_rating' => [0, 100]
             ],
             'athletic_finisher' => [
                 'shooting' => [70, 85],
