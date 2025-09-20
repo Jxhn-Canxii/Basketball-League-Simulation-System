@@ -183,6 +183,18 @@ class PlayoffController extends Controller
                 $homeTeamName = $standingsData[$series->home_team_id]->name ?? DB::table('teams')->where('id', $series->home_team_id)->value('name');
                 $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
 
+                $seriesCount = DB::table('playoff_series')
+                    ->where(function ($q) use ($series) {
+                        $q->where('home_team_id', $series->away_team_id)
+                        ->where('away_team_id',$series->home_team_id);
+                    })
+                    ->orWhere(function ($q) use ($series) {
+                        $q->where('home_team_id', $series->home_team_id)
+                        ->where('away_team_id',  $series->away_team_id);
+                    })
+                    ->count();
+
+                $series->is_rivals = $seriesCount >= 3;
                 // Determine series lead or result
                 $seriesLead = '';
                 if ($series->completed) {
@@ -226,6 +238,7 @@ class PlayoffController extends Controller
                         'primary_color' => $standingsData[$series->away_team_id]->primary_color ?? '00000',
                         'secondary_color' => $standingsData[$series->away_team_id]->secondary_color ?? '00000',
                     ],
+                    'is_rivals' =>  $series->is_rivals,
                     'series_lead' => $seriesLead,
                     'completed' => $series->completed,
                     'winner_id' => $series->winner_team_id,
@@ -369,6 +382,18 @@ class PlayoffController extends Controller
                 $homeTeamName = $standingsData[$series->home_team_id]->name ?? DB::table('teams')->where('id', $series->home_team_id)->value('name');
                 $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
 
+                $seriesCount = DB::table('playoff_series')
+                    ->where(function ($q) use ($series) {
+                        $q->where('home_team_id', $series->away_team_id)
+                        ->where('away_team_id',$series->home_team_id);
+                    })
+                    ->orWhere(function ($q) use ($series) {
+                        $q->where('home_team_id', $series->home_team_id)
+                        ->where('away_team_id',  $series->away_team_id);
+                    })
+                    ->count();
+
+                $series->is_rivals = $seriesCount >= 3;
                 // Series lead text
                 if ($series->winner_team_id) {
                     $winnerName = $series->winner_team_id == $series->home_team_id ? $homeTeamName : $awayTeamName;
@@ -429,6 +454,7 @@ class PlayoffController extends Controller
                     'completed' => $series->completed,
                     'winner_id' => $series->winner_team_id,
                     'loser_id' => $series->loser_team_id,
+                    'is_rivals' => $series->is_rivals,
                     'created_at' => $series->created_at,
                     'updated_at' => $series->updated_at,
                     'season_id' => $series->season_id,

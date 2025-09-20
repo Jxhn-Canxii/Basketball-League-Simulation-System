@@ -83,6 +83,9 @@
                     {{ series.home_team.conference }} #{{ series.home_team.conference_rank }}
                     vs {{ series.away_team.conference }} #{{ series.away_team.conference_rank }}
                 </span>
+                <span :class="series.is_rivals ? 'text-red-500' : ''">
+                    <i v-if="series.is_rivals" class="fa fa-fire"></i>
+                </span>
             </div>
             <div class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center">
                 <button
