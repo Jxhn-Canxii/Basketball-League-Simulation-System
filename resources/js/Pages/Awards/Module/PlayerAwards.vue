@@ -10,7 +10,7 @@
         <div class="flex gap-2">
             <select
                 v-model="search_filters.season_id"
-                @change.prevent="search_filters.awards_name = 0,fetchFilteredPlayers()"
+                @change.prevent="fetchFilteredPlayers()"
                 class="mt-1 mb-2 p-2 border rounded w-full"
             >
                 <option value="0">Select Season</option>
@@ -25,7 +25,7 @@
             <!-- Dropdown for sorting by -->
             <select
                 v-model="search_filters.awards_name"
-                @change.prevent="search_filters.season_id = 0,fetchFilteredPlayers()"
+                @change.prevent="fetchFilteredPlayers()"
                 class="mt-1 mb-2 p-2 border rounded w-full"
             >
                 <option value="0">Select Award Name</option>
@@ -111,7 +111,7 @@
             <p class="font-bold text-red-500">Please Choose Season.</p>
         </div>
     </div>
-    <Modal :show="isAddModalOpen" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
+    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
         <button
             class="flex float-end bg-gray-100 p-3"
             @click.prevent="showPlayerProfileModal = false"

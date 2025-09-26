@@ -26,7 +26,7 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="award in awards" :key="award.id">
+                    <tr v-for="award in awards" :key="award.id" @click.prevent="showPlayerInformation(award.player_id)" class="hover:bg-gray-100 cursor-pointer">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ award.award_name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ award.player_name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ award.team_name }}</td>
@@ -36,19 +36,35 @@
             </table>
         </div>
     </div>
+    
+    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
+        <div class="p-6 block">
+            <!-- Image Section -->
+            <PlayerPerformance :key="selectedPlayer.player_id" :player_id="selectedPlayer.player_id" />
+        </div>
+    </Modal>
 </template>
 
 <script setup>
 import { ref, onMounted } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import Modal from "@/Components/Modal.vue";
+import PlayerPerformance from '@/Pages/Players/Module/PlayerPerformance.vue';
 
 const awards = ref([]);
 const isLoading = ref(false);
+const showPlayerProfileModal = ref(false);
+const selectedPlayer = ref(0);
 const progressPercentage = ref(0);
 const props = defineProps({
     team_ids: Array,
 });
+
+const showPlayerInformation = (player_id) => {
+    selectedPlayer.value = player_id;
+    showPlayerProfileModal.value = true;
+};
 
 const updatePlayerStatus = async () => {
     try {
