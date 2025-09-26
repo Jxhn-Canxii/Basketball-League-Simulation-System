@@ -112,12 +112,6 @@
         </div>
     </div>
     <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="showPlayerProfileModal = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
         <div class="p-6 block">
             <PlayerPerformance :key="showPlayerProfileModal" :player_id="showPlayerProfileModal" />
         </div>
