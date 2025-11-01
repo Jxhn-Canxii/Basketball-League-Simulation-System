@@ -87,13 +87,14 @@
     </div>
     <div class="block px-2" v-if="isHide">
         <transition name="fade" mode="out-in">
-            <div v-if="showGameResults && activeGameId != 0" :key="'game-' + activeGameId">
-                <GameResults :game_id="activeGameId" :showBoxScore="false" :showGameNews="true" />
+            <!-- //add on v-if showGameResults &&  -->
+            <div v-if="activeGameId != 0" :key="'game-' + activeGameId">
+                <GameResults :game_id="activeGameId" :showBoxScore="false" :showGameNews="false" />
             </div>
-            <div v-else-if="!showGameResults && activeGameId != 0" :key="'transactions-' + activeGameId">
-                <RecentTransactions :key="activeGameId"/>
+            <!-- <div v-else-if="!showGameResults && activeGameId != 0" :key="'transactions-' + activeGameId"> -->
+                <!-- <RecentTransactions :key="activeGameId"/> -->
                 <!-- <Top15MVPCandidate  :key="activeGameId" :current_round="currentRound"/> -->
-            </div>
+            <!-- </div> -->
         </transition>
         <div
             v-if="activeGameId != 0"

@@ -514,7 +514,7 @@ class SimulateController extends Controller
         $this->updateInjuryAndWaiving($gameData->home_team_id);
         $this->updateInjuryAndWaiving($gameData->away_team_id);
 
-        $this->updateTeamStreaks($gameData->id);
+        // $this->updateTeamStreaks($gameData->id);
         $this->updateHeadToHeadResults($gameData->id);
         // $this->createGameNewsFromGame($gameData->id);
 
@@ -1092,7 +1092,7 @@ class SimulateController extends Controller
             $this->updatePlayerMoraleBasedOnStats($gameData->away_team_id,  $winnerId);
             $this->updateInjuryAndWaiving($gameData->home_team_id);
             $this->updateInjuryAndWaiving($gameData->away_team_id);
-            $this->updateTeamStreaks($gameData->id);
+            // $this->updateTeamStreaks($gameData->id);
             $this->updateHeadToHeadResults($gameData->id);
             // $this->createGameNewsFromGame($gameData->id);
 
@@ -1603,9 +1603,9 @@ class SimulateController extends Controller
         $this->updateInjuryAndWaiving($gameData->home_team_id);
         $this->updateInjuryAndWaiving($gameData->away_team_id);
 
-        $this->updateTeamStreaks($gameData->id);
+        // $this->updateTeamStreaks($gameData->id);
         $this->updateHeadToHeadResults($gameData->id);
-        $this->createGameNewsFromGame($gameData->id);
+        // $this->createGameNewsFromGame($gameData->id);
         if ($isRoundsSimulatedForSeason) {
             $this->updateInjuryFreeAgents();
         }

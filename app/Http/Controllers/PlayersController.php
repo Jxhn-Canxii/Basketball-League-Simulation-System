@@ -2560,7 +2560,7 @@ class PlayersController extends Controller
     {
 
         $wordOptions = [
-            $faker->colorName,
+            // $faker->colorName,
             $faker->domainWord,
             $faker->citySuffix,
             $faker->streetSuffix,
