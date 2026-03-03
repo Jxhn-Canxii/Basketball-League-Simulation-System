@@ -5,10 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\TeamChemistryController;
 use App\Models\Teams;
 
 class TeamsController extends Controller
 {
+    protected $chemistry;
+
+    public function __construct(){
+
+        $this->chemistry = new TeamChemistryController();
+    }
     // Display a listing of the resource.
     public function index()
     {
@@ -92,6 +99,8 @@ class TeamsController extends Controller
     }
     public function currentseasonstatistics($teamId, $seasonId)
     {
+        $previousSeasonId = $seasonId - 1;
+
         $teamInfo = self::getTeamInfo($teamId);
         $allTimeStats = self::getAllTimeStats($teamId);
         $finalsStats = self::getFinalsStats($teamId);
@@ -99,14 +108,16 @@ class TeamsController extends Controller
         $playoffStats = self::getPlayoffStats($teamId);
         $seasonStats = self::getSeasonHistoryCount($teamId, $seasonId);
         $latestSeason = self::getLatestSeason($teamId, $seasonId);
+        $chemistry =  $this->chemistry->getChemistryCalculation($teamId,$seasonId,$previousSeasonId);
 
         return [
-            'teams' => $teamInfo[0],
+            'teams' => $teamInfo,
             'allTimeStats' => $allTimeStats,
             'finalsStats' => $finalsStats,
             'roundStats' => $roundStats,
             'playoffStats' => $playoffStats,
             'seasonStats' => $seasonStats,
+            'chemistry' => $chemistry,
             'latestSeason' => $latestSeason,
         ];
     }
@@ -258,6 +269,8 @@ class TeamsController extends Controller
     public function teamInfo(Request $request)
     {
         $teamId = $request->team_id;
+        $seasonId = get_current_season_id();
+        $previousSeasonId = $seasonId - 1;
 
         $teamInfo = self::getTeamInfo($teamId);
         $allTimeStats = self::getAllTimeStats($teamId);
@@ -265,14 +278,16 @@ class TeamsController extends Controller
         $roundStats = self::getRoundStats($teamId);
         $playoffStats = self::getPlayoffStats($teamId);
         $gameStreaks = self::getTeamStreaks($teamId);
+        $chemistry =  $this->chemistry->getChemistryCalculation($teamId,$seasonId,$previousSeasonId);
 
         return response()->json([
-            'teams' => $teamInfo[0],
+            'teams' => $teamInfo,
             'allTimeStats' => $allTimeStats,
             'finalsStats' => $finalsStats,
             'roundStats' => $roundStats,
             'playoffStats' => $playoffStats,
             'streaks' => $gameStreaks,
+            'chemistry' => $chemistry,
         ]);
     }
     public function teamSeasonFinals(Request $request)
@@ -467,6 +482,7 @@ class TeamsController extends Controller
 
         // Exclude "transfer" status
         $transactionQuery->where('transactions.status', '!=', 'transfer')
+            ->where('transactions.status', '!=', 'claimed-via-waiver')
             ->where('transactions.status', '!=', 'role change');
 
         // Sorting
@@ -603,7 +619,7 @@ class TeamsController extends Controller
                 'team_reputation_view.estimated_fans'
             )
             ->where('teams.id', $teamId)
-            ->get();
+            ->first();
 
         return $teamData;
     }

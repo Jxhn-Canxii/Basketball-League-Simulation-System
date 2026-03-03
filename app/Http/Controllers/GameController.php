@@ -11,10 +11,18 @@ use App\Models\PlayerGameStats;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Http\Controllers\HelperController;
 
 class GameController extends Controller
 {
 
+    protected $helper;
+
+    public function __construct(){
+
+        $this->helper = new HelperController();
+    }
+   
     public function getBoxScore(Request $request)
     {
         // Validate the request
@@ -25,6 +33,7 @@ class GameController extends Controller
 
         $show_stats = $request->show_stats;
         $game_id = $request->game_id; // Fetch game details from the schedule_view table and join with teams table
+
         $game = \DB::table('schedule_view')
             ->join('teams as away_team', 'schedule_view.away_id', '=', 'away_team.id') // Join for away team
             ->join('teams as home_team', 'schedule_view.home_id', '=', 'home_team.id') // Join for home team
@@ -50,7 +59,9 @@ class GameController extends Controller
             ], 404);
         }
 
-        $playerStats = \DB::table('player_game_stats')
+        $playerDatabase = $this->helper->getPlayerStatsDatabaseName($game->season_id);
+        
+        $playerStats = \DB::table($playerDatabase.' as player_game_stats')
             ->where('player_game_stats.game_id', $game_id)
             ->leftJoin('players as p', 'player_game_stats.player_id', '=', 'p.id') // Alias for players table
             ->leftJoin('teams as drafted_team', 'drafted_team.id', '=', 'p.drafted_team_id') // Alias for drafted teams
@@ -441,7 +452,7 @@ class GameController extends Controller
 
         $gameNews = DB::table('game_news')
             ->select('id', 'game_id', 'season_id', 'round', 'title', 'content', 'created_at', 'updated_at')
-             ->where('game_id', $game->game_id)
+            ->where('game_id', $game->game_id)
             ->first();
 
         // Format data for box score
@@ -485,6 +496,7 @@ class GameController extends Controller
             'total_players_played' => $playerStats->count(),
             'season_name' =>  $seasonName,
             'league_name' =>  $leagueName,
+            'stats_source' => $playerDatabase
         ];
 
         return response()->json([

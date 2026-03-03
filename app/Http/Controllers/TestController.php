@@ -6,9 +6,24 @@ use Illuminate\Http\Request;
 use App\Models\Teams;
 use App\Models\Player; // <-- Add this if not yet imported
 use Illuminate\Support\Facades\DB;
-
+use App\Http\Controllers\TeamBalanceController;
+use App\Http\Controllers\TeamChemistryController;
+use App\Http\Controllers\TeamStreakController;
+use App\Http\Controllers\HelperController;
 class TestController extends Controller
 {
+    protected $teamBalance;
+    protected $chemistry;
+    protected $streak;
+    protected $helper;
+
+    public function __construct(){
+
+        $this->teamBalance = new TeamBalanceController();
+        $this->chemistry = new TeamChemistryController();
+        $this->streak = new TeamStreakController();
+        $this->helper = new HelperController();
+    }
     public function waiveTeam(Request $request, $teamId)
     {
         $seasonStatus = (int) $request->input('season_status', 2);
@@ -281,6 +296,105 @@ class TestController extends Controller
             ->orderByDesc('players.overall_rating')
             ->limit(1)
             ->first();
+    }
+
+    public function testTeamBalance(){
+
+        $activeTeams = DB::table('teams')
+            ->select('teams.id', 'teams.name')
+            ->groupBy('teams.id', 'teams.name')
+            ->orderBy('teams.name')
+            ->get();
+            
+            $data = [];
+
+            foreach($activeTeams as $team){
+
+                $data[$team->name] = $this->teamBalance->testFixTeamPositionBalance($team->id,true);
+            }
+
+            return $data;
+        
+    }
+
+    public function testChemistryCalculations(){
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+        $previousSeasonId = $latestSeasonId - 1;
+
+        $activeTeams = DB::table('teams')
+            ->select('teams.id', 'teams.name')
+            ->groupBy('teams.id', 'teams.name')
+            ->orderBy('teams.name')
+            ->get();
+            
+            $data = [];
+
+            foreach($activeTeams as $team){
+                $finalChemistry = $this->chemistry->getChemistryCalculation($team->id,$latestSeasonId,$previousSeasonId);
+                $data[$team->name] = $finalChemistry;
+                
+                // DB::table('team_season_info')->updateOrInsert(
+                //     [
+                //         'team_id' => $team->id,
+                //         'season_id' => $latestSeasonId,
+                //     ],
+                //     [
+                //         'chemistry' => $finalChemistry['chemistry_score'],
+                //     ]
+                // );
+            }
+
+            usort($data, function($a, $b){
+                return $b['chemistry_score'] <=> $a['chemistry_score'];
+            });
+
+            return response()->json([
+                'data' => $data,
+            ]);
+    }
+
+    public function testGameStreak(Request $request){
+        $gameId = $request->game_id;
+        $teamId = 58;
+
+        // return $this->streak->updateTeamStreaks($gameId,$teamId,0);
+
+        $latestSeasonId = get_current_season_id();
+        $previousSeasonId = $latestSeasonId - 1;
+
+        $prevChampion = $this->helper->getNationalChampionId($previousSeasonId);
+
+        return $prevChampion;
+
+    }
+
+    public function insertTeamStreak(){
+
+        $activeTeams = DB::table('teams')
+            ->select('teams.id', 'teams.name')
+            ->groupBy('teams.id', 'teams.name')
+            ->orderBy('teams.name')
+            ->get();
+        
+        foreach($activeTeams as $team){
+
+            $data = [
+                'best_winning_streak' => 0,
+                'best_winning_streak_start_id' => 0,
+                'best_winning_streak_end_id' => 0,
+                'best_losing_streak' => 0,
+                'best_losing_streak_start_id' => 0,
+                'best_losing_streak_end_id' => 0,
+            ];
+
+            DB::table('streak')->updateOrInsert(
+                [
+                    'team_id' => $team->id,
+                ],
+                $data
+            );
+        }
     }
 
     public function redisTest()

@@ -14,9 +14,16 @@ use App\Models\PlayerGameStats;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Http\Controllers\HelperController;
 
 class PlayersController extends Controller
 {
+
+    protected $helper;
+
+    public function __construct(){
+        $this->helper = new HelperController();
+    }
 
     public function index()
     {
@@ -109,6 +116,7 @@ class PlayersController extends Controller
                         'age' => $player->age,
                         'role' => $stats->role,
                         'is_active' => $player->is_active,
+                        'morale' => $player->morale,
                         'hardship_contract' => $player->hardship_contract,
                         'injury_recovery_games' => $player->injury_recovery_games,
                         'is_rookie' => $player->is_rookie,
@@ -256,6 +264,7 @@ class PlayersController extends Controller
                         'age' => $player->age,
                         'role' => $player->role,
                         'is_active' => $player->is_active,
+                        'morale' => $player->morale,
                         'is_rookie' => $player->is_rookie,
                         'injury_type' => $player->injury_type,
                         'contract_years' => $player->contract_years,
@@ -575,6 +584,7 @@ class PlayersController extends Controller
             'locale' => $locale,
         ]);
     }
+
     // Add a player to a team with random attributes
     public function addPlayer(Request $request)
     {
@@ -1605,38 +1615,38 @@ class PlayersController extends Controller
 
         // Fetch championship count and season names
         $championships = \DB::table('seasons')
-            ->join('player_game_stats', 'seasons.id', '=', 'player_game_stats.season_id')
+            ->join('player_season_stats', 'seasons.id', '=', 'player_season_stats.season_id')
             ->join('playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
-            ->join('teams as team', 'player_game_stats.team_id', '=', 'team.id')
+            ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
             ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
             ->select(
                 'seasons.id as season_id',
                 'seasons.name as season_name',
                 'winner_team.name as championship_team'
             )
-            ->where('player_game_stats.player_id', $playerId)
+            ->where('player_season_stats.player_id', $playerId)
             ->where('playoff_series.round', 'finals')
             ->where('playoff_series.status', 2) // Series is finished
-            ->whereColumn('playoff_series.winner_team_id', 'player_game_stats.team_id') // Match columns correctly
+            ->whereColumn('playoff_series.winner_team_id', 'player_season_stats.team_id') // Match columns correctly
             ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
             ->distinct()
             ->get();
 
         // Fetch conference championships (using playoff_series table)
         $conference_championships = \DB::table('seasons')
-            ->join('player_game_stats', 'seasons.id', '=', 'player_game_stats.season_id')
+            ->join('player_season_stats', 'seasons.id', '=', 'player_season_stats.season_id')
             ->join('playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
-            ->join('teams as team', 'player_game_stats.team_id', '=', 'team.id')
+            ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
             ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
             ->select(
                 'seasons.id as season_id',
                 'seasons.name as season_name',
                 'winner_team.name as championship_team'
             )
-            ->where('player_game_stats.player_id', $playerId)
+            ->where('player_season_stats.player_id', $playerId)
             ->where('playoff_series.round', 'semi_finals')
             ->where('playoff_series.status', 2) // Series is finished
-            ->whereColumn('playoff_series.winner_team_id', 'player_game_stats.team_id') // Match columns correctly
+            ->whereColumn('playoff_series.winner_team_id', 'player_season_stats.team_id') // Match columns correctly
             ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
             ->distinct()
             ->get();
@@ -1769,8 +1779,10 @@ class PlayersController extends Controller
             ->first();
 
 
+        $playerDatabase = $this->helper->getPlayerStatsDatabaseName($seasonId);
+
         // Fetch player game logs for the given player and season with pagination
-        $playerGameLogs = \DB::table('player_game_stats')
+        $playerGameLogs = \DB::table($playerDatabase.' as player_game_stats')
             ->join('players', 'player_game_stats.player_id', '=', 'players.id')
             ->join('teams as player_team', 'player_game_stats.team_id', '=', 'player_team.id') // Join with player's team to get team name
             ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
@@ -1803,7 +1815,7 @@ class PlayersController extends Controller
             ->get();
 
         // Fetch total count of records for pagination info
-        $totalRecords = \DB::table('player_game_stats')
+        $totalRecords = \DB::table($playerDatabase.' as player_game_stats')
             ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
             ->where('player_game_stats.player_id', $playerId)
             ->where('player_game_stats.season_id', $seasonId)

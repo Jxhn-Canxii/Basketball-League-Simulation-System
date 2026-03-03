@@ -518,6 +518,8 @@ class DraftController extends Controller
         $draftResultsWithNames = DB::table('drafts')
             ->join('teams', 'drafts.team_id', '=', 'teams.id')
             ->join('players', 'drafts.player_id', '=', 'players.id')
+            ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
+            ->leftJoin('teams as signed_team', 'signed_team.id', '=', 'player_season_stats.team_id')
             ->select(
                 'players.type as archetype',
                 'players.age',
@@ -525,6 +527,9 @@ class DraftController extends Controller
                 'players.position',
                 'drafts.team_id',
                 'teams.name as team_name',
+                'teams.id as drafted_team_id',
+                'signed_team.name as signed_team_name',
+                'signed_team.id as signed_team_id',
                 'drafts.player_id',
                 'players.name as player_name',
                 'drafts.season_id',
@@ -535,6 +540,7 @@ class DraftController extends Controller
             ->where('players.draft_id', $latestSeasonId)
             ->orderBy('drafts.round')
             ->orderBy('drafts.pick_number')
+            ->groupBy('players.id')
             ->get();
 
         // Extract player IDs from the draft results to create the rank group

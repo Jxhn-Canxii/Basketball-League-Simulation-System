@@ -6,10 +6,27 @@ use Illuminate\Http\Request;
 use App\Models\Seasons;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\ContractController;
+use App\Http\Controllers\AwardsController;
+use App\Http\Controllers\TeamBalanceController;
+use App\Http\Controllers\FreeAgentController;
 use Inertia\Inertia;
 
 class TransactionsController extends Controller
 {
+    protected $storeStats;
+    protected $contract;
+    protected $teamBalance;
+    protected $freeAgent;
+
+    public function __construct()
+    {
+        // instantiate once so other methods can use it via $this->storeStats
+        $this->storeStats = new AwardsController();
+        $this->contract = new ContractController();
+        $this->teamBalance = new TeamBalanceController();
+        $this->freeAgent = new FreeAgentController();
+    }
 
     public function getRecentNonTransferTransactions()
     {
@@ -345,7 +362,7 @@ class TransactionsController extends Controller
         }
 
         // Set contract years based on the player's role
-        $contractYears = $this->determineContractYears($player->role);
+        $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
 
         // Update the player's team and contract years
         $player->update([
@@ -363,7 +380,7 @@ class TransactionsController extends Controller
     public function assignPlayerToTeam($player, $team, $currentSeasonId, $seasonId)
     {
         // Determine contract years based on the player's role
-        $contractYears = $this->determineContractYears($player->role);
+        $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
 
         // Team information
         $teamId = $team->id;
@@ -454,6 +471,12 @@ class TransactionsController extends Controller
             ->havingRaw('COUNT(players.id) < 15')
             ->inRandomOrder() // Add randomization
             ->get();
+        
+        $activeTeams = DB::table('teams')
+            ->select('teams.id', 'teams.name')
+            ->groupBy('teams.id', 'teams.name')
+            ->inRandomOrder() // Add randomization
+            ->get();
 
         $teamsCount = $teamsWithFewMembers->count();
         if ($teamsCount === 0) {
@@ -496,6 +519,7 @@ class TransactionsController extends Controller
             $usedPlayerIds = []; // Keep track of already-assigned players
 
             foreach ($teamsWithFewMembers as $team) {
+ 
                 $teamPosCounts = $this->getTeamPositionCounts($team->id);
                 $currentPlayerCount = $team->player_count;
 
@@ -503,7 +527,7 @@ class TransactionsController extends Controller
                 foreach ($minimumPositionCounts as $position => $minRequired) {
                     while (($teamPosCounts[$position] ?? 0) < $minRequired && $currentPlayerCount < 15) {
                         // Get the best available player for the current position
-                        $player = $this->getBestAvailableFreeAgent($position, $usedPlayerIds);
+                        $player = $this->freeAgent->getBestAvailableFreeAgent($position, $usedPlayerIds);
                         if (!$player) break;
 
                         // Assign player to team
@@ -517,7 +541,7 @@ class TransactionsController extends Controller
                 // Fill remaining roster spots with best available players
                 while ($currentPlayerCount < 15) {
                     // Get the best available player (no position requirement)
-                    $player = $this->getBestAvailableFreeAgent('SG', $usedPlayerIds);
+                    $player = $this->freeAgent->getBestAvailableFreeAgent('SG', $usedPlayerIds);
                     if (!$player) break;
 
                     // Assign player to team
@@ -528,7 +552,13 @@ class TransactionsController extends Controller
                     $usedPlayerIds[] = $player->id; // Mark as used
                     $currentPlayerCount++;
                 }
+
+                // $this->teamBalance->fixTeamPositionBalance($team->id);
             }
+
+            // foreach($activeTeams as $team){
+            //     $this->teamBalance->fixTeamPositionBalance($team->id,true);
+            // }
 
             // Final check for incomplete teams
             $incompleteTeams = DB::table('teams')
@@ -628,6 +658,8 @@ class TransactionsController extends Controller
                 $usedPlayerIds[] = $player->id;
                 $currentPlayerCount++;
             }
+
+            $this->teamBalance->fixTeamPositionBalance($team->id);
         }
 
         return response()->json([
@@ -686,7 +718,7 @@ class TransactionsController extends Controller
      */
     private function assignPlayerWithTransaction($player, $team, $currentSeasonId, $seasonId)
     {
-        $contractYears = $this->determineContractYears($player->role);
+        $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
         $teamId = $team->id;
         $teamName = $team->name;
 
@@ -791,7 +823,8 @@ class TransactionsController extends Controller
     {
         $seasonId = get_current_season_id();
         $teams = DB::table('teams')->pluck('id');
-        $storeStats = new AwardsController; // Instantiate once outside the loop
+        // use the shared AwardsController instance instead of creating a new one here
+        // $storeStats = new AwardsController; // removed
 
         foreach ($teams as $teamId) {
             DB::beginTransaction();
@@ -836,7 +869,7 @@ class TransactionsController extends Controller
                         ->update(['role' => $newRole]);
 
                     // Store player stats for the next season
-                    $storeStats->storePlayerNextSeasonStats($teamId, $player->id);
+                    $this->storeStats->storePlayerNextSeasonStats($teamId, $player->id);
                 }
 
                 // Commit the transaction for this team
@@ -872,8 +905,8 @@ class TransactionsController extends Controller
                     ->get();
 
                 foreach ($allPlayersStats as $playerStat) {
-                    $storeStats = new AwardsController;
-                    $storeStats->storePlayerNextSeasonStats($teamId, $playerStat->id);
+                    // use shared AwardsController instance
+                    $this->storeStats->storePlayerNextSeasonStats($teamId, $playerStat->id);
                 }
 
                 DB::commit();
@@ -885,97 +918,5 @@ class TransactionsController extends Controller
         }
 
         return true;
-    }
-
-
-    private function determineContractYears($role)
-    {
-        switch ($role) {
-            case 'star player':
-                return rand(3, 7);
-            case 'all star':
-                return rand(3, 5);
-            case 'starter':
-                return rand(1, 5);
-            case 'role player':
-                return rand(1, 3);
-            case 'bench':
-                return rand(1, 2);
-            default:
-                return 1;
-        }
-    }
-
-    //getFreeAgentsByPositionAndCompositeScore
-    private function getBestAvailableFreeAgent($position, $usedPlayerIds)
-    {
-        $query = Player::select(
-            'players.*',
-            'teams.acronym as drafted_team',
-            DB::raw("(
-                    SELECT GROUP_CONCAT(CONCAT(award_name, ' (Season ', season_id, ')') SEPARATOR ', ')
-                    FROM season_awards
-                    WHERE season_awards.player_id = players.id
-                ) as awards"),
-            DB::raw("(
-                    SELECT CONCAT('Finals MVP (Season ', seasons.id, ')')
-                    FROM seasons
-                    WHERE seasons.finals_mvp_id = players.id
-                    ORDER BY seasons.id DESC
-                    LIMIT 1
-                ) as finals_mvp"),
-            DB::raw("(
-                    CASE WHEN EXISTS (
-                        SELECT 1 FROM seasons WHERE seasons.finals_mvp_id = players.id
-                    ) THEN 1 ELSE 0 END
-                ) as is_finals_mvp"),
-            DB::raw("(
-                    SELECT GROUP_CONCAT(seasons.name SEPARATOR ', ')
-                    FROM seasons
-                    WHERE seasons.finals_mvp_id = players.id
-                ) as finals_mvp_seasons")
-        )
-            ->where('players.contract_years', 0) // Only free agents
-            ->where('players.is_active', 1) // Only active players
-            ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id');
-
-        if ($position) {
-            $query->where('players.position', 'LIKE', "%$position%");
-        }
-
-        if (!empty($usedPlayerIds)) {
-            $query->whereNotIn('players.id', $usedPlayerIds);
-        }
-
-        $query->orderByRaw("
-            LENGTH(awards) DESC,
-            is_finals_mvp DESC,
-            FIELD(role, 'star player', 'all star', 'starter', 'role player', 'bench')
-        ");
-
-        return $query->first();
-    }
-
-    private function getFreeAgentsByCompositeScore($currentSeasonId)
-    {
-        $freeAgents = Player::select(
-            'players.*',
-            'teams.acronym as drafted_team',
-            DB::raw("(SELECT GROUP_CONCAT(CONCAT(award_name, ' (Season ', season_id, ')') SEPARATOR ', ') FROM season_awards WHERE season_awards.player_id = players.id) as awards"),
-            DB::raw("(SELECT  CONCAT('Finals MVP (Season ', seasons.id, ')')  FROM seasons WHERE seasons.finals_mvp_id = players.id LIMIT 1) as finals_mvp"),
-            DB::raw("CASE WHEN players.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = players.id) THEN 1 ELSE 0 END as is_finals_mvp"),
-            DB::raw("(SELECT GROUP_CONCAT(seasons.name SEPARATOR ', ') FROM seasons WHERE seasons.finals_mvp_id = players.id) as finals_mvp_seasons")
-        )
-            ->where('players.contract_years', 0)
-            ->where('players.is_active', 1)
-            ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id'); // Join teams on players.drafted_team_id
-
-        $freeAgents->orderByRaw("
-            LENGTH(awards) DESC,
-            is_finals_mvp DESC,
-            FIELD(role, 'star player','all star', 'starter', 'role player', 'bench')
-        ");
-
-        return  $freeAgents->get();
     }
 }

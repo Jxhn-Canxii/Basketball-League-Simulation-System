@@ -127,38 +127,116 @@ class ConferenceController extends Controller
                 ->where('ps.team_id', $team->team_id)
                 ->where('p.draft_id', $seasonId) // Only rookies drafted in this season
                 ->where('ps.season_id', $seasonId)
-                ->select('p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
+                ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
                 ->orderByDesc('ps.eff')
                 ->get();
 
-            // Get best player by highest eff
-            $bestPlayer = DB::table('players as p')
+            $topPlayers = DB::table('players as p')
                 ->join('player_season_stats as ps', 'p.id', '=', 'ps.player_id')
                 ->where('ps.team_id', $team->team_id)
                 ->where('ps.season_id', $seasonId)
-                ->select('p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game', 'ps.eff')
+                ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
                 ->orderByDesc('ps.eff')
-                ->first();
+                ->limit(3)
+                ->get();
+            
+            $injuredPlayers = DB::table('players as p')
+                ->join('player_season_stats as ps', 'p.id', '=', 'ps.player_id')
+                ->where('ps.team_id', $team->team_id)
+                ->where('ps.season_id', $seasonId)
+                ->where('p.is_injured', true)
+                ->select('p.is_injured','p.injury_type','p.injury_recovery_games','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
+                ->orderByDesc('ps.eff')
+                ->get();
+
+            $newPlayers = DB::table('players as p')
+                ->join('player_season_stats as ps', 'p.id', '=', 'ps.player_id')
+                ->where('ps.team_id', $team->team_id) // Filter by the team
+                ->where('ps.season_id', $seasonId) // Filter by the current season
+                ->whereNotExists(function($query) use ($team, $seasonId) {
+                    // Ensure the player hasn't played for this team in any previous season
+                    $query->selectRaw(1)
+                        ->from('player_season_stats as ps2')
+                        ->whereColumn('ps2.player_id', 'ps.player_id')
+                        ->where('ps2.team_id', $team->team_id)
+                        ->where('ps2.season_id', '<', $seasonId); // Check for previous seasons
+                })
+                ->groupBy('p.id') // Group by player
+                ->havingRaw('COUNT(ps.id) = 1') // Ensure only players with 1 stat entry for this season and team
+                ->distinct() // Ensure distinct players
+                ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
+                ->orderByDesc('ps.eff') // Order by player efficiency
+                ->get();
+
+
+            // Get best player by highest eff
+            // $bestPlayer = DB::table('players as p')
+            //     ->join('player_season_stats as ps', 'p.id', '=', 'ps.player_id')
+            //     ->where('ps.team_id', $team->team_id)
+            //     ->where('ps.season_id', $seasonId)
+            //     ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game', 'ps.eff')
+            //     ->orderByDesc('ps.eff')
+            //     ->first();
 
             // Format rookies as "Name (23.4ppg, 3.1apg, 5.2rpg)"
             $team->rookies = $rookies->map(function ($r) {
+                $isInjured =  $r->is_injured ? 'x' : '';
+
                 return sprintf(
-                    "%s (%.1fppg, %.1fapg, %.1frpg)",
+                    "%s (%.1fppg, %.1fapg, %.1frpg) %s",
                     $r->name,
                     $r->avg_points_per_game,
                     $r->avg_assists_per_game,
-                    $r->avg_rebounds_per_game
+                    $r->avg_rebounds_per_game,
+                    $isInjured,
+                );
+            })->implode('%%');
+            
+            $team->new_players = $newPlayers->map(function ($r) {
+                $isInjured =  $r->is_injured ? 'x' : '';
+                
+                return sprintf(
+                    "%s (%.1fppg, %.1fapg, %.1frpg) %s",
+                    $r->name,
+                    $r->avg_points_per_game,
+                    $r->avg_assists_per_game,
+                    $r->avg_rebounds_per_game,
+                    $isInjured
+                );
+            })->implode('%%');
+
+            $team->top_players = $topPlayers->map(function ($r) {
+                $isInjured =  $r->is_injured ? 'x' : '';
+
+                return sprintf(
+                    "%s (%.1fppg, %.1fapg, %.1frpg) %s",
+                    $r->name,
+                    $r->avg_points_per_game,
+                    $r->avg_assists_per_game,
+                    $r->avg_rebounds_per_game,
+                    $isInjured,
+                );
+            })->implode('%%');
+
+            $team->injured_players = $injuredPlayers->map(function ($r) {
+                $injuryType = str_replace('_',' ',$r->injury_type);
+
+                return sprintf(
+                    "%s - %s | eta %s days",
+                    $r->name,
+                    $injuryType,
+                    $r->injury_recovery_games,
                 );
             })->implode('%%');
 
             // Format best player as "Name (23.4ppg, 3.1apg, 5.2rpg)"
-            $team->best_player = $bestPlayer ? sprintf(
-                "%s (%.1fppg, %.1fapg, %.1frpg)",
-                $bestPlayer->name,
-                $bestPlayer->avg_points_per_game,
-                $bestPlayer->avg_assists_per_game,
-                $bestPlayer->avg_rebounds_per_game
-            ) : null;
+            // $team->best_player = $bestPlayer ? sprintf(
+            //     "%s (%.1fppg, %.1fapg, %.1frpg)",
+            //     $bestPlayer->name,
+            //     $bestPlayer->avg_points_per_game,
+            //     $bestPlayer->avg_assists_per_game,
+            //     $bestPlayer->avg_rebounds_per_game
+            // ) : null;
 
             return $team;
         });

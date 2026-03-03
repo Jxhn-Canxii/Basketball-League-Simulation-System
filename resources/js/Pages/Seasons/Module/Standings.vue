@@ -376,14 +376,14 @@ const teamAchievements = (team) => {
     achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-users text-yellow-200'></span><span class='font-semibold text-indigo-100'>Estimated Fans:</span> <span class='text-indigo-100'>${numberFormatter(team.estimated_fans)} Fans</span></div>`;
 
   // Best player block
-  let bestPlayerBlock = '';
-  if (team.best_player) {
-    bestPlayerBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
-      <span class='fa fa-user text-yellow-200'></span>
-      <span class='font-semibold text-indigo-100'>Best Player:</span>
-      <span class='text-indigo-100'>${team.best_player}</span>
-    </div>`;
-  }
+  // let bestPlayerBlock = '';
+  // if (team.best_player) {
+  //   bestPlayerBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
+  //     <span class='fa fa-user text-yellow-200'></span>
+  //     <span class='font-semibold text-indigo-100'>Best Player:</span>
+  //     <span class='text-indigo-100'>${team.best_player}</span>
+  //   </div>`;
+  // }
 
   // Rookies block
   let rookiesBlock = '';
@@ -400,13 +400,55 @@ const teamAchievements = (team) => {
     }
   }
 
-  if (!achievementsRows && !bestPlayerBlock && !rookiesBlock) return '';
+  let newPlayersBlock = '';
+  if (team.new_players) {
+    const newPlayersArr = team.new_players.split('%%').map(r => r.trim()).filter(r => r);
+    if (newPlayersArr.length > 0) {
+      newPlayersBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
+        <span class='fa fa-user-plus text-green-200'></span>
+        <span class='font-semibold text-indigo-100'>New Players:</span>
+      </div>
+      <div class='ml-7 flex flex-col gap-1'>
+        ${newPlayersArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
+      </div>`;
+    }
+  }
+
+  let topPlayersBlock = '';
+  if(team.top_players) {
+    const topPlayersArr = team.top_players.split('%%').map(r => r.trim()).filter(r => r);
+    if (topPlayersArr.length > 0) {
+      topPlayersBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
+        <span class='fa fa-user-secret text-yellow-200'></span>
+        <span class='font-semibold text-indigo-100'>Top 3 Players:</span>
+      </div>
+      <div class='ml-7 flex flex-col gap-1'>
+        ${topPlayersArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
+      </div>`;
+    }
+  }
+
+let injuryBlock = '';
+  if (team.rookies) {
+    const injuryArr = team.injured_players.split('%%').map(r => r.trim()).filter(r => r);
+    if (injuryArr.length > 0) {
+      injuryBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
+        <span class='fa fa-ambulance text-red-500'></span>
+        <span class='font-semibold text-indigo-100'>Injury Report:</span>
+      </div>
+      <div class='ml-7 flex flex-col gap-1'>
+        ${injuryArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
+      </div>`;
+    }
+  }
+
+  if (!achievementsRows && !rookiesBlock  && !newPlayersBlock && !topPlayersBlock && !injuryBlock) return '';
 
   // Use team colors for gradient bg
   const primary = team.primary_color ? formatHex(team.primary_color) : '#312e81';
   const secondary = team.secondary_color ? formatHex(team.secondary_color) : '#6366f1';
   const cardBg = `background: linear-gradient(135deg, ${primary} 60%, ${secondary} 100%)`;
-
+  // ${bestPlayerBlock}
   return `
     <div class="p-3 text-sm rounded-lg shadow-lg border border-indigo-700 inline-block w-auto max-w-[100vw]" style="${cardBg}">
       <h3 class="text-lg font-bold mb-2 flex items-center gap-2 text-yellow-200">
@@ -415,8 +457,10 @@ const teamAchievements = (team) => {
       </h3>
       <div class="grid grid-cols-1 gap-1">
         ${achievementsRows}
-        ${bestPlayerBlock}
+        ${topPlayersBlock}
+        ${newPlayersBlock}
         ${rookiesBlock}
+        ${injuryBlock}
       </div>
     </div>
   `;

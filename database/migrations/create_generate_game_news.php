@@ -20,11 +20,6 @@ return new class extends Migration
             $table->string('title', 255);
             $table->text('content');
             $table->timestamps();
-
-            // Foreign key constraints
-            $table->foreign('game_id')->references('id')->on('games')->onDelete('cascade');
-            $table->foreign('season_id')->references('id')->on('seasons')->onDelete('cascade');
-            $table->foreign('winner_id')->references('id')->on('teams')->onDelete('set null');
         });
     }
 

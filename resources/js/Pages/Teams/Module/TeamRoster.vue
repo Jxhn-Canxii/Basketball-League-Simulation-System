@@ -290,9 +290,17 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border" :title="'Draft class: '+player.draft_class">
                                         {{ player.draft_status == 'Undrafted' ? 'S'+player.draft_id+' '+player.draft_status : player.draft_status + (player.drafted_team ? ' ('+player.drafted_team+ ')' : '')}}
+                                        
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
-                                        {{ player.name }}<sup>{{ player.age }}</sup>
+                                        <span class="text-xs flex items-center ml-2">
+                                            {{ player.name }}<sup>{{ player.age }}</sup>
+                                            <i
+                                                :class="getMoraleIcon(player.morale)"
+                                                :title="`${getMoraleTitle(player.morale)} ${player.morale}%`"
+                                                style="font-size: 1em;"
+                                            ></i>
+                                        </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.position }}
@@ -1418,6 +1426,21 @@ const playerStatusClass = (isActive) => {
 const playerStatusText = (isActive) => {
     return isActive ? "Active" : "Waived";
 };
+
+const getMoraleIcon = (chemistry) => {
+  if (chemistry >= 80) return 'fa-solid fa-face-laugh-beam text-yellow-500';
+  if (chemistry >= 60) return 'fa-solid fa-face-smile text-green-500';
+  if (chemistry >= 40) return 'fa-solid fa-face-meh text-gray-500';
+  if (chemistry >= 20) return 'fa-solid fa-face-frown text-orange-500';
+  return 'fa-solid fa-face-angry text-red-600';
+}
+const getMoraleTitle = (chemistry) => {
+  if (chemistry >= 80) return 'Locked In';
+  if (chemistry >= 60) return 'Confident';
+  if (chemistry >= 40) return 'Steady';
+  if (chemistry >= 20) return 'Uncertain';
+  return 'Frustrated';
+}
 </script>
 
 <style scoped>

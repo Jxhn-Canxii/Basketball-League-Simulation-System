@@ -11,11 +11,13 @@ use App\Http\Controllers\ConferenceController;
 use App\Http\Controllers\PlayersController;
 use App\Http\Controllers\CoachController;
 use App\Http\Controllers\NewsController;
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\TransactionsController;
 use App\Http\Controllers\RatingsController;
 use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\SimulateController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\LeadersController;
@@ -85,13 +87,14 @@ Route::middleware('auth')->group(function () {
     Route::prefix('simulate/')->group(function(){
         Route::post('game-playoff', [SimulateController::class, 'simulatePlayoff'])->name('game.simulate.playoff');
         Route::post('game-regular', [SimulateController::class, 'simulateRegular'])->name('game.simulate.regular');
-        Route::post('get-round-schedule-ids', [SimulateController::class, 'getScheduleIds'])->name('game.per.round');
+        Route::post('get-round-schedule-ids', [ScheduleController::class, 'getScheduleIds'])->name('game.per.round');
         Route::post('game-per-round', [SimulateController::class, 'simulatePerRound'])->name('game.simulate.round');
 
         Route::post('game-playoff-series', [SimulateController::class, 'simulatePlayoffSeries'])->name('game.simulate.playoff.series');
         
         Route::get('testroles', [SimulateController::class, 'testRoleAssignment'])->name('test.roles');
-        Route::get('test-free-agent/{position}', [SimulateController::class, 'getBestFreeAgent'])->name('get.free.agent');
+        Route::get('test-free-agent/{position}', [FreeAgentController::class, 'getBestFreeAgent'])->name('get.free.agent');
+        
     });
 
     Route::prefix('schedule/')->group(function(){
@@ -158,7 +161,7 @@ Route::middleware('auth')->group(function () {
         Route::post('seasons-per-league-paginate', [SeasonsController::class, 'seasonsPerLeaguePaginate'])->name('league.seasons.paginate');
         Route::post('dropdown-season', [SeasonsController::class, 'getSeasonsDropdown'])->name('seasons.dropdown');
 
-         Route::post('seasons-storyline', [SeasonsController::class, 'seasonStoryLine'])->name('seasons.storyline');
+        Route::post('seasons-storyline', [SeasonsController::class, 'seasonStoryLine'])->name('seasons.storyline');
 
     });
 
@@ -190,6 +193,7 @@ Route::middleware('auth')->group(function () {
     Route::prefix('games/')->group(function(){
         Route::post('box-score', [GameController::class, 'getBoxScore'])->name('game.boxscore');
     });
+
     Route::prefix('coaches/')->group(function(){
         Route::get('', [CoachController::class, 'index'])->name('coaches.index');
         Route::post('list-coaches', [CoachController::class, 'listCoaches'])->name('coaches.list');
@@ -197,8 +201,8 @@ Route::middleware('auth')->group(function () {
         Route::get('assign-coach-teams', [CoachController::class, 'assignFreeAgentCoaches'])->name('assign.coach.teams');
         Route::get('end-coach-signings', [CoachController::class, 'endCoachSignings'])->name('end.coach.signings');
         Route::get('duplicate-coaches', [CoachController::class, 'fixDuplicateCoaches'])->name('check.duplicate.team.coach');
-       
     });
+
     Route::prefix('players/')->group(function(){
         Route::get('', [PlayersController::class, 'index'])->name('players.index');
         Route::get('experience', [PlayersController::class, 'experience'])->name('experience.index');
@@ -274,9 +278,15 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('tests/')->group(function(){
-       Route::get('waive/{team_id}', [TestController::class, 'waiveTeam']);
-       Route::get('waive-scan', [TestController::class, 'waiveScan']);
-       Route::get('redis-test', [TestController::class, 'redisTest']);
+        Route::get('waive/{team_id}', [TestController::class, 'waiveTeam']);
+        Route::get('waive-scan', [TestController::class, 'waiveScan']);
+        Route::get('redis-test', [TestController::class, 'redisTest']);
+        Route::get('team-balance-test', [TestController::class, 'testTeamBalance']);
+        Route::get('team-chemistry-test', [TestController::class, 'testChemistryCalculations']);
+        Route::get('game-streak-test/{game_id}', [TestController::class, 'testGameStreak']);
+        Route::get('archive-test',[ArchiveController::class, 'archiveDecadeStats']);
+        
+
     });
 
 });

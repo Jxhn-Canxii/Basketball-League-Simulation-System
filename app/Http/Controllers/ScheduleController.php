@@ -13,12 +13,23 @@ use App\Models\Schedules;
 use App\Models\Conference;
 use App\Models\Player;
 use App\Models\PlayerGameStats;
-use App\Http\Controllers\AwardsController;
-use App\Http\Controllers\PlayersController;
+use App\Http\Controllers\TeamStreakController;
+use App\Http\Controllers\HelperController;
+use App\Http\Controllers\ArchiveController;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleController extends Controller
 {
+    protected $archive;
+    protected $helper;
+    protected $streak;
+
+    public function __construct(){
+
+        $this->archive = new ArchiveController();
+        $this->helper = new HelperController();
+        $this->streak = new TeamStreakController();
+    }
     //
     public function index()
     {
@@ -26,6 +37,86 @@ class ScheduleController extends Controller
             'status' => session('status'),
         ]);
     }
+
+    public function getScheduleIds(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'season_id' => 'required|exists:seasons,id',
+            'round' => 'required',
+        ]);
+
+        $seasonId = $request->season_id;
+        $round = $request->round;
+
+        // Get the latest season status (assuming you store this status in the 'seasons' table)
+        $latestSeasonStatus = $this->helper->seasonStatus($seasonId);
+
+        // Get the number of rounds that are already simulated (status != 2)
+        $simulatedRounds = $this->helper->simulatedRounds($seasonId);
+
+        // Get the total number of rounds in the season
+        $totalRounds = $this->helper->totalRounds($seasonId);
+
+        // Retrieve schedule records for the given season and round
+        $schedules = Schedules::where('season_id', $seasonId)
+            ->where('round', $round)
+            ->where('status', 1)
+            ->orderBy('id')
+            ->select('id', 'conference_id')
+            ->get();
+
+        // Check if half of the rounds are simulated
+        $now = now();
+        $currentHour = $now->hour;
+
+        // // Check if the time is between 6 PM (18) and 6 AM (6)
+        // $isTimeRestricted = ($currentHour >= 18 || $currentHour < 6);
+
+        $tradeDeadlineThreshold = ($totalRounds / 2) - 2;
+
+        $isTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
+
+        if ($isTradeDeadline) {
+            // Update the season status to indicate trade deadline
+            DB::table('seasons')
+                ->where('id', $seasonId)
+                ->update(['status' => config('timeline.in_season_trade')]);
+
+            $isTradeDeadline = false; // Reset after executing
+        }
+
+        // Group by conference_id
+        $groupedByConference = $schedules->groupBy('conference_id');
+
+        // Interleave results to alternate by conference
+        $interleaved = [];
+        $hasData = true;
+
+        while ($hasData) {
+            $hasData = false;
+
+            foreach ($groupedByConference as $conferenceId => $games) {
+                if (!$games->isEmpty()) {
+                    $interleaved[] = $games->shift(); // Take the first available game
+                    $hasData = true;
+                }
+            }
+        }
+
+        // Count distinct conferences in this round
+        $conferenceCount = $groupedByConference->count();
+
+        return response()->json([
+            'schedule_ids' => $interleaved,
+            'conference_count' => $conferenceCount,
+            'is_trade_deadline' => $isTradeDeadline, // Add trade deadline info
+            'simulated_rounds' => $simulatedRounds,
+            'total_rounds' => $totalRounds,
+            'status' => $latestSeasonStatus,
+        ]);
+    }
+
     public function list(Request $request)
     {
         // Fetch schedules with teams' data for the specified league
@@ -94,7 +185,11 @@ class ScheduleController extends Controller
             ]);
 
             // Store team season info (make sure this throws exception if it fails)
-            $this->storeTeamSeasonInfo();
+            if($nextSeasonid == 1){
+                $this->streak->insertTeamStreak();
+            }
+            
+            $this->archive->storeTeamSeasonInfo();
 
             DB::commit();
 
@@ -514,53 +609,6 @@ class ScheduleController extends Controller
                 'message' => 'Schedule failed',
                 'error' => $e->getMessage(),
             ], 500);
-        }
-    }
-
-    private function storeTeamSeasonInfo()
-    {
-        $latestSeasonId = get_current_season_id();
-        $previousSeasonId = $latestSeasonId - 1;
-
-        $teamsCoach = DB::table('teams')->get();
-
-        // Get the previous season's champion team_id
-        $prevChampion = DB::table('seasons')
-            ->where('id', $previousSeasonId)
-            ->value('finals_winner_id');
-
-        foreach ($teamsCoach as $team) {
-            try {
-                // Ensure necessary fields are present
-                if (!$team->id || !$latestSeasonId) {
-                    throw new \Exception("Missing team ID or season ID.");
-                }
-
-                $coach = DB::table('coaches')->where('id', $team->coach_id)->first();
-                $coachIq = $coach ? $coach->coach_iq : 0;
-                $chemistry = 75;
-                $conferenceId = $team->conference_id ?? 0;
-
-                $isDefendingChampion = $team->id == $prevChampion ? 1 : 0;
-                // Perform the insert/update
-                DB::table('team_season_info')->updateOrInsert(
-                    [
-                        'team_id' => $team->id,
-                        'season_id' => $latestSeasonId,
-                    ],
-                    [
-                        'coach_id' => $team->coach_id,
-                        'coach_iq' => $coachIq,
-                        'chemistry' => $chemistry,
-                        'conference_id' => $conferenceId,
-                        'is_defending_champion' => $isDefendingChampion,
-                        'updated_at' => now(),
-                    ]
-                );
-            } catch (\Exception $e) {
-                // Optional: log individual team errors
-                throw new \Exception("Failed to store team season info for team ID {$team->id}: " . $e->getMessage());
-            }
         }
     }
 

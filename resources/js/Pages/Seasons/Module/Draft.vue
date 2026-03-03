@@ -12,7 +12,7 @@
             <!-- <button type="button" @click="fetchDraftResults">Yack</button> -->
             <button
                 v-if="!isHide"
-                @click.prevent="addMultiplePlayers(200)"
+                @click.prevent="addMultiplePlayers(400)"
                 class="px-2 py-2 bg-green-500 rounded font-bold text-md float-end text-white shadow"
             >
                 <i class="fa fa-user"></i> Add Rookie Player From Api

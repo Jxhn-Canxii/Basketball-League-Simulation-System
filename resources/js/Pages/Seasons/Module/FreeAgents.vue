@@ -33,12 +33,12 @@
                         >
                             <i class="fa fa-user"></i> Add Rookie Player
                         </button> -->
-                        <button
+                        <!-- <button
                             @click.prevent="addMultiplePlayers(1400)"
                             class="px-4 py-2 bg-green-700 text-white rounded mb-4 text-sm"
                         >
                             <i class="fa fa-user"></i> Add Undrafted Rookie
-                        </button>
+                        </button> -->
                     </div>
                 </div>
                  <input

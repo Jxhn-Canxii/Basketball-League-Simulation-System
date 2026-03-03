@@ -15,13 +15,13 @@ return [
             'series_length' => 3, // Best-of-3
         ],
         'quarter_finals' => [
-            'series_length' => 3, // Best-of-5
-        ],
-        'semi_finals' => [
             'series_length' => 5, // Best-of-5
         ],
-        'interconference_semi_finals' => [
-            'series_length' => 5, // Best-of-7
+        'semi_finals' => [ // conference finals
+            'series_length' => 7, // Best-of-7
+        ],
+        'interconference_semi_finals' => [ // big 4
+            'series_length' => 7, // Best-of-7
         ],
         'finals' => [
             'series_length' => 7, // Best-of-7

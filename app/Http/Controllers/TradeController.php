@@ -7,9 +7,17 @@ ini_set('max_execution_time', 0); // Unlimited execution time
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
+use App\Http\Controllers\ArchiveController; // added import
 
 class TradeController extends Controller
 {
+    protected $archive;
+
+    public function __construct()
+    {
+        $this->archive = new ArchiveController();
+    }
+
     public function getPendingTradeProposals(Request $request)
     {
         $request->validate([
@@ -293,6 +301,7 @@ class TradeController extends Controller
             //return false; // Indicate failure
         }
     }
+
     public function endInSeasonTradeWindow()
     {
         $latestSeasonId = get_current_season_id();
@@ -303,20 +312,25 @@ class TradeController extends Controller
 
         return response()->json(['message' => 'Trade window ended!']);
     }
+
     public function endOffSeasonTradeWindow()
     {
         $latestSeasonId = get_current_season_id();
         $storyline = $this->upsertCurrentSeasonStoryline();
 
-        if ($storyline) {
+        if($storyline) {
+            $this->archive->archiveDecadeStats();
+
             DB::table('seasons')
                 ->where('id',  $latestSeasonId)
                 ->update(['status' => config('timeline.off_season_trade')]);
-
+                
             return response()->json(['message' => 'Trade window ended!']);
         }
+
         return  $storyline;
     }
+
     public function generateTradeProposals(Request $request)
     {
         $request->validate([
@@ -449,26 +463,26 @@ class TradeController extends Controller
         $previousSeasonId = get_previous_season_id(); // Assuming seasons are sequential
 
         // Get top 6 teams per conference
-        $topTeams = DB::table('standings_snapshots')
-            ->where('season_id', $latestSeasonId)
-            ->where('conference_rank', '<=', 6) // Top 6 teams per conference
-            ->pluck('team_id')
-            ->toArray();
+        // $topTeams = DB::table('standings_snapshots')
+        //     ->where('season_id', $latestSeasonId)
+        //     ->where('conference_rank', '<=', 6) // Top 6 teams per conference
+        //     ->pluck('team_id')
+        //     ->toArray();
 
-        // Get star players and all-stars from top 6 teams in each conference
-        $starPlayers = DB::table('players')
-            ->whereIn('team_id', $topTeams)
-            ->whereIn('players.role', ['star player', 'all star', 'starter']) // Filter by role
-            ->pluck('players.id')
-            ->toArray();
+        // // Get star players and all-stars from top 6 teams in each conference
+        // $starPlayers = DB::table('players')
+        //     ->whereIn('team_id', $topTeams)
+        //     ->whereIn('players.role', ['star player', 'all star', 'starter']) // Filter by role
+        //     ->pluck('players.id')
+        //     ->toArray();
 
         // Fetch latest player stats, excluding star players and all-stars from top 6 teams
         $latestStats = DB::table('player_season_stats')
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->where('players.team_id', $teamId)
-            ->whereNotIn('players.id', $starPlayers) // Exclude stars and all-stars
-            ->where('players.is_injured', 0)
-            ->where('players.contract_years', '<=', 2)
+            // ->whereNotIn('players.id', $starPlayers) // Exclude stars and all-stars
+            // ->where('players.is_injured', 0)
+            ->where('players.contract_years', '<=', 5)
             ->where('player_season_stats.season_id', $latestSeasonId)
             ->select(
                 'players.id as player_id',

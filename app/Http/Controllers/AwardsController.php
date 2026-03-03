@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
-
 class AwardsController extends Controller
 {
     public function index()
@@ -442,6 +441,9 @@ class AwardsController extends Controller
                 $data
             );
 
+            DB::table('players')->where('id', $player->id)->update([
+                'morale' => 75,
+            ]);
             //return true;
             // if(!$insertRecords){
             //     return response()->json(['message' => "Failed storing stats for Player ID: {$playerId}",'data' => $data]);

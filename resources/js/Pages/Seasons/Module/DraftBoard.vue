@@ -35,6 +35,7 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -47,6 +48,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border"  :class="playerSigningStatus(player.drafted_team_id,player.signed_team_id)">{{ player.signed_team_name }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -65,6 +67,7 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -77,6 +80,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :class="playerSigningStatus(player.drafted_team_id,player.signed_team_id)">{{ player.signed_team_name }}</td>
                         </tr>
                     </tbody>
                 </table>
@@ -130,6 +134,22 @@ const fetchDraftResults = async () => {
         console.error("Error fetching draft history:", error);
     }
 };
+
+const playerSigningStatus = (drafted_team,signed_team) => {
+
+    const statusClass = [
+        'bg-green-500',
+        'bg-red-500',
+        'bg-gray-500'
+    ];
+
+    if(signed_team == null) return statusClass[2];
+    if(signed_team != null && drafted_team != signed_team) return statusClass[1];
+    
+    return statusClass[0];
+    
+
+}
 </script>
 
 <style scoped>

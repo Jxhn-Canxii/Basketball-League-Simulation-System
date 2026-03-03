@@ -20,7 +20,7 @@
                 {{ team_info.teams.city ?? "-" }} {{ team_info.teams.team_name ?? "-" }} ({{ team_info.teams.acronym ?? "-" }})
             </h2>
             <span class="text-sm text-gray-100">
-                Coach: {{ team_info.teams.coach_name }} ({{ team_info.teams.coach_winning }}%)
+                Coach: {{ team_info.teams.coach_name }} ({{ team_info.teams.coach_winning }}%) | {{ team_info.chemistry.coach_experience }} yrs.
             </span>
         </div>
 
@@ -59,6 +59,12 @@
             <span class="flex items-center space-x-1 text-blue-300">
                 <i class="fas fa-flask"></i>
                 <span>{{ team_info.teams.chemistry }}</span>
+            </span>
+
+             <!-- Chemistry -->
+            <span class="flex items-center space-x-1 text-blue-300">
+                <i class="fas fa-users"></i>
+                <span>{{ team_info.chemistry.average_age }}</span>
             </span>
         </div>
     </div>
