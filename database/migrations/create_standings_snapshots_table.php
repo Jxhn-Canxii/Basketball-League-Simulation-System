@@ -26,8 +26,12 @@ return new class extends Migration
             $table->unsignedInteger('losses')->default(0);
             $table->unsignedInteger('total_home_score')->default(0);
             $table->unsignedInteger('total_away_score')->default(0);
+            $table->unsignedInteger('total_points_for')->default(0);
+            $table->unsignedInteger('total_points_against')->default(0);
             $table->decimal('home_ppg', 5, 2)->nullable(); // Points per game, e.g., 100.50
             $table->decimal('away_ppg', 5, 2)->nullable(); // Points per game, e.g., 98.75
+            $table->unsignedInteger('total_points_for_avg')->default(0);
+            $table->unsignedInteger('total_points_against_avg')->default(0);
             $table->integer('score_difference')->default(0); // Can be positive or negative
             $table->unsignedInteger('conference_rank');
             $table->unsignedInteger('overall_rank');
