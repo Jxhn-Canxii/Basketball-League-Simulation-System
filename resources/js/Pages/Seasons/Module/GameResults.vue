@@ -874,7 +874,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div v-else class="text-white text-xs">
+                                <div v-else class="text-white text-sm text-wrap">
                                     <p>{{ gameNews.title }}</p>   
                                 </div>
                             </div>
