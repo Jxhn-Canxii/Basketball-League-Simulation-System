@@ -140,8 +140,8 @@
                                     >6</span
                                 >
                             </li>
-                             <li
-                                v-if="season_id > 1"
+                            <li
+                              
                                 @click="changeTab('News')"
                                 :class="{
                                     'text-yellow-500 border-b-2 border-yellow-500':
@@ -165,7 +165,6 @@
                                 >
                             </li>
                             <li
-                                v-if="season_id > 1"
                                 @click="changeTab('Transactions')"
                                 :class="{
                                     'text-yellow-500 border-b-2 border-yellow-500':
