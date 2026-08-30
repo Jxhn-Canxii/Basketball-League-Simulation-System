@@ -2,7 +2,7 @@
     <!-- this div will be at the bottom the top div will create an ilussion of overlay make the standings and top10 players card float at the center-->
     <div>
         <div
-            class="w-full flex overflow-x-auto border-b-2 bg-black rounded"
+            class="w-full flex justify-between overflow-x-auto border-b-2 bg-black rounded"
         >
             <ul class="flex flex-wrap">
                 <li
@@ -37,6 +37,9 @@
                     <!-- Warning Badge Notification Counter -->
                 </li>
             </ul>
+            <div class="float-right py-2">
+                <button @click.prevent="boostMode = !boostMode" class="rounded p-2 text-white rounded text-sm" :class="boostMode ? 'bg-red-500' : 'bg-gray-200'"><i class="fa fa-rocket"></i> Boost!</button>
+            </div>
         </div>
         <div
             class="grid grid-cols-1 md:grid-cols-7 gap-6 p-2 bg-black rounded"
@@ -49,7 +52,7 @@
 
                 <small class="text-white mt-3">Transaction ID:{{ updateKey }} || Conference ID: {{ selectedConference }} || Round {{ currentRound ?? 0 }} || Transaction Update: {{ transactionUpdate }}</small>   
                 <!-- <Top15MVPCandidate v-if="activeConferenceTab" :key="updateKey" /> -->
-                <RecentTransactions v-if="seasonStatus < 3" :key="transactionUpdate"/>
+                <RecentTransactions v-if="!boostMode && seasonStatus < 3" :key="transactionUpdate"/>
                 <!-- <Top15MVPCandidate v-if="seasonStatus == 2 && (currentRound % 2 == 0)" :key="currentRound" :current_round="currentRound"/> -->
             </div>
             <!-- Schedule and Results UI (Right Side) -->
@@ -65,7 +68,7 @@
                 :simulate_next="isAutoSimulate"
                 :season_data="season_info" />
                 <br>
-                <Top15MVPCandidate v-if="seasonStatus < 3 && (currentRound % 3 == 0) && currentRound != 0" :key="currentRound" :current_round="currentRound"/>
+                <Top15MVPCandidate v-if="!boostMode && seasonStatus < 3 && (currentRound % 3 == 0) && currentRound != 0" :key="currentRound" :current_round="currentRound"/>
                 <!-- <RecentNews v-if="seasonStatus < 3 && (currentRound % 2 != 0)" :key="updateKey" :season_status="seasonStatus" :season_id="props.season_id"/> -->
             </div>
         </div>
@@ -91,6 +94,8 @@ const isAutoSimulate = ref(false);
 const updateKey = ref(0);
 const selectedConference = ref(1);
 const transactionUpdate = ref(false);
+const boostMode = ref(false);
+
 const props = defineProps({
     season_id: {
         type: [Number,String],

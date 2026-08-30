@@ -117,6 +117,7 @@ class LeaguesController extends Controller
             'player_season_playoff_stats',
             'playoff_series',
             'player_series_appearances',
+            'game_news',
             'standings_snapshots',
             'schedules',
             'seasons',
@@ -126,17 +127,77 @@ class LeaguesController extends Controller
             'trade_logs',
             'team_season_info',
             'trade_proposals',
+            'trade_players',
             'transactions',
         ];
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=0;'); // Disable foreign key checks
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
 
-        foreach ($tables as $table) {
-            DB::table($table)->truncate();
+        try {
+
+            /*
+        |--------------------------------------------------------------------------
+        | Truncate normal tables
+        |--------------------------------------------------------------------------
+        */
+
+            foreach ($tables as $table) {
+
+                if (DB::getSchemaBuilder()->hasTable($table)) {
+                    DB::table($table)->truncate();
+                }
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | Drop all dynamic player_game_stats_batch_N tables
+        |--------------------------------------------------------------------------
+        */
+
+            $databaseName = DB::getDatabaseName();
+
+            $batchTables = DB::table('information_schema.tables')
+                ->where('table_schema', $databaseName)
+                ->where(
+                    'table_name',
+                    'like',
+                    'player_game_stats_batch_%'
+                )
+                ->pluck('table_name');
+
+            foreach ($batchTables as $tableName) {
+
+                /*
+             * Extra safety:
+             * only allow the expected table-name pattern.
+             */
+                if (
+                    preg_match(
+                        '/^player_game_stats_batch_[0-9]+$/',
+                        $tableName
+                    )
+                ) {
+                    DB::statement(
+                        'DROP TABLE IF EXISTS `' .
+                            str_replace('`', '``', $tableName) .
+                            '`'
+                    );
+                }
+            }
+        } finally {
+
+            /*
+        |--------------------------------------------------------------------------
+        | Always re-enable foreign key checks
+        |--------------------------------------------------------------------------
+        */
+
+            DB::statement('SET FOREIGN_KEY_CHECKS=1;');
         }
 
-        DB::statement('SET FOREIGN_KEY_CHECKS=1;'); // Re-enable foreign key checks
-
-        return response()->json(['message' => 'Tables reseted successfully']);
+        return response()->json([
+            'message' => 'Tables reset successfully.',
+            'batch_tables_removed' => $batchTables->count(),
+        ]);
     }
 }
