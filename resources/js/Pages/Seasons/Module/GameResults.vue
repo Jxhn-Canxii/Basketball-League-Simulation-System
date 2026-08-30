@@ -894,8 +894,8 @@
                 </div>
             </div>
         </div>
-        <div class="fixed bottom-0 right-0 bg-gray-900 text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
-            <div class="flex items-center space-x-2">
+        <div class="fixed bottom-0 right-0 bg-transparent text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
+            <div class="flex items-center space-x-2 rounded">
                 <i class="fas fa-clock"></i>
                 
                 <span class="font-mono">{{ formatTime(time) }}</span>
