@@ -1,7 +1,7 @@
 <template>
   <div
     class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border-b-2 border-dashed"
-    v-if="season_info.seasons && season_info.seasons[0].status > 1 && !loading"
+    v-if="season_info.seasons && season_info.seasons[0].status > 2 && !loading"
   >
     <div class="md:col-span-4 overflow-y-auto">
       <div class="flex justify-between" v-if="!isHide">
@@ -73,8 +73,8 @@
 
   <!-- Regular season not finished message -->
   <div
-    class="flex justify-center min-h-screen items-center border-b-2 border-dashed p-4 bg-white"
-    v-if="season_info.seasons && season_info.seasons[0].status == 1 && !loading"
+    class="flex justify-center min-h-screen items-center border-b-2 border-dashed p-4 bg-dark"
+    v-if="season_info.seasons && season_info.seasons[0].status < 3 && !loading"
   >
     <div class="text-center bg-white p-8 rounded-lg shadow-lg border-2 border-red-500">
       <p class="text-red-500 font-bold text-3xl md:text-4xl leading-relaxed mb-4">
@@ -86,7 +86,7 @@
       </p>
       <div class="mt-6">
         <a
-          :href="route('seasons.details', { season_id: props.season_id })"
+          :href="route('seasons.details', { season_id: props.season_id, playoff_type: 2 })"
           class="bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-6 rounded-lg shadow-md focus:outline-none focus:ring-2 focus:ring-red-300"
         >
           Go to Regular Season

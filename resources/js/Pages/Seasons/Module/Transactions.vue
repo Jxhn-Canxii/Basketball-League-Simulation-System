@@ -1,6 +1,6 @@
 <template>
   <div class="bg-black shadow-sm rounded-lg mt-2 overflow-hidden shadow-lg shadow-red-400">
-    <div class="px-4 pb-2 border-b border-gray-200 bg-gray-900" v-if="props.showTitle">
+    <div class="p-2 border-b border-gray-200 bg-gray-900" v-if="props.showTitle">
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-bold text-yellow-500 flex items-center">
           <i class="fas fa-exchange-alt text-red-500 mr-2"></i>

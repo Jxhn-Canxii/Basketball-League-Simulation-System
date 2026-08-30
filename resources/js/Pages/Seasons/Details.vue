@@ -241,13 +241,13 @@
                     </div>
                     <div
                         v-if="currentTab === 'Transactions' && season_id != 0"
-                        class="min-w-full overflow-x-auto"
+                        class="min-w-full overflow-x-auto p-4"
                     >
                         <Transactions :key="season_id" :season_id="season_id" />
                     </div>
                     <div
                         v-if="currentTab === 'News' && season_id != 0"
-                        class="min-w-full overflow-x-auto"
+                        class="min-w-full overflow-x-auto p-4"
                     >
                         <AllNews :key="season_id" :season_id="season_id" />
                     </div>

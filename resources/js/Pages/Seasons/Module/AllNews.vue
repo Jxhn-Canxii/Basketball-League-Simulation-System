@@ -1,6 +1,6 @@
 <template>
-  <div class="bg-black shadow-sm rounded-lg mt-2 overflow-hidden shadow-lg shadow-red-400">
-    <div class="px-4 pb-2 border-b border-gray-200 bg-gray-900">
+  <div class="bg-black shadow-sm rounded-lg mt-2 overflow-hidden shadow-lg p-2">
+    <div class="p-2 border-b border-gray-200 bg-gray-900">
       <div class="flex items-center justify-between">
         <h2 class="text-lg font-bold text-yellow-500 flex items-center">
           <i class="fas fa-newspaper text-red-500 mr-2"></i>
@@ -25,7 +25,7 @@
       <div v-for="news in data?.data" 
            :key="news.id"
            class="p-4 transition-colors">
-        <div class="flex items-start space-x-3">
+        <div class="flex items-start space-x-1">
             <GameNews :key="news.id" :data="news" />
         </div>
       </div>
