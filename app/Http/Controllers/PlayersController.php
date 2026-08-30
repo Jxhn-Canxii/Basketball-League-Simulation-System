@@ -61,6 +61,7 @@ class PlayersController extends Controller
         $playerStats = [];
         $latestSeasonId = get_current_season_id();
 
+        $isLatestSeason = ($seasonId == $latestSeasonId);
         // Fetch the season status
         $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
 
@@ -100,14 +101,18 @@ class PlayersController extends Controller
 
                     $latestRatings = DB::table('player_ratings')
                         ->where('player_id', $player->id)
-                        ->where('season_id', $seasonId-1)
-                        ->value('overall_rating') ?? 75;
+                        ->where('season_id', $seasonId)
+                        ->value('overall_rating') ??  75;
                     
-                    $prevRatings = DB::table('player_ratings')
+                    $latestRatings = ($seasonId == 1) ? $player->overall_rating : $latestRatings;
+
+                    $prevRatings = ($seasonId == 1) ? $player->overall_rating  :  DB::table('player_ratings')
                         ->where('player_id', $player->id)
-                        ->where('season_id', $seasonId - 2)
+                        ->where('season_id', $seasonId -1)
                         ->value('overall_rating') ?? 75;
-            
+
+                    $prevRatings = ($seasonId == 1) ? $player->overall_rating : $prevRatings;
+                    
                     $hasImproved = $this->helper->hasImproved($latestRatings,$prevRatings);
                     // $hasImproved = 'Latest: '.$latestRatings.' - Prev: '.$prevRatings;                  // Count seasons played with the team
                     $seasonsPlayedWithTeam = DB::table('player_season_stats_archives')
@@ -148,9 +153,9 @@ class PlayersController extends Controller
                         'draft_id' => $player->draft_id,
                         'draft_class' => $player->draft_class,
                         'draft_status' => $player->draft_status,
-                        'overall_rating' => $player->overall_rating,
+                        'overall_rating' => $latestRatings,
                         'potential_rating' => $player->potential_rating,
-                        'potential_status' => $player->potential_rating == $player->overall_rating ? 'MAX' : '-',
+                        'potential_status' => $player->potential_rating == $latestRatings ? 'MAX' : '-',
                         'status' => $playerStatus,
                         'is_cut' => $playerCUtfromFinalRoster,
                         'has_improved' => $hasImproved,
@@ -179,6 +184,7 @@ class PlayersController extends Controller
                         'conference_championships_won' => (int)$player->conference_championships_won,
                         'championships_won' => (int)$player->championships_won,
                         'awards_won' => (int)$player->awards_won,
+                        'is_latest' => $isLatestSeason,
                     ];
                 }
             }
@@ -363,6 +369,7 @@ class PlayersController extends Controller
             'season_id' => $seasonId,
             'team_id' => $teamId,
             'stats_count' => count($playerStatsData),
+            'table' => $seasonStatsDBName
         ]);
     }
 
