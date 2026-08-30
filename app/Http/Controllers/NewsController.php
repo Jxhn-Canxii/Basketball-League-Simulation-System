@@ -270,7 +270,7 @@ class NewsController extends Controller
                     $seriesLosses = $homeWins;
                 }
 
-                $requiredWins = (int) ceil($bestOf / 2);
+                $requiredWins = $bestOf;
 
                 $isSeriesClinched =
                     $seriesStatus === 2 ||
@@ -284,7 +284,7 @@ class NewsController extends Controller
                 // required total, this is the deciding game.
                 $isGame7 =
                     !$isSeriesClinched &&
-                    $bestOf === 7 &&
+                    $seriesLength === 7 &&
                     $seriesWins === 3 &&
                     $seriesLosses === 3;
 

@@ -108,7 +108,6 @@ class LeaguesController extends Controller
             'injury_histories',
             'players',
             'player_game_stats',
-            'coaches',
             'player_playoff_appearances',
             'player_ratings',
             'player_season_stats',
@@ -124,8 +123,8 @@ class LeaguesController extends Controller
             'season_awards',
             'storylines',
             'streak',
-            'trade_logs',
             'team_season_info',
+            'trade_logs',
             'trade_proposals',
             'trade_players',
             'transactions',
@@ -147,6 +146,29 @@ class LeaguesController extends Controller
                     DB::table($table)->truncate();
                 }
             }
+
+            /*
+        |--------------------------------------------------------------------------
+        | Reset Team Data
+        |--------------------------------------------------------------------------
+        */
+
+        DB::statement(
+            'UPDATE teams
+            LEFT JOIN coaches ON teams.id = coaches.team_id
+            SET teams.coach_id = COALESCE(coaches.id, 0)'
+        );
+
+        DB::statement(
+            'UPDATE coaches SET 
+            career_wins = 0,
+            contract_years = 0,
+            career_losses = 0,
+            team_id = 0,
+            winning_percentage = 0'
+        );
+
+        DB::statement('UPDATE `teams` SET `coach_id`=0');
 
             /*
         |--------------------------------------------------------------------------
