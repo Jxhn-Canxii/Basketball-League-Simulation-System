@@ -12,6 +12,7 @@ use App\Http\Controllers\TeamStreakController;
 use App\Http\Controllers\HelperController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ArchiveController;
+use App\Http\Controllers\PlayoffStatsController;
 class TestController extends Controller
 {
     protected $teamBalance;
@@ -20,6 +21,7 @@ class TestController extends Controller
     protected $streak;
     protected $helper;
     protected $archive;
+    protected $playoff;
 
     public function __construct(){
 
@@ -29,6 +31,7 @@ class TestController extends Controller
         $this->helper = new HelperController();
         $this->schedule = new ScheduleController();
         $this->archive = new ArchiveController();
+        $this->playoff = new PlayoffStatsController();
         
     }
     public function testSchedule(){
@@ -445,8 +448,17 @@ class TestController extends Controller
 
         $archive =  $this->archive->archivePlayerSeasonStats();
 
-         return response()->json([
+        return response()->json([
             'message' => $archive,
+        ]);
+    }
+
+    public function testSnapShot(){
+
+        $snap = $this->playoff->saveStandingsSnapshot();
+
+        return response()->json([
+            'message' => $snap,
         ]);
     }
 }

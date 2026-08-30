@@ -329,6 +329,8 @@ Route::middleware('auth')->group(function () {
         Route::get('testroles', [SimulateController::class, 'testRoleAssignment'])->name('test.roles');
         Route::get('test-free-agent/{position}', [FreeAgentController::class, 'getBestFreeAgent'])->name('get.free.agent');
         Route::get('archive-test', [TestController::class, 'TestArchiving'])->name('test.archive');
+        Route::get('snap-test', [TestController::class, 'testSnapShot'])->name('test.snap');
+    
     });
 
 });

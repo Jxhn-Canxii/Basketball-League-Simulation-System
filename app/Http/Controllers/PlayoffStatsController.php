@@ -57,7 +57,6 @@ class PlayoffStatsController extends Controller
                     'away_ppg',
                     'total_points_for_avg',
                     'total_points_against_avg',
-                    'total_points_avg',
                     'score_difference',
                     'conference_rank',
                     'overall_rank',
