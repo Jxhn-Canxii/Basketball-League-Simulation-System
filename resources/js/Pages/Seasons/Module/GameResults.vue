@@ -682,7 +682,7 @@
             </div>
             <!-- Stat Leaders Section: 3/4 Width -->
             <div v-if="showGameNews" class="w-full md:w-1/2 p-2 bg-white flex items-center justify-center relative">
-                <a @click.prevent="showGameNews = false" class="top-2 right-2 hidden absolute">
+                <a @click.prevent="showGameNews = false" class="top-2 right-2 absolute">
                     <i class="fa fa-2x fa-list-check"></i>
                 </a>
                 <div class="block">
@@ -690,7 +690,7 @@
                 </div>
             </div>
             <div v-else class="w-full md:w-1/2 p-2 bg-dark shadow-lg-white text-white relative">
-                <a @click.prevent="showGameNews = true" class="top-2 right-2 hidden absolute">
+                <a @click.prevent="showGameNews = true" class="top-2 right-2 absolute">
                     <i class="fa fa-2x fa-newspaper"></i>
                 </a>
                 <h3 class="text-lg font-semibold mb-2 text-yellow-600">Stat Leaders</h3>

@@ -1,7 +1,7 @@
 <template>
   <div class="bg-black shadow-sm rounded-lg mt-2 overflow-hidden shadow-lg p-2">
     <div class="p-2 border-b border-gray-200 bg-gray-900">
-      <div class="flex items-center justify-between">
+      <div class="flex items-center justify-between" @click.prevent="getNewsList()">
         <h2 class="text-lg font-bold text-yellow-500 flex items-center">
           <i class="fas fa-newspaper text-red-500 mr-2"></i>
           Latest News

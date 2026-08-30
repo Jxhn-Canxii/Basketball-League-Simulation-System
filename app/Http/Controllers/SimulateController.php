@@ -511,14 +511,13 @@ class SimulateController extends Controller
 
         $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId);
         $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId);
-
-
+        
         $this->teamStreak->updateTeamStreaks($gameData->id);
         $this->teamStats->updateHeadToHeadResults($gameData->id);
         
-        $this->news->createGameNewsFromGame($gameData->id);
-
         $this->playOffStats->updatePlayoffAppearancesForGame($gameData);
+        
+        $this->news->createGameNewsFromGame($gameData->id);
 
         if ($isRoundsSimulatedForSeason) {
             $this->freeAgent->updateInjuryFreeAgents();
