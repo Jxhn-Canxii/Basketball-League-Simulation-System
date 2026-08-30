@@ -1101,8 +1101,6 @@ class SimulateController extends Controller
 
             $this->teamStats->updateHeadToHeadResults($gameData->id);
 
-            $this->news->createGameNewsFromGame($gameData->id);
-
             $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId,  $gameData->round);
             $isRoundSeriesSimulatedForSeason = $this->helper->isRoundSeriesSimulated($currentSeasonId,  $gameData->round);
             if (!$isRoundSeriesSimulatedForSeason) {
@@ -1120,6 +1118,9 @@ class SimulateController extends Controller
             }
 
             $this->playOffStats->updatePlayoffSeriesAppearancesForGame($gameData);
+
+            $this->news->createGameNewsFromGame($gameData->id);
+
         });
 
         $gameNews = DB::table('game_news')

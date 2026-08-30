@@ -101,7 +101,7 @@
   </div>
 
     <!-- Game News Modal -->
-    <div v-if="isGameNewsModalOpen" class="fixed bg-transparent bottom-0 right-0 bg-white p-2">
+    <div v-if="isGameNewsModalOpen && game_news" class="fixed bg-transparent bottom-0 right-0 bg-white p-2">
         <div class="flex justify-center" @click.prevent="isGameNewsModalOpen = false">
             <!-- <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3> -->
             <GameNews :key="game_news.id" :data="game_news" :showNews="true" />
