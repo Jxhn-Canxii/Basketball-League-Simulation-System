@@ -865,8 +865,9 @@ SELECT
 
         '\n\n',
 
-        '### The Finals\n',
+        '### The Finals',
 
+        '\n\n',
         CASE
 
             WHEN fs.games_played = fs.series_length THEN
@@ -1030,8 +1031,9 @@ SELECT
 
         '\n\n',
 
-        '### Season Awards\n',
-
+        '### Season Awards',
+        
+        '\n\n',
         CASE
             WHEN aw.mvp IS NOT NULL
                 THEN CONCAT('Season MVP: ', aw.mvp, '. ')
@@ -1065,8 +1067,11 @@ SELECT
         /* =================================================
            TRIVIA
            ================================================= */
+        '\n\n',
 
-        '\n\n### Season Trivia\n',
+        '### Season Trivia',
+
+        '\n\n',
 
         CASE
             WHEN cr.consecutive_titles >= 4 THEN
@@ -1109,7 +1114,7 @@ SELECT
                 )
         END,
 
-        '\n',
+        '\n\n',
 
         CASE
             WHEN hsg.points IS NOT NULL THEN
@@ -1124,7 +1129,7 @@ SELECT
                 ''
         END,
 
-        '\n',
+        '\n\n',
 
         CASE
             WHEN fs.games_played = fs.series_length THEN

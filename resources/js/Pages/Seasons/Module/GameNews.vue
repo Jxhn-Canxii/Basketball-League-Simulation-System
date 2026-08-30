@@ -23,7 +23,17 @@ const props = defineProps({
           title: '',
           body: ''
         })
+    },
+    showNews:{
+      type: Boolean,
+      default: false,
     }
 });
 
+const loadData = () => {
+    show_news.value = props.showNews;
+}
+onMounted(() => {
+   loadData();
+})
 </script>

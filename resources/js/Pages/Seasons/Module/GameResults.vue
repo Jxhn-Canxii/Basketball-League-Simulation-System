@@ -536,10 +536,15 @@
             </div>
         </div>
         <!-- Best Player of the Game -->
-        <div class="block md:flex bg-gray-800 rounded">
+        <div 
+        :style="{
+            backgroundColor:
+                '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.secondary_color : gameDetails?.away_team.secondary_color),
+        }"
+        class="block md:flex rounded">
             <!-- Best Player Section: 1/4 Width -->
             <div class="w-full md:w-3/4 p-2 shadow-md">
-                <h3 class="text-lg text-yellow-600 font-semibold mb-1">Player of the Game</h3>
+                <h3 class="text-lg text-white font-semibold mb-1">Player of the Game</h3>
                 <div
                     v-if="bestPlayer"
                     class="bg-white shadow-lg p-4 rounded-lg text-black"
@@ -681,21 +686,27 @@
                 </div>
             </div>
             <!-- Stat Leaders Section: 3/4 Width -->
-            <div v-if="showGameNews" class="w-full md:w-1/2 p-2 bg-white flex items-center justify-center relative">
+            <div v-if="showGameNews" 
+                :style="{
+                    backgroundColor:
+                        '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.secondary_color : gameDetails?.away_team.secondary_color),
+                }"
+                class="w-full md:w-1/2 p-2 relative">
                 <a @click.prevent="showGameNews = false" class="top-2 right-2 absolute">
                     <i class="fa fa-2x fa-list-check"></i>
                 </a>
-                <div class="block">
-                    <GameNews :key="gameNews.id" :data="gameNews" />
+                <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3>
+                <div class="min-w-full">
+                    <GameNews :key="gameNews.id" :data="gameNews" :showNews="true" />
                 </div>
             </div>
-            <div v-else class="w-full md:w-1/2 p-2 bg-dark shadow-lg-white text-white relative">
+            <div v-else class="w-full md:w-1/2 p-2 relative">
                 <a @click.prevent="showGameNews = true" class="top-2 right-2 absolute">
                     <i class="fa fa-2x fa-newspaper"></i>
                 </a>
-                <h3 class="text-lg font-semibold mb-2 text-yellow-600">Stat Leaders</h3>
+                <h3 class="text-lg font-semibold mb-2 text-white">Stat Leaders</h3>
                 <div class="min-w-full">
-                    <ul class="space-y-4">
+                    <ul class="space-y-2">
                         <li
                             v-if="statLeaders.points"
                             class="flex items-center bg-white text-black p-2 rounded  border-gray-300 pb-2"
@@ -883,13 +894,13 @@
                 </div>
             </div>
         </div>
-        <!-- <div class="fixed bottom-0 right-0 bg-gray-900 text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
+        <div class="fixed bottom-0 right-0 bg-gray-900 text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
             <div class="flex items-center space-x-2">
                 <i class="fas fa-clock"></i>
                 
                 <span class="font-mono">{{ formatTime(time) }}</span>
             </div>
-        </div> -->
+        </div>
     </div>
     <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
         <div class="p-6 block">
