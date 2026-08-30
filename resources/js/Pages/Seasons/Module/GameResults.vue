@@ -552,9 +552,9 @@
                     >
                         <p class="text-4xl font-extrabold mb-1 relative text-nowrap" :title="bestPlayer?.name">
                             {{ playerFormatter(bestPlayer?.name) }}
-                            <!-- <sup class="text-xs absolute top-0 ml-2 mt-2 text-nowrap" v-if="bestPlayer?.age">
+                            <sup class="text-xs text-right absolute top-0 ml-2 mt-2 text-nowrap" v-if="bestPlayer?.age">
                                {{ bestPlayer?.age }} | {{ bestPlayer?.position }}
-                            </sup> -->
+                            </sup>
                         </p>
                         <div class="flex justify-center p-2">
                             <span
@@ -804,7 +804,7 @@
                             <i class="fas fa-user-shield text-gray-600" title="Steals"></i>
                             </span>
                             <div class="ml-3 flex-grow">
-                                <div class="flex justify-between items-start">
+                                <div v-if="statLeaders.steals.steals > 0" class="flex justify-between items-start">
                                     <div>
                                         <span :title="statLeaders.steals.player_name" class="font-semibold">{{
                                             playerFormatter(statLeaders.steals.player_name)
@@ -831,7 +831,7 @@
                                 <i class="fas fa-stop-circle text-gray-600" title="Blocks"></i>
                             </span>
                             <div class="ml-3 flex-grow">
-                                <div class="flex justify-between items-start">
+                                <div v-if="statLeaders.blocks.blocks > 0" class="flex justify-between items-start">
                                     <div>
                                         <span :title="statLeaders.blocks.player_name" class="font-semibold">{{
                                             playerFormatter(statLeaders.blocks.player_name)
