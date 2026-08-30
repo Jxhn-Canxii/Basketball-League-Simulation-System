@@ -1,7 +1,7 @@
 <template>
   <div
     class="grid grid-cols-1 md:grid-cols-4 gap-6 p-6 border-b-2 border-dashed"
-    v-if="season_info.seasons && season_info.seasons[0].status > 2 && !loading"
+    v-if="season_info.seasons && season_info.seasons[0].status >= 2 && !loading"
   >
     <div class="md:col-span-4 overflow-y-auto">
       <div class="flex justify-between" v-if="!isHide">
