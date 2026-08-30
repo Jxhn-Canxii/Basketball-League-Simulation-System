@@ -100,20 +100,13 @@
     <p class="text-red-500 font-bold text-2xl">Loading...</p>
   </div>
 
-   <!-- Game Result Modal -->
-  <Modal
-    :show="isGameNewsModalOpen"
-    :maxWidth="'6xl'"
-    title="Game News"
-    @close="isGameNewsModalOpen = false"
-  >
-    <div class="mt-4">
-        <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3>
-        <div class="min-w-full">
+    <!-- Game News Modal -->
+    <div v-if="isGameNewsModalOpen" class="fixed bg-transparent bottom-0 right-0 bg-white p-2">
+        <div class="flex justify-center" @click.prevent="isGameNewsModalOpen = false">
+            <!-- <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3> -->
             <GameNews :key="game_news.id" :data="game_news" :showNews="true" />
         </div>
     </div>
-  </Modal>
 </template>
 
 <script setup>
