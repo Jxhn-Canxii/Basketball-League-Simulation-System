@@ -29,75 +29,75 @@ class LeadersController extends Controller
 
         // Fetch total stats for each player across all games
         // Get top 10 players by average points per game, with season and team information
-        $topPoints = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-            ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
+        $topPoints = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
+            ->join('teams', 'player_season_stats_archives.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'teams.name as team_name',
-                'player_season_stats.avg_points_per_game',
-                'player_season_stats.season_id'
+                'player_season_stats_archives.avg_points_per_game',
+                'player_season_stats_archives.season_id'
             )
             ->orderByDesc('avg_points_per_game')
             ->limit(10)
             ->get();
 
         // Get top 10 players by average rebounds per game, with season and team information
-        $topRebounds = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-            ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
+        $topRebounds = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
+            ->join('teams', 'player_season_stats_archives.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'teams.name as team_name',
-                'player_season_stats.avg_rebounds_per_game',
-                'player_season_stats.season_id'
+                'player_season_stats_archives.avg_rebounds_per_game',
+                'player_season_stats_archives.season_id'
             )
             ->orderByDesc('avg_rebounds_per_game')
             ->limit(10)
             ->get();
 
         // Get top 10 players by average assists per game, with season and team information
-        $topAssists = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-            ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
+        $topAssists = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
+            ->join('teams', 'player_season_stats_archives.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'teams.name as team_name',
-                'player_season_stats.avg_assists_per_game',
-                'player_season_stats.season_id'
+                'player_season_stats_archives.avg_assists_per_game',
+                'player_season_stats_archives.season_id'
             )
             ->orderByDesc('avg_assists_per_game')
             ->limit(10)
             ->get();
 
         // Get top 10 players by average steals per game, with season and team information
-        $topSteals = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-            ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
+        $topSteals = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
+            ->join('teams', 'player_season_stats_archives.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'teams.name as team_name',
-                'player_season_stats.avg_steals_per_game',
-                'player_season_stats.season_id'
+                'player_season_stats_archives.avg_steals_per_game',
+                'player_season_stats_archives.season_id'
             )
             ->orderByDesc('avg_steals_per_game')
             ->limit(10)
             ->get();
 
         // Get top 10 players by average blocks per game, with season and team information
-        $topBlocks = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-            ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
+        $topBlocks = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
+            ->join('teams', 'player_season_stats_archives.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'teams.name as team_name',
-                'player_season_stats.avg_blocks_per_game',
-                'player_season_stats.season_id'
+                'player_season_stats_archives.avg_blocks_per_game',
+                'player_season_stats_archives.season_id'
             )
             ->orderByDesc('avg_blocks_per_game')
             ->limit(10)
@@ -116,86 +116,86 @@ class LeadersController extends Controller
     public function getTotalStatsLeaders()
     {
         // Get top 10 players by total combined points across all seasons
-        $topTotalPoints = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+        $topTotalPoints = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
             ->leftJoin('teams', 'players.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'players.is_active as is_active',
                 'teams.name as team_name',
-                DB::raw('SUM(player_season_stats.total_points) as total_points'), // Sum total points across all seasons
+                DB::raw('SUM(player_season_stats_archives.total_points) as total_points'), // Sum total points across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
+            ->groupBy('player_season_stats_archives.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_points')
             ->limit(10)
             ->get();
 
         // Get top 10 players by total combined rebounds across all seasons
-        $topTotalRebounds = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+        $topTotalRebounds = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
             ->leftJoin('teams', 'players.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'players.is_active as is_active',
                 'teams.name as team_name',
-                DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'), // Sum total rebounds across all seasons
+                DB::raw('SUM(player_season_stats_archives.total_rebounds) as total_rebounds'), // Sum total rebounds across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
+            ->groupBy('player_season_stats_archives.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_rebounds')
             ->limit(10)
             ->get();
 
         // Get top 10 players by total combined assists across all seasons
-        $topTotalAssists = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+        $topTotalAssists = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
             ->leftJoin('teams', 'players.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'players.is_active as is_active',
                 'teams.name as team_name',
-                DB::raw('SUM(player_season_stats.total_assists) as total_assists'), // Sum total assists across all seasons
+                DB::raw('SUM(player_season_stats_archives.total_assists) as total_assists'), // Sum total assists across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
+            ->groupBy('player_season_stats_archives.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_assists')
             ->limit(10)
             ->get();
 
         // Get top 10 players by total combined steals across all seasons
-        $topTotalSteals = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+        $topTotalSteals = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
             ->leftJoin('teams', 'players.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'players.is_active as is_active',
                 'teams.name as team_name',
-                DB::raw('SUM(player_season_stats.total_steals) as total_steals'), // Sum total steals across all seasons
+                DB::raw('SUM(player_season_stats_archives.total_steals) as total_steals'), // Sum total steals across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
+            ->groupBy('player_season_stats_archives.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_steals')
             ->limit(10)
             ->get();
 
         // Get top 10 players by total combined blocks across all seasons
-        $topTotalBlocks = DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+        $topTotalBlocks = DB::table('player_season_stats_archives')
+            ->join('players', 'player_season_stats_archives.player_id', '=', 'players.id')
             ->leftJoin('teams', 'players.team_id', '=', 'teams.id')
             ->select(
                 'players.draft_id as draft_id',
                 'players.name as player_name',
                 'players.is_active as is_active',
                 'teams.name as team_name',
-                DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'), // Sum total blocks across all seasons
+                DB::raw('SUM(player_season_stats_archives.total_blocks) as total_blocks'), // Sum total blocks across all seasons
                 'players.id as player_id'
             )
-            ->groupBy('player_season_stats.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
+            ->groupBy('player_season_stats_archives.player_id', 'players.name', 'teams.name', 'players.id', 'players.draft_id')
             ->orderByDesc('total_blocks')
             ->limit(10)
             ->get();
@@ -240,6 +240,7 @@ class LeadersController extends Controller
             'topSingleSteals' => $topSingleSteals
         ]);
     }
+    
     public function updateAllTimeTopStats()
     {
         // Get the current season id (you can get this from your business logic or the latest game)
@@ -386,7 +387,7 @@ class LeadersController extends Controller
 
     public function getTop15MVPLeaders()
     {
-        $topPlayers = \DB::table('mvp_leaders as m')
+        $topPlayers = DB::table('mvp_leaders as m')
             ->select([
                 'm.player_id',
                 'm.player_name',

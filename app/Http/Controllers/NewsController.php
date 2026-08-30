@@ -49,7 +49,8 @@ class NewsController extends Controller
     public function getAllNews(Request $request)
     {
         // Get pagination parameters with defaults
-        $currentPage = $request->input('current_page', 1);
+        $currentPage = $request->input('page_num', 1);
+        $seasonId = $request->input('season_id', 1);
         $itemsPerPage = $request->input('itemsperpage', 10);
         $search = $request->input('search', '');
 
@@ -63,7 +64,8 @@ class NewsController extends Controller
 
         // Build query with optional search
         $query = DB::table('game_news')
-            ->select('id', 'game_id', 'season_id', 'round', 'winner_id', 'title', 'content', 'created_at', 'updated_at');
+            ->select('id', 'game_id', 'season_id', 'round', 'winner_id', 'title', 'content', 'created_at', 'updated_at')
+            ->where('season_id',$seasonId);
 
         if (!empty($search)) {
             $query->where(function ($q) use ($search) {
@@ -84,16 +86,14 @@ class NewsController extends Controller
 
         return response()->json([
             'data' => $news,
-            'pagination' => [
-                'current_page' => (int) $currentPage,
-                'total_pages' => (int) $totalPages,
-                'total_items' => (int) $totalItems,
-                'itemsperpage' => (int) $itemsPerPage,
-            ],
+            'current_page' => (int) $currentPage,
+            'total_pages' => (int) $totalPages,
+            'total_items' => (int) $totalItems,
+            'itemsperpage' => (int) $itemsPerPage,
         ], 200);
     }
 
-    private function createGameNewsFromGame($gameId)
+    public function createGameNewsFromGame($gameId)
     {
         // Fetch game info with winner_id and team details
         $game = DB::table('schedule_view as sv')

@@ -45,15 +45,13 @@
             }}
             <sup
               :class="
-                main_performance.player_details.age >=
-                main_performance.player_details.retirement_age
+                main_performance.player_details.is_active == 0
                   ? 'p-1 rounded-full text-red-500'
                   : 'p-1 rounded-full text-yellow-500'
               "
             >
               {{
-                main_performance.player_details.age >=
-                main_performance.player_details.retirement_age
+                main_performance.player_details.is_active == 0
                   ? "R"
                   : "A"
               }}
@@ -104,6 +102,10 @@
               main_performance.player_details.archetype.replaceAll("_", " ") ?? "-"
             }}</a
           >
+        </p>
+        <p>
+          <strong>Potential:</strong>
+          {{ main_performance.player_details.potential_rating ?? "-" }}
         </p>
       </div>
       <h3 class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center">
@@ -251,47 +253,13 @@
         <p>No career highs data available.</p>
       </div>
       <h3 class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center">
-        <i class="fa fa-users text-red-500 mr-2"></i>
-        Player Projection
+        <i class="fa fa-clipboard text-red-500 mr-2"></i>
+       Scouting Report!
       </h3>
       <div
         class="ml-4 text-wrap"
-        v-if="
-          main_performance.player_comparison &&
-          main_performance.player_comparison.length > 0
-        "
       >
-        <p>
-          <strong class="text-blue-500">Best Projection</strong>
-          {{
-            main_performance.player_comparison[0]?.best_projection_player_name ?? "N/A"
-          }}
-        </p>
-        <p>
-          <strong>Rating:</strong>
-          {{ main_performance.player_comparison[0]?.best_projection_rating ?? "N/A" }}
-        </p>
-      </div>
-      <div
-        class="ml-4 mt-4 text-wrap"
-        v-if="
-          main_performance.player_comparison &&
-          main_performance.player_comparison.length > 0
-        "
-      >
-        <p>
-          <strong class="text-red-500">Worst Projection</strong>
-          {{
-            main_performance.player_comparison[0]?.worst_projection_player_name ?? "N/A"
-          }}
-        </p>
-        <p>
-          <strong>Rating:</strong>
-          {{ main_performance.player_comparison[0]?.worst_projection_rating ?? "N/A" }}
-        </p>
-      </div>
-      <div v-else class="ml-4">
-        <p>No player comparison data available.</p>
+         <a class="hover:bg-yellow-500 mt-2 text-underlined bg-yellow-600 p-2 rounded text-nowrap text-white text-xs" @click.prevent="isPlayerScoutingReportOpen = true"><i class="fa fa-envelope"></i> View Scouting Report</a>
       </div>
     </div>
 
@@ -470,10 +438,25 @@
       </div>
     </div>
   </div>
+  <Modal
+    :show="isPlayerScoutingReportOpen"
+    :maxWidth="'sm'"
+    title="Player Scouting Report!"
+    @close="isPlayerScoutingReportOpen = false"
+  >
+    <div class="mt-4 p-3 block">
+      According to Champs Narnia:
+      <br>
+      <br>
+      <p>{{ main_performance.scouting_report ?? "N/A" }}</p>
+    </div>
+  </Modal>
 </template>
 
 <script setup>
 import { ref, onMounted, watch } from "vue";
+import Modal from "@/Components/Modal.vue";
+
 import axios from "axios";
 import {
   roleBadgeClass,
@@ -497,6 +480,7 @@ const props = defineProps({
   },
 });
 const main_performance = ref([]);
+const isPlayerScoutingReportOpen = ref(false);
 const isLoading = ref(false);
 const player_id = ref(props.player_id);
 

@@ -10,12 +10,16 @@ use App\Http\Controllers\TeamBalanceController;
 use App\Http\Controllers\TeamChemistryController;
 use App\Http\Controllers\TeamStreakController;
 use App\Http\Controllers\HelperController;
+use App\Http\Controllers\ScheduleController;
+use App\Http\Controllers\ArchiveController;
 class TestController extends Controller
 {
     protected $teamBalance;
+    protected $schedule;
     protected $chemistry;
     protected $streak;
     protected $helper;
+    protected $archive;
 
     public function __construct(){
 
@@ -23,7 +27,37 @@ class TestController extends Controller
         $this->chemistry = new TeamChemistryController();
         $this->streak = new TeamStreakController();
         $this->helper = new HelperController();
+        $this->schedule = new ScheduleController();
+        $this->archive = new ArchiveController();
+        
     }
+    public function testSchedule(){
+        $players = DB::table('players')->get();
+
+        foreach ($players as $player) {
+
+            $overallRating = $player->overall_rating ?? 70;
+            $potentialRating = 70;
+
+            if ($overallRating >= 90) {
+                $potentialRating = 99;
+            } elseif ($overallRating >= 85 && $overallRating <= 89) {
+                $potentialRating = rand(90,95);
+            } elseif ($overallRating >= 75 && $overallRating <= 84) {
+                $potentialRating = rand(85,90);
+            } elseif ($overallRating >= 60 && $overallRating <= 74) {
+                $potentialRating = rand(75,85);
+            } else {
+                $potentialRating = 74;
+            }
+
+            Player::where('id', $player->id)->update(['potential_rating' => $potentialRating]);
+
+        }
+
+        return response()->json(['success!']);
+    }
+
     public function waiveTeam(Request $request, $teamId)
     {
         $seasonStatus = (int) $request->input('season_status', 2);
@@ -404,6 +438,15 @@ class TestController extends Controller
 
         return response()->json([
             'cache' => $value,
+        ]);
+    }
+
+    public function TestArchiving(){
+
+        $archive =  $this->archive->archivePlayerSeasonStats();
+
+         return response()->json([
+            'message' => $archive,
         ]);
     }
 }

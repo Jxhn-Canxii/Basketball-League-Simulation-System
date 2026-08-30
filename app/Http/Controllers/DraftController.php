@@ -6,10 +6,17 @@ use Illuminate\Http\Request;
 use App\Models\Seasons;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\HelperController;
 use Inertia\Inertia;
 
 class DraftController extends Controller
 {
+    protected $helper;
+
+    public function __construct(){
+        $this->helper = new HelperController();
+    }
+
     public function index()
     {
         return Inertia::render('Draft/Index', [
@@ -261,7 +268,7 @@ class DraftController extends Controller
                     $previousSeasonId = $currentSeasonId;
 
                     $playerToWaive = DB::table('players as p')
-                        ->leftJoin('player_season_stats as stats', function ($join) use ($previousSeasonId) {
+                        ->leftJoin('player_season_stats_archives as stats', function ($join) use ($previousSeasonId) {
                             $join->on('p.id', '=', 'stats.player_id')
                                 ->where('stats.season_id', '=', $previousSeasonId);
                         })
@@ -513,12 +520,16 @@ class DraftController extends Controller
         // Get the latest season_id from the request
         $latestSeasonId = $request->season_id;
 
+           // Determine if the season_id is the current season
+        $currentSeasonId = get_current_season_id();
+
+        $playerSeasonStatsTable = $this->helper->getSeasonStatsDBName($latestSeasonId);
 
         // If you want to include team names and player names, join the relevant tables
         $draftResultsWithNames = DB::table('drafts')
             ->join('teams', 'drafts.team_id', '=', 'teams.id')
             ->join('players', 'drafts.player_id', '=', 'players.id')
-            ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
+            ->leftJoin($playerSeasonStatsTable.' as player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
             ->leftJoin('teams as signed_team', 'signed_team.id', '=', 'player_season_stats.team_id')
             ->select(
                 'players.type as archetype',
@@ -546,9 +557,6 @@ class DraftController extends Controller
         // Extract player IDs from the draft results to create the rank group
         $rankGroupPlayerIds = $draftResultsWithNames->pluck('player_id');
 
-        // Determine if the season_id is the current season
-        $currentSeasonId = DB::table('seasons')->orderBy('id', 'desc')->value('id');
-
         // Fetch player stats and calculate ranks only for the players drafted in the latest season
         $playerStats = collect();
         if ($latestSeasonId == $currentSeasonId) {
@@ -573,7 +581,7 @@ class DraftController extends Controller
             $playerStats = $playerGameStats;
         } else {
             // Get player stats from the player_season_stats table for the previous season, filtered by rank group and draft_id
-            $playerSeasonStats = DB::table('player_season_stats')
+            $playerSeasonStats = DB::table($playerSeasonStatsTable.' as player_season_stats')
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
                 ->where('players.draft_id', $latestSeasonId)
                 ->whereIn('player_season_stats.player_id', $rankGroupPlayerIds) // Filter by rank group
@@ -673,6 +681,7 @@ class DraftController extends Controller
             'draft_results' => $draftResultsWithNames,
         ]);
     }
+    
     private function updatePlayerPlayoffAppearances()
     {
         // $seasonId = $request->season_id;

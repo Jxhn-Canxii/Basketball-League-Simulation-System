@@ -31,7 +31,7 @@
                             </tr>
                         </thead>
                         <tbody class="bg-white divide-y divide-gray-200">
-                            <tr v-for="(season, index) in team_history.history" :key="season.season" @click.enter.prevent="showTooltip = season.round_info" class="hover:bg-gray-200">
+                            <tr v-for="(season, index) in team_history.history" :key="season.season" @click.prevent="showTeamSchedule = season.season_id" class="hover:bg-gray-200">
                                 <td class="px-2 py-3 whitespace-nowrap border">{{ season.season_name }}</td>
                                 <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.wins }}</td>
                                 <td class="px-2 py-3 whitespace-nowrap border text-right">{{ season.losses }}</td>
@@ -107,20 +107,6 @@
                     />
                 </div>
         </div>
-        <!-- <Modal :show="showTooltip" title="Last Game Result" :maxWidth="'sm'">
-            <button class="flex float-end bg-gray-100 p-3" @click.prevent="showTooltip = false">
-                <i class="fa fa-times text-black-600"></i>
-            </button>
-            <div class="grid grid-cols-1 gap-6 p-6">
-                <h2 class="text-lg font-semibold text-gray-800">
-                    Last Game Result
-                </h2>
-                <div><strong>Round:</strong> {{ roundNameFormatter(showTooltip.round) }}</div>
-                <div><strong>Result:</strong> {{ showTooltip.won ? 'Won' : 'Lost' }}</div>
-                <div><strong>Score:</strong> {{ showTooltip.score }} - {{ showTooltip.opponent_score }}</div>
-                <div><strong>Opponent:</strong> {{ showTooltip.opponent_name }}</div>
-            </div>
-        </Modal> -->
     </div>
     <div v-else class="flex items-center justify-center h-64">
         <div class="text-center">
@@ -128,6 +114,16 @@
             <p class="mt-2 text-gray-500">Loading team season history...</p>
         </div>
     </div>
+     <!-- Modal for Team Schedul -->
+    <Modal :show="showTeamSchedule" :maxWidth="'6xl'" :title="'Season '+showTeamSchedule+' Match Results'" @close="showTeamSchedule = false">
+        <div class="p-6 block">
+            <TeamSchedule
+                :season_id="showTeamSchedule"
+                :team_id="props.team_id"
+                :key="showTeamSchedule"
+            />
+        </div>
+    </Modal>
 </template>
 
 <script setup>
@@ -137,6 +133,8 @@ import { roundNameFormatter } from "@/Utility/Formatter";
 import { ref, onMounted, computed, watch } from "vue";
 import Modal from "@/Components/Modal.vue";
 import Paginator from "@/Components/Paginator.vue";
+import TeamSchedule from "./TeamSchedule.vue";
+
 import Swal from "sweetalert2";
 import axios from "axios";
 
@@ -146,6 +144,8 @@ const props = defineProps({
         required: true
     }
 });
+
+const showTeamSchedule = ref(false);
 const showTooltip = ref(false);
 const team_history = ref([]);
 const team_info = ref([]);

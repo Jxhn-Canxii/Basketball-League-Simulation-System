@@ -268,4 +268,298 @@ class CoachController extends Controller
 
         return response()->json(['message' => 'Duplicate coaches fixed successfully!']);
     }
+
+    public function getCoachInfo(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'coach_id' => 'required|exists:coaches,id',
+        ]);
+
+        $coachId = $request->coach_id;
+
+        // Fetch player and team details
+        $coachDetails = DB::table('coaches')
+            ->join('teams', 'coaches.team_id', '=', 'teams.id', 'left') // Join teams table to get team details
+            ->where('coaches.id', $coachId)
+            ->select(
+                'coaches.*',
+                'teams.name as team_name',
+                'teams.city as team_city',
+                'teams.primary_color',
+                'teams.secondary_color',
+            )
+            ->first();
+
+        if (!$coachDetails) {
+            return response()->json([
+                'error' => 'Player not found.',
+            ], 404);
+        }
+
+        // Fetch playoff performance
+        $playoffQualified = DB::table('team_season_info')
+            ->where('is_playoff_qualified', 1)
+            ->where('coach_id', $coachId)
+            ->count();
+
+        $isDefendingChampion = DB::table('team_season_info')
+            ->where('is_defending_champion', 1)
+            ->where('coach_id', $coachId)
+            ->count();
+
+        // Set default values if no performance data found
+        $playoffPerformance = (object)[
+            'playoff_count' => $playoffQualified,
+            'champion_count' => $isDefendingChampion,
+        ];
+
+        // Fetch championship count and season names
+        $championships = DB::table('seasons')
+            ->join('team_season_info', 'seasons.id', '=', 'team_season_info.season_id')
+            ->join('playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
+            ->join('teams as team', 'team_season_info.team_id', '=', 'team.id')
+            ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
+            ->select(
+                'seasons.id as season_id',
+                'seasons.name as season_name',
+                'winner_team.name as championship_team'
+            )
+            ->where('team_season_info.coach_id', $coachId)
+            ->where('playoff_series.round', 'finals')
+            ->where('playoff_series.status', 2) // Series is finished
+            ->whereColumn('playoff_series.winner_team_id', 'team_season_info.team_id') // Match columns correctly
+            ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
+            ->distinct()
+            ->get();
+
+        $conference_championships = DB::table('seasons')
+            ->join('team_season_info', 'seasons.id', '=', 'team_season_info.season_id')
+            ->join('playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
+            ->join('teams as team', 'team_season_info.team_id', '=', 'team.id')
+            ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
+            ->select(
+                'seasons.id as season_id',
+                'seasons.name as season_name',
+                'winner_team.name as championship_team'
+            )
+            ->where('team_season_info.coach_id', $coachId)
+            ->where('playoff_series.round', 'semi_finals')
+            ->where('playoff_series.status', 2) // Series is finished
+            ->whereColumn('playoff_series.winner_team_id', 'team_season_info.team_id') // Match columns correctly
+            ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
+            ->distinct()
+            ->get();
+
+        // Calculate season count
+        $seasonCount = DB::table('team_season_info')
+            ->where('coach_id', $coachId)
+            ->distinct('season_id')
+            ->count('season_id');
+
+        // Calculate playoff count
+        $playoffCount = DB::table('team_season_info')
+            ->where('coach_id', $coachId)
+            ->where('is_playoff_qualified', 1)
+            ->count('season_id');
+
+        $overallRankSeasons = DB::table('team_season_info')
+            ->join('standings_snapshots', function ($join) {
+                $join->on('team_season_info.team_id', '=', 'standings_snapshots.team_id')
+                    ->on('team_season_info.season_id', '=', 'standings_snapshots.season_id');
+            })
+            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
+            ->join('teams', 'team_season_info.team_id', '=', 'teams.id')
+            ->where('team_season_info.coach_id', $coachId)
+            ->where('standings_snapshots.overall_rank', 1)
+            ->distinct()
+            ->get([
+                'standings_snapshots.season_id',
+                'seasons.name as season_name',
+                'standings_snapshots.overall_rank',
+                'teams.name as team_name'
+            ]);
+
+        $conferenceRankSeasons = DB::table('team_season_info')
+            ->join('standings_snapshots', function ($join) {
+                $join->on('team_season_info.team_id', '=', 'standings_snapshots.team_id')
+                    ->on('team_season_info.season_id', '=', 'standings_snapshots.season_id');
+            })
+            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
+            ->join('teams', 'team_season_info.team_id', '=', 'teams.id')
+            ->where('team_season_info.coach_id', $coachId)
+            ->where('standings_snapshots.conference_rank', 1)
+            ->distinct()
+            ->get([
+                'standings_snapshots.season_id',
+                'seasons.name as season_name',
+                'standings_snapshots.conference_rank',
+                'teams.name as team_name'
+            ]);
+
+        return response()->json([
+            'coach_details' => $coachDetails,
+            'playoff_performance' => $playoffPerformance,
+            'national_championships' => $championships,
+            'conference_championships' => $conference_championships,
+            'national_overall_champions' => $overallRankSeasons,
+            'conference_overall_champions' => $conferenceRankSeasons,
+            'season_count' => $seasonCount,
+            'playoff_count' => $playoffCount,
+        ]);
+    }
+
+    public function getSeasonHistory(Request $request)
+    {
+        $coach_id = $request->coach_id;
+        $page = $request->page_num ?? 1;
+        $itemsPerPage = $request->itemsperpage ?? 10;
+
+        $offset = ($page - 1) * $itemsPerPage;
+
+        $seasonHistory = DB::table('team_season_info')
+            ->select(
+                'team_season_info.coach_id',
+                'team_season_info.season_id',
+                'team_season_info.team_id',
+
+                // Team
+                'teams.*',
+
+                // Coach
+                'coaches.name as coach_name',
+
+                // Season
+                'seasons.name as season_name',
+                'seasons.status as season_status',
+
+                // Team season info
+                'team_season_info.is_playoff_qualified',
+                'team_season_info.is_defending_champion',
+                'team_season_info.chemistry',
+
+                // Standings
+                'standings_snapshots.team_name',
+                'standings_snapshots.team_acronym',
+                'standings_snapshots.conference_id',
+                'standings_snapshots.conference_name',
+                'standings_snapshots.wins',
+                'standings_snapshots.losses',
+                'standings_snapshots.total_home_score',
+                'standings_snapshots.total_away_score',
+                'standings_snapshots.home_ppg',
+                'standings_snapshots.away_ppg',
+                'standings_snapshots.score_difference',
+                'standings_snapshots.overall_rank',
+                'standings_snapshots.conference_rank',
+                'standings_snapshots.primary_color',
+                'standings_snapshots.secondary_color',
+
+                // Won Semi Finals
+                DB::raw("
+                EXISTS (
+                    SELECT 1
+                    FROM playoff_series ps
+                    WHERE ps.season_id = team_season_info.season_id
+                    AND ps.round = 'semi_finals'
+                    AND ps.winner_team_id = team_season_info.team_id
+                ) as won_semi_finals
+            "),
+
+                // Won Finals
+                DB::raw("
+                EXISTS (
+                    SELECT 1
+                    FROM playoff_series ps
+                    WHERE ps.season_id = team_season_info.season_id
+                    AND ps.round = 'finals'
+                    AND ps.winner_team_id = team_season_info.team_id
+                ) as won_finals
+            ")
+            )
+
+            ->leftJoin(
+                'coaches',
+                'coaches.id',
+                '=',
+                'team_season_info.coach_id'
+            )
+
+            ->join(
+                'teams',
+                'teams.id',
+                '=',
+                'team_season_info.team_id'
+            )
+
+            ->leftJoin(
+                'seasons',
+                'seasons.season_id',
+                '=',
+                'team_season_info.season_id'
+            )
+
+            ->leftJoin('standings_snapshots', function ($join) {
+                $join->on(
+                    'standings_snapshots.season_id',
+                    '=',
+                    'team_season_info.season_id'
+                )->on(
+                    'standings_snapshots.team_id',
+                    '=',
+                    'team_season_info.team_id'
+                );
+            })
+
+            ->where(
+                'team_season_info.coach_id',
+                $coach_id
+            )
+
+            ->where(
+                'seasons.status',
+                17
+            )
+
+            ->orderBy(
+                'team_season_info.season_id',
+                'desc'
+            )
+
+            ->offset($offset)
+            ->limit($itemsPerPage)
+            ->get();
+
+
+        // Get total number of records
+        $totalItems = DB::table('team_season_info')
+            ->join(
+                'seasons',
+                'seasons.season_id',
+                '=',
+                'team_season_info.season_id'
+            )
+            ->where(
+                'team_season_info.coach_id',
+                $coach_id
+            )
+            ->where(
+                'seasons.status',
+                17
+            )
+            ->count();
+
+
+        $totalPages = ceil($totalItems / $itemsPerPage);
+
+
+        return [
+            'history' => $seasonHistory,
+            'total_items' => $totalItems,
+            'items_per_page' => $itemsPerPage,
+            'current_page' => $page,
+            'total_pages' => $totalPages,
+            'shit' => true
+        ];
+    }
 }

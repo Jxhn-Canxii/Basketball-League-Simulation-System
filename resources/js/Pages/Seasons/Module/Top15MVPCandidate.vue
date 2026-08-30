@@ -1,5 +1,5 @@
 <template>
-  <div class="mvp-leaderboard max-w-full mx-auto p-4 bg-white">
+  <div class="mvp-leaderboard max-w-full mx-auto p-4 bg-dark">
     <div class="flex justify-between items-center mb-4">
       <h2 class="text-2xl font-bold text-center flex-1">Top 15 MVP Candidates</h2>
       <button
@@ -13,23 +13,23 @@
 
     <div v-if="loading" class="text-center text-gray-500">Loading...</div>
 
-    <div v-else class="max-h-[90vh] overflow-auto">
+    <div v-else class="max-h-full">
       <div v-if="leaders.length === 0" class="text-center text-red-500 font-semibold">
         No data available
       </div>
 
-      <ul v-else class="grid gap-4 grid-cols-1">
+      <ul v-else class="grid gap-4 grid-cols-3 xs:grid-cols-1">
         <li
           v-for="(player, index) in leaders"
           :key="player.player_id"
-          class="flex items-center space-x-4 p-3 border rounded shadow-sm transition-transform duration-500"
+          class="flex items-center space-x-4 p-3 border rounded shadow-sm transition-transform duration-500 {{ getMovementClass() }}"
           :class="{
             'bg-green-100': rankChange(player.player_id) > 0,
             'bg-red-100': rankChange(player.player_id) < 0,
-            'bg-white': rankChange(player.player_id) === 0
+            'bg-white': rankChange(player.player_id) === 0,
+            'bg-yellow-300' : index <= 2
           }"
           :style="[
-            getAnimationStyle(player.player_id),
             {
               borderLeft: `6px solid #${player.primary_color}`,
               backgroundImage: `linear-gradient(to right, #${player.primary_color}20, #${player.secondary_color}20)`
@@ -64,6 +64,7 @@
           </div>
         </li>
       </ul>
+      <small class="text-red-500 text-xs">Note: Ranking update every 2 rounds</small>
     </div>
   </div>
 </template>
@@ -75,7 +76,7 @@ import { defineProps } from "vue";
 
 const props = defineProps({
   current_round: {
-    type: Number,
+    type: [String,Number],
     required: true,
   },
 });
@@ -114,25 +115,13 @@ const rankChange = (playerId) => {
   return oldRank - newRank;
 };
 
-const getAnimationStyle = (playerId) => {
-  const change = rankChange(playerId);
-  if (change === 0) return {};
+const getMovementClass = (teamId) => {
+  const trend = rankChange(teamId);
+  if (change === 0) return "";
 
-  if (!animationTimers.has(playerId)) {
-    animationTimers.set(
-      playerId,
-      setTimeout(() => {
-        animationTimers.delete(playerId);
-      }, 1500)
-    );
-  }
-
-  return {
-    transform: `translateY(${change * -10}px)`,
-    transition: "transform 1s ease",
-  };
+  if (!trend || trend.symbol === "-") return "";
+  return trend > 0 ? "animate-rise" : "animate-fall";
 };
-
 const formatDraftStatus = (status) => {
   return status === "Undrafted" ? "Undrafted" : `${status}`;
 };

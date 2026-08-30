@@ -31,10 +31,10 @@ class TeamRoleController extends Controller
             foreach ($playersRaw as $player) {
                 $playerId = $player->id;
 
-                $yearsPro = DB::table('player_season_stats')
+                $yearsPro = DB::table('player_season_stats_archives')
                     ->where('player_id', $playerId)
                     ->distinct('season_id')
-                    ->count('season_id');
+                    ->count('season_id') + 1;
 
                 // Current season totals
                 $currentEff = DB::table('player_season_stats')

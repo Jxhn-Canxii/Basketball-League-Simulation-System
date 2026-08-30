@@ -5,10 +5,10 @@
         <AuthenticatedLayout>
             <template #header> Season {{ season_id }}</template>
             <div
-                class="flex min-w-screen min-h-full bg-white overflow-auto shadow rounded p-2"
+                class="flex min-w-screen min-h-full bg-black overflow-auto shadow rounded p-2"
             >
                 <div
-                    class="bg-white overflow-hidden shadow-sm sm:rounded-lg min-w-screen min-h-full p-2"
+                    class="bg-black text-white overflow-hidden shadow-sm sm:rounded-lg min-w-screen min-h-full p-2"
                 >
                     <div class="w-screen mb-0 flex overflow-x-auto border-b-2">
                         <ul class="flex flex-wrap">
@@ -140,6 +140,30 @@
                                     >6</span
                                 >
                             </li>
+                             <li
+                                v-if="season_id > 1"
+                                @click="changeTab('News')"
+                                :class="{
+                                    'text-yellow-500 border-b-2 border-yellow-500':
+                                        currentTab === 'News',
+                                }"
+                                class="whitespace-nowrap group flex items-center px-3 py-2 cursor-pointer relative flex-shrink-0 max-w-xs"
+                            >
+                                <i
+                                    class="fa fa-newspaper mr-2 text-gray-500 group-hover:text-yellow-500"
+                                    title="News"
+                                ></i>
+                                <span
+                                    class="text-truncate hidden sm:inline md:inline"
+                                    >News</span
+                                >
+                                <!-- Warning Badge Notification Counter -->
+                                <span
+                                    hidden
+                                    class="bg-red-500 text-white rounded-full h-4 w-4 text-center m-1 text-xs"
+                                    >6</span
+                                >
+                            </li>
                             <li
                                 v-if="season_id > 1"
                                 @click="changeTab('Transactions')"
@@ -169,7 +193,7 @@
                             >
                                 <select
                                     v-model="season_id"
-                                    class="mt-1 mb-2 p-2 border rounded w-full"
+                                    class="mt-1 mb-2 p-2 border rounded w-full text-black"
                                 >
                                     <option value="0">Select Season</option>
                                     <option
@@ -181,6 +205,7 @@
                                     </option>
                                 </select>
                             </li>
+                            
                         </ul>
                     </div>
                     <!-- Modify the existing content based on the currentTab -->
@@ -221,6 +246,12 @@
                     >
                         <Transactions :key="season_id" :season_id="season_id" />
                     </div>
+                    <div
+                        v-if="currentTab === 'News' && season_id != 0"
+                        class="min-w-full overflow-x-auto"
+                    >
+                        <AllNews :key="season_id" :season_id="season_id" />
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>
@@ -244,6 +275,7 @@ import SeasonAwards from "./Module/SeasonAwards.vue";
 import SeasonLeaders from "../Analytics/Module/SeasonLeaders.vue";
 import DraftBoard from "./Module/DraftBoard.vue";
 import Transactions from "./Module/Transactions.vue";
+import AllNews from "./Module/AllNews.vue";
 
 const props = defineProps({
     season_id: {

@@ -13,7 +13,7 @@ use App\Models\Schedules;
 use App\Models\Conference;
 use App\Models\Player;
 use App\Models\PlayerGameStats;
-use App\Http\Controllers\AwardsController;
+// use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\TeamBalanceController;
 use App\Http\Controllers\TeamRoleController;
@@ -23,6 +23,7 @@ use App\Http\Controllers\PlayerStatsController;
 use App\Http\Controllers\TeamStatsController;
 use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\PlayoffStatsController;
+use App\Http\Controllers\NewsController;
 use App\Http\Controllers\HelperController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
@@ -40,11 +41,12 @@ class SimulateController extends Controller
     protected $freeAgent;
     protected $playOffStats;
     protected $helper;
+    protected $news;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new AwardsController();
+        // $this->storeStats = new AwardsController();
         $this->contract = new ContractController();
         $this->teamBalance = new TeamBalanceController();
         $this->teamRole = new TeamRoleController();
@@ -54,6 +56,7 @@ class SimulateController extends Controller
         $this->teamStats = new TeamStatsController();
         $this->teamStreak = new TeamStreakController();
         $this->freeAgent = new FreeAgentController();
+        $this->news = new NewsController();
         $this->helper = new HelperController();
     }
 
@@ -189,7 +192,7 @@ class SimulateController extends Controller
         // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
             $minutes = (float) $homeMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured) {
+            if ($minutes === 0 || $player->is_injured == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -248,7 +251,7 @@ class SimulateController extends Controller
         // Repeat similar simulation for away team players...
         foreach ($awayTeamPlayers as $player) {
             $minutes = (float) $awayMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured) {
+            if ($minutes === 0 || $player->is_injured == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -498,6 +501,7 @@ class SimulateController extends Controller
 
         // check if round games is simulated
         $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId, $gameData->round);
+        $transactionCount = $this->helper->getTransferTransactionCount();
 
         $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
         $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
@@ -511,7 +515,8 @@ class SimulateController extends Controller
 
         $this->teamStreak->updateTeamStreaks($gameData->id);
         $this->teamStats->updateHeadToHeadResults($gameData->id);
-        // $this->createGameNewsFromGame($gameData->id);
+        
+        $this->news->createGameNewsFromGame($gameData->id);
 
         $this->playOffStats->updatePlayoffAppearancesForGame($gameData);
 
@@ -549,7 +554,8 @@ class SimulateController extends Controller
         // Return the simulation result
         return response()->json([
             'message' => 'Game simulated successfully',
-            'schedule' => $schedule
+            'schedule' => $schedule,
+            'transaction_count' => $transactionCount
         ]);
         // } catch (\Exception $e) {
         //     DB::rollBack(); // Rollback transaction on error
@@ -573,6 +579,10 @@ class SimulateController extends Controller
         $request->validate([
             'schedule_id' => 'required|exists:schedules,id',
         ]);
+
+        $currentSeasonId = get_current_season_id();
+
+        // $season = Seasons::find($currentSeasonId);
 
         $isGameFinished = DB::table('schedules')
             ->where('id', $request->schedule_id)
@@ -626,7 +636,7 @@ class SimulateController extends Controller
                 'schedules.status'
             )
             ->findOrFail($request->schedule_id);
-
+   
         $isSeriesFinished = DB::table('playoff_series')
             ->where('series_id', $gameData->series_id)
             ->where('status', 2)
@@ -692,9 +702,6 @@ class SimulateController extends Controller
             // ], 400);
         }
 
-        // Fetch current season ID
-        $currentSeasonId = $gameData->season_id;
-
         // Define role-based priority and maximum points
         $rolePriority = [
             'star player' => 1,
@@ -725,7 +732,7 @@ class SimulateController extends Controller
         // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
             $minutes = (float) $homeMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured) {
+            if ($minutes === 0 || $player->is_injured == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -784,7 +791,7 @@ class SimulateController extends Controller
         // Repeat similar simulation for away team players...
         foreach ($awayTeamPlayers as $player) {
             $minutes = (float) $awayMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured) {
+            if ($minutes === 0 || $player->is_injured == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -1092,8 +1099,10 @@ class SimulateController extends Controller
             $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId);
             
             $this->teamStreak->updateTeamStreaks($gameData->id);
+
             $this->teamStats->updateHeadToHeadResults($gameData->id);
-            // $this->createGameNewsFromGame($gameData->id);
+
+            $this->news->createGameNewsFromGame($gameData->id);
 
             $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId,  $gameData->round);
             $isRoundSeriesSimulatedForSeason = $this->helper->isRoundSeriesSimulated($currentSeasonId,  $gameData->round);
@@ -1179,6 +1188,10 @@ class SimulateController extends Controller
             'schedule_id' => 'required|exists:schedules,id',
         ]);
 
+        $currentSeasonId = get_current_season_id();
+
+        $season = Seasons::find($currentSeasonId);
+
         $isGameFinished = DB::table('schedules')
             ->where('id', $request->schedule_id)
             ->where('status', 2)  // Fetch previous round and current round in one query
@@ -1241,8 +1254,10 @@ class SimulateController extends Controller
         $this->teamBalance->fixTeamPositionBalance($gameData->home_team_id,false);
         $this->teamBalance->fixTeamPositionBalance($gameData->away_team_id,false);
 
-        $this->teamBalance->signPlayerOffWaiver($gameData->home_team_id);
-        $this->teamBalance->signPlayerOffWaiver($gameData->away_team_id);
+        if($season->status == 2){
+            $this->teamBalance->signPlayerOffWaiver($gameData->home_team_id);
+            $this->teamBalance->signPlayerOffWaiver($gameData->away_team_id);
+        }
 
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
@@ -1282,7 +1297,6 @@ class SimulateController extends Controller
             // ], 400);
         }
 
-        $currentSeasonId = $gameData->season_id;
         $rolePriority = [
             'star player' => 1,
             'all star' => 2,
@@ -1306,7 +1320,7 @@ class SimulateController extends Controller
         // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
             $minutes = (float) $homeMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured) {
+            if ($minutes === 0 || $player->is_injured == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -1365,7 +1379,7 @@ class SimulateController extends Controller
         // Repeat similar simulation for away team players...
         foreach ($awayTeamPlayers as $player) {
             $minutes = (float) $awayMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured) {
+            if ($minutes === 0 || $player->is_injured == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -1594,6 +1608,8 @@ class SimulateController extends Controller
         // check if round games is simulated
         $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId,  $gameData->round);
 
+        $transactionCount = $this->helper->getTransferTransactionCount();
+
         $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
         $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
 
@@ -1604,15 +1620,17 @@ class SimulateController extends Controller
         $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $gameData->winner_id);
 
         $this->teamStreak->updateTeamStreaks($gameData->id);
+
         $this->teamStats->updateHeadToHeadResults($gameData->id);
-        // $this->createGameNewsFromGame($gameData->id);
+
+        $this->news->createGameNewsFromGame($gameData->id);
+
         if ($isRoundsSimulatedForSeason) {
             $this->freeAgent->updateInjuryFreeAgents();
         }
 
         if ($allRoundsSimulatedForSeason) {
             // Update the season's status to 2
-            $season = Seasons::find($currentSeasonId);
             if ($season) {
                 $season->status = 2;
                 $season->save();
@@ -1631,6 +1649,9 @@ class SimulateController extends Controller
         return response()->json([
             'message' => 'Game simulated successfully',
             'game_id' => $gameData->game_id,
+            'season_status' => $season->status,
+            'round' => $gameData->round,
+            'transaction_count' => $transactionCount,
             // 'data' => $gameResult,
             // 'playerGameStats' => $playerGameStats,
         ]);

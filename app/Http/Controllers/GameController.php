@@ -34,7 +34,7 @@ class GameController extends Controller
         $show_stats = $request->show_stats;
         $game_id = $request->game_id; // Fetch game details from the schedule_view table and join with teams table
 
-        $game = \DB::table('schedule_view')
+        $game = DB::table('schedule_view')
             ->join('teams as away_team', 'schedule_view.away_id', '=', 'away_team.id') // Join for away team
             ->join('teams as home_team', 'schedule_view.home_id', '=', 'home_team.id') // Join for home team
             ->where('schedule_view.game_id', $game_id)
@@ -60,17 +60,19 @@ class GameController extends Controller
         }
 
         $playerDatabase = $this->helper->getPlayerStatsDatabaseName($game->season_id);
-        
-        $playerStats = \DB::table($playerDatabase.' as player_game_stats')
+        $seasonStatsDBName = $this->helper->getSeasonStatsDBName($game->season_id);
+
+        $playerStats = DB::table($playerDatabase.' as player_game_stats')
             ->where('player_game_stats.game_id', $game_id)
             ->leftJoin('players as p', 'player_game_stats.player_id', '=', 'p.id') // Alias for players table
             ->leftJoin('teams as drafted_team', 'drafted_team.id', '=', 'p.drafted_team_id') // Alias for drafted teams
             ->leftJoin('teams as t', 'player_game_stats.team_id', '=', 't.id') // Alias for teams table
-            ->leftJoin('player_season_stats as pss', function ($join) {
+            ->leftJoin( $seasonStatsDBName.' as pss', function ($join) {
                 $join->on('pss.player_id', '=', 'p.id')
                     ->on('pss.season_id', '=', 'player_game_stats.season_id'); // Join player_season_stats on player_id and season_id
             })
             ->leftJoin('season_awards as sa', 'sa.player_id', '=', 'p.id')
+            ->leftJoin('player_playoff_appearances as ppa', 'ppa.player_id', '=', 'p.id')
             ->select(
                 'player_game_stats.player_id',
                 'p.name as player_name',
@@ -107,6 +109,8 @@ class GameController extends Controller
                 'player_game_stats.per',
                 'player_game_stats.ts_percent',
                 'player_game_stats.eff',
+                'ppa.championships_won',
+                'ppa.round_of_16_appearances as playoff_appearance',
 
                 // Determine if the player is the Finals MVP for this season
                 DB::raw("CASE WHEN p.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = p.id LIMIT 1) THEN 1 ELSE 0 END as is_finals_mvp"),
@@ -287,7 +291,8 @@ class GameController extends Controller
             'drafted_team_acro' => $bestWinningTeamPlayer->drafted_team_acro,
             'awards' => $bestWinningTeamPlayer->awards ?? null,
             'finals_mvp' => $bestWinningTeamPlayer->finals_mvp ?? null,
-            'championship_won' => $bestWinningTeamPlayer->championship_won ?? null,
+            'championships_won' => $bestWinningTeamPlayer->championships_won ?? null,
+            'playoff_appearance' => $bestWinningTeamPlayer->playoff_appearance ?? null,
             'is_finals_mvp' => $bestWinningTeamPlayer->is_finals_mvp,
             'is_season_mvp' => $bestWinningTeamPlayer->is_season_mvp,
             'is_defensive_poy' => $bestWinningTeamPlayer->is_defensive_poy,
@@ -306,7 +311,7 @@ class GameController extends Controller
 
         if ($show_stats) {
             // Fetch all players that might be relevant to the game (ignoring team_id here)
-            $players = \DB::table('players')
+            $players = DB::table('players')
                 ->whereIn('id', $playerStats->pluck('player_id')->toArray())
                 ->get()
                 ->keyBy('id');
@@ -526,9 +531,10 @@ class GameController extends Controller
         // Randomly pick a stat type (this now includes total stats as well)
         $randomStatKey = array_rand($statTypes);
         $statType = $statTypes[$randomStatKey]; // Get the readable stat name (e.g., 'points', 'steals')
+        $seasonStatsDBName = $this->helper->getSeasonStatsDBName($seasonId);
 
         // Step 1: Retrieve the overall leader with the highest stat for the season
-        $overallLeader = DB::table('player_season_stats')
+        $overallLeader = DB::table( $seasonStatsDBName.' as player_season_stats')
             ->select(
                 'player_season_stats.id',
                 'player_season_stats.player_id',
@@ -565,7 +571,7 @@ class GameController extends Controller
             ->first();
 
         // Step 2: Retrieve the rookie leader with the highest stat for the season
-        $rookieLeader = DB::table('player_season_stats')
+        $rookieLeader = DB::table($seasonStatsDBName.' as player_season_stats')
             ->select(
                 'player_season_stats.id',
                 'player_season_stats.player_id',
@@ -639,20 +645,22 @@ class GameController extends Controller
             ->where('game_id', $gameId)
             ->get();
     }
-    private function getTeamRatingsPerSeason($seasonId, $teamId)
+    private function getTeamRatingsPerSeason(int $seasonId,int $teamId)
     {
+        $seasonStatsDBName = $this->helper->getSeasonStatsDBName($seasonId);
+
         // Get team ratings for the given season using the player_ratings table
-        $teamRatings = \DB::table('player_season_stats') // Changed table to player_season_stats
+        $teamRatings = DB::table($seasonStatsDBName.' as player_season_stats') // Changed table to player_season_stats
             ->join('players as p', 'player_season_stats.player_id', '=', 'p.id') // Join with player_ratings table
             ->join('teams as t', 'player_season_stats.team_id', '=', 't.id')
             ->select(
                 't.id as team_id',
                 't.name as team_name',
                 'player_season_stats.season_id',
-                \DB::raw('ROUND(AVG(p.defense_rating)) as defense_rating'),
-                \DB::raw('ROUND(AVG(p.shooting_rating)) as offense_rating'), // Assuming offense is shooting_rating
-                \DB::raw('ROUND(AVG(p.passing_rating)) as passing_rating'),
-                \DB::raw('ROUND(AVG(p.rebounding_rating)) as rebounding_rating')
+                DB::raw('ROUND(AVG(p.defense_rating)) as defense_rating'),
+                DB::raw('ROUND(AVG(p.shooting_rating)) as offense_rating'), // Assuming offense is shooting_rating
+                DB::raw('ROUND(AVG(p.passing_rating)) as passing_rating'),
+                DB::raw('ROUND(AVG(p.rebounding_rating)) as rebounding_rating')
             )
             ->where('player_season_stats.season_id', $seasonId)  // Filter by season
             ->where('player_season_stats.team_id', $teamId)  // Filter by team_id (optional)
@@ -674,7 +682,7 @@ class GameController extends Controller
     private function getTeamStreak($teamId, $game_id)
     {
         // Query to calculate the team's current winning or losing streak
-        $streak = \DB::table('schedule_view')
+        $streak = DB::table('schedule_view')
             ->where(function ($query) use ($teamId) {
                 $query->where('home_id', $teamId)
                     ->orWhere('away_id', $teamId);
@@ -723,7 +731,7 @@ class GameController extends Controller
     private function getHeadToHeadRecord($homeTeamId, $awayTeamId)
     {
         // Fetch the head-to-head matchup from the head_to_head_matchups table using homeTeamId as team_id
-        $headToHead = \DB::table('head_to_head')
+        $headToHead = DB::table('head_to_head')
             ->where('team_id', $homeTeamId)
             ->where('opponent_id', $awayTeamId)
             ->first(); // We expect at most one record, so using first()

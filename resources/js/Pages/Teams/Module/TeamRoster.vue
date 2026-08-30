@@ -68,7 +68,7 @@
             </div>
             <div>
                 <select v-model="season_id" @change="seasonBehavior()" class="mt-1 block w-full sm:w-auto border-gray-300 rounded-md shadow-sm sm:text-sm">
-                    <option :key="0" value="0">Latest Roster</option>
+                    <option :key="0" value="0" disabled class="text-gray-400 text-bold">Roster Per Season</option>
                     <option v-for="(season, ss) in seasons" :key="season.season_id" :value="season.season_id">{{ season.name }}</option>
                 </select>
             </div>
@@ -83,12 +83,14 @@
                         <h3 class="text-black font-bold mt-4 mb-4">All Players</h3>
                         <div>
                             <!-- Toggle Button -->
-                            <button 
+                            <button
+                                v-if="team_info?.current_season_id == season_id" 
                                 @click="showTransferred = !showTransferred"
                                 class="mb-2 px-4 py-2 bg-blue-500 text-white text-xs rounded"
                             >
                                 {{ showTransferred ? 'Hide Transferred Players' : 'Show Transferred Players' }}
                             </button>
+                            <!-- {{ team_info?.current_season_id }} -->
                         </div>
                     </div>
 
@@ -294,12 +296,18 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border" :title="player.retirement_age">
                                         <span class="text-xs flex items-center ml-2">
+                                            <span>
+                                                <i v-if="player.has_improved == 1" class="fa fa-chevron-up text-lime-500"></i>
+                                                <i v-if="player.has_improved == 0" class="fa fa-chevron-down text-red-500"></i>
+                                                <i v-if="player.has_improved == 2" class="fa fa-dash text-gray-500"></i>
+                                            </span>
                                             {{ player.name }}<sup>{{ player.age }}</sup>
                                             <i
                                                 :class="getMoraleIcon(player.morale)"
                                                 :title="`${getMoraleTitle(player.morale)} ${player.morale}%`"
                                                 style="font-size: 1em;"
                                             ></i>
+                                            <!-- {{ player.has_improved }} -->
                                         </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
@@ -324,8 +332,8 @@
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.contract_years ?? '-' }} yrs.
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap border">
-                                        {{ player.overall_rating ?? '-' }}
+                                    <td class="px-2 py-1 whitespace-nowrap border" :title="'Potential: '+player.potential_rating">
+                                        {{ player.overall_rating ?? '-' }} <sup>{{ player.potential_status }}</sup>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.bpg_game_leader.toFixed(1) }}
@@ -623,8 +631,8 @@
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.contract_years ?? '-' }} yrs.
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap border">
-                                        {{ player.overall_rating ?? '-' }}
+                                    <td class="px-2 py-1 whitespace-nowrap border" :title="'Potential: '+player.potential_rating">
+                                        {{ player.overall_rating ?? '-' }} <sup>{{ player.potential_status }}</sup>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.bpg_game_leader.toFixed(1) }}
@@ -927,8 +935,8 @@
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.contract_years ?? '-' }} yrs.
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap border">
-                                        {{ player.overall_rating ?? '-' }}
+                                    <td class="px-2 py-1 whitespace-nowrap border" :title="'Potential: '+player.potential_rating">
+                                        {{ player.overall_rating ?? '-' }} <sup>{{ player.potential_status }}</sup>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.bpg_game_leader.toFixed(1) }}
@@ -1259,7 +1267,7 @@ watch(
 );
 
 onMounted(async () => {
-    await seasonsDropdown();
+    await seasonsDropdown(props.team_id);
     await fetchTeamInfo(props.team_id);
     await fetchTeamRoster(props.team_id);
 });
@@ -1345,10 +1353,10 @@ const fetchTeamRoster = async (id) => {
         console.error("Error fetching team info:", error);
     }
 };
-const seasonsDropdown = async () => {
+const seasonsDropdown = async (id) => {
     try {
-        const response = await axios.post(route("seasons.dropdown"), {
-            season_id: 0,
+        const response = await axios.post(route("team.seasons.dropdown"), {
+             team_id: id,
         });
         seasons.value = response.data;
         console.log(response.data[0].season_id);

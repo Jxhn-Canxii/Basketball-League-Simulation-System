@@ -410,7 +410,7 @@ class PlayoffStatsController extends Controller
     private function updatePlayerPlayoffAppearance($playerId, $gameData, $seriesIdentifier)
     {
         if (!$playerId || !$gameData || !$seriesIdentifier) {
-            \Log::error("Invalid input: playerId=$playerId, gameData=" . json_encode($gameData) . ", seriesIdentifier=$seriesIdentifier");
+            // \Log::error("Invalid input: playerId=$playerId, gameData=" . json_encode($gameData) . ", seriesIdentifier=$seriesIdentifier");
             return;
         }
 
@@ -423,7 +423,7 @@ class PlayoffStatsController extends Controller
         // Fetch player's team_id
         $playerTeamId = DB::table('players')->where('id', $playerId)->value('team_id');
         if (!$playerTeamId) {
-            \Log::error("No team_id found for player_id: $playerId");
+            // \Log::error("No team_id found for player_id: $playerId");
             return;
         }
 
@@ -440,7 +440,7 @@ class PlayoffStatsController extends Controller
         ];
 
         if (!isset($roundColumnMap[$round])) {
-            \Log::warning("Invalid playoff round: $round");
+            // \Log::warning("Invalid playoff round: $round");
             return; // Not a tracked playoff round
         }
 
@@ -456,7 +456,7 @@ class PlayoffStatsController extends Controller
                 ->exists();
 
             if ($existingAppearance) {
-                \Log::info("Player $playerId already credited for series $seriesIdentifier");
+                // \Log::info("Player $playerId already credited for series $seriesIdentifier");
                 return; // Skip if appearance already recorded
             }
 
@@ -487,12 +487,12 @@ class PlayoffStatsController extends Controller
 
             // ✅ Handle championship win in finals (single-elims assumption)
             if ($round === 'finals' && $winnerTeamId && $playerTeamId == $winnerTeamId) {
-                \Log::info("Incrementing championships_won for player $playerId, team $playerTeamId won");
+                // \Log::info("Incrementing championships_won for player $playerId, team $playerTeamId won");
                 DB::table('player_playoff_appearances')
                     ->where('player_id', $playerId)
                     ->increment('championships_won');
             } else {
-                \Log::info("Championship not incremented: round=$round, playerTeamId=$playerTeamId, winnerTeamId=$winnerTeamId");
+                // \Log::info("Championship not incremented: round=$round, playerTeamId=$playerTeamId, winnerTeamId=$winnerTeamId");
             }
         });
     }

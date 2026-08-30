@@ -26,7 +26,7 @@
     <div class="p-6 bg-gray-900 shadow-md rounded-lg min-w-screen mx-auto" v-else>
         <!-- Game Summary -->
         <div
-            class="flex flex-col lg:flex-row justify-between mb-4 border-b-2 border-gray-700 pb-4"
+            class="flex flex-col lg:flex-row justify-between mb-4 -2 border-gray-700 pb-4"
         >
             <div
                 class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative order-1 md:order-1"
@@ -312,7 +312,7 @@
                                 'bg-yellow-100 text-black':
                                     top5HomePlayers.includes(player.name),
                             }"
-                            class="border-b hover:bg-gray-600 text-xs"
+                            class=" hover:bg-gray-600 text-xs"
                         >
                             <td class="py-1 px-3">
                                 {{ player.name }}
@@ -472,7 +472,7 @@
                                 'bg-yellow-100 text-black':
                                     top5AwayPlayers.includes(player.name),
                             }"
-                            class="border-b hover:bg-gray-600 text-xs"
+                            class=" hover:bg-gray-600 text-xs"
                         >
                             <td class="py-1 px-3 text-wrap">
                                 {{ player.name }}
@@ -536,10 +536,10 @@
             </div>
         </div>
         <!-- Best Player of the Game -->
-        <div class="block md:flex bg-white rounded">
+        <div class="block md:flex bg-gray-800 rounded">
             <!-- Best Player Section: 1/4 Width -->
-            <div class="w-full md:w-1/2 p-2 shadow-md">
-                <h3 class="text-lg font-semibold mb-1">Player of the Game</h3>
+            <div class="w-full md:w-3/4 p-2 shadow-md">
+                <h3 class="text-lg text-yellow-600 font-semibold mb-1">Player of the Game</h3>
                 <div
                     v-if="bestPlayer"
                     class="bg-white shadow-lg p-4 rounded-lg text-black"
@@ -552,9 +552,9 @@
                     >
                         <p class="text-4xl font-extrabold mb-1 relative text-nowrap" :title="bestPlayer?.name">
                             {{ playerFormatter(bestPlayer?.name) }}
-                            <sup class="text-xs absolute top-0 ml-2 mt-2 text-nowrap" v-if="bestPlayer?.age">
+                            <!-- <sup class="text-xs absolute top-0 ml-2 mt-2 text-nowrap" v-if="bestPlayer?.age">
                                {{ bestPlayer?.age }} | {{ bestPlayer?.position }}
-                            </sup>
+                            </sup> -->
                         </p>
                         <div class="flex justify-center p-2">
                             <span
@@ -639,22 +639,20 @@
 
                     <!-- Marquee for awards -->
                     <div class="mt-4 block justify-start text-wrap">
-                        <p class="text-xs font-bold text-gray-600" v-if="bestPlayer?.awards && bestPlayer?.awards.length > 0">
-                            {{ bestPlayer?.awards }}
-                        </p>
-                        <p class="text-xs font-bold text-gray-600" v-if="bestPlayer?.finals_mvp && bestPlayer?.finals_mvp.length > 0">
-                             {{ bestPlayer?.finals_mvp }}
-                        </p>
-                        <p class="text-xs font-bold text-gray-600" v-if="bestPlayer?.championship_won && bestPlayer?.championship_won.length > 0">
-                            {{ bestPlayer?.championship_won }}
-                       </p>
-                    </div>
-                    <div class="flex justify-between text-nowrap items-center">
                         <sup class="float-center font-bold mt-0 text-red-500">
                             <b class="text-gray-400">Draft:</b> {{ bestPlayer.draft_status == 'Undrafted' ? 'S'+bestPlayer.draft_id+' '+bestPlayer.draft_status : bestPlayer.draft_status + (bestPlayer.drafted_team_acro ? ' ('+bestPlayer.drafted_team_acro+ ')' : '')}}
                         </sup>
-                        <div class="flex justify-center space-x-3 items-center">
+                    </div>
+                    <div class="block text-nowrap mt-2 items-center">
+                        <div class="flex justify-left space-x-3 items-center">
                             <sup v-if="bestPlayer?.is_finals_mvp" title="Finals MVP">
+                                <i class="fa fa-medal text-yellow-500 text-lg"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_finals_mvp"
+                            v-for="champ in bestPlayer?.championships_won" 
+                            :key="champ"
+                            :title="bestPlayer?.championships_won+'x Champion/s'" 
+                            >
                                 <i class="fa fa-trophy text-yellow-500 text-lg"></i>
                             </sup>
                             <sup v-if="bestPlayer?.is_season_mvp" title="Season MVP">
@@ -672,6 +670,12 @@
                             <sup v-if="bestPlayer?.is_sixth_man" title="Sixth Man of the Season">
                                 <b class="text-gray-500 text-lg text-bold bg-gray-200 rounded-full p-1 text-center">6</b>
                             </sup>
+                            <sup v-if="bestPlayer?.playoff_appearance > 0" :title="bestPlayer?.playoff_appearance+'x Play-off Appearance'">
+                                <!-- <i class="fa fa-medal text-yellow-500 text-lg"></i> -->
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-blue-900 text-white text-center">
+                                    {{ bestPlayer?.playoff_appearance }}x <i class="fa fa-md fa-diagram-project text-red-500"></i>
+                                </label>
+                            </sup>
                         </div>
                     </div>
                 </div>
@@ -685,16 +689,16 @@
                     <GameNews :key="gameNews.id" :data="gameNews" />
                 </div>
             </div>
-            <div v-else class="w-full md:w-1/2 p-2 bg-white relative">
+            <div v-else class="w-full md:w-1/2 p-2 bg-dark shadow-lg-white text-white relative">
                 <a @click.prevent="showGameNews = true" class="top-2 right-2 hidden absolute">
                     <i class="fa fa-2x fa-newspaper"></i>
                 </a>
-                <h3 class="text-lg font-semibold mb-2">Stat Leaders</h3>
-                <div class="min-w-full shadow-lg border-gray-300 p-4">
+                <h3 class="text-lg font-semibold mb-2 text-yellow-600">Stat Leaders</h3>
+                <div class="min-w-full">
                     <ul class="space-y-4">
                         <li
                             v-if="statLeaders.points"
-                            class="flex items-center border-b border-gray-300 pb-2"
+                            class="flex items-center bg-white text-black p-2 rounded  border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -706,8 +710,8 @@
                             <div class="ml-3 flex-grow">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <span class="font-bold">{{
-                                            statLeaders.points.player_name
+                                        <span :title="statLeaders.points.player_name" class="font-bold">{{
+                                            playerFormatter(statLeaders.points.player_name)
                                         }}</span>
                                         <small class="text-gray-400 block">{{
                                             statLeaders.points.team_name
@@ -724,7 +728,11 @@
 
                         <li
                             v-if="statLeaders.assists"
-                            class="flex items-center border-b border-gray-300 pb-2"
+                            :style="{
+                                backgroundColor:
+                                    '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color  : gameDetails?.away_team.primary_color ),
+                            }"
+                            class="flex items-center  p-2 border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -734,8 +742,8 @@
                             <div class="ml-3 flex-grow">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <span class="font-semibold">{{
-                                            statLeaders.assists.player_name
+                                        <span :title="statLeaders.assists.player_name" class="font-semibold">{{
+                                            playerFormatter(statLeaders.assists.player_name)
                                         }}</span>
                                         <small class="text-gray-400 block">{{
                                             statLeaders.assists.team_name
@@ -754,7 +762,7 @@
                         </li>
                         <li
                             v-if="statLeaders.rebounds"
-                            class="flex items-center border-b border-gray-300 pb-2"
+                            class="flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -764,8 +772,8 @@
                             <div class="ml-3 flex-grow">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <span class="font-semibold">{{
-                                            statLeaders.rebounds.player_name
+                                        <span :title="statLeaders.rebounds.player_name" class="font-semibold">{{
+                                            playerFormatter(statLeaders.rebounds.player_name)
                                         }}</span>
                                         <small class="text-gray-400 block">{{
                                             statLeaders.rebounds.team_name
@@ -784,7 +792,11 @@
                         </li>
                         <li
                             v-if="statLeaders.steals"
-                            class="flex items-center border-b border-gray-300 pb-2"
+                            :style="{
+                                backgroundColor:
+                                    '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color  : gameDetails?.away_team.primary_color ),
+                            }"
+                            class="flex items-center  p-2 border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -794,8 +806,8 @@
                             <div class="ml-3 flex-grow">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <span class="font-semibold">{{
-                                            statLeaders.steals.player_name
+                                        <span :title="statLeaders.steals.player_name" class="font-semibold">{{
+                                            playerFormatter(statLeaders.steals.player_name)
                                         }}</span>
                                         <small class="text-gray-400 block">{{
                                             statLeaders.steals.team_name
@@ -811,7 +823,7 @@
                         </li>
                         <li
                             v-if="statLeaders.blocks"
-                            class="flex items-center border-b border-gray-300 pb-2"
+                            class="flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -821,8 +833,8 @@
                             <div class="ml-3 flex-grow">
                                 <div class="flex justify-between items-start">
                                     <div>
-                                        <span class="font-semibold">{{
-                                            statLeaders.blocks.player_name
+                                        <span :title="statLeaders.blocks.player_name" class="font-semibold">{{
+                                            playerFormatter(statLeaders.blocks.player_name)
                                         }}</span>
                                         <small class="text-gray-400 block">{{
                                             statLeaders.blocks.team_name
@@ -837,7 +849,12 @@
                             </div>
                         </li>
                     </ul>
-                    <div class="p-0 flex-grow mt-2" v-if="injuredPlayers?.length > 0">
+                    <div 
+                    :style="{
+                        backgroundColor:
+                            '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color : gameDetails?.away_team.primary_color),
+                    }"
+                    class="p-2 flex-grow mt-3 text-white">
                         <div class="border-l-4 border-red-500 h-full overflow-hidden">
                             <div class="flex items-center h-6 px-2">
                                 <span class="animate-pulse flex items-center">
@@ -846,16 +863,19 @@
                                 </span>
                             </div>
                             <div class="h-10 overflow-hidden px-2">
-                                <div class="whitespace-nowrap animate-marquee flex text-sm text-gray-800">
+                                <div v-if="injuredPlayers?.length > 0" class="whitespace-nowrap animate-marquee flex text-sm text-gray-800">
                                     <div class="flex items-center">
                                         <div
                                             v-for="injury in injuredPlayers"
                                             :key="injury.id"
-                                            class="flex-shrink-0 inline-block"
+                                            class="flex-shrink-0 inline-block text-white"
                                         >
                                             {{ formatInjuredPlayers(injury) }}
                                         </div>
                                     </div>
+                                </div>
+                                <div v-else class="text-white text-xs">
+                                    <p>{{ gameNews.title }}</p>   
                                 </div>
                             </div>
                         </div>

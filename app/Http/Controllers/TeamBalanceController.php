@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\AwardsController;
+use App\Http\Controllers\PlayerSeasonStatsController;
 use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\ContractController;
 use App\Http\Controllers\HelperController;
@@ -18,7 +18,7 @@ class TeamBalanceController extends Controller
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new AwardsController();
+        $this->storeStats = new PlayerSeasonStatsController();
         $this->contract = new ContractController();
         $this->freeAgent = new FreeAgentController();
         $this->helper = new HelperController();
@@ -44,6 +44,8 @@ class TeamBalanceController extends Controller
             ->first();
 
         $teamName = $this->helper->getTeamName($teamId);
+
+        $simulatedRounds = 0;
 
         if (!$counts) {
             return response()->json(['error' => 'Team not found in view.'], 404);
@@ -73,6 +75,7 @@ class TeamBalanceController extends Controller
         $positionsNeeding = collect($posCounts)->filter(fn($count) => $count < $minimumPlayersPerPosition);
         $positionsOverfilled = collect($posCounts)->filter(fn($count) => $count > $minimumPlayersPerPosition);
 
+        // dd($rosterCount);
         // =============== CASE 1: Roster < 15 ====================
         if ($rosterCount < 15) {
             while ($rosterCount < 15) {
@@ -115,11 +118,13 @@ class TeamBalanceController extends Controller
                 $minimumPlayersNeeded = $minimumPlayersPerPosition - $missing;
                 $overflow = $positionsOverfilled->sortDesc()->keys()->first();
 
+                // dd($teamId);
                 $playerToWaive = DB::table('players')
                             ->where('players.team_id', $teamId)
                             ->where('players.is_active', true)
-                            ->where('players.is_injured', false)
-                            ->where('players.role','!=', 'star player')
+                            // ->where('players.is_injured', false)
+                            // ->where('players.role','!=', 'star player')
+                            ->whereNotIn('players.role', ['all star', 'star player'])
                             ->where(function ($query) use ($overflow) {
                                 $query->where('players.position', $overflow)
                                     ->orWhere('players.position', 'like', $overflow . '/%')
@@ -149,106 +154,109 @@ class TeamBalanceController extends Controller
                                 ['contract_years', 'asc'],
                             ]);
 
-                for ($i = 0; $i < $minimumPlayersNeeded ; $i++) {
+                // dd($simulatedRounds);
+                if($simulatedRounds > 2){
+                    for ($i = 0; $i < $minimumPlayersNeeded ; $i++) {
 
-                    if (!$overflow || $posCounts[$overflow] <= $minimumPlayersPerPosition) break;
+                        if (!$overflow || $posCounts[$overflow] <= $minimumPlayersPerPosition) break;
 
-                    // Try to trade first
-                    $tradeData[$i] = $this->findTradePlayer($teamId, $position, $overflow, $seasonId);    
+                        // Try to trade first
+                        $tradeData[$i] = $this->findTradePlayer($teamId, $position, $overflow, $seasonId);    
 
-                    if ($tradeData[$i]) {
-                        // Execute two-way trade
-                        // Update player from other team to current team
-                        DB::table('players')->where('id', $tradeData[$i]['incomingPlayer']->player_id)->update([
-                            'team_id' => $teamId,
-                        ]);
+                        if ($tradeData[$i]) {
+                            // Execute two-way trade
+                            // Update player from other team to current team
+                            DB::table('players')->where('id', $tradeData[$i]['incomingPlayer']->player_id)->update([
+                                'team_id' => $teamId,
+                            ]);
 
-                        // Update player from current team to other team
-                        DB::table('players')->where('id', $tradeData[$i]['outgoingPlayer']->player_id)->update([
-                            'team_id' => $tradeData[$i]['otherTeamId'],
-                        ]);
+                            // Update player from current team to other team
+                            DB::table('players')->where('id', $tradeData[$i]['outgoingPlayer']->player_id)->update([
+                                'team_id' => $tradeData[$i]['otherTeamId'],
+                            ]);
 
-                        $tradedTeamName = $this->helper->getTeamName($tradeData[$i]['otherTeamId']);
-                        $incomingTradeDetails = "Traded to {$teamName} in exchange for {$tradeData[$i]['outgoingPlayer']->player_name} ({$tradedTeamName})";
-                        // Record transaction for incoming player
-                        DB::table('transactions')->insert([
-                            'player_id' => $tradeData[$i]['incomingPlayer']->player_id,
-                            'season_id' => $seasonId,
-                            'details' =>  $incomingTradeDetails,
-                            'from_team_id' => $tradeData[$i]['otherTeamId'],
-                            'to_team_id' => $teamId,
-                            'status' => 'in-season trade',
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                            $tradedTeamName = $this->helper->getTeamName($tradeData[$i]['otherTeamId']);
+                            $incomingTradeDetails = "Traded to {$teamName} in exchange for {$tradeData[$i]['outgoingPlayer']->player_name} ({$tradedTeamName})";
+                            // Record transaction for incoming player
+                            DB::table('transactions')->insert([
+                                'player_id' => $tradeData[$i]['incomingPlayer']->player_id,
+                                'season_id' => $seasonId,
+                                'details' =>  $incomingTradeDetails,
+                                'from_team_id' => $tradeData[$i]['otherTeamId'],
+                                'to_team_id' => $teamId,
+                                'status' => 'in-season trade',
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
 
-                        $this->storeStats->storePlayerCurrentSeasonStats($teamId, $tradeData[$i]['incomingPlayer']->player_id);
-                        // Record transaction for outgoing 
-                        $outgoingTradeDetails = "Traded to {$tradedTeamName} in exchange for {$tradeData[$i]['incomingPlayer']->player_name} ({$teamName})";
-                        
-                        DB::table('transactions')->insert([
-                            'player_id' => $tradeData[$i]['outgoingPlayer']->player_id,
-                            'season_id' => $seasonId,
-                            'details' => $outgoingTradeDetails,
-                            'from_team_id' => $teamId,
-                            'to_team_id' => $tradeData[$i]['otherTeamId'],
-                            'status' => 'in-season trade',
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                            $this->storeStats->storePlayerCurrentSeasonStats($teamId, $tradeData[$i]['incomingPlayer']->player_id);
+                            // Record transaction for outgoing 
+                            $outgoingTradeDetails = "Traded to {$tradedTeamName} in exchange for {$tradeData[$i]['incomingPlayer']->player_name} ({$teamName})";
+                            
+                            DB::table('transactions')->insert([
+                                'player_id' => $tradeData[$i]['outgoingPlayer']->player_id,
+                                'season_id' => $seasonId,
+                                'details' => $outgoingTradeDetails,
+                                'from_team_id' => $teamId,
+                                'to_team_id' => $tradeData[$i]['otherTeamId'],
+                                'status' => 'in-season trade',
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
 
-                        $this->storeStats->storePlayerCurrentSeasonStats($tradeData[$i]['otherTeamId'], $tradeData[$i]['outgoingPlayer']->player_id);
-                        // Update position counts
-                        // $posCounts[$overflow]--;
-                        // $posCounts[$position]++;
-                    } else {
-                        // Fall back to waiving and signing free agent
-                        if (!$playerToWaive[$i]) continue;
+                            $this->storeStats->storePlayerCurrentSeasonStats($tradeData[$i]['otherTeamId'], $tradeData[$i]['outgoingPlayer']->player_id);
+                            // Update position counts
+                            // $posCounts[$overflow]--;
+                            // $posCounts[$position]++;
+                        } else {
+                            // Fall back to waiving and signing free agent
+                            if (!$playerToWaive[$i]) continue;
 
-                        // Waive player
-                        DB::table('players')->where('id', $playerToWaive[$i]->id)->update([
-                            'contract_years' => 0,
-                            'team_id' => 0,
-                        ]);
+                            // Waive player
+                            DB::table('players')->where('id', $playerToWaive[$i]->id)->update([
+                                'contract_years' => 0,
+                                'team_id' => 0,
+                            ]);
 
-                        DB::table('transactions')->insert([
-                            'player_id' => $playerToWaive[$i]->id,
-                            'season_id' => $seasonId,
-                            'details' => "Waived by {$teamName} to create a roster spot.",
-                            'from_team_id' => $teamId,
-                            'to_team_id' => 0,
-                            'status' => 'waived',
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                            DB::table('transactions')->insert([
+                                'player_id' => $playerToWaive[$i]->id,
+                                'season_id' => $seasonId,
+                                'details' => "Waived by {$teamName} to create a roster spot.",
+                                'from_team_id' => $teamId,
+                                'to_team_id' => 0,
+                                'status' => 'waived',
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
 
-                        // Sign free agent
-                        $replacement[$i] = $this->freeAgent->getBestFreeAgentAvailable($position);
-                        if (!$replacement) continue;
+                            // Sign free agent
+                            $replacement[$i] = $this->freeAgent->getBestFreeAgentAvailable($position);
+                            if (!$replacement) continue;
 
-                        $contractYears = $this->contract->getContractYearsBasedOnRole($replacement[$i]->role);
+                            $contractYears = $this->contract->getContractYearsBasedOnRole($replacement[$i]->role);
 
-                        DB::table('players')->where('id', $replacement[$i]->player_id)->update([
-                            'team_id' => $teamId,
-                            'contract_years' => $contractYears,
-                        ]);
+                            DB::table('players')->where('id', $replacement[$i]->player_id)->update([
+                                'team_id' => $teamId,
+                                'contract_years' => $contractYears,
+                            ]);
 
-                        DB::table('transactions')->insert([
-                            'player_id' => $replacement[$i]->player_id,
-                            'season_id' => $seasonId,
-                            'details' => "Signed by {$teamName} for a regular contract for {$contractYears} yrs",
-                            'from_team_id' => 0,
-                            'to_team_id' => $teamId,
-                            'status' => 'signed',
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]);
+                            DB::table('transactions')->insert([
+                                'player_id' => $replacement[$i]->player_id,
+                                'season_id' => $seasonId,
+                                'details' => "Signed by {$teamName} for a regular contract for {$contractYears} yrs",
+                                'from_team_id' => 0,
+                                'to_team_id' => $teamId,
+                                'status' => 'signed',
+                                'created_at' => now(),
+                                'updated_at' => now(),
+                            ]);
 
-                        $this->storeStats->storePlayerCurrentSeasonStats($teamId, $replacement[$i]->player_id);
+                            $this->storeStats->storePlayerCurrentSeasonStats($teamId, $replacement[$i]->player_id);
+                        }
+
+                        $posCounts[$overflow]--;
+                        $posCounts[$position]++;
                     }
-
-                    $posCounts[$overflow]--;
-                    $posCounts[$position]++;
                 }
             }
 
@@ -430,10 +438,18 @@ class TeamBalanceController extends Controller
         // Get the total number of rounds in the season
         $totalRounds = $this->helper->totalRounds($seasonId);
 
-        $canSignPlayerOffWaiver = $totalRounds - 3;
+        $currentConferenceRank = $this->helper->currentSeasonConferenceRank($teamId);
+
+        $canSignPlayerOffWaiver = $simulatedRounds >= ($totalRounds - 3);
+
+        $allowedTeamsToSign = ($currentConferenceRank >= 12) && ($currentConferenceRank < 6);
+
+        $secondQuarterRegularSeason = $latestSeasonStatus == 2;
+
+        $chancesToSign = 50 > rand(0,100);
 
         //total rounds is 15, round simulated is 12, this can automatically eligible to sign free agent players for playoff roster
-        $isEligibleToSignOffWaiver = $simulatedRounds >= $canSignPlayerOffWaiver && $latestSeasonStatus == 1;
+        $isEligibleToSignOffWaiver = $chancesToSign && $allowedTeamsToSign && $canSignPlayerOffWaiver && $secondQuarterRegularSeason;
 
         if(!$isEligibleToSignOffWaiver) return;
 
@@ -457,9 +473,10 @@ class TeamBalanceController extends Controller
 
                 // Fall back to waiving and signing free agent
         $playerToWaive = DB::table('players')
+            ->leftJoin('player_season_stats as pss', 'players.id', '=', 'pss.player_id')
             ->where('players.team_id', $teamId)
             ->where('players.is_active', true)
-            ->where('players.morale','<=', 20)
+            ->where('pss.season_id', $seasonId)
             ->where(function ($query) use ($position) {
                 $query->where('players.position', $position)
                     ->orWhere('players.position', 'like', $position . '/%')
@@ -467,6 +484,8 @@ class TeamBalanceController extends Controller
                     ->orWhere('players.position', 'like', '%/' . $position . '/%');
             })
             ->select('players.*')
+            ->orderBy('pss.eff')
+            ->orderBy('pss.performance_points')
             ->get()
             ->first();
         

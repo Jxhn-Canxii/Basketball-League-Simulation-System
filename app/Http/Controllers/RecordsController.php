@@ -171,7 +171,7 @@ class RecordsController extends Controller
         $offset = ($page - 1) * $perPage;
 
         // Query to fetch teams and aggregate player stats per team
-        $scoreAlltime = DB::table('player_season_stats')
+        $scoreAlltime = DB::table('player_season_stats_archives as player_season_stats')
             ->select(
                 'teams.name',
                 'teams.primary_color',
@@ -238,7 +238,7 @@ class RecordsController extends Controller
         $offset = ($page - 1) * $perPage;
 
         // Query to fetch statistics from player_season_stats
-        $statsAlltime = DB::table('player_season_stats')
+        $statsAlltime = DB::table('player_season_stats_archives')
             ->select(
                 'players.id as player_id',
                 'players.name as player_name',
@@ -246,9 +246,9 @@ class RecordsController extends Controller
                 'teams.secondary_color',
                 'teams.primary_color',
                 'teams.name as team_name',
-                DB::raw("SUM(player_season_stats.$sortBy) as total_stat") // Aggregate the chosen stat for each player
+                DB::raw("SUM(player_season_stats_archives.$sortBy) as total_stat") // Aggregate the chosen stat for each player
             )
-            ->leftJoin('players', 'player_season_stats.player_id', '=', 'players.id') // Join players
+            ->leftJoin('players', 'player_season_stats_archives.player_id', '=', 'players.id') // Join players
             ->leftJoin('teams', 'teams.id', '=', 'players.team_id') // Join players
             ->groupBy('players.id', 'players.name', 'teams.name')                                  // Group by player_id and player_name
             ->orderBy('total_stat', 'desc')                                          // Order by total_stat in descending order
@@ -264,7 +264,7 @@ class RecordsController extends Controller
 
 
         // Count total unique players with stats
-        $totalCount = DB::table('player_season_stats')
+        $totalCount = DB::table('player_season_stats_archives')
             ->select('player_id')
             ->distinct()
             ->count();

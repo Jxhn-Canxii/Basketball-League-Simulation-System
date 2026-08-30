@@ -1,1 +1,0 @@
-UPDATE `players` SET `team_id`=0,`contract_years`=0,`is_rookie`=1,`is_active`=1,`draft_id`=1,`draft_order`=0,`drafted_team_id`=0,`is_drafted`=0,`draft_status`='Undrafted',`is_injured`=0,`fatigue`=0,`injury_history`=0,`injury_recovery_games`=0,`hardship_contract`=0

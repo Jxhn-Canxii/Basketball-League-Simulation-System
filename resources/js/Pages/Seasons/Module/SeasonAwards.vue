@@ -1,12 +1,12 @@
 <template>
-    <div class="team-roster">
-        <h2 class="text-xl font-semibold text-gray-800">Season Awards</h2>
+    <div class="team-roster bg-dark">
+        <h2 class="text-xl font-semibold text-yellow-600 mt-4">Season Awards</h2>
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
         <!-- Awards Table -->
         <div class="overflow-x-auto" v-if="awards">
             <table class="min-w-full divide-y divide-gray-200">
-                <thead class="bg-gray-50">
+                <thead class="bg-dark">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Award Name</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Player Name</th>
@@ -14,11 +14,11 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Award Description</th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <tr v-for="award in awards" :key="award.id">
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ award.award_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ award.player_name }}</td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ award.team_name }}</td>
+                <tbody class="bg-dark divide-y divide-gray-200">
+                    <tr v-for="award in awards" :key="award.id" class="hover:bg-gray-900">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-yellow-500">{{ award.award_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-bold text-sm text-red-500">{{ award.player_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-blue-500">{{ award.team_name }}</td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ award.award_description }}</td>
                     </tr>
                 </tbody>

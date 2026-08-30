@@ -288,6 +288,7 @@ class TeamsController extends Controller
             'playoffStats' => $playoffStats,
             'streaks' => $gameStreaks,
             'chemistry' => $chemistry,
+            'current_season_id' => $seasonId,
         ]);
     }
     public function teamSeasonFinals(Request $request)
@@ -579,6 +580,7 @@ class TeamsController extends Controller
             'top_rivals' => $winLossRecords,
         ]);
     }
+    
     private function getTeamInfo($teamId)
     {
         $teamData = DB::table('teams')
@@ -1123,7 +1125,7 @@ class TeamsController extends Controller
             ->exists();
 
         // Count the number of team #1 picks where draft_status ends with 'R1 P1'
-        $teamOnePickCount = DB::table('player_season_stats')
+        $teamOnePickCount = DB::table('player_season_stats_archives as player_season_stats')
             ->join('players', 'players.id', '=', 'player_season_stats.player_id') // Joining player_season_stats with players table
             ->where('player_season_stats.team_id', $teamId) // Corrected 'team_id' reference
             ->where('player_season_stats.season_id', $latestSeasonId) // Filter by season ID
@@ -1139,27 +1141,27 @@ class TeamsController extends Controller
 
         // Count how many times the team has been the Finals MVP
         $finalsMvpCount = DB::table('seasons')
-            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'seasons.finals_mvp_id')  // Join on MVP player_id
+            ->join('player_season_stats_archives as player_season_stats', 'player_season_stats.player_id', '=', 'seasons.finals_mvp_id')  // Join on MVP player_id
             ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
             ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
             ->count();
 
         $seasonMvpCount = DB::table('season_awards')
-            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
+            ->join('player_season_stats_archives as player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
             ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
             ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
             ->where('season_awards.award_name', 'Best Overall Player')  // Ensure the player played in the current season
             ->count();
 
         $defensivePlayerOfTheSeasonCount = DB::table('season_awards')
-            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
+            ->join('player_season_stats_archives as player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
             ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
             ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
             ->where('season_awards.award_name', 'Best Defensive Player')  // Ensure the player played in the current season
             ->count();
 
         $rookiePlayerOfTheSeasonCount = DB::table('season_awards')
-            ->join('player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
+            ->join('player_season_stats_archives as player_season_stats', 'player_season_stats.player_id', '=', 'season_awards.player_id')  // Join on MVP player_id
             ->where('player_season_stats.team_id', $teamId)  // Ensure player was on the given team
             ->where('player_season_stats.season_id', $latestSeasonId)  // Ensure the player played in the current season
             ->where('season_awards.award_name', 'Rookie of the Season')  // Ensure the player played in the current season

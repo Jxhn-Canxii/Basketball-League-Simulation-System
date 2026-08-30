@@ -8,10 +8,12 @@ use Illuminate\Http\Request;
 use App\Models\Seasons;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\HelperController; // added import
 use Inertia\Inertia;
 
 class AnalyticsController extends Controller
 {
+    
     public function index()
     {
         return Inertia::render('Analytics/Index', [
@@ -170,10 +172,10 @@ class AnalyticsController extends Controller
         }
 
         // Fetch player stats
-        $playerStats = \DB::table('player_season_stats')
-            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+        $playerStats = DB::table('player_season_stats_archives as pss')
+            ->join('players', 'pss.player_id', '=', 'players.id')
             ->join('teams', 'players.team_id', '=', 'teams.id')
-            ->where('player_season_stats.season_id', $seasonId)
+            ->where('pss.season_id', $seasonId)
             ->select(
                 'players.id as player_id',
                 'players.name as player_name',
@@ -182,15 +184,15 @@ class AnalyticsController extends Controller
                 'teams.name as team_name',
                 'players.is_rookie',
                 'players.draft_id',
-                'player_season_stats.total_games',
-                'player_season_stats.total_games_played as games_played',
-                'player_season_stats.avg_points_per_game',
-                'player_season_stats.avg_rebounds_per_game',
-                'player_season_stats.avg_assists_per_game',
-                'player_season_stats.avg_steals_per_game',
-                'player_season_stats.avg_blocks_per_game',
-                'player_season_stats.avg_turnovers_per_game',
-                'player_season_stats.avg_fouls_per_game'
+                'pss.total_games',
+                'pss.total_games_played as games_played',
+                'pss.avg_points_per_game',
+                'pss.avg_rebounds_per_game',
+                'pss.avg_assists_per_game',
+                'pss.avg_steals_per_game',
+                'pss.avg_blocks_per_game',
+                'pss.avg_turnovers_per_game',
+                'pss.avg_fouls_per_game'
             )
             ->get();
 

@@ -46,6 +46,7 @@ return new class extends Migration
             $table->decimal('leadership_rating', 5, 2)->default(0);
             $table->decimal('work_ethic_rating', 5, 2)->default(0);
             $table->decimal('overall_rating', 5, 2)->default(0);
+            $table->decimal('potential_rating', 5, 2)->default(0);
             $table->string('type', 50)->nullable();
 
             // Draft Information

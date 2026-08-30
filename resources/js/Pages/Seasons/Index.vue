@@ -357,7 +357,7 @@
                 </div>
             </Modal>
              <Modal :show="isSeasonDraftModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonDraftModalOpen} Draft Results`" @close="isSeasonDraftModalOpen = false">
-                <div class="mt-4 p-3 block">
+                <div class="mt-4 p-3 block bg-dark">
                     <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" @newSeason="handleTradeSeason" />
                 </div>
             </Modal>
@@ -389,7 +389,7 @@ import axios from "axios";
 
 import Trade from "@/Pages/Seasons/Module/Trade.vue";
 import FreeAgents from "@/Pages/Seasons/Module/FreeAgents.vue";
-import FreeAgentsCoach from "@/Pages/Coaches/Module/FreeAgentsCoach.vue";
+import FreeAgentsCoach from "@/Pages/Coaches/FreeAgentsCoach.vue";
 import SeasonAwards from "@/Pages/Seasons/Module/SeasonAwards.vue";
 import Awards from "@/Pages/Seasons/Module/Awards.vue";
 import Draft from "@/Pages/Seasons/Module/Draft.vue";

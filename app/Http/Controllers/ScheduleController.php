@@ -24,7 +24,8 @@ class ScheduleController extends Controller
     protected $helper;
     protected $streak;
 
-    public function __construct(){
+    public function __construct()
+    {
 
         $this->archive = new ArchiveController();
         $this->helper = new HelperController();
@@ -159,13 +160,16 @@ class ScheduleController extends Controller
                 case 6:
                     $this->createCustomRoundRobinScheduleByConference($nextSeasonid, $request->league_id, 10);
                     break;
+                case 7:
+                    $this->createRoundRobinSchedule($nextSeasonid, $request->league_id);
+                    break;
                 case 1:
                     throw new \Exception('Single Elimination not available for this season type.');
                 default:
                     throw new \Exception('Invalid season type.');
             }
 
-           $totalRegularGames = DB::table('schedules')
+            $totalRegularGames = DB::table('schedules')
                 ->where('season_id', $nextSeasonid)
                 ->where('conference_id', 1) // specify the conference
                 ->whereRaw('round REGEXP "^[0-9]+$"')   // only numeric rounds
@@ -185,10 +189,10 @@ class ScheduleController extends Controller
             ]);
 
             // Store team season info (make sure this throws exception if it fails)
-            if($nextSeasonid == 1){
+            if ($nextSeasonid == 1) {
                 $this->streak->insertTeamStreak();
             }
-            
+
             $this->archive->storeTeamSeasonInfo();
 
             DB::commit();
@@ -207,6 +211,69 @@ class ScheduleController extends Controller
         }
     }
 
+    /// regular match schedule
+    private function createRoundRobinSchedule($seasonId, $leagueId)
+    {
+        DB::beginTransaction(); // Start transaction
+        try {
+            // Retrieve teams based on league_id
+            $teams = Teams::where('league_id', $leagueId)->get();
+
+            // Generate matches for each conference
+            foreach ($teams as $allTeams) {
+                $roundCounter = 0; // Initialize round counter
+                $numTeams = count($allTeams);
+                $gameIdCounter = 1; // Initialize game ID counter
+                $matches = [];
+
+                // Generate matches for each round 1st leg
+                for ($round = 0; $round < ($numTeams - 1); $round++) {
+                    for ($i = 0; $i < $numTeams / 2; $i++) {
+                        $homeIndex = ($round + $i) % ($numTeams - 1);
+                        $awayIndex = ($numTeams - 1 - $i + $round) % ($numTeams - 1);
+
+                        if ($i == 0) {
+                            $awayIndex = $numTeams - 1;
+                        }
+
+                        $homeTeam = $allTeams[$homeIndex];
+                        $awayTeam = $allTeams[$awayIndex];
+
+                        // Ensure both teams are not null (bye team)
+                        if ($homeTeam->id != $awayTeam->id) {
+                            $conferenceId = $homeTeam->conference_id;
+                            // First leg match
+                            $gameId = $seasonId . '-' . ($roundCounter + 1) . '-' . $conferenceId . '-' . $gameIdCounter;
+                            $matches[] = [
+                                'season_id' => $seasonId,
+                                'game_id' => $gameId,
+                                'round' => $roundCounter + 1, // Continue round number
+                                'conference_id' => $conferenceId,
+                                'home_id' => $homeTeam->id,
+                                'away_id' => $awayTeam->id,
+                                'home_score' => 0, // Initialize with default score
+                                'away_score' => 0, // Initialize with default score
+                                'winner_id' => 0,
+                            ];
+                            $gameIdCounter++;
+                        }
+                    }
+                    $roundCounter++; // Increment round number after each round
+                }
+
+                // Save matches to the database
+                Schedules::insert($matches);
+            }
+
+            DB::commit(); // Commit transaction if all operations succeed
+        } catch (\Exception $e) {
+            DB::rollBack(); // Rollback all changes on error
+            // Log the error for debugging
+
+            // Optionally, you can throw the exception again or return a custom error message
+            throw $e;
+        }
+    }
     ///per conference match schedule
     private function createDoubleRoundRobinScheduleByConference($seasonId, $leagueId)
     {
@@ -634,7 +701,7 @@ class ScheduleController extends Controller
             ->where('ps.series_id', $seriesId)
             ->where('ps.season_id', $seasonId)
             ->first();
-   
+
         // Fetch games in this series
         $playoffSchedule = DB::table('schedule_view')
             ->where('series_id', $seriesId)
@@ -820,4 +887,216 @@ class ScheduleController extends Controller
         ]);
     }
 
+    public function seasonschedules(Request $request)
+    {
+        $seasonId = $request->season_id;
+        $teamId = $request->team_id;
+        $conferenceId = $request->conference_id;
+        $excludedRounds = config('playoffs');
+        $itemsPerPage = $request->itemsperpage ?: 6;
+        $currentPage = $request->page_num ?: 1;
+        $currentSeasonId = get_current_season_id();
+
+        // Calculate offset for pagination based on current page
+        $offset = ($currentPage - 1) * $itemsPerPage;
+
+        // Get total count first
+        $totalSchedules = DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->where('conference_id', $conferenceId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                        ->orWhere('away_id', $teamId);
+                });
+            })
+            ->whereNotIn('round', $excludedRounds)
+            ->count();
+
+        $totalPages = ceil($totalSchedules / $itemsPerPage);
+
+        // Reset to first page if requested page is too high
+        if ($offset >= $totalSchedules) {
+            $offset = 0;
+            $currentPage = 1;
+        }
+
+        // Fetch the actual schedule data
+        $schedules = DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->where('conference_id', $conferenceId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                        ->orWhere('away_id', $teamId);
+                });
+            })
+            ->whereNotIn('round', $excludedRounds)
+            ->orderBy('status', 'desc')  // Sort status 2 first
+            ->orderBy('id', 'desc')  // Within status 2, order by updated_at
+            ->skip($offset)
+            ->take($itemsPerPage)
+            ->get()
+            ->toArray();
+
+        $teamIds = collect($schedules)->pluck('home_id')->merge(
+            collect($schedules)->pluck('away_id')
+        )->unique();
+
+        $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+        $standingsData = DB::table($standingsTable)
+            ->whereIn('team_id', $teamIds)
+            ->where('season_id', $seasonId)
+            ->get()
+            ->keyBy('team_id');
+
+        $games = [];
+        foreach ($schedules as $game) {
+            $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+            $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+
+            $games[] = [
+                'id' => $game->id,
+                'game_id' => $game->game_id,
+                'home_team' => [
+                    'id' => $game->home_id,
+                    'name' => $homeTeamName,
+                    'home_score' => $game->home_score,
+                    'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
+                    'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
+                ],
+                'away_team' => [
+                    'id' => $game->away_id,
+                    'name' => $awayTeamName,
+                    'away_score' => $game->away_score,
+                    'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
+                    'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
+                ],
+                'winner' => $game->winner_id,
+                'season_id' => $seasonId,
+            ];
+        }
+        // Check if all non-final rounds are simulated
+        $allRoundsSimulated = DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->whereNotIn('round', $excludedRounds)
+            ->where('status', 1)
+            ->doesntExist();
+
+        return response()->json([
+            'schedules' => $games,
+            'is_simulated' => $allRoundsSimulated,
+            'current_page' => $currentPage,
+            'total_pages' => $totalPages,
+            'total_count' => $totalSchedules,
+        ]);
+    }
+
+    public function teamseasonschedules(Request $request)
+    {
+        $seasonId = $request->season_id;
+        $teamId = $request->team_id;
+        $conferenceId = $request->conference_id;
+        $excludedRounds = config('playoffs');
+        $itemsPerPage = $request->itemsperpage ?: 6;
+        $currentPage = $request->page_num ?: 1;
+        $currentSeasonId = get_current_season_id();
+
+        // Calculate offset for pagination based on current page
+        $offset = ($currentPage - 1) * $itemsPerPage;
+
+        // Get total count first
+        $totalSchedules = DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                        ->orWhere('away_id', $teamId);
+                });
+            })
+            ->whereNotIn('round', $excludedRounds)
+            ->count();
+
+        $totalPages = ceil($totalSchedules / $itemsPerPage);
+
+        // Reset to first page if requested page is too high
+        if ($offset >= $totalSchedules) {
+            $offset = 0;
+            $currentPage = 1;
+        }
+
+        // Fetch the actual schedule data
+        $schedules = DB::table('schedule_view')
+            ->where('season_id', $seasonId)
+            ->when($teamId != 0, function ($query) use ($teamId) {
+                return $query->where(function ($q) use ($teamId) {
+                    $q->where('home_id', $teamId)
+                        ->orWhere('away_id', $teamId);
+                });
+            })
+            ->whereNotIn('round', $excludedRounds)
+            ->orderBy('status', 'desc')  // Sort status 2 first
+            ->orderBy('id', 'desc')  // Within status 2, order by updated_at
+            ->skip($offset)
+            ->take($itemsPerPage)
+            ->get()
+            ->toArray();
+
+        $teamIds = collect($schedules)->pluck('home_id')->merge(
+            collect($schedules)->pluck('away_id')
+        )->unique();
+
+        $standingsTable = ($seasonId == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+        $standingsData = DB::table($standingsTable)
+            ->whereIn('team_id', $teamIds)
+            ->where('season_id', $seasonId)
+            ->get()
+            ->keyBy('team_id');
+
+        $games = [];
+        foreach ($schedules as $game) {
+            $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
+            $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+
+            $games[] = [
+                'id' => $game->id,
+                'game_id' => $game->game_id,
+                'home_team' => [
+                    'id' => $game->home_id,
+                    'name' => $homeTeamName,
+                    'home_score' => $game->home_score,
+                    'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
+                    'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
+                ],
+                'away_team' => [
+                    'id' => $game->away_id,
+                    'name' => $awayTeamName,
+                    'away_score' => $game->away_score,
+                    'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                    'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
+                    'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
+                    'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
+                    'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
+                ],
+                'winner' => $game->winner_id,
+                'season_id' => $seasonId,
+            ];
+        }
+
+        return response()->json([
+            'schedules' => $games,
+            'current_page' => $currentPage,
+            'total_pages' => $totalPages,
+            'total_count' => $totalSchedules,
+        ]);
+    }
 }

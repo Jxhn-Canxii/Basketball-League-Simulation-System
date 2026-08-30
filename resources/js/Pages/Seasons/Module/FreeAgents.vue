@@ -114,6 +114,12 @@
                                 </th>
                                 <th
                                     class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+                                    title="Potential Rating"
+                                >
+                                    POT
+                                </th>
+                                <th
+                                    class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
                                     title="Shooting Rating"
                                 >
                                     SH
@@ -196,6 +202,13 @@
                                     {{
                                         parseFloat(
                                             player.overall_rating || 0
+                                        ).toFixed(1)
+                                    }}
+                                </td>
+                                <td class="px-2 py-1 whitespace-nowrap border">
+                                    {{
+                                        parseFloat(
+                                            player.potential_rating || 0
                                         ).toFixed(1)
                                     }}
                                 </td>

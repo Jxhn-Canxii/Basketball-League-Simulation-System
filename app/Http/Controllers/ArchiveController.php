@@ -8,6 +8,7 @@ use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use App\Http\Controllers\TeamChemistryController;
+use App\Http\Controllers\TeamStreakController;
 use App\Http\Controllers\HelperController;
 use Inertia\Inertia;
 
@@ -15,13 +16,15 @@ class ArchiveController extends Controller
 {
     protected $chemistry;
     protected $helper;
+    protected $streak;
 
     public function __construct(){
         $this->chemistry = new TeamChemistryController();
+        $this->streak = new TeamStreakController();
         $this->helper = new HelperController();
     }
 
-    public static function archiveDecadeStats()
+    public static function archiveGameStats()
     {
         $currentSeasonId = get_current_season_id();
         $MODULO = config('archive.DECADE_MODULO');
@@ -55,6 +58,43 @@ class ArchiveController extends Controller
         }
     }
 
+    public static function archivePlayerSeasonStats()
+    {
+        $currentSeasonId = get_current_season_id();
+        $MODULO = config('archive.DECADE_MODULO');
+        // $tableBatch = $currentSeasonId / $MODULO;
+
+        $archiveSeasonStatsTable = "player_season_stats_archives" ;
+        $archiveSeasonPlayoffStatsTable = "player_season_playoff_stats_archives" ;
+
+        // 1) Only proceed if season is finished
+        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+        if (!$season || $season->status < 14) return;
+
+        DB::beginTransaction();
+        try {
+
+            // 3) IF ARCHIVE TABLE EXISTS → STOP (no transaction)
+            if (!Schema::hasTable($archiveSeasonStatsTable)) {
+                DB::statement("CREATE TABLE $archiveSeasonStatsTable LIKE player_season_stats");
+            }
+
+            if (!Schema::hasTable($archiveSeasonPlayoffStatsTable)) {
+                DB::statement("CREATE TABLE $archiveSeasonPlayoffStatsTable LIKE player_season_playoff_stats");
+            }
+
+            DB::statement("INSERT INTO $archiveSeasonStatsTable SELECT * FROM player_season_stats");
+            DB::statement("DELETE FROM player_season_stats WHERE season_id < $currentSeasonId");
+
+            DB::statement("INSERT INTO $archiveSeasonPlayoffStatsTable SELECT * FROM player_season_playoff_stats");
+            DB::statement("DELETE FROM player_season_playoff_stats WHERE season_id < $currentSeasonId");
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
     public function storeTeamSeasonInfo()
     {
         $latestSeasonId = get_current_season_id();
@@ -93,6 +133,9 @@ class ArchiveController extends Controller
                         'updated_at' => now(),
                     ]
                 );
+
+                $this->streak->newTeamStreak($team->id);
+                
             } catch (\Exception $e) {
                 // Optional: log individual team errors
                 throw new \Exception("Failed to store team season info for team ID {$team->id}: " . $e->getMessage());

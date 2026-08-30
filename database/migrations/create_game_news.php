@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('game_news', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('game_id');
+            $table->string('game_id',150);
             $table->unsignedBigInteger('season_id');
             $table->unsignedInteger('round');
             $table->unsignedBigInteger('winner_id')->nullable();

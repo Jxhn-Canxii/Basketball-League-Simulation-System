@@ -256,6 +256,22 @@ class SeasonsController extends Controller
         // Return the data as JSON response
         return response()->json($seasons);
     }
+
+    public function getTeamSeasonsDropdown(Request $request){
+
+        $teamId = $request->team_id;
+
+        // Fetch all seasons with their id and name, ordered by the latest season_id
+        $seasons = DB::table('team_season_info as tsi')
+            ->join('seasons as s', 's.id', '=', 'tsi.season_id','inner')
+            ->select('s.id as season_id', 's.name', 's.status as status')
+             ->where('tsi.team_id', $teamId) // Filter by the team id
+            ->orderBy('tsi.id', 'desc') // Order by season_id in descending order
+            ->get();
+
+        // Return the data as JSON response
+        return response()->json($seasons);
+    }
     // Other methods...
 
     private function championsPerConference($conference_id)

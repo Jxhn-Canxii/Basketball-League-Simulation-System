@@ -33,6 +33,11 @@
                             <option value="1">Injured</option>
                             <option value="0">Healthy</option>
                         </select>
+                        <select class="mt-1 mb-2 p-2 border rounded w-full" v-model="search.is_active" @change="fetchAllPlayers()">
+                            <option value="2">All</option>
+                            <option value="1">Active</option>
+                            <option value="0">Retired</option>
+                        </select>
                     </div>
                   
                     <div v-if="data.players?.length === 0" class="text-center text-gray-500">No player found.</div>
@@ -55,7 +60,7 @@
                                 </tr>
                             </thead>
                             <tbody class="bg-white divide-y divide-gray-200">
-                                <tr v-for="player in data.players" :key="player.player_id" @click.prevent="showPlayerProfile(player)" class="hover:bg-gray-100">
+                                <tr v-if="!loading && data.players?.length > 0" v-for="player in data.players" :key="player.player_id" @click.prevent="showPlayerProfile(player)" class="hover:bg-gray-100">
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.name }}
                                         <sup v-if="player.is_finals_mvp">
@@ -81,14 +86,28 @@
                                         </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
-                                        <!-- Display "Retired" if player is not active and retirement age is greater than or equal to their age -->
-                                        <span v-if="player.age > player.retirement_age && !player.is_active" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Retired</span>
-
                                         <!-- Display "Active" if player is active and retirement age is less than their age -->
-                                        <span v-if="player.age <= player.retirement_age && player.is_active" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Active</span>
+                                        <span v-if="player.team_id > 0 && player.is_active" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800">Active</span>
 
                                         <!-- Display "Waived/Free Agent" if player is waived/free agent and retirement age is less than their age -->
-                                        <span v-if="player.age <= player.retirement_age && !player.is_active" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Waived/Free Agent</span>
+                                        <span v-if="player.team_id == 0 && player.is_active" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800">Free Agent</span>
+                                        
+                                        <!-- Display "Retired" if player is not active and retirement age is greater than or equal to their age -->
+                                        <span v-if="!player.is_active" class="inline-flex items-center px-2.5 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800">Retired</span>
+
+                                    </td>
+                                </tr>
+                                <tr v-if="!loading && data.players?.length == 0" class="hover:bg-gray-100">
+                                    <td colspan="11" class="px-2 py-1 whitespace-nowrap border text-center text-red-500">
+                                        <b>No player found!</b>
+                                    </td>
+                                </tr>
+                                <tr v-if="loading" class="hover:bg-gray-100">
+                                    <td colspan="11" class="px-2 py-1 whitespace-nowrap border text-center text-red-500">
+                                        <div class="block text-center">
+                                            <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+                                            <p>Fetching player list...</p>
+                                        </div>
                                     </td>
                                 </tr>
                             </tbody>
@@ -130,6 +149,7 @@ import PlayerPerformance from './Module/PlayerPerformance.vue';
 
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref([]);
+const loading = ref(false);
 const data = ref({
     free_agents: [],
     current_page: 1,
@@ -143,7 +163,8 @@ const search = ref({
     total: 0,
     search: '',
     position: '',
-    injury_status: '2', // 2 means all, 1 means injured, 0 means healthy
+    injury_status: 2, // 2 means all, 1 means injured, 0 means healthy
+    is_active: 2, // 2 means all, 1 means active, 0 means retired
     itemsperpage: 10,
 });
 const teams = ref([]);
@@ -151,10 +172,13 @@ const teams = ref([]);
 
 const fetchAllPlayers = async () => {
     try {
+        loading.value = true;
         const response = await axios.post(route("players.list.all"), search.value);
         data.value = response.data;
     } catch (error) {
         console.error("Error fetching free agents:", error);
+    } finally{
+        loading.value = false;
     }
 };
 const handlePagination = (page_num) => {

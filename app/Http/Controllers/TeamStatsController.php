@@ -22,10 +22,10 @@ class TeamStatsController extends Controller
             $role = $player->role;
 
             // Years pro = distinct seasons
-            $yearsPro = DB::table('player_season_stats')
+            $yearsPro = DB::table('player_season_stats_archives')
                 ->where('player_id', $playerId)
                 ->distinct('season_id')
-                ->count('season_id');
+                ->count('season_id') + 1;
 
             // Current season efficiency sum
             $currentEff = DB::table('player_season_stats')

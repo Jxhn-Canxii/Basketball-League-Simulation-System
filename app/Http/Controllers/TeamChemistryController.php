@@ -94,7 +94,7 @@ class TeamChemistryController extends Controller
 
     private function calculateRetentionRate($teamId,$latestSeasonId,$previousSeasonId){
 
-        $previousSeasonPlayers = DB::table('player_season_stats')
+        $previousSeasonPlayers = DB::table('player_season_stats_archives')
                     ->where('team_id', $teamId)
                     ->where('season_id', $previousSeasonId)
                     ->pluck('player_id');

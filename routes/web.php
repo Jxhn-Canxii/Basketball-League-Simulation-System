@@ -22,7 +22,9 @@ use App\Http\Controllers\SimulateController;
 use App\Http\Controllers\GameController;
 use App\Http\Controllers\LeadersController;
 use App\Http\Controllers\TradeController;
+use App\Http\Controllers\StandingsController;
 use App\Http\Controllers\PlayoffController;
+use App\Http\Controllers\RoundController;
 use App\Http\Controllers\TestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -51,6 +53,7 @@ Route::get('', function () {
 Route::middleware('auth')->group(function () {
 
     Route::prefix('records/')->group(function(){
+
         Route::get('', [RecordsController::class, 'index'])->name('records.index');
         Route::post('season-champions', [RecordsController::class, 'champions'])->name('records.champions');
         Route::post('recent-games', [RecordsController::class, 'recent'])->name('records.recent');
@@ -63,11 +66,13 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('teams/')->group(function(){
+
         Route::get('', [TeamsController::class, 'index'])->name('teams.index');
         Route::post('list-teams', [TeamsController::class, 'list'])->name('teams.list');
         Route::post('add-teams', [TeamsController::class, 'add'])->name('teams.add');
         Route::post('update-teams', [TeamsController::class, 'update'])->name('teams.update');
         Route::post('delete-teams', [TeamsController::class, 'delete'])->name('teams.delete');
+        
         Route::post('team-info', [TeamsController::class, 'teaminfo'])->name('teams.info');
         Route::post('team-season-finals', [TeamsController::class, 'teamSeasonFinals'])->name('teams.season.finals');
         Route::post('team-season-standings', [TeamsController::class, 'teamSeasonStandings'])->name('teams.season.standings');
@@ -85,27 +90,30 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('simulate/')->group(function(){
+
         Route::post('game-playoff', [SimulateController::class, 'simulatePlayoff'])->name('game.simulate.playoff');
         Route::post('game-regular', [SimulateController::class, 'simulateRegular'])->name('game.simulate.regular');
-        Route::post('get-round-schedule-ids', [ScheduleController::class, 'getScheduleIds'])->name('game.per.round');
         Route::post('game-per-round', [SimulateController::class, 'simulatePerRound'])->name('game.simulate.round');
-
         Route::post('game-playoff-series', [SimulateController::class, 'simulatePlayoffSeries'])->name('game.simulate.playoff.series');
-        
-        Route::get('testroles', [SimulateController::class, 'testRoleAssignment'])->name('test.roles');
-        Route::get('test-free-agent/{position}', [FreeAgentController::class, 'getBestFreeAgent'])->name('get.free.agent');
         
     });
 
-    Route::prefix('schedule/')->group(function(){
+    Route::prefix('schedules/')->group(function(){
+
         Route::get('', [ScheduleController::class, 'index'])->name('schedule.index');
         Route::post('list-schedules', [ScheduleController::class, 'list'])->name('schedule.list');
         Route::post('list-playoff-series', [ScheduleController::class, 'playOffSeriesResults'])->name('seasons.playoff.series.info');
+        
+        Route::post('conference-schedules', [ScheduleController::class, 'seasonSchedules'])->name('conferences.schedules');
+        Route::post('team-season-schedules', [ScheduleController::class, 'teamseasonschedules'])->name('team.season.schedules');
+        
+        Route::post('get-round-schedule-ids', [ScheduleController::class, 'getScheduleIds'])->name('game.per.round');
         //simulation and scheduling
         Route::post('create-schedule-regular', [ScheduleController::class, 'createSeasonandSchedule'])->name('create.schedule.regular');
     });
 
     Route::prefix('playoffs/')->group(function(){
+        
         Route::post('create-schedule-playoff', [PlayoffController::class, 'playoffSchedule'])->name('create.schedule.playoff');
         Route::post('conference-playoffs', [PlayoffController::class, 'seasonsPlayoffs'])->name('seasons.playoffs');
         Route::post('conference-playoffs-series', [PlayoffController::class, 'seasonsPlayoffsSeries'])->name('seasons.playoffs.series');
@@ -113,6 +121,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('leaders/')->group(function(){
+
         Route::get('', [LeadersController::class, 'index'])->name('leaders.index');
         Route::get('single-stats-leaders', [LeadersController::class, 'getSingleStatsLeaders'])->name('single.stats.leaders');
         Route::get('total-stats-leaders', [LeadersController::class, 'getTotalStatsLeaders'])->name('total.stats.leaders');
@@ -124,15 +133,18 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('ratings/')->group(function(){
+
         Route::post('update-player-status', [RatingsController::class, 'updateActivePlayers'])->name('update.player.status');
     });
 
     Route::prefix('news/')->group(function(){
-        Route::post('get-all-game-news', [AnalyticsController::class, 'getAllNews'])->name('game.news.list');
-        Route::post('get-game-news', [AnalyticsController::class, 'getNewsByGameId'])->name('game.news');
+
+        Route::post('get-all-game-news', [NewsController::class, 'getAllNews'])->name('game.news.list');
+        Route::post('get-game-news', [NewsController::class, 'getNewsByGameId'])->name('game.news');
     });
 
     Route::prefix('analytics/')->group(function(){
+
         Route::get('', [AnalyticsController::class, 'index'])->name('analytics.index');
         Route::post('get-all-standings', [AnalyticsController::class, 'getAllStandings'])->name('analytics.standings');
         Route::get('player-stats', [AnalyticsController::class, 'countPlayers'])->name('analytics.player.count');
@@ -142,6 +154,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('draft/')->group(function(){
+
         Route::post('players-list', [DraftController::class, 'rookieDraftees'])->name('draft.list');
         Route::get('draft-order', [DraftController::class, 'draftOrder'])->name('draft.orders');
         Route::get('draft-latest-results', [DraftController::class, 'draftResults'])->name('draft.results');
@@ -151,6 +164,7 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('seasons/')->group(function(){
+
         Route::get('', [SeasonsController::class, 'index'])->name('seasons.index');
         Route::get('season-details/{season_id}/{playoff_type}', [SeasonsController::class, 'details'])->name('seasons.details');
         Route::post('list-season', [SeasonsController::class, 'list'])->name('seasons.list');
@@ -160,7 +174,7 @@ Route::middleware('auth')->group(function () {
         Route::post('seasons-per-league', [SeasonsController::class, 'seasonsPerLeague'])->name('league.seasons');
         Route::post('seasons-per-league-paginate', [SeasonsController::class, 'seasonsPerLeaguePaginate'])->name('league.seasons.paginate');
         Route::post('dropdown-season', [SeasonsController::class, 'getSeasonsDropdown'])->name('seasons.dropdown');
-
+        Route::post('team-dropdown-season', [SeasonsController::class, 'getTeamSeasonsDropdown'])->name('team.seasons.dropdown');
         Route::post('seasons-storyline', [SeasonsController::class, 'seasonStoryLine'])->name('seasons.storyline');
 
     });
@@ -176,34 +190,49 @@ Route::middleware('auth')->group(function () {
         Route::get('reset-league', [LeaguesController::class, 'resetLeague'])->name('leagues.reset');  
     });
 
+    Route::prefix('standings/')->group(function(){
+        
+        Route::post('conference-standings', [StandingsController::class, 'seasonStandings'])->name('conferences.standings');
+    });
+
+    Route::prefix('rounds/')->group(function(){
+
+        Route::post('get-rounds-per-conference', [RoundController::class, 'getConferenceRoundNotSimulated'])->name('upcoming.rounds.season.conference');
+        Route::post('get-rounds-per-season', [RoundController::class, 'getSeasonRoundNotSimulated'])->name('upcoming.rounds.season');
+    });
+
     Route::prefix('conferences/')->group(function(){
+
         Route::post('list-conferences', [ConferenceController::class, 'list'])->name('conferences.list');
         Route::post('add-conference', [ConferenceController::class, 'add'])->name('conferences.add');
         Route::post('delete-conference', [ConferenceController::class, 'delete'])->name('conferences.delete');
 
-        Route::post('conference-standings', [ConferenceController::class, 'seasonStandings'])->name('conferences.standings');
-        Route::post('conference-schedules', [ConferenceController::class, 'seasonSchedules'])->name('conferences.schedules');
         Route::post('league-conference', [ConferenceController::class, 'leagueConference'])->name('conference.season.dropdown');
 
-        Route::post('get-rounds-per-conference', [ConferenceController::class, 'getConferenceRoundNotSimulated'])->name('upcoming.rounds.season.conference');
-
-        Route::post('get-rounds-per-season', [ConferenceController::class, 'getSeasonRoundNotSimulated'])->name('upcoming.rounds.season');
     });
 
     Route::prefix('games/')->group(function(){
+
         Route::post('box-score', [GameController::class, 'getBoxScore'])->name('game.boxscore');
+    
     });
 
     Route::prefix('coaches/')->group(function(){
+        
         Route::get('', [CoachController::class, 'index'])->name('coaches.index');
         Route::post('list-coaches', [CoachController::class, 'listCoaches'])->name('coaches.list');
         Route::post('add-coach', [CoachController::class, 'addFreeAgentCoach'])->name('coaches.add.free.agent');
         Route::get('assign-coach-teams', [CoachController::class, 'assignFreeAgentCoaches'])->name('assign.coach.teams');
         Route::get('end-coach-signings', [CoachController::class, 'endCoachSignings'])->name('end.coach.signings');
         Route::get('duplicate-coaches', [CoachController::class, 'fixDuplicateCoaches'])->name('check.duplicate.team.coach');
+    
+        Route::post('coach-information', [CoachController::class, 'getCoachInfo'])->name('coach.information');
+        Route::post('coach-season-history', [CoachController::class, 'getSeasonHistory'])->name('coach.season.history');
+
     });
 
     Route::prefix('players/')->group(function(){
+
         Route::get('', [PlayersController::class, 'index'])->name('players.index');
         Route::get('experience', [PlayersController::class, 'experience'])->name('experience.index');
         Route::get('freeagents', [PlayersController::class, 'freeAgents'])->name('freeagents.index');
@@ -232,20 +261,21 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('transactions/')->group(function(){
+
         Route::post('assign-team-free-agents', [TransactionsController::class, 'assignPlayerToRandomTeam'])->name('assign.freeagent.teams');
         Route::post('auto-assign-team-free-agents', [TransactionsController::class, 'assignRemainingFreeAgents'])->name('auto.assign.freeagent.teams');
         Route::get('override-assign-team-free-agents', [TransactionsController::class, 'assignRemainingFreeAgents'])->name('override.auto.assign.freeagent.teams');
         Route::post('waive-player', [TransactionsController::class, 'waivePlayer'])->name('players.waive');
         Route::post('extend-contract-player', [TransactionsController::class, 'extendContract'])->name('players.contract.extend');
         Route::post('player-transactions', [TransactionsController::class, 'getTransactions'])->name('players.transactions');
-        Route::post('recent-transactions', [TransactionsController::class, 'getRecentNonTransferTransactions'])->name('recent.transactions');
+        Route::post('recent-transactions', [TransactionsController::class, 'getRecentTransferTransactions'])->name('recent.transactions');
+        Route::post('season-transactions', [TransactionsController::class, 'getSeasonTransferTransactions'])->name('season.transactions');
         // Route::post('freeagent-market', [TransactionsController::class, 'getFreeAgentsByCompositeScore'])->name('players.best.free.agent');
     });
 
     Route::prefix('awards/')->group(function(){
+
         Route::get('', [AwardsController::class, 'index'])->name('awards.index');
-        Route::post('store-player-stats', [AwardsController::class, 'storePlayerSeasonStats'])->name('store.player.stats');
-        Route::get('override-store-player-stats/{season_id}', [AwardsController::class, 'storeAllPlayerSeasonStats'])->name('store.player.stats.override');
         Route::post('player-awards', [AwardsController::class, 'storeSeasonAwards'])->name('player.awards');
         Route::get('player-awards-dropdown', [AwardsController::class, 'getAwardNamesDropdown'])->name('player.awards.dropdown');
         Route::post('player-awards-filter', [AwardsController::class, 'filterAwardsPerSeason'])->name('player.awards.filter');
@@ -268,16 +298,24 @@ Route::middleware('auth')->group(function () {
     });
 
     Route::prefix('users/')->group(function(){
+
         Route::get('', [UserController::class, 'index'])->name('users.index');
+        Route::post('list-users', [UserController::class, 'list'])->name('users.list');
+        Route::post('add-users', [UserController::class, 'add'])->name('users.add');
+        Route::post('update-users', [UserController::class, 'update'])->name('users.update');
+        Route::post('delete-users', [UserController::class, 'delete'])->name('users.delete');
+       
     });
 
     Route::prefix('profile/')->group(function(){
+
         Route::get('', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
     Route::prefix('tests/')->group(function(){
+
         Route::get('waive/{team_id}', [TestController::class, 'waiveTeam']);
         Route::get('waive-scan', [TestController::class, 'waiveScan']);
         Route::get('redis-test', [TestController::class, 'redisTest']);
@@ -285,8 +323,12 @@ Route::middleware('auth')->group(function () {
         Route::get('team-chemistry-test', [TestController::class, 'testChemistryCalculations']);
         Route::get('game-streak-test/{game_id}', [TestController::class, 'testGameStreak']);
         Route::get('archive-test',[ArchiveController::class, 'archiveDecadeStats']);
+        Route::get('schedule-test',[TestController::class, 'testSchedule']);
         
-
+        Route::get('best-freeagent-offwaiver',[FreeAgentController::class, 'getBestFreeAgentOffWaiver']);
+        Route::get('testroles', [SimulateController::class, 'testRoleAssignment'])->name('test.roles');
+        Route::get('test-free-agent/{position}', [FreeAgentController::class, 'getBestFreeAgent'])->name('get.free.agent');
+        Route::get('archive-test', [TestController::class, 'TestArchiving'])->name('test.archive');
     });
 
 });

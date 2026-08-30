@@ -70,6 +70,8 @@ return new class extends Migration
             $table->decimal('three_point_percentage', 5, 2)->storedAs(DB::raw('CASE WHEN total_three_point_attempts = 0 THEN 0 ELSE (total_three_pointers_made / total_three_point_attempts) * 100 END'));
             $table->decimal('free_throw_percentage', 5, 2)->storedAs(DB::raw('CASE WHEN total_free_throw_attempts = 0 THEN 0 ELSE (total_free_throws_made / total_free_throw_attempts) * 100 END'));
 
+            $table->integer('performance_points')->default(100);
+
             $table->timestamps();
         });
     }

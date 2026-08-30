@@ -5,8 +5,8 @@
         <div class="flex flex-1 flex-col overflow-hidden">
             <Header />
 
-            <main class="flex justify-center overflow-y-auto min-h-screen min-w-screen bg-red-200">
-                <div class="container m-0 w-screen overflow-hidden px-2 py-0">
+            <main class="flex justify-center overflow-y-auto min-h-screen min-w-screen bg-gray-900">
+                <div class="container m-0 mt-4 flex w-screen overflow-hidden px-2 py-0">
                     <!-- <h3 class="mb-4 text-3xl font-medium text-gray-700">
                         <slot name="header" />
                     </h3> -->

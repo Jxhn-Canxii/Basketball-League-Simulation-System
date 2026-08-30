@@ -98,7 +98,7 @@
         </transition>
         <div
             v-if="activeGameId != 0"
-            class="w-full flex min-w-full overflow-x-auto border-b-2 text-md"
+            class="w-full flex min-w-full overflow-x-auto border-b-2 text-md bg-black"
         >
             <ul class="flex flex-wrap">
                 <li
@@ -122,7 +122,7 @@
                     ></i>
                     <span
                         hidden
-                        class="text-truncate hidden sm:inline md:inline"
+                        class="text-truncate hidden sm:inline md:inline text-white"
                         >{{ conference.name }}
                         {{
                             conference.champions_count > 0
@@ -174,7 +174,7 @@
                 id="teamFilter" 
                 v-model="search_schedule.team_id" 
                 @change.prevent="searchInput()" 
-                class="ml-4 py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
+                class="ml-4 py-2 px-3 border text-black border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 text-sm"
             >
                 <option value="0">All Teams</option>
                 <option v-for="team in teams" :key="team.id" :value="team.id">{{ team.name }}</option>
@@ -251,7 +251,12 @@
     const teams = ref([]);
     const data = ref([]);
     const activeGameId = ref(0);
-    const emit = defineEmits(["transaction_id", "simulate_next_conference"]);
+    const seasonStatus = ref(0);
+    const transactionUpdate = ref(0);
+    const showGameResults = ref(true);
+    const flipTimer = ref(null);
+
+    const emit = defineEmits(["round","season_status","transaction_update","transaction_id", "simulate_next_conference"]);
     const props = defineProps({
         season_id: { type: [Number, String], required: true },
         conference_id: { type: [Number, String], required: true },
@@ -416,10 +421,17 @@
             });
             
             activeGameId.value = response.data.game_id ?? 0;
+            seasonStatus.value = response.data.season_status ?? 0;
+            currentRound.value = response.data.round ?? 0;
+            transactionUpdate.value = response.data.transaction_count;
             showGameResults.value = true; // Show game results first
 
             // Wait for the user to view results before moving to the next game
             activeConferenceTab.value = conference_id;
+
+            emit('season_status',seasonStatus.value);
+            emit('round',currentRound.value);
+            emit('transaction_update',transactionUpdate.value);
             emit('transaction_id',conference_id);
 
             // Start flipping between views
@@ -459,9 +471,6 @@
             console.error("Error fetching standings:", error);
         }
     };
-
-    const showGameResults = ref(true);
-    const flipTimer = ref(null);
 
     onMounted(async () => {
         await fetchConferenceTeams();

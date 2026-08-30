@@ -33,10 +33,22 @@ class TeamStreakController extends Controller
 
         try {
             if($homeData){
-                DB::table('streak')->where('team_id', $game->home_id)->update($homeData);
+                // DB::table('streak')->where('team_id', $game->home_id)->update($homeData);
+                DB::table('streak')->updateOrInsert(
+                    [
+                        'team_id' => $game->home_id,
+                    ],
+                    $homeData
+                );
             }
             if($awayData){
-                DB::table('streak')->where('team_id', $game->away_id)->update($awayData);
+                // DB::table('streak')->where('team_id', $game->away_id)->update($awayData);
+                DB::table('streak')->updateOrInsert(
+                    [
+                        'team_id' => $game->away_id,
+                    ],
+                    $awayData
+                );
             }
         } catch (\Exception $e) {
 
@@ -85,6 +97,8 @@ class TeamStreakController extends Controller
             'best_winning_streak_end_id' =>  $winningStreakEndId,
             'best_losing_streak_start_id' => $losingStreakStartId,
             'best_losing_streak_end_id' =>  $losingStreakEndId,
+            'created_at' => $streakStatus,
+            'updated_at' => now(),
         ];
     }
 
@@ -182,5 +196,27 @@ class TeamStreakController extends Controller
                 $data
             );
         }
+
+    }
+
+    public function newTeamStreak($teamId){
+
+            $streakExists = DB::table('streak')
+                ->where('team_id', $teamId)
+                ->exists();
+
+            if($streakExists) return true;
+
+            $data = [
+                'team_id' => $teamId,
+                'best_winning_streak' => 0,
+                'best_winning_streak_start_id' => 0,
+                'best_winning_streak_end_id' => 0,
+                'best_losing_streak' => 0,
+                'best_losing_streak_start_id' => 0,
+                'best_losing_streak_end_id' => 0,
+            ];
+
+            DB::table('streak')->insert($data);
     }
 }

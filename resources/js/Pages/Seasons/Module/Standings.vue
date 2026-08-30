@@ -1,5 +1,5 @@
 <template>
-  <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+  <div class="rounded-lg shadow-sm overflow-hidden shadow-lg shadow-red-400">
     <!-- Loading State -->
     <div v-if="loadingStandings" class="p-8 text-center">
       <div class="animate-pulse flex flex-col items-center">
@@ -17,11 +17,11 @@
     <!-- Standings Table -->
     <div v-else class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200 text-nowrap">
-        <thead class="bg-gray-50">
+        <thead class="bg-gray-900">
           <tr>
             <th scope="col" class="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs text-yellow-500 font-medium text-gray-500 uppercase tracking-wider">W</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs text-red-500 font-medium text-gray-500 uppercase tracking-wider">L</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs text-blue-500 font-medium uppercase tracking-wider">W</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs text-red-500 font-medium uppercase tracking-wider">L</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STRK</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">LAST 5 GAMES</th>
@@ -31,7 +31,7 @@
         <transition-group 
           tag="tbody"
           name="rank-change"
-          class="bg-white relative"
+          class="relative"
           @before-enter="beforeEnter"
           @enter="enter"
           @leave="leave"
@@ -52,7 +52,7 @@
                     style="font-size: 1em;"
                   ></i>
                 </span>
-                <Tooltip :content="teamAchievements(team)">
+                <Tooltip :content="teamAchievements(team)" class="bg-white ml-2 rounded-tl">
                   <TeamDetails
                     :team_id="team.team_id"
                     :showInfo="props.showLegend"
@@ -77,9 +77,9 @@
                 </span>
               </div>
             </td>
-            <td class="px-2 py-2 whitespace-nowrap text-sm">{{ team.wins }}</td>
-            <td class="px-2 py-2 whitespace-nowrap text-sm">{{ team.losses }}</td>
-            <td class="px-2 py-2 whitespace-nowrap text-center text-sm">{{ team.overall_rank }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-sm text-blue-500">{{ team.wins }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-sm text-red-500">{{ team.losses }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-center text-gray-500 text-sm">{{ team.overall_rank }}</td>
             <td class="px-2 py-2 whitespace-nowrap text-center text-sm">
               <span :class="team.streak_status && team.streak_status.toLowerCase().startsWith('w') ? 'text-green-700 font-bold' : 'text-red-700 font-bold'">
                 {{ team.streak_status }}
@@ -89,8 +89,8 @@
               <div class="flex justify-center space-x-1">
                 <template v-for="(result, index) in team.last_5_games?.split('').reverse()" :key="index">
                   <span :class="{
-                    'bg-green-100 text-green-800 px-1 rounded-full text-xs font-semibold': result === 'W',
-                    'bg-red-100 text-red-800 px-1 rounded-full': result === 'L',
+                    'bg-black text-green-800 px-1 rounded-full text-xs font-semibold': result === 'W',
+                    'bg-black text-red-800 px-1 rounded-full': result === 'L',
                     'bg-gray-100 text-gray-500 px-1 rounded': !['W', 'L'].includes(result)
                   }">
                     <span v-if="result === 'W'">✓</span>
@@ -100,7 +100,7 @@
                 </template>
               </div>
             </td>
-            <td class="px-2 py-2 whitespace-nowrap text-left text-sm">
+            <td class="px-2 py-2 whitespace-nowrap text-left text-pink-500 text-sm">
               {{ team.next_opponent_acronym }}
             </td>
             <!-- <td class="px-2 py-2 whitespace-nowrap">
@@ -311,10 +311,10 @@ const getMovementClass = (teamId) => {
 const getTeamRowClass = (index) => {
   const baseClass =
     index <= 5
-      ? 'bg-orange-50 hover:bg-orange-200'
+      ? 'bg-gray hover:bg-orange-800'
       : index <= 9
-      ? 'bg-blue-50 hover:bg-blue-200'
-      : 'bg-red-50 hover:bg-red-200';
+      ? 'bg-gray hover:bg-blue-800'
+      : 'bg-gray hover:bg-red-800';
 
   const baseBorder =
     index <= 5

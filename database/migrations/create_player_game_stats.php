@@ -91,6 +91,17 @@ return new class extends Migration
                 END
             ) STORED
         ');
+
+        DB::statement('
+            ALTER TABLE player_game_stats ADD is_playoff INT GENERATED ALWAYS AS (
+                CASE
+                    WHEN LOCATE("G", game_id) > 0 AND LENGTH(game_id) > LOCATE("G",, game_id) + 1 THEN
+                    1
+                    ELSE 
+                    0
+                END
+            ) STORED
+        ');
     }
 
     public function down(): void

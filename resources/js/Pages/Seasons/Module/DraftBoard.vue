@@ -1,21 +1,21 @@
 <template>
-    <div class="draft-board">
+    <div class="draft-board text-white bg-dark">
         <!-- Available Players Section -->
-        <h3 class="text-lg font-semibold text-gray-800">Season {{ props.season_id }} Draft Results</h3>
+        <h3 class="text-lg font-semibold text-yellow-600">Season {{ props.season_id }} Draft Results</h3>
         <hr class="my-4 border-t border-gray-200" />
         <div class="overflow-x-auto mb-8" v-if="draftResults.length > 0">
             <!-- Tabs for Rounds -->
             <div class="flex border-b mb-4">
                 <button
                     class="px-4 py-2 text-sm font-medium"
-                    :class="selectedRound === 1 ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'"
+                    :class="selectedRound === 1 ? 'text-yellow-600 border-b-2 border-blue-600' : 'text-gray-600'"
                     @click="selectedRound = 1"
                 >
                     Round 1
                 </button>
                 <button
                     class="px-4 py-2 text-sm font-medium"
-                    :class="selectedRound === 2 ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-600'"
+                    :class="selectedRound === 2 ? 'text-yellow-600 border-b-2 border-blue-600' : 'text-gray-600'"
                     @click="selectedRound = 2"
                 >
                     Round 2
@@ -38,11 +38,11 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="player in draftResults.filter(player => player.round === 1)" :key="player.player_id" class="hover:bg-gray-100" @click.prevent="showPlayerProfileModal = player.player_id">
+                    <tbody class="bg-dark text-white divide-y divide-gray-200">
+                        <tr v-for="player in draftResults.filter(player => player.round === 1)" :key="player.player_id" class="hover:bg-gray-900" @click.prevent="showPlayerProfileModal = player.player_id">
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-100': player.pick_number >= player.rank, 'bg-red-100': player.pick_number < player.rank}">{{ player.pick_number }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-900': player.pick_number >= player.rank, 'bg-red-900': player.pick_number < player.rank}">{{ player.pick_number }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
@@ -70,11 +70,11 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
                         </tr>
                     </thead>
-                    <tbody class="bg-white divide-y divide-gray-200">
-                        <tr v-for="player in draftResults.filter(player => player.round === 2)" :key="player.player_id" class="hover:bg-gray-100" @click.prevent="showPlayerProfileModal = player.player_id">
+                    <tbody class="bg-dark text-white divide-y divide-gray-200">
+                        <tr v-for="player in draftResults.filter(player => player.round === 2)" :key="player.player_id" class="hover:bg-gray-900" @click.prevent="showPlayerProfileModal = player.player_id">
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-100': (player.pick_number + round1Length) >= player.rank, 'bg-red-100': (player.pick_number + round1Length) < player.rank}">{{ player.pick_number + round1Length }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-900': (player.pick_number + round1Length) >= player.rank, 'bg-red-900': (player.pick_number + round1Length) < player.rank}">{{ player.pick_number + round1Length }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>

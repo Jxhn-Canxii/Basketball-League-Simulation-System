@@ -8,7 +8,7 @@ INSERT INTO `teams` (
 -- Conference 1 (Luzon)
 ('Angels',          'ACA', 'Angeles City',     'Soar with Grace!',       'FFCC00', '003366', 1, 1, 'AngelCore',         NOW(), NOW()),
 ('Knights',         'KNT', 'Malolos',          'Charge with Valor!',     '333399', 'CCCCCC', 1, 1, 'ValorArmory',       NOW(), NOW()),
-('Pateros Ducks', 'DUX', 'Pateros', 'Fear the Beak.', '004225', 'FFD700', 1, 1, 'Golden Egg Dining Corp', NOW(), NOW()),
+('Ducks', 'DUX', 'Antipolo', 'Fear the Beak.', '004225', 'FFD700', 1, 1, 'Golden Egg Dining Corp', NOW(), NOW()),
 ('Razorbacks',    'VLZ', 'Valenzuela',   'No Fear. No Limits.',  '800000', '444444', 1, 1, 'ValCity Pride Org',    NOW(), NOW()),
 
 -- Conference 2 (Luzon)

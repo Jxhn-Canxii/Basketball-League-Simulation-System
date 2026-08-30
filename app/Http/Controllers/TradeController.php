@@ -8,13 +8,16 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use App\Http\Controllers\ArchiveController; // added import
+use App\Http\Controllers\HelperController; // added import
 
 class TradeController extends Controller
 {
     protected $archive;
+    protected $helper;
 
     public function __construct()
     {
+        $this->helper = new HelperController();
         $this->archive = new ArchiveController();
     }
 
@@ -129,7 +132,7 @@ class TradeController extends Controller
 
         $isOffSeason = (bool) $request->is_off_season;
         $latestSeasonId = ($isOffSeason) ? get_current_season_id() + 1 : get_current_season_id();
-        $storeStats = new AwardsController();
+        $storeStats = new PlayerSeasonStatsController();
 
         // Fetch all pending trade proposals for the current season
         $proposals = DB::table('trade_proposals')
@@ -319,7 +322,8 @@ class TradeController extends Controller
         $storyline = $this->upsertCurrentSeasonStoryline();
 
         if($storyline) {
-            $this->archive->archiveDecadeStats();
+            $this->archive->archiveGameStats();
+            $this->archive->archivePlayerSeasonStats();
 
             DB::table('seasons')
                 ->where('id',  $latestSeasonId)
@@ -505,7 +509,7 @@ class TradeController extends Controller
         $underperformingPlayers = [];
 
         foreach ($latestStats as $playerStats) {
-            $previousStats = DB::table('player_season_stats')
+            $previousStats = DB::table('player_season_stats_archives')
                 ->where('player_id', $playerStats->player_id)
                 ->where('season_id', $previousSeasonId)
                 ->first();
@@ -529,17 +533,33 @@ class TradeController extends Controller
         return $underperformingPlayers;
     }
 
-    private function findUnhappyStars()
+    private function getUnderperformingPlayers()
     {
         $latestSeasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id(); // Assuming seasons are sequential
 
-        $starPlayers = DB::table('players')
-            ->join('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
-            ->join('standings_snapshots', 'players.team_id', '=', 'standings_snapshots.team_id')
-            ->where('standings_snapshots.season_id', $latestSeasonId)
-            ->where('standings_snapshots.overall_rank', '>=', 56) // Teams ranked 56 or lower
+        // Get top 6 teams per conference
+        // $topTeams = DB::table('standings_snapshots')
+        //     ->where('season_id', $latestSeasonId)
+        //     ->where('conference_rank', '<=', 6) // Top 6 teams per conference
+        //     ->pluck('team_id')
+        //     ->toArray();
+
+        // // Get star players and all-stars from top 6 teams in each conference
+        // $starPlayers = DB::table('players')
+        //     ->whereIn('team_id', $topTeams)
+        //     ->whereIn('players.role', ['star player', 'all star', 'starter']) // Filter by role
+        //     ->pluck('players.id')
+        //     ->toArray();
+
+        // Fetch latest player stats, excluding star players and all-stars from top 6 teams
+        $latestStats = DB::table('player_season_stats')
+            ->join('players', 'player_season_stats.player_id', '=', 'players.id')
+            // ->where('players.team_id', $teamId)
+            // ->whereNotIn('players.id', $starPlayers) // Exclude stars and all-stars
+            // ->where('players.is_injured', 0)
+            ->where('players.contract_years', '<=', 5)
             ->where('player_season_stats.season_id', $latestSeasonId)
-            ->whereIn('players.role', ['star player', 'starter', 'all star']) // Filter by role
             ->select(
                 'players.id as player_id',
                 'players.team_id',
@@ -558,14 +578,41 @@ class TradeController extends Controller
             )
             ->get();
 
-        return $starPlayers->map(fn($player) => (array) $player)->toArray();
+        $underperformingPlayers = [];
+
+        foreach ($latestStats as $playerStats) {
+            $previousStats = DB::table('player_season_stats_archives')
+                ->where('player_id', $playerStats->player_id)
+                ->where('season_id', $previousSeasonId)
+                ->first();
+
+            $latestScore = $this->calculatePerformanceScore($playerStats);
+            $previousScore = $previousStats ? $this->calculatePerformanceScore($previousStats) : 0;
+
+            if ($previousScore > 0) {
+                $declinePercentage = (($previousScore - $latestScore) / $previousScore) * 100;
+
+                if ($declinePercentage >= 20) { // Threshold for a **super decline** (e.g., 20% drop)
+                    $playerStats->super_decline = true;
+                }
+            }
+
+            if ($latestScore < $previousScore) {
+                $underperformingPlayers[] = (array) $playerStats;
+            }
+        }
+
+        return $underperformingPlayers;
     }
+
 
     private function getPlayerStats($playerId)
     {
         $latestSeasonId = get_current_season_id();
 
-        return DB::table('player_season_stats')
+        $dbName = $this->helper->getSeasonStatsDBName($latestSeasonId);
+
+        return DB::table($dbName)
             ->where('player_id', $playerId)
             ->where('season_id', $latestSeasonId)
             ->first();

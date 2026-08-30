@@ -1,12 +1,12 @@
 <template>
-  <div class="bg-white shadow-sm rounded-lg overflow-hidden">
-    <div class="px-4 pb-2 border-b border-gray-200" v-if="props.showTitle">
+  <div class="bg-black shadow-sm rounded-lg mt-2 overflow-hidden shadow-lg shadow-red-400">
+    <div class="px-4 pb-2 border-b border-gray-200 bg-gray-900" v-if="props.showTitle">
       <div class="flex items-center justify-between">
-        <h2 class="text-lg font-bold text-gray-800 flex items-center">
+        <h2 class="text-lg font-bold text-yellow-500 flex items-center">
           <i class="fas fa-exchange-alt text-red-500 mr-2"></i>
           Recent Transactions
         </h2>
-        <span class="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm">
+        <span class="bg-red-100 text-red-600 hidden px-2 py-0 rounded-full text-sm">
           {{ transactions.length }} transactions
         </span>
       </div>
@@ -24,11 +24,11 @@
     <div v-else class="divide-y divide-gray-100">
       <div v-for="transaction in sortedTransactions" 
            :key="transaction.id"
-           class="p-4 hover:bg-gray-50 transition-colors">
+           class="p-4 hover:bg-gray-900 transition-colors">
         <div class="flex items-start space-x-3">
           <!-- Icon based on transaction type -->
           <div class="flex-shrink-0 mt-1">
-            <i :class="getTransactionIcon(transaction.status)" class="text-lg"></i>
+            <i :class="getTransactionIcon(transaction.status)" class="text-md"></i>
           </div>
 
           <!-- Transaction Content -->
@@ -36,18 +36,18 @@
             <div class="flip-card-container" :class="{ 'is-flipped': flippedCards[transaction.id] }">
                 <!-- Front Side (Transaction Info) -->
                 <div class="flip-card-front p-2" @click="togglePlayerCard(transaction.id)">
-                    <div class="flex items-center gap-2">
-                        <span class="font-semibold text-gray-900 cursor-pointer">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="font-bold text-md text-nowrap text-white cursor-pointer">
                             {{ transaction.player_name }} <sup>{{ Math.round(transaction.overall_rating ?? 0) }}</sup>, {{ transaction.age }} |  {{ transaction.position }}
                         </span>
-                        <span :class="roleBadgeClass(transaction.player_role)">
+                        <span class="text-nowrap" :class="roleBadgeClass(transaction.player_role)">
                             {{ transaction.player_role }}
                         </span>
-                        <span :class="getStatusBadgeClass(transaction.status)">
+                        <span class="text-nowrap" :class="getStatusBadgeClass(transaction.status)">
                             {{ formatStatus(transaction.status) }}
                         </span>
                         <!-- draft status badge -->
-                        <span class="bg-gray-100 text-gray-600 px-2 py-1 rounded-full text-xs">
+                        <span class="bg-gray-100 text-nowrap text-gray-600 px-2 py-1 rounded-full text-xs">
                          {{ transaction.draft_status == 'Undrafted' ? `S${ transaction.draft_season_id} ${transaction.draft_status}` : `${transaction.draft_status}` }} {{ transaction.draft_status == 'Undrafted' ? '' : `(${transaction.drafted_team_abbre})` }}
                         </span>
                         <i v-if="transaction.awards_info" 
@@ -58,14 +58,22 @@
 
                     <p class="text-sm text-gray-600 mt-1">
                         {{ transaction.details }}
-                        <template v-if="transaction.status !== 'star player change' && transaction.status !== 'role change'">
-                            <span class="text-gray-400 mx-1">•</span>
-                            {{ transaction.from_team_name }}
-                            <i class="fas fa-arrow-right text-xs mx-1 text-gray-400"></i>
-                            {{ transaction.to_team_name }}
-                        </template>
                     </p>
 
+                    <template v-if="transaction.status !== 'star player change' && transaction.status !== 'role change'">
+                      <div class="flex justify-between">
+                        <p class="text-xs text-gray-600 mt-1">
+                          <span class="text-gray-400 mx-1">•</span>
+                          {{ transaction.from_team_name }}
+                          <i class="fas fa-arrow-right text-xs mx-1 text-gray-400"></i>
+                          <b>{{ transaction.to_team_name }}</b>
+                        </p>
+                        <p v-if="transaction.status == 'waived' && transaction.current_team_name != 'Free Agent'" class="text-xs text-gray-400 mt-1">
+                          <b>Current: {{ transaction.current_team_city }} {{ transaction.current_team_name }}</b>
+                        </p>
+                      </div>
+                    </template>
+                    
                     <div class="text-xs text-gray-500 mt-1">
                         Source: <i class="text-blue-500">{{ getSourceTeam(transaction) }}</i>
                     </div>

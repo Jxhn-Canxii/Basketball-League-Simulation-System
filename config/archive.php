@@ -10,6 +10,6 @@ return [
     | You can adjust the decade modulo value here.
     */
 
-    'DECADE_MODULO' => 5, // Archive stats every 5 seasons
+    'DECADE_MODULO' => 1, // Archive stats every seasons
 
 ];

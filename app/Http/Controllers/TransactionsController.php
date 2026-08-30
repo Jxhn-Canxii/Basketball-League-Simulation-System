@@ -7,9 +7,10 @@ use App\Models\Seasons;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\ContractController;
-use App\Http\Controllers\AwardsController;
+use App\Http\Controllers\PlayerSeasonStatsController;
 use App\Http\Controllers\TeamBalanceController;
 use App\Http\Controllers\FreeAgentController;
+use App\Http\Controllers\HelperController;
 use Inertia\Inertia;
 
 class TransactionsController extends Controller
@@ -18,14 +19,16 @@ class TransactionsController extends Controller
     protected $contract;
     protected $teamBalance;
     protected $freeAgent;
+    protected $helper;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new AwardsController();
+        $this->storeStats = new PlayerSeasonStatsController();
         $this->contract = new ContractController();
         $this->teamBalance = new TeamBalanceController();
         $this->freeAgent = new FreeAgentController();
+        $this->helper = new HelperController();
     }
 
     public function getRecentNonTransferTransactions()
@@ -111,6 +114,206 @@ class TransactionsController extends Controller
         ]);
     }
 
+    public function getRecentTransferTransactions()
+    {
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $transactions = DB::table('transactions')
+            ->select(
+                'transactions.id',
+                'transactions.player_id',
+                'players.name as player_name',
+                'players.role as player_role',
+                'players.position as position',
+                'players.overall_rating as overall_rating',
+                'players.draft_status as draft_status',
+                'players.draft_id as draft_season_id',
+                DB::raw("CASE WHEN players.drafted_team_id = 0 THEN 'Undrafted' ELSE drafted_team.acronym END as drafted_team_abbre"),
+                'players.age as age',
+                'transactions.season_id',
+                'seasons.name as season_name',
+                'transactions.details',
+                'transactions.from_team_id',
+                DB::raw("CASE WHEN transactions.from_team_id = 0 THEN 'Free Agent' ELSE from_teams.name END as from_team_name"),
+                DB::raw("CASE WHEN transactions.from_team_id = 0 THEN 'None' ELSE from_teams.city END as from_team_city"),
+                'transactions.to_team_id',
+                DB::raw("CASE WHEN transactions.to_team_id = 0 THEN 'Free Agent' ELSE to_teams.name END as to_team_name"),
+                DB::raw("CASE WHEN transactions.to_team_id = 0 THEN 'None' ELSE to_teams.city END as to_team_city"),
+                DB::raw("CASE WHEN players.team_id = 0 THEN 'Free Agent' ELSE current_team.name END as current_team_name"),
+                DB::raw("CASE WHEN players.team_id = 0 THEN 'Free Agent' ELSE current_team.city END as current_team_city"),
+                'transactions.status',
+                'transactions.created_at',
+                'transactions.updated_at',
+                // Add award information
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT award_name SEPARATOR ', ') 
+                    FROM season_awards 
+                    WHERE season_awards.player_id = transactions.player_id) as awards"),
+                // Check if player is Finals MVP
+                DB::raw("CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM seasons 
+                        WHERE seasons.finals_mvp_id = transactions.player_id
+                    ) THEN 'Finals MVP'
+                    ELSE NULL 
+                END as finals_mvp_status"),
+                // Get Finals MVP seasons
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT seasons.name) 
+                    FROM seasons 
+                    WHERE seasons.finals_mvp_id = transactions.player_id) as finals_mvp_seasons")
+            )
+            ->join('players', 'transactions.player_id', '=', 'players.id')
+            ->join('seasons', 'transactions.season_id', '=', 'seasons.id')
+            ->leftJoin('teams as current_team', 'players.team_id', '=', 'current_team.id')
+            ->leftJoin('teams as drafted_team', 'players.drafted_team_id', '=', 'drafted_team.id')
+            ->leftJoin('teams as from_teams', 'transactions.from_team_id', '=', 'from_teams.id')
+            ->leftJoin('teams as to_teams', 'transactions.to_team_id', '=', 'to_teams.id')
+            ->where('transactions.season_id', $latestSeasonId)
+            ->whereNotIn('transactions.status', ['star player change', 'role change'])
+            ->orderBy('transactions.id', 'desc')
+            ->limit(6)
+            ->get();
+
+        // Format the response data
+        $transactions = $transactions->map(function ($transaction) {
+            $awardsInfo = [];
+
+            // Add regular awards if any
+            if ($transaction->awards) {
+                $awardsInfo[] = $transaction->awards;
+            }
+
+            // Add Finals MVP information if applicable
+            if ($transaction->finals_mvp_status) {
+                $awardsInfo[] = "Finals MVP (" . $transaction->finals_mvp_seasons . ")";
+            }
+
+            // Add awards information to transaction
+            $transaction->awards_info = !empty($awardsInfo) ? implode(', ', $awardsInfo) : null;
+
+            // Remove raw fields
+            unset($transaction->awards);
+            unset($transaction->finals_mvp_status);
+            unset($transaction->finals_mvp_seasons);
+
+            return $transaction;
+        });
+
+        return response()->json([
+            'transactions' => $transactions
+        ]);
+    }
+
+    public function getSeasonTransferTransactions(Request $request)
+    {
+        $perPage = $request->input('itemsperpage', 10); // Number of items per page
+        $currentPage = $request->input('page_num', 1); // Current page number
+        $search = $request->input('search', ''); // Search term
+
+        $transactions = DB::table('transactions')
+            ->select(
+                'transactions.id',
+                'transactions.player_id',
+                'players.name as player_name',
+                'players.role as player_role',
+                'players.position as position',
+                'players.overall_rating as overall_rating',
+                'players.draft_status as draft_status',
+                'players.draft_id as draft_season_id',
+                DB::raw("CASE WHEN players.drafted_team_id = 0 THEN 'Undrafted' ELSE drafted_team.acronym END as drafted_team_abbre"),
+                'players.age as age',
+                'transactions.season_id',
+                'seasons.name as season_name',
+                'transactions.details',
+                'transactions.from_team_id',
+                DB::raw("CASE WHEN transactions.from_team_id = 0 THEN 'Free Agent' ELSE from_teams.name END as from_team_name"),
+                DB::raw("CASE WHEN transactions.from_team_id = 0 THEN 'None' ELSE from_teams.city END as from_team_city"),
+                'transactions.to_team_id',
+                DB::raw("CASE WHEN transactions.to_team_id = 0 THEN 'Free Agent' ELSE to_teams.name END as to_team_name"),
+                DB::raw("CASE WHEN transactions.to_team_id = 0 THEN 'None' ELSE to_teams.city END as to_team_city"),
+                DB::raw("CASE WHEN players.team_id = 0 THEN 'Free Agent' ELSE current_team.name END as current_team_name"),
+                DB::raw("CASE WHEN players.team_id = 0 THEN 'Free Agent' ELSE current_team.city END as current_team_city"),
+                'transactions.status',
+                'transactions.created_at',
+                'transactions.updated_at',
+                // Add award information
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT award_name SEPARATOR ', ') 
+                    FROM season_awards 
+                    WHERE season_awards.player_id = transactions.player_id) as awards"),
+                // Check if player is Finals MVP
+                DB::raw("CASE 
+                    WHEN EXISTS (
+                        SELECT 1 FROM seasons 
+                        WHERE seasons.finals_mvp_id = transactions.player_id
+                    ) THEN 'Finals MVP'
+                    ELSE NULL 
+                END as finals_mvp_status"),
+                // Get Finals MVP seasons
+                DB::raw("(SELECT GROUP_CONCAT(DISTINCT seasons.name) 
+                    FROM seasons 
+                    WHERE seasons.finals_mvp_id = transactions.player_id) as finals_mvp_seasons")
+            )
+            ->join('players', 'transactions.player_id', '=', 'players.id')
+            ->join('seasons', 'transactions.season_id', '=', 'seasons.id')
+            ->leftJoin('teams as current_team', 'players.team_id', '=', 'current_team.id')
+            ->leftJoin('teams as drafted_team', 'players.drafted_team_id', '=', 'drafted_team.id')
+            ->leftJoin('teams as from_teams', 'transactions.from_team_id', '=', 'from_teams.id')
+            ->leftJoin('teams as to_teams', 'transactions.to_team_id', '=', 'to_teams.id')
+            ->whereNotIn('transactions.status', ['star player change', 'role change']);
+
+        // Apply search filter if provided
+        if($search) {
+            $transactions->where('players.name', 'like', "%{$search}%");
+        }
+
+         // Get the total number of records
+        $totalItems = DB::table('transactions')
+            ->count();
+
+        // Calculate the offset for the query
+        $offset = ($currentPage - 1) * $perPage;
+
+        // Fetch the paginated data
+        $transactions = $transactions->offset($offset)
+            ->orderBy('transactions.id', 'desc')
+            ->limit($perPage)
+            ->get();
+
+        // Calculate total pages
+        $totalPages = (int) ceil($totalItems / $perPage);
+
+        // Format the response data
+        $transactions = $transactions->map(function ($transaction) {
+            $awardsInfo = [];
+
+            // Add regular awards if any
+            if ($transaction->awards) {
+                $awardsInfo[] = $transaction->awards;
+            }
+
+            // Add Finals MVP information if applicable
+            if ($transaction->finals_mvp_status) {
+                $awardsInfo[] = "Finals MVP (" . $transaction->finals_mvp_seasons . ")";
+            }
+
+            // Add awards information to transaction
+            $transaction->awards_info = !empty($awardsInfo) ? implode(', ', $awardsInfo) : null;
+
+            // Remove raw fields
+            unset($transaction->awards);
+            unset($transaction->finals_mvp_status);
+            unset($transaction->finals_mvp_seasons);
+
+            return $transaction;
+        });
+
+        return response()->json([
+            'current_page' => $currentPage,
+            'total_pages' => $totalPages,
+            'total' => $totalItems,
+            'search' => $search,
+            'transactions' => $transactions,
+        ]);
+    }
 
     public function getTransactions(Request $request)
     {
@@ -120,6 +323,7 @@ class TransactionsController extends Controller
         $perPage = $request->get('itemsperpage', 10); // Default items per page is 10
         $page = $request->get('page_num', 1); // Default to page 1
 
+        $statsDBName = $this->helper->getSeasonStatsDBName($seasonId);
         // Build the initial query with necessary joins
         $query = DB::table('transactions as t')
             ->leftJoin('season_awards as sa', function ($join) {
@@ -130,7 +334,7 @@ class TransactionsController extends Controller
             ->leftJoin('teams as from_team', 'from_team.id', '=', 't.from_team_id')
             ->leftJoin('teams as to_team', 'to_team.id', '=', 't.to_team_id')
             ->leftJoin('teams as award_team', 'award_team.id', '=', 'sa.team_id') // Join teams for the awards
-            ->leftJoin('player_season_stats as ps', function ($join) {
+            ->leftJoin($statsDBName.' as ps', function ($join) {
                 $join->on('ps.player_id', '=', 't.player_id')
                     ->on('ps.season_id', '=', 't.season_id');
             })
@@ -227,7 +431,7 @@ class TransactionsController extends Controller
 
         foreach ($transactions as $transaction) {
             $playerId = $transaction->player_id;
-            $championships = \DB::table('seasons')
+            $championships = DB::table('seasons')
                 ->join('player_game_stats', 'seasons.id', '=', 'player_game_stats.season_id')
                 ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id')
                 ->join('teams', 'player_game_stats.team_id', '=', 'teams.id')
@@ -236,10 +440,10 @@ class TransactionsController extends Controller
                 ->where('schedules.round', 'finals')
                 ->whereColumn('seasons.id', 'player_game_stats.season_id')
                 ->whereExists(function ($query) use ($playerId) {
-                    $query->select(\DB::raw(1))
+                    $query->select(DB::raw(1))
                         ->from('schedules as s')
                         ->join('player_game_stats as pg', 's.game_id', '=', 'pg.game_id')
-                        ->where('pg.team_id', '=', \DB::raw('player_game_stats.team_id'))
+                        ->where('pg.team_id', '=', DB::raw('player_game_stats.team_id'))
                         ->where('s.round', 'finals')
                         ->where('pg.player_id',  $playerId)
                         ->whereColumn('pg.season_id', 'player_game_stats.season_id')
@@ -823,8 +1027,8 @@ class TransactionsController extends Controller
     {
         $seasonId = get_current_season_id();
         $teams = DB::table('teams')->pluck('id');
-        // use the shared AwardsController instance instead of creating a new one here
-        // $storeStats = new AwardsController; // removed
+        // use the shared PlayerSeasonStatsController instance instead of creating a new one here
+        // $storeStats = new PlayerSeasonStatsController; // removed
 
         foreach ($teams as $teamId) {
             DB::beginTransaction();
@@ -878,8 +1082,6 @@ class TransactionsController extends Controller
                 DB::rollBack();
 
                 // Log the error message with more details
-                \Log::error('Error assigning role for team ' . $teamId . ': ' . $e->getMessage());
-
                 return false; // Return false if an error occurs during the update
             }
         }
@@ -905,7 +1107,7 @@ class TransactionsController extends Controller
                     ->get();
 
                 foreach ($allPlayersStats as $playerStat) {
-                    // use shared AwardsController instance
+                    // use shared PlayerSeasonStatsController instance
                     $this->storeStats->storePlayerNextSeasonStats($teamId, $playerStat->id);
                 }
 

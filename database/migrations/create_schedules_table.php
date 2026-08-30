@@ -3,7 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-
+use Illuminate\Support\Facades\DB;
 return new class extends Migration
 {
     /**
@@ -14,6 +14,18 @@ return new class extends Migration
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
             $table->string('game_id');
+            DB::statement('
+                ALTER TABLE schedules ADD game_number INT GENERATED ALWAYS AS (
+                    CASE
+                        WHEN LOCATE("G", game_id) > 0 AND LENGTH(game_id) > LOCATE("G",, game_id) + 1 THEN
+                            CAST(SUBTR(`game_id`,LOCATE("G",`game_id`) + 1,LOCATE("-",`game_id`,LOCATE("G",`game_id`)) - LOCATE("G",`game_id`) - 1) as UNSIGNED) 
+                        WHEN LOCATE("G",`game_id`) > 0 THEN 
+                            CAST(SUBSTR(`game_id`,LOCATE("G",`game_id`) + 1) as UNSIGNED) 
+                        ELSE 
+                        0
+                    END
+                ) STORED
+            ');
             $table->string('round');
             $table->integer('season_id')->constrained()->onDelete('cascade');
             $table->integer('conference_id');

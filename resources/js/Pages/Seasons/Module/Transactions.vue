@@ -1,179 +1,273 @@
 <template>
-    <div class="transactions-board">
-        <!-- Title Section -->
-        <h3 class="text-lg font-semibold text-gray-800">
-            Transactions for Season {{ props.season_id }}
-        </h3>
-        <hr class="my-4 border-t border-gray-200" />
-
-        <!-- Tabs for Transactions Type (Normal / Notable) -->
-        <div class="flex border-b mb-4">
-            <button
-                class="px-4 py-2 text-sm font-medium"
-                :class="{
-                    'text-blue-600 border-b-2 border-blue-600': selectedType === 'notable',
-                    'text-gray-600': selectedType !== 'notable'
-                }"
-                @click="changeType('notable')"
-            >
-                Notable Transactions
-            </button>
-            <button
-                class="px-4 py-2 text-sm font-medium"
-                :class="{
-                    'text-blue-600 border-b-2 border-blue-600': selectedType === 'normal',
-                    'text-gray-600': selectedType !== 'normal'
-                }"
-                @click="changeType('normal')"
-            >
-                Normal Transactions
-            </button>
-        </div>
-
-        <!-- Loader while fetching data -->
-        <div v-if="loading" class="flex justify-center items-center py-4">
-            <div class="spinner-border animate-spin inline-block w-8 h-8 border-4 rounded-full border-blue-600 border-t-transparent" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-        </div>
-
-        <!-- Transactions Table -->
-        <div v-if="!loading && data.data?.length > 0">
-            <table class="min-w-full divide-y divide-gray-200 text-xs">
-                <thead class="bg-gray-50 text-nowrap">
-                    <tr>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Player</th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Role</th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Awards</th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">From Team</th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">To Team</th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Transaction Type</th>
-                        <!-- <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Details</th> -->
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200">
-                    <!-- Loop through transactions -->
-                    <tr v-for="transaction in data.data" :key="transaction.id" @click.prevent="showPlayerProfileModal = transaction.player_id" :class="transaction.is_active ? 'bg-white' : 'bg-red-100'" class="hover:bg-gray-100 cursor-pointer">
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <span>
-                                {{ transaction.player_name }}
-                                <sup v-if="transaction.is_finals_mvp">
-                                    <i class="fa fa-star fa-sm text-yellow-500"></i>
-                                </sup>
-                            </span>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">
-                            <span
-                                :class="roleBadgeClass(transaction.role)"
-                                class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
-                            >
-                                {{ transaction.role }}
-                            </span>
-                        </td>
-                        <td class="px-2 py-1 whitespace-normal border text-wrap break-words">
-                            {{ transaction.player_awards }}
-
-                            <!-- Display Finals MVP -->
-                            <template v-if="transaction.finals_mvp">
-                                {{ transaction.player_awards ? ',' : '' }}{{ transaction.finals_mvp }}
-                            </template>
-
-                            <!-- Display Career Championships -->
-                            <template v-if="transaction.player_career_championships">
-                                {{ (transaction.player_awards || transaction.finals_mvp) ? ',' : '' }}{{ transaction.player_career_championships }}
-                            </template>
-                        </td>
-                        <td class="px-2 py-1 whitespace-nowrap border">{{ transaction.from_team_name }}</td>
-                        <td class="px-2 py-1 whitespace-nowrap border">{{ transaction.to_team_name }}</td>
-                        <td class="px-2 py-1 whitespace-nowrap border">{{ transaction.status }}</td>
-                        <!-- <td class="px-2 py-1 whitespace-nowrap border">{{ transaction.details }}</td> -->
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-
-        <!-- No transactions message -->
-        <div v-else class="text-center py-4 text-gray-500" v-if="!loading">
-            <p>No transactions available for this season.</p>
-        </div>
+  <div class="bg-black shadow-sm rounded-lg mt-2 overflow-hidden shadow-lg shadow-red-400">
+    <div class="px-4 pb-2 border-b border-gray-200 bg-gray-900" v-if="props.showTitle">
+      <div class="flex items-center justify-between">
+        <h2 class="text-lg font-bold text-yellow-500 flex items-center">
+          <i class="fas fa-exchange-alt text-red-500 mr-2"></i>
+          Season Transactions
+        </h2>
+        <span class="bg-red-100 text-red-600 px-2 py-0 rounded-full text-sm">
+          {{ data.total_pages ?? 0 }} transactions
+        </span>
+      </div>
     </div>
 
-   <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="showPlayerProfileModal = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
-        <div class="p-6 block">
-            <PlayerPerformance :key="showPlayerProfileModal" :player_id="showPlayerProfileModal" />
+    <!-- Loading State -->
+    <div v-if="loading" class="p-4">
+      <div v-for="n in 3" :key="n" class="animate-pulse mb-4">
+        <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+        <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+      </div>
+    </div>
+
+    <!-- Transactions List -->
+    <div v-else class="divide-y divide-gray-100">
+      <div v-for="transaction in sortedTransactions" 
+           :key="transaction.id"
+           class="p-4 hover:bg-gray-900 transition-colors">
+        <div class="flex items-start space-x-3">
+          <!-- Icon based on transaction type -->
+          <div class="flex-shrink-0 mt-1">
+            <i :class="getTransactionIcon(transaction.status)" class="text-md"></i>
+          </div>
+
+          <!-- Transaction Content -->
+          <div class="flex-grow relative">
+            <div class="flip-card-container" :class="{ 'is-flipped': flippedCards[transaction.id] }">
+                <!-- Front Side (Transaction Info) -->
+                <div class="flip-card-front p-2" @click="togglePlayerCard(transaction.id)">
+                    <div class="flex items-center gap-2 text-xs">
+                        <span class="font-bold text-md text-nowrap text-white cursor-pointer">
+                            {{ transaction.player_name }} <sup>{{ Math.round(transaction.overall_rating ?? 0) }}</sup>, {{ transaction.age }} |  {{ transaction.position }}
+                        </span>
+                        <span class="text-nowrap" :class="roleBadgeClass(transaction.player_role)">
+                            {{ transaction.player_role }}
+                        </span>
+                        <span class="text-nowrap" :class="getStatusBadgeClass(transaction.status)">
+                            {{ formatStatus(transaction.status) }}
+                        </span>
+                        <!-- draft status badge -->
+                        <span class="bg-gray-100 text-nowrap text-gray-600 px-2 py-1 rounded-full text-xs">
+                         {{ transaction.draft_status == 'Undrafted' ? `S${ transaction.draft_season_id} ${transaction.draft_status}` : `${transaction.draft_status}` }} {{ transaction.draft_status == 'Undrafted' ? '' : `(${transaction.drafted_team_abbre})` }}
+                        </span>
+                        <i v-if="transaction.awards_info" 
+                          class="fas fa-award text-yellow-500 hover:text-yellow-600 cursor-pointer"
+                          :title="`${transaction.player_name} has ${parseAwards(transaction.awards_info).length} awards`">
+                        </i>
+                    </div>
+
+                    <p class="text-sm text-gray-600 mt-1">
+                        {{ transaction.details }}
+                    </p>
+
+                    <template v-if="transaction.status !== 'star player change' && transaction.status !== 'role change'">
+                      <div class="flex justify-between">
+                        <p class="text-xs text-gray-600 mt-1">
+                          <span class="text-gray-400 mx-1">•</span>
+                          {{ transaction.from_team_name }}
+                          <i class="fas fa-arrow-right text-xs mx-1 text-gray-400"></i>
+                          <b>{{ transaction.to_team_name }}</b>
+                        </p>
+                        <p v-if="transaction.status == 'waived' && transaction.current_team_name != 'Free Agent'" class="text-xs text-gray-400 mt-1">
+                          <b>Current: {{ transaction.current_team_city }} {{ transaction.current_team_name }}</b>
+                        </p>
+                      </div>
+                    </template>
+                    
+                    <div class="text-xs text-gray-500 mt-1">
+                        Source: <i class="text-blue-500">{{ getSourceTeam(transaction) }}</i>
+                    </div>
+                </div>
+
+                <!-- Back Side (Awards Info) -->
+                <div class="flip-card-back p-2 bg-gray-50" @click="togglePlayerCard(transaction.id)">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm font-semibold text-gray-700">
+                                {{ transaction.player_name }}'s Achievements
+                            </span>
+                        </div>
+
+                        <div class="flex flex-wrap gap-1.5">
+                            <template v-if="transaction.awards_info">
+                                <span v-for="(award, index) in parseAwards(transaction.awards_info)"
+                                      :key="index"
+                                      class="inline-flex items-center px-2 py-1 rounded-full text-xs"
+                                      :class="getAwardBadgeClass(award)">
+                                    <i :class="getAwardIcon(award)" class="mr-1"></i>
+                                    {{ formatAwardText(award) }}
+                                </span>
+                            </template>
+                            <span v-else class="text-xs text-gray-500 italic">
+                                No awards yet in career
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+          </div>
         </div>
-    </Modal>
+      </div>
+    </div>
+
+    <!-- Pagination Controls -->
+    <div class="flex w-full overflow-auto">
+        <Paginator
+            v-if="data.total"
+            :page_number="search.page_num"
+            :total_rows="data.total ?? 0"
+            :itemsperpage="search.itemsperpage"
+            @page_num="handlePagination"
+        />
+    </div>
+  </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import axios from "axios";
+import { ref, onMounted, computed } from 'vue';
+import axios from 'axios';
+import Swal from 'sweetalert2';
 import Paginator from "@/Components/Paginator.vue";
-import { roleBadgeClass } from "@/Utility/Formatter";
-import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
-import Modal from "@/Components/Modal.vue";
+import {
+    roleBadgeClass,
+    getTransactionIcon,
+    getStatusBadgeClass,
+    statusBadgeClass,
+    getAwardBadgeClass,
+    getAwardIcon,
+    formatStatus,
+    formatAwardText 
+} from "@/Utility/Formatter";
 
-const showPlayerProfileModal = ref(false);
 const props = defineProps({
-    season_id: {
-        type: [Number, String],
-        default: 0,
-    },
-    team_id: {
-        type: [Number, String],
-        default: 0,
-    },
-});
-
-const selectedType = ref("notable"); // Track selected type (normal/notable)
-const data = ref({ data: [], total: 0 }); // Store transactions data with pagination info
-const search = ref({
-    season_id: 0,
-    team_id: 0,
-    itemsperpage: 10,
-    page_num: 1,
-    search: '',
-    type: 'notable',
-});
-const loading = ref(false); // Add a loading state to track if data is being fetched
-
-// Change transaction type (normal or notable)
-const changeType = (type) => {
-    selectedType.value = type;
-    search.value.page_num = 1; // Reset to page 1 when changing the transaction type
-    fetchTransactions();
-};
-
-// Fetch the transactions data from Laravel API
-const fetchTransactions = async () => {
-    try {
-        loading.value = true; // Set loading to true before making the API request
-        search.value.type = selectedType.value;
-        search.value.season_id = props.season_id;
-        search.value.team_id = props.team_id;
-        const response = await axios.post(route("players.transactions"), search.value);
-        data.value = response.data; // Store the response data (includes pagination info)
-    } catch (error) {
-        console.error("Error fetching transactions:", error);
-    } finally {
-        loading.value = false; // Set loading to false after the request is completed
+    showTitle: {
+        type: Boolean,
+        default: true,
     }
+});
+
+const data = ref([]);
+const loading = ref(true);
+const flippedCards = ref({});
+const search = ref({
+    page_num: 1,
+    search: "",
+    itemsperpage: 10,
+});
+;
+
+const getSeasonTransactions = async () => {
+  try {
+    loading.value = true;
+    const response = await axios.post(route('season.transactions'),search.value);
+    data.value = response.data;
+  } catch (error) {
+    console.error(error);
+    Swal.fire({
+      icon: 'error',
+      title: 'Error!',
+      text: 'Failed to fetch season transactions. Please try again later.',
+    });
+  } finally {
+    loading.value = false;
+  }
 };
 
-// Handle pagination (when page number changes)
-const handlePagination = (page) => {
-    search.value.page_num = page;
-    fetchTransactions(); // Fetch transactions for the selected page
+const handlePagination = (page_num) => {
+    search.value.page_num = page_num ?? 1;
+    getSeasonTransactions();
+}
+
+const sortedTransactions = computed(() => {
+  return data.value.transactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+});
+
+const getSourceTeam = (transaction) => {
+  const playerSlug = transaction.player_name.replace(/\s+/g, '-').toLowerCase();
+
+  const teamCity = transaction.to_team_city === 'None' ? 'free-agent' : transaction.to_team_city;
+  const teamName = transaction.to_team_name === 'Free Agent' ? '' : transaction.to_team_name;
+
+  const teamSlug = `${teamCity} ${teamName}`.trim().replace(/\s+/g, '-').toLowerCase();
+  const statusSlug = transaction.status.replace(/\s+/g, '-').toLowerCase();
+
+  const domain = `${teamSlug}.com`; // e.g. valenzuela-dolphins.com
+
+  return `https://${domain}/news/${transaction.season_id ?? 0}/${playerSlug}-${teamSlug}-${statusSlug}`;
 };
 
-// Fetch transactions when the component is mounted
+
+
+const togglePlayerCard = (id) => {
+  flippedCards.value[id] = !flippedCards.value[id];
+};
+
+const parseAwards = (awardsInfo) => {
+  return awardsInfo.split(',');
+};
+
 onMounted(() => {
-    fetchTransactions(); // Load transactions on initial mount
+  getSeasonTransactions();
 });
 </script>
+
+<style scoped>
+@keyframes marquee {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-marquee {
+  display: inline-block;
+  animation: marquee 80s linear infinite;
+}
+
+/* Add these new styles for skeleton animation */
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .5;
+  }
+}
+
+/* Add styles for flip card */
+.flip-card {
+  perspective: 1000px;
+}
+
+.flip-card-front, .flip-card-back {
+  backface-visibility: hidden;
+  transition: transform 0.6s;
+}
+
+.flip-card-front {
+  transform: rotateY(0deg);
+}
+
+.flip-card-back {
+  transform: rotateY(180deg);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.is-flipped .flip-card-front {
+  transform: rotateY(-180deg);
+}
+
+.is-flipped .flip-card-back {
+  transform: rotateY(0deg);
+}
+</style>

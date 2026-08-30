@@ -33,6 +33,13 @@ class HelperController extends Controller
 
     }
 
+    public function currentSeasonConferenceRank($teamId){
+        
+        return DB::table('standings_view')
+            ->where('team_id', $teamId)
+            ->value('conference_rank'); // Get the 'conference_rank' of the current season standings
+    }
+
     public function totalRounds($seasonId){
 
         return DB::table('schedules')
@@ -104,6 +111,34 @@ class HelperController extends Controller
         return $archiveTable;
     }
 
+    public function getSeasonStatsDBName($seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'player_season_stats';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "player_season_stats_archives";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getPlayoffStatsDBName($seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'player_season_playoff_stats';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "player_season_playoff_stats_archives";
+        }
+
+        return $archiveTable;
+    }
+
     public function getTeamName($teamId){
 
         return DB::table('teams')->where('id', $teamId)->value('name') ?? 'Unknown Team';
@@ -116,5 +151,45 @@ class HelperController extends Controller
             ->value('finals_winner_id');
         
         return $championId;
+    }
+
+    public function totalRegularSeasonGames($seasonId, $teamId)
+    {
+        $gamesPlayedCount = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->where('game_number',0)
+            ->where(function ($query) use ($teamId) {
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->count();
+
+        return $gamesPlayedCount;
+    }
+
+    public function getTransferTransactionCount(){
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+         // Get the total number of records
+        $totalItems = DB::table('transactions')
+            ->where('season_id', $latestSeasonId)
+            ->whereNotIn('status', ['star player change', 'role change'])
+            ->count();
+
+        return $totalItems;
+    }
+
+    public function hasImproved($latest,$previous){
+        $hasImproved = 0;
+        if($latest > $previous){
+            $hasImproved = 1;
+        }
+
+        if($latest == $previous){
+            $hasImproved = 2;
+        }
+        
+        return $hasImproved;
+
     }
 }

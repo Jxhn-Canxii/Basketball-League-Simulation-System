@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class ContractController extends Controller
 {
 
-        private function handleHardshipContract($player, $stats)
+    public function handleHardshipContract($player, $stats)
     {
         $newHardshipGames = $player->hardship_contract - 1;
         if ($newHardshipGames > 0) {
@@ -20,7 +20,7 @@ class ContractController extends Controller
             // Check if player performance is good (e.g., points or eff >= 10)
             $performanceGood = false;
             $seasonId = $stats['season_id'] ?? get_current_season_id();
-            $playerSeasonStats = DB::table('player_season_stats')
+            $playerSeasonStats = DB::table('player_season_stats') // good
                 ->where('player_id', $player->id)
                 ->where('season_id', $seasonId)
                 ->first();
@@ -31,7 +31,7 @@ class ContractController extends Controller
             $performanceGood = $effPerGame >= 10 || ($effPerGame >= 7 && $minutesPerGame <= 15); // efficient in small minutes
             if ($performanceGood) {
                 // Sign as regular: assign contract years (e.g., 1 or based on role)
-                $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
+                $contractYears = $this->getContractYearsBasedOnRole($player->role);
                 DB::table('players')->where('id', $player->id)->update([
                     'hardship_contract' => 0,
                     'contract_years' => $contractYears,
@@ -101,7 +101,7 @@ class ContractController extends Controller
     {
         switch ($role) {
             case 'star player':
-                return mt_rand(1, 7);
+                return mt_rand(1, 5);
             case 'starter':
                 return mt_rand(1, 5);
             case 'role player':

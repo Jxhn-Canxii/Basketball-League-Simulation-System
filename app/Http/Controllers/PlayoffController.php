@@ -56,7 +56,7 @@ class PlayoffController extends Controller
     private static function getLastFullyFinishedRound($seasonId)
     {
         // Get distinct rounds ordered descending (latest first)
-        $rounds = \DB::table('playoff_series')
+        $rounds = DB::table('playoff_series')
             ->where('season_id', $seasonId)
             ->select('round')
             ->distinct()
@@ -65,7 +65,7 @@ class PlayoffController extends Controller
 
         foreach ($rounds as $round) {
             // Check if all series in this round have status = 2
-            $notFinishedCount = \DB::table('playoff_series')
+            $notFinishedCount = DB::table('playoff_series')
                 ->where('season_id', $seasonId)
                 ->where('round', $round)
                 ->where('status', '!=', 2)
@@ -84,7 +84,7 @@ class PlayoffController extends Controller
 
     private static function getOngoingRound($seasonId)
     {
-        return \DB::table('playoff_series')
+        return DB::table('playoff_series')
             ->where('season_id', $seasonId)
             ->where('status', 1)
             ->distinct()

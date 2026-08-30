@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\AwardsController;
+use App\Http\Controllers\PlayerSeasonStatsController;
 use App\Models\PlayerGameStats;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
@@ -14,7 +14,7 @@ class PlayerStatsController extends Controller
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new AwardsController();
+        $this->storeStats = new PlayerSeasonStatsController();
     }
 
     public function createInactivePlayerStats($player, $gameData, $seasonId)
@@ -134,7 +134,7 @@ class PlayerStatsController extends Controller
             'star player' => [36, 42],
             'all star'    => [32, 38],
             'starter'     => [28, 34],
-            'role player' => [15, 24],
+            'role player' => [16, 24],
             'bench'       => [0, 20],
         ];
 
@@ -177,7 +177,7 @@ class PlayerStatsController extends Controller
         // Ensure minimum of 8 players with minutes
         $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
 
-        if ($rotation->count() < 8) {
+        if ($rotation->count() < 6) {
             $needed = 8 - $rotation->count();
 
             $reAddCandidates = $dnpPlayers
@@ -877,10 +877,16 @@ class PlayerStatsController extends Controller
             foreach ($playerGameStats as &$stats) {
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
 
-                $this->storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
+                if($isPlayoff){
+                    $this->storeStats->storePlayerSeasonPlayoffStats($stats['team_id'], $stats['player_id']);
+                }else{
+                    $this->storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
+                }
+
+                $seasonStatsTable = $isPlayoff ? 'player_season_playoff_stats' : 'player_season_stats';
 
                 // Update Player Season Stats (Incrementing Leader Fields)
-                DB::table('player_season_stats')->updateOrInsert(
+                DB::table($seasonStatsTable)->updateOrInsert(
                     ['player_id' => $stats['player_id'], 'season_id' => $stats['season_id'], 'team_id' => $stats['team_id']],
                     [
                         'points_game_leader' => DB::raw("points_game_leader + {$stats['points_game_leader']}"),
@@ -907,4 +913,32 @@ class PlayerStatsController extends Controller
             throw new Exception("Failed to update season stats. Please check logs." . $e->getMessage());
         }
     }
+
+    public function handleHardshipContract($player,$stats){
+        
+            $updatedContract = $player->hardship_contract - 1;
+            $teamId = $updatedContract > 0 ? $player->team_id : 0;
+
+            if($updatedContract == 0){
+                DB::table('transactions')->insert([
+                    'player_id' => $stats['player_id'],
+                    'season_id' => $stats['season_id'],
+                    'details' => 'Has ended his 10-game hardship contract.',
+                    'from_team_id' => $player->team_id,
+                    'to_team_id' => 0,
+                    'status' => 'waived',
+                ]);
+            }
+
+            DB::table('players')->updateOrInsert(
+                ['id' => $stats['player_id']],
+                [
+                    'hardship_contract' => $updatedContract,
+                    'team_id' =>  $teamId,
+                ]
+            );
+
+            return true;
+    }
+
 }

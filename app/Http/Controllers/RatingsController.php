@@ -9,14 +9,18 @@ use Exception;
 use Inertia\Inertia;
 use App\Models\Seasons;
 use App\Models\Teams;
-use App\Models\Schedules;
-use App\Models\Conference;
 use App\Models\Player;
-use App\Models\PlayerGameStats;
+use App\Http\Controllers\ContractController;
 use Illuminate\Support\Facades\DB;
 
 class RatingsController extends Controller
 {
+    protected $contract;
+
+    public function __construct()
+    {
+        $this->contract = new ContractController();
+    }
     //
     public function updateActivePlayers(Request $request)
     {
@@ -34,8 +38,6 @@ class RatingsController extends Controller
 
             // Get the last (highest) team ID in the teams table
             $lastTeamId = DB::table('teams')->max('id');
-
-            \Log::info('Received request:', ['team_id' => $teamId, 'is_last' => $isLast]);
 
             // Fetch all active players, filtered by team_id if provided
             $query = Player::where('is_active', 1)
@@ -186,7 +188,6 @@ class RatingsController extends Controller
 
                         $player->team_id = 0; // Set team_id to 0 (free agent)
                         $player->contract_years = 0; // Remove contract
-                        \Log::info('Player waived due to injury recovery period', ['player_id' => $player->id]);
                     }
                 }
             }
@@ -290,9 +291,11 @@ class RatingsController extends Controller
 
                         $player->contract_years = 0;
                         $player->team_id = 0;
-                    } elseif (mt_rand(1, 100) <= $reSignChance) {
+                    } 
+                    elseif (mt_rand(1, 100) <= $reSignChance) {
                         // Player accepts re-sign
-                        $extensionYears = $this->getContractYearsBasedOnRole($player->role);
+                        $extensionYears = $this->contract->getContractYearsBasedOnRole($player->role);
+
                         $player->contract_years += $extensionYears;
                         $reSignedPlayers[] = $player;
 
@@ -351,7 +354,6 @@ class RatingsController extends Controller
                     $player->rebounding_rating *= $penaltyFactor;
                     $player->overall_rating *= $penaltyFactor;
 
-                    \Log::info('Injury penalty applied', ['player_id' => $player->id]);
                 }
 
                 $performanceData = $this->comparePerformanceBetweenSeasons($player->id);
@@ -383,6 +385,8 @@ class RatingsController extends Controller
                     $declinedPlayers[] = $player;
                 }
 
+                $player->overall_rating = ($player->overall_rating > $player->potential_rating) ? $player->potential_rating : $player->overall_rating;
+                
                 DB::table('players')->where('id', $player->id)->update([
                     'contract_years' => $player->contract_years,
                     'team_id' => $player->team_id,
@@ -426,7 +430,6 @@ class RatingsController extends Controller
             }
             // Show alert if this is the last update
             if ($teamId == $lastTeamId) {
-                \Log::info('Processing last update.');
 
                 $this->updatePlayerAndCoachAge();
                 $this->promoteRetiredPlayersToCoaches();
@@ -436,8 +439,6 @@ class RatingsController extends Controller
                 if ($season) {
                     $season->status = config('timeline.player_update');
                     $season->save();
-                } else {
-                    \Log::warning('Season not found for ID:', ['seasonId' => $seasonId]);
                 }
 
                 DB::commit(); // Commit transaction
@@ -464,8 +465,6 @@ class RatingsController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack(); // Rollback transaction on error
-
-            \Log::error('Failed to update player statuses', ['exception' => $e]);
 
             return response()->json([
                 'error' => true,
@@ -634,10 +633,10 @@ class RatingsController extends Controller
                 DB::table('transactions')->insert([
                     'player_id' => 0,
                     'season_id' => $latestSeasonId,
-                    'details' => $coach->name . ' has been waived as head coach of ' . $team->name . ' due to poor season performance.',
+                    'details' => $coach->name . ' has been fired as a head coach of ' . $team->name . ' due to poor season performance.',
                     'from_team_id' => $team->id,
                     'to_team_id' => 0,
-                    'status' => 'waived',
+                    'status' => 'fired',
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
@@ -658,43 +657,30 @@ class RatingsController extends Controller
 
         foreach ($retiredHighIQPlayers as $player) {
             $alreadyCoach = DB::table('coaches')
-                ->where('player_id', $player->id)
+                ->where('name', $player->name)
                 ->exists();
+            
+            if ($alreadyCoach) {
+                continue;
+            }
+
             $retirementAge = rand($player->age + 5, 65);
 
-            if (!$alreadyCoach) {
-                DB::table('coaches')->insert([
-                    'name' => $player->name,
-                    'coach_iq' => $player->basketball_iq_rating,
-                    'age' => $player->age,
-                    'retirement_age' => $retirementAge,
-                    'team_id' => 0,
-                    'career_wins' => 0,
-                    'career_losses' => 0,
-                    'is_active' => 1,
-                    'player_id' => $player->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-            }
-        }
-    }
-
-
-    private function getContractYearsBasedOnRole($role)
-    {
-        switch ($role) {
-            case 'star player':
-                return mt_rand(1, 7);
-            case 'all star':
-                return mt_rand(1, 5);
-            case 'starter':
-                return mt_rand(1, 4);
-            case 'role player':
-                return mt_rand(1, 3);
-            case 'bench':
-            default:
-                return mt_rand(1, 2);
+           
+            DB::table('coaches')->insert([
+                'name' => $player->name,
+                'coach_iq' => $player->basketball_iq_rating,
+                'age' => $player->age,
+                'retirement_age' => $retirementAge,
+                'team_id' => 0,
+                'career_wins' => 0,
+                'career_losses' => 0,
+                'is_active' => 1,
+                'player_id' => $player->id,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+            
         }
     }
 
@@ -706,6 +692,7 @@ class RatingsController extends Controller
         'role player' => 3,
         'bench' => 4,
     ];
+    
     protected $roleThresholds = [
         'star player' => 90,  // Star players should maintain at least 90 overall rating
         'all star' => 85,      // Starters should maintain at least 85 overall rating
@@ -713,29 +700,6 @@ class RatingsController extends Controller
         'role player' => 60,  // Role players should maintain at least 60 overall rating
         'bench' => 40,        // Bench players should maintain at least 40 overall rating
     ];
-
-    // Function to adjust the player's ratings if they are underperforming for their role
-    private function adjustRatingsForRole($player)
-    {
-        // Define performance thresholds for each role
-        $roleThresholds = $this->roleThresholds;
-
-        // Get the performance threshold for the player's current role
-        $currentRole = $player->role;
-        $expectedPerformance = $roleThresholds[$currentRole] ?? 60; // Default to 60 if the role is not found
-
-        // Adjust ratings if the player's overall rating is below the expected threshold for their role
-        if ($player->overall_rating < $expectedPerformance) {
-            // The player is underperforming, so reduce their ratings slightly
-            $player->shooting_rating = max(40, $player->shooting_rating - mt_rand(1, 3));
-            $player->defense_rating = max(40, $player->defense_rating - mt_rand(1, 3));
-            $player->passing_rating = max(40, $player->passing_rating - mt_rand(1, 3));
-            $player->rebounding_rating = max(40, $player->rebounding_rating - mt_rand(1, 3));
-
-            // Recalculate overall rating based on adjusted individual ratings
-            $player->overall_rating = ($player->shooting_rating + $player->defense_rating + $player->passing_rating + $player->rebounding_rating) / 4;
-        }
-    }
 
     private function logPlayerRatings($player, $seasonId)
     {
@@ -763,11 +727,6 @@ class RatingsController extends Controller
                     'updated_at' => now(),
                 ]
             );
-        } else {
-            \Log::info('Player ratings already recorded for season', [
-                'player_id' => $player->id,
-                'season_id' => $seasonId
-            ]);
         }
     }
 
@@ -787,8 +746,8 @@ class RatingsController extends Controller
             ->where('season_id', $latestSeasonId)
             ->first(); // Get latest season stats
 
-        // Fetch player's stats for the previous season from player_season_stats table
-        $previousSeasonStats = DB::table('player_season_stats')
+        // Fetch player's stats for the previous season from player_season_stats_archives table
+        $previousSeasonStats = DB::table('player_season_stats_archives')
             ->where('player_id', $playerId)
             ->where('season_id', $previousSeasonId)
             ->first(); // Get previous season stats

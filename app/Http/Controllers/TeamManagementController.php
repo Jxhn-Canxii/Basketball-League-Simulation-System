@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\AwardsController;
+use App\Http\Controllers\PlayerSeasonStatsController;
 use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\ContractController;
+use App\Http\Controllers\TradeController;
 use App\Http\Controllers\HelperController;
 
 class TeamManagementController extends Controller
@@ -14,16 +15,18 @@ class TeamManagementController extends Controller
 
     protected $storeStats;
     protected $freeAgent;
+    protected $trade;
     protected $contract;
     protected $helper;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new AwardsController();
+        $this->storeStats = new PlayerSeasonStatsController();
         $this->freeAgent = new FreeAgentController();
         $this->contract = new ContractController();
         $this->helper = new HelperController();
+        $this->trade = new TradeController();
     }
 
     public function updateSeasonTeamChemistryBeforeGame($teamId)
@@ -213,7 +216,6 @@ class TeamManagementController extends Controller
         try {
             // Check if player is already retired or inactive
             if (!$player->is_active) {
-                \Log::info("Player {$player->name} is already inactive or retired. No action needed.");
                 return;
             }
 
@@ -230,10 +232,8 @@ class TeamManagementController extends Controller
                     // Decrement injury recovery games
                     DB::table('players')->where('id', $player->id)->decrement('injury_recovery_games', $deductionPerGame);
                     $updatedRecoveryGames = DB::table('players')->where('id', $player->id)->value('injury_recovery_games');
-                    \Log::info("Decremented recovery games for {$player->name}. Remaining: {$updatedRecoveryGames}");
                 } else {
                     $updatedRecoveryGames = $player->injury_recovery_games;
-                    \Log::info("No recovery games left for {$player->name}.");
                 }
 
                 // Load injury config
@@ -287,7 +287,6 @@ class TeamManagementController extends Controller
                             'retirement_age' => $newRetirementAge,
                             'updated_at' => now(),
                         ]);
-                        \Log::info("Adjusted retirement age for {$player->name} from {$player->retirement_age} to {$newRetirementAge} due to severe injury ({$currentInjury}) and high injury history ({$injuryHistoryCount} injuries).");
                         // Update player object and retirement reason
                         $player->retirement_age = $newRetirementAge;
                         $retirementReason = "severe injury history ({$injuryHistoryCount} injuries)";
@@ -311,7 +310,6 @@ class TeamManagementController extends Controller
                             'updated_at' => now(),
                         ]);
 
-                    \Log::info("Player {$player->name} has fully recovered from injury.");
                 }
             }
 
@@ -345,11 +343,9 @@ class TeamManagementController extends Controller
                     'status' => 'retired',
                 ]);
 
-                \Log::info("Player {$player->name} has been forced to retire due to {$retirementReason}.");
                 return;
             }
         } catch (\Exception $e) {
-            \Log::error("Error handling player {$player->id}: " . $e->getMessage());
         }
     }
 
@@ -359,9 +355,9 @@ class TeamManagementController extends Controller
             $player = (object) $player;
         }
 
-        $evaluation = $this->shouldWaivePlayer($player, $seasonId, $seasonStatus);
-
-        if ($evaluation['waived']) {
+        $evaluation = $this->playerMovementDecisionMaker($player, $seasonId, $seasonStatus);
+        
+        if ($evaluation['waived'] && $evaluation['performance_points'] < 70) {
             $reason = $evaluation['reason'] ?? 'No specific reason provided';
             $teamId = $player->team_id;
 
@@ -410,7 +406,26 @@ class TeamManagementController extends Controller
 
             return true;
         }
+        // if ($evaluation['tradeable']){
+        //     $getUnderPerformingPlayer = $this->trade->getUnderperformingPlayers();
+            
+        //     // DB::table('transactions')->insert([
+        //     //     'player_id' => $player->id,
+        //     //     'season_id' => $seasonId,
+        //     //     'details' => 'Waived: ' . $reason,
+        //     //     'from_team_id' => $teamId,
+        //     //     'to_team_id' => 0,
+        //     //     'status' => 'waived',
+        //     // ]);
 
+        //     // // 🚫 Remove player from team
+        //     // DB::table('players')->where('id', $player->id)->update([
+        //     //     'contract_years' => 0,
+        //     //     'team_id' => 0,
+        //     // ]);
+
+        //     return false;
+        // }
         return false;
     }
     
@@ -433,8 +448,9 @@ class TeamManagementController extends Controller
     }
 
 
-    private function shouldWaivePlayer($player, int $seasonId, int $seasonStatus): array
+    private function playerMovementDecisionMaker($player, int $seasonId, int $seasonStatus): array
     {
+        $waivePoints = 0;
         // Waivers only allowed in first half of season
           // Get the number of rounds that are already simulated (status != 2)
         $simulatedRounds = $this->helper->simulatedRounds($seasonId);
@@ -513,7 +529,12 @@ class TeamManagementController extends Controller
         $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
 
         if ($player->injury_recovery_games > $requiredRecoveryGames) {
-            return ['waived' => true, 'reason' => 'Injured too long'];
+            
+            $waivePoints += rand(10,30);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+
+            return ['waived' => true,'performance_points' =>  $newPerformancePoints, 'reason' => 'Injured too long'];
         }
 
         // Combined criteria for efficiency and improvement (stricter to reduce waivers)
@@ -522,7 +543,13 @@ class TeamManagementController extends Controller
 
         // Adjusted efficiency threshold (from eff < 4 to eff < 6)
         if ($seasonStats->eff !== null && $seasonStats->eff < 6 && $hasNotImproved && $hasPlayedMinimumGames && !$isRebuilding) {
-            return ['waived' => true, 'reason' => 'Low efficiency and no improvement'];
+            
+            $waivePoints += rand(1,10);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+
+            return ['waived' => true,'performance_points' =>  $newPerformancePoints, 'reason' => 'Low efficiency and no improvement'];
+
         }
 
         // Adjusted composite score (from < 5 to < 7)
@@ -535,37 +562,96 @@ class TeamManagementController extends Controller
             $compositeScore < 7 && $seasonStats->avg_minutes_per_game < $usageMinutesThreshold &&
             $seasonStats->total_games_played <= ($totalGames * 0.30) && $hasNotImproved && $hasPlayedMinimumGames
         ) {
-            return ['waived' => true, 'reason' => 'Low composite efficiency and no improvement'];
+            
+            $waivePoints += rand(1,5);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+
+            return ['waived' => true,'performance_points' =>  $newPerformancePoints,'reason' => 'Low composite efficiency and no improvement'];
         }
 
         // Rebuilding team: waive veterans with moderate performance
         if ($isRebuilding && $player->age >= 32 && $seasonStats->eff < 12 && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Veteran waived by rebuilding team'];
+            
+            $waivePoints += rand(1,15);
+            
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+
+            return ['waived' => true,'performance_points' =>  $newPerformancePoints,'reason' => 'Veteran waived by rebuilding team'];
         }
 
         // High fatigue or morale issues (require multiple conditions)
         if ($player->fatigue >= 85 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'High fatigue and underperforming with no improvement'];
+            
+            $waivePoints += rand(1,6);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+
+            return ['waived' => true,'performance_points' =>  $newPerformancePoints,'reason' => 'High fatigue and underperforming with no improvement'];
         }
 
         if ($player->morale !== null && $player->morale < 40 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Low morale and underperforming with no improvement'];
+            
+            $waivePoints += rand(1,6);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Low morale and underperforming with no improvement'];
         }
 
         // Aging players (stricter criteria)
         if ($player->age >= 34 && $seasonStats->eff < 10 && $hasNotImproved && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Aging player with poor impact and no improvement'];
+            
+            $waivePoints += rand(10,20);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Aging player with poor impact and no improvement'];
         }
 
         // Bad value contract (require no improvement)
-        if ($player->contract_years > 2 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
-            return ['waived' => true, 'reason' => 'Bad value contract with no improvement'];
+        if ($player->contract_years <= 2 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
+            
+            $waivePoints += rand(1,15);
+
+            
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id,$seasonId,$player->team_id,$waivePoints);
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Bad value contract with no improvement'];
         }
 
         return ['waived' => false, 'reason' => null];
     }
 
-        private array $playerYearsProCache = [];
+    public function updatePlayerPerformancePoints($playerId,$seasonId,$teamId,$waivePoints)
+    {
+        $performancePoints = DB::table('player_season_stats')
+            ->where('player_id', $playerId)
+            ->where('team_id', $teamId)
+            ->where('season_id', $seasonId)
+            ->value('performance_points');
+
+        $newPerformancePoints = $performancePoints - $waivePoints;
+
+        DB::table('player_season_stats')->updateOrInsert(
+            [
+                'player_id' => $playerId,
+                'season_id' => $seasonId,
+                'team_id' => $teamId,
+            ],
+            [
+                // Insert actual shooting stats
+                'performance_points' =>  $newPerformancePoints,
+                
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        return  $newPerformancePoints;
+    }
+
+    private array $playerYearsProCache = [];
+    
     private array $playerYearsProWithTeamCache = [];
 
     private function getYearsPro(int $playerId): int
@@ -574,12 +660,12 @@ class TeamManagementController extends Controller
             return $this->playerYearsProCache[$playerId];
         }
 
-        $yearsPro = DB::table('player_season_stats')
+        $yearsPro = DB::table('player_season_stats_archives')
             ->where('player_id', $playerId)
             ->distinct()
             ->count('season_id');
 
-        return $this->playerYearsProCache[$playerId] = $yearsPro;
+        return $this->playerYearsProCache[$playerId] = $yearsPro + 1;
     }
 
     private function getYearsProWithTeam(int $playerId, int $teamId): int
@@ -588,13 +674,13 @@ class TeamManagementController extends Controller
             return $this->playerYearsProCache[$playerId];
         }
 
-        $yearsPro = DB::table('player_season_stats')
+        $yearsPro = DB::table('player_season_stats_archives')
             ->where('player_id', $playerId)
             ->where('team_id', $teamId)
             ->distinct()
             ->count('season_id');
 
-        return $this->playerYearsProWithTeamCache[$playerId] = $yearsPro;
+        return $this->playerYearsProWithTeamCache[$playerId] = $yearsPro + 1;
     }
 
     private function isDevelopmentalPlayer($player): bool
@@ -707,13 +793,13 @@ class TeamManagementController extends Controller
         $yearsPro = $this->getYearsPro($playerId);
 
         // Fetch stats from last played season and one prior
-        $pastSeasons = DB::table('player_season_stats as pss')
+        $pastSeasons = DB::table('player_season_stats_archives as pss')
             ->join(DB::raw('(
             SELECT season_id, player_id, role
-            FROM player_season_stats
+            FROM player_season_stats_archives
             WHERE id IN (
                 SELECT MAX(id)
-                FROM player_season_stats
+                FROM player_season_stats_archives
                 GROUP BY season_id, player_id
             )
         ) as latest_stats'), function ($join) {
@@ -860,7 +946,9 @@ class TeamManagementController extends Controller
 
     private function getPlayerSeasonStats(int $playerId, int $teamId, int $seasonId)
     {
-        $stats = DB::table('player_season_stats')
+        $dbName = $this->helper->getSeasonStatsDBName($seasonId);
+        
+        $stats = DB::table($dbName)
             ->where('player_id', $playerId)
             ->where('season_id', $seasonId)
             ->where('team_id', $teamId)

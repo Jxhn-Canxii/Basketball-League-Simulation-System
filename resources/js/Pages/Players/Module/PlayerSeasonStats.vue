@@ -150,7 +150,7 @@
               </div>
             </td>
           </tr>
-          <tr v-if="season_logs.player_stats?.length == 0 && !season_stats_loading">
+          <tr v-if="season_logs?.length == 0 && !season_stats_loading">
             <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="12">
               No data available
             </td>
@@ -244,57 +244,61 @@
         <tbody class="divide-y divide-gray-200">
           <tr
             v-for="(player, index) in playoff_logs.player_stats"
-            v-if="playoff_logs.player_stats?.length > 0 && !playoff_loading"
+            v-if="playoff_logs.player_stats?.length > 0 && !season_stats_loading"
             :key="player.player_id"
             @click.prevent="isGameLogsModalOpen = player.season_id"
-            class="hover:bg-gray-100 text-white cursor-pointer"
+            class="hover:opacity-90 cursor-pointer text-white"
             :style="{
               background:
-                player.team_primary_color && player.team_secondary_color
-                  ? `linear-gradient(90deg, #${player.team_primary_color}, #${player.team_secondary_color})`
+                player.team_primary_colors || player.team_secondary_colors
+                  ? `linear-gradient(90deg, ${player.team_primary_colors
+                      .split(',')
+                      .map((c, i) => {
+                        const sec = player.team_secondary_colors?.split(',')[i];
+                        return [`#${c.trim()}`, sec ? `#${sec.trim()}` : null];
+                      })
+                      .flat()
+                      .filter(Boolean)
+                      .join(', ')})`
                   : '#f9fafb',
             }"
           >
-            <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.season_name }}
-            </td>
-            <td class="px-2 py-1 whitespace-wrap border">
-              {{ player.team_name }}
-            </td>
+            <td class="px-2 py-1 whitespace-nowrap border">{{ player.season_name }}</td>
+            <td class="px-2 py-1 whitespace-wrap border">{{ player.team_names }}</td>
             <td class="px-2 py-1 whitespace-nowrap border">
               <span
-                :class="roleBadgeClass(player.role)"
+                :class="roleBadgeClass(player.player_role)"
                 class="inline-flex items-center capitalize px-2.5 py-0.5 rounded text-xs font-medium"
               >
-                {{ player.role }}
+                {{ player.player_role }}
               </span>
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.games_played }}
+              {{ player.total_games_played }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.average_points_per_game.toFixed(1) }}
+              {{ player.average_points_per_game.toFixed(2) }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.average_rebounds_per_game.toFixed(1) }}
+              {{ player.average_rebounds_per_game.toFixed(2) }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.average_assists_per_game.toFixed(1) }}
+              {{ player.average_assists_per_game.toFixed(2) }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.average_steals_per_game.toFixed(1) }}
+              {{ player.average_steals_per_game.toFixed(2) }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.average_blocks_per_game.toFixed(1) }}
+              {{ player.average_blocks_per_game.toFixed(2) }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.average_turnovers_per_game.toFixed(1) }}
+              {{ player.average_turnovers_per_game.toFixed(2) }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border">
-              {{ player.average_fouls_per_game.toFixed(1) }}
+              {{ player.average_fouls_per_game.toFixed(2) }}
             </td>
             <td class="px-2 py-1 whitespace-nowrap border font-bold">
-              {{ player.overall_rating ? player.overall_rating.toFixed(1) : "Unrated" }}
+              {{ player.overall_rating ? player.overall_rating.toFixed(2) : "Unrated" }}
             </td>
           </tr>
           <tr v-if="season_stats_loading">
@@ -305,10 +309,7 @@
               </div>
             </td>
           </tr>
-          <tr
-            class="hover:bg-gray-100"
-            v-if="playoff_logs.player_stats?.length == 0 && !playoff_loading"
-          >
+          <tr v-if="playoff_logs?.length == 0 && !season_stats_loading">
             <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="12">
               No data available
             </td>
@@ -372,6 +373,7 @@ const fetchPlayerPlayoffPerformance = async () => {
     playoff_loading.value = false;
   } catch (error) {
     playoff_loading.value = false;
+    playoff_logs.value = [];
     console.error("Error fetching player season performance:", error);
   } finally {
     playoff_loading.value = false;
@@ -388,6 +390,7 @@ const fetchPlayerSeasonPerformance = async () => {
     season_stats_loading.value = false;
   } catch (error) {
     season_stats_loading.value = false;
+    season_logs.value = [];
     console.error("Error fetching player season performance:", error);
   } finally {
     season_stats_loading.value = false;
