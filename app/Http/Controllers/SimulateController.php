@@ -1122,6 +1122,11 @@ class SimulateController extends Controller
             $this->playOffStats->updatePlayoffSeriesAppearancesForGame($gameData);
         });
 
+        $gameNews = DB::table('game_news')
+            ->select('id', 'game_id', 'season_id', 'round', 'title', 'content', 'created_at', 'updated_at')
+            ->where('game_id', $gameData->game_id)
+            ->first();
+
         // Format series response
         $seriesResponse = [
             'id' => $series->id,
@@ -1162,7 +1167,8 @@ class SimulateController extends Controller
         // Return the simulation result
         return response()->json([
             'message' => 'Game simulated successfully',
-            'series' => $seriesResponse
+            'series' => $seriesResponse,
+            'news' => $gameNews,
         ]);
         // } catch (\Exception $e) {
         //     DB::rollBack(); // Rollback transaction on error

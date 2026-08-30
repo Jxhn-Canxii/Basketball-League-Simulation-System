@@ -99,6 +99,21 @@
   <div class="flex justify-center items-center p-4" v-if="loading">
     <p class="text-red-500 font-bold text-2xl">Loading...</p>
   </div>
+
+   <!-- Game Result Modal -->
+  <Modal
+    :show="isGameNewsModalOpen"
+    :maxWidth="'6xl'"
+    title="Game News"
+    @close="isGameNewsModalOpen = false"
+  >
+    <div class="mt-4">
+        <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3>
+        <div class="min-w-full">
+            <GameNews :key="game_news.id" :data="game_news" :showNews="true" />
+        </div>
+    </div>
+  </Modal>
 </template>
 
 <script setup>
@@ -113,6 +128,7 @@ import {
     roundStatusFormatter,
 } from "@/Utility/Formatter.js";
 
+import GameNews from "@/Pages/Seasons/Module/GameNews.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
@@ -122,7 +138,7 @@ import SeriesCard from "@/Pages/Seasons/Module/SeriesCard.vue";
 const isAddModalOpen = ref(false);
 const isTeamModalOpen = ref(false);
 const isTeamComparisonModalOpen = ref(false);
-const isGameResultModalOpen = ref(false);
+const isGameNewsModalOpen = ref(false);
 const showSeriesResult = ref(false);
 const loading = ref(false);
 const change_key = ref(localStorage.getItem("season-key"));
@@ -132,6 +148,8 @@ const season_info = ref(false);
 const season_playoffs = ref(false);
 const is_play_ins = ref(false);
 const active_series_id = ref(false);
+const game_news = ref(false);
+
 const form = useForm({
     seasons_id: 0,
 });
@@ -315,6 +333,7 @@ const fetchSeasonPlayoffs = async (type) => {
 const simulateGame = async (id, game_id, type, index, round) => {
     try {
         isHide.value = true;
+        isGameNewsModalOpen.value = true;
         activeIndex.value = index;
 
         Swal.fire({
@@ -337,9 +356,10 @@ const simulateGame = async (id, game_id, type, index, round) => {
             schedule_id: id,
         });
 
-        season_playoffs.value.playoffs[round][index] = response.data.schedule;
+        game_news.value = response.data.news;
+        // season_playoffs.value.playoffs[round][index] = response.data.schedule;
 
-        active_series_id.value = season_playoffs.value.playoffs[round][index]?.series_id ?? 0;
+        // active_series_id.value = season_playoffs.value.playoffs[round][index]?.series_id ?? 0;
 
         Swal.close();
         Swal.fire({
@@ -351,19 +371,24 @@ const simulateGame = async (id, game_id, type, index, round) => {
             timerProgressBar: true
         });
 
-
-        isGameResultModalOpen.value = game_id;
+        isGameNewsModalOpen.value = false;
         isHide.value = false;
     } catch (error) {
         console.error("Error simulating the game:", error);
-        Swal.close();
-        isHide.value = false;
+
         Swal.fire({
             icon: "error",
             title: "Error!",
             text: error.response?.data?.message || "Failed to simulate game.",
         });
+
         throw error; // Rethrow to allow caller to handle
+    } finally{
+        
+        isHide.value = false;
+        isGameNewsModalOpen.value = false;
+
+        Swal.close();
     }
 };
 
