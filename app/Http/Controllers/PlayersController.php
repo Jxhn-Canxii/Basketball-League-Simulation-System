@@ -116,13 +116,13 @@ class PlayersController extends Controller
                         ->where('team_id', $teamId)
                         ->where('season_id', '<=', $seasonId)
                         ->get()
-                        ->count();
+                        ->count() + 1;
 
                     $totalSeasonsPlayed = DB::table('player_season_stats_archives')
                         ->where('player_id', $player->id)
                         ->where('season_id', '<=', $seasonId)
                         ->distinct('season_id')
-                        ->count('season_id');
+                        ->count('season_id') + 1;
 
                     $playerStatus = $player->team_id == $teamId ? ($player->is_active ? 1 : 0) : 2;
                     $playerCUtfromFinalRoster = ($player->team_id != $teamId && $player->is_active && $stats->total_games_played == 0) ? 1 : 0;
