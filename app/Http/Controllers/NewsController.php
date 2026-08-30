@@ -4,9 +4,15 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Http\Controllers\HelperController;
 
 class NewsController extends Controller
 {
+    protected $helper;
+
+    public function __construct(){
+        $this->helper = new HelperController();
+    }
     /**
      * Get news by game_id.
      *
@@ -125,24 +131,6 @@ class NewsController extends Controller
             ->first();
 
         $isLast3Rounds = $season && $game->round >= ($season->total_regular_games - 3);
-
-        // Handle tie case (no winner_id)
-        if (!$game->winner_id) {
-            $title = "{$game->home_team} and {$game->away_team} Battle to a {$game->home_score}-{$game->away_score} Draw in Round {$game->round}";
-            $content = "In a thrilling Round {$game->round} showdown, {$game->home_team} and {$game->away_team} fought to a hard-earned {$game->home_score}-{$game->away_score} tie. Both teams showcased relentless determination, with neither side giving an inch in a match filled with heart-stopping moments. This deadlock keeps both squads hungry for their next chance to claim victory.";
-
-            DB::table('game_news')->insert([
-                'game_id'    => $game->game_id,
-                'season_id'  => $game->season_id,
-                'round'      => $game->round,
-                'winner_id'  => null,
-                'title'      => $title,
-                'content'    => $content,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-            return;
-        }
 
         // Determine loser and scores
         $loser = $game->winner_id === $game->home_team_id ? $game->away_team : $game->home_team;
@@ -567,7 +555,7 @@ class NewsController extends Controller
         // Select random phrases
         $title = str_replace(
             ['{winner}', '{loser}', '{home_score}', '{away_score}', '{round}', '{player}'],
-            [$game->winner_team, $loser, $game->home_score, $game->away_score, $game->round, $draftPick ? $draftPick->player_name : ''],
+            [$game->winner_team, $loser, $game->home_score, $game->away_score, $this->helper->roundFormatter($game->round), $draftPick ? $draftPick->player_name : ''],
             $headlineTemplates[array_rand($headlineTemplates)]
         );
 

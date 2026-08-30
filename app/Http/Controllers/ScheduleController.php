@@ -1020,7 +1020,7 @@ class ScheduleController extends Controller
                         ->orWhere('away_id', $teamId);
                 });
             })
-            ->whereNotIn('round', $excludedRounds)
+            // ->whereNotIn('round', $excludedRounds)
             ->count();
 
         $totalPages = ceil($totalSchedules / $itemsPerPage);
@@ -1040,7 +1040,7 @@ class ScheduleController extends Controller
                         ->orWhere('away_id', $teamId);
                 });
             })
-            ->whereNotIn('round', $excludedRounds)
+            // ->whereNotIn('round', $excludedRounds)
             ->orderBy('status', 'desc')  // Sort status 2 first
             ->orderBy('id', 'desc')  // Within status 2, order by updated_at
             ->skip($offset)

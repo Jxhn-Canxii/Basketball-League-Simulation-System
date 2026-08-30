@@ -66,7 +66,7 @@ class PlayerStatsController extends Controller
 
             // Calculate initial morale
             $morale = $player->morale ?? 75;
-            $role = $player->role ?? 'bench';
+            $role = strtolower(trim($player->role ?? 'bench'));
 
             // 🎯 1. Game result impact
             $morale += $wonGame ? 2 : -2;
@@ -81,7 +81,7 @@ class PlayerStatsController extends Controller
 
             // 🎯 3. Minutes played vs role expectation
             $expectedMin = match ($role) {
-                'star' => 32,
+                'star player' => 32,
                 'all star' => 28,
                 'starter' => 24,
                 'bench' => 10,
@@ -306,9 +306,9 @@ class PlayerStatsController extends Controller
             }
 
             $seasonId = get_current_season_id() ?? 1;
-            $staminaFactor  = $player->stamina_rating / 100;
-            $strengthFactor = $player->strength_rating / 100;
-            $currentFatigue = $player->fatigue;
+            $staminaFactor  = $this->rating($player, 'stamina_rating', 70) / 100;
+            $strengthFactor = $this->rating($player, 'strength_rating', 70) / 100;
+            $currentFatigue = $this->rating($player, 'fatigue', 0);
             $retirementAge = $player->retirement_age ?? 36;
             $age = $player->age;
 
@@ -336,12 +336,12 @@ class PlayerStatsController extends Controller
             if ($minutes == 0) {
                 $newFatigue = max(0, $currentFatigue - 20); // Auto-recovery for DNP
             } else {
-                $fatigueIncrease = $minutes * (1 - $staminaFactor * 0.5);
-                $newFatigue = min(20, $currentFatigue + round($fatigueIncrease)); // Cap at 20
+                $fatigueIncrease = $minutes * (1.0 - $staminaFactor * 0.55);
+                $newFatigue = min(100, $currentFatigue + round($fatigueIncrease));
             }
 
             // STEP 4: Injury chance check using injury_prone_percentage
-            if ($newFatigue >= 20) {
+            if ($newFatigue >= 85) {
                 $triggerInjuryChance = rand(1, 100);
 
                 if ($triggerInjuryChance <= 30) { // 30% chance to trigger injury logic
@@ -352,8 +352,9 @@ class PlayerStatsController extends Controller
                     }
                 }
 
-                // If not injured, reset fatigue
-                $newFatigue = 0;
+                // Heavy fatigue is reduced after the injury check instead of being
+                // reset to zero, preserving the player's accumulated fatigue.
+                $newFatigue = 35;
             }
 
 
@@ -406,163 +407,170 @@ class PlayerStatsController extends Controller
     }
 
 
-    public function calculatePerformanceFactor($player)
+    public function calculatePerformanceFactor($player, bool $isClutchTime = false)
     {
         try {
-            // Base performance factor with a random value between 100 and 120
-            $basePerformanceFactor = rand(100, 120) / 100;
+            // Keep this factor close to 1.00. It is a modifier, not another
+            // rating system. Player attributes should drive individual stats.
+            $overall = $this->clamp((float) ($player->overall_rating ?? 70), 40, 99);
+            $iq = $this->clamp((float) ($player->basketball_iq_rating ?? 60), 1, 99);
+            $workEthic = $this->clamp((float) ($player->work_ethic_rating ?? 60), 1, 99);
+            $morale = $this->clamp((float) ($player->morale ?? 75), 0, 100);
+            $stamina = $this->clamp((float) ($player->stamina_rating ?? 70), 1, 99);
+            $fatigue = $this->clamp((float) ($player->fatigue ?? 0), 0, 100);
+            $age = (int) ($player->age ?? 25);
+            $yearsPro = max(0, (int) ($player->years_pro ?? 0));
 
-            // Adjust the factor based on player fatigue
-            $fatigueFactor = (100 - $player->fatigue) / 100;
-            $performanceFactor = $basePerformanceFactor * $fatigueFactor;
+            // Overall is the largest influence. The other attributes only
+            // move the player's nightly form a little.
+            $factor = 0.78 + ($overall / 100) * 0.20; // 0.86 at 40, 0.978 at 99
+            $factor += (($iq - 70) / 1000);
+            $factor += (($workEthic - 70) / 1400);
+            $factor += (($morale - 75) / 1500);
 
-            // Further adjustments based on player injury status
-            if ($player->is_injured) {
-                // If injured, reduce performance factor by a percentage (e.g., 50% less)
-                $performanceFactor *= 0.5;
+            // Experience improves consistency, but does not make old players
+            // permanently better than their actual ratings.
+            $factor += min(0.025, $yearsPro * 0.0025);
+
+            // Prime-age curve.
+            if ($age >= 24 && $age <= 30) {
+                $factor += 0.015;
+            } elseif ($age >= 31 && $age <= 33) {
+                $factor += 0.005;
+            } elseif ($age >= 34) {
+                $factor -= min(0.08, ($age - 33) * 0.012);
+            } elseif ($age <= 21) {
+                $factor -= 0.01;
             }
 
-            // Optionally adjust further based on player ratings, like leadership or basketball IQ
-            if ($player->leadership_rating > 70) {
-                // If the player has a high leadership rating, boost performance slightly
-                $performanceFactor *= 1.05;
+            // Fatigue is important, but stamina softens its effect.
+            $fatiguePenalty = ($fatigue / 100) * (0.20 + ((100 - $stamina) / 100) * 0.30);
+            $factor -= $fatiguePenalty;
+
+            if (!empty($player->is_injured)) {
+                $factor *= 0.70;
             }
 
-            // Return the final performance factor
-            return round($performanceFactor, 2);
-        } catch (\Exception $e) {
+            if ($isClutchTime) {
+                $clutch = $this->clamp((float) ($player->clutch_rating ?? 50), 1, 99);
+                $factor += (($clutch - 50) / 2500); // roughly +/- 2%
+            }
 
-            return 1.0; // Default performance factor in case of error
+            // Small nightly variance: roughly +/- 6%.
+            $factor *= mt_rand(94, 106) / 100;
+
+            return round($this->clamp($factor, 0.72, 1.12), 3);
+        } catch (\Throwable $e) {
+            \Log::error("Error calculating performance factor for player {$player->id}: " . $e->getMessage());
+            return 1.00;
         }
     }
 
     public function calculateDefensiveImpact($opponentTeamId)
     {
-        $seasonId = get_current_season_id();
-        // Step 1: Get average defense_rating, rebounding_rating, and morale
-        $playerAverages = DB::table('players')
+        $players = DB::table('players')
             ->where('team_id', $opponentTeamId)
             ->where('is_active', 1)
-            ->selectRaw('AVG(defense_rating) as defense_rating, AVG(rebounding_rating) as rebounding_rating')
-            ->first();
+            ->where('is_injured', 0)
+            ->select([
+                'defense_rating',
+                'basketball_iq_rating',
+                'athleticism_rating',
+                'strength_rating',
+                'morale',
+                'stamina_rating'
+            ])
+            ->get();
 
-        $defenseRating = $playerAverages->defense_rating ?? 0;
-        $reboundingRating = $playerAverages->rebounding_rating ?? 0;
-        $morale = $playerAverages->morale ?? 0;
+        if ($players->isEmpty()) {
+            return 0.08;
+        }
 
-        // Step 3: Calculate the overall defensive score
-        $overallDefensiveRating = ($defenseRating + $reboundingRating) / 2;
+        // Use the better half of the active roster more heavily because the
+        // opponent's best defenders spend more possessions on the floor.
+        $ratings = $players->map(function ($p) {
+            $skill =
+                ($this->rating($p, 'defense_rating', 50) * 0.55) +
+                ($this->rating($p, 'basketball_iq_rating', 50) * 0.15) +
+                ($this->rating($p, 'athleticism_rating', 50) * 0.15) +
+                ($this->rating($p, 'strength_rating', 50) * 0.05) +
+                ($this->rating($p, 'stamina_rating', 50) * 0.10);
+            return $skill * (0.90 + ($this->rating($p, 'morale', 75) / 1000));
+        })->sortDesc()->values();
 
-        // Step 4: Combine skill, morale, and chemistry
-        $combinedImpact = (
-            ($overallDefensiveRating * 0.6) + ($morale * 0.2)
-        );
+        $topCount = max(5, (int) ceil($ratings->count() / 2));
+        $defenseRating = $ratings->take($topCount)->avg();
 
-        // Step 5: Normalize
-        return floor($combinedImpact / 30);
+        // Return a small fraction used by shot-volume formulas, not a raw
+        // 0-100 rating. Around .05 is weak and .12-.15 is elite.
+        return round($this->clamp(0.035 + (($defenseRating - 50) / 1000), 0.02, 0.15), 3);
     }
 
     public function calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact)
     {
-        if ($minutes === 0) return 0;
+        if ($minutes <= 0) return 0;
 
-        $baseRates = [
-            'PG' => 0.07,
-            'SG' => 0.06,
-            'SF' => 0.05,
-            'PF' => 0.04,
-            'C'  => 0.03,
+        $positions = array_map('trim', explode('/', $player->position ?? 'SF'));
+        $positionRates = [
+            'PG' => 0.105,
+            'SG' => 0.085,
+            'SF' => 0.070,
+            'PF' => 0.065,
+            'C'  => 0.070,
         ];
+        $baseRate = collect($positions)->map(fn($p) => $positionRates[$p] ?? 0.07)->average();
 
-        $positions = explode('/', $player->position ?? 'SF');
-        $baseRate = collect($positions)
-            ->map(fn($pos) => $baseRates[trim($pos)] ?? 0.05)
-            ->average();
+        $passing = $this->rating($player, 'passing_rating', 60);
+        $iq = $this->rating($player, 'basketball_iq_rating', 60);
+        $usage = $this->usageMultiplier($player);
 
-        $iqPassFactor = (200 - ($player->passing_rating + $player->basketball_iq_rating)) / 200;
-        $adjustedRate = ($baseRate + ($defensiveImpact / 250)) * (1 + $iqPassFactor / 2);
+        // Better passers/IQ players lose fewer possessions. High usage creates
+        // more turnover opportunities.
+        $skillFactor = 1.15 - (($passing * 0.55 + $iq * 0.45) / 100) * 0.30;
+        $defenseFactor = 1.0 + $defensiveImpact * 1.25;
+        $fatigueFactor = 1.0 + (($this->rating($player, 'fatigue', 0)) / 500);
+        $expected = $minutes * $baseRate * $usage * $skillFactor * $defenseFactor * $fatigueFactor;
+        $expected *= (0.92 + $performanceFactor * 0.08);
 
-        $turnovers = round($minutes * $adjustedRate * $performanceFactor);
-        return min($turnovers, 8);
+        return min(10, $this->poissonRandomizer(max(0.01, $expected)));
     }
 
     public function calculateFoul(Player $player, int $minutes, float $performanceFactor, float $defensiveImpact): int
     {
-        if ($minutes === 0) return 0;
+        if ($minutes <= 0) return 0;
 
-        // 1. BASE FOUL RATE BY POSITION/ROLE (Primary driver)
+        $positions = array_map('trim', explode('/', $player->position ?? 'SF'));
         $positionRates = [
-            'PG' => 0.03,  // Point guards foul least
-            'SG' => 0.04,
-            'SF' => 0.05,
-            'PF' => 0.07,
-            'C'  => 0.09   // Big men foul most
+            'PG' => 0.045,
+            'SG' => 0.050,
+            'SF' => 0.058,
+            'PF' => 0.070,
+            'C'  => 0.078,
         ];
+        $baseRate = collect($positions)->map(fn($p) => $positionRates[$p] ?? 0.055)->average();
 
-        // Handle multi-position roles (e.g., "PG/SG")
-        $positions = explode('/', $player->role ?? $player->position ?? 'SF');
-        $baseRate = collect($positions)
-            ->map(fn($pos) => $positionRates[trim($pos)] ?? 0.05)
-            ->average();
+        $iq = $this->rating($player, 'basketball_iq_rating', 60);
+        $workEthic = $this->rating($player, 'work_ethic_rating', 60);
+        $stamina = $this->rating($player, 'stamina_rating', 70);
+        $bashing = $this->rating($player, 'bashing_factor', 50);
+        $fatigue = $this->rating($player, 'fatigue', 0);
+        $defense = $this->rating($player, 'defense_rating', 60);
+        $rookie = !empty($player->is_rookie) ? 1.04 : 1.0;
 
-        // 2. PLAYER ATTRIBUTE MODIFIERS (Weighted contributions)
-        $controlFactors = [
-            'positive' => [
-                'basketball_iq_rating' => 0.25,  // Smart players foul less
-                'work_ethic_rating'    => 0.20,  // Disciplined players
-                'stamina_rating'       => 0.15,  // Better conditioning
-                'morale'               => 0.15,  // Happy players
-                'leadership_rating'    => 0.10   // On-court decision making
-            ],
-            'negative' => [
-                'bashing_factor'      => 0.30,  // Aggressive players foul more
-                'fatigue'             => 0.25,  // Tired players
-                'injury_prone_percentage' => 0.10 // Injury-prone players
-            ]
-        ];
+        $discipline = 1.12 - (($iq * 0.45 + $workEthic * 0.35 + $stamina * 0.20) / 100) * 0.22;
+        $aggression = 0.94 + ($bashing / 100) * 0.20 + ($defense / 100) * 0.08;
+        $fatigueFactor = 1.0 + ($fatigue / 250);
+        $defensiveEnvironment = 1.0 + ($defensiveImpact * 0.60);
 
-        // Calculate control score (0-100 scale)
-        $positiveScore = array_reduce(
-            array_keys($controlFactors['positive']),
-            fn($carry, $attr) => $carry + ($player->$attr * $controlFactors['positive'][$attr]),
-            0
-        );
+        $expected = $minutes * $baseRate * $discipline * $aggression * $fatigueFactor * $rookie * $defensiveEnvironment;
+        $expected *= (0.95 + $performanceFactor * 0.05);
 
-        $negativeScore = array_reduce(
-            array_keys($controlFactors['negative']),
-            fn($carry, $attr) => $carry + ($player->$attr * $controlFactors['negative'][$attr]),
-            0
-        );
-
-        $controlScore = ($positiveScore - $negativeScore) / 100;
-
-        // 3. DYNAMIC MODIFIERS
-        $defensiveAggression = ($player->defense_rating / 100) * ($defensiveImpact / 100);
-        $fatiguePenalty = 1 + ($player->fatigue / 100); // 1.0-2.0 multiplier
-        $rookiePenalty = $player->is_rookie ? 1.15 : 1.0; // Rookies foul 15% more
-
-        // 4. FINAL FOUL CALCULATION
-        $adjustedRate = $baseRate
-            * (1 + $defensiveAggression)  // Aggressive defense
-            * (1.5 - $controlScore)       // Control score impact
-            * $fatiguePenalty             // Fatigue effect
-            * $rookiePenalty;             // Rookie adjustment
-
-        // 5. APPLY PERFORMANCE FACTOR & RANDOMNESS
-        $fouls = round($minutes * $adjustedRate * $performanceFactor) + rand(-1, 1);
-
-        // 6. SPECIAL CASES
-        // Injured players foul more carelessly
-        if ($player->is_injured) {
-            $fouls += rand(0, 1);
+        // Occasional shooting/loose-ball foul variation.
+        if (mt_rand(1, 100) <= 12) {
+            $expected += 0.15;
         }
 
-        // "Hack-a-Shaq" rule: Poor FT shooters get targeted
-        if ($player->free_throw_rating < 50 && rand(1, 100) > 70) {
-            $fouls += 1;
-        }
-
-        return min(max($fouls, 0), 6); // Clamp to 0-6 fouls
+        return min(6, $this->poissonRandomizer(max(0.01, $expected)));
     }
 
     private function poissonRandomizer(float $lambda): int
@@ -592,232 +600,294 @@ class PlayerStatsController extends Controller
         return max(0, $sample);
     }
 
+    private function rating($player, string $attribute, float $default = 50): float
+    {
+        $value = is_array($player) ? ($player[$attribute] ?? $default) : ($player->$attribute ?? $default);
+        return $this->clamp((float) $value, 0, 100);
+    }
+
+    private function clamp(float $value, float $min, float $max): float
+    {
+        return max($min, min($max, $value));
+    }
+
+    private function usageMultiplier($player): float
+    {
+        $role = strtolower(trim(is_array($player) ? ($player['role'] ?? 'starter') : ($player->role ?? 'starter')));
+        return [
+            'star player' => 1.30,
+            'all star' => 1.15,
+            'starter' => 1.00,
+            'role player' => 0.82,
+            'bench' => 0.65,
+        ][$role] ?? 0.90;
+    }
+
+    private function binomialRandomizer(int $trials, float $probability): int
+    {
+        if ($trials <= 0 || $probability <= 0) return 0;
+        if ($probability >= 1) return $trials;
+
+        $successes = 0;
+        for ($i = 0; $i < $trials; $i++) {
+            if ((mt_rand() / mt_getrandmax()) < $probability) {
+                $successes++;
+            }
+        }
+        return $successes;
+    }
+
     public function calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowsMade, $fouls)
     {
-        // Base points
-        $points = ($twoPointMade * 2) + ($threePointMade * 3) + $freeThrowsMade;
-
-        // Foul trouble lowers aggressiveness (less shot attempts)
-        $foulPenalty = max(0, 1 - ($fouls * 0.05));
-
-        // Work ethic + stamina help players maintain scoring despite fouls
-        $resilience = ($player->work_ethic_rating + $player->stamina_rating) / 200; // 0 - 1
-
-        return max(round($points * ($foulPenalty + ($resilience * 0.1))), 0);
+        // Points must equal made shots. Do not multiply them again with
+        // morale/work-ethic/foul factors after the makes have been generated.
+        return max(
+            0,
+            ((int) $twoPointMade * 2) +
+                ((int) $threePointMade * 3) +
+                (int) $freeThrowsMade
+        );
     }
 
     public function calculateRebounds(Player $player, int $minutes, float $performanceFactor, int $fouls): int
     {
-        // Position weights tuned to NBA averages
-        $positionWeights = [
-            'C' => 0.35,
-            'PF' => 0.30,
-            'SF' => 0.20,
-            'SG' => 0.15,
-            'PG' => 0.10
+        if ($minutes <= 0) return 0;
+
+        $positions = array_map('trim', explode('/', $player->position ?? 'SF'));
+        $positionRates = [
+            'PG' => 0.105,
+            'SG' => 0.125,
+            'SF' => 0.175,
+            'PF' => 0.245,
+            'C'  => 0.305,
         ];
-        $positionFactor = $positionWeights[$player->position] ?? 0.20;
+        $baseRate = collect($positions)->map(fn($p) => $positionRates[$p] ?? 0.17)->average();
 
-        // Base per-minute expected rebounds (ceiling keeps averages realistic)
-        $reboundPerMinute = min(
-            0.70,
-            $positionFactor * (
-                ($player->rebounding_rating * 0.65 +
-                    $player->athleticism_rating * 0.25 +
-                    $player->strength_rating * 0.10) / 100.0
-            )
-        );
+        $rebounding = $this->rating($player, 'rebounding_rating', 60);
+        $athleticism = $this->rating($player, 'athleticism_rating', 60);
+        $strength = $this->rating($player, 'strength_rating', 60);
+        $iq = $this->rating($player, 'basketball_iq_rating', 60);
 
-        // Softer foul penalty (players still rebound with fouls)
-        $foulPenalty = max(0.5, 1 - ($fouls * 0.08));
+        $skill = (
+            $rebounding * 0.55 +
+            $athleticism * 0.20 +
+            $strength * 0.15 +
+            $iq * 0.10
+        ) / 75;
 
-        // Expected (lambda) rebounds
-        $expected = $reboundPerMinute * $minutes * $performanceFactor * $foulPenalty;
+        $foulPenalty = max(0.72, 1 - ($fouls * 0.055));
+        $expected = $minutes * $baseRate * $skill * $performanceFactor * $foulPenalty;
 
-        // --- Monster spike gating (ultra-rare) ---
-        // Example: base 0.0005 ~ 1 in 2000. Adjust as needed.
-        $monsterChance = 0.0005;
-        $spike = 0;
-        if (mt_rand() / mt_getrandmax() < $monsterChance && $player->rebounding_rating >= 88 && in_array($player->position, ['C', 'PF'])) {
-            // Add spike to expected before sampling (so stochastic)
-            $expected += rand(10, 18);
+        // Rare ceiling games, gated by actual rebounding ability.
+        if ($rebounding >= 88 && in_array($positions[0], ['PF', 'C'], true) && mt_rand(1, 1000) === 1) {
+            $expected += mt_rand(5, 9);
         }
 
-        //actual rebounds from Poisson(lambda = expected)
-        $actual = $this->poissonRandomizer($expected);
-
-        return (int) $actual;
+        return min(25, $this->poissonRandomizer(max(0.01, $expected)));
     }
 
 
     public function calculateBlocks(Player $player, int $minutes, float $performanceFactor, int $fouls): int
     {
-        // Position-based caps
-        $positionCaps = ['C' => 0.40, 'PF' => 0.35, 'SF' => 0.25, 'SG' => 0.15, 'PG' => 0.10];
+        if ($minutes <= 0) return 0;
 
-        $blocksPerMinute = min(
-            $positionCaps[$player->position] ?? 0.20,
-            ($player->blocks_rating * 0.6 +
-                $player->athleticism_rating * 0.25 +
-                $player->defense_rating * 0.15) / 250
-        );
+        $positions = array_map('trim', explode('/', $player->position ?? 'SF'));
+        $positionRates = [
+            'PG' => 0.0015,
+            'SG' => 0.0025,
+            'SF' => 0.0045,
+            'PF' => 0.0085,
+            'C'  => 0.0115,
+        ];
+        $baseRate = collect($positions)->map(fn($p) => $positionRates[$p] ?? 0.0045)->average();
 
-        // Stronger foul impact
-        $foulPenalty = max(0.2, 1 - ($fouls * 0.15));
+        $defense = $this->rating($player, 'defense_rating', 60);
+        $athleticism = $this->rating($player, 'athleticism_rating', 60);
+        $strength = $this->rating($player, 'strength_rating', 60);
+        $iq = $this->rating($player, 'basketball_iq_rating', 60);
 
-        $expected = round($blocksPerMinute * $minutes * $performanceFactor * $foulPenalty);
+        $skill = (
+            $defense * 0.45 +
+            $athleticism * 0.25 +
+            $strength * 0.15 +
+            $iq * 0.15
+        ) / 70;
 
-        //actual blocks from Poisson(lambda = expected)
-        $actual = $this->poissonRandomizer($expected);
+        $foulPenalty = max(0.65, 1 - ($fouls * 0.07));
+        $expected = $minutes * $baseRate * $skill * $performanceFactor * $foulPenalty;
 
-        return (int) $actual;
+        return min(8, $this->poissonRandomizer(max(0.001, $expected)));
     }
 
     public function calculateSteals(Player $player, int $minutes, float $performanceFactor, int $fouls): int
     {
-        // More conservative base rate
-        $stealsPerMinute = min(
-            0.30, // Absolute max
-            ($player->steals_rating * 0.5 +
-                $player->basketball_iq_rating * 0.3 +
-                $player->athleticism_rating * 0.2) / 300
-        );
+        if ($minutes <= 0) return 0;
 
-        // Fouls hurt steals more
-        $foulPenalty = max(0.4, 1 - ($fouls * 0.08));
+        $positions = array_map('trim', explode('/', $player->position ?? 'SF'));
+        $positionRates = [
+            'PG' => 0.028,
+            'SG' => 0.025,
+            'SF' => 0.020,
+            'PF' => 0.015,
+            'C'  => 0.012,
+        ];
+        $baseRate = collect($positions)->map(fn($p) => $positionRates[$p] ?? 0.020)->average();
 
-        // Leadership reduces reckless steals
-        $discipline = 1 - ($player->leadership_rating / 500);
+        $defense = $this->rating($player, 'defense_rating', 60);
+        $iq = $this->rating($player, 'basketball_iq_rating', 60);
+        $athleticism = $this->rating($player, 'athleticism_rating', 60);
+        $bashing = $this->rating($player, 'bashing_factor', 50);
 
-        $expected = round($stealsPerMinute * $minutes * $performanceFactor * $foulPenalty * $discipline);
+        $skill = (
+            $defense * 0.45 +
+            $iq * 0.30 +
+            $athleticism * 0.20 +
+            $bashing * 0.05
+        ) / 70;
 
-        //actual steals from Poisson(lambda = expected)
-        $actual = $this->poissonRandomizer($expected);
+        $foulPenalty = max(0.70, 1 - ($fouls * 0.05));
+        $expected = $minutes * $baseRate * $skill * $performanceFactor * $foulPenalty;
 
-        return (int) $actual;
+        return min(7, $this->poissonRandomizer(max(0.001, $expected)));
     }
 
     // $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers,$homeChemistry, true, true);
-    public function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry = 50, $isClutchTime = false, $isHomeAdvantage)
+    public function calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry = 50, $isClutchTime = false, $isHomeAdvantage = false)
     {
-        $positionWeights = [
-            'PG' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.6],
-            'SG' => ['two_point' => 0.4, 'three_point' => 0.6, 'free_throw' => 0.5],
-            'SF' => ['two_point' => 0.5, 'three_point' => 0.5, 'free_throw' => 0.5],
-            'PF' => ['two_point' => 0.7, 'three_point' => 0.3, 'free_throw' => 0.5],
-            'C'  => ['two_point' => 0.8, 'three_point' => 0.2, 'free_throw' => 0.4],
-        ];
+        if ($minutes <= 0) {
+            return [
+                'two_point_attempts' => 0,
+                'two_point_made' => 0,
+                'three_point_attempts' => 0,
+                'three_point_made' => 0,
+                'free_throw_attempts' => 0,
+                'free_throw_made' => 0,
+            ];
+        }
+
+        $positions = array_map('trim', explode('/', $player->position ?? 'SF'));
+        $position = $positions[0] ?? 'SF';
 
         $roleMultipliers = [
-            'star player' => 1.1,
-            'all star'    => 1.05,
-            'starter'     => 1.0,
-            'role player' => 0.85,
-            'bench'       => 0.7,
+            'star player' => 1.25,
+            'all star'    => 1.12,
+            'starter'     => 1.00,
+            'role player' => 0.78,
+            'bench'       => 0.60,
         ];
+        $role = strtolower(trim($player->role ?? 'starter'));
+        $roleFactor = $roleMultipliers[$role] ?? 0.85;
 
-        $positions = explode('/', $player->position ?? 'SF');
-        $positionCount = count($positions);
+        $shooting = $this->rating($player, 'shooting_rating', 60);
+        $twoPoint = $this->rating($player, 'two_point_rating', 60);
+        $threePoint = $this->rating($player, 'three_point_rating', 60);
+        $ft = $this->rating($player, 'free_throw_rating', 60);
+        $iq = $this->rating($player, 'basketball_iq_rating', 60);
+        $athleticism = $this->rating($player, 'athleticism_rating', 60);
+        $strength = $this->rating($player, 'strength_rating', 60);
+        $morale = $this->rating($player, 'morale', 75);
+        $stamina = $this->rating($player, 'stamina_rating', 70);
+        $fatigue = $this->rating($player, 'fatigue', 0);
 
-        $positionFactor = ['two_point' => 0, 'three_point' => 0, 'free_throw' => 0];
-        foreach ($positions as $pos) {
-            $pos = trim($pos);
-            $weights = $positionWeights[$pos] ?? $positionWeights['SF'];
-            $positionFactor['two_point'] += $weights['two_point'] / $positionCount;
-            $positionFactor['three_point'] += $weights['three_point'] / $positionCount;
-            $positionFactor['free_throw'] += $weights['free_throw'] / $positionCount;
-        }
+        $performanceFactor = $this->calculatePerformanceFactor($player, $isClutchTime);
 
-        $roleFactor = $roleMultipliers[strtolower($player->role)] ?? 1.0;
-        $fatigueFactor = max(0.5, (100 - ($player->fatigue ?? 0)) / 100);
-        $injuryFactor = $player->is_injured ? 0.3 : 1.0;
-        $clutchBoost = ($isClutchTime && ($player->clutch_rating ?? 50) > 80) ? 1.2 : 1.0;
+        // Shot volume is based on role + minutes + offensive skill, not simply
+        // minutes * 0.8. This produces realistic FGA ranges.
+        $baseFgaPer36 = [
+            'star player' => 20.0,
+            'all star'    => 17.5,
+            'starter'     => 14.0,
+            'role player' => 10.5,
+            'bench'       => 8.0,
+        ][$role] ?? 12.0;
 
-        // 🆕 New: Chemistry and Morale factors
-        $morale = $player->morale ?? 50;
-        $moraleFactor = 0.9 + ($morale / 1000);     // 0.9 ~ 1.4 range (at morale 40 ~ 100)
-        $chemistryFactor = 0.9 + ($chemistry / 1000); // 0.9 ~ 1.4 range (at chemistry 40 ~ 100)
-        $homeAdvantageFactor = $isHomeAdvantage ? 1.05 : 1.0; // 5% boost if at home
+        $scoringAbility = (
+            $shooting * 0.25 +
+            $twoPoint * 0.25 +
+            $threePoint * 0.25 +
+            $iq * 0.15 +
+            $athleticism * 0.10
+        ) / 75;
 
-        $baseAttempts = max(1, round($minutes * 0.8));
-        $foulImpact = $fouls * 0.05;
-        $turnoverImpact = $turnovers * 0.1;
-        $adjustedBaseAttempts = max(0, $baseAttempts - ($foulImpact + $turnoverImpact));
+        $usageFactor = $roleFactor * $scoringAbility;
+        $usageFactor *= 0.94 + ($morale / 1000);
+        $usageFactor *= 0.96 + ($chemistry / 2500);
+        $usageFactor *= max(0.78, 1 - ($fatigue / 350));
+        $usageFactor *= $performanceFactor;
 
-        $attemptBias = rand(85, 115) / 100;
-        $threePointWeight = $positionFactor['three_point'] * $attemptBias;
-        $twoPointWeight = 1 - $threePointWeight;
+        if ($isHomeAdvantage) $usageFactor *= 1.015;
+        if (!empty($player->is_injured)) $usageFactor *= 0.65;
 
-        $totalFactor = $roleFactor * $fatigueFactor * $injuryFactor * $clutchBoost * $moraleFactor * $chemistryFactor * $homeAdvantageFactor;
+        $fga = ($minutes / 36) * $baseFgaPer36 * $usageFactor;
+        $fga -= $turnovers * 0.20;
+        $fga -= $fouls * 0.08;
+        $fga *= mt_rand(94, 106) / 100;
+        $fga = (int) round($this->clamp($fga, 0, min(30, $minutes * 0.90)));
 
-        $rawAdjustedAttempts = $adjustedBaseAttempts * $totalFactor;
+        // Position provides a tendency, while actual 3PT rating strongly
+        // influences whether the player takes those shots.
+        $positionThree = [
+            'PG' => 0.48,
+            'SG' => 0.52,
+            'SF' => 0.40,
+            'PF' => 0.30,
+            'C' => 0.16,
+        ][$position] ?? 0.35;
+        $threeSkill = 0.65 + (($threePoint - 60) / 300);
+        $threeShare = $this->clamp($positionThree * $threeSkill, 0.08, 0.62);
 
-        $maxPointsPerMinute = 3.0;
-        $maxAttempts = ($player->role === 'star player') ? 40 : 35;
-        $adjustedAttempts = min($rawAdjustedAttempts, $maxAttempts);
+        // High IQ players take fewer low-value shots, but good shooters are
+        // more willing to shoot from three.
+        $threeShare += (($threePoint - 70) / 1000);
+        $threeShare = $this->clamp($threeShare, 0.08, 0.65);
 
-        $threePointAttempts = round($adjustedAttempts * $threePointWeight);
-        $twoPointAttempts = round($adjustedAttempts * $twoPointWeight);
+        $threeAttempts = $this->binomialRandomizer($fga, $threeShare);
+        $twoAttempts = max(0, $fga - $threeAttempts);
 
-        $freeThrowAttempts = round(
-            ($twoPointAttempts * 0.3 + $threePointAttempts * 0.1) * (($player->strength_rating ?? 70) / 100)
-        );
+        // Free throws come from rim pressure, strength, athleticism and usage.
+        $rimPressure = (
+            $twoPoint * 0.35 +
+            $athleticism * 0.30 +
+            $strength * 0.20 +
+            $iq * 0.15
+        ) / 100;
+        $ftaRate = $this->clamp(0.10 + ($rimPressure * 0.14), 0.08, 0.25);
+        $ftaRate *= $role === 'star player' ? 1.08 : 1.0;
+        $ftaRate *= 1 + ($defensiveImpact * 0.15);
+        $freeThrowAttempts = $this->binomialRandomizer($fga, $ftaRate);
 
-        // Defense impact
-        $defenseScaling = 1 + ($adjustedAttempts / 50);
-        $adjustedTwoPointAttempts = max(0, $twoPointAttempts - ($defensiveImpact * $defenseScaling));
-        $adjustedThreePointAttempts = max(0, $threePointAttempts - ($defensiveImpact * $defenseScaling));
-        $adjustedFreeThrowAttempts = max(0, $freeThrowAttempts - ($defensiveImpact * 0.5));
+        // Shooting efficiency: ratings are the anchor; performance factors
+        // only move the result modestly. This avoids 90% shooting games.
+        $twoPct = 0.38 + ($twoPoint / 100) * 0.22 + ($shooting / 100) * 0.05;
+        $twoPct += (($iq - 70) / 1000);
+        $twoPct += (($morale - 75) / 1500);
+        $twoPct *= $performanceFactor;
+        $twoPct *= max(0.88, 1 - ($defensiveImpact * 0.70));
+        $twoPct *= max(0.88, 1 - ($fatigue / 600));
+        $twoPct = $this->clamp($twoPct, 0.30, 0.70);
 
-        // Efficiency drop from high volume
-        $volumePenalty = 1 - min(0.15, max(0, $adjustedAttempts - 25) * 0.01);
+        $threePct = 0.25 + ($threePoint / 100) * 0.22 + ($shooting / 100) * 0.04;
+        $threePct += (($iq - 70) / 1500);
+        $threePct *= $performanceFactor;
+        $threePct *= max(0.90, 1 - ($defensiveImpact * 0.50));
+        $threePct *= max(0.90, 1 - ($fatigue / 700));
+        $threePct = $this->clamp($threePct, 0.20, 0.48);
 
-        $twoPointAccuracy = (
-            ($player->two_point_rating ?? 60) / 100 *
-            ($player->basketball_iq_rating ?? 60) / 100 *
-            $fatigueFactor * $injuryFactor * $volumePenalty * $moraleFactor * $chemistryFactor
-        );
+        $ftPct = 0.68 + ($ft / 100) * 0.25;
+        $ftPct *= $performanceFactor;
+        $ftPct = $this->clamp($ftPct, 0.55, 0.97);
 
-        $threePointAccuracy = (
-            ($player->three_point_rating ?? 60) / 100 *
-            ($player->basketball_iq_rating ?? 60) / 100 *
-            $fatigueFactor * $injuryFactor * $volumePenalty * $moraleFactor * $chemistryFactor
-        );
-
-        $freeThrowAccuracy = (
-            ($player->free_throw_rating ?? 60) / 100 *
-            ($player->work_ethic_rating ?? 60) / 100 *
-            $fatigueFactor * $injuryFactor * $moraleFactor
-        );
-
-        $twoPointMade = min(rand(0, round($adjustedTwoPointAttempts * $twoPointAccuracy)), $adjustedTwoPointAttempts);
-        $threePointMade = min(rand(0, round($adjustedThreePointAttempts * $threePointAccuracy)), $adjustedThreePointAttempts);
-        $freeThrowMade = min(rand(0, round($adjustedFreeThrowAttempts * $freeThrowAccuracy)), $adjustedFreeThrowAttempts);
-
-        // $twoPointMade = $this->binomialRandomizer($adjustedTwoPointAttempts, min(0.75, $twoPointAccuracy));
-        // $threePointMade = $this->binomialRandomizer($adjustedThreePointAttempts, min(0.55, $threePointAccuracy));
-        // $freeThrowMade = $this->binomialRandomizer($adjustedFreeThrowAttempts, min(0.95, $freeThrowAccuracy));
-
-        // Cap scoring to a realistic points per minute
-        $estimatedPoints = ($twoPointMade * 2) + ($threePointMade * 3) + $freeThrowMade;
-        $maxPointsPerMinute = 3.0;
-        $maxPoints = round($minutes * $maxPointsPerMinute);
-
-        if ($estimatedPoints > $maxPoints) {
-            $scalingFactor = $maxPoints / $estimatedPoints;
-
-            $twoPointMade = round($twoPointMade * $scalingFactor);
-            $threePointMade = round($threePointMade * $scalingFactor);
-            $freeThrowMade = round($freeThrowMade * $scalingFactor);
-        }
+        $twoMade = $this->binomialRandomizer($twoAttempts, $twoPct);
+        $threeMade = $this->binomialRandomizer($threeAttempts, $threePct);
+        $ftMade = $this->binomialRandomizer($freeThrowAttempts, $ftPct);
 
         return [
-            'two_point_attempts'     => $adjustedTwoPointAttempts,
-            'two_point_made'         => $twoPointMade,
-            'three_point_attempts'   => $adjustedThreePointAttempts,
-            'three_point_made'       => $threePointMade,
-            'free_throw_attempts'    => $adjustedFreeThrowAttempts,
-            'free_throw_made'        => $freeThrowMade,
+            'two_point_attempts'   => $twoAttempts,
+            'two_point_made'       => min($twoMade, $twoAttempts),
+            'three_point_attempts' => $threeAttempts,
+            'three_point_made'     => min($threeMade, $threeAttempts),
+            'free_throw_attempts'  => $freeThrowAttempts,
+            'free_throw_made'      => min($ftMade, $freeThrowAttempts),
         ];
     }
 
@@ -877,9 +947,9 @@ class PlayerStatsController extends Controller
             foreach ($playerGameStats as &$stats) {
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
 
-                if($isPlayoff){
+                if ($isPlayoff) {
                     $this->storeStats->storePlayerSeasonPlayoffStats($stats['team_id'], $stats['player_id']);
-                }else{
+                } else {
                     $this->storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
                 }
 
@@ -914,31 +984,31 @@ class PlayerStatsController extends Controller
         }
     }
 
-    public function handleHardshipContract($player,$stats){
-        
-            $updatedContract = $player->hardship_contract - 1;
-            $teamId = $updatedContract > 0 ? $player->team_id : 0;
+    public function handleHardshipContract($player, $stats)
+    {
 
-            if($updatedContract == 0){
-                DB::table('transactions')->insert([
-                    'player_id' => $stats['player_id'],
-                    'season_id' => $stats['season_id'],
-                    'details' => 'Has ended his 10-game hardship contract.',
-                    'from_team_id' => $player->team_id,
-                    'to_team_id' => 0,
-                    'status' => 'waived',
-                ]);
-            }
+        $updatedContract = $player->hardship_contract - 1;
+        $teamId = $updatedContract > 0 ? $player->team_id : 0;
 
-            DB::table('players')->updateOrInsert(
-                ['id' => $stats['player_id']],
-                [
-                    'hardship_contract' => $updatedContract,
-                    'team_id' =>  $teamId,
-                ]
-            );
+        if ($updatedContract == 0) {
+            DB::table('transactions')->insert([
+                'player_id' => $stats['player_id'],
+                'season_id' => $stats['season_id'],
+                'details' => 'Has ended his 10-game hardship contract.',
+                'from_team_id' => $player->team_id,
+                'to_team_id' => 0,
+                'status' => 'waived',
+            ]);
+        }
 
-            return true;
+        DB::table('players')->updateOrInsert(
+            ['id' => $stats['player_id']],
+            [
+                'hardship_contract' => $updatedContract,
+                'team_id' =>  $teamId,
+            ]
+        );
+
+        return true;
     }
-
 }

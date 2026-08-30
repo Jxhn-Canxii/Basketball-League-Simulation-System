@@ -192,4 +192,48 @@ class HelperController extends Controller
         return $hasImproved;
 
     }
+
+    public function roundFormatter($round){
+        
+        if (!is_numeric($round)){
+            switch ($round) {
+                case 'play_ins_elims_round_1':
+                    return 'Conference Play-ins (7th vs 8th)';
+                    break;
+                case 'play_ins_elims_round_2':
+                    return 'Conference Play-ins (9th vs 10th)';
+                    break;
+                case 'play_ins_elims':
+                    return 'Conference Play-ins';
+                    break;
+                case 'play_ins_finals':
+                    return 'Conference Play-ins Finals';
+                    break;
+                case 'round_of_32':
+                    return 'Conference Round of 16';
+                    break;
+                case 'round_of_16':
+                    return 'Conference Quarterfinals';
+                    break;
+                case 'quarter_finals':
+                    return 'Conference Semi-Finals';
+                    break;
+                case 'semi_finals':
+                    return 'Conference Finals';
+                    break;
+                case 'interconference_semi_finals':
+                    return 'The Big 4';
+                    break;
+                case 'finals':
+                    return 'The Finals';
+                    break;
+                default:
+                    return '-';
+                    break;
+            }
+        }
+        
+        return $round;
+
+    }
 }
