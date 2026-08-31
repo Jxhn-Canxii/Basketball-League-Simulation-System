@@ -1,11 +1,11 @@
 <template>
-  <div class="p-4 rounded-2xl shadow-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white w-full max-w-sm relative z-9000">
-    <div class="text-lg font-bold mb-2 border-b border-white/30 pb-1">
+  <div :class="textLarge ? 'max-w-lg' : 'max-w-sm'" class="p-4 rounded-2xl shadow-lg bg-gradient-to-r from-gray-800 via-gray-900 to-black text-white w-full relative z-9000">
+    <div :class="textLarge ? 'text-xl' : 'text-lg'" class=" font-bold mb-2 border-b border-white/30 pb-1">
       {{ data.title }}
       <br>
       <a class="text-sm text-right text-yellow-400" @click.prevent="show_news = !show_news"> Show {{ show_news ? 'less' : 'more' }}...</a>
     </div>
-    <p v-if="show_news" class="text-sm leading-relaxed text-white/90">
+    <p v-if="show_news" :class="textLarge ? 'text-lg' : 'text-sm'" class=" leading-relaxed text-white/90">
       {{ data.content }}
     </p>
   </div>
@@ -25,6 +25,10 @@ const props = defineProps({
         })
     },
     showNews:{
+      type: Boolean,
+      default: false,
+    },
+    textLarge:{
       type: Boolean,
       default: false,
     }

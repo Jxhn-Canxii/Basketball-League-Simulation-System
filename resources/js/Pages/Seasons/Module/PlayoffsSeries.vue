@@ -101,10 +101,10 @@
   </div>
 
     <!-- Game News Modal -->
-    <div v-if="isGameNewsModalOpen && game_news" class="fixed bg-transparent bottom-0 right-0 bg-white p-2">
-        <div class="flex justify-center" @click.prevent="isGameNewsModalOpen = false">
+    <div v-if="isGameNewsModalOpen && game_news" class="fixed bg-transparent top-[30%] right-[36%] bg-white p-2">
+        <div class="flex justify-center bg-red-300 p-2 rounded-2xl shadow-lg shadow-blue-500" @click.prevent="isGameNewsModalOpen = false">
             <!-- <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3> -->
-            <GameNews :key="game_news.id" :data="game_news" :showNews="true" />
+            <GameNews :key="game_news.id" :data="game_news" :showNews="true" :textLarge="true" />
         </div>
     </div>
 </template>
