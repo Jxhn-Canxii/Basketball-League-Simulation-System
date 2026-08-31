@@ -1308,11 +1308,13 @@ class TradeController extends Controller
 
         if ($storyline) {
 
-            $this->archive
-                ->archiveGameStats();
+            $this->archive->archiveGameStats();
 
-            $this->archive
-                ->archivePlayerSeasonStats();
+            $this->archive->archivePlayerSeasonStats();
+
+            // $this->archive->archiveSeasonScheduleViewTable();
+
+            // $this->archive->archiveSeasonScheduleWriteTable();
 
             DB::table('seasons')
                 ->where(

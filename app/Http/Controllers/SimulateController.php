@@ -1644,7 +1644,7 @@ class SimulateController extends Controller
                 $season->status = 2;
                 $season->save();
 
-                $this->archive->saveStandingsSnapshot();
+                $this->archive->archiveStandingViewTable();
                 $this->playOffStats->updatePlayoffQualifiedFlags();
             }
         }

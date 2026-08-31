@@ -83,7 +83,7 @@ class ArchiveController extends Controller
                 DB::statement("CREATE TABLE $archiveSeasonPlayoffStatsTable LIKE player_season_playoff_stats");
             }
             
-            DB::statement("INSERT INTO $archiveSeasonStatsTable SELECT CONCAT(`id`,'P-',`player_id`,'S-',`player_id`,'T-',`season_id`) as id, `player_id`, `team_id`, `season_id`, `role`, `avg_minutes_per_game`, `avg_points_per_game`, `avg_rebounds_per_game`, `avg_assists_per_game`, `avg_steals_per_game`, `avg_blocks_per_game`, `avg_turnovers_per_game`, `avg_fouls_per_game`, `total_field_goals_made`, `total_field_goal_attempts`, `total_two_pointers_made`, `total_two_point_attempts`, `total_three_pointers_made`, `total_three_point_attempts`, `total_free_throws_made`, `total_free_throw_attempts`, `total_points`, `total_rebounds`, `total_assists`, `total_steals`, `total_blocks`, `total_turnovers`, `total_fouls`, `total_minutes_played`, `total_games_played`, `total_games`, `bpg_game_leader`, `points_game_leader`, `rebounds_game_leader`, `assists_game_leader`, `steals_game_leader`, `blocks_game_leader`, `per`, `ts_percent`, `eff`, `field_goal_percentage`, `two_point_percentage`, `three_point_percentage`, `free_throw_percentage`, `performance_points`, `created_at`, `updated_at` FROM player_season_stats");
+            DB::statement("INSERT INTO $archiveSeasonStatsTable SELECT CONCAT('id','P-','player_id','S-','player_id','T-','season_id') as id, 'player_id', 'team_id`, `season_id`, `role`, `avg_minutes_per_game`, `avg_points_per_game`, `avg_rebounds_per_game`, `avg_assists_per_game`, `avg_steals_per_game`, `avg_blocks_per_game`, `avg_turnovers_per_game`, `avg_fouls_per_game`, `total_field_goals_made`, `total_field_goal_attempts`, `total_two_pointers_made`, `total_two_point_attempts`, `total_three_pointers_made`, `total_three_point_attempts`, `total_free_throws_made`, `total_free_throw_attempts`, `total_points`, `total_rebounds`, `total_assists`, `total_steals`, `total_blocks`, `total_turnovers`, `total_fouls`, `total_minutes_played`, `total_games_played`, `total_games`, `bpg_game_leader`, `points_game_leader`, `rebounds_game_leader`, `assists_game_leader`, `steals_game_leader`, `blocks_game_leader`, `per`, `ts_percent`, `eff`, `field_goal_percentage`, `two_point_percentage`, `three_point_percentage`, `free_throw_percentage`, `performance_points`, `created_at`, `updated_at` FROM player_season_stats");
             DB::statement("DELETE FROM player_season_stats");
 
             DB::statement("INSERT INTO $archiveSeasonPlayoffStatsTable SELECT CONCAT(`id`,'P-',`player_id`,'S-',`player_id`,'T-',`season_id`) as id, `player_id`, `team_id`, `season_id`, `role`, `avg_minutes_per_game`, `avg_points_per_game`, `avg_rebounds_per_game`, `avg_assists_per_game`, `avg_steals_per_game`, `avg_blocks_per_game`, `avg_turnovers_per_game`, `avg_fouls_per_game`, `total_field_goals_made`, `total_field_goal_attempts`, `total_two_pointers_made`, `total_two_point_attempts`, `total_three_pointers_made`, `total_three_point_attempts`, `total_free_throws_made`, `total_free_throw_attempts`, `total_points`, `total_rebounds`, `total_assists`, `total_steals`, `total_blocks`, `total_turnovers`, `total_fouls`, `total_minutes_played`, `total_games_played`, `total_games`, `bpg_game_leader`, `points_game_leader`, `rebounds_game_leader`, `assists_game_leader`, `steals_game_leader`, `blocks_game_leader`, `per`, `ts_percent`, `eff`, `field_goal_percentage`, `two_point_percentage`, `three_point_percentage`, `free_throw_percentage`, `performance_points`, `created_at`, `updated_at` FROM player_season_playoff_stats");
@@ -144,7 +144,7 @@ class ArchiveController extends Controller
         }
     }
 
-    public function saveStandingsSnapshot()
+    public function archiveStandingViewTable()
     {
         try {
             $snapshots = DB::table('standings_view')
@@ -196,6 +196,71 @@ class ArchiveController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'message' => 'Standing Snapshot Error' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public static function archiveSeasonScheduleViewTable()
+    {
+        $currentSeasonId = get_current_season_id();
+        $MODULO = config('archive.DECADE_MODULO');
+        // $tableBatch = $currentSeasonId / $MODULO;
+
+        $archiveSeasonScheduleTableView = "schedule_view_snapshot" ;
+
+        // 1) Only proceed if season is finished
+        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+        if (!$season || $season->status < 14) return;
+
+        DB::beginTransaction();
+        try {
+            if (!Schema::hasTable($archiveSeasonScheduleTableView)) {
+                DB::statement("CREATE TABLE $archiveSeasonScheduleTableView LIKE schedule_view");
+            }
+            
+            DB::statement("INSERT INTO archiveSeasonScheduleTableView SELECT 'id', 'game_id', 'game_number', 'round', 'season_id', 'conference_id', 'series_id', 'series_number', 'home_id', 'home_score', 'away_id', 'away_score', 'winner_id', 'status', 'created_at', 'updated_at', 'game_number_formatted', 'series_id_number', 'home_team_name', 'away_team_name', 'home_primary_color', 'away_primary_color', 'home_secondary_color', 'away_secondary_color', 'home_team_city', 'away_team_city', 'season_name', 'league_name', 'league_type', 'winning_name', 'winning_city' FROM schedule_view");
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+    public function archiveScheduleWriteTable()
+    {
+        try {
+            $snapshots = DB::table('schedules')
+                ->select(
+                    'game_id', 
+                    'game_number', 
+                    'round',
+                    'season_id',
+                    'conference_id',
+                    'series_id',
+                    'series_number',
+                    'home_id',
+                    'home_score',
+                    'away_id',
+                    'away_score',
+                    'winner_id',
+                    'status',
+                    'created_at',
+                    'updated_at'
+                )
+                ->get();
+
+            foreach ($snapshots as $snapshot) {
+                DB::table('schedules_archives')->updateOrInsert(
+                    [
+                        'game_id' => $snapshot->game_id,
+                    ],
+                    (array) $snapshot
+                );
+            }
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Schedule Snapshot Error' . $e->getMessage(),
             ], 500);
         }
     }
