@@ -539,8 +539,8 @@ class PlayersController extends Controller
             $query->where('players.is_active', $isActive);
         }
 
-        if ($withATeam == 1) {
-            $query->where('players.team_id','>',0);
+        if ($withATeam == 0) {
+            $query->where('players.team_id',0);
         }
 
         // Add sorting by is_active status, then by role priority
