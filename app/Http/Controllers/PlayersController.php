@@ -456,6 +456,8 @@ class PlayersController extends Controller
         $position = $request->input('position', ''); // Search term
         $injuryStatus = (int) $request->input('injury_status', 2); // 2 means all, 1 means injured, 0 means healthy
         $isActive = (int) $request->input('is_active', 1); // 2 means all, 1 means injured, 0 means healthy
+        $withATeam = (int) $request->input('with_a_team', 1); // 1 means with team, 0 means free agent
+        
         // Calculate the offset for the query
         $offset = ($currentPage - 1) * $perPage;
 
@@ -536,6 +538,11 @@ class PlayersController extends Controller
         if ($isActive !== 2) {
             $query->where('players.is_active', $isActive);
         }
+
+        if ($withATeam == 1) {
+            $query->where('players.team_id','>',0);
+        }
+
         // Add sorting by is_active status, then by role priority
         $query->orderBy('players.is_active', 'desc') // Active players first
             ->orderByRaw("FIELD(players.role, 'star player','all star', 'starter', 'role player', 'bench')");

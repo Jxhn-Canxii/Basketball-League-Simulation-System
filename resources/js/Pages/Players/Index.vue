@@ -38,6 +38,10 @@
                             <option value="1">Active</option>
                             <option value="0">Retired</option>
                         </select>
+                        <select class="mt-1 mb-2 p-2 border rounded w-full" v-model="search.with_a_team" @change="fetchAllPlayers()">
+                            <option value="1">With Team</option>
+                            <option value="0">Free Agent</option>
+                        </select>
                     </div>
                   
                     <div v-if="data.players?.length === 0" class="text-center text-gray-500">No player found.</div>
@@ -165,6 +169,7 @@ const search = ref({
     position: '',
     injury_status: 2, // 2 means all, 1 means injured, 0 means healthy
     is_active: 2, // 2 means all, 1 means active, 0 means retired
+    with_a_team: 1, //1 means with a team, 0 means free agent
     itemsperpage: 10,
 });
 const teams = ref([]);
