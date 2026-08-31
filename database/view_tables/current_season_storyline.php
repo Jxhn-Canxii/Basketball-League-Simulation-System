@@ -371,7 +371,7 @@ playin_summary AS (
 
         GROUP_CONCAT(
             CASE
-                WHEN round == 'play_ins_elims_round_2'
+                WHEN round = 'play_ins_elims_round_2'
             THEN
                 CONCAT(
                     winner_name,
@@ -379,7 +379,7 @@ playin_summary AS (
                     loser_name,
                     ' has been eliminated in the play-ins.',
                 )
-            WHEN round == 'play_ins_elims_round_1'
+            WHEN round = 'play_ins_elims_round_1'
             THEN
                 CONCAT(
                     winner_name,
@@ -389,7 +389,7 @@ playin_summary AS (
                     loser_name,
                     ' will take the the winner of the Play-ins(9th vs 10th) as the battle for the last ticket for the playoffs.',
                 )
-            WHEN round == 'play_ins_finals'
+            WHEN round = 'play_ins_finals'
             THEN
                 CONCAT(
                     winner_name,
