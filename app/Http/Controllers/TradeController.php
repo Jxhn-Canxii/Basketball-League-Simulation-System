@@ -185,8 +185,18 @@ class TradeController extends Controller
                 $teams->push($player->to_team_id);
             }
 
+            $teamName = collect();
+
+            foreach ($proposal->players as $player) {
+                $teamName->push($player->from_team);
+                $teamName->push($player->to_team);
+            }
+
             $proposal->teams_involved =
                 $teams->unique()->values();
+
+            $proposal->team_name_involved =
+                $teamName->unique()->values();
 
             $proposal->team_count =
                 $proposal->team_count

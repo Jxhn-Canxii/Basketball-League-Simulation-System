@@ -1,217 +1,140 @@
 <template>
-    <div class="draft-board">
-        <h2 class="text-xl font-semibold text-gray-800">{{ props.isOffSeason ? 'Off-season' : 'In-season' }} Trade Proposal</h2>
+  <div class="draft-board">
+    <h2 class="text-xl font-semibold text-gray-800">
+      {{ props.isOffSeason ? "Off-season" : "In-season" }} Trade Proposal
+    </h2>
 
-        <!-- Show 'Generate Proposal' button if proposals are empty -->
-        <div v-if="!trade_season_end" class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b">
-            <button 
-                @click="generateTradeProposal"
-                v-if="!trade_season_end"
-                class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
-                Generate Proposal
-            </button>
-            <button 
-                @click="endTrade" 
-                v-if="!trade_season_end"
-                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                End Trade Season
-            </button>
-        </div>
-        <div v-if="current_season > 0 || proposals.length > 0 && !trade_season_end" class="text-right mb-4 mt-4">
-            <button 
-                @click="autoTrade" 
-                class="px-4 py-2 bg-green-500 mr-4 text-white rounded hover:bg-red-600">
-                Let AI Decide
-            </button>
-        </div>
-        <!-- Display list of proposals -->
-        <div v-if="proposals.length > 0  && current_season > 0" >
-            <!-- Show 'End Trade' button if there are proposals -->
-            <!-- Tabs for categorizing proposals by role -->
-            <div class="flex mb-4 space-x-4">
-                <button 
-                    v-for="(category, index) in categories" 
-                    :key="index" 
-                    @click="selectCategory(category)" 
-                    :class="['px-4 py-2 rounded', selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800']">
-                    {{ category }}
-                </button>
-            </div>
-
-            <!-- Display proposals by selected category -->
-            <div v-if="proposalsByCategory[selectedCategory].length > 0">
-                <div class="grid grid-cols-2 gap-4">
-                    <div v-for="(proposal, index) in proposalsByCategory[selectedCategory]" :key="proposal.id" 
-                    :style="
-                        gradientStyle(
-                        proposal?.to_team_secondary_color,
-                        proposal?.to_team_primary_color,
-                        proposal?.from_team_primary_color,
-                        proposal?.from_team_secondary_color
-                        )
-                    "
-                    class="border p-4 rounded-lg shadow-md">
-                        <div class="mt-4 flex justify-between items-center">
-                            <div 
-                            :style="
-                                gradientStyle(
-                                proposal?.to_team_primary_color,
-                                proposal?.to_team_primary_color,
-                                proposal?.to_team_primary_color,
-                                proposal?.to_team_primary_color,
-                                )
-                            "
-                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
-                                <h4 class="text-center font-semibold text-lg">{{ proposal.player_from_name }}</h4>
-                                <p class="text-center text-white">{{ proposal.from_team }} to {{ proposal.to_team }}</p>
-                                <p class="text-center text-white">{{ proposal.player_from_role }}</p>
-                                <div class="flex justify-center items-center mt-2">
-                                    <a href="#" @click.prevent="showProfile(proposal.player_from_id)" class="text-blue-500 underline">View Profile</a>
-                                </div>
-                            </div>
-
-                            <div class="mx-4 flex items-center">
-                                <span class="text-gray-600 font-semibold">→</span>
-                            </div>
-
-                            <div 
-                            :style="
-                                gradientStyle(
-                                proposal?.from_team_primary_color,
-                                proposal?.from_team_primary_color,
-                                proposal?.from_team_primary_color,
-                                proposal?.from_team_primary_color,
-                                )
-                            "
-                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
-                                <h4 class="text-center font-semibold text-lg">{{ proposal.player_to_name }}</h4>
-                                <p class="text-center text-white">{{ proposal.to_team }} to {{ proposal.from_team }}</p>
-                                <p class="text-center text-white">{{ proposal.player_to_role }}</p>
-                                <div class="flex justify-center items-center mt-2">
-                                    <a href="#" @click.prevent="showProfile(proposal.player_to_id)" class="text-blue-500 underline">View Profile</a>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-gray-500 text-sm">{{ new Date(proposal.created_at).toLocaleString() }}</p>
-                        <!-- <div class="mt-2 flex justify-end space-x-4">
-                            <button 
-                                @click="approveProposal(proposal.id)" 
-                                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                Approve
-                            </button>
-                            <button 
-                                @click="rejectProposal(proposal.id)" 
-                                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                                Reject
-                            </button>
-                        </div> -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Show if no proposals available for the selected category -->
-            <div v-else>
-                <p class="text-center text-white">No trade proposals available for this category.</p>
-            </div>
-        </div>
-        <div v-if="approved.length > 0  && current_season > 0" >
-            <!-- Show 'End Trade' button if there are proposals -->
-            <!-- Tabs for categorizing proposals by role -->
-            <div class="flex mb-4 space-x-4 mt-6">
-                <button 
-                    v-for="(category, index) in categories" 
-                    :key="index" 
-                    @click="selectCategory(category)" 
-                    :class="['px-4 py-2 rounded', selectedCategory === category ? 'bg-blue-500 text-white' : 'bg-gray-200 text-gray-800']">
-                    {{ category }}
-                </button>
-            </div>
-
-            <!-- Display proposals by selected category -->
-            <div v-if="approvedByCategory[selectedCategory].length > 0">
-                <div class="grid grid-cols-2 gap-4">
-                    <div v-for="(proposal, index) in approvedByCategory[selectedCategory]" :key="proposal.id" 
-                    :style="
-                        gradientStyle(
-                        proposal?.to_team_secondary_color,
-                        proposal?.to_team_primary_color,
-                        proposal?.from_team_primary_color,
-                        proposal?.from_team_secondary_color
-                        )
-                    "
-                    class="border p-4 rounded-lg shadow-md">
-                        <div class="mt-4 flex justify-between items-center">
-                            <div 
-                            :style="
-                                gradientStyle(
-                                proposal?.to_team_primary_color,
-                                proposal?.to_team_primary_color,
-                                proposal?.to_team_primary_color,
-                                proposal?.to_team_primary_color,
-                                )
-                            "
-                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
-                                <h4 class="text-center font-semibold text-lg">{{ proposal.player_from_name }}</h4>
-                                <p class="text-center text-white">{{ proposal.from_team }} to {{ proposal.to_team }}</p>
-                                <p class="text-center text-white">{{ proposal.player_from_role }}</p>
-                                <div class="flex justify-center items-center mt-2">
-                                    <a href="#" @click.prevent="showProfile(proposal.player_from_id)" class="text-blue-500 underline">View Profile</a>
-                                </div>
-                            </div>
-
-                            <div class="mx-4 flex items-center">
-                                <span class="text-gray-600 font-semibold">→</span>
-                            </div>
-
-                            <div 
-                             :style="
-                                gradientStyle(
-                                proposal?.from_team_primary_color,
-                                proposal?.from_team_primary_color,
-                                proposal?.from_team_primary_color,
-                                proposal?.from_team_primary_color,
-                                )
-                            "
-                            class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md">
-                                <h4 class="text-center font-semibold text-lg">{{ proposal.player_to_name }}</h4>
-                                <p class="text-center text-white">{{ proposal.to_team }} to {{ proposal.from_team }}</p>
-                                <p class="text-center text-white">{{ proposal.player_to_role }}</p>
-                                <div class="flex justify-center items-center mt-2">
-                                    <a href="#" @click.prevent="showProfile(proposal.player_to_id)" class="text-blue-500 underline">View Profile</a>
-                                </div>
-                            </div>
-                        </div>
-                        <p class="text-gray-500 text-sm">Approved</p>
-                        <!-- <div class="mt-2 flex justify-end space-x-4">
-                            <button 
-                                @click="approveProposal(proposal.id)" 
-                                class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-                                Approve
-                            </button>
-                            <button 
-                                @click="rejectProposal(proposal.id)" 
-                                class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
-                                Reject
-                            </button>
-                        </div> -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Show if no proposals available for the selected category -->
-            <div v-else>
-                <p class="text-center text-white">No trade proposals available for this category.</p>
-            </div>
-        </div>
+    <!-- Show 'Generate Proposal' button if proposals are empty -->
+    <div
+      v-if="!trade_season_end"
+      class="flex text-2xl bg-gray-200 font-bold justify-center items-center p-4 mb-4 gap-3 mt-4 border-b"
+    >
+      <button
+        @click="generateTradeProposal"
+        v-if="!trade_season_end"
+        class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+      >
+        Generate Proposal
+      </button>
+      <button
+        @click="endTrade"
+        v-if="!trade_season_end"
+        class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
+      >
+        End Trade Season
+      </button>
     </div>
-
-    <!-- Modal for Player Profile -->
-    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
-        <div class="p-6 block">
-            <!-- Image Section -->
-            <PlayerPerformance v-if="selectedPlayer" :key="selectedPlayer" :player_id="selectedPlayer" />
+    <div
+      v-if="current_season > 0 || (proposals.length > 0 && !trade_season_end)"
+      class="text-right mb-4 mt-4"
+    >
+      <button
+        @click="autoTrade"
+        v-if="isTradeDone > 0"
+        class="px-4 py-2 bg-green-500 mr-4 text-white rounded hover:bg-red-600"
+      >
+        Let AI Decide
+      </button>
+    </div>
+    <!-- Display list of proposals -->
+    <div v-if="proposals.length > 0 && current_season > 0">
+      <!-- Show 'End Trade' button if there are proposals -->
+      <div v-if="proposals.length > 0" class="grid grid-cols-3 xs:grid-cols-1 p-2 gap-3">
+        <div
+          class="bg-gray-200 p-4 rounded-2xl"
+          v-for="(proposal, index) in proposals"
+          :key="index"
+        >
+          <p v-if="isTradeDone > 0">
+            A proposed {{ proposal.team_count }}-team trade involves the following
+            <b v-for="(teams, index) in proposal?.team_name_involved">
+                {{ teams }} {{ index == proposal.team_count - 1 ? "" : "," }}
+            </b>.
+          </p>
+          <p v-else>
+            Breaking news: {{ proposal.team_count }}-team trade approved involving
+            <b v-for="(teams, index) in proposal?.team_name_involved">
+                {{ teams }} {{ index == proposal.team_count - 1 ? "" : "," }}
+            </b>.
+          </p>
+          <!-- {{ proposal }} -->
+          <div :class="'grid-cols-'+((proposal.team_count % 2 == 0) ? 2 : 1)" class="grid gap-4  border p-4 rounded-lg shadow-md">
+            <div
+              class="p-2 rounded-lg"
+              v-for="(player, index) in proposal.players"
+              :key="player.iplayer_idd"
+            >
+                <div
+                  :style="
+                    gradientStyle(
+                      player?.to_team_primary_color,
+                      player?.to_team_primary_color,
+                      player?.to_team_primary_color,
+                      player?.to_team_primary_color
+                    )
+                  "
+                  class="flex-1 p-4 bg-gray-50 rounded-lg shadow-md"
+                >
+                  <h4 class="text-center font-semibold text-lg">
+                    {{ player.player_name }}
+                  </h4>
+                  <p class="text-center text-white">
+                    {{ player.from_team }} to {{ player.to_team }}
+                  </p>
+                  <p class="text-center text-white">{{ player.role }}</p>
+                  <div class="flex justify-center items-center mt-2">
+                    <a
+                      href="#"
+                      @click.prevent="showProfile(player.player_id)"
+                      class="text-blue-500 underline"
+                      >View Profile</a
+                    >
+                  </div>
+                </div>
+              
+            </div>
+            <p class="text-black text-sm uppercase font-bold">{{ proposal.status }}</p>
+            <!-- <div class="mt-2 flex justify-end space-x-4">
+                        <button 
+                            @click="approveProposal(proposal.id)" 
+                            class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                            Approve
+                        </button>
+                        <button 
+                            @click="rejectProposal(proposal.id)" 
+                            class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600">
+                            Reject
+                        </button>
+                    </div> -->
+          </div>
         </div>
-    </Modal>
+      </div>
+
+      <!-- Show if no proposals available for the selected category -->
+      <div v-else>
+        <p class="text-center text-white">
+          No trade proposals available for this season.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for Player Profile -->
+  <Modal
+    :show="showPlayerProfileModal"
+    :maxWidth="'6xl'"
+    title="Player Profile"
+    @close="showPlayerProfileModal = false"
+  >
+    <div class="p-6 block">
+      <!-- Image Section -->
+      <PlayerPerformance
+        v-if="selectedPlayer"
+        :key="selectedPlayer"
+        :player_id="selectedPlayer"
+      />
+    </div>
+  </Modal>
 </template>
 <script setup>
 import { ref, onMounted } from "vue";
@@ -219,108 +142,67 @@ import Swal from "sweetalert2";
 import axios from "axios";
 import Modal from "@/Components/Modal.vue";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
-import { gradientStyle } from  "@/Utility/Formatter";
+import { gradientStyle } from "@/Utility/Formatter";
 const emits = defineEmits(["newSeason"]);
 const props = defineProps({
-    isOffSeason:{
-        type: Boolean,
-        default: true,
-    },
+  isOffSeason: {
+    type: Boolean,
+    default: true,
+  },
 });
 const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);
 const proposals = ref([]);
-const approved = ref([]);
 const current_season = ref(null);
 const trade_season_end = ref(false);
-const selectedCategory = ref("star player"); // Default category
-const categories = ref(["star player","all star", "starter", "role player", "bench"]); // Categories for roles
-const proposalsByCategory = ref({
-    "star player": [],
-    "all star": [],
-    "starter": [],
-    "role player": [],
-    "bench": []
-});
-const approvedByCategory = ref({
-    "star player": [],
-    "all star": [],
-    "starter": [],
-    "role player": [],
-    "bench": []
-});
+const isTradeDone = ref(false);
+
 onMounted(async () => {
-    await fetchPendingTradeProposals();
-    await fetchApprovedTradeProposals();
+  loadData();
 });
 
-const selectCategory = (category) => {
-    selectedCategory.value = category;
+const loadData = async () => {
+  await fetchPendingTradeProposals();
+  if (isTradeDone.value == 0) {
+    await fetchApprovedTradeProposals();
+  }
+//   console.log(isTradeDone.value);
 };
-
 const showProfile = (playerId) => {
-    selectedPlayer.value = playerId;
-    showPlayerProfileModal.value = true;
+  selectedPlayer.value = playerId;
+  showPlayerProfileModal.value = true;
 };
 
 // Fetch trade candidates
 const fetchPendingTradeProposals = async () => {
-    try {
-        const response = await axios.post(route("trade.list.pending"),{is_off_season: props.isOffSeason}); // Update with your API endpoint
-        proposals.value = response.data.trade_proposals;
-        current_season.value = response.data.current_season;
-        categorizeProposalsByRole();
-    } catch (error) {
-        console.error("Error fetching available proposals:", error);
-    }
+  try {
+    const response = await axios.post(route("trade.list.pending"), {
+      is_off_season: props.isOffSeason,
+    }); // Update with your API endpoint
+    proposals.value = response.data.trade_proposals;
+    isTradeDone.value = response.data.trade_proposals.length;
+    current_season.value = response.data.current_season;
+  } catch (error) {
+    console.error("Error fetching available proposals:", error);
+  }
 };
 const fetchApprovedTradeProposals = async () => {
-    try {
-        const response = await axios.post(route("trade.list.approved"),{is_off_season: props.isOffSeason}); // Update with your API endpoint
-        approved.value = response.data.trade_proposals;
-        current_season.value = response.data.current_season;
-        trade_season_end.value = response.data.trade_season_end;
-        categorizeApprovedProposalsByRole();
-    } catch (error) {
-        console.error("Error fetching available proposals:", error);
-    }
+  try {
+    const response = await axios.post(route("trade.list.approved"), {
+      is_off_season: props.isOffSeason,
+    }); // Update with your API endpoint
+    proposals.value = response.data.trade_proposals;
+    current_season.value = response.data.current_season;
+    trade_season_end.value = response.data.trade_season_end;
+  } catch (error) {
+    console.error("Error fetching available proposals:", error);
+  }
 };
-// Categorize proposals by role
-const categorizeProposalsByRole = () => {
-    // Clear current categorization
-    proposalsByCategory.value["star player"] = [];
-    proposalsByCategory.value["all star"] = [];
-    proposalsByCategory.value["starter"] = [];
-    proposalsByCategory.value["role player"] = [];
-    proposalsByCategory.value["bench"] = [];
 
-    proposals.value.forEach(proposal => {
-        const role = proposal.player_to_role.toLowerCase();
-        if (proposalsByCategory.value[role]) {
-            proposalsByCategory.value[role].push(proposal);
-        }
-    });
-};
-const categorizeApprovedProposalsByRole = () => {
-    // Clear current categorization
-    approvedByCategory.value["star player"] = [];
-    approvedByCategory.value["all star"] = [];
-    approvedByCategory.value["starter"] = [];
-    approvedByCategory.value["role player"] = [];
-    approvedByCategory.value["bench"] = [];
-
-    approved.value.forEach(proposal => {
-        const role = proposal.player_to_role.toLowerCase();
-
-        if (approvedByCategory.value[role]) {
-            approvedByCategory.value[role].push(proposal);
-        }
-    });
-};
 // Handle pagination (if needed)
 const handlePagination = (page_num) => {
-    search.value.page_num = page_num;
-    fetchPendingTradeProposals();
+  search.value.page_num = page_num;
+  fetchPendingTradeProposals();
 };
 
 // End trade function (currently not used here)
@@ -328,119 +210,127 @@ const endTrade = async () => {
   try {
     // 1️⃣  fire‑and‑forget: no await here
     Swal.fire({
-      title: 'Processing...',
-      text: 'Ending trade...',
-      icon: 'info',
+      title: "Processing...",
+      text: "Ending trade...",
+      icon: "info",
       allowOutsideClick: false,
       allowEscapeKey: false,
       showConfirmButton: false,
       didOpen: () => {
         Swal.showLoading();
-      }
+      },
     });
 
     // 2️⃣  do the API call
-    await axios.post(route(props.isOffSeason ? 'trade.end.offseason'
-                                            : 'trade.end.inseason'));
+    await axios.post(
+      route(props.isOffSeason ? "trade.end.offseason" : "trade.end.inseason")
+    );
 
     // 3️⃣  close loader & show success
     await Swal.close();
     await Swal.fire({
-      title: 'Success!',
-      text: 'Trade successfully completed and season storyline summary created!',
-      icon: 'success',
-      confirmButtonText: 'OK'
+      title: "Success!",
+      text: "Trade successfully completed and season storyline summary created!",
+      icon: "success",
+      confirmButtonText: "OK",
     });
 
     // 4️⃣  follow‑up logic
     fetchApprovedTradeProposals();
-    emits('newSeason', Math.random());
+    emits("newSeason", Math.random());
   } catch (error) {
     await Swal.close();
     await Swal.fire({
-      title: 'Error!',
-      text: error.response?.data?.message
-            || 'Failed to end trade or create storyline summary',
-      icon: 'error',
-      confirmButtonText: 'OK'
+      title: "Error!",
+      text:
+        error.response?.data?.message ||
+        "Failed to end trade or create storyline summary",
+      icon: "error",
+      confirmButtonText: "OK",
     });
-    console.error('Error in endTrade:', error);
+    console.error("Error in endTrade:", error);
   }
 };
 
 const autoTrade = async () => {
-    // Show the "Processing" Swal when the function is called
-    const processingSwal = Swal.fire({
-        title: 'Processing...',
-        text: 'Please wait while the AI decides the trade proposals.',
-        icon: 'info',
-        showConfirmButton: false,
-        willOpen: () => {
-            Swal.showLoading();
-        }
+  // Show the "Processing" Swal when the function is called
+  const processingSwal = Swal.fire({
+    title: "Processing...",
+    text: "Please wait while the AI decides the trade proposals.",
+    icon: "info",
+    showConfirmButton: false,
+    willOpen: () => {
+      Swal.showLoading();
+    },
+  });
+  try {
+    const response = await axios.post(route("trade.decision.automated"), {
+      is_off_season: props.isOffSeason,
     });
-    try {
-        const response = await axios.post(route("trade.decision.automated"),{is_off_season: props.isOffSeason});
-        
-        if (response && response.data && response.data.decisions) {
-            proposals.value = []; //clear pending proposals
-            fetchApprovedTradeProposals();
-            emits("newSeason", Math.random());
-        }
 
-        // Close the processing Swal once the response is processed
-        processingSwal.close();
-    } catch (error) {
-        console.error("Error deciding trade:", error);
-
-        // Close the processing Swal when error occurs
-        processingSwal.close();
-
-        // Show error Swal with the response error message
-        await Swal.fire({
-            title: 'Error!',
-            text: error.response ? error.response.data.message : 'An error occurred.',
-            icon: 'error',
-        });
+    if (response && response.data && response.data.decisions) {
+      proposals.value = []; //clear pending proposals
+      fetchApprovedTradeProposals();
+      emits("newSeason", Math.random());
     }
+
+    // Close the processing Swal once the response is processed
+    processingSwal.close();
+  } catch (error) {
+    console.error("Error deciding trade:", error);
+
+    // Close the processing Swal when error occurs
+    processingSwal.close();
+
+    // Show error Swal with the response error message
+    await Swal.fire({
+      title: "Error!",
+      text: error.response ? error.response.data.message : "An error occurred.",
+      icon: "error",
+    });
+  }
 };
 
 // Generate new trade proposal
 const generateTradeProposal = async () => {
-    try {
-        // Show the processing Swal
-        const swalProcessing = Swal.fire({
-            title: 'Processing...',
-            text: 'Please wait while we generate the trade proposal.',
-            icon: 'info',
-            showConfirmButton: false,
-            willOpen: () => {
-                Swal.showLoading();
-            }
-        });
+  try {
+    // Show the processing Swal
+    const swalProcessing = Swal.fire({
+      title: "Processing...",
+      text: "Please wait while we generate the trade proposal.",
+      icon: "info",
+      showConfirmButton: false,
+      willOpen: () => {
+        Swal.showLoading();
+      },
+    });
 
-        // Make the API request
-        const response = await axios.post(route("trade.generate"),{is_off_season: props.isOffSeason}); // Update with your API endpoint
+    // Make the API request
+    const response = await axios.post(route("trade.generate"), {
+      is_off_season: props.isOffSeason,
+    }); // Update with your API endpoint
 
-        // Close the processing Swal once the API call finishes
-        swalProcessing.close();
+    // Close the processing Swal once the API call finishes
+    swalProcessing.close();
 
-        if (response) {
-            await Swal.fire({
-                title: 'Proposal Generated!',
-                text: 'A new trade proposal has been generated.',
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-            fetchPendingTradeProposals(); // Refresh proposals list
-        }
-    } catch (error) {
-        console.error("Error generating trade proposal:", error);
-        await Swal.fire({
-            title: 'Error!',
-            text: error.response?.data?.message || "An error occurred while generating the trade proposal.",
-            icon: 'error',
-        });
+    if (response) {
+      await Swal.fire({
+        title: "Proposal Generated!",
+        text: "A new trade proposal has been generated.",
+        icon: "success",
+        confirmButtonText: "OK",
+      });
+      fetchPendingTradeProposals(); // Refresh proposals list
     }
+  } catch (error) {
+    console.error("Error generating trade proposal:", error);
+    await Swal.fire({
+      title: "Error!",
+      text:
+        error.response?.data?.message ||
+        "An error occurred while generating the trade proposal.",
+      icon: "error",
+    });
+  }
 };
 </script>

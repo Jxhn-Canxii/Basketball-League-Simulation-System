@@ -23,6 +23,7 @@ use App\Http\Controllers\PlayerStatsController;
 use App\Http\Controllers\TeamStatsController;
 use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\PlayoffStatsController;
+use App\Http\Controllers\ArchiveController;
 use App\Http\Controllers\NewsController;
 use App\Http\Controllers\HelperController;
 use Illuminate\Support\Facades\DB;
@@ -42,6 +43,7 @@ class SimulateController extends Controller
     protected $playOffStats;
     protected $helper;
     protected $news;
+    protected $archive;
 
     public function __construct()
     {
@@ -57,6 +59,7 @@ class SimulateController extends Controller
         $this->teamStreak = new TeamStreakController();
         $this->freeAgent = new FreeAgentController();
         $this->news = new NewsController();
+        $this->archive = new ArchiveController();
         $this->helper = new HelperController();
     }
 
@@ -1641,7 +1644,7 @@ class SimulateController extends Controller
                 $season->status = 2;
                 $season->save();
 
-                $this->playOffStats->saveStandingsSnapshot();
+                $this->archive->saveStandingsSnapshot();
                 $this->playOffStats->updatePlayoffQualifiedFlags();
             }
         }

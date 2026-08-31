@@ -33,62 +33,6 @@ class PlayoffStatsController extends Controller
     }
     // Helper methods for stat calculation
 
-    public function saveStandingsSnapshot()
-    {
-        try {
-            $snapshots = DB::table('standings_view')
-                ->select(
-                    'team_id',
-                    'team_name',
-                    'team_city',
-                    'team_acronym',
-                    'primary_color',
-                    'secondary_color',
-                    'conference_id',
-                    'conference_name',
-                    'season_id',
-                    'wins',
-                    'losses',
-                    'total_home_score',
-                    'total_away_score',
-                    'total_points_for',
-                    'total_points_against',
-                    'home_ppg',
-                    'away_ppg',
-                    'total_points_for_avg',
-                    'total_points_against_avg',
-                    'score_difference',
-                    'conference_rank',
-                    'overall_rank',
-                    'is_defending_champion',
-                    'chemistry',
-                    'last_playoff_season_name',
-                    'playoff_appearances',
-                    'finals_appearances',
-                    'conference_finals_appearances',
-                    'conference_championships',
-                    'championships',
-                    'streak_status',
-                    'last_5_games'
-                )
-                ->get();
-
-            foreach ($snapshots as $snapshot) {
-                DB::table('standings_snapshots')->updateOrInsert(
-                    [
-                        'team_id' => $snapshot->team_id,
-                        'season_id' => $snapshot->season_id,
-                    ],
-                    (array) $snapshot
-                );
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Standing Snapshot Error' . $e->getMessage(),
-            ], 500);
-        }
-    }
-
     public function updateFinalsBonusContract($teamId, $seasonId, $teamName)
     {
         // Retrieve all active players for the specified team

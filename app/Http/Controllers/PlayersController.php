@@ -23,7 +23,8 @@ class PlayersController extends Controller
     protected $helper;
     protected $scout;
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->helper = new HelperController();
         $this->scout = new ScoutController();
     }
@@ -103,17 +104,17 @@ class PlayersController extends Controller
                         ->where('player_id', $player->id)
                         ->where('season_id', $seasonId)
                         ->value('overall_rating') ??  75;
-                    
+
                     $latestRatings = ($seasonId == 1) ? $player->overall_rating : $latestRatings;
 
                     $prevRatings = ($seasonId == 1) ? $player->overall_rating  :  DB::table('player_ratings')
                         ->where('player_id', $player->id)
-                        ->where('season_id', $seasonId -1)
+                        ->where('season_id', $seasonId - 1)
                         ->value('overall_rating') ?? 75;
 
                     $prevRatings = ($seasonId == 1) ? $player->overall_rating : $prevRatings;
-                    
-                    $hasImproved = $this->helper->hasImproved($latestRatings,$prevRatings);
+
+                    $hasImproved = $this->helper->hasImproved($latestRatings, $prevRatings);
                     // $hasImproved = 'Latest: '.$latestRatings.' - Prev: '.$prevRatings;                  // Count seasons played with the team
                     $seasonsPlayedWithTeam = DB::table('player_season_stats_archives')
                         ->select(DB::raw('DISTINCT season_id, team_id'))
@@ -132,7 +133,7 @@ class PlayersController extends Controller
                     $playerStatus = $player->team_id == $teamId ? ($player->is_active ? 1 : 0) : 2;
                     $playerCUtfromFinalRoster = ($player->team_id != $teamId && $player->is_active && $stats->total_games_played == 0) ? 1 : 0;
                     // Add player stats to the array
-                    if($playerCUtfromFinalRoster) continue;
+                    if ($playerCUtfromFinalRoster) continue;
 
                     $playerStats[] = [
                         'player_id' => $player->id,
@@ -813,13 +814,13 @@ class PlayersController extends Controller
             $potentialRating = rand(99);
         } elseif ($overallRating >= 85 && $overallRating <= 89) {
             $role = 'all star';
-            $potentialRating = rand(90,95);
+            $potentialRating = rand(90, 95);
         } elseif ($overallRating >= 75 && $overallRating <= 84) {
             $role = 'starter';
-            $potentialRating = rand(85,90);
+            $potentialRating = rand(85, 90);
         } elseif ($overallRating >= 60 && $overallRating <= 74) {
             $role = 'role player';
-            $potentialRating = rand(75,85);
+            $potentialRating = rand(75, 85);
         } else {
             $role = 'bench';
             $potentialRating = 74;
@@ -1290,7 +1291,7 @@ class PlayersController extends Controller
         $playerId = $request->player_id;
 
         // Fetch player season stats for the given player
-        $playerStatsLatest = DB::table('player_season_stats')
+        $playerStatsLatest = DB::table('player_season_stats as player_season_stats')
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
             ->join('seasons', 'player_season_stats.season_id', '=', 'seasons.id') // Join with seasons table
@@ -1348,6 +1349,7 @@ class PlayersController extends Controller
             )
             ->orderBy('player_season_stats.season_id', 'desc') // Sort by season_id in descending order
             ->get();
+
 
         $playerStats = DB::table('player_season_stats_archives as player_season_stats')
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
@@ -1408,8 +1410,8 @@ class PlayersController extends Controller
             ->orderBy('player_season_stats.season_id', 'desc') // Sort by season_id in descending order
             ->get();
 
-        
-        if($playerStats->isEmpty() && $playerStatsLatest->isEmpty()) {
+
+        if ($playerStats->isEmpty() && $playerStatsLatest->isEmpty()) {
             return response()->json([
                 'error' => 'No stats found for the given player.',
                 'player_stats' => [],
@@ -1470,6 +1472,8 @@ class PlayersController extends Controller
                 'total_three_point_attempts' => $stats->total_three_point_attempts,
                 'total_free_throws_made' => $stats->total_free_throws_made,
                 'total_free_throw_attempts' => $stats->total_free_throw_attempts,
+
+                'latest' => true,
             ];
         }
 
@@ -1524,11 +1528,14 @@ class PlayersController extends Controller
                 'total_three_point_attempts' => $stats->total_three_point_attempts,
                 'total_free_throws_made' => $stats->total_free_throws_made,
                 'total_free_throw_attempts' => $stats->total_free_throw_attempts,
+
+                'latest' => false,
             ];
         }
 
         return response()->json([
             'player_stats' => $formattedPlayerStats,
+            'checked' => true,
         ]);
     }
 
@@ -1602,9 +1609,10 @@ class PlayersController extends Controller
             ->get();
 
 
-         // Fetch player season stats for the given player
-        
-         $playerStatsLatest = DB::table('player_season_playoff_stats')
+        // Fetch player season stats for the given player
+
+
+        $playerStatsLatest = DB::table('player_season_playoff_stats')
             ->join('players', 'player_season_playoff_stats.player_id', '=', 'players.id')
             ->join('teams', 'player_season_playoff_stats.team_id', '=', 'teams.id')
             ->join('seasons', 'player_season_playoff_stats.season_id', '=', 'seasons.id') // Join with seasons table
@@ -1662,8 +1670,9 @@ class PlayersController extends Controller
             )
             ->orderBy('player_season_playoff_stats.season_id', 'desc') // Sort by season_id in descending order
             ->get();
-        
-        if ($playerStats->isEmpty() && $playerStats->isEmpty()) {
+
+
+        if ($playerStats->isEmpty() && $playerStatsLatest->isEmpty()) {
             return response()->json([
                 'error' => 'No stats found for the given player.',
                 'player_stats' => [],
@@ -2001,7 +2010,7 @@ class PlayersController extends Controller
                 'teams.name as team_name'
             ]);
 
-            $scoutingReportData = [
+        $scoutingReportData = [
             'potential_rating' => $playerDetails->potential_rating,
             'overall_rating' => $playerDetails->overall_rating,
             'basketball_iq_rating' => $playerDetails->basketball_iq_rating,
@@ -2068,7 +2077,7 @@ class PlayersController extends Controller
         $playerDatabase = $this->helper->getPlayerStatsDatabaseName($seasonId);
 
         // Fetch player game logs for the given player and season with pagination
-        $playerGameLogs = DB::table($playerDatabase.' as player_game_stats')
+        $playerGameLogs = DB::table($playerDatabase . ' as player_game_stats')
             ->join('players', 'player_game_stats.player_id', '=', 'players.id')
             ->join('teams as player_team', 'player_game_stats.team_id', '=', 'player_team.id') // Join with player's team to get team name
             ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
@@ -2101,7 +2110,7 @@ class PlayersController extends Controller
             ->get();
 
         // Fetch total count of records for pagination info
-        $totalRecords = DB::table($playerDatabase.' as player_game_stats')
+        $totalRecords = DB::table($playerDatabase . ' as player_game_stats')
             ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
             ->where('player_game_stats.player_id', $playerId)
             ->where('player_game_stats.season_id', $seasonId)
@@ -2688,7 +2697,7 @@ class PlayersController extends Controller
 
         // Map results and add details using roundFormat()
         $injuryHistory = $injuryHistory->map(function ($item) {
-            $roundLabel = $this->formatRound($item->round,$item->game_number);
+            $roundLabel = $this->formatRound($item->round, $item->game_number);
 
             if ($item->team_id == $item->home_id) {
                 $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->away_team}";
@@ -2950,7 +2959,7 @@ class PlayersController extends Controller
     {
         switch ($round) {
             case 'play_ins_elims_round_1':
-                return 'Conference Play-ins (7th vs 8th)'; 
+                return 'Conference Play-ins (7th vs 8th)';
             case 'play_ins_elims_round_2':
                 return 'Conference Play-ins (9th vs 10th)';
             case 'play_ins_elims':
