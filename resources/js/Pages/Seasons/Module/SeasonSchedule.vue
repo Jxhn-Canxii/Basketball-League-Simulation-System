@@ -347,7 +347,7 @@
 
                         try {
                             await simulateGameWithResults(gameId.id,gameId.conference_id);
-                            await new Promise((resolve) => setTimeout(resolve, 2000));
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
 
                             // Remove successfully simulated game from failedGames if it exists
                             failedGames.delete(gameId);
@@ -435,12 +435,12 @@
             emit('transaction_id',conference_id);
 
             // Start flipping between views
-            if (flipTimer.value) clearInterval(flipTimer.value);
-            flipTimer.value = setInterval(() => {
-                showGameResults.value = !showGameResults.value;
-            }, 4000);
+            // if (flipTimer.value) clearInterval(flipTimer.value);
+            // flipTimer.value = setInterval(() => {
+            //     showGameResults.value = !showGameResults.value;
+            // }, 2000);
     
-            await new Promise((resolve) => setTimeout(resolve, 8000)); // Allow 3 flips
+            await new Promise((resolve) => setTimeout(resolve, 500)); // Allow 3 flips
 
             // Clear the interval when moving to next game
             if (flipTimer.value) {
