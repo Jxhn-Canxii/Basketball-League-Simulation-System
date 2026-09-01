@@ -19,7 +19,6 @@ use Carbon\Carbon;
 
 class PlayoffController extends Controller
 {
-
     protected $helper;
 
     public function __construct(){
@@ -58,7 +57,7 @@ class PlayoffController extends Controller
     }
 
 
-    private static function getLastFullyFinishedRound($seasonId)
+    private function getLastFullyFinishedRound($seasonId)
     {
         // Get distinct rounds ordered descending (latest first)
         $rounds = DB::table('playoff_series')
@@ -87,7 +86,7 @@ class PlayoffController extends Controller
     }
 
 
-    private static function getOngoingRound($seasonId)
+    private function getOngoingRound($seasonId)
     {
         return DB::table('playoff_series')
             ->where('season_id', $seasonId)
@@ -566,7 +565,7 @@ class PlayoffController extends Controller
 
 
     //start playoff algo
-    public static function playoffSchedule(Request $request)
+    public function playoffSchedule(Request $request)
     {
         try {
             // Retrieve inputs
@@ -603,16 +602,16 @@ class PlayoffController extends Controller
             // Check if the current round already exists
             $currentRoundExists = $schedules->where('round', $round)->isNotEmpty();
 
-            // $getOngoingRound = self::getOngoingRound($seasonId);
+            // $getOngoingRound = $this->getOngoingRound($seasonId);
 
             // if (!empty($getOngoingRound)) {
-            //     self::processOngoingSeriesSchedules($seasonId, $getOngoingRound);
-            //     self::updateSeasonPlayoffRound($seasonId, $getOngoingRound);
+            //     $this->processOngoingSeriesSchedules($seasonId, $getOngoingRound);
+            //     $this->updateSeasonPlayoffRound($seasonId, $getOngoingRound);
 
             // }
 
             // if (!$allPrevRoundsSeriesFinished) {
-            //     self::processOngoingSeriesSchedules($seasonId, $prev_round);
+            //     $this->processOngoingSeriesSchedules($seasonId, $prev_round);
 
             //     return response()->json([
             //         'message' => 'Prev round series schedule is ongoing. Cannot create series schedule for next round.',
@@ -620,7 +619,7 @@ class PlayoffController extends Controller
             // }
 
             if ($currentRoundExists) {
-                // self::processOngoingSeriesSchedules($seasonId, $round);
+                // $this->processOngoingSeriesSchedules($seasonId, $round);
                 return response()->json([
                     'message' => 'Round schedule already created',
                 ], 500);
@@ -639,12 +638,12 @@ class PlayoffController extends Controller
             // Logic based on playoff type
             if ($playoff_type == 1) {
                 if ($conferenceCount < 4) {
-                    return self::playoffschedulebyrank($request);
+                    return $this->playoffschedulebyrank($request);
                 } else {
-                    return self::playoffschedulebyconference($request);
+                    return $this->playoffschedulebyconference($request);
                 }
             } else {
-                return self::playoffSeriesScheduleByConference($request);
+                return $this->playoffSeriesScheduleByConference($request);
             }
         } catch (\Throwable $e) {
             return response()->json([
@@ -656,7 +655,7 @@ class PlayoffController extends Controller
         }
     }
 
-    private static function playoffScheduleByRank($request)
+    private function playoffScheduleByRank($request)
     {
         // Retrieve inputs
         $seasonId = $request->season_id;
@@ -665,7 +664,7 @@ class PlayoffController extends Controller
 
         // Update season champions and losers if needed
         if (($start == 16 && $round === 'round_of_16')) {
-            self::updateSeasonChampionsAndLosers($seasonId);
+            $this->updateSeasonChampionsAndLosers($seasonId);
         }
 
         // Retrieve the league_id from the seasons table
@@ -691,8 +690,8 @@ class PlayoffController extends Controller
             ->toArray();
 
         if ($round == 'finals') {
-            $pairings = self::generatePairingsOneConference($seasonId, 0, $round);
-            $allSchedules = self::createSchedule($pairings, $seasonId, $round, 0);
+            $pairings = $this->generatePairingsOneConference($seasonId, 0, $round);
+            $allSchedules = $this->createSchedule($pairings, $seasonId, $round, 0);
         } else {
             //round of 32,round of 36 and quarter finals
             // Determine the number of top teams to select per conference
@@ -708,10 +707,10 @@ class PlayoffController extends Controller
                     ->toArray();
 
                 // Generate pairings for the round of 16 (or other rounds)
-                $pairings = ($round == 'round_of_16') ? self::pairTeams($topTeamsByConferenceRank, 8) : self::generatePairingsOneConference($seasonId, $conferenceId, $round);
+                $pairings = ($round == 'round_of_16') ? $this->pairTeams($topTeamsByConferenceRank, 8) : $this->generatePairingsOneConference($seasonId, $conferenceId, $round);
 
                 // Create the playoff schedule for the specified round for the current conference
-                $schedule = self::createSchedule($pairings, $seasonId, $round, $conferenceId);
+                $schedule = $this->createSchedule($pairings, $seasonId, $round, $conferenceId);
 
                 // Append the current conference's schedule to the allSchedules array
                 $allSchedules = array_merge($allSchedules, $schedule);
@@ -719,9 +718,9 @@ class PlayoffController extends Controller
         }
         // Insert all playoff schedules into the database in a single batch
         try {
-            self::insertSchedule($seasonId, $round, $allSchedules);
+            $this->insertSchedule($seasonId, $round, $allSchedules);
 
-            self::updateSeasonPlayoffRound($seasonId, $round);
+            $this->updateSeasonPlayoffRound($seasonId, $round);
             // If the schedule was inserted successfully, return a success response
             return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
         } catch (Exception $e) {
@@ -730,7 +729,7 @@ class PlayoffController extends Controller
         }
     }
 
-    private static function playoffScheduleByConference($request)
+    private function playoffScheduleByConference($request)
     {
         // Retrieve inputs
         try {
@@ -742,7 +741,7 @@ class PlayoffController extends Controller
 
             // Update season champions and losers if needed
             if ($start == 16 && $round === 'play_ins_elims_round_1') {
-                self::updateSeasonChampionsAndLosers($seasonId);
+                $this->updateSeasonChampionsAndLosers($seasonId);
             }
 
             // Retrieve the league_id from the seasons table
@@ -777,12 +776,12 @@ class PlayoffController extends Controller
 
             if ($round == 'play_ins_elims_round_1') {
                 foreach ($conferences as $conferenceId) {
-                    $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
+                    $scheduleFirstRound = $this->getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
                     $allSchedules = array_merge($allSchedules, $scheduleFirstRound);
                 }
             } else if ($round == 'play_ins_elims_round_2') {
                 foreach ($conferences as $conferenceId) {
-                    $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
+                    $scheduleFirstRound = $this->getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
                     $allSchedules = array_merge($allSchedules, $scheduleFirstRound);
                 }
             } else if ($round == 'play_ins_finals') {
@@ -835,16 +834,16 @@ class PlayoffController extends Controller
 
 
                     // **Play-In Finals**: The loser of 7th vs 8th faces the winner of 9th vs 10th
-                    $playInFinalsTeams = self::pairTeams([$loser7vs8, $winner9vs10], 2);
+                    $playInFinalsTeams = $this->pairTeams([$loser7vs8, $winner9vs10], 2);
 
                     // Create the schedule for the Play-In Finals
-                    // self::pairTeams($topTeamsByOverallRank, 8)
-                    $schedulePlayInFinals = self::createSchedule($playInFinalsTeams, $seasonId, 'play_ins_finals', $conferenceId);
+                    // $this->pairTeams($topTeamsByOverallRank, 8)
+                    $schedulePlayInFinals = $this->createSchedule($playInFinalsTeams, $seasonId, 'play_ins_finals', $conferenceId);
                     $allSchedules = array_merge($allSchedules, $schedulePlayInFinals);
                 }
             } else if ($round == 'interconference_semi_finals' || $round == 'finals') {
-                $pairings = self::generatePairings16($seasonId, 0, $round);
-                $allSchedules = self::createSchedule($pairings, $seasonId, $round, 0);
+                $pairings = $this->generatePairings16($seasonId, 0, $round);
+                $allSchedules = $this->createSchedule($pairings, $seasonId, $round, 0);
             } else {
                 //round of 32,round of 36 and quarter finals
                 // Determine the number of top teams to select per conference
@@ -880,7 +879,7 @@ class PlayoffController extends Controller
                     $conferenceTeams = array_slice($conferenceTeams, 0, 6); // Take the first 6 teams
 
                     // Get the results of the Play-In Elimination Round 1 and Play-In Finals to determine the winners
-                    $playInTeams = self::getPlayInEliminationTeams($seasonId, $conferenceId);
+                    $playInTeams = $this->getPlayInEliminationTeams($seasonId, $conferenceId);
 
                     $winnerPlayInRound1 = $playInTeams['winner_of_7vs8']; // Winner of 7th vs 8th (Play-In Elimination Round 1)
                     $winnerPlayInFinals = $playInTeams['winner_of_9vs10']; // Winner of 9th vs 10th (Play-In Finals)
@@ -893,10 +892,10 @@ class PlayoffController extends Controller
                     $topTeamsByOverallRank = $conferenceTeams; // Now this contains the 8 teams (6 top + 2 play-in winners)
 
                     // Generate pairings for the round of 16 (or other rounds)
-                    $pairings = ($round == 'round_of_16') ? self::pairTeams($topTeamsByOverallRank, 8) : self::generatePairings16($seasonId, $conferenceId, $round);
+                    $pairings = ($round == 'round_of_16') ? $this->pairTeams($topTeamsByOverallRank, 8) : $this->generatePairings16($seasonId, $conferenceId, $round);
 
                     // Create the playoff schedule for the specified round for the current conference
-                    $schedule = self::createSchedule($pairings, $seasonId, $round, $conferenceId);
+                    $schedule = $this->createSchedule($pairings, $seasonId, $round, $conferenceId);
 
                     // Append the current conference's schedule to the allSchedules array
                     $allSchedules = array_merge($allSchedules, $schedule);
@@ -905,9 +904,9 @@ class PlayoffController extends Controller
             // Insert all playoff schedules into the database in a single batch
 
             try {
-                self::insertSchedule($seasonId, $round, $allSchedules);
+                $this->insertSchedule($seasonId, $round, $allSchedules);
 
-                self::updateSeasonPlayoffRound($seasonId, $round);
+                $this->updateSeasonPlayoffRound($seasonId, $round);
                 // If the schedule was inserted successfully, return a success response
                 return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
             } catch (Exception $e) {
@@ -920,7 +919,7 @@ class PlayoffController extends Controller
         }
     }
 
-    private static function playoffSeriesScheduleByConference($request)
+    private function playoffSeriesScheduleByConference($request)
     {
         try {
             $seasonId = $request->season_id;
@@ -929,7 +928,7 @@ class PlayoffController extends Controller
 
             // Update season champions and losers if needed
             if ($start == 16 && $round === 'play_ins_elims_round_1') {
-                self::updateSeasonChampionsAndLosers($seasonId);
+                $this->updateSeasonChampionsAndLosers($seasonId);
             }
 
             // Retrieve the league_id from the seasons table
@@ -969,9 +968,9 @@ class PlayoffController extends Controller
 
             if ($round == 'play_ins_elims_round_1') {
                 foreach ($conferences as $conferenceId) {
-                    $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
+                    $scheduleFirstRound = $this->getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
 
-                    list($seriesData, $scheduleData) = self::createPlayInSeriesAndSchedule(
+                    list($seriesData, $scheduleData) = $this->createPlayInSeriesAndSchedule(
                         $scheduleFirstRound,
                         $seasonId,
                         $round,
@@ -983,9 +982,9 @@ class PlayoffController extends Controller
                 }
             } else if ($round == 'play_ins_elims_round_2') {
                 foreach ($conferences as $conferenceId) {
-                    $scheduleFirstRound = self::getPlayInSchedule($seasonId, $conferenceId, [9, 10], 2, $round);
+                    $scheduleFirstRound = $this->getPlayInSchedule($seasonId, $conferenceId, [9, 10], 2, $round);
 
-                    list($seriesData, $scheduleData) = self::createPlayInSeriesAndSchedule(
+                    list($seriesData, $scheduleData) = $this->createPlayInSeriesAndSchedule(
                         $scheduleFirstRound,
                         $seasonId,
                         $round,
@@ -1002,13 +1001,13 @@ class PlayoffController extends Controller
                 ];
 
                 foreach ($conferences as $conferenceId) {
-                    $scheduleFinalRound = self::handlePlayInFinals(
+                    $scheduleFinalRound = $this->handlePlayInFinals(
                         $seasonId,
                         $conferenceId,
                         $previousRounds,
                         $round
                     );
-                    list($seriesData, $scheduleData) = self::createPlayInSeriesAndSchedule(
+                    list($seriesData, $scheduleData) = $this->createPlayInSeriesAndSchedule(
                         $scheduleFinalRound,
                         $seasonId,
                         $round,
@@ -1019,8 +1018,8 @@ class PlayoffController extends Controller
                 }
             } else if ($round == 'interconference_semi_finals' || $round == 'finals') {
 
-                $pairings = self::generateSeriesPairings16($seasonId, 0, $round);
-                list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
+                $pairings = $this->generateSeriesPairings16($seasonId, 0, $round);
+                list($seriesData, $scheduleData) = $this->createSeriesAndSchedule(
                     $pairings,
                     $seasonId,
                     $round,
@@ -1062,7 +1061,7 @@ class PlayoffController extends Controller
                     $conferenceTeams = array_slice($conferenceTeams, 0, 6); // Take the first 6 teams
 
                     // Get the results of the Play-In Elimination Round 1 and Play-In Finals to determine the winners
-                    $playInTeams = self::getPlayInEliminationTeams($seasonId, $conferenceId);
+                    $playInTeams = $this->getPlayInEliminationTeams($seasonId, $conferenceId);
 
                     $winnerPlayInRound1 = $playInTeams['winner_of_7vs8']; // Winner of 7th vs 8th (Play-In Elimination Round 1)
                     $winnerPlayInFinals = $playInTeams['winner_of_9vs10']; // Winner of 9th vs 10th (Play-In Finals)
@@ -1076,11 +1075,11 @@ class PlayoffController extends Controller
 
 
                     // Generate pairings
-                    $pairings = self::pairSeriesTeams($topTeamsByOverallRank, 8);
+                    $pairings = $this->pairSeriesTeams($topTeamsByOverallRank, 8);
 
                     //  dd($pairings );
                     // Create series and schedule for the round
-                    list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
+                    list($seriesData, $scheduleData) = $this->createSeriesAndSchedule(
                         $pairings,
                         $seasonId,
                         $round,
@@ -1095,10 +1094,10 @@ class PlayoffController extends Controller
                 foreach ($conferences as $conferenceId) {
 
                     // Generate pairings
-                    $pairings = self::generateSeriesPairings16($seasonId, $conferenceId, $round);
+                    $pairings = $this->generateSeriesPairings16($seasonId, $conferenceId, $round);
 
                     // Create series and schedule for the round
-                    list($seriesData, $scheduleData) = self::createSeriesAndSchedule(
+                    list($seriesData, $scheduleData) = $this->createSeriesAndSchedule(
                         $pairings,
                         $seasonId,
                         $round,
@@ -1115,13 +1114,13 @@ class PlayoffController extends Controller
             try {
                 DB::transaction(function () use ($seasonId, $round, $allSeries, $allSchedules) {
                     if (!empty($allSeries)) {
-                        self::insertPlayoffSeries($seasonId, $round, $allSeries);
+                        $this->insertPlayoffSeries($seasonId, $round, $allSeries);
                     }
                     if (!empty($allSchedules)) {
-                        self::insertSeriesSchedule($seasonId, $round, $allSchedules);
+                        $this->insertSeriesSchedule($seasonId, $round, $allSchedules);
                     }
 
-                    self::updateSeasonPlayoffRound($seasonId, $round);
+                    $this->updateSeasonPlayoffRound($seasonId, $round);
                 });
 
                 return response()->json(['success' => true, 'message' => 'Series and schedule inserted successfully']);
@@ -1135,7 +1134,7 @@ class PlayoffController extends Controller
     /**
      * Create playoff series and schedule for play-in rounds (best-of-1)
      */
-    private static function createPlayInSeriesAndSchedule($scheduleData, $seasonId, $round, $conferenceId)
+    private function createPlayInSeriesAndSchedule($scheduleData, $seasonId, $round, $conferenceId)
     {
         $seriesData = [];
         $formattedSchedule = [];
@@ -1192,7 +1191,7 @@ class PlayoffController extends Controller
     /**
      * Create both playoff series and schedule for game one (non-play-in rounds)
      */
-    private static function createSeriesAndSchedule($pairings, $seasonId, $round, $conferenceId, $seriesLength)
+    private function createSeriesAndSchedule($pairings, $seasonId, $round, $conferenceId, $seriesLength)
     {
         $seriesData = [];
         $scheduleData = [];
@@ -1225,7 +1224,7 @@ class PlayoffController extends Controller
             ];
 
             // Define home/away pattern
-            $homePattern = self::getHomePattern($seriesLength);
+            $homePattern = $this->getHomePattern($seriesLength);
 
             // Create schedule entries for all games in the series
             for ($gameNum = 1; $gameNum <= $seriesLength; $gameNum++) {
@@ -1267,7 +1266,7 @@ class PlayoffController extends Controller
      * Get home/away pattern for the given series length
      * 'H' means higher seed home, 'A' means lower seed home
      */
-    private static function getHomePattern($bestOf)
+    private function getHomePattern($bestOf)
     {
         switch ($bestOf) {
             case 1:
@@ -1287,7 +1286,7 @@ class PlayoffController extends Controller
     /**
      * Insert playoff series into playoff_series table
      */
-    private static function insertPlayoffSeries($seasonId, $round, $seriesData)
+    private function insertPlayoffSeries($seasonId, $round, $seriesData)
     {
         if (empty($seriesData)) {
             return;
@@ -1317,7 +1316,7 @@ class PlayoffController extends Controller
     /**
      * Insert schedule into schedules table
      */
-    private static function insertSeriesSchedule($seasonId, $round, $scheduleData)
+    private function insertSeriesSchedule($seasonId, $round, $scheduleData)
     {
         if (empty($scheduleData)) {
             return;
@@ -1348,9 +1347,9 @@ class PlayoffController extends Controller
         }
     }
 
-    private static function updateSeasonPlayoffRound($seasonId, $round)
+    private function updateSeasonPlayoffRound($seasonId, $round)
     {
-        $status = self::roundStatusFormatter($round);
+        $status = $this->roundStatusFormatter($round);
 
         // Get current status first
         $currentStatus = DB::table('seasons')
@@ -1366,7 +1365,7 @@ class PlayoffController extends Controller
     }
 
 
-    private static function getPlayInEliminationTeams($seasonId, $conferenceId)
+    private function getPlayInEliminationTeams($seasonId, $conferenceId)
     {
         $scheduleTable = $this->helper->getScheduleDBName($seasonId);
 
@@ -1402,7 +1401,7 @@ class PlayoffController extends Controller
     }
 
 
-    private static function updateSeasonChampionsAndLosers($seasonId)
+    private function updateSeasonChampionsAndLosers($seasonId)
     {
         // Retrieve the top and bottom teams from standings view
         $topTeam = DB::table('standings_view')
@@ -1434,7 +1433,7 @@ class PlayoffController extends Controller
     }
 
     // Function to generate pairings for playoff matches based on the round
-    private static function generatePairingsOneConference($seasonId, $conferenceId, $round)
+    private function generatePairingsOneConference($seasonId, $conferenceId, $round)
     {
         // Initialize pairings array
         $pairings = [];
@@ -1443,26 +1442,26 @@ class PlayoffController extends Controller
         switch ($round) {
             case 'quarter_finals':
                 // Pair the teams for quarter-finals
-                $winners = self::getWinnersOfRound('round_of_16', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 4);
+                $winners = $this->getWinnersOfRound('round_of_16', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 4);
                 break;
             case 'semi_finals':
                 // Pair the winners of quarter-finals for semi-finals
-                $winners = self::getWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 2);
+                $winners = $this->getWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 2);
                 break;
             case 'finals':
                 // Pair the winners of semi-finals for finals
-                $winners = self::getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
+                $winners = $this->getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
 
-                $pairings = self::pairTeams($winners, 2);
+                $pairings = $this->pairTeams($winners, 2);
                 break;
         }
 
         return $pairings;
     }
 
-    private static function generatePairings16($seasonId, $conferenceId, $round)
+    private function generatePairings16($seasonId, $conferenceId, $round)
     {
         // Initialize pairings array
         $pairings = [];
@@ -1471,31 +1470,31 @@ class PlayoffController extends Controller
         switch ($round) {
             case 'quarter_finals':
                 // Pair the teams for quarter-finals
-                $winners = self::getWinnersOfRound('round_of_16', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 4);
+                $winners = $this->getWinnersOfRound('round_of_16', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 4);
                 break;
             case 'semi_finals':
                 // Pair the winners of quarter-finals for semi-finals
-                $winners = self::getWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 2);
+                $winners = $this->getWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 2);
                 break;
             case 'interconference_semi_finals':
                 // Pair the winners of semi-finals for finals
-                $winners = self::getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
+                $winners = $this->getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
 
-                $pairings = self::pairTeams($winners, 4);
+                $pairings = $this->pairTeams($winners, 4);
                 break;
             case 'finals':
                 // Pair the winners of semi-finals for finals
-                $winners = self::getWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 2);
+                $winners = $this->getWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 2);
                 break;
         }
 
         return $pairings;
     }
 
-    private static function generateSeriesPairings16($seasonId, $conferenceId, $round)
+    private function generateSeriesPairings16($seasonId, $conferenceId, $round)
     {
         // Initialize pairings array
         $pairings = [];
@@ -1504,31 +1503,31 @@ class PlayoffController extends Controller
         switch ($round) {
             case 'quarter_finals':
                 // Pair the teams for quarter-finals
-                $winners = self::getSeriesWinnersOfRound('round_of_16', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 4);
+                $winners = $this->getSeriesWinnersOfRound('round_of_16', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 4);
                 break;
             case 'semi_finals':
                 // Pair the winners of quarter-finals for semi-finals
-                $winners = self::getSeriesWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 2);
+                $winners = $this->getSeriesWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 2);
                 break;
             case 'interconference_semi_finals':
                 // Pair the winners of semi-finals for finals
-                $winners = self::getSeriesWinnersOfRound('semi_finals', $seasonId, $conferenceId);
+                $winners = $this->getSeriesWinnersOfRound('semi_finals', $seasonId, $conferenceId);
 
-                $pairings = self::pairTeams($winners, 4);
+                $pairings = $this->pairTeams($winners, 4);
                 break;
             case 'finals':
                 // Pair the winners of semi-finals for finals
-                $winners = self::getSeriesWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
-                $pairings = self::pairTeams($winners, 2);
+                $winners = $this->getSeriesWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
+                $pairings = $this->pairTeams($winners, 2);
                 break;
         }
 
         return $pairings;
     }
 
-    private static function getWinnersOfRound($round, $seasonId, $conferenceId)
+    private function getWinnersOfRound($round, $seasonId, $conferenceId)
     {
         $winners = [];
 
@@ -1559,7 +1558,7 @@ class PlayoffController extends Controller
         return $winners;
     }
 
-    private static function getSeriesWinnersOfRound($round, $seasonId, $conferenceId)
+    private function getSeriesWinnersOfRound($round, $seasonId, $conferenceId)
     {
         $winners = [];
 
@@ -1588,7 +1587,7 @@ class PlayoffController extends Controller
         return $winners;
     }
 
-    private static function pairTeams($teams, $pairCount)
+    private function pairTeams($teams, $pairCount)
     {
         // Generate pairings based on the teams array
         $pairings = [];
@@ -1599,7 +1598,7 @@ class PlayoffController extends Controller
         return $pairings;
     }
 
-    private static function pairSeriesTeams($teams, $pairCount)
+    private function pairSeriesTeams($teams, $pairCount)
     {
         // Generate pairings based on the teams array
         $pairings = [];
@@ -1619,7 +1618,7 @@ class PlayoffController extends Controller
      * @param string $round  Round name
      * @return array         Array of scheduled games
      */
-    private static function getPlayInSchedule($seasonId, $conferenceId, array $ranks, $pairCount, $round)
+    private function getPlayInSchedule($seasonId, $conferenceId, array $ranks, $pairCount, $round)
     {
         $teams = DB::table('standings_view')
             ->where('season_id', $seasonId)
@@ -1635,14 +1634,14 @@ class PlayoffController extends Controller
             ->toArray();
 
         if (count($teams) === $pairCount) {
-            $pairing = self::pairTeams($teams, $pairCount);
-            return self::createSchedule($pairing, $seasonId, $round, $conferenceId);
+            $pairing = $this->pairTeams($teams, $pairCount);
+            return $this->createSchedule($pairing, $seasonId, $round, $conferenceId);
         }
 
         return [];
     }
 
-    private static function handlePlayInFinals($seasonId, $conferenceId, $previousRounds, $finalRoundName)
+    private function handlePlayInFinals($seasonId, $conferenceId, $previousRounds, $finalRoundName)
     {
         // Fetch both rounds' results
         $round1Results = DB::table('playoff_series')
@@ -1663,14 +1662,14 @@ class PlayoffController extends Controller
         }
 
         // Determine winners & losers using winner_id
-        [$winner7vs8, $loser7vs8] = self::determineWinnerLoser($round1Results->first());
-        [$winner9vs10, $loser9vs10] = self::determineWinnerLoser($round2Results->first());
+        [$winner7vs8, $loser7vs8] = $this->determineWinnerLoser($round1Results->first());
+        [$winner9vs10, $loser9vs10] = $this->determineWinnerLoser($round2Results->first());
 
         // Create schedule for this conference
         $pairing = [$loser7vs8, $winner9vs10];
 
-        $pairing = self::pairTeams($pairing, 2);
-        return self::createSchedule($pairing, $seasonId, $finalRoundName, $conferenceId);
+        $pairing = $this->pairTeams($pairing, 2);
+        return $this->createSchedule($pairing, $seasonId, $finalRoundName, $conferenceId);
     }
 
     /**
@@ -1679,7 +1678,7 @@ class PlayoffController extends Controller
      * @param object $game
      * @return array [winnerId, loserId]
      */
-    private static function determineWinnerLoser($game)
+    private function determineWinnerLoser($game)
     {
         $winner = $game->winner_team_id;
         $loser = $game->loser_team_id;
@@ -1687,7 +1686,7 @@ class PlayoffController extends Controller
     }
 
     // Function to create schedule for a round of playoff matches
-    private static function createSchedule($pairings, $seasonId, $round, $conferenceId)
+    private function createSchedule($pairings, $seasonId, $round, $conferenceId)
     {
 
         $schedule = [];
@@ -1717,7 +1716,7 @@ class PlayoffController extends Controller
         return $schedule;
     }
 
-    private static function insertSchedule($seasonId, $round, $schedule)
+    private function insertSchedule($seasonId, $round, $schedule)
     {
         $scheduleTable = $this->helper->getScheduleDBName($seasonId);
 
@@ -1796,7 +1795,7 @@ class PlayoffController extends Controller
         });
     }
 
-    // private static function processOngoingSeriesSchedules($seasonId, $ongoingRound)
+    // private function processOngoingSeriesSchedules($seasonId, $ongoingRound)
     // {
     //     // Get all playoff series in the ongoing round with status = 1 (ongoing)
     //     $ongoingSeries = DB::table('playoff_series')
@@ -1845,7 +1844,7 @@ class PlayoffController extends Controller
     //             $gameId = "S{$series->season_id}-C{$series->conference_id}-R{$series->round}-Series{$seriesNumber}-G{$gameNumber}";
 
     //             // Get home/away pattern for the series (your existing helper method)
-    //             $homePattern = self::getHomePattern($series->series_length);
+    //             $homePattern = $this->getHomePattern($series->series_length);
 
     //             if ($homePattern[$gameNumber - 1] === 'H') {
     //                 $homeId = $series->home_team_id;
@@ -1876,7 +1875,7 @@ class PlayoffController extends Controller
     //     }
     // }
 
-    private static function roundStatusFormatter($round)
+    private function roundStatusFormatter($round)
     {
 
         switch ($round) {

@@ -347,7 +347,7 @@
 
                         try {
                             await simulateGameWithResults(gameId.id,gameId.conference_id);
-                            await new Promise((resolve) => setTimeout(resolve, 1000));
+                            await new Promise((resolve) => setTimeout(resolve, 500));
 
                             // Remove successfully simulated game from failedGames if it exists
                             failedGames.delete(gameId);
