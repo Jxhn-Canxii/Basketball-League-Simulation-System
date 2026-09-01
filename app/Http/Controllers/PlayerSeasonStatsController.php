@@ -609,7 +609,6 @@ class PlayerSeasonStatsController extends Controller
 
             return response()->json(['message' => "Stored stats for Player ID: {$playerId}", 'data' => $data]);
         } catch (\Exception $e) {
-            \Log::error('Error in storeplayernextseasonstats: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
@@ -697,13 +696,16 @@ class PlayerSeasonStatsController extends Controller
 
             return response()->json(['message' => "Stored stats for Player ID: {$playerId}", 'data' => $data]);
         } catch (\Exception $e) {
-            \Log::error('Error in storeplayernextseasonstats: ' . $e->getMessage());
             return response()->json(['error' => $e->getMessage()], 500);
         }
     } 
     
     public static function totalRegularSeasonGames($seasonId, $teamId)
     {
+        // $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+
+        // dd($scheduleTable);
+
         $gamesPlayedCount = DB::table('schedules')
             ->where('season_id', $seasonId)
             ->where('game_number',0)

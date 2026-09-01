@@ -6,15 +6,18 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\TeamChemistryController;
+use App\Http\Controllers\HelperController;
 use App\Models\Teams;
 
 class TeamsController extends Controller
 {
     protected $chemistry;
+    protected $helper;
 
     public function __construct(){
 
         $this->chemistry = new TeamChemistryController();
+        $this->helper = new HelperController();
     }
     // Display a listing of the resource.
     public function index()
@@ -135,9 +138,11 @@ class TeamsController extends Controller
             ->get();
     }
 
-    public function getLastMatchResults($season_id, $homeId, $awayId)
+    public function getLastMatchResults($seasonId, $homeId, $awayId)
     {
-        $matchResults = DB::table('schedule_view')
+        $scheduleViewTable = $this->helper->getScheduleViewDBName($seasonId);
+
+        $matchResults = DB::table($scheduleViewTable.' as schedule_view')
             ->select(
                 'schedule_view.id',
                 'schedule_view.season_id',
@@ -179,14 +184,14 @@ class TeamsController extends Controller
             ->join('teams as home', 'schedule_view.home_id', '=', 'home.id')
             ->join('teams as away', 'schedule_view.away_id', '=', 'away.id')
             ->leftJoin('teams as winner', 'schedule_view.winner_id', '=', 'winner.id')
-            ->where(function ($query) use ($homeId, $awayId, $season_id) {
-                $query->where(function ($q) use ($homeId, $awayId, $season_id) {
-                    $q->where('season_id', '<=', $season_id)
+            ->where(function ($query) use ($homeId, $awayId, $seasonId) {
+                $query->where(function ($q) use ($homeId, $awayId, $seasonId) {
+                    $q->where('season_id', '<=', $seasonId)
                     ->where('home_id', $homeId)
                     ->where('away_id', $awayId);
                 })
-                ->orWhere(function ($q) use ($homeId, $awayId, $season_id) {
-                    $q->where('season_id', '<=', $season_id)
+                ->orWhere(function ($q) use ($homeId, $awayId, $seasonId) {
+                    $q->where('season_id', '<=', $seasonId)
                     ->where('home_id', $awayId)
                     ->where('away_id', $homeId);
                 });
@@ -365,7 +370,7 @@ class TeamsController extends Controller
                 DB::raw('MAX(schedules.id) as last_round_played')
             )
             ->join('seasons', 'seasons.id', '=', 'standings_snapshots.season_id')
-            ->leftJoin('schedules', function ($join) use ($teamId) {
+            ->leftJoin('schedules_archives as schedules', function ($join) use ($teamId) {
                 $join->on('schedules.season_id', '=', 'standings_snapshots.season_id')
                     ->where('schedules.status', 2) // only finished games
                     ->where(function ($query) use ($teamId) {
@@ -654,7 +659,7 @@ class TeamsController extends Controller
                 DB::raw('MAX(schedules.id) as last_round_played_id')
             )
             ->join('seasons', 'seasons.id', '=', 'standings_snapshots.season_id')
-            ->leftJoin('schedules', function ($join) use ($teamId) {
+            ->leftJoin('schedules_archives as schedules', function ($join) use ($teamId) {
                 $join->on('schedules.season_id', '=', 'standings_snapshots.season_id')
                     ->where(function ($query) use ($teamId) {
                         $query->where('schedules.home_id', '=', $teamId)
@@ -744,7 +749,7 @@ class TeamsController extends Controller
     private function getLastRoundPlayed($lastRoundPlayedId, $teamId)
     {
         // Retrieve the round and result information based on last_round_played_id
-        $roundInfo = DB::table('schedules')
+        $roundInfo = DB::table('schedules_archives')
             ->select('round', 'home_score', 'away_score', 'home_id', 'away_id')
             ->where('id', $lastRoundPlayedId)
             ->first();
@@ -824,7 +829,7 @@ class TeamsController extends Controller
 
     private function getRoundStats($teamId)
     {
-        return DB::table('schedules')
+        return DB::table('schedules_archives')
             ->where(function ($query) use ($teamId) {
                 $query->where('away_id', $teamId)
                     ->orWhere('home_id', $teamId);
@@ -841,7 +846,7 @@ class TeamsController extends Controller
 
     private function getPlayoffStats($teamId)
     {
-        return DB::table('schedules')
+        return DB::table('schedules_archives as schedules')
             ->where(function ($query) use ($teamId) {
                 $query->where('away_id', $teamId)
                     ->orWhere('home_id', $teamId);
@@ -898,7 +903,7 @@ class TeamsController extends Controller
 
     private function getLastSeasonOfRound($teamId, $round)
     {
-        $lastSeasonId = DB::table('schedules')
+        $lastSeasonId = DB::table('schedules_archives')
             ->where(function ($query) use ($teamId) {
                 $query->where('away_id', $teamId)
                     ->orWhere('home_id', $teamId);
@@ -927,7 +932,7 @@ class TeamsController extends Controller
     }
     private function getPlayoffAppearance($teamId)
     {
-        return DB::table('schedules')
+        return DB::table('schedules_archives as schedules')
             ->where(function ($query) use ($teamId) {
                 // Check if the team is involved in any game (either as home or away)
                 $query->where('away_id', $teamId)
@@ -962,7 +967,7 @@ class TeamsController extends Controller
 
     private function getFinalsSeasons($teamId)
     {
-        return DB::table('schedules')
+        return DB::table('schedules_archives as schedules')
             ->where('round', 'finals')
             ->where(function ($query) use ($teamId) {
                 $query->where('away_id', $teamId)
@@ -982,7 +987,7 @@ class TeamsController extends Controller
 
     private function headToHead($teamId)
     {
-        return DB::table('schedules')
+        return DB::table('schedules_archives as schedules')
             ->select(
                 DB::raw('CASE WHEN schedules.away_id = ' . $teamId . ' THEN home_team.name ELSE away_team.name END as opponent_name'),
                 DB::raw('(SUM(CASE WHEN schedules.home_id = ' . $teamId . ' THEN 1 ELSE 0 END) + SUM(CASE WHEN schedules.away_id = ' . $teamId . ' THEN 1 ELSE 0 END)) as total_games'),
@@ -1006,7 +1011,7 @@ class TeamsController extends Controller
 
     private function getTopRivals1($teamId)
     {
-        return DB::table('schedules')
+        return DB::table('schedules_archives as schedules')
             ->select(
                 DB::raw('CASE WHEN schedules.away_id = ' . $teamId . ' THEN home_team.name ELSE away_team.name END as opponent_name'),
                 DB::raw('(SUM(CASE WHEN schedules.home_id = ' . $teamId . ' THEN 1 ELSE 0 END) + SUM(CASE WHEN schedules.away_id = ' . $teamId . ' THEN 1 ELSE 0 END)) as total_games')

@@ -433,7 +433,7 @@ class TransactionsController extends Controller
             $playerId = $transaction->player_id;
             $championships = DB::table('seasons')
                 ->join('player_game_stats', 'seasons.id', '=', 'player_game_stats.season_id')
-                ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id')
+                ->join('schedules_archives as schedules', 'player_game_stats.game_id', '=', 'schedules.game_id')
                 ->join('teams', 'player_game_stats.team_id', '=', 'teams.id')
                 ->select('seasons.id as season_id', 'teams.name as championship_team', 'seasons.name as championship_season')
                 ->where('player_game_stats.player_id',  $playerId)
@@ -441,7 +441,7 @@ class TransactionsController extends Controller
                 ->whereColumn('seasons.id', 'player_game_stats.season_id')
                 ->whereExists(function ($query) use ($playerId) {
                     $query->select(DB::raw(1))
-                        ->from('schedules as s')
+                        ->from('schedules_archives as s')
                         ->join('player_game_stats as pg', 's.game_id', '=', 'pg.game_id')
                         ->where('pg.team_id', '=', DB::raw('player_game_stats.team_id'))
                         ->where('s.round', 'finals')

@@ -118,6 +118,8 @@ class LeaguesController extends Controller
             'player_series_appearances',
             'game_news',
             'standings_snapshots',
+            'schedules_archives',
+            'schedule_view_snapshots',
             'schedules',
             'seasons',
             'season_awards',

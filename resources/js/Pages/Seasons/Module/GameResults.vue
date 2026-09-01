@@ -886,7 +886,7 @@
                                     </div>
                                 </div>
                                 <div v-else class="text-white text-sm text-wrap">
-                                    <p>{{ gameNews.title }}</p>   
+                                    <p>{{ gameNews?.title ?? '-' }}</p>   
                                 </div>
                             </div>
                         </div>
@@ -927,6 +927,10 @@ import GameNews from "@/Pages/Seasons/Module/GameNews.vue";
 const props = defineProps({
     game_id: {
         type: String,
+        required: true,
+    },
+    season_id: {
+        type: [String, Number],
         required: true,
     },
     showBoxScore: {
@@ -987,6 +991,7 @@ const fetchBoxScore = async () => {
         const response = await axios.post(route("game.boxscore"), {
             game_id: props.game_id,
             show_stats: props.showBoxScore,
+            season_id: props.season_id
         });
         const data = response.data.box_score;
 

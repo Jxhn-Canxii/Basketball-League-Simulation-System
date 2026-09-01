@@ -29,12 +29,16 @@ class GameController extends Controller
         $request->validate([
             'game_id' => 'required|string',
             'show_stats'  => 'required|boolean',
+            'season_id'  => 'required|exists:seasons,id',
         ]);
 
         $show_stats = $request->show_stats;
         $game_id = $request->game_id; // Fetch game details from the schedule_view table and join with teams table
+        $seasonId = $request->season_id; // Fetch game details from the schedule_view table and join with teams table
 
-        $game = DB::table('schedule_view')
+        $scheduleViewTable = $this->helper->getScheduleViewDBName($seasonId);
+
+        $game = DB::table($scheduleViewTable.' as schedule_view')
             ->join('teams as away_team', 'schedule_view.away_id', '=', 'away_team.id') // Join for away team
             ->join('teams as home_team', 'schedule_view.home_id', '=', 'home_team.id') // Join for home team
             ->where('schedule_view.game_id', $game_id)
@@ -300,8 +304,8 @@ class GameController extends Controller
             'is_most_improved' => $bestWinningTeamPlayer->is_most_improved,
         ] : null;
 
-        $homeTeamStreak = $this->getTeamStreak($game->home_id, $game->id);
-        $awayTeamStreak = $this->getTeamStreak($game->away_id, $game->id);
+        $homeTeamStreak = $this->getTeamStreak($game->home_id, $game->id, $seasonId);
+        $awayTeamStreak = $this->getTeamStreak($game->away_id, $game->id, $seasonId);
 
         // Query to get head-to-head record
         $headToHeadRecord = $this->getHeadToHeadRecord($game->home_id, $game->away_id);
@@ -679,10 +683,12 @@ class GameController extends Controller
     /**
      * Function to get team streak
      */
-    private function getTeamStreak($teamId, $game_id)
+    private function getTeamStreak(int $teamId, string $game_id, int $seasonId)
     {
+        $scheduleViewTable = $this->helper->getScheduleViewDBName($seasonId);
+
         // Query to calculate the team's current winning or losing streak
-        $streak = DB::table('schedule_view')
+        $streak = DB::table($scheduleViewTable.' as schedule_view')
             ->where(function ($query) use ($teamId) {
                 $query->where('home_id', $teamId)
                     ->orWhere('away_id', $teamId);

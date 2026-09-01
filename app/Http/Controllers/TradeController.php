@@ -1312,9 +1312,9 @@ class TradeController extends Controller
 
             $this->archive->archivePlayerSeasonStats();
 
-            // $this->archive->archiveSeasonScheduleViewTable();
+            $this->archive->archiveScheduleViewTable();
 
-            // $this->archive->archiveSeasonScheduleWriteTable();
+            $this->archive->archiveScheduleWriteTable();
 
             DB::table('seasons')
                 ->where(

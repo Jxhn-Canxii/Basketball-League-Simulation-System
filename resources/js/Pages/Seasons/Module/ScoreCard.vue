@@ -95,7 +95,7 @@
         <a
           href="#"
           class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-          @click.prevent="isGameResultModalOpen = match.game_id"
+          @click.prevent="isGameResultModalOpen = [match.game_id,match.season_id]"
         >
           View Result
         </a>
@@ -110,7 +110,7 @@
     @close="isGameResultModalOpen = false"
   >
     <div class="mt-4">
-      <GameResults :key="isGameResultModalOpen" :game_id="isGameResultModalOpen" />
+      <GameResults :key="isGameResultModalOpen" :game_id="isGameResultModalOpen[0]" :season_id="isGameResultModalOpen[1]" />
     </div>
   </Modal>
   <Modal

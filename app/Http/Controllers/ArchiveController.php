@@ -147,6 +147,13 @@ class ArchiveController extends Controller
     public function archiveStandingViewTable()
     {
         try {
+            DB::beginTransaction();
+
+            $currentSeasonId = get_current_season_id();
+
+            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            if (!$season || $season->status < 2) return;
+            
             $snapshots = DB::table('standings_view')
                 ->select(
                     'team_id',
@@ -193,43 +200,92 @@ class ArchiveController extends Controller
                     (array) $snapshot
                 );
             }
+            DB::commit();
+
         } catch (\Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'message' => 'Standing Snapshot Error' . $e->getMessage(),
             ], 500);
         }
     }
 
-    public static function archiveSeasonScheduleViewTable()
+    public function archiveScheduleViewTable()
     {
-        $currentSeasonId = get_current_season_id();
-        $MODULO = config('archive.DECADE_MODULO');
-        // $tableBatch = $currentSeasonId / $MODULO;
-
-        $archiveSeasonScheduleTableView = "schedule_view_snapshot" ;
-
-        // 1) Only proceed if season is finished
-        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
-        if (!$season || $season->status < 14) return;
-
-        DB::beginTransaction();
         try {
-            if (!Schema::hasTable($archiveSeasonScheduleTableView)) {
-                DB::statement("CREATE TABLE $archiveSeasonScheduleTableView LIKE schedule_view");
+            DB::beginTransaction();
+
+            $currentSeasonId = get_current_season_id();
+
+            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            if (!$season || $season->status < 14) return;
+
+            $snapshots = DB::table('schedule_view')
+                ->select(
+                    'id', 
+                    'game_id', 
+                    'game_number', 
+                    'round', 
+                    'season_id', 
+                    'conference_id', 
+                    'series_id', 
+                    'series_number', 
+                    'home_id', 
+                    'home_score', 
+                    'away_id', 
+                    'away_score', 
+                    'winner_id', 
+                    'status', 
+                    'created_at', 
+                    'updated_at', 
+                    'game_number_formatted', 
+                    'series_id_number', 
+                    'home_team_name', 
+                    'away_team_name', 
+                    'home_primary_color', 
+                    'away_primary_color', 
+                    'home_secondary_color', 
+                    'away_secondary_color', 
+                    'home_team_city', 
+                    'away_team_city', 
+                    'season_name', 
+                    'league_name', 
+                    'league_type', 
+                    'winning_name', 
+                    'winning_city'
+                )
+                ->get();
+
+            foreach ($snapshots as $snapshot) {
+                DB::table('schedule_view_snapshots')->updateOrInsert(
+                    [
+                        'game_id' => $snapshot->game_id,
+                    ],
+                    (array) $snapshot
+                );
             }
-            
-            DB::statement("INSERT INTO archiveSeasonScheduleTableView SELECT 'id', 'game_id', 'game_number', 'round', 'season_id', 'conference_id', 'series_id', 'series_number', 'home_id', 'home_score', 'away_id', 'away_score', 'winner_id', 'status', 'created_at', 'updated_at', 'game_number_formatted', 'series_id_number', 'home_team_name', 'away_team_name', 'home_primary_color', 'away_primary_color', 'home_secondary_color', 'away_secondary_color', 'home_team_city', 'away_team_city', 'season_name', 'league_name', 'league_type', 'winning_name', 'winning_city' FROM schedule_view");
 
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
-            throw $e;
+
+            return response()->json([
+                'message' => 'Schedule Snapshot Error' . $e->getMessage(),
+            ], 500);
         }
     }
 
     public function archiveScheduleWriteTable()
     {
         try {
+            DB::beginTransaction();
+
+            $currentSeasonId = get_current_season_id();
+
+            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            if (!$season || $season->status < 14) return;
+            
             $snapshots = DB::table('schedules')
                 ->select(
                     'game_id', 
@@ -258,7 +314,13 @@ class ArchiveController extends Controller
                     (array) $snapshot
                 );
             }
+
+            DB::statement("DELETE FROM schedules");
+
+            DB::commit();
         } catch (\Exception $e) {
+            DB::rollBack();
+
             return response()->json([
                 'message' => 'Schedule Snapshot Error' . $e->getMessage(),
             ], 500);

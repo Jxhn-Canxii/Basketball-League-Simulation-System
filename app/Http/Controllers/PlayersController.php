@@ -2082,12 +2082,13 @@ class PlayersController extends Controller
 
 
         $playerDatabase = $this->helper->getPlayerStatsDatabaseName($seasonId);
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
 
         // Fetch player game logs for the given player and season with pagination
         $playerGameLogs = DB::table($playerDatabase . ' as player_game_stats')
             ->join('players', 'player_game_stats.player_id', '=', 'players.id')
             ->join('teams as player_team', 'player_game_stats.team_id', '=', 'player_team.id') // Join with player's team to get team name
-            ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
+            ->join($scheduleTable.' as schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
             ->join('seasons', 'schedules.season_id', '=', 'seasons.id') // Join with seasons table
             ->leftJoin('teams as home_team', 'schedules.home_id', '=', 'home_team.id') // Join with home team
             ->leftJoin('teams as away_team', 'schedules.away_id', '=', 'away_team.id') // Join with away team
@@ -2118,7 +2119,7 @@ class PlayersController extends Controller
 
         // Fetch total count of records for pagination info
         $totalRecords = DB::table($playerDatabase . ' as player_game_stats')
-            ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
+            ->join($scheduleTable.' as schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
             ->where('player_game_stats.player_id', $playerId)
             ->where('player_game_stats.season_id', $seasonId)
             ->count();
@@ -2165,12 +2166,13 @@ class PlayersController extends Controller
             ->select('players.name as player_name', 'teams.name as team_name') // Select player name and team name
             ->first();
 
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
 
         // Fetch player game logs for the given player and season with pagination
         $playerGameLogs = DB::table('player_game_stats')
             ->join('players', 'player_game_stats.player_id', '=', 'players.id')
             ->join('teams as player_team', 'player_game_stats.team_id', '=', 'player_team.id') // Join with player's team to get team name
-            ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
+            ->join($scheduleTable.' as schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
             ->join('seasons', 'schedules.season_id', '=', 'seasons.id') // Join with seasons table
             ->leftJoin('teams as home_team', 'schedules.home_id', '=', 'home_team.id') // Join with home team
             ->leftJoin('teams as away_team', 'schedules.away_id', '=', 'away_team.id') // Join with away team
@@ -2200,7 +2202,7 @@ class PlayersController extends Controller
 
         // Fetch total count of records for pagination info
         $totalRecords = DB::table('player_game_stats')
-            ->join('schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
+            ->join($scheduleTable.' as schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
             ->where('player_game_stats.player_id', $playerId)
             ->count();
 
@@ -2672,6 +2674,33 @@ class PlayersController extends Controller
         }
 
         $injuryHistory = DB::table('injured_players_view as ipv')
+            ->join('schedules_archives as s', 'ipv.game_id', '=', 's.id')
+            ->join('teams as th', 's.home_id', '=', 'th.id')   // home team
+            ->join('teams as ta', 's.away_id', '=', 'ta.id')   // away team
+            ->join('teams as ti', 'ti.id', '=', 'ipv.team_id')   // team when injured
+            ->where('ipv.player_id', $player_id)
+            ->orderByDesc('ipv.game_id')
+            ->select(
+                'ipv.*',
+                's.season_id',
+                's.conference_id',
+                's.round',
+                's.series_id',
+                's.home_id',
+                'th.name as home_team',
+                's.home_score',
+                's.away_id',
+                'ta.name as away_team',
+                's.away_score',
+                's.winner_id',
+                's.status as game_status',
+                's.game_number',
+                'ti.primary_color',
+                'ti.secondary_color'
+            )
+            ->get();
+
+        $injuryLatestHistory = DB::table('injured_players_view as ipv')
             ->join('schedules as s', 'ipv.game_id', '=', 's.id')
             ->join('teams as th', 's.home_id', '=', 'th.id')   // home team
             ->join('teams as ta', 's.away_id', '=', 'ta.id')   // away team
@@ -2698,12 +2727,25 @@ class PlayersController extends Controller
             )
             ->get();
 
-        if ($injuryHistory->isEmpty()) {
+        if ($injuryHistory->isEmpty() && $injuryLatestHistory->isEmpty()) {
             return response()->json(['message' => 'No injury history found for this player.'], 404);
         }
 
+        // $allInjuryRecord = [];
         // Map results and add details using roundFormat()
-        $injuryHistory = $injuryHistory->map(function ($item) {
+        $injuryHistory[] = $injuryHistory->map(function ($item) {
+            $roundLabel = $this->formatRound($item->round, $item->game_number);
+
+            if ($item->team_id == $item->home_id) {
+                $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->away_team}";
+            } else {
+                $item->details = "Injury started in Season {$item->season_id}, {$roundLabel} vs {$item->home_team}";
+            }
+
+            return $item;
+        });
+
+        $injuryHistory[] = $injuryLatestHistory->map(function ($item) {
             $roundLabel = $this->formatRound($item->round, $item->game_number);
 
             if ($item->team_id == $item->home_id) {
@@ -2722,7 +2764,10 @@ class PlayersController extends Controller
 
     private function getScheduleCount($teamId, $seasonId)
     {
-        $count = DB::table('schedules')
+                
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+
+        $count = DB::table($scheduleTable)
             ->where('season_id', $seasonId) // Filter by season_id
             ->where(function ($query) use ($teamId) {
                 // Check if team_id is in either home_id or away_id

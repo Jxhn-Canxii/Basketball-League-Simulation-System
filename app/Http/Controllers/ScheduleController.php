@@ -685,6 +685,8 @@ class ScheduleController extends Controller
         $seasonId = $request->season_id;
         $currentSeasonId = get_current_season_id();
 
+        $scheduleViewTable = $this->helper->getScheduleViewDBName($seasonId);
+
         // Get playoff series info with team names and colors
         $seriesInfo = DB::table('playoff_series as ps')
             ->leftJoin('teams as ht', 'ps.home_team_id', '=', 'ht.id')
@@ -703,7 +705,7 @@ class ScheduleController extends Controller
             ->first();
 
         // Fetch games in this series
-        $playoffSchedule = DB::table('schedule_view')
+        $playoffSchedule = DB::table($scheduleViewTable)
             ->where('series_id', $seriesId)
             ->orderBy('id', 'asc')
             ->get()
@@ -855,7 +857,7 @@ class ScheduleController extends Controller
         }
 
         // Last finished game in the series
-        $lastFinishedGame = DB::table('schedule_view')
+        $lastFinishedGame = DB::table($scheduleViewTable)
             ->where('series_id', $seriesId)
             ->where('status', 2) // finished
             ->orderBy('id', 'desc')
@@ -900,8 +902,10 @@ class ScheduleController extends Controller
         // Calculate offset for pagination based on current page
         $offset = ($currentPage - 1) * $itemsPerPage;
 
+        $scheduleViewTable = $this->helper->getScheduleViewDBName($seasonId);
+
         // Get total count first
-        $totalSchedules = DB::table('schedule_view')
+        $totalSchedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
             ->when($teamId != 0, function ($query) use ($teamId) {
@@ -922,7 +926,7 @@ class ScheduleController extends Controller
         }
 
         // Fetch the actual schedule data
-        $schedules = DB::table('schedule_view')
+        $schedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
             ->when($teamId != 0, function ($query) use ($teamId) {
@@ -1011,8 +1015,10 @@ class ScheduleController extends Controller
         // Calculate offset for pagination based on current page
         $offset = ($currentPage - 1) * $itemsPerPage;
 
+        $scheduleViewTable = $this->helper->getScheduleViewDBName($seasonId);
+
         // Get total count first
-        $totalSchedules = DB::table('schedule_view')
+        $totalSchedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
@@ -1032,7 +1038,7 @@ class ScheduleController extends Controller
         }
 
         // Fetch the actual schedule data
-        $schedules = DB::table('schedule_view')
+        $schedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {

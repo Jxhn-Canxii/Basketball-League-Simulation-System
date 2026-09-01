@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\PlayerSeasonStatsController;
+use App\Http\Controllers\ContractController;
 use App\Models\PlayerGameStats;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
@@ -10,11 +11,13 @@ use Illuminate\Support\Facades\DB;
 class PlayerStatsController extends Controller
 {
     protected $storeStats;
+    protected $contract;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
         $this->storeStats = new PlayerSeasonStatsController();
+        $this->contract = new ContractController();
     }
 
     public function createInactivePlayerStats($player, $gameData, $seasonId)
@@ -926,6 +929,8 @@ class PlayerStatsController extends Controller
                     $stats
                 );
 
+                $this->recordCareerHighs($stats);
+
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
                     - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
@@ -972,7 +977,7 @@ class PlayerStatsController extends Controller
                 $player = DB::table('players')->where('id', $stats['player_id'])->first();
 
                 if ($player && $player->hardship_contract > 0) {
-                    $this->handleHardshipContract($player, $stats);
+                    $this->contract->handleHardshipContract($player, $stats);
                 }
             }
         } catch (Exception $e) {
@@ -984,31 +989,7 @@ class PlayerStatsController extends Controller
         }
     }
 
-    public function handleHardshipContract($player, $stats)
-    {
-
-        $updatedContract = $player->hardship_contract - 1;
-        $teamId = $updatedContract > 0 ? $player->team_id : 0;
-
-        if ($updatedContract == 0) {
-            DB::table('transactions')->insert([
-                'player_id' => $stats['player_id'],
-                'season_id' => $stats['season_id'],
-                'details' => 'Has ended his 10-game hardship contract.',
-                'from_team_id' => $player->team_id,
-                'to_team_id' => 0,
-                'status' => 'waived',
-            ]);
-        }
-
-        DB::table('players')->updateOrInsert(
-            ['id' => $stats['player_id']],
-            [
-                'hardship_contract' => $updatedContract,
-                'team_id' =>  $teamId,
-            ]
-        );
-
-        return true;
+    public function recordCareerHighs($stats){
+            return true;
     }
 }

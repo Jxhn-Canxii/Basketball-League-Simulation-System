@@ -139,6 +139,34 @@ class HelperController extends Controller
         return $archiveTable;
     }
 
+    public function getScheduleViewDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'schedule_view';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "schedule_view_snapshots";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getScheduleDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'schedules';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "schedules_archives";
+        }
+
+        return $archiveTable;
+    }
+
     public function getTeamName($teamId){
 
         return DB::table('teams')->where('id', $teamId)->value('name') ?? 'Unknown Team';

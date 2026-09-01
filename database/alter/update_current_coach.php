@@ -8,7 +8,8 @@ SET
     contract_years = 0,
     career_losses = 0,
     team_id = 0,
-    winning_percentage = 0;
+    winning_percentage = 0,
+    age = age - 2;
 
 
 UPDATE `teams` SET `coach_id`=0;

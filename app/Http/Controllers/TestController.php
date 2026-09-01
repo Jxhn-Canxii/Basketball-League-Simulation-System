@@ -446,7 +446,8 @@ class TestController extends Controller
 
     public function TestArchiving(){
 
-        $archive =  $this->archive->archivePlayerSeasonStats();
+        // $archive =  $this->archive->archivePlayerSeasonStats();
+        $archive =  $this->archive->archiveScheduleViewTable();
 
         return response()->json([
             'message' => $archive,
