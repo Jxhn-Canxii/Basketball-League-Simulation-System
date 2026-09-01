@@ -362,7 +362,6 @@ class PlayerSeasonStatsController extends Controller
             return response()->json(['message' => 'Player season stats stored successfully.']);
         } catch (\Exception $e) {
             // Log the error and return a generic error response
-            \Log::error('Error in storeplayerseasonstats: ' . $e->getMessage());
             return response()->json(['error' => 'An unexpected error occurred.'], 500);
         }
     }
