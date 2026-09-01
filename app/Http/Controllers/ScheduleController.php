@@ -670,7 +670,7 @@ class ScheduleController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error("Schedule failed: " . $e->getMessage());
+
             return response()->json([
                 'success' => false,
                 'message' => 'Schedule failed',

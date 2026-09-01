@@ -471,7 +471,7 @@ class TeamsController extends Controller
             )
             ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
             ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
-            ->join('players', 'transactions.player_id', '=', 'players.id');
+            ->leftJoin('players', 'transactions.player_id', '=', 'players.id');
 
         // Apply team filtering based on status
         $transactionQuery->where(function ($query) use ($teamId) {

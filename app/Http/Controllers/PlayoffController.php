@@ -1206,6 +1206,9 @@ class PlayoffController extends Controller
             $seriesId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}";
             $bestOf = intval(floor($seriesLength / 2) + 1);
 
+            if(($pairing[0] == 0) || ($pairing[1] == 0)){
+                throw new \Exception("Pairings should both have legit team IDs");
+            }
             // Create playoff series entry
             $seriesData[] = [
                 'series_id' => $seriesId,
@@ -1695,6 +1698,10 @@ class PlayoffController extends Controller
 
             if (!is_array($pair) || count($pair) < 2) {
                 throw new \Exception("Each pairing must contain exactly two team IDs.");
+            }
+
+            if(($pair[0] == 0) || ($pair[0] == 0)){
+                throw new \Exception("Each pairing must contain team IDs greater than zero!.");
             }
             // dd($game_number);
             // Create schedule entries for each pairing in the round

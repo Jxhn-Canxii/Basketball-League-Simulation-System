@@ -368,43 +368,47 @@ conference_results AS (
 playin_summary AS (
     SELECT
         COUNT(*) AS playin_series,
-        CASE
-            WHEN round = 'play_ins_elims_round_2' THEN
-                CONCAT(
-                    winner_name,
-                    ' advances in the Play-ins Finals to decide who will get the last ticket to the playoffs. While,',
-                    loser_name,
-                    ' has been eliminated in the play-ins.'
-                )
-            WHEN round = 'play_ins_elims_round_1' THEN
-                CONCAT(
-                    winner_name,
-                    ' advances in the play-offs as a 7th seed as they beat ',
-                    loser_name,
-                    ' The ',
-                    loser_name,
-                    ' will take the the winner of the Play-ins(9th vs 10th) as the battle for the last ticket for the playoffs.'
-                )
-            WHEN round = 'play_ins_finals' THEN
-                CONCAT(
-                    winner_name,
-                    ' advances in the play-offs as the 8th seed as they beat ',
-                    loser_name,
-                    ' The ',
-                    loser_name,
-                    ' season will come to the end.'
-                ) 
-            ELSE
-                CONCAT(
-                    winner_name,
-                    ' eliminated ',
-                    loser_name,
-                    ' ',
-                    winner_wins,
-                    '-',
-                    loser_wins
-                )
-        END AS playin_results
+        GROUP_CONCAT(
+            CASE
+                WHEN round = 'play_ins_elims_round_2' THEN
+                    CONCAT(
+                        winner_name,
+                        ' advances in the Play-ins Finals to decide who will get the last ticket to the playoffs. While,',
+                        loser_name,
+                        ' has been eliminated in the play-ins.'
+                    )
+                WHEN round = 'play_ins_elims_round_1' THEN
+                    CONCAT(
+                        winner_name,
+                        ' advances in the play-offs as a 7th seed as they beat ',
+                        loser_name,
+                        ' The ',
+                        loser_name,
+                        ' will take the the winner of the Play-ins(9th vs 10th) as the battle for the last ticket for the playoffs.'
+                    )
+                WHEN round = 'play_ins_finals' THEN
+                    CONCAT(
+                        winner_name,
+                        ' advances in the play-offs as the 8th seed as they beat ',
+                        loser_name,
+                        '. The ',
+                        loser_name,
+                        ' season will come to the end.'
+                    ) 
+                ELSE
+                    CONCAT(
+                        winner_name,
+                        ' eliminated ',
+                        loser_name,
+                        ' ',
+                        winner_wins,
+                        '-',
+                        loser_wins
+                    )
+            END
+            ORDER BY id
+            SEPARATOR '. '
+         ) AS playin_results
 
     FROM season_series
     WHERE round IN (
