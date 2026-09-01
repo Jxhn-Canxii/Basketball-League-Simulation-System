@@ -1289,7 +1289,7 @@ const filteredTransferredPlayers = computed(() => {
 
 const filteredNewPlayers = computed(() => {
     return team_roster.value.players?.filter(player => 
-        player.seasons_played_with_team == 1
+        player.seasons_played_with_team > 1
     );
 });
 

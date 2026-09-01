@@ -113,7 +113,7 @@ class StandingsController extends Controller
                 ->get();
 
             $newPlayers = DB::table('players as p')
-                ->join($playerSeasonStatsDBName.' as ps', 'p.id', '=', 'ps.player_id')
+                ->join('player_season_stats_archives as ps', 'p.id', '=', 'ps.player_id')
                 ->where('ps.team_id', $team->team_id) // Filter by the team
                 ->where('p.team_id', $team->team_id) // Filter by the team
                 ->where('ps.season_id', $seasonId) // Filter by the current season
@@ -155,7 +155,7 @@ class StandingsController extends Controller
                     $r->avg_points_per_game,
                     $r->avg_assists_per_game,
                     $r->avg_rebounds_per_game,
-                    $isInjured
+                    $isInjured,
                 );
             })->implode('%%');
 

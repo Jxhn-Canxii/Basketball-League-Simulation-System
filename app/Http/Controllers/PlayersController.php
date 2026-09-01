@@ -238,7 +238,7 @@ class PlayersController extends Controller
                 $seasonsPlayedWithTeam = DB::table('player_season_stats_archives')
                     ->where('player_id', $player->id)
                     ->where('team_id', $teamId)
-                    ->count('team_id');
+                    ->count('team_id') + 1;
 
                 $totalSeasonGameSchedule = $this->getScheduleCount($teamId, $seasonId);
 
@@ -260,7 +260,7 @@ class PlayersController extends Controller
                     'per_game_score' => (float)0,
                     'total_score' => (float)0,
                     'combined_score' => (float)0,
-                    'seasons_played_with_team' => $seasonsPlayedWithTeam + 1,
+                    'seasons_played_with_team' => $seasonsPlayedWithTeam,
                     'team_total_games' => (float)$totalSeasonGameSchedule,
                     'total_seasons_played' => $totalSeasonsPlayed + 1,
                     'average_eff' => (float)0,
@@ -324,7 +324,7 @@ class PlayersController extends Controller
                         'per_game_score' => number_format($stats['per_game_score'], 2),
                         'total_score' => number_format(0, 2),
                         'combined_score' => number_format(0, 2),
-                        'seasons_played_with_team' => $seasonsPlayedWithTeam + 1,
+                        'seasons_played_with_team' => $seasonsPlayedWithTeam,
                         'team_total_games' => (float)$totalSeasonGameSchedule,
                         'total_seasons_played' => $totalSeasonsPlayed + 1,
                         'latest_season' => $latestSeasonId,
