@@ -23,6 +23,7 @@
             <th scope="col" class="px-1 py-2 text-center text-xs text-blue-500 font-medium uppercase tracking-wider">W</th>
             <th scope="col" class="px-1 py-2 text-center text-xs text-red-500 font-medium uppercase tracking-wider">L</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
+            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DIFF</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STRK</th>
             <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">LAST 5 GAMES</th>
             <th scope="col" class="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NEXT</th>
@@ -79,13 +80,14 @@
             </td>
             <td class="px-2 py-2 whitespace-nowrap text-sm text-blue-500">{{ team.wins }}</td>
             <td class="px-2 py-2 whitespace-nowrap text-sm text-red-500">{{ team.losses }}</td>
-            <td class="px-2 py-2 whitespace-nowrap text-center text-gray-500 text-sm">{{ team.overall_rank }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-center text-gray-500 text-xs">{{ team.overall_rank }}</td>
+            <td class="px-2 py-2 whitespace-nowrap text-center text-xs" :class="team.score_difference < 0 ? 'text-red-300' : 'text-green-300'">{{ team.score_difference }}</td>
             <td class="px-2 py-2 whitespace-nowrap text-center text-sm">
               <span :class="team.streak_status && team.streak_status.toLowerCase().startsWith('w') ? 'text-green-700 font-bold' : 'text-red-700 font-bold'">
                 {{ team.streak_status }}
               </span>
             </td>
-            <td class="px-2 py-2 whitespace-nowrap text-center text-sm">
+            <td class="px-2 py-2 whitespace-nowrap text-center text-xs">
               <div class="flex justify-center space-x-1">
                 <template v-for="(result, index) in team.last_5_games?.split('').reverse()" :key="index">
                   <span :class="{
@@ -100,7 +102,7 @@
                 </template>
               </div>
             </td>
-            <td class="px-2 py-2 whitespace-nowrap text-left text-pink-500 text-sm">
+            <td class="px-2 py-2 whitespace-nowrap text-left text-pink-500 text-xs">
               {{ team.next_opponent_acronym }}
             </td>
             <!-- <td class="px-2 py-2 whitespace-nowrap">
