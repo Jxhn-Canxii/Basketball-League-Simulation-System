@@ -495,6 +495,7 @@ finals_games AS (
     JOIN current_season cs
         ON cs.id = sch.season_id
     WHERE sch.round = 'finals'
+    AND sch.status = 2
 ),
 
 finals_last_game AS (
