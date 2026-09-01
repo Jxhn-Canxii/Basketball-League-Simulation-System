@@ -276,7 +276,8 @@
           <GameResults
             v-if="isGameResultModalOpen"
             :key="isGameResultModalOpen"
-            :game_id="isGameResultModalOpen"
+            :game_id="isGameResultModalOpen[0]"
+            :season_id="isGameResultModalOpen[1]"
             :showBoxScore="true"
           />
         </div>
@@ -292,7 +293,7 @@
             <div
               v-for="(match, index) in series_info"
               :key="match.id || index"
-              @click="match.winner != 0 ? isGameResultModalOpen = match.game_id : null"
+              @click="match.winner != 0 ? isGameResultModalOpen = [match.game_id,match.season_id] : null"
               class="relative cursor-pointer hover:scale-105 transition min-w-[200px] border-2"
             >
               <div

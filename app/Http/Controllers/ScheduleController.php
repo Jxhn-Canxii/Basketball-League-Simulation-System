@@ -858,12 +858,13 @@ class ScheduleController extends Controller
 
         // Last finished game in the series
         $lastFinishedGame = DB::table($scheduleViewTable)
+            ->select('game_id','season_id')
             ->where('series_id', $seriesId)
             ->where('status', 2) // finished
             ->orderBy('id', 'desc')
             ->first();
 
-        $lastFinishedGameId = $lastFinishedGame->game_id ?? null;
+        $lastFinishedGameId = [$lastFinishedGame->game_id,$lastFinishedGame->season_id,]?? null;
 
         // Compute series lead text
         if ($seriesInfo->home_wins == $seriesInfo->away_wins) {
