@@ -285,7 +285,7 @@ class NewsController extends Controller
                 $isGame7 =
                     !$isSeriesClinched &&
                     $seriesLength === 7 &&
-                    $seriesWins === 3 &&
+                    $seriesWins === 4 &&
                     $seriesLosses === 3;
 
                 $isEliminationGame =
@@ -495,7 +495,8 @@ class NewsController extends Controller
                     "{winner} Gets the Job Done, Sends {loser} Home",
                     "Closeout Night: {winner} Ends {loser}'s Playoff Run",
                 ];
-            } elseif ($isPotentialClincher) {
+            }
+            elseif ($isPotentialClincher) {
                 $headlineTemplates = [
                     "{winner} Moves Within One Win of Eliminating {loser}",
                     "{winner} Takes Command of {$roundLabel} Series Against {loser}",
@@ -504,8 +505,8 @@ class NewsController extends Controller
                     "One Win Away: {winner} Takes {$seriesWins}-{$seriesLosses} Series Lead",
                     "{loser} Faces Elimination After Loss to {winner}",
                     "{winner} Takes a Huge Step Toward Advancing",
-                ];
-            } elseif ($seriesWins == $seriesLosses) {
+                ]; 
+            } elseif ($isSeriesTied) {
                 $headlineTemplates = [
                     "{winner} Breaks {$roundLabel} Series Tie With Win Over {loser}",
                     "Series Level No More: {winner} Takes the Lead Against {loser}",
