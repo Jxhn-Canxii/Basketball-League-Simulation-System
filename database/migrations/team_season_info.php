@@ -19,6 +19,8 @@ return new class extends Migration
             $table->unsignedBigInteger('coach_id');
             $table->integer('coach_iq');
             $table->integer('chemistry');
+            $table->integer('is_playoff_qualified');
+            $table->integer('is_defending_champion');
             $table->timestamps();
         });
     }

@@ -19,6 +19,7 @@ class PlayoffStatsController extends Controller
             ->pluck('team_id')
             ->toArray();
 
+        
         // Step 2: Set is_playoff_qualified = 1 for qualified teams
         DB::table('team_season_info')
             ->where('season_id', $seasonId)

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('name');
             $table->integer('age');
             $table->string('nationality', 100)->nullable();
-            $table->foreignId('team_id')->nullable()->constrained()->nullOnDelete();
+            $table->integer('team_id')->default(0);
             $table->enum('coaching_style', ['defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo']);
             $table->integer('experience_years');
             $table->integer('offensive_rating')->check('offensive_rating >= 1 AND offensive_rating <= 100');

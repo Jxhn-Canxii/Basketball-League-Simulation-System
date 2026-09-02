@@ -1,4 +1,5 @@
-<?
+<?php
+
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -23,13 +24,6 @@ return new class extends Migration
             $table->unsignedBigInteger('winner_team_id')->nullable();
             $table->unsignedBigInteger('loser_team_id')->nullable();
             $table->timestamps();
-
-            // Optional foreign keys (uncomment if related tables exist)
-            // $table->foreign('season_id')->references('id')->on('seasons')->onDelete('cascade');
-            // $table->foreign('home_team_id')->references('id')->on('teams')->onDelete('cascade');
-            // $table->foreign('away_team_id')->references('id')->on('teams')->onDelete('cascade');
-            // $table->foreign('winner_team_id')->references('id')->on('teams')->onDelete('set null');
-            // $table->foreign('loser_team_id')->references('id')->on('teams')->onDelete('set null');
         });
     }
 

@@ -64,6 +64,7 @@ return new class extends Migration
             $table->text('injury_history')->nullable();
             $table->decimal('injury_recovery_games',5,2)->default(0);
             $table->integer('morale')->default(75);
+            $table->integer('years_pro')->default(0);
             // Timestamps
             $table->timestamps();
         });

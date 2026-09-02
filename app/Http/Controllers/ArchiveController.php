@@ -222,8 +222,7 @@ class ArchiveController extends Controller
             if (!$season || $season->status < 14) return;
 
             $snapshots = DB::table('schedule_view')
-                ->select(
-                    'id', 
+                ->select( 
                     'game_id', 
                     'game_number', 
                     'round', 

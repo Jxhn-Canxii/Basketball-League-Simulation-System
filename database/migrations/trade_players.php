@@ -43,11 +43,6 @@ return new class extends Migration
                 'idx_trade_players_to_team'
             );
 
-            $table->foreign('trade_proposal_id')
-                ->references('id')
-                ->on('trade_proposals')
-                ->cascadeOnDelete()
-                ->cascadeOnUpdate();
         });
     }
 

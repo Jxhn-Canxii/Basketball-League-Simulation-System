@@ -14,22 +14,11 @@ return new class extends Migration
         Schema::create('schedules_archives', function (Blueprint $table) {
             $table->id();
             $table->string('game_id');
-            DB::statement('
-                ALTER TABLE schedules_archives ADD game_number INT GENERATED ALWAYS AS (
-                    CASE
-                        WHEN LOCATE("G", game_id) > 0 AND LENGTH(game_id) > LOCATE("G",, game_id) + 1 THEN
-                            CAST(SUBTR(`game_id`,LOCATE("G",`game_id`) + 1,LOCATE("-",`game_id`,LOCATE("G",`game_id`)) - LOCATE("G",`game_id`) - 1) as UNSIGNED) 
-                        WHEN LOCATE("G",`game_id`) > 0 THEN 
-                            CAST(SUBSTR(`game_id`,LOCATE("G",`game_id`) + 1) as UNSIGNED) 
-                        ELSE 
-                        0
-                    END
-                ) STORED
-            ');
+            $table->string('game_number');
             $table->string('round');
             $table->integer('season_id')->constrained()->onDelete('cascade');
             $table->integer('conference_id');
-            $table->integer('series_number');
+            $table->integer('series_id');
             $table->integer('home_id')->constrained('teams')->onDelete('cascade');
             $table->integer('home_score')->default(0);
             $table->integer('away_id')->constrained('teams')->onDelete('cascade');
@@ -45,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('schedules');
+        Schema::dropIfExists('schedules_archives');
     }
 };
