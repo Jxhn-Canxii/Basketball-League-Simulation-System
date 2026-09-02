@@ -25,9 +25,10 @@ return new class extends Migration
             $table->integer('age');
             $table->integer('retirement_age')->default(35);
 
-            // New Position Column
+            // Position
             $table->string('position', 10)->nullable();
 
+            // Role
             $table->string('role', 100)->nullable();
 
             // Ratings
@@ -49,6 +50,39 @@ return new class extends Migration
             $table->decimal('potential_rating', 5, 2)->default(0);
             $table->string('type', 50)->nullable();
 
+            // Player Personality / Contract Behavior
+            $table->decimal('loyalty_rating', 5, 2)
+                ->storedAs('LEAST(100, GREATEST(0, ROUND(
+                    (leadership_rating * 0.40) +
+                    (work_ethic_rating * 0.30) +
+                    (basketball_iq_rating * 0.15) +
+                    (morale * 0.15)
+                )))');
+
+            $table->decimal('satisfaction_rating', 5, 2)
+                ->storedAs('LEAST(100, GREATEST(0, ROUND(
+                    (morale * 0.50) +
+                    (leadership_rating * 0.20) +
+                    (work_ethic_rating * 0.15) +
+                    (basketball_iq_rating * 0.15)
+                )))');
+
+            $table->decimal('ambition_rating', 5, 2)
+                ->storedAs('LEAST(100, GREATEST(0, ROUND(
+                    (work_ethic_rating * 0.35) +
+                    (overall_rating * 0.30) +
+                    (potential_rating * 0.25) +
+                    (basketball_iq_rating * 0.10)
+                )))');
+
+            $table->decimal('negotation_skill_rating', 5, 2)
+                ->storedAs('LEAST(100, GREATEST(0, ROUND(
+                    (basketball_iq_rating * 0.35) +
+                    (leadership_rating * 0.25) +
+                    (work_ethic_rating * 0.20) +
+                    (overall_rating * 0.20)
+                )))');
+
             // Draft Information
             $table->unsignedBigInteger('draft_id')->nullable();
             $table->integer('draft_order')->nullable();
@@ -62,9 +96,12 @@ return new class extends Migration
             $table->string('injury_type', 255)->nullable();
             $table->decimal('fatigue', 5, 2)->default(0);
             $table->text('injury_history')->nullable();
-            $table->decimal('injury_recovery_games',5,2)->default(0);
+            $table->decimal('injury_recovery_games', 5, 2)->default(0);
+
+            // Morale & Experience
             $table->integer('morale')->default(75);
             $table->integer('years_pro')->default(0);
+
             // Timestamps
             $table->timestamps();
         });

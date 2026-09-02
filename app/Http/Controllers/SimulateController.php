@@ -127,41 +127,6 @@ class SimulateController extends Controller
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
 
-        //check if home team is injury depleted
-        $homeTeamInjuries = DB::table('players')
-            ->where('team_id', $gameData->home_team_id)
-            ->where('is_injured', true)
-            ->get();
-
-        if ($homeTeamInjuries->count() > 5) {
-            //run the fire leoparad rule
-            $initiateFLRule = $this->teamManagement->fireLeopardRule($gameData->home_team_id);
-            // return response()->json([
-            //     'error' => true,
-            //     'fire' =>  $initiateFLRule,
-            //     'injured' => $homeTeamInjuries->count(),
-            //     'team' => $gameData->home_team_id,
-            //     'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            // ], 400);
-        }
-
-        $awayTeamInjuries = DB::table('players')
-            ->where('team_id', $gameData->away_team_id)
-            ->where('is_injured', true)
-            ->get();
-
-        if ($awayTeamInjuries->count() > 5) {
-            //run the fire leoparad rule
-            $initiateFLRule =  $this->teamManagement->fireLeopardRule($gameData->away_team_id);
-            // return response()->json([
-            //     'error' => true,
-            //     'fire' =>  $initiateFLRule,
-            //     'injured' => $awayTeamInjuries->count(),
-            //     'team' => $gameData->away_team_id,
-            //     'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            // ], 400);
-        }
-
         // Fetch current season ID
         $currentSeasonId = $gameData->season_id;
 
@@ -669,40 +634,6 @@ class SimulateController extends Controller
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
 
-        //check if home team is injury depleted
-        $homeTeamInjuries = DB::table('players')
-            ->where('team_id', $gameData->home_team_id)
-            ->where('is_injured', true)
-            ->get();
-
-        if ($homeTeamInjuries->count() > 5) {
-            //run the fire leoparad rule
-            $initiateFLRule = $this->teamManagement->fireLeopardRule($gameData->home_team_id);
-            // return response()->json([
-            //     'error' => true,
-            //     'fire' =>  $initiateFLRule,
-            //     'injured' => $homeTeamInjuries->count(),
-            //     'team' => $gameData->home_team_id,
-            //     'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            // ], 400);
-        }
-
-        $awayTeamInjuries = DB::table('players')
-            ->where('team_id', $gameData->away_team_id)
-            ->where('is_injured', true)
-            ->get();
-
-        if ($awayTeamInjuries->count() > 5) {
-            //run the fire leoparad rule
-            $initiateFLRule =  $this->teamManagement->fireLeopardRule($gameData->away_team_id);
-            // return response()->json([
-            //     'error' => true,
-            //     'fire' =>  $initiateFLRule,
-            //     'injured' => $awayTeamInjuries->count(),
-            //     'team' => $gameData->away_team_id,
-            //     'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            // ], 400);
-        }
 
         // Define role-based priority and maximum points
         $rolePriority = [
@@ -1260,51 +1191,9 @@ class SimulateController extends Controller
             ], 400);
         }
 
-        $this->teamBalance->fixTeamPositionBalance($gameData->home_team_id,false);
-        $this->teamBalance->fixTeamPositionBalance($gameData->away_team_id,false);
-
-        if($season->status == 2){
-            $this->teamBalance->signPlayerOffWaiver($gameData->home_team_id);
-            $this->teamBalance->signPlayerOffWaiver($gameData->away_team_id);
-        }
-
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
         //check first to balance team positions
-        //check if home team is injury depleted
-        $homeTeamInjuries = DB::table('players')
-            ->where('team_id', $gameData->home_team_id)
-            ->where('is_injured', true)
-            ->get();
-
-        if ($homeTeamInjuries->count() > 5) {
-            //run the fire leoparad rule
-            $initiateFLRule = $this->teamManagement->fireLeopardRule($gameData->home_team_id);
-            // return response()->json([
-            //     'error' => true,
-            //     'fire' =>  $initiateFLRule,
-            //     'injured' => $homeTeamInjuries->count(),
-            //     'team' => $gameData->home_team_id,
-            //     'message' => $gameData->home_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            // ], 400);
-        }
-
-        $awayTeamInjuries = DB::table('players')
-            ->where('team_id', $gameData->away_team_id)
-            ->where('is_injured', true)
-            ->get();
-
-        if ($awayTeamInjuries->count() > 5) {
-            //run the fire leoparad rule
-            $initiateFLRule =  $this->teamManagement->fireLeopardRule($gameData->away_team_id);
-            // return response()->json([
-            //     'error' => true,
-            //     'fire' =>  $initiateFLRule,
-            //     'injured' => $awayTeamInjuries->count(),
-            //     'team' => $gameData->away_team_id,
-            //     'message' => $gameData->away_team_name.' team is injury depleted!.Cant proceed, game postponed!',
-            // ], 400);
-        }
 
         $rolePriority = [
             'star player' => 1,

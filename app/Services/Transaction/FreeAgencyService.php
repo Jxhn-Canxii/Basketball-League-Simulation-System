@@ -170,7 +170,7 @@ class FreeAgencyService
             DB::table('transactions')->insert([
                 'player_id' => $player->id,
                 'season_id' => $seasonId,
-                'details' => $player->name . ' signed with team ' . $teamId . ' for $' . number_format((float) $offer['salary'], 2) . ' on a ' . $offer['contract_type'] . ' contract.',
+                'details' => $player->name . ' signed with team ' . $teamId . ' for ₱' . number_format((float) $offer['salary'], 2) . ' on a ' . $offer['contract_type'] . ' contract.',
                 'from_team_id' => 0,
                 'to_team_id' => $teamId,
                 'status' => 'signed',

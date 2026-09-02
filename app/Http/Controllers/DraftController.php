@@ -7,14 +7,18 @@ use App\Models\Seasons;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\HelperController;
+use App\Services\Coach\CoachDecisionService;
 use Inertia\Inertia;
 
 class DraftController extends Controller
 {
     protected $helper;
+    protected $coachDecisionService;
 
-    public function __construct(){
+    public function __construct()
+    {
         $this->helper = new HelperController();
+        $this->helper = new CoachDecisionService();
     }
 
     public function index()
@@ -217,24 +221,83 @@ class DraftController extends Controller
                 $teamId = $pick->team_id;
                 $team = DB::table('teams')->where('id', $teamId)->first();
                 $neededPositions = array_keys($teamPositionNeeds[$teamId] ?? []);
-                $bestAvailable = $availablePlayers->first();
 
-                // Try to find a player who fits a position need within -3 overall rating tolerance
-                $selectedPlayer = $availablePlayers->first(function ($player) use ($neededPositions, $bestAvailable) {
-                    foreach ($neededPositions as $pos) {
-                        if (strpos($player->position, $pos) !== false && $player->overall_rating >= $bestAvailable->overall_rating - 3) {
-                            return true;
-                        }
+                $coach = $this->coachDecisionService
+                    ->getTeamCoach($teamId);
+
+                $candidatePlayers = $availablePlayers
+                    ->sortByDesc(function ($player) {
+                        return (float) (
+                            $player->overall_rating
+                            ?? $player->overall
+                            ?? 0
+                        );
+                    })
+                    ->take(15)
+                    ->values();
+
+                $scoredCandidates = $candidatePlayers
+                    ->map(function ($player) use (
+                        $coach,
+                        $neededPositions
+                    ) {
+
+                        $draftScore = $this->calculateCoachDraftScore(
+                            $coach,
+                            $player,
+                            $neededPositions
+                        );
+
+                        return [
+                            'player' => $player,
+                            'draft_score' => $draftScore,
+                        ];
+                    })
+                    ->sortByDesc('draft_score')
+                    ->values();
+
+                $topCandidates = $scoredCandidates
+                    ->take(3)
+                    ->values();
+
+                $selectedCandidate = $topCandidates->first();
+
+                if ($topCandidates->count() > 1) {
+
+                    /*
+    |--------------------------------------------------------------------------
+    | Great coaches are more likely to pick the best player.
+    |--------------------------------------------------------------------------
+    */
+
+                    $coachQuality = $this->coachDecisionService
+                        ->getCoachQuality($coach);
+
+                    $bestChance = 55 + (($coachQuality - 50) * 0.40);
+
+                    $bestChance = max(
+                        40,
+                        min(90, $bestChance)
+                    );
+
+                    if (
+                        !$this->coachDecisionService
+                            ->randomDecision($bestChance)
+                    ) {
+                        $selectedCandidate = $topCandidates
+                            ->slice(1)
+                            ->random();
                     }
-                    return false;
-                });
-
-                if (!$selectedPlayer) {
-                    $selectedPlayer = $bestAvailable;
                 }
 
+                $selectedPlayer = $selectedCandidate['player'];
+
+                $selectedPlayer = $selectedCandidate['player'];
+
+                $selectedDraftScore = $selectedCandidate['draft_score'];
+
                 // Remove selected player
-                $availablePlayers = $availablePlayers->reject(fn($p) => $p->id === $selectedPlayer->id)->values();
+                $availablePlayers = $availablePlayers->reject(fn($p) => $p->id === $selectedPlayer['player']->id)->values();
 
                 // Determine if a player needs to be waived
                 $hasSpace = DB::table('players')->where('team_id', $teamId)->count() < 15;
@@ -520,7 +583,7 @@ class DraftController extends Controller
         // Get the latest season_id from the request
         $latestSeasonId = $request->season_id;
 
-           // Determine if the season_id is the current season
+        // Determine if the season_id is the current season
         $currentSeasonId = get_current_season_id();
 
         $playerSeasonStatsTable = $this->helper->getSeasonStatsDBName($latestSeasonId);
@@ -529,7 +592,7 @@ class DraftController extends Controller
         $draftResultsWithNames = DB::table('drafts')
             ->join('teams', 'drafts.team_id', '=', 'teams.id')
             ->join('players', 'drafts.player_id', '=', 'players.id')
-            ->leftJoin($playerSeasonStatsTable.' as player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
+            ->leftJoin($playerSeasonStatsTable . ' as player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
             ->leftJoin('teams as signed_team', 'signed_team.id', '=', 'player_season_stats.team_id')
             ->select(
                 'players.type as archetype',
@@ -581,7 +644,7 @@ class DraftController extends Controller
             $playerStats = $playerGameStats;
         } else {
             // Get player stats from the player_season_stats table for the previous season, filtered by rank group and draft_id
-            $playerSeasonStats = DB::table($playerSeasonStatsTable.' as player_season_stats')
+            $playerSeasonStats = DB::table($playerSeasonStatsTable . ' as player_season_stats')
                 ->join('players', 'player_season_stats.player_id', '=', 'players.id')
                 ->where('players.draft_id', $latestSeasonId)
                 ->whereIn('player_season_stats.player_id', $rankGroupPlayerIds) // Filter by rank group
@@ -682,4 +745,23 @@ class DraftController extends Controller
         ]);
     }
 
+    private function calculateCoachDraftScore(
+        $coach,
+        $player,
+        array $positionNeeds
+    ): float {
+        $baseScore = (float) (
+            $player->overall_rating
+            ?? $player->overall
+            ?? 0
+        );
+
+        return $this->coachDecisionService
+            ->getDraftScore(
+                $coach,
+                $player,
+                $baseScore,
+                $positionNeeds
+            );
+    }
 }

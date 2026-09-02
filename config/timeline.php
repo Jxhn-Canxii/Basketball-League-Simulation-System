@@ -16,8 +16,8 @@ return [
     'awards' => 12,
     'player_update' => 13,
     'draft' => 14,
-    'off_season_trade' => 15,
-    'player_signings' => 16,
-    'coach_signings' => 17,
+    'coach_signings' => 15,
+    'off_season_trade' => 16,
+    'player_signings' => 17,
     'new_season' => 18,
 ];

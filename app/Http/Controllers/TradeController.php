@@ -8,16 +8,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
+use App\Services\Player\PlayerValuationService;
+use App\Services\Coach\CoachDecisionService;
 
 class TradeController extends Controller
 {
     protected $archive;
     protected $helper;
+    protected $coachDecisionService;
+    protected $valuationService;
 
     public function __construct()
     {
         $this->helper = new HelperController();
         $this->archive = new ArchiveController();
+        $this->valuationService = new PlayerValuationService();
+        $this->coachDecisionService = new CoachDecisionService();
     }
 
     /*
@@ -122,11 +128,17 @@ class TradeController extends Controller
             ->toArray();
 
         $players = DB::table('trade_players')
-            ->join(
+            ->leftJoin(
                 'players',
                 'trade_players.player_id',
                 '=',
                 'players.id'
+            )
+            ->leftJoin(
+                'draft_pick_rights',
+                'trade_players.draft_pick_right_id',
+                '=',
+                'draft_pick_rights.id'
             )
             ->join(
                 'teams as from_team',
@@ -148,11 +160,17 @@ class TradeController extends Controller
                 'trade_players.id',
                 'trade_players.trade_proposal_id',
                 'trade_players.player_id',
+                'trade_players.draft_pick_right_id',
                 'trade_players.from_team_id',
                 'trade_players.to_team_id',
 
                 'players.name as player_name',
                 'players.role',
+                'draft_pick_rights.season_id as pick_season_id',
+                'draft_pick_rights.round as pick_round',
+                'draft_pick_rights.original_team_id as pick_original_team_id',
+                'draft_pick_rights.current_owner_id as pick_current_owner_id',
+                'draft_pick_rights.protections as pick_protections',
 
                 'from_team.name as from_team',
                 'to_team.name as to_team',
@@ -167,41 +185,50 @@ class TradeController extends Controller
             ->get()
             ->groupBy('trade_proposal_id');
 
-        foreach ($proposals as $proposal) {
+            foreach ($proposals as $proposal) {
 
-            $proposal->players =
-                $players->get($proposal->id, collect())->values();
+                $proposal->players =
+                    $players->get($proposal->id, collect())->values();
 
-            /*
-            |--------------------------------------------------------------------------
-            | Get unique teams involved
-            |--------------------------------------------------------------------------
-            */
+                $proposal->players = $proposal->players->map(function ($tradePlayer) {
+                    if (!empty($tradePlayer->draft_pick_right_id)) {
+                        $tradePlayer->player_name = 'Draft Pick: ' . $tradePlayer->pick_round . ' / ' . $tradePlayer->pick_season_id;
+                        $tradePlayer->role = 'draft pick';
+                    }
 
-            $teams = collect();
+                    return $tradePlayer;
+                });
 
-            foreach ($proposal->players as $player) {
-                $teams->push($player->from_team_id);
-                $teams->push($player->to_team_id);
+                /*
+                |--------------------------------------------------------------------------
+                | Get unique teams involved
+                |--------------------------------------------------------------------------
+                */
+
+                $teams = collect();
+
+                foreach ($proposal->players as $player) {
+                    $teams->push($player->from_team_id);
+                    $teams->push($player->to_team_id);
+                }
+
+                $teamName = collect();
+
+                foreach ($proposal->players as $player) {
+                    $teamName->push($player->from_team);
+                    $teamName->push($player->to_team);
+                }
+
+                $proposal->teams_involved =
+                    $teams->unique()->values();
+
+                $proposal->team_name_involved =
+                    $teamName->unique()->values();
+
+                $proposal->team_count =
+                    $proposal->team_count
+                    ?? $proposal->teams_involved->count();
             }
-
-            $teamName = collect();
-
-            foreach ($proposal->players as $player) {
-                $teamName->push($player->from_team);
-                $teamName->push($player->to_team);
-            }
-
-            $proposal->teams_involved =
-                $teams->unique()->values();
-
-            $proposal->team_name_involved =
-                $teamName->unique()->values();
-
-            $proposal->team_count =
-                $proposal->team_count
-                ?? $proposal->teams_involved->count();
-        }
     }
 
     /*
@@ -435,6 +462,10 @@ class TradeController extends Controller
                 continue;
             }
 
+            if (!$this->validateTradeBalance($selectedPlayers)) {
+                continue;
+            }
+
             /*
             |--------------------------------------------------------------------------
             | Validate each team's incoming/outgoing value
@@ -639,438 +670,227 @@ class TradeController extends Controller
 
         $decisions = [];
 
-        foreach ($proposals as $proposal) {
+       foreach ($proposals as $proposal) {
 
-            try {
+    DB::beginTransaction();
 
-                /*
-                |--------------------------------------------------------------------------
-                | Get every player in this trade
-                |--------------------------------------------------------------------------
-                */
+    try {
 
-                $tradePlayers =
-                    DB::table('trade_players')
-                    ->where(
-                        'trade_proposal_id',
-                        $proposal->id
-                    )
-                    ->get();
+        /*
+        |--------------------------------------------------------------------------
+        | Existing validation
+        |--------------------------------------------------------------------------
+        */
 
-                /*
-                |--------------------------------------------------------------------------
-                | Validate proposal
-                |--------------------------------------------------------------------------
-                */
+        $valid = true;
 
-                if ($tradePlayers->count() < 2) {
+        $teamEvaluations = [];
 
-                    $this->rejectTradeProposal(
-                        $proposal->id
+        foreach ($proposal->tradePlayers as $tradePlayer) {
+
+            /*
+            |--------------------------------------------------------------------------
+            | Example:
+            |
+            | tradePlayer->team_id
+            | tradePlayer->player_id
+            | tradePlayer->receiving_team_id
+            |--------------------------------------------------------------------------
+            */
+
+            $outgoingTeamId =
+                (int) $tradePlayer->team_id;
+
+            $incomingTeamId =
+                (int) $tradePlayer->receiving_team_id;
+
+            $player = DB::table('players')
+                ->where(
+                    'id',
+                    $tradePlayer->player_id
+                )
+                ->first();
+
+            if (!$player) {
+                $valid = false;
+                break;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Make sure player is still on original team.
+            |--------------------------------------------------------------------------
+            */
+
+            if (
+                (int) $player->team_id !==
+                $outgoingTeamId
+            ) {
+                $valid = false;
+                break;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Player valuation
+            |--------------------------------------------------------------------------
+            */
+
+            $baseValue =
+                $this->valuationService
+                    ->calculatePlayerValue(
+                        $player
                     );
 
-                    $decisions[] = [
-                        'proposal_id' =>
-                        $proposal->id,
+            /*
+            |--------------------------------------------------------------------------
+            | Find the player this team receives.
+            |--------------------------------------------------------------------------
+            */
 
-                        'status' =>
-                        'rejected',
-
-                        'reason' =>
-                        'Invalid trade proposal.',
-                    ];
-
-                    continue;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Validate players and teams
-                |--------------------------------------------------------------------------
-                */
-
-                $invalidTrade = false;
-
-                foreach ($tradePlayers as $tradePlayer) {
-
-                    $player =
-                        DB::table('players')
-                        ->where(
-                            'id',
-                            $tradePlayer->player_id
-                        )
-                        ->first();
-
-                    if (!$player) {
-                        $invalidTrade = true;
-                        break;
-                    }
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Player must still belong to original team
-                    |--------------------------------------------------------------------------
-                    */
-
-                    if (
-                        (int) $player->team_id
-                        !==
-                        (int) $tradePlayer->from_team_id
+            $incomingTradePlayer =
+                $proposal->tradePlayers
+                    ->first(function ($item) use (
+                        $incomingTeamId
                     ) {
-                        $invalidTrade = true;
-                        break;
-                    }
-                }
+                        return (
+                            (int) $item->receiving_team_id ===
+                            $incomingTeamId
+                        );
+                    });
 
-                if ($invalidTrade) {
+            if (!$incomingTradePlayer) {
+                $valid = false;
+                break;
+            }
 
-                    $this->rejectTradeProposal(
-                        $proposal->id
+            $incomingPlayer =
+                DB::table('players')
+                    ->where(
+                        'id',
+                        $incomingTradePlayer->player_id
+                    )
+                    ->first();
+
+            if (!$incomingPlayer) {
+                $valid = false;
+                break;
+            }
+
+            $incomingBaseValue =
+                $this->valuationService
+                    ->calculatePlayerValue(
+                        $incomingPlayer
                     );
 
-                    $decisions[] = [
-                        'proposal_id' =>
-                        $proposal->id,
-
-                        'status' =>
-                        'rejected',
-
-                        'reason' =>
-                        'One or more players are no longer available.',
-                    ];
-
-                    continue;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Check if any player has already been traded
-                |--------------------------------------------------------------------------
-                */
-
-                $playerIds =
-                    $tradePlayers
-                    ->pluck('player_id')
-                    ->toArray();
-
-                $alreadyTraded =
-                    DB::table('trade_players')
-                    ->join(
-                        'trade_proposals',
-                        'trade_players.trade_proposal_id',
-                        '=',
-                        'trade_proposals.id'
-                    )
-                    ->where(
-                        'trade_proposals.season_id',
-                        $latestSeasonId
-                    )
-                    ->where(
-                        'trade_proposals.status',
-                        'approved'
-                    )
-                    ->whereIn(
-                        'trade_players.player_id',
-                        $playerIds
-                    )
-                    ->where(
-                        'trade_players.trade_proposal_id',
-                        '!=',
-                        $proposal->id
-                    )
-                    ->exists();
-
-                if ($alreadyTraded) {
-
-                    $this->rejectTradeProposal(
-                        $proposal->id
-                    );
-
-                    $decisions[] = [
-                        'proposal_id' =>
-                        $proposal->id,
-
-                        'status' =>
-                        'rejected',
-
-                        'reason' =>
-                        'Player already involved in another approved trade.',
-                    ];
-
-                    continue;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Calculate player values
-                |--------------------------------------------------------------------------
-                */
-
-                $scores = [];
-
-                foreach ($tradePlayers as $tradePlayer) {
-
-                    $stats =
-                        $this->getPlayerStats(
-                            $tradePlayer->player_id
-                        );
-
-                    $scores[] =
-                        $this->calculatePerformanceScore(
-                            $stats
-                        );
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Calculate trade balance
-                |--------------------------------------------------------------------------
-                */
-
-                $maxScore =
-                    max($scores);
-
-                $minScore =
-                    min($scores);
-
-                $scoreDifference =
-                    $maxScore - $minScore;
-
-                /*
-                |--------------------------------------------------------------------------
-                | Determine approval chance
-                |--------------------------------------------------------------------------
-                */
-
-                $approvalChance = 60;
-
-                if ($scoreDifference <= 5) {
-
-                    $approvalChance = 85;
-                } elseif ($scoreDifference <= 10) {
-
-                    $approvalChance = 75;
-                } elseif ($scoreDifference <= 15) {
-
-                    $approvalChance = 65;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Random decision
-                |--------------------------------------------------------------------------
-                */
-
-                if (
-                    rand(1, 100)
-                    >
-                    $approvalChance
-                ) {
-
-                    $this->rejectTradeProposal(
-                        $proposal->id
-                    );
-
-                    $decisions[] = [
-                        'proposal_id' =>
-                        $proposal->id,
-
-                        'status' =>
-                        'rejected',
-
-                        'reason' =>
-                        'Trade rejected based on team decision logic.',
-                    ];
-
-                    continue;
-                }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Execute entire trade atomically
-                |--------------------------------------------------------------------------
-                */
-
-                DB::transaction(function () use (
-                    $proposal,
-                    $tradePlayers,
-                    $isOffSeason,
-                    $storeStats
-                ) {
-
-                    foreach ($tradePlayers as $tradePlayer) {
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Lock player row
-                        |--------------------------------------------------------------------------
-                        */
-
-                        $player =
-                            DB::table('players')
-                            ->where(
-                                'id',
-                                $tradePlayer->player_id
-                            )
-                            ->lockForUpdate()
-                            ->first();
-
-                        if (!$player) {
-
-                            throw new \Exception(
-                                "Player {$tradePlayer->player_id} not found."
-                            );
-                        }
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Make sure player is still on original team
-                        |--------------------------------------------------------------------------
-                        */
-
-                        if (
-                            (int) $player->team_id
-                            !==
-                            (int) $tradePlayer->from_team_id
-                        ) {
-
-                            throw new \Exception(
-                                "Player {$player->name} is no longer on the expected team."
-                            );
-                        }
-
-                        /*
-                        |--------------------------------------------------------------------------
-                        | Move player
-                        |--------------------------------------------------------------------------
-                        */
-
-                        $updated =
-                            DB::table('players')
-                            ->where(
-                                'id',
-                                $tradePlayer->player_id
-                            )
-                            ->where(
-                                'team_id',
-                                $tradePlayer->from_team_id
-                            )
-                            ->update([
-                                'team_id' =>
-                                $tradePlayer->to_team_id,
-                            ]);
-
-                        if (!$updated) {
-
-                            throw new \Exception(
-                                "Failed to move player {$player->name}."
-                            );
-                        }
-                    }
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Mark master proposal approved
-                    |--------------------------------------------------------------------------
-                    */
-
-                    DB::table('trade_proposals')
-                        ->where(
-                            'id',
-                            $proposal->id
-                        )
-                        ->update([
-                            'status' =>
-                            'approved',
-
-                            'updated_at' =>
-                            now(),
-                        ]);
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Store player season stats
-                    |--------------------------------------------------------------------------
-                    */
-
-                    foreach ($tradePlayers as $tradePlayer) {
-
-                        if ($isOffSeason) {
-
-                            $storeStats
-                                ->storePlayerNextSeasonStats(
-                                    $tradePlayer->to_team_id,
-                                    $tradePlayer->player_id
-                                );
-                        } else {
-
-                            $storeStats
-                                ->storePlayerCurrentSeasonStats(
-                                    $tradePlayer->to_team_id,
-                                    $tradePlayer->player_id
-                                );
-                        }
-                    }
-
-                    /*
-                    |--------------------------------------------------------------------------
-                    | Log each player movement
-                    |--------------------------------------------------------------------------
-                    */
-
-                    foreach ($tradePlayers as $tradePlayer) {
-
-                        self::logTrade(
-                            $tradePlayer->from_team_id,
-                            $tradePlayer->to_team_id,
-                            $tradePlayer->player_id,
-                            null,
-                            'Multi-team trade accepted.',
-                            $isOffSeason,
-                            $proposal->id
-                        );
-                    }
-                });
-
-                $decisions[] = [
-                    'proposal_id' =>
-                    $proposal->id,
-
-                    'status' =>
-                    'approved',
-
-                    'team_count' =>
-                    $proposal->team_count,
-
-                    'players' =>
-                    $tradePlayers->count(),
-
-                    'reason' =>
-                    'Multi-team trade approved successfully.',
-                ];
-            } catch (\Exception $e) {
-
-                Log::error(
-                    'Trade processing error: ' .
-                        $e->getMessage(),
-                    [
-                        'proposal_id' =>
-                        $proposal->id,
-                    ]
+            /*
+            |--------------------------------------------------------------------------
+            | Coach evaluation
+            |--------------------------------------------------------------------------
+            */
+
+            $evaluation =
+                $this->evaluateTradeForTeam(
+                    $incomingTeamId,
+                    $incomingPlayer,
+                    $player,
+                    $incomingBaseValue,
+                    $baseValue
                 );
 
-                $decisions[] = [
-                    'proposal_id' =>
-                    $proposal->id,
+            $teamEvaluations[] =
+                $evaluation;
+        }
 
-                    'status' =>
-                    'error',
+        if (!$valid) {
 
-                    'reason' =>
-                    $e->getMessage(),
-                ];
+            DB::rollBack();
+
+            continue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Every team must approve.
+        |--------------------------------------------------------------------------
+        */
+
+        $allTeamsApprove = true;
+
+        foreach ($teamEvaluations as $evaluation) {
+
+            if (
+                !$this->coachDecisionService
+                    ->randomDecision(
+                        $evaluation['approval_chance']
+                    )
+            ) {
+                $allTeamsApprove = false;
+                break;
             }
         }
+
+        if (!$allTeamsApprove) {
+
+            DB::rollBack();
+
+            /*
+            | Mark proposal rejected if this is how
+            | your existing system handles failed decisions.
+            */
+
+            DB::table('trade_proposals')
+                ->where('id', $proposal->id)
+                ->update([
+                    'status' => 3,
+                    'updated_at' => now(),
+                ]);
+
+            continue;
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Execute existing trade transaction
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($proposal->tradePlayers as $tradePlayer) {
+
+            DB::table('players')
+                ->where(
+                    'id',
+                    $tradePlayer->player_id
+                )
+                ->update([
+                    'team_id' =>
+                        $tradePlayer->receiving_team_id,
+                    'updated_at' => now(),
+                ]);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Existing approval/logging code
+        |--------------------------------------------------------------------------
+        */
+
+        DB::table('trade_proposals')
+            ->where('id', $proposal->id)
+            ->update([
+                'status' => 2,
+                'updated_at' => now(),
+            ]);
+
+        DB::commit();
+
+    } catch (\Throwable $e) {
+
+        DB::rollBack();
+
+        throw $e;
+    }
+}
 
         return response()->json([
             'decisions' =>
@@ -1399,26 +1219,57 @@ class TradeController extends Controller
     |--------------------------------------------------------------------------
     */
 
+    private function validateTradeBalance(array $players): bool
+    {
+        if (count($players) < 2) {
+            return false;
+        }
+
+        $scores = array_map(function ($player) {
+            return (float) ($player['composite_score'] ?? 0);
+        }, $players);
+
+        $maxScore = max($scores);
+        $minScore = min($scores);
+
+        if (($maxScore - $minScore) > 15) {
+            return false;
+        }
+
+        $salaries = array_map(function ($player) {
+            return (float) ($player['salary'] ?? 0);
+        }, $players);
+
+        $maxSalary = max($salaries);
+        $minSalary = min($salaries);
+
+        if ($maxSalary <= 0 || $minSalary <= 0) {
+            return true;
+        }
+
+        if ($maxSalary > ($minSalary * 1.25) + 100000) {
+            return false;
+        }
+
+        return true;
+    }
+
     private function calculatePerformanceScore($player)
+    {
+        return $this->calculatePlayerValue($player);
+    }
+
+    private function calculatePlayerValue($player)
     {
         if (!$player) {
             return 0;
         }
 
-        return (float) (
+        if (is_array($player) || is_object($player)) {
+            return (float) $this->valuationService->calculatePlayerValue($player);
+        }
 
-            ($player->avg_points_per_game ?? 0) * 2 +
-
-            ($player->avg_rebounds_per_game ?? 0) * 1.5 +
-
-            ($player->avg_assists_per_game ?? 0) * 1.5 +
-
-            ($player->avg_steals_per_game ?? 0) * 2 +
-
-            ($player->avg_blocks_per_game ?? 0) * 2 -
-
-            ($player->avg_turnovers_per_game ?? 0) * 1.5
-        );
+        return 0;
     }
 
     /*
@@ -1427,159 +1278,201 @@ class TradeController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    private function findUnderperformingPlayers($teamId)
-    {
-        $latestSeasonId =
-            get_current_season_id();
+    private function findUnderperformingPlayers(
+        int $teamId
+    ) {
+        $seasonId = get_current_season_id();
 
-        $previousSeasonId =
-            get_previous_season_id();
+        $coach = $this->coachDecisionService
+            ->getTeamCoach($teamId);
 
         /*
-        |--------------------------------------------------------------------------
-        | Current season stats
-        |--------------------------------------------------------------------------
-        */
+    |--------------------------------------------------------------------------
+    | Current season stats
+    |--------------------------------------------------------------------------
+    */
 
-        $latestStats =
-            DB::table('player_season_stats')
+        $currentPlayers = DB::table('player_season_stats')
             ->join(
                 'players',
-                'player_season_stats.player_id',
+                'players.id',
                 '=',
-                'players.id'
+                'player_season_stats.player_id'
+            )
+            ->where(
+                'player_season_stats.season_id',
+                $seasonId
             )
             ->where(
                 'players.team_id',
                 $teamId
             )
             ->where(
+                'players.is_active',
+                1
+            )
+            ->where(
                 'players.contract_years',
                 '<=',
                 5
             )
-            ->where(
-                'player_season_stats.season_id',
-                $latestSeasonId
-            )
             ->select(
-
-                'players.id as player_id',
-
-                'players.team_id',
-
-                'players.role',
-
-                'players.name as player_name',
-
-                'player_season_stats.total_games',
-
-                'player_season_stats.total_games_played',
-
-                'player_season_stats.avg_minutes_per_game',
-
-                'player_season_stats.avg_points_per_game',
-
-                'player_season_stats.avg_rebounds_per_game',
-
-                'player_season_stats.avg_assists_per_game',
-
-                'player_season_stats.avg_steals_per_game',
-
-                'player_season_stats.avg_blocks_per_game',
-
-                'player_season_stats.avg_turnovers_per_game',
-
-                'player_season_stats.avg_fouls_per_game'
+                'players.*',
+                'player_season_stats.*'
             )
             ->get();
 
-        $underperformingPlayers = [];
+        if ($currentPlayers->isEmpty()) {
+            return collect();
+        }
 
         /*
-        |--------------------------------------------------------------------------
-        | Previous season stats
-        |--------------------------------------------------------------------------
-        |
-        | Instead of querying the archive once per player,
-        | load the previous season archive once.
-        |
-        */
+    |--------------------------------------------------------------------------
+    | Previous season
+    |--------------------------------------------------------------------------
+    */
 
-        $previousStats =
-            DB::table('player_season_stats_archives')
+        $previousSeasonId = $seasonId - 1;
+
+        $previousStats = DB::table(
+            'player_season_stats_archives'
+        )
             ->where(
                 'season_id',
                 $previousSeasonId
             )
-            ->whereIn(
-                'player_id',
-                $latestStats
-                    ->pluck('player_id')
-                    ->toArray()
-            )
             ->get()
             ->keyBy('player_id');
 
-        foreach ($latestStats as $playerStats) {
+        $tradeable = collect();
 
-            $previous =
-                $previousStats->get(
-                    $playerStats->player_id
-                );
+        foreach ($currentPlayers as $player) {
 
-            $latestScore =
-                $this->calculatePerformanceScore(
-                    $playerStats
-                );
+            $previous = $previousStats
+                ->get($player->player_id);
 
-            $previousScore =
-                $previous
-                ? $this->calculatePerformanceScore(
-                    $previous
-                )
-                : 0;
-
-            /*
-            |--------------------------------------------------------------------------
-            | Super decline
-            |--------------------------------------------------------------------------
-            */
-
-            $playerStats->super_decline = false;
-
-            if ($previousScore > 0) {
-
-                $declinePercentage =
-                    (
-                        ($previousScore - $latestScore)
-                        /
-                        $previousScore
-                    ) * 100;
-
-                if ($declinePercentage >= 20) {
-
-                    $playerStats->super_decline = true;
-                }
+            if (!$previous) {
+                continue;
             }
 
             /*
-            |--------------------------------------------------------------------------
-            | Only underperforming players
-            |--------------------------------------------------------------------------
-            */
+        |--------------------------------------------------------------------------
+        | Calculate performance
+        |--------------------------------------------------------------------------
+        */
+
+            $currentScore = $this->calculatePerformanceScore(
+                $player
+            );
+
+            $previousScore = $this->calculatePerformanceScore(
+                $previous
+            );
+
+            if ($previousScore <= 0) {
+                continue;
+            }
+
+            if ($currentScore >= $previousScore) {
+                continue;
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | Decline
+        |--------------------------------------------------------------------------
+        */
+
+            $decline = $previousScore - $currentScore;
+
+            $declinePercentage =
+                ($decline / $previousScore) * 100;
+
+            $superDecline = (
+                $declinePercentage >= 20
+            );
+
+            /*
+        |--------------------------------------------------------------------------
+        | Coach trade pressure
+        |--------------------------------------------------------------------------
+        */
+
+            $expiringContract = (
+                (int) ($player->contract_years ?? 0) <= 1
+            );
+
+            $tradePressure =
+                $this->coachDecisionService
+                ->getTradePressure(
+                    $coach,
+                    $player,
+                    $declinePercentage,
+                    $superDecline,
+                    $expiringContract
+                );
+
+            /*
+        |--------------------------------------------------------------------------
+        | Minimum pressure
+        |--------------------------------------------------------------------------
+        */
+
+            if ($tradePressure < 15) {
+                continue;
+            }
+
+            /*
+        |--------------------------------------------------------------------------
+        | Trade randomness
+        |--------------------------------------------------------------------------
+        */
+
+            $tradeChance = min(
+                90,
+                30 + $tradePressure
+            );
 
             if (
-                $previousScore > 0 &&
-                $latestScore < $previousScore
+                !$this->coachDecisionService
+                    ->randomDecision($tradeChance)
             ) {
-
-                $underperformingPlayers[] =
-                    (array) $playerStats;
+                continue;
             }
+
+            /*
+        |--------------------------------------------------------------------------
+        | Add metadata
+        |--------------------------------------------------------------------------
+        */
+
+            $player->current_performance_score =
+                $currentScore;
+
+            $player->previous_performance_score =
+                $previousScore;
+
+            $player->performance_decline =
+                $decline;
+
+            $player->performance_decline_percentage =
+                $declinePercentage;
+
+            $player->super_decline =
+                $superDecline;
+
+            $player->trade_pressure =
+                $tradePressure;
+
+            $player->coach_id =
+                $coach?->id;
+
+            $tradeable->push($player);
         }
 
-        return $underperformingPlayers;
+        return $tradeable
+            ->sortByDesc('trade_pressure')
+            ->values();
     }
 
     /*
@@ -1620,6 +1513,8 @@ class TradeController extends Controller
                 'players.team_id',
 
                 'players.role',
+
+                'players.salary',
 
                 'players.name as player_name',
 
@@ -1769,4 +1664,85 @@ class TradeController extends Controller
 
         return $stats;
     }
+
+    private function calculateCoachAdjustedTradeValue(
+        int $teamId,
+        $player,
+        float $baseValue
+    ): float {
+        $coach = $this->coachDecisionService
+            ->getTeamCoach($teamId);
+
+        return $this->coachDecisionService
+            ->getTradeValue(
+                $coach,
+                $player,
+                $baseValue
+            );
+    }
+
+    private function evaluateTradeForTeam(
+    int $teamId,
+    $outgoingPlayer,
+    $incomingPlayer,
+    float $outgoingBaseValue,
+    float $incomingBaseValue
+): array {
+    $coach = $this->coachDecisionService
+        ->getTeamCoach($teamId);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Coach-adjusted values
+    |--------------------------------------------------------------------------
+    */
+
+    $outgoingValue =
+        $this->coachDecisionService
+            ->getTradeValue(
+                $coach,
+                $outgoingPlayer,
+                $outgoingBaseValue
+            );
+
+    $incomingValue =
+        $this->coachDecisionService
+            ->getTradeValue(
+                $coach,
+                $incomingPlayer,
+                $incomingBaseValue
+            );
+
+    /*
+    |--------------------------------------------------------------------------
+    | Net benefit
+    |--------------------------------------------------------------------------
+    */
+
+    $netBenefit =
+        $incomingValue -
+        $outgoingValue;
+
+    /*
+    |--------------------------------------------------------------------------
+    | Coach approval
+    |--------------------------------------------------------------------------
+    */
+
+    $approvalChance =
+        $this->coachDecisionService
+            ->getTradeApprovalChance(
+                $coach,
+                $netBenefit
+            );
+
+    return [
+        'team_id' => $teamId,
+        'coach_id' => $coach?->id,
+        'outgoing_value' => $outgoingValue,
+        'incoming_value' => $incomingValue,
+        'net_benefit' => $netBenefit,
+        'approval_chance' => $approvalChance,
+    ];
+}
 }

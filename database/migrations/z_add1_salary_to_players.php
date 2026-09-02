@@ -34,24 +34,20 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('players', function (Blueprint $table) {
-            if (Schema::hasColumn('players', 'team_option')) {
-                $table->dropColumn('team_option');
-            }
+            $columns = [
+                'can_be_extended',
+                'is_restricted_fa',
+                'team_option',
+                'player_option',
+                'no_trade_clause',
+                'contract_type',
+                'salary',
+            ];
 
-            if (Schema::hasColumn('players', 'player_option')) {
-                $table->dropColumn('player_option');
-            }
-
-            if (Schema::hasColumn('players', 'no_trade_clause')) {
-                $table->dropColumn('no_trade_clause');
-            }
-
-            if (Schema::hasColumn('players', 'contract_type')) {
-                $table->dropColumn('contract_type');
-            }
-
-            if (Schema::hasColumn('players', 'salary')) {
-                $table->dropColumn('salary');
+            foreach ($columns as $column) {
+                if (Schema::hasColumn('players', $column)) {
+                    $table->dropColumn($column);
+                }
             }
         });
     }

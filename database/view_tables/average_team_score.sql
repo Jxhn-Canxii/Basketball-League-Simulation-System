@@ -1,4 +1,4 @@
-CREATE VIEW avg_league_scores AS
+CREATE OR REPLACE VIEW avg_league_scores AS
 SELECT 
     ROUND(AVG(home_score)) AS avg_home_score,
     ROUND(AVG(away_score)) AS avg_away_score,

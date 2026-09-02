@@ -172,6 +172,44 @@ class ContractService
         return $record ? $this->normalizeCapRecord($record, $defaults) : $defaults;
     }
 
+
+    /**
+     * Get the current Mid-Level Exception (MLE).
+     */
+    public function getMLE(): float
+    {
+        $seasonId = get_current_season_id();
+
+        /*
+    |--------------------------------------------------------------------------
+    | Base MLE
+    |--------------------------------------------------------------------------
+    */
+
+        $baseMLE = 5_000_000;
+
+        /*
+    |--------------------------------------------------------------------------
+    | Optional salary inflation
+    |--------------------------------------------------------------------------
+    |
+    | Increase the MLE gradually as the league evolves.
+    |
+    */
+
+        $seasonOffset = max(0, $seasonId - 1);
+
+        $inflationRate = 0.03; // 3% per season
+
+        return round(
+            $baseMLE * pow(
+                1 + $inflationRate,
+                $seasonOffset
+            ),
+            2
+        );
+    }
+
     public function getContractYearsBasedOnRole($role): int
     {
         return match (strtolower(trim((string) $role))) {

@@ -47,8 +47,19 @@
                             <i class="fa fa-user-plus"></i> Rookie Draft
                         </button>
                         <button
+                            @click.prevent="isCoachSigningModalOpen = true"
+                            v-if="seasons.is_new_season == 4 || seasons.is_new_season == 8"
+                            v-bind:class="{
+                                'opacity-25': isCoachSigningModalOpen,
+                            }"
+                            v-bind:disabled="isCoachSigningModalOpen"
+                            class="px-2 py-2 bg-red-700 rounded font-bold text-md float-end text-white shadow"
+                        >
+                            <i class="fa fa-chalkboard-teacher"></i> Coach Signings
+                        </button>
+                        <button
                             @click.prevent="isTradeModalOpen = true"
-                            v-if="seasons.is_new_season == 4"
+                            v-if="seasons.is_new_season == 5"
                             v-bind:class="{
                                 'opacity-25': isTradeModalOpen,
                             }"
@@ -59,7 +70,7 @@
                         </button>
                         <button
                             @click.prevent="isPlayerSigningModalOpen = true"
-                            v-if="seasons.is_new_season == 5 || seasons.is_new_season == 8"
+                            v-if="seasons.is_new_season == 6 || seasons.is_new_season == 8"
                             v-bind:class="{
                                 'opacity-25': isPlayerSigningModalOpen,
                             }"
@@ -67,17 +78,6 @@
                             class="px-2 py-2 bg-red-500 rounded font-bold text-md float-end text-white shadow"
                         >
                             <i class="fa fa-users"></i> Player Signings
-                        </button>
-                        <button
-                            @click.prevent="isCoachSigningModalOpen = true"
-                            v-if="seasons.is_new_season == 6 || seasons.is_new_season == 8"
-                            v-bind:class="{
-                                'opacity-25': isCoachSigningModalOpen,
-                            }"
-                            v-bind:disabled="isCoachSigningModalOpen"
-                            class="px-2 py-2 bg-red-700 rounded font-bold text-md float-end text-white shadow"
-                        >
-                            <i class="fa fa-chalkboard-teacher"></i> Coach Signings
                         </button>
                         <Add v-if="seasons.is_new_season == 7 || seasons.is_new_season == 8" @transaction_id="handleCreateSeason" />
                     </div>

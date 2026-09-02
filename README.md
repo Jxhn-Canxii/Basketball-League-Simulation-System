@@ -335,3 +335,8 @@ Liga should be able to simulate a basketball world that continues to evolve over
 * 🏀 Rich basketball history
 
 **Next major milestone: Refactor, Optimize, Archive, and Scale.**
+
+
+commands
+
+Run All View  table = php artisan db:run-view-tables

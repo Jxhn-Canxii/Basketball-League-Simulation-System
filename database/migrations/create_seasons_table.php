@@ -15,6 +15,7 @@ return new class extends Migration
             $table->integer('league_id'); // foreign key for league_id
             $table->integer('type'); // enum for season type
             $table->integer('match_type'); // enum for match type
+            $table->integer('playoff_type')->default(0);
             $table->integer('start_playoffs'); // boolean flag to indicate if playoffs started
             $table->integer('is_conference'); // boolean to indicate if it's conference-related
             $table->integer('status'); // status of the season
@@ -38,6 +39,7 @@ return new class extends Migration
             $table->string('champion_name')->nullable(); // Name of the champion team
             $table->integer('weakest_id')->nullable(); // Weakest team
             $table->string('weakest_name')->nullable(); // Name of the weakest team
+            $table->integer('total_regular_games')->default(0); // Name of the weakest team
             $table->timestamps(); // created_at, updated_at
         });
     }

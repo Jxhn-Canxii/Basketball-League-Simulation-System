@@ -16,11 +16,11 @@ return new class extends Migration
             $table->id();
 
             $table->string('game_id');
+            $table->string('series_id');
 
             $table->string('round');
             $table->integer('season_id');
             $table->integer('conference_id');
-            $table->integer('series_id');
 
             $table->integer('home_id');
             $table->integer('home_score')->default(0);
@@ -46,8 +46,10 @@ return new class extends Migration
             ADD game_number INT
             GENERATED ALWAYS AS (
                 CAST(
-                    SUBSTRING_INDEX(game_id, "-", -1)
-                    AS UNSIGNED
+                    SUBSTRING(
+                        SUBSTRING_INDEX(game_id, "-", -1),
+                        2
+                    ) AS UNSIGNED
                 )
             ) STORED
             AFTER game_id

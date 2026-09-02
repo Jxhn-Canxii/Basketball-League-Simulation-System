@@ -1,4 +1,4 @@
-CREATE VIEW retired_players AS
+CREATE OR REPLACE VIEW retired_players AS
 SELECT players.name AS player_name,
        teams.name AS team_name,
        dt.name As drafted_team_name,
