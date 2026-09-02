@@ -11,9 +11,14 @@ return [
     */
 
     'salary_cap' => [
-        'first_apron' => 250,000,000,
-        'second_apron' => 275,000,000,
-        'luxury_apron' => 300,000,000,
+        'salary_cap' => 136000000,
+        'luxury_tax_line' => 165600000,
+        'mle_value' => 12400000,
+        'vet_min_value' => 1165720,
+        'two_way_value' => 578710,
+        'first_apron' => 250000000,
+        'second_apron' => 275000000,
+        'luxury_apron' => 300000000,
     ],
 
 ];

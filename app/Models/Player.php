@@ -17,6 +17,11 @@ class Player extends Model
         'address',
         'team_id',
         'contract_years',
+        'salary',
+        'contract_type',
+        'no_trade_clause',
+        'player_option',
+        'team_option',
         'hardship_contract',
         'contract_expires_at',
         'is_active',
@@ -64,6 +69,10 @@ class Player extends Model
 
     protected $casts = [
         'contract_expires_at' => 'datetime',
+        'salary' => 'decimal:2',
+        'no_trade_clause' => 'boolean',
+        'player_option' => 'boolean',
+        'team_option' => 'boolean',
     ];
 
     public function team()

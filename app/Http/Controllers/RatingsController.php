@@ -665,13 +665,17 @@ class RatingsController extends Controller
             }
 
             $retirementAge = rand($player->age + 5, 65);
-
+            $coachingStyle = array_rand(['defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo']);
+            $preferredTeamComposition = array_rand(['balanced','offensive','defensive','any','contenders','rebuilding']);
+        
            
             DB::table('coaches')->insert([
                 'name' => $player->name,
                 'coach_iq' => $player->basketball_iq_rating,
-                'age' => $player->age,
+                'coaching_style' => $coachingStyle,
                 'retirement_age' => $retirementAge,
+                'experience_years' => 0,
+                'preferred_team_composition' => $preferredTeamComposition,
                 'team_id' => 0,
                 'career_wins' => 0,
                 'career_losses' => 0,

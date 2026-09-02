@@ -5,9 +5,22 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Player;
+use App\Services\Contract\ContractService;
+use App\Services\Player\PlayerValuationService;
+use App\Services\Transaction\FreeAgencyService;
 
 class FreeAgentController extends Controller
 {
+    protected ContractService $contractService;
+    protected PlayerValuationService $valuationService;
+    protected FreeAgencyService $freeAgencyService;
+
+    public function __construct()
+    {
+        $this->contractService = new ContractService();
+        $this->valuationService = new PlayerValuationService();
+        $this->freeAgencyService = new FreeAgencyService();
+    }
 
     public function getBestFreeAgent(Request $request)
     {
@@ -29,167 +42,54 @@ class FreeAgentController extends Controller
 
     public function getBestFreeAgentAvailable($position)
     {
-        $positions = explode('/', strtoupper($position)); // Normalize casing
+        $candidates = $this->rankFreeAgentsForPosition($position);
 
-        // Flexible position filter: match any part of multi-position fields
-        $positionFilter = function ($query) use ($positions) {
-            $query->where(function ($q) use ($positions) {
-                foreach ($positions as $pos) {
-                    $q->orWhere('players.position', 'LIKE', '%' . $pos . '%');
-                }
-            });
-        };
-
-        // Get latest season id (adjust if your season logic is different)
-        $latestSeasonId = get_current_season_id();
-
-        // Top 10 by overall_rating
-        $byOverall = DB::table('players')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc('players.overall_rating')
-            ->limit(10)
-            ->get();
-
-        // Top 10 by awards count
-        $byAwards = DB::table('players')
-            ->leftJoin('season_awards', 'players.id', '=', 'season_awards.player_id')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role',
-                DB::raw('COUNT(season_awards.id) as awards_count')
-            )
-            ->groupBy(
-                'players.id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc('awards_count')
-            ->limit(10)
-            ->get();
-
-        // Top 10 by EFF in latest season
-        $byEff = DB::table('players')
-            ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where('player_season_stats.season_id', $latestSeasonId)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role',
-                'player_season_stats.eff'
-            )
-            ->orderByDesc('player_season_stats.eff')
-            ->limit(10)
-            ->get();
-
-        // Merge all and deduplicate by player_id
-        $merged = $byOverall->merge($byAwards)->merge($byEff)->unique('player_id')->values();
-
-        // Return a random player from the merged top candidates
-        if ($merged->isNotEmpty()) {
-            return $merged->random();
+        if ($candidates->isNotEmpty()) {
+            return $candidates->first();
         }
 
-        // Fallback: any available player at the position
-        return DB::table('players')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc('players.overall_rating')
-            ->limit(1)
-            ->first();
+        return null;
     }
 
     public function getBestFreeAgentScouted($teamId, $position)
     {
-        $positions = explode('/', strtoupper($position)); // Normalize casing
+        return $this->rankFreeAgentsForPosition($position, $teamId)->first();
+    }
 
-        // Flexible position filter: match any part of multi-position fields
-        $positionFilter = function ($query) use ($positions) {
-            $query->where(function ($q) use ($positions) {
-                foreach ($positions as $pos) {
-                    $q->orWhere('players.position', 'LIKE', '%' . $pos . '%');
-                }
-            });
-        };
+    public function runFreeAgencyPeriod(Request $request)
+    {
+        $request->validate([
+            'season_id' => 'nullable|integer|min:1',
+        ]);
 
-        // Get latest season id (adjust if your season logic is different)
+        $seasonId = $request->input('season_id', get_current_season_id());
+        $summary = $this->freeAgencyService->runFreeAgencyPeriod($seasonId);
+
+        return response()->json([
+            'message' => 'Free agency period completed successfully.',
+            'summary' => $summary,
+        ]);
+    }
+
+    private function rankFreeAgentsForPosition($position, $teamId = null)
+    {
+        $positions = explode('/', strtoupper($position));
         $latestSeasonId = get_current_season_id();
 
-        // Top 10 by overall_rating
-        $byOverall = DB::table('players')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc('players.overall_rating')
-            ->limit(10)
-            ->get();
-
-        // Top 10 by awards count
-        $byAwards = DB::table('players')
+        $query = DB::table('players')
             ->leftJoin('season_awards', 'players.id', '=', 'season_awards.player_id')
+            ->leftJoin('player_season_stats', function ($join) use ($latestSeasonId) {
+                $join->on('players.id', '=', 'player_season_stats.player_id')
+                    ->where('player_season_stats.season_id', '=', $latestSeasonId);
+            })
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
-            ->where($positionFilter)
+            ->where(function ($subQuery) use ($positions) {
+                foreach ($positions as $pos) {
+                    $subQuery->orWhere('players.position', 'LIKE', '%' . $pos . '%');
+                }
+            })
             ->select(
                 'players.id as player_id',
                 'players.name',
@@ -199,7 +99,8 @@ class FreeAgentController extends Controller
                 'players.injury_history',
                 'players.age',
                 'players.role',
-                DB::raw('COUNT(season_awards.id) as awards_count')
+                DB::raw('COUNT(season_awards.id) as awards_count'),
+                DB::raw('COALESCE(player_season_stats.eff, 0) as eff')
             )
             ->groupBy(
                 'players.id',
@@ -209,62 +110,45 @@ class FreeAgentController extends Controller
                 'players.overall_rating',
                 'players.injury_history',
                 'players.age',
-                'players.role'
-            )
-            ->orderByDesc('awards_count')
-            ->limit(10)
-            ->get();
-
-        // Top 10 by EFF in latest season
-        $byEff = DB::table('players')
-            ->leftJoin('player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where('player_season_stats.season_id', $latestSeasonId)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
                 'players.role',
                 'player_season_stats.eff'
-            )
-            ->orderByDesc('player_season_stats.eff')
-            ->limit(10)
-            ->get();
+            );
 
-        // Merge all and deduplicate by player_id
-        $merged = $byOverall->merge($byAwards)->merge($byEff)->unique('player_id')->values();
+        $candidates = $query->get()->map(function ($player) use ($teamId) {
+            $player->valuation_score = $this->valuationService->calculatePlayerValue($player);
+            $player->team_fit_score = $teamId ? $this->teamFitScore($teamId, $player) : 0;
+            $player->composite_score = $player->valuation_score + $player->team_fit_score;
 
-        // Return a random player from the merged top candidates
-        if ($merged->isNotEmpty()) {
-            return $merged->random();
+            return $player;
+        })->sortByDesc('composite_score')->values();
+
+        return $candidates;
+    }
+
+    private function teamFitScore($teamId, $player): float
+    {
+        $standing = DB::table('standings_view')
+            ->where('season_id', get_current_season_id())
+            ->where('team_id', $teamId)
+            ->first();
+
+        $winRate = 0.5;
+
+        if ($standing) {
+            $games = (int) (($standing->wins ?? 0) + ($standing->losses ?? 0));
+            if ($games > 0) {
+                $winRate = ((int) ($standing->wins ?? 0)) / $games;
+            }
         }
 
-        // Fallback: any available player at the position
-        return DB::table('players')
-            ->where('players.is_active', 1)
-            ->where('players.is_injured', 0)
-            ->where('players.team_id', 0)
-            ->where($positionFilter)
-            ->select(
-                'players.id as player_id',
-                'players.name',
-                'players.position',
-                'players.team_id',
-                'players.overall_rating',
-                'players.injury_history',
-                'players.age',
-                'players.role'
-            )
-            ->orderByDesc('players.overall_rating')
-            ->limit(1)
-            ->first();
+        $roleFit = match (strtolower((string) ($player->role ?? ''))) {
+            'star player' => 4.0,
+            'starter' => 3.0,
+            'role player' => 2.0,
+            default => 1.0,
+        };
+
+        return round(($winRate * 5) + $roleFit, 2);
     }
 
     public function getBestFreeAgentOffWaiver()

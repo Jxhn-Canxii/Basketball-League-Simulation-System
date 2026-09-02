@@ -87,15 +87,19 @@ class CoachController extends Controller
         $currentSeasonId = get_current_season_id();
         $age = rand(35, 45);
         $retirement_age = rand(50, 65);
+        $coachingStyle = array_rand(['defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo']);
+        $preferredTeamComposition = array_rand(['balanced','offensive','defensive','any','contenders','rebuilding']);
         $coachIq = rand(75, 99);
         // Insert the new coach into the database
         $coachId = DB::table('coaches')->insertGetId([
             'name' => $request->name,
             'team_id' => 0,
             'coach_iq' => $coachIq,
+            'coaching_style' => $coachingStyle,
             'age' => $age,
             'retirement_age' => $retirement_age ?? 65,
             'experience_years' => 0,
+            'preferred_team_composition' => $preferredTeamComposition,
             'contract_years' => 0,
             'is_active' => 1,  // Default active
             'created_at' => now(),

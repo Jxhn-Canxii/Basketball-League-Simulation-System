@@ -4,9 +4,16 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\Services\Contract\ContractService;
 
 class ContractController extends Controller
 {
+    protected ContractService $contractService;
+
+    public function __construct()
+    {
+        $this->contractService = new ContractService();
+    }
 
     public function handleHardshipContract($player, $stats)
     {
@@ -99,16 +106,64 @@ class ContractController extends Controller
     
     public function getContractYearsBasedOnRole($role)
     {
-        switch ($role) {
-            case 'star player':
-                return mt_rand(1, 5);
-            case 'starter':
-                return mt_rand(1, 5);
-            case 'role player':
-                return mt_rand(1, 4);
-            case 'bench':
-            default:
-                return mt_rand(1, 3);
+        return $this->contractService->getContractYearsBasedOnRole($role);
+    }
+
+    public function endOfSeasonContractDecisions()
+    {
+        $seasonId = get_current_season_id();
+        $expiringPlayers = DB::table('players')
+            ->where('team_id', '>', 0)
+            ->where('is_active', 1)
+            ->where('contract_years', '<=', 0)
+            ->get();
+
+        $decisions = [];
+
+        foreach ($expiringPlayers as $player) {
+            $teamId = (int) $player->team_id;
+            $offer = $this->contractService->getContractOffer($player, $teamId);
+
+            if ($offer['contract_type'] === 'max' || $offer['salary'] >= ($this->contractService->getSalaryCapValues($seasonId)['mle_value'])) {
+                DB::table('players')
+                    ->where('id', $player->id)
+                    ->update([
+                        'contract_years' => $offer['years'],
+                        'salary' => $offer['salary'],
+                        'contract_type' => $offer['contract_type'],
+                        'player_option' => $offer['player_option'],
+                        'team_option' => $offer['team_option'],
+                        'no_trade_clause' => $offer['no_trade_clause'],
+                    ]);
+
+                $decisions[] = [
+                    'player_id' => $player->id,
+                    'status' => 'extended',
+                    'salary' => $offer['salary'],
+                ];
+            } else {
+                DB::table('players')
+                    ->where('id', $player->id)
+                    ->update([
+                        'team_id' => 0,
+                        'contract_years' => 0,
+                        'salary' => 0,
+                        'contract_type' => null,
+                        'player_option' => false,
+                        'team_option' => false,
+                        'no_trade_clause' => false,
+                    ]);
+
+                $decisions[] = [
+                    'player_id' => $player->id,
+                    'status' => 'released',
+                ];
+            }
         }
+
+        return response()->json([
+            'season_id' => $seasonId,
+            'decisions' => $decisions,
+        ]);
     }
 }

@@ -11,6 +11,8 @@ use App\Http\Controllers\PlayerSeasonStatsController;
 use App\Http\Controllers\TeamBalanceController;
 use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\HelperController;
+use App\Services\Contract\ContractService;
+use App\Services\Player\PlayerValuationService;
 use Inertia\Inertia;
 
 class TransactionsController extends Controller
@@ -20,6 +22,8 @@ class TransactionsController extends Controller
     protected $teamBalance;
     protected $freeAgent;
     protected $helper;
+    protected $contractService;
+    protected $valuationService;
 
     public function __construct()
     {
@@ -29,6 +33,8 @@ class TransactionsController extends Controller
         $this->teamBalance = new TeamBalanceController();
         $this->freeAgent = new FreeAgentController();
         $this->helper = new HelperController();
+        $this->contractService = new ContractService();
+        $this->valuationService = new PlayerValuationService();
     }
 
     public function getRecentNonTransferTransactions()
@@ -553,9 +559,6 @@ class TransactionsController extends Controller
             ], 400);
         }
 
-        // Select a random team
-        $teamId = $teamIds->random();
-
         // Fetch the player
         $player = Player::find($request->player_id);
 
@@ -565,35 +568,59 @@ class TransactionsController extends Controller
             ], 404);
         }
 
-        // Set contract years based on the player's role
-        $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
+        $eligibleTeams = $teamIds->filter(function ($teamId) use ($player) {
+            $offer = $this->contractService->getContractOffer($player, $teamId);
+
+            return $this->contractService->canSignPlayer($teamId, $offer['salary']);
+        })->values();
+
+        if ($eligibleTeams->isEmpty()) {
+            return response()->json([
+                'message' => 'No teams can currently afford this player.',
+            ], 400);
+        }
+
+        $teamId = $eligibleTeams->random();
+
+        $offer = $this->contractService->getContractOffer($player, $teamId);
+        $contractYears = $offer['years'];
 
         // Update the player's team and contract years
         $player->update([
             'team_id' => $teamId,
             'contract_years' => $contractYears,
+            'salary' => $offer['salary'],
+            'contract_type' => $offer['contract_type'],
+            'player_option' => $offer['player_option'],
+            'team_option' => $offer['team_option'],
+            'no_trade_clause' => $offer['no_trade_clause'],
         ]);
 
         return response()->json([
             'message' => 'Player successfully assigned to a team. Remaining Teams that needed players: ' . $teamsCount,
             'team_id' => $teamId,
             'team_count' =>  $teamsCount,
+            'salary' => $offer['salary'],
+            'contract_type' => $offer['contract_type'],
         ]);
     }
 
     public function assignPlayerToTeam($player, $team, $currentSeasonId, $seasonId)
     {
-        // Determine contract years based on the player's role
-        $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
-
         // Team information
         $teamId = $team->id;
         $teamName = $team->name;
+        $offer = $this->contractService->getContractOffer($player, $team);
+        $contractYears = $offer['years'];
 
         // Start a database transaction to ensure atomicity
         DB::beginTransaction();
 
         try {
+            if (!$this->contractService->canSignPlayer($teamId, $offer['salary'], $currentSeasonId)) {
+                throw new \RuntimeException('Team cannot afford this signing under current cap rules.');
+            }
+
             // Update the player's team_id and contract_years using DB
             if ($seasonId == 0) {
                 DB::table('players')
@@ -603,6 +630,11 @@ class TransactionsController extends Controller
                         'drafted_team_id' => $teamId,
                         'is_drafted' => true,
                         'contract_years' => $contractYears,
+                        'salary' => $offer['salary'],
+                        'contract_type' => $offer['contract_type'],
+                        'player_option' => $offer['player_option'],
+                        'team_option' => $offer['team_option'],
+                        'no_trade_clause' => $offer['no_trade_clause'],
                         'draft_status' => 'Special Draft'
                     ]);
             } else {
@@ -610,7 +642,12 @@ class TransactionsController extends Controller
                     ->where('id', $player->id)
                     ->update([
                         'team_id' => $teamId,
-                        'contract_years' => $contractYears
+                        'contract_years' => $contractYears,
+                        'salary' => $offer['salary'],
+                        'contract_type' => $offer['contract_type'],
+                        'player_option' => $offer['player_option'],
+                        'team_option' => $offer['team_option'],
+                        'no_trade_clause' => $offer['no_trade_clause']
                     ]);
             }
 
@@ -619,7 +656,7 @@ class TransactionsController extends Controller
             DB::table('transactions')->insert([
                 'player_id' => $player->id,
                 'season_id' => $currentSeasonId,
-                'details' => $player->name . ' has signed for ' . $teamName . ' for ' . $contractYears . ' years on a standard contract.',
+                'details' => $player->name . ' has signed for ' . $teamName . ' for ' . $contractYears . ' years on a ' . $offer['contract_type'] . ' contract worth $' . number_format((float) $offer['salary'], 2) . '.',
                 'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
                 'to_team_id' => $teamId,
                 'status' => 'signed',
@@ -634,6 +671,30 @@ class TransactionsController extends Controller
             // Rethrow or handle the error as needed
             throw $e;
         }
+    }
+
+    public function signFreeAgent(Request $request)
+    {
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+            'team_id' => 'required|exists:teams,id',
+        ]);
+
+        $player = Player::findOrFail($request->player_id);
+        $team = DB::table('teams')->where('id', $request->team_id)->first();
+
+        if (!$team) {
+            return response()->json(['message' => 'Team not found.'], 404);
+        }
+
+        $seasonId = get_current_season_id() ?? 0;
+        $this->assignPlayerToTeam($player, $team, $seasonId, 1);
+
+        return response()->json([
+            'message' => 'Free agent signed successfully.',
+            'player_id' => $player->id,
+            'team_id' => $team->id,
+        ]);
     }
 
     public function assignRemainingFreeAgents()
