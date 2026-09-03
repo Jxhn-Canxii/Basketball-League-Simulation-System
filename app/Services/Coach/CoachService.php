@@ -5,7 +5,7 @@ namespace App\Services\Coach;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class TemplateService
+class CoachService
 {
     public function listCoaches($request)
     {

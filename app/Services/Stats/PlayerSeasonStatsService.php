@@ -6,7 +6,7 @@ ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\HelperController;
+use App\Services\Helper\HelperService;
 use Inertia\Inertia;
 
 class PlayerSeasonStatsService
@@ -14,7 +14,7 @@ class PlayerSeasonStatsService
     protected $helper;
 
     public function __construct(){
-        $this->helper = new HelperController();
+        $this->helper = new HelperService();
     }
     /**
      * Store aggregated stats of a player's performance for a season in the player_season_stats table.

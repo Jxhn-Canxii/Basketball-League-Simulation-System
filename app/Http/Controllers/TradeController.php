@@ -10,6 +10,8 @@ use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 use App\Services\Player\PlayerValuationService;
 use App\Services\Coach\CoachDecisionService;
+use App\Services\Helper\HelperService;
+use App\Services\Archive\ArchiveService;
 
 class TradeController extends Controller
 {
@@ -20,8 +22,8 @@ class TradeController extends Controller
 
     public function __construct()
     {
-        $this->helper = new HelperController();
-        $this->archive = new ArchiveController();
+        $this->helper = new HelperService();
+        $this->archive = new ArchiveService();
         $this->valuationService = new PlayerValuationService();
         $this->coachDecisionService = new CoachDecisionService();
     }
@@ -270,6 +272,7 @@ class TradeController extends Controller
         */
 
         $playersByTeam = [];
+        $underPerformedPlayers = 0;
 
         foreach ($teams as $teamId) {
 
@@ -287,16 +290,17 @@ class TradeController extends Controller
 
             if (!empty($players)) {
                 $playersByTeam[$teamId] = $players;
+                $underPerformedPlayers += count($players);
             }
         }
 
-        if (count($playersByTeam) < 2) {
+        if ($underPerformedPlayers < 2) {
 
             return response()->json([
                 'message' =>
                 'Not enough teams with tradeable players.',
                 'trades' => [],
-            ]);
+            ],400);
         }
 
         /*

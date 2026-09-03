@@ -283,11 +283,11 @@ class SeasonsService
             return 3; //player rookie drafting update
         } elseif ($lastSeasonStatus == config('timeline.draft')) {
             return 4; //player signing
-        } elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
-            return 5; // player trade
-        } elseif ($lastSeasonStatus == config('timeline.player_signings')) {
-            return 6; // new season
         } elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
+            return 5; // player trade
+        } elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
+            return 6; // new season
+        } elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 7; // new season
         }
         // Optionally, you can return a default value if no status matches

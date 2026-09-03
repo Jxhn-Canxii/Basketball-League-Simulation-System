@@ -277,8 +277,9 @@ class DraftService
 
                 $selectedDraftScore = $selectedCandidate['draft_score'];
 
+                // dd($selectedPlayer->id);
                 // Remove selected player
-                $availablePlayers = $availablePlayers->reject(fn($p) => $p->id === $selectedPlayer['player']->id)->values();
+                $availablePlayers = $availablePlayers->reject(fn($p) => $p->id === $selectedPlayer->id)->values();
 
                 // Determine if a player needs to be waived
                 $hasSpace = DB::table('players')->where('team_id', $teamId)->count() < 15;

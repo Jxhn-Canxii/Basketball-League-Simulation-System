@@ -6,20 +6,16 @@ use Illuminate\Http\Request;
 use App\Models\Seasons;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\ContractController;
-use App\Http\Controllers\PlayerSeasonStatsController;
-use App\Http\Controllers\TeamBalanceController;
-use App\Http\Controllers\FreeAgentController;
-use App\Http\Controllers\HelperController;
 use App\Services\Contract\ContractService;
+use App\Services\Helper\HelperService;
+use App\Services\Player\FreeAgentService;
 use App\Services\Player\PlayerValuationService;
+use App\Services\Stats\PlayerSeasonStatsService;
 use Inertia\Inertia;
 
 class TransactionsController extends Controller
 {
     protected $storeStats;
-    protected $contract;
-    protected $teamBalance;
     protected $freeAgent;
     protected $helper;
     protected $contractService;
@@ -28,11 +24,9 @@ class TransactionsController extends Controller
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new PlayerSeasonStatsController();
-        $this->contract = new ContractController();
-        $this->teamBalance = new TeamBalanceController();
-        $this->freeAgent = new FreeAgentController();
-        $this->helper = new HelperController();
+        $this->storeStats = new PlayerSeasonStatsService();
+        $this->freeAgent = new FreeAgentService();
+        $this->helper = new HelperService();
         $this->contractService = new ContractService();
         $this->valuationService = new PlayerValuationService();
     }
@@ -831,12 +825,9 @@ class TransactionsController extends Controller
                     $currentPlayerCount++;
                 }
 
-                // $this->teamBalance->fixTeamPositionBalance($team->id);
             }
 
-            // foreach($activeTeams as $team){
-            //     $this->teamBalance->fixTeamPositionBalance($team->id,true);
-            // }
+           
 
             // Final check for incomplete teams
             $incompleteTeams = DB::table('teams')
@@ -937,7 +928,6 @@ class TransactionsController extends Controller
                 $currentPlayerCount++;
             }
 
-            $this->teamBalance->fixTeamPositionBalance($team->id);
         }
 
         return response()->json([
@@ -996,7 +986,7 @@ class TransactionsController extends Controller
      */
     private function assignPlayerWithTransaction($player, $team, $currentSeasonId, $seasonId)
     {
-        $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
+        $contractYears = $this->contractService->getContractYearsBasedOnRole($player->role);
         $teamId = $team->id;
         $teamName = $team->name;
 
