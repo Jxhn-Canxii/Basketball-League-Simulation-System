@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 class CoachDecisionService
 {
+    
     /**
      * Get the current active coach of a team.
      */

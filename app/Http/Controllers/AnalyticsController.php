@@ -5,15 +5,17 @@ namespace App\Http\Controllers;
 ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
 
 use Illuminate\Http\Request;
-use App\Models\Seasons;
-use App\Models\Player;
-use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\HelperController; // added import
+use App\Services\Analytics\AnalyticsService;
 use Inertia\Inertia;
 
 class AnalyticsController extends Controller
 {
-    
+    protected $analyticsService;
+
+    public function __construct()
+    {
+        $this->analyticsService = new AnalyticsService;
+    }
     public function index()
     {
         return Inertia::render('Analytics/Index', [
@@ -27,318 +29,27 @@ class AnalyticsController extends Controller
             'conference_id' => 'required|integer',
             'team_id' => 'required|integer',
         ]);
-
-        // Fetch all records from standings_snapshots and join with seasons and teams tables
-        $standings = DB::table('standings_snapshots')
-            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
-            ->join('teams', 'standings_snapshots.team_id', '=', 'teams.id')
-            ->select(
-                'standings_snapshots.team_name',
-                'seasons.name AS season',
-                'standings_snapshots.wins',
-                'teams.primary_color',
-                'teams.secondary_color'
-            );
-
-        // Apply filters for conference_id and team_id if provided
-        if ($request->conference_id > 0) {
-            $standings->where('standings_snapshots.conference_id', $request->conference_id);
-        }
-        if ($request->team_id > 0) {
-            $standings->where('standings_snapshots.team_id', $request->team_id);
-        }
-
-        $standings = $standings->get();
-
-        // Structure data for line chart
-        $structuredData = [];
-
-        foreach ($standings as $record) {
-            $team = $record->team_name;
-            $season = $record->season;
-            $wins = $record->wins;
-            $primaryColor = '#' . ltrim($record->primary_color, '#'); // Add # to primary color
-            $secondaryColor = '#' . ltrim($record->secondary_color, '#'); // Add # to secondary color
-
-            // Initialize team entry if it doesn't exist
-            if (!isset($structuredData[$team])) {
-                $structuredData[$team] = [
-                    'color' => $primaryColor,
-                    'secondaryColor' => $secondaryColor,
-                    'winsData' => []
-                ];
-            }
-
-            // Add the win data for the specific season
-            $structuredData[$team]['winsData'][$season] = $wins;
-        }
-
-        // Prepare the final data for the line chart
-        $seasons = array_unique(array_reduce($structuredData, function ($carry, $item) {
-            return array_merge($carry, array_keys($item['winsData']));
-        }, []));
-
-        $finalData = [
-            'labels' => array_values($seasons), // Seasons as labels
-            'datasets' => []
-        ];
-
-        foreach ($structuredData as $team => $data) {
-            $dataset = [
-                'label' => $team,
-                'data' => array_map(function ($season) use ($data) {
-                    return $data['winsData'][$season] ?? 0; // Default to 0 if no wins recorded
-                }, $seasons),
-                'fill' => false,
-                'borderColor' => $data['color'], // Use the team's primary color with #
-                'backgroundColor' => $data['secondaryColor'], // Use the team's secondary color with #
-            ];
-
-            $finalData['datasets'][] = $dataset;
-        }
-
-        return response()->json($finalData); // Return JSON response for chart
+        
+        return $this->analyticsService->getAllStandings($request);
     }
 
     public function countPlayers()
     {
-        // Count total players
-        $totalPlayers = DB::table('players')->count();
-
-        // Count active players
-        $activePlayers = DB::table('players')
-            ->where('is_active', 1)
-            ->count();
-
-        // Count retired players
-        $retiredPlayers = DB::table('players')
-            ->where('is_active', 0)
-            ->count();
-
-        // Count rookie players
-        $rookiePlayers = DB::table('players')
-            ->where('is_rookie', 1)
-            ->count();
-
-        // Count free agents
-        $freeAgents = DB::table('players')
-            ->where('is_active', 1)
-            ->where('team_id', 0)
-            ->count();
-
-        // Count active players in teams (team_id > 0)
-        $activePlayersInTeams = DB::table('players')
-            ->where('is_active', 1)
-            ->where('team_id', '>', 0)
-            ->count();
-
-        // Count total teams (assuming teams have players, based on team_id > 0)
-        $totalTeams = DB::table('teams')
-            ->count();
-
-        // Define max roster size
-        $maxRosterSize = 15;
-
-        // Calculate total available slots
-        $totalAvailableSlots = ($totalTeams * $maxRosterSize) - $activePlayersInTeams;
-
-        // Fetch summary data
-        $positionSummary = DB::table('active_player_position_summary_with_warning_and_needed')
-            ->first();
-
-
-        return response()->json([
-            'total_players' => $totalPlayers,
-            'active_players' => $activePlayers,
-            'retired_players' => $retiredPlayers,
-            'rookie_players' => $rookiePlayers,
-            'free_agents' => $freeAgents,
-            'active_players_with_team' => $activePlayersInTeams,
-            'total_available_slots' => $totalAvailableSlots,
-            'position_summary' => $positionSummary, // Include the extra table result here
-        ]);
+        return $this->analyticsService->countPlayers(); 
     }
-
 
     public function getSeasonLeaders(Request $request)
     {
-        // Determine the leader type and season ID
-        $leaderType = $request->input('leader_type', 'mvp_leaders');
-        $seasonId = $request->input('season_id', get_current_season_id());
-
-        // Ensure season ID is valid
-        if (empty($seasonId)) {
-            return response()->json(['error' => 'Invalid season ID.'], 400);
-        }
-
-        // Fetch player stats
-        $playerStats = DB::table('player_season_stats_archives as pss')
-            ->join('players', 'pss.player_id', '=', 'players.id')
-            ->join('teams', 'players.team_id', '=', 'teams.id')
-            ->where('pss.season_id', $seasonId)
-            ->select(
-                'players.id as player_id',
-                'players.name as player_name',
-                'players.draft_status',
-                'players.team_id',
-                'teams.name as team_name',
-                'players.is_rookie',
-                'players.draft_id',
-                'pss.total_games',
-                'pss.total_games_played as games_played',
-                'pss.avg_points_per_game',
-                'pss.avg_rebounds_per_game',
-                'pss.avg_assists_per_game',
-                'pss.avg_steals_per_game',
-                'pss.avg_blocks_per_game',
-                'pss.avg_turnovers_per_game',
-                'pss.avg_fouls_per_game'
-            )
-            ->get();
-
-        // Format player stats
-        $formattedPlayerStats = $playerStats->map(function ($stats) {
-            return [
-                'player_id' => $stats->player_id,
-                'player_name' => $stats->player_name,
-                'team_name' => $stats->team_name,
-                'is_rookie' => $stats->is_rookie,
-                'draft_status' => $stats->draft_status,
-                'draft_id' => $stats->draft_id,
-                'games_played' => $stats->games_played,
-                'points_per_game' => number_format($stats->avg_points_per_game, 2),
-                'rebounds_per_game' => number_format($stats->avg_rebounds_per_game, 2),
-                'assists_per_game' => number_format($stats->avg_assists_per_game, 2),
-                'blocks_per_game' => number_format($stats->avg_blocks_per_game, 2),
-                'steals_per_game' => number_format($stats->avg_steals_per_game, 2),
-                'turnovers_per_game' => number_format($stats->avg_turnovers_per_game, 2),
-                'fouls_per_game' => number_format($stats->avg_fouls_per_game, 2),
-            ];
-        });
-
-        // Define limit for top leaders
-        $limit = 10;
-
-        // Fetch MVP leaders
-        // Calculate MVP Leaders
-        $mvpLeaders = $playerStats->map(function ($stats) use ($seasonId) {
-            // Get the total number of games played by the team
-            $totalGames = $stats->total_games ?? 0;
-
-            // Calculate how many games the player has played
-            $gamesPlayed = $stats->games_played;
-
-            // Calculate the required 70% of total games
-            $requiredGames = ceil($totalGames * 0.7); // Round up to the nearest whole number
-
-            // Check if player has played at least 70% of team's games
-            if ($gamesPlayed >= $requiredGames) {
-                // Calculate performance points
-                $performancePoints =
-                    ($stats->avg_points_per_game * 1) +
-                    ($stats->avg_rebounds_per_game * 1.2) +
-                    ($stats->avg_assists_per_game * 1.5) +
-                    ($stats->avg_steals_per_game * 2) +
-                    ($stats->avg_blocks_per_game * 2) -
-                    ($stats->avg_turnovers_per_game * 1) -
-                    ($stats->avg_fouls_per_game * 0.5);
-
-                // Store the raw performance score for sorting
-                $stats->performance_score = (float) $performancePoints;
-            } else {
-                // If the player doesn't meet the 70% threshold, set a very low performance score to exclude them
-                $stats->performance_score = -1;
-            }
-
-            return $stats;
-        })
-            ->sortByDesc('performance_score') // Sort numerically by performance score
-            ->take($limit);
-
-        // Calculate Rookie Leaders (same logic as MVP, but for rookies)
-        $rookieLeaders = $playerStats
-            ->filter(function ($stats) use ($seasonId) {
-                // Filter rookies based on draft_id matching the current season ID
-                return $stats->draft_id == $seasonId;
-            })
-            ->map(function ($stats) use ($seasonId) {
-                // Get the total number of games played by the team
-                // Get the total number of games played by the team
-                $totalGames = $stats->total_games ?? 0;
-
-                // Calculate how many games the player has played
-                $gamesPlayed = $stats->games_played;
-
-                // Calculate the required 70% of total games
-                $requiredGames = ceil($totalGames * 0.7); // Round up to the nearest whole number
-
-                // Check if player has played at least 70% of team's games
-                if ($gamesPlayed >= $requiredGames) {
-                    // Calculate performance points
-                    $performancePoints =
-                        ($stats->avg_points_per_game * 1) +
-                        ($stats->avg_rebounds_per_game * 1.2) +
-                        ($stats->avg_assists_per_game * 1.5) +
-                        ($stats->avg_steals_per_game * 2) +
-                        ($stats->avg_blocks_per_game * 2) -
-                        ($stats->avg_turnovers_per_game * 1) -
-                        ($stats->avg_fouls_per_game * 0.5);
-
-                    // Store the raw performance score for sorting
-                    $stats->performance_score = (float) $performancePoints;
-                } else {
-                    // If the player doesn't meet the 70% threshold, set a very low performance score to exclude them
-                    $stats->performance_score = -1;
-                }
-
-                return $stats;
-            })
-            ->sortByDesc('performance_score') // Sort numerically by performance score
-            ->take($limit);
-
-        // Sort by specific categories
-        $topPoints = $formattedPlayerStats->sortByDesc('points_per_game')->take($limit);
-        $topRebounds = $formattedPlayerStats->sortByDesc('rebounds_per_game')->take($limit);
-        $topAssists = $formattedPlayerStats->sortByDesc('assists_per_game')->take($limit);
-        $topBlocks = $formattedPlayerStats->sortByDesc('blocks_per_game')->take($limit);
-        $topSteals = $formattedPlayerStats->sortByDesc('steals_per_game')->take($limit);
-        $topTurnovers = $formattedPlayerStats->sortByDesc('turnovers_per_game')->take($limit);
-        $topFouls = $formattedPlayerStats->sortByDesc('fouls_per_game')->take($limit);
-
-        // Match the leader type
-        $response = match ($leaderType) {
-            'top_point_leaders' => $topPoints,
-            'top_rebound_leaders' => $topRebounds,
-            'top_assist_leaders' => $topAssists,
-            'top_block_leaders' => $topBlocks,
-            'top_steals_leaders' => $topSteals,
-            'top_turnovers_leaders' => $topTurnovers,
-            'top_fouls_leaders' => $topFouls,
-            'mvp_leaders' => $mvpLeaders,
-            'rookie_leaders' => $rookieLeaders,
-            default => [],
-        };
-
-        return response()->json(['leaders' => $response]);
+        return $this->analyticsService->getSeasonLeaders($request); 
     }
 
     public function getAllStatistics()
     {
-        // Use the DB query builder to get the first row from the table
-        $statistics = DB::table('game_statistics_combined')->first();
-
-        // Return the data as JSON
-        return response()->json($statistics); // Or return view('game_statistics', compact('statistics'));
+       return $this->analyticsService->getAllStatistics();
     }
 
     public function getDraftPlayerStatistics()
     {
-        // Query the draft_player_statistics view and order by latest ID
-        $statistics = DB::table('draft_player_statistics')
-            ->orderBy('draft_id', 'desc')
-            ->get();
-
-        // Return the result as JSON
-        return response()->json($statistics);
+       return $this->analyticsService->getDraftPlayerStatistics();
     }
 }

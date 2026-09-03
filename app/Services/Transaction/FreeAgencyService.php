@@ -144,7 +144,7 @@ class FreeAgencyService
         ];
     }
 
-    private function signPlayer($player, int $teamId, array $offer, int $seasonId)
+    public function signPlayer($player, int $teamId, array $offer, int $seasonId)
     {
         if ($teamId <= 0) {
             return null;
@@ -176,6 +176,19 @@ class FreeAgencyService
                 'status' => 'signed',
                 'created_at' => now(),
                 'updated_at' => now(),
+            ]);
+
+            DB::table('player_contracts')->insert([
+                'player_id' => $player->id,
+                'season_id' => $seasonId,
+                'team_id' => $teamId,
+                'salary' => $offer['salary'],
+                'contract_years' => $offer['years'],
+                'contract_type' => $offer['contract_type'],
+                'player_option' => $offer['player_option'] ?? false,
+                'team_option' => $offer['team_option'] ?? false,
+                'no_trade_clause' => $offer['no_trade_clause'] ?? false,
+                'status' => 'signed',
             ]);
         });
 

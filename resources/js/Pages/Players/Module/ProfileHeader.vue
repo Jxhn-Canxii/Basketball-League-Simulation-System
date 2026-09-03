@@ -149,6 +149,12 @@
       </h3>
       <div class="ml-4">
         <p>
+          <strong>Contract Type:</strong>
+          {{ main_performance.player_details?.contract_type ?? "unsigned" }}
+        </p>
+      </div>
+      <div class="ml-4">
+        <p>
           <strong>Contract Left:</strong>
           {{
             main_performance.player_details.contract_years > 0

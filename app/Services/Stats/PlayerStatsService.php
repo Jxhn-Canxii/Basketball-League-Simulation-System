@@ -1,23 +1,19 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Stats;
 
-use App\Http\Controllers\PlayerSeasonStatsController;
-use App\Http\Controllers\ContractController;
+use App\Services\Stats\PlayerSeasonStatsService;
 use App\Models\PlayerGameStats;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 
-class PlayerStatsController extends Controller
+class PlayerStatsService
 {
     protected $storeStats;
-    protected $contract;
-
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new PlayerSeasonStatsController();
-        $this->contract = new ContractController();
+        $this->storeStats = new PlayerSeasonStatsService();
     }
 
     public function createInactivePlayerStats($player, $gameData, $seasonId)
@@ -368,7 +364,7 @@ class PlayerStatsController extends Controller
 
             return true;
         } catch (\Exception $e) {
-            \Log::error("Error updating fatigue for player {$player->id}: " . $e->getMessage());
+            // \Log::error("Error updating fatigue for player {$player->id}: " . $e->getMessage());
         }
     }
 
@@ -405,7 +401,7 @@ class PlayerStatsController extends Controller
                 'updated_at' => now(),
             ]);
         } else {
-            \Log::error("Injury types configuration is missing.");
+            // \Log::error("Injury types configuration is missing.");
         }
     }
 
@@ -464,7 +460,7 @@ class PlayerStatsController extends Controller
 
             return round($this->clamp($factor, 0.72, 1.12), 3);
         } catch (\Throwable $e) {
-            \Log::error("Error calculating performance factor for player {$player->id}: " . $e->getMessage());
+            // \Log::error("Error calculating performance factor for player {$player->id}: " . $e->getMessage());
             return 1.00;
         }
     }
@@ -897,7 +893,7 @@ class PlayerStatsController extends Controller
     public function updateSeasonStats($playerGameStats, $gameData, $isPlayoff)
     {
         if (empty($playerGameStats)) {
-            throw new Exception("Player game stats are empty. Cannot update season stats.");
+            throw new \Exception("Player game stats are empty. Cannot update season stats.");
         }
 
         try {
@@ -976,16 +972,13 @@ class PlayerStatsController extends Controller
                 // Reduce hardship contract games for players on temporary contracts
                 $player = DB::table('players')->where('id', $stats['player_id'])->first();
 
-                if ($player && $player->hardship_contract > 0) {
-                    $this->contract->handleHardshipContract($player, $stats);
-                }
             }
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             // Log error for debugging
             // Log::error("Error updating season stats: " . $e->getMessage());
 
             // Optionally, throw the error again to stop execution
-            throw new Exception("Failed to update season stats. Please check logs." . $e->getMessage());
+            throw new \Exception("Failed to update season stats. Please check logs." . $e->getMessage());
         }
     }
 

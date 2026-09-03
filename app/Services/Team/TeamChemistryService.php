@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Team;
 
 use Illuminate\Support\Facades\DB;
 
-class TeamChemistryController extends Controller
+class TeamChemistryService
 {
     public function getChemistryCalculation($teamId, $latestSeasonId, $previousSeasonId)
     {

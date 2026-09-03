@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Team;
 
 use Illuminate\Support\Facades\DB;
 
-class TeamStreakController extends Controller
+class TeamStreakService
 {
 
     public static function updateTeamStreaks($gameId)

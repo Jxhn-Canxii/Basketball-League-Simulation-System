@@ -1,24 +1,24 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Team;
 
-use App\Models\Conference;
 use Illuminate\Http\Request;
-use App\Http\Controllers\HelperController;
 use Illuminate\Support\Facades\DB;
+use App\Services\Helper\HelperService;
 
-class ScoutController extends Controller
+class ScoutingService
 {
     protected $helper;
 
     public function __construct()
     {
-        $this->helper = new HelperController();
+        $this->helper = new HelperService();
     }
-   
-    public function generateScoutingReport($scoutingReportData){
-       
-        $award =  $this->awardReport($scoutingReportData['awards'],$scoutingReportData['season_count']);
+
+    public function generateScoutingReport($scoutingReportData)
+    {
+
+        $award =  $this->awardReport($scoutingReportData['awards'], $scoutingReportData['season_count']);
         $potential = $this->potential($scoutingReportData['potential_rating']);
         $overall = $this->overallReport($scoutingReportData['overall_rating']);
         $defense = $this->defenseReport($scoutingReportData['defense_rating']);
@@ -30,22 +30,23 @@ class ScoutController extends Controller
         $workEthic = $this->workEthic($scoutingReportData['work_ethic_rating']);
         $injuryReport = $this->injuryReport($scoutingReportData['injury_prone_rate']);
 
-        $report = "In terms of potential, ".$potential;
+        $report = "In terms of potential, " . $potential;
 
-        $report .= "As you can see the defense, ".$defense;
-        $report .= " In shooting, ".$shooting;
-        $report .= " Let's go to the passing, ".$passing;
-        $report .= " In terms of leadership, ".$leadership;
-        $report .= " Basketball IQ, ".$basketBallIq;
-        $report .= ". Work-ethic wise, ".$workEthic;
-        $report .= " Let me add in free-throw, ".$freeThrow;
-        $report .= " And lastly is this player injury-prone? The answer is, ".$injuryReport;
-        $report .= " Overall, ".$overall;
+        $report .= "As you can see the defense, " . $defense;
+        $report .= " In shooting, " . $shooting;
+        $report .= " Let's go to the passing, " . $passing;
+        $report .= " In terms of leadership, " . $leadership;
+        $report .= " Basketball IQ, " . $basketBallIq;
+        $report .= ". Work-ethic wise, " . $workEthic;
+        $report .= " Let me add in free-throw, " . $freeThrow;
+        $report .= " And lastly is this player injury-prone? The answer is, " . $injuryReport;
+        $report .= " Overall, " . $overall;
 
         return $report;
     }
 
-    private function potential($rating){
+    private function potential($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'This player has a franchise-cornerstone potential.';
@@ -68,7 +69,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function defenseReport($rating){
+    private function defenseReport($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'One of the best defensive players of this draft!.';
@@ -88,7 +90,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function shootingReport($rating){
+    private function shootingReport($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'Gifted shooter!.';
@@ -108,7 +111,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function passingReport($rating){
+    private function passingReport($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'A gifted facilitator and a floor general';
@@ -128,7 +132,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function freeThrowReport($rating){
+    private function freeThrowReport($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'Free-throw is automatic!';
@@ -148,7 +153,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function overallReport($rating){
+    private function overallReport($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'Can make immediate impact in the court.';
@@ -168,7 +174,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function workEthic($rating){
+    private function workEthic($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'Mamba mentality!';
@@ -188,7 +195,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function basketBallIq($rating){
+    private function basketBallIq($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'Potential Point God IQ!';
@@ -208,7 +216,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function leaderShip($rating){
+    private function leaderShip($rating)
+    {
         switch ($rating) {
             case $rating > 95:
                 return 'Locker-room player and a future coach!';
@@ -228,7 +237,8 @@ class ScoutController extends Controller
         }
     }
 
-    private function injuryReport($rating){
+    private function injuryReport($rating)
+    {
         switch ($rating) {
             case $rating > 85 && $rating < 95:
                 return 'Yes, High-chance of injury! Potential injury-prone player.';
@@ -245,17 +255,16 @@ class ScoutController extends Controller
         }
     }
 
-    private function awardReport($awardCount,$championshipCount){
+    private function awardReport($awardCount, $championshipCount)
+    {
         $report = '';
-        if($awardCount > 0 && $championshipCount > 0){
-           $report = 'Award-winner and a championship experience.'; 
+        if ($awardCount > 0 && $championshipCount > 0) {
+            $report = 'Award-winner and a championship experience.';
         }
-        if($awardCount == 0 && $championshipCount > 0){
-           $report = 'Championship experience.'; 
+        if ($awardCount == 0 && $championshipCount > 0) {
+            $report = 'Championship experience.';
         }
 
         return $report;
     }
-
-
 }

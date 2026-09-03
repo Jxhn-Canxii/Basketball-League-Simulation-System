@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Stats;
 
 ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
 
@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\HelperController;
 use Inertia\Inertia;
 
-class PlayerSeasonStatsController extends Controller
+class PlayerSeasonStatsService
 {
     protected $helper;
 

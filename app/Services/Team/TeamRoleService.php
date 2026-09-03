@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Team;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
-class TeamRoleController extends Controller
+class TeamRoleService
 {
     public function __construct(){
 
@@ -24,7 +25,8 @@ class TeamRoleController extends Controller
                 ->where('is_injured', false)
                 ->where('team_id', $teamId)
                 ->select('id', 'role', 'position')
-                ->get();
+                ->get()
+                ->toArray();
 
             $playerEfficiencies = [];
 
@@ -199,7 +201,6 @@ class TeamRoleController extends Controller
             return true;
         } catch (\Exception $e) {
             DB::rollBack();
-            \Log::error("Error updating team $teamId roles: " . $e->getMessage());
             return false;
         }
     }

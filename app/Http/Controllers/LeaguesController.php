@@ -104,6 +104,8 @@ class LeaguesController extends Controller
     {
         $tables = [
             'drafts',
+            'draft_pick_rights',
+            'salary_caps',
             'head_to_head',
             'injury_histories',
             'players',
@@ -130,6 +132,7 @@ class LeaguesController extends Controller
             'trade_proposals',
             'trade_players',
             'transactions',
+            'player_contracts',
         ];
 
         DB::statement('SET FOREIGN_KEY_CHECKS=0;');

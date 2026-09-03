@@ -1,12 +1,13 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Playoff;
+
 use App\Models\PlayerGameStats;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Carbon;
 
-class PlayoffStatsController extends Controller
+class PlayoffStatsService
 {
     public function updatePlayoffQualifiedFlags()
     {

@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Team;
+
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 
-class TeamStatsController extends Controller
+class TeamStatsService
 {
     public function getActivePlayersSorted($teamId, $rolePriority, $round)
     {
@@ -145,9 +146,6 @@ class TeamStatsController extends Controller
             // Return true if successful
             return true;
         } catch (\Exception $e) {
-            // Log the error message
-            \Log::error('Error updating head-to-head matchup for team_id ' . $teamId . ' vs opponent_id ' . $opponentId . ': ' . $e->getMessage());
-
             // Return a structured error response
             return response()->json([
                 'error' => 'Error updating head-to-head matchup: ' . $e->getMessage()

@@ -221,6 +221,7 @@ const inviteCoach = async (info) => {
     try {
         const response = await axios.post(route("coaches.add.free.agent"), {
             name: info.name,
+            nationality: info.country,
         });
         // return response.data.message; // Return success message for logging
         Swal.fire({

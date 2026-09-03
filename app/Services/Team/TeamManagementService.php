@@ -1,32 +1,29 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Services\Team;
 
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\PlayerSeasonStatsController;
-use App\Http\Controllers\FreeAgentController;
-use App\Http\Controllers\ContractController;
-use App\Http\Controllers\TradeController;
-use App\Http\Controllers\HelperController;
+use App\Services\Stats\PlayerSeasonStatsService;
+use App\Services\Helper\HelperService;
+use App\Services\Transaction\FreeAgencyService;
+use App\Services\Player\FreeAgentService;
 
-class TeamManagementController extends Controller
+
+class TeamManagementService
 {
-
     protected $storeStats;
     protected $freeAgent;
-    protected $trade;
-    protected $contract;
     protected $helper;
+    protected $freeAgencyService;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        $this->storeStats = new PlayerSeasonStatsController();
-        $this->freeAgent = new FreeAgentController();
-        $this->contract = new ContractController();
-        $this->helper = new HelperController();
-        $this->trade = new TradeController();
+        $this->storeStats = new PlayerSeasonStatsService();
+        $this->helper = new HelperService();
+        $this->freeAgencyService = new FreeAgencyService();
+        $this->freeAgent = new FreeAgentService();
     }
 
     public function updateSeasonTeamChemistryBeforeGame($teamId)
@@ -152,63 +149,6 @@ class TeamManagementController extends Controller
             'coach_iq' => $teamSeasonInfo->coach_iq ?? 50, // Default if missing
             'chemistry' => $teamSeasonInfo->chemistry ?? 50,
         ];
-    }
-
-    public function fireLeopardRule($teamId)
-    {
-        $seasonId = get_current_season_id();
-
-        // Count the number of active (non-injured) players
-        $activePlayersCount = DB::table('players')
-            ->where('team_id', $teamId)
-            ->where('is_injured', false)
-            ->count();
-
-        // If the team has at least 11 healthy players, no action is needed
-        if ($activePlayersCount >= 11) {
-            return $activePlayersCount;
-        }
-
-        // Determine how many players need to be added
-        $playersNeeded = 1;
-        $signedPlayers = [];
-
-        // Find free agents for temporary contracts
-        $freeAgents = DB::table('players')
-            ->where('team_id', 0) // Free agent pool
-            ->where('is_injured', 0) // Not injured
-            ->where('is_active', 1) // Ensure the player is active
-            ->orderByDesc('overall_rating') // Sort by highest overall rating
-            ->orderBy('injury_prone_percentage', 'asc') // Lowest injury-prone percentage first
-            ->orderBy('age', 'asc') // Then sort by youngest age
-            ->take($playersNeeded)
-            ->get();
-
-
-        foreach ($freeAgents as $freeAgent) {
-            // Assign a temporary hardship contract (10-game contract)
-            DB::table('players')->where('id', $freeAgent->id)->update([
-                'team_id' => $teamId,
-                'contract_years' => 0, // Temporary contract
-                'hardship_contract' => 10, // The player is signed for 10 games only
-            ]);
-
-            // Log transaction
-            DB::table('transactions')->insert([
-                'player_id' => $freeAgent->id,
-                'season_id' => $seasonId,
-                'details' => 'Signed under hardship exception (10-game contract)',
-                'from_team_id' => 0,
-                'to_team_id' => $teamId,
-                'status' => 'signed-hardship',
-            ]);
-
-            $this->storeStats->storePlayerSeasonStats($teamId, $freeAgent->id);
-
-            $signedPlayers[] = $freeAgent;
-        }
-
-        return $signedPlayers;
     }
 
     public function handleInjuredPlayer($player, $seasonId, $seasonStatus)
@@ -343,6 +283,11 @@ class TeamManagementController extends Controller
                     'status' => 'retired',
                 ]);
 
+                DB::table('player_contracts')
+                    ->where('player_id', $player->id)
+                    ->where('status', 'signed')
+                    ->update(['status' => 'terminated']);
+
                 return;
             }
         } catch (\Exception $e) {
@@ -377,55 +322,29 @@ class TeamManagementController extends Controller
                 'team_id' => 0,
             ]);
 
+            DB::table('player_contracts')
+                ->where('player_id', $player->id)
+                ->where('status', 'signed')
+                ->update(['status' => 'terminated']);
+
             // ✅ Find replacement
             $replacement = $this->freeAgent->getBestFreeAgentAvailable($player->position);
+            $bundle = $this->freeAgencyService->generateFreeAgencyOffers($seasonId);
+            $bestOffer = array_rand($bundle['best_offer'],1);
+            if (!$bestOffer) {
+                return true;
+            }
+
+            $bestOffer = $this->freeAgencyService->handleRestrictedFA($player, $bestOffer);
             if ($replacement) {
-                $contractYears = $this->contract->getContractYearsBasedOnRole($player->role);
 
-                DB::table('players')->where('id', $replacement->player_id)->update([
-                    'team_id' => $teamId,
-                    'contract_years' => $contractYears,
-                ]);
-
-                // Check if replacement is same as waived player
-                $replacementDetails = ($replacement->player_id === $player->id)
-                    ? 'Re-signed ' . $player->name . ' after reevaluation. Contract renewed for ' . $contractYears . ' year(s).'
-                    : 'Signed as replacement for ' . $player->name . '. Contract Years: ' . $contractYears;
-
-                DB::table('transactions')->insert([
-                    'player_id' => $replacement->player_id,
-                    'season_id' => $seasonId,
-                    'details' => $replacementDetails,
-                    'from_team_id' => 0,
-                    'to_team_id' => $teamId,
-                    'status' => 'signed',
-                ]);
-
+                $this->freeAgencyService->signPlayer($replacement,$teamId,$bestOffer,$seasonId);
                 $this->storeStats->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
             }
 
             return true;
         }
-        // if ($evaluation['tradeable']){
-        //     $getUnderPerformingPlayer = $this->trade->getUnderperformingPlayers();
-            
-        //     // DB::table('transactions')->insert([
-        //     //     'player_id' => $player->id,
-        //     //     'season_id' => $seasonId,
-        //     //     'details' => 'Waived: ' . $reason,
-        //     //     'from_team_id' => $teamId,
-        //     //     'to_team_id' => 0,
-        //     //     'status' => 'waived',
-        //     // ]);
-
-        //     // // 🚫 Remove player from team
-        //     // DB::table('players')->where('id', $player->id)->update([
-        //     //     'contract_years' => 0,
-        //     //     'team_id' => 0,
-        //     // ]);
-
-        //     return false;
-        // }
+        
         return false;
     }
     

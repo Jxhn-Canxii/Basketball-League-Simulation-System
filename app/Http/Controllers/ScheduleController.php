@@ -5,14 +5,10 @@ namespace App\Http\Controllers;
 ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
 
 use Illuminate\Http\Request;
-use Exception;
 use Inertia\Inertia;
 use App\Models\Seasons;
 use App\Models\Teams;
 use App\Models\Schedules;
-use App\Models\Conference;
-use App\Models\Player;
-use App\Models\PlayerGameStats;
 use App\Http\Controllers\TeamStreakController;
 use App\Http\Controllers\HelperController;
 use App\Http\Controllers\ArchiveController;
