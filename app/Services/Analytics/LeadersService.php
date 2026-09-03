@@ -200,26 +200,37 @@ class LeadersService
         ]);
     }
 
+    private function getTopSingleStats(string $type,$limit = 10){
+
+        $data = DB::table('career_highlights as ch')
+            ->select('players.name as player_name','ch.value as '.$type,'ot.name as opponent_team','teams.name as player_team','seasons.name as season_name','teams.city')
+            ->join('players','players.id','=','ch.player_id')
+            ->join('teams','teams.id','=','ch.team_id')
+            ->join('teams as ot','ot.id','=','ch.vs_team_id')
+            ->join('seasons','seasons.id','=','ch.season_id')
+            ->where('ch.type', $type)
+            ->limit($limit)
+            ->orderBy('ch.value','desc')
+            ->get();
+        
+        return $data;
+    }
     public function getSingleStatsLeaders()
     {
 
-        $topSinglePoints = DB::table('top_10_single_game_points')
-            ->get();
+        $topSinglePoints = $this->getTopSingleStats('points');
+
         // Highest Rebounds in a Single Game
-        $topSingleRebounds = DB::table('top_10_single_game_rebounds')
-            ->get();
+        $topSingleRebounds = $this->getTopSingleStats('rebounds');
 
         // Highest Assists in a Single Game
-        $topSingleAssists = DB::table('top_10_single_game_assists')
-            ->get();
+        $topSingleAssists = $this->getTopSingleStats('assists');
 
         // Highest Blocks in a Single Game
-        $topSingleBlocks = DB::table('top_10_single_game_blocks')
-            ->get();
+        $topSingleBlocks = $this->getTopSingleStats('blocks');
 
         // Highest Steals in a Single Game
-        $topSingleSteals = DB::table('top_10_single_game_steals')
-            ->get();
+        $topSingleSteals = $this->getTopSingleStats('steals');
 
         // Return data as a JSON response
         return response()->json([

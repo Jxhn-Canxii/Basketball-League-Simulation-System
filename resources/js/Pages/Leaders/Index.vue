@@ -306,7 +306,7 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
+                                            <span><b>{{ player.player_team }}</b> vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
@@ -333,7 +333,7 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
+                                            <span><b>{{ player.player_team }}</b> vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
@@ -360,7 +360,7 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
+                                            <span><b>{{ player.player_team }}</b> vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
@@ -387,7 +387,7 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
+                                            <span><b>{{ player.player_team }}</b> vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->
@@ -414,7 +414,7 @@
 
                                         </div>
                                         <div class="text-xs text-gray-600">
-                                            <span>{{ player.player_team }} vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
+                                            <span><b>{{ player.player_team }}</b> vs {{ player.opponent_team }} <sup>{{ player.season_name }}</sup></span>
                                         </div>
                                     </div>
                                     <!-- Right side: Points in a circle -->

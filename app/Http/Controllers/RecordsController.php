@@ -16,7 +16,6 @@ class RecordsController extends Controller
     public function __construct()
     {
         $this->recordsService = new RecordsService();
-        throw new \Exception('Not implemented');
     }
     public function index()
     {

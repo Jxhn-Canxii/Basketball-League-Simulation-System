@@ -15,6 +15,9 @@ return new class extends Migration
             $table->text('details'); // details of the transaction
             $table->string('game_id'); // the team the player is leaving
             $table->integer('team_id')->default(0); // the team the player is joining (default 0 for waived)
+            $table->integer('vs_team_id')->default(0); // the team the player is joining (default 0 for waived)
+            $table->integer('value'); // the status of the transaction (e.g., "waived")
+            $table->string('type'); // the status of the transaction (e.g., "waived")
             $table->string('status'); // the status of the transaction (e.g., "waived")
             $table->timestamps(); // created_at and updated_at timestamps
         });

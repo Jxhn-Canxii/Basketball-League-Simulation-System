@@ -389,7 +389,7 @@ class SimulateService
 
         // Update or insert player game stats
         $this->playerStats->updateSeasonStats($playerGameStats, $gameData, true);
-        $this->career->recordPlayerCareerHigh($playerGameStats);
+        $this->career->recordPlayerCareerHigh($playerGameStats, $gameData);
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
@@ -889,7 +889,7 @@ class SimulateService
 
         // Update or insert player game stats
         $this->playerStats->updateSeasonStats($playerGameStats, $gameData, true);
-        $this->career->recordPlayerCareerHigh($playerGameStats);
+        $this->career->recordPlayerCareerHigh($playerGameStats, $gameData);
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
@@ -1004,7 +1004,7 @@ class SimulateService
         $winnerId = $gameData->winner_id;
         DB::transaction(function () use ($gameData, $playerGameStats, $currentSeasonId, $winnerId) {
             $this->playerStats->updateSeasonStats($playerGameStats, $gameData, true);
-            $this->career->recordPlayerCareerHigh($playerGameStats);
+            $this->career->recordPlayerCareerHigh($playerGameStats, $gameData);
 
             
             $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
@@ -1439,7 +1439,7 @@ class SimulateService
 
         // Update database records with new stats
         $this->playerStats->updateSeasonStats($playerGameStats, $gameData, false);
-        $this->career->recordPlayerCareerHigh($playerGameStats);
+        $this->career->recordPlayerCareerHigh($playerGameStats,$gameData);
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
