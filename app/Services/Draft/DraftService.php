@@ -8,17 +8,20 @@ use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use App\Services\Helper\HelperService;
 use App\Services\Coach\CoachDecisionService;
+use App\Services\Contract\ContractService;
 
 class DraftService
 {
 
     protected $helper;
     protected $coachDecisionService;
+    protected $contractService;
 
     public function __construct()
     {
         $this->helper = new HelperService();
         $this->coachDecisionService = new CoachDecisionService();
+        $this->contractService = new ContractService();
     }
 
     public function draftOrder()
@@ -342,6 +345,12 @@ class DraftService
                             'status' => 'waived',
                             'details' => "Waived by {$team->name} to make space for draft pick",
                         ]);
+
+                        DB::table('player_contracts')
+                            ->where('player_id', $playerToWaive->id)
+                            ->where('status', 'signed')
+                            ->update(['status' => 'terminated']);
+
                         $hasSpace = true;
                     }
                 }
@@ -388,6 +397,31 @@ class DraftService
                         'to_team_id' => $teamId,
                         'status' => 'signed',
                         'details' => "Signed by {$team->name} to rookie contract ({$contract} years)",
+                    ]);
+
+                    $offer = $this->contractService->assignRookieContract($selectedPlayer, $pick->round, $pick->pick_number);
+
+                            // Insert the transaction record into the transactions table
+                    DB::table('transactions')->insert([
+                        'player_id' => $selectedPlayer->id,
+                        'season_id' => $currentSeasonId,
+                        'details' => $selectedPlayer->name . ' has signed for ' . $team->name . ' for ' . $contractYears . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
+                        'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
+                        'to_team_id' => $teamId,
+                        'status' => 'signed',
+                    ]);
+
+                    DB::table('player_contracts')->insert([
+                        'player_id' => $selectedPlayer->id,
+                        'season_id' => $currentSeasonId,
+                        'team_id' => $teamId,
+                        'salary' => $offer['salary'],
+                        'contract_years' => $offer['years'],
+                        'contract_type' => $offer['contract_type'],
+                        'player_option' => $offer['player_option'] ?? false,
+                        'team_option' => $offer['team_option'] ?? false,
+                        'no_trade_clause' => $offer['no_trade_clause'] ?? false,
+                        'status' => 'signed',
                     ]);
                 }
 

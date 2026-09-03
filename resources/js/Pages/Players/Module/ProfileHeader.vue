@@ -228,31 +228,27 @@
       <div v-if="main_performance.career_highs" class="ml-4">
         <p>
           <strong>Points:</strong>
-          {{ main_performance.career_highs.career_high_points ?? "N/A" }}
+          {{ main_performance.career_highs.points ?? "N/A" }}
         </p>
         <p>
           <strong>Rebounds:</strong>
-          {{ main_performance.career_highs.career_high_rebounds ?? "N/A" }}
+          {{ main_performance.career_highs.rebounds ?? "N/A" }}
         </p>
         <p>
           <strong>Assists:</strong>
-          {{ main_performance.career_highs.career_high_assists ?? "N/A" }}
+          {{ main_performance.career_highs.assists ?? "N/A" }}
         </p>
         <p>
           <strong>Steals:</strong>
-          {{ main_performance.career_highs.career_high_steals ?? "N/A" }}
+          {{ main_performance.career_highs.steals ?? "N/A" }}
         </p>
         <p>
           <strong>Blocks:</strong>
-          {{ main_performance.career_highs.career_high_blocks ?? "N/A" }}
+          {{ main_performance.career_highs.blocks ?? "N/A" }}
         </p>
         <p>
           <strong>Turnovers:</strong>
-          {{ main_performance.career_highs.career_high_turnovers ?? "N/A" }}
-        </p>
-        <p>
-          <strong>Fouls:</strong>
-          {{ main_performance.career_highs.career_high_fouls ?? "N/A" }}
+          {{ main_performance.career_highs.turnovers ?? "N/A" }}
         </p>
       </div>
       <div v-else class="ml-4">

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Playoff;
+namespace App\Services\Stats;
 
 use App\Models\PlayerGameStats;
 use App\Models\Player;

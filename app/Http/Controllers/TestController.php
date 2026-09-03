@@ -5,33 +5,36 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Teams;
 use App\Models\Player; // <-- Add this if not yet imported
+use App\Services\Archive\ArchiveService;
+use App\Services\Helper\HelperService;
+use App\Services\Stats\PlayoffStatsService;
+use App\Services\Schedule\ScheduleService;
+use App\Services\Team\TeamChemistryService;
+use App\Services\Team\TeamStreakService;
+use App\Services\Trade\TradeService;
 use Illuminate\Support\Facades\DB;
-use App\Http\Controllers\TeamBalanceController;
-use App\Http\Controllers\TeamChemistryController;
-use App\Http\Controllers\TeamStreakController;
-use App\Http\Controllers\HelperController;
-use App\Http\Controllers\ScheduleController;
-use App\Http\Controllers\ArchiveController;
-use App\Http\Controllers\PlayoffStatsController;
+
 class TestController extends Controller
 {
-    protected $teamBalance;
+
     protected $schedule;
     protected $chemistry;
     protected $streak;
     protected $helper;
     protected $archive;
     protected $playoff;
+    protected $tradeService;
 
     public function __construct(){
 
-        $this->teamBalance = new TeamBalanceController();
-        $this->chemistry = new TeamChemistryController();
-        $this->streak = new TeamStreakController();
-        $this->helper = new HelperController();
-        $this->schedule = new ScheduleController();
-        $this->archive = new ArchiveController();
-        $this->playoff = new PlayoffStatsController();
+
+        $this->chemistry = new TeamChemistryService();
+        $this->streak = new TeamStreakService();
+        $this->helper = new HelperService();
+        $this->schedule = new ScheduleService();
+        $this->archive = new ArchiveService();
+        $this->playoff = new PlayoffStatsService();
+        $this->tradeService = new TradeService();
         
     }
     public function testSchedule(){
@@ -406,6 +409,21 @@ class TestController extends Controller
 
     }
 
+    public function checkUnderPerformedPlayersPerTeam(){
+        
+        $activeTeams = DB::table('teams')
+            ->select('teams.id', 'teams.name')
+            ->groupBy('teams.id', 'teams.name')
+            ->orderBy('teams.name')
+            ->get();
+        
+        $players = [];
+
+        foreach($activeTeams as $team){
+            $players[$team->name] = $this->tradeService->findUnderperformingPlayers($team->id);
+        }
+    }
+
     public function insertTeamStreak(){
 
         $activeTeams = DB::table('teams')
@@ -456,7 +474,7 @@ class TestController extends Controller
 
     public function testSnapShot(){
 
-        $snap = $this->playoff->saveStandingsSnapshot();
+        $snap = $this->archive->archivePlayoffSeriesTable();
 
         return response()->json([
             'message' => $snap,

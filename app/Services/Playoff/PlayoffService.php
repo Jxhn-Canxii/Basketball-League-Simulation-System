@@ -208,6 +208,7 @@ class PlayoffService
         $status = $status >= 8 ? 8 : $status;
 
         $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+        $seriesTable = $this->helper->getSeriesDBName($seasonId);
 
         // Load formats from config
         $formats = config('playoff_formats');
@@ -244,7 +245,7 @@ class PlayoffService
             ];
 
             // --- Get series for this round ---
-            $seriesList = DB::table('playoff_series')
+            $seriesList = DB::table($seriesTable.' as playoff_series')
                 ->select(
                     'playoff_series.id',
                     'playoff_series.series_id',
@@ -259,8 +260,8 @@ class PlayoffService
                     DB::raw('CASE WHEN playoff_series.status = 2 THEN 1 ELSE 0 END as completed'),
                     'playoff_series.winner_team_id',
                     'playoff_series.loser_team_id',
-                    'playoff_series.created_at',
-                    'playoff_series.updated_at'
+                    // 'playoff_series.created_at',
+                    // 'playoff_series.updated_at'
                 )
                 ->leftJoin('conferences', 'playoff_series.conference_id', '=', 'conferences.id')
                 ->where('playoff_series.season_id', $seasonId)
@@ -287,7 +288,7 @@ class PlayoffService
                 $homeTeamName = $standingsData[$series->home_team_id]->name ?? DB::table('teams')->where('id', $series->home_team_id)->value('name');
                 $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
 
-                $seriesCount = DB::table('playoff_series')
+                $seriesCount = DB::table($seriesTable)
                     ->where(function ($q) use ($series) {
                         $q->where('home_team_id', $series->away_team_id)
                         ->where('away_team_id',$series->home_team_id);
@@ -360,8 +361,8 @@ class PlayoffService
                     'winner_id' => $series->winner_team_id,
                     'loser_id' => $series->loser_team_id,
                     'is_rivals' => $series->is_rivals,
-                    'created_at' => $series->created_at,
-                    'updated_at' => $series->updated_at,
+                    // 'created_at' => $series->created_at,
+                    // 'updated_at' => $series->updated_at,
                     'season_id' => $series->season_id,
                     'games' => $games,
                 ];
@@ -1371,9 +1372,10 @@ class PlayoffService
     private function getSeriesWinnersOfRound($round, $seasonId, $conferenceId)
     {
         $winners = [];
+        $seriesTable = $this->helper->getSeriesDBName($seasonId);
 
         // Build base query depending on round
-        $query = DB::table('playoff_series')
+        $query = DB::table($seriesTable)
             ->where('round', $round)
             ->where('season_id', $seasonId);
 
@@ -1453,14 +1455,16 @@ class PlayoffService
 
     private function handlePlayInFinals($seasonId, $conferenceId, $previousRounds, $finalRoundName)
     {
+        $seriesTable = $this->helper->getSeriesDBName($seasonId);
+
         // Fetch both rounds' results
-        $round1Results = DB::table('playoff_series')
+        $round1Results = DB::table($seriesTable)
             ->where('season_id', $seasonId)
             ->where('round', $previousRounds['first'])
             ->where('conference_id', $conferenceId)
             ->get();
 
-        $round2Results = DB::table('playoff_series')
+        $round2Results = DB::table($seriesTable)
             ->where('season_id', $seasonId)
             ->where('round', $previousRounds['second'])
             ->where('conference_id', $conferenceId)

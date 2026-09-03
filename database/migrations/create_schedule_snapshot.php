@@ -19,15 +19,12 @@ return new class extends Migration
             $table->integer('season_id');
             $table->integer('conference_id');
             $table->string('series_id');
-            $table->integer('series_number');
             $table->integer('home_id');
             $table->integer('home_score');
             $table->integer('away_id');
             $table->integer('away_score');
             $table->integer('winner_id');
-            $table->integer('status'); 
-            $table->string('created_at'); 
-            $table->string('updated_at'); 
+            $table->integer('status');  
             $table->string('game_number_formatted'); 
             $table->string('series_id_number'); 
             $table->string('home_team_name'); 

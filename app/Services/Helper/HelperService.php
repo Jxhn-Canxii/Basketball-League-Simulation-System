@@ -167,6 +167,20 @@ class HelperService
         return $archiveTable;
     }
 
+    public function getSeriesDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'playoff_series';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "playoff_series_archives";
+        }
+
+        return $archiveTable;
+    }
+
     public function getTeamName($teamId){
 
         return DB::table('teams')->where('id', $teamId)->value('name') ?? 'Unknown Team';

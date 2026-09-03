@@ -45,9 +45,11 @@ class ArchiveService
 
             DB::statement("CREATE TABLE $archiveTable LIKE player_game_stats");
             DB::statement("INSERT INTO $archiveTable SELECT * FROM player_game_stats");
-            DB::statement("DELETE FROM player_game_stats WHERE season_id < $currentSeasonId");
+            DB::statement("DELETE FROM player_game_stats");
 
             DB::commit();
+
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -86,6 +88,8 @@ class ArchiveService
             DB::statement("DELETE FROM player_season_playoff_stats");
 
             DB::commit();
+
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
             throw $e;
@@ -198,6 +202,7 @@ class ArchiveService
             }
             DB::commit();
 
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -225,15 +230,12 @@ class ArchiveService
                     'season_id', 
                     'conference_id', 
                     'series_id', 
-                    'series_number', 
                     'home_id', 
                     'home_score', 
                     'away_id', 
                     'away_score', 
                     'winner_id', 
                     'status', 
-                    'created_at', 
-                    'updated_at', 
                     'game_number_formatted', 
                     'series_id_number', 
                     'home_team_name', 
@@ -250,6 +252,7 @@ class ArchiveService
                     'winning_name', 
                     'winning_city'
                 )
+                ->where('status',2)
                 ->get();
 
             foreach ($snapshots as $snapshot) {
@@ -262,6 +265,8 @@ class ArchiveService
             }
 
             DB::commit();
+
+            return true;
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -289,16 +294,14 @@ class ArchiveService
                     'season_id',
                     'conference_id',
                     'series_id',
-                    'series_number',
                     'home_id',
                     'home_score',
                     'away_id',
                     'away_score',
                     'winner_id',
                     'status',
-                    'created_at',
-                    'updated_at'
                 )
+                ->where('status',2)
                 ->get();
 
             foreach ($snapshots as $snapshot) {
@@ -311,6 +314,56 @@ class ArchiveService
             }
 
             DB::statement("DELETE FROM schedules");
+
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Schedule Snapshot Error' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function archivePlayoffSeriesTable()
+    {
+        try {
+            DB::beginTransaction();
+
+            $currentSeasonId = get_current_season_id();
+
+            // $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            // if (!$season || $season->status < 14) return;
+            
+            $snapshots = DB::table('playoff_series')
+                ->select(
+                    'season_id',
+                    'conference_id',
+                    'round',
+                    'series_id',
+                    'home_team_id',
+                    'away_team_id',
+                    'best_of',
+                    'home_wins',
+                    'away_wins',
+                    'series_length',
+                    'status',
+                    'winner_team_id',
+                    'loser_team_id',
+                )
+                ->where('status',2)
+                ->get();
+
+            foreach ($snapshots as $snapshot) {
+                DB::table('playoff_series_archives')->updateOrInsert(
+                    [
+                        'series_id' => $snapshot->series_id,
+                    ],
+                    (array) $snapshot
+                );
+            }
+
+            DB::statement("DELETE FROM playoff_series");
 
             DB::commit();
         } catch (\Exception $e) {

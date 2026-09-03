@@ -88,15 +88,16 @@ class PlayerService
 
                     $latestRatings = DB::table('player_ratings')
                         ->where('player_id', $player->id)
-                        ->where('season_id', $seasonId)
+                        ->where('season_id', $seasonId - 1)
                         ->value('overall_rating') ??  75;
-
-                    $latestRatings = ($seasonId == 1) ? $player->overall_rating : $latestRatings;
 
                     $prevRatings = ($seasonId == 1) ? $player->overall_rating  :  DB::table('player_ratings')
                         ->where('player_id', $player->id)
-                        ->where('season_id', $seasonId - 1)
+                        ->where('season_id', $seasonId - 2)
                         ->value('overall_rating') ?? 75;
+
+                    $latestRatings = ($seasonId < 3) ? $player->overall_rating : $latestRatings;
+
 
                     $prevRatings = ($seasonId == 1) ? $player->overall_rating : $prevRatings;
 
@@ -130,6 +131,8 @@ class PlayerService
                         'is_active' => $player->is_active,
                         'morale' => $player->morale,
                         'hardship_contract' => $player->hardship_contract,
+                        'salary' => '₱'.number_format($player->salary,2,'.',','),
+                        'contract_type' => $player->contract_type,
                         'injury_recovery_games' => $player->injury_recovery_games,
                         'is_rookie' => $player->is_rookie,
                         'is_injured' => $player->is_injured,
@@ -1211,16 +1214,7 @@ class PlayerService
 
 
         // Fetch career high stats
-        $careerHighs = DB::table('player_game_stats')
-            ->select(
-                DB::raw('MAX(points) as career_high_points'),
-                DB::raw('MAX(rebounds) as career_high_rebounds'),
-                DB::raw('MAX(assists) as career_high_assists'),
-                DB::raw('MAX(steals) as career_high_steals'),
-                DB::raw('MAX(blocks) as career_high_blocks'),
-                DB::raw('MAX(turnovers) as career_high_turnovers'),
-                DB::raw('MAX(fouls) as career_high_fouls')
-            )
+        $careerHighs = DB::table('player_game_highs')
             ->where('player_id', $playerId)
             ->first();
 

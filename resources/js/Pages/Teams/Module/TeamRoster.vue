@@ -142,9 +142,9 @@
                                     </th>
                                     <th
                                         class="px-2 py-1 text-left font-medium  text-wrap uppercase tracking-wider"
-                                        title="Remaining Contract Years"
+                                        title="Contract Details"
                                     >
-                                        Yrs. Left
+                                        Contract
                                     </th>
 
                                     <th
@@ -329,8 +329,13 @@
                                         <!-- If the player has played more than one season -->
                                         {{ player.seasons_played_with_team }} yrs.
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap border">
-                                        {{ player.contract_years ?? '-' }} yrs.
+                                    <td class="px-2 py-1 whitespace-nowrap border uppercase" :title="player.contract_years+' Years Remaining'">
+                                        <!-- {{ player.contract_years ?? '-' }} yrs. -->
+                                        {{ player.salary ?? '-' }}
+                                        <sup>
+                                            {{ player.contract_type ?? '-' }} 
+                                            <sup>{{ player.contract_years ?? '-' }} yrs</sup>
+                                        </sup>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border" :title="'Potential: '+player.potential_rating">
                                         {{ player.overall_rating ?? '-' }} <sup>{{ player.potential_status }}</sup>

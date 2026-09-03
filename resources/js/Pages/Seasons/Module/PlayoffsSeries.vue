@@ -7,9 +7,9 @@
       <div class="flex justify-between" v-if="!isHide">
         <h2 class="text-lg font-semibold text-gray-800 mb-2">Playoffs Series</h2>
         <button
-          :disabled="season_info.seasons && season_info.seasons[0].status > 11"
+          :disabled="season_info.seasons && season_info.seasons[0].status < 2 || season_info.seasons[0].status > 11"
           :class="
-            season_info.seasons && season_info.seasons[0].status > 11
+            season_info.seasons && season_info.seasons[0].status < 3 || season_info.seasons[0].status > 11
               ? 'bg-gray-500 cursor-not-allowed'
               : 'bg-red-500 hover:bg-red-600 hover:text-red-900'
           "

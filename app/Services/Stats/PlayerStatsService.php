@@ -37,6 +37,8 @@ class PlayerStatsService
             'field_goals_made' => 0,
             'three_point_attempts' => 0,
             'three_pointers_made' => 0,
+            'two_point_attempts' => 0,
+            'two_pointers_made' => 0,
             'free_throw_attempts' => 0,
             'free_throws_made' => 0,
         ];

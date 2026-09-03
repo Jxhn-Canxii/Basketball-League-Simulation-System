@@ -129,7 +129,7 @@ class TeamsController extends Controller
     public function getTeamsByConference(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer',
+            'conference_id' => 'required|integer',
         ]);
         return $this->teamsService->getTeamsByConference($request);
     }

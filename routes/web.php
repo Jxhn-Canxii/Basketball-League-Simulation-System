@@ -309,7 +309,7 @@ Route::middleware('auth')->group(function () {
         Route::post('add-users', [UserController::class, 'add'])->name('users.add');
         Route::post('update-users', [UserController::class, 'update'])->name('users.update');
         Route::post('delete-users', [UserController::class, 'delete'])->name('users.delete');
-       
+
     });
 
     Route::prefix('profile/')->group(function(){
@@ -335,6 +335,7 @@ Route::middleware('auth')->group(function () {
         Route::get('test-free-agent/{position}', [FreeAgentController::class, 'getBestFreeAgent'])->name('get.free.agent');
         Route::get('archive-test', [TestController::class, 'TestArchiving'])->name('test.archive');
         Route::get('snap-test', [TestController::class, 'testSnapShot'])->name('test.snap');
+        Route::get('underperformed-test', [TestController::class, 'checkUnderPerformedPlayersPerTeam'])->name('test.underperformed');
     
     });
 

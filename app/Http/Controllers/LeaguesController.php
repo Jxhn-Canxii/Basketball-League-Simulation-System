@@ -117,6 +117,7 @@ class LeaguesController extends Controller
             'player_season_playoff_stats_archives',
             'player_season_playoff_stats',
             'playoff_series',
+            'playoff_series_archives',
             'player_series_appearances',
             'game_news',
             'standings_snapshots',

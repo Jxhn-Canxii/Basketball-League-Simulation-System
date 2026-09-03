@@ -284,9 +284,9 @@ class SeasonsService
         } elseif ($lastSeasonStatus == config('timeline.draft')) {
             return 4; //player signing
         } elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
-            return 5; // player trade
+            return 5; // coach_signings
         } elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
-            return 6; // new season
+            return 6; // trade
         } elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 7; // new season
         }

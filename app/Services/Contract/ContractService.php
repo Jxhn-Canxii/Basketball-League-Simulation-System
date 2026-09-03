@@ -75,14 +75,14 @@ class ContractService
         ];
     }
 
-    public function assignRookieContract($player, $pickNumber): array
+    public function assignRookieContract($player,$round, $pickNumber): array
     {
         $pickNumber = max(1, (int) $pickNumber);
 
         $salary = match (true) {
-            $pickNumber <= 5 => 12000000,
-            $pickNumber <= 14 => 8000000,
-            $pickNumber <= 30 => 4500000,
+            ($pickNumber <= 5 && $round == 1) => 12000000,
+            ($pickNumber <= 14 && $round == 1) => 8000000,
+            ($pickNumber <= 30 && $round == 1) => 4500000,
             default => 1500000,
         };
 

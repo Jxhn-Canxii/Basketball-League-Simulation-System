@@ -13,7 +13,8 @@ use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\League\NewsService;
 use App\Services\Player\FreeAgentService;
-use App\Services\Playoff\PlayoffStatsService;
+use App\Services\Stats\PlayerCareerStatsService;
+use App\Services\Stats\PlayoffStatsService;
 use App\Services\Stats\PlayerStatsService;
 use App\Services\Team\TeamManagementService;
 use App\Services\Team\TeamRoleService;
@@ -35,6 +36,7 @@ class SimulateService
     protected $helper;
     protected $news;
     protected $archive;
+    protected $career;
 
     public function __construct()
     {
@@ -50,6 +52,7 @@ class SimulateService
         $this->freeAgent = new FreeAgentService();
         $this->news = new NewsService();
         $this->archive = new ArchiveService();
+        $this->career = new PlayerCareerStatsService();
         $this->helper = new HelperService();
     }
 
@@ -386,6 +389,7 @@ class SimulateService
 
         // Update or insert player game stats
         $this->playerStats->updateSeasonStats($playerGameStats, $gameData, true);
+        $this->career->recordPlayerCareerHigh($playerGameStats);
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
@@ -885,6 +889,7 @@ class SimulateService
 
         // Update or insert player game stats
         $this->playerStats->updateSeasonStats($playerGameStats, $gameData, true);
+        $this->career->recordPlayerCareerHigh($playerGameStats);
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
@@ -999,6 +1004,8 @@ class SimulateService
         $winnerId = $gameData->winner_id;
         DB::transaction(function () use ($gameData, $playerGameStats, $currentSeasonId, $winnerId) {
             $this->playerStats->updateSeasonStats($playerGameStats, $gameData, true);
+            $this->career->recordPlayerCareerHigh($playerGameStats);
+
             
             $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
@@ -1432,6 +1439,7 @@ class SimulateService
 
         // Update database records with new stats
         $this->playerStats->updateSeasonStats($playerGameStats, $gameData, false);
+        $this->career->recordPlayerCareerHigh($playerGameStats);
 
         // Calculate scores based on player stats
         $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
