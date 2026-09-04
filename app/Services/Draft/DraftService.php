@@ -390,15 +390,6 @@ class DraftService
                 ]);
 
                 if ($hasSpace) {
-                    DB::table('transactions')->insert([
-                        'player_id' => $selectedPlayer->id,
-                        'season_id' => $currentSeasonId,
-                        'from_team_id' => 0,
-                        'to_team_id' => $teamId,
-                        'status' => 'signed',
-                        'details' => "Signed by {$team->name} to rookie contract ({$contract} years)",
-                    ]);
-
                     $offer = $this->contractService->assignRookieContract($selectedPlayer, $pick->round, $pick->pick_number);
 
                             // Insert the transaction record into the transactions table

@@ -112,7 +112,7 @@ class StandingsService
                 ->get();
 
             $newPlayers = DB::table('players as p')
-                ->join('player_season_stats_archives as ps', 'p.id', '=', 'ps.player_id')
+                ->join($playerSeasonStatsDBName.' as ps', 'p.id', '=', 'ps.player_id')
                 ->where('ps.team_id', $team->team_id) // Filter by the team
                 ->where('p.team_id', $team->team_id) // Filter by the team
                 ->where('ps.season_id', $seasonId) // Filter by the current season

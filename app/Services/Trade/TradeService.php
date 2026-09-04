@@ -345,11 +345,13 @@ class TradeService
             | 2 = normal trade
             | 3 = three-team trade
             | 4 = four-team trade
+            | 5 = five-team trade
+            | 6 = six-team trade
             |
             */
 
             $maxTeamCount = min(
-                4,
+                6,
                 count($availableTeamIds)
             );
 
