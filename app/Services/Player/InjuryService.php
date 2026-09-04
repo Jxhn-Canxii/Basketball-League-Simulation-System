@@ -98,7 +98,7 @@ class InjuryService
             return $item;
         });
 
-        $injuryHistory[] = $injuryLatestHistory->map(function ($item) {
+        $injuryHistory = $injuryLatestHistory->map(function ($item) {
             $roundLabel = $this->roundService->formatRound($item->round, $item->game_number);
 
             if ($item->team_id == $item->home_id) {

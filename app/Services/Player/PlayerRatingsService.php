@@ -24,6 +24,36 @@ class PlayerRatingsService
         $this->coachDecisionService = new CoachDecisionService();
         $this->contractService = new ContractService();
     }
+
+    public function updateRookieContract($teamId){
+         $contracts = DB::table('player_contracts as pc')
+                    ->select('pc.*','p.name as player_name','p.is_rookie')
+                    ->join('players as p','p.id','=','pc.player_id')
+                    ->where('pc.team_id',$teamId)
+                    ->where('p.is_rookie',1)
+                    ->get();
+
+        // dd($contracts);
+
+        $players = [];
+
+        foreach ($contracts as $contract) {
+                DB::table('players')
+                    ->where('id', $contract->player_id)
+                    ->update([
+                        'salary' => $contract->salary,
+                        'contract_type' => $contract->contract_type,
+                        'player_option' => $contract->player_option,
+                        'team_option' => $contract->team_option,
+                        'no_trade_clause' => $contract->no_trade_clause,
+                    ]);
+                
+                $players[] = $contract->player_name;
+        }
+
+        return $players;
+
+    }
     //
     public function updateActivePlayers($request)
     {
@@ -169,13 +199,25 @@ class PlayerRatingsService
                         DB::table('player_contracts')
                             ->where('player_id', $player->id)
                             ->update(['status' => 'terminated']);
+                        
+                        DB::table('players')
+                            ->where('id', $player->id)
+                            ->update([
+                                'team_id' => 0,
+                                'contract_years' => 0,
+                                'salary' => 0,
+                                'contract_type' => 0,
+                                'player_option' => 0,
+                                'team_option' => 0,
+                                'no_trade_clause' => 0
+                            ]);
                 
                         $player->team_id = 0; // Set team_id to 0 (free agent)
+                        
                         $player->contract_years = 0; // Remove contract
                     }
                 }
 
-                 
             }
             // Fetch updated players
             $players = $query->get();
@@ -222,6 +264,18 @@ class PlayerRatingsService
                     DB::table('player_contracts')
                         ->where('player_id', $player->id)
                         ->update(['status' => 'terminated']);
+
+                    DB::table('players')
+                        ->where('id', $player->id)
+                        ->update([
+                            'team_id' => 0,
+                            'contract_years' => 0,
+                            'salary' => 0,
+                            'contract_type' => 0,
+                            'player_option' => 0,
+                            'team_option' => 0,
+                            'no_trade_clause' => 0
+                        ]);
 
                     $player->is_active = 0;
                     $player->contract_years = 0;
@@ -847,7 +901,11 @@ class PlayerRatingsService
                 ->update([
                     'team_id' => 0,
                     'contract_years' => 0,
-                    'updated_at' => now(),
+                    'salary' => 0,
+                    'contract_type' => 0,
+                    'player_option' => 0,
+                    'team_option' => 0,
+                    'no_trade_clause' => 0
                 ]);
 
             DB::table('player_contracts')

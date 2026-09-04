@@ -263,14 +263,7 @@ class TeamManagementService
                 if ($retirementReason === 'severe injury history') {
                     $details .= " (injury count: {$injuryHistoryCount})";
                 }
-
-                // Update player to retired status
-                DB::table('players')->where('id', $player->id)->update([
-                    'is_active' => false,
-                    'team_id' => null,
-                    'updated_at' => now(),
-                ]);
-
+                
                 // Log retirement in transactions table
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
@@ -285,6 +278,19 @@ class TeamManagementService
                     ->where('player_id', $player->id)
                     ->where('status', 'signed')
                     ->update(['status' => 'terminated']);
+                
+                DB::table('players')
+                    ->where('id', $player->id)
+                    ->update([
+                        'team_id' => 0,
+                        'contract_years' => 0,
+                        'salary' => 0,
+                        'contract_type' => 0,
+                        'player_option' => 0,
+                        'team_option' => 0,
+                        'no_trade_clause' => 0,
+                        'is_active' => false
+                    ]);
 
                 return;
             }
@@ -315,10 +321,17 @@ class TeamManagementService
             ]);
 
             // 🚫 Remove player from team
-            DB::table('players')->where('id', $player->id)->update([
-                'contract_years' => 0,
-                'team_id' => 0,
-            ]);
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'team_id' => 0,
+                    'contract_years' => 0,
+                    'salary' => 0,
+                    'contract_type' => 0,
+                    'player_option' => 0,
+                    'team_option' => 0,
+                    'no_trade_clause' => 0
+                ]);
 
             DB::table('player_contracts')
                 ->where('player_id', $player->id)

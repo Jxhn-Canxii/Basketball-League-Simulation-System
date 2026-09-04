@@ -333,10 +333,19 @@ class DraftService
                         ->first();
 
                     if ($playerToWaive) {
-                        DB::table('players')->where('id', $playerToWaive->id)->update([
-                            'team_id' => 0,
-                            'contract_years' => 0,
-                        ]);
+                        
+                        DB::table('players')
+                            ->where('id',$playerToWaive->id)
+                            ->update([
+                                'team_id' => 0,
+                                'contract_years' => 0,
+                                'salary' => 0,
+                                'contract_type' => 0,
+                                'player_option' => 0,
+                                'team_option' => 0,
+                                'no_trade_clause' => 0
+                            ]);
+
                         DB::table('transactions')->insert([
                             'player_id' => $playerToWaive->id,
                             'season_id' => $currentSeasonId,
@@ -414,6 +423,20 @@ class DraftService
                         'no_trade_clause' => $offer['no_trade_clause'] ?? false,
                         'status' => 'signed',
                     ]);
+                    
+                    DB::table('players')
+                    ->where('id', $selectedPlayer->id)
+                    ->update([
+                        'team_id' => $teamId,
+                        'contract_years' => $offer['years'],
+                        'salary' => $offer['salary'],
+                        'contract_type' => $offer['contract_type'],
+                        'player_option' => $offer['player_option'],
+                        'team_option' => $offer['team_option'],
+                        'no_trade_clause' => $offer['no_trade_clause']
+                    ]);
+
+
                 }
 
                 $draftResults[] = [

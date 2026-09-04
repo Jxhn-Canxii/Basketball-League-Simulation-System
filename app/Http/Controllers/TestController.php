@@ -7,6 +7,7 @@ use App\Models\Teams;
 use App\Models\Player; // <-- Add this if not yet imported
 use App\Services\Archive\ArchiveService;
 use App\Services\Helper\HelperService;
+use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Schedule\ScheduleService;
 use App\Services\Team\TeamChemistryService;
@@ -24,6 +25,7 @@ class TestController extends Controller
     protected $archive;
     protected $playoff;
     protected $tradeService;
+    protected $playerRatingService;
 
     public function __construct(){
 
@@ -35,6 +37,7 @@ class TestController extends Controller
         $this->archive = new ArchiveService();
         $this->playoff = new PlayoffStatsService();
         $this->tradeService = new TradeService();
+        $this->playerRatingService = new PlayerRatingsService();
         
     }
     public function testSchedule(){
@@ -420,8 +423,28 @@ class TestController extends Controller
         $players = [];
 
         foreach($activeTeams as $team){
-            $players[$team->name]['players'] = $this->tradeService->findUnderperformingPlayers($team->id);
+            $uPlayer = $this->tradeService->findUnderperformingPlayers($team->id)[0];
+
+            // dd($uPlayer->name);
+            $players[$team->name]['players'] = $uPlayer->name.' declines '.ceil($uPlayer->performance_decline_percentage).'% on performance.';
             $players[$team->name]['team_name'] = $team->name;
+        }
+
+        return response()->json($players,200);
+    }
+
+    public function updateRookieContract(){
+        
+        $activeTeams = DB::table('teams')
+            ->select('teams.id', 'teams.name')
+            ->groupBy('teams.id', 'teams.name')
+            ->orderBy('teams.name')
+            ->get();
+        
+        $players = [];
+
+        foreach($activeTeams as $team){
+            $players[$team->name]['players'] = $this->playerRatingService->updateRookieContract($team->id);
         }
 
         return response()->json($players,200);

@@ -267,7 +267,7 @@ class TradeService
 
             foreach ($players as &$player) {
 
-                $player['composite_score'] =
+                $player->composite_score =
                     $this->calculatePerformanceScore(
                         (object) $player
                     );
@@ -374,11 +374,11 @@ class TradeService
             foreach ($selectedTeams as $teamId) {
 
                 $candidates = array_filter(
-                    $playersByTeam[$teamId] ?? [],
+                    $playersByTeam->$teamId ?? [],
                     function ($player) use ($usedPlayers) {
 
                         return !in_array(
-                            $player['player_id'],
+                            $player->player_id,
                             $usedPlayers
                         );
                     }
