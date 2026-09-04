@@ -227,6 +227,10 @@
       </h3>
       <div v-if="main_performance.career_highs" class="ml-4">
         <p>
+          <strong>MInutes:</strong>
+          {{ main_performance.career_highs.minutes ?? "N/A" }}
+        </p>
+        <p>
           <strong>Points:</strong>
           {{ main_performance.career_highs.points ?? "N/A" }}
         </p>

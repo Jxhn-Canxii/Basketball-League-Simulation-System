@@ -12,7 +12,7 @@ use App\Services\Archive\ArchiveService;
 use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\League\NewsService;
-use App\Services\Player\FreeAgentService;
+use App\Services\Player\FreeAgencyService;
 use App\Services\Stats\PlayerCareerStatsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Stats\PlayerStatsService;
@@ -49,7 +49,7 @@ class SimulateService
         $this->playerStats = new PlayerStatsService();
         $this->teamStats = new TeamStatsService();
         $this->teamStreak = new TeamStreakService();
-        $this->freeAgent = new FreeAgentService();
+        $this->freeAgent = new FreeAgencyService();
         $this->news = new NewsService();
         $this->archive = new ArchiveService();
         $this->career = new PlayerCareerStatsService();

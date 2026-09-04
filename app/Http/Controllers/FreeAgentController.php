@@ -5,31 +5,19 @@ namespace App\Http\Controllers;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
 use App\Models\Player;
-use App\Services\Player\FreeAgentService;
+use App\Services\Player\FreeAgencyService;
+use App\Services\Trade\TradeService;
+
 class FreeAgentController extends Controller
 {
    
-    protected $freeAgentService;
+    protected $freeAgencyService;
+    protected $tradeService;
 
     public function __construct()
     {
-        $this->freeAgentService = new FreeAgentService();
-    }
-
-    public function getBestFreeAgent(Request $request){
-
-        return $this->freeAgentService->getBestFreeAgent($request);
-    }
-
-    public function getBestFreeAgentAvailable($position){
-
-        return $this->freeAgentService->getBestFreeAgentAvailable($position);
-    }
-
-
-    public function getBestFreeAgentScouted($teamId, $position)
-    {
-        return $this->freeAgentService->rankFreeAgentsForPosition($position, $teamId)->first();
+        $this->freeAgencyService = new FreeAgencyService();
+        $this->tradeService = new TradeService();
     }
 
     public function runFreeAgencyPeriod(Request $request)
@@ -38,22 +26,25 @@ class FreeAgentController extends Controller
             'season_id' => 'nullable|integer|min:1',
         ]);
 
-        return  $this->freeAgentService->runFreeAgencyPeriod($request);
+        return  $this->freeAgencyService->runFreeAgencyPeriod($request);
 
     }
 
-    public function getBestFreeAgentOffWaiver()
-    {
-        return  $this->freeAgentService->getBestFreeAgentOffWaiver();
-    }
+    public function underPerformedPlayersPerTeam(){
+        
+        $activeTeams = DB::table('teams')
+            ->select('teams.id', 'teams.name')
+            ->groupBy('teams.id', 'teams.name')
+            ->orderBy('teams.name')
+            ->get();
+        
+        $players = [];
 
-    public function updateInjuryFreeAgents()
-    {
-        return  $this->freeAgentService->updateInjuryFreeAgents();
-    }
+        foreach($activeTeams as $team){
+            $players[$team->name]['players'] = $this->tradeService->findUnderperformingPlayers($team->id);
+            $players[$team->name]['team_name'] = $team->name;
+        }
 
-    public function getBestAvailableFreeAgent()
-    {
-        return  $this->freeAgentService->getBestAvailableFreeAgent();
+        return response()->json($players,200);
     }
 }

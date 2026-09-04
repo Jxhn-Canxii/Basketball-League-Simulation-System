@@ -212,6 +212,26 @@ class PlayersController extends Controller
 
     }
 
+    public function getPlayerContracts(Request $request)
+    {   
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+        ]);
+
+        return $this->playerService->getPlayerContracts($request);
+
+    }
+
+    public function getCareerHighs(Request $request)
+    {   
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+        ]);
+
+        return $this->playerService->getCareerHighs($request);
+
+    }
+
     public function getRoleChangeHistory(Request $request)
     {   
         $request->validate([

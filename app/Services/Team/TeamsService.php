@@ -8,16 +8,19 @@ use Illuminate\Support\Facades\DB;
 use App\Models\Teams;
 use App\Services\Helper\HelperService;
 use App\Services\Team\TeamChemistryService;
+use App\Services\Trade\TradeService;
 
 class TeamsService
 {
     protected $chemistry;
     protected $helper;
+    protected $tradeService;
 
     public function __construct(){
 
         $this->chemistry = new TeamChemistryService();
         $this->helper = new HelperService();
+        $this->tradeService = new TradeService();
     }
     // Display a listing of the resource.
     public function index()

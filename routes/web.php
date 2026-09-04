@@ -86,6 +86,7 @@ Route::middleware('auth')->group(function () {
         Route::post('team-match-history', [TeamsController::class, 'matchHistory'])->name('match.history');
         Route::post('team-recent-season-performance', [TeamsController::class, 'countTeamOnePicksAndCheckChampion'])->name('team.recent.performance');
         Route::post('team-per-conference', [TeamsController::class, 'getTeamsByConference'])->name('conference.team.dropdown');
+        Route::post('team-underperformed-players', [FreeAgentController::class, 'underPerformedPlayersPerTeam'])->name('team.underperformed.players');
         
     });
 
@@ -246,6 +247,8 @@ Route::middleware('auth')->group(function () {
         Route::post('player-play-off-performance', [PlayersController::class, 'getPlayerPlayoffperformance'])->name('players.playoff.performance');
         Route::post('player-main-performance', [PlayersController::class, 'getPlayerMainPerformance'])->name('players.main.performance');
         Route::post('player-transactions', [PlayersController::class, 'getPlayerTransactions'])->name('players.season.transactions');
+        Route::post('player-contracts', [PlayersController::class, 'getPlayerContracts'])->name('players.contracts.history');
+        Route::post('player-career-highs', [PlayersController::class, 'getCareerHighs'])->name('players.career.highs');
         Route::post('player-role-history', [PlayersController::class, 'getRoleChangeHistory'])->name('players.role.history');
         Route::post('player-injury', [PlayersController::class, 'getPlayerInjuryHistory'])->name('players.season.injury');
 

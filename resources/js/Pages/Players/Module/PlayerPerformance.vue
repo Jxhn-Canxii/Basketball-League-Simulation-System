@@ -24,11 +24,18 @@
                 <i class="fas fa-exchange-alt"></i> Player Transactions
             </button>
             <button
-                 class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'role_history' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('role_history')"
+                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
+                :class="activeTab === 'contracts' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
+                @click="setActiveTab('contracts')"
             >
-                <i class="fas fa-list-check"></i> Role History
+                <i class="fas fa-file-contract"></i> Contract History
+            </button>
+            <button
+                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
+                :class="activeTab === 'career_highs' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
+                @click="setActiveTab('career_highs')"
+            >
+                <i class="fas fa-star"></i> Career Highs
             </button>
             <button
                 class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
@@ -36,6 +43,13 @@
                 @click="setActiveTab('injury')"
             >
                 <i class="fas fa-medkit"></i> Injury History
+            </button>
+            <button
+                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
+                :class="activeTab === 'role_history' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
+                @click="setActiveTab('role_history')"
+            >
+                <i class="fas fa-list-check"></i> Role History
             </button>
         </div>
         <!-- Divider -->
@@ -56,6 +70,12 @@
         </div>
         <div v-if="activeTab === 'injury'">
             <PlayerInjury :key="props.player_id" :player_id="props.player_id" />
+        </div>
+        <div v-if="activeTab === 'career_highs'">
+            <PlayerCareerHighs :key="props.player_id" :player_id="props.player_id" />
+        </div>
+        <div v-if="activeTab === 'contracts'">
+            <PlayerContracts :key="props.player_id" :player_id="props.player_id" />
         </div>
     </div>
     <Modal :show="isGameLogsModalOpen" :maxWidth="'fullscreen'" title="Player Game Logs" @close="isGameLogsModalOpen = false">
@@ -79,6 +99,8 @@ import PlayerTransactions from "./PlayerTransactions.vue";
 import PlayerSeasonStats from "./PlayerSeasonStats.vue";
 import PlayerRoleHistory from "./PlayerRoleHistory.vue";
 import PlayerGameLogs from "./PlayerGameLogs.vue";
+import PlayerContracts from "./PlayerContracts.vue";
+import PlayerCareerHighs from "./PlayerCareerHighs.vue";
 const props = defineProps({
     player_id: {
         type: Number,

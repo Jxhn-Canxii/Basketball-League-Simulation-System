@@ -420,8 +420,11 @@ class TestController extends Controller
         $players = [];
 
         foreach($activeTeams as $team){
-            $players[$team->name] = $this->tradeService->findUnderperformingPlayers($team->id);
+            $players[$team->name]['players'] = $this->tradeService->findUnderperformingPlayers($team->id);
+            $players[$team->name]['team_name'] = $team->name;
         }
+
+        return response()->json($players,200);
     }
 
     public function insertTeamStreak(){

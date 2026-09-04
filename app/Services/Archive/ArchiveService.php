@@ -332,8 +332,8 @@ class ArchiveService
 
             $currentSeasonId = get_current_season_id();
 
-            // $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
-            // if (!$season || $season->status < 14) return;
+            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            if (!$season || $season->status < 14) return;
             
             $snapshots = DB::table('playoff_series')
                 ->select(

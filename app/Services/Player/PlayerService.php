@@ -1177,7 +1177,7 @@ class PlayerService
         // Fetch championship count and season names
         $championships = DB::table('seasons')
             ->join('player_season_stats_archives as player_season_stats', 'seasons.id', '=', 'player_season_stats.season_id')
-            ->join('playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
+            ->join('playoff_series_archives as playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
             ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
             ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
             ->select(
@@ -1196,7 +1196,7 @@ class PlayerService
         // Fetch conference championships (using playoff_series table)
         $conference_championships = DB::table('seasons')
             ->join('player_season_stats_archives as player_season_stats', 'seasons.id', '=', 'player_season_stats.season_id')
-            ->join('playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
+            ->join('playoff_series_archives as playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
             ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
             ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
             ->select(
@@ -1660,5 +1660,74 @@ class PlayerService
 
         return response()->json($transactions);
     }
+
+    public function getPlayerContracts($request)
+    {
+        $player_id = $request->input('player_id');
+
+        if (!$player_id) {
+            return response()->json(['error' => 'Player ID is required'], 400);
+        }
+
+        $transactions = DB::table('player_contracts as contracts')
+            ->join('players', 'contracts.player_id', '=', 'players.id')
+            ->leftJoin('teams', 'contracts.team_id', '=', 'teams.id')
+            ->leftJoin('seasons', 'contracts.id', '=', 'seasons.id')
+            ->where('contracts.player_id', $player_id)
+            ->select(
+                'contracts.*',
+                'teams.name as team_name',
+                'players.name as player_name',
+                'players.contract_years as years_remaining'
+            )
+            ->orderByDesc('contracts.id')
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            return response()->json(['message' => 'No contract found for this player.'], 404);
+        }
+
+        return response()->json($transactions);
+    }
+    
+    public function getCareerHighs($request)
+    {
+        $player_id = $request->input('player_id');
+
+        if (!$player_id) {
+            return response()->json(['error' => 'Player ID is required'], 400);
+        }
+
+        $transactions = DB::table('career_highlights as ch')
+            ->join('players', 'ch.player_id', '=', 'players.id')
+            ->leftJoin('teams', 'ch.team_id', '=', 'teams.id')
+            ->leftJoin('teams as vs', 'ch.vs_team_id', '=', 'vs.id')
+            ->leftJoin('seasons', 'ch.season_id', '=', 'seasons.id')
+            ->where('ch.player_id', $player_id)
+            ->where('ch.status','career-high')
+            ->select(
+                'ch.id',
+                'ch.season_id',
+                'ch.team_id',
+                'ch.status',
+                'ch.details',
+                'ch.value as stats_value',
+                'ch.type as stats_type',
+                'teams.name as team_name',
+                'vs.name as opponent_team_name',
+                'seasons.name as season_name',
+                'players.name as player_name',
+            )
+            ->orderByDesc('ch.id')
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            return response()->json(['message' => 'No contract found for this player.'], 404);
+        }
+
+        return response()->json($transactions);
+    }
+
+
 }
 

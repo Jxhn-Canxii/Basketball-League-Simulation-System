@@ -6,8 +6,7 @@ use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use App\Services\Stats\PlayerSeasonStatsService;
 use App\Services\Helper\HelperService;
-use App\Services\Transaction\FreeAgencyService;
-use App\Services\Player\FreeAgentService;
+use App\Services\Player\FreeAgencyService;
 
 
 class TeamManagementService
@@ -23,7 +22,6 @@ class TeamManagementService
         $this->storeStats = new PlayerSeasonStatsService();
         $this->helper = new HelperService();
         $this->freeAgencyService = new FreeAgencyService();
-        $this->freeAgent = new FreeAgentService();
     }
 
     public function updateSeasonTeamChemistryBeforeGame($teamId)
@@ -328,7 +326,7 @@ class TeamManagementService
                 ->update(['status' => 'terminated']);
 
             // ✅ Find replacement
-            $replacement = $this->freeAgent->getBestFreeAgentAvailable($player->position);
+            $replacement = $this->freeAgencyService->getBestFreeAgentAvailable($player->position);
             $bundle = $this->freeAgencyService->generateFreeAgencyOffers($seasonId);
             $bestOffer = array_rand($bundle['best_offer'],1);
             if (!$bestOffer) {
