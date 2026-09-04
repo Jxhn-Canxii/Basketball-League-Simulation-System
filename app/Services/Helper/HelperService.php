@@ -111,6 +111,34 @@ class HelperService
         return $archiveTable;
     }
 
+    public function getGameBreakDownDBName($seasonId)
+    {
+
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = ceil($seasonId / $MODULO);
+
+        $archiveTable = "game_quarter_breakdown_batch_" . $tableBatch;
+        if (!Schema::hasTable($archiveTable)) {
+            $archiveTable = "game_quarter_breakdown";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getPlayerQuarterStatsDatabaseName($seasonId)
+    {
+
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = ceil($seasonId / $MODULO);
+
+        $archiveTable = "player_per_quarter_stats_batch_" . $tableBatch;
+        if (!Schema::hasTable($archiveTable)) {
+            $archiveTable = "player_per_quarter_stats";
+        }
+
+        return $archiveTable;
+    }
+
     public function getSeasonStatsDBName($seasonId)
     {
 

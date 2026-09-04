@@ -132,11 +132,11 @@ class PlayerStatsService
         ];
 
         $roleMinuteRanges = [
-            'star player' => [36, 42],
-            'all star'    => [32, 38],
-            'starter'     => [28, 34],
-            'role player' => [16, 24],
-            'bench'       => [0, 20],
+            'star player' => [6,12],
+            'all star'    => [6, 12],
+            'starter'     => [6, 10],
+            'role player' => [6, 8],
+            'bench'       => [0, 6],
         ];
 
         $positionTargets = [
@@ -536,6 +536,63 @@ class PlayerStatsService
         return min(10, $this->poissonRandomizer(max(0.01, $expected)));
     }
 
+    public function distributeAssists(&$playerGameStats, $teamId, $maxAssists, &$assistsAssigned)
+    {
+        $playmakerIndex = 0; // Track number of players assigned assists in this iteration
+
+        // Calculate the assist range (half to 3/4 of max assists)
+        $assistRange = rand(floor($maxAssists / 2), floor($maxAssists * 3 / 4));
+
+        // Distribute assists among the top 5 to 7 playmakers
+        $remainingAssists = $assistRange; // Remaining assists to distribute among top 5 to 7 playmakers
+        $playmakers = [];
+
+        foreach ($playerGameStats as &$stats) {
+            if ($stats['team_id'] === $teamId && $stats['minutes'] > 0) { // Check if player has more than 0 minutes
+                // Collect the top playmakers (5-7 based on passing rating)
+                if ($playmakerIndex < 7) {
+                    $playmakers[] = &$stats; // Add the player to the playmaker list
+                }
+                $playmakerIndex++;
+            }
+        }
+
+        // Sort the players by passing rating in descending order
+        usort($playmakers, function ($a, $b) {
+            return $b['passing_rating'] <=> $a['passing_rating'];
+        });
+
+        // Randomly distribute the assistRange among the top 5 to 7 players
+        $assistCount = count($playmakers);
+        if ($assistCount > 0) {
+            foreach ($playmakers as &$playmaker) {
+                // Randomly assign assists to each playmaker in the range of 0 to remaining assists
+                $maxForThisPlayer = min($remainingAssists, rand(0, floor($remainingAssists / 2)));
+                $playmaker['assists'] = $maxForThisPlayer;  // Assign assists
+
+                // Deduct from remaining assists
+                $remainingAssists -= $maxForThisPlayer;
+
+                // If there are no more assists to distribute, break early
+                if ($remainingAssists <= 0) {
+                    break;
+                }
+            }
+        }
+
+        // Any remaining assists to be distributed among the rest of the players
+        $remainingAssistsToDistribute = $maxAssists - $assistRange - $remainingAssists;
+        foreach ($playerGameStats as &$stats) {
+            if ($stats['team_id'] === $teamId && !in_array($stats, $playmakers) && $stats['minutes'] > 0) { // Ensure player has minutes > 0
+                // Assign remaining assists to players who are not in the top playmaker group and have played minutes
+                $stats['assists'] = rand(0, floor($remainingAssistsToDistribute / 2));
+            }
+        }
+
+        // Update the assists assigned counter
+        $assistsAssigned = $maxAssists - $remainingAssists;
+    }
+
     public function calculateFoul(Player $player, int $minutes, float $performanceFactor, float $defensiveImpact): int
     {
         if ($minutes <= 0) return 0;
@@ -892,6 +949,68 @@ class PlayerStatsService
         ];
     }
 
+    public function updateQuarterStats($playerGameStats, $gameData, $quarter = 'Q1')
+    {
+        if (empty($playerGameStats)) {
+            throw new \Exception("Player per quarter game stats are empty. Cannot update season stats.");
+        }
+
+        try {
+            foreach ($playerGameStats as $stats) {
+                if (isset($stats['passing_rating'])) {
+                    unset($stats['passing_rating']);
+                }
+                // dd($stats['points']);
+                // Update Player Game Stats
+                DB::table('player_per_quarter_stats')->updateOrInsert(
+                    [
+                        'player_id' => $stats['player_id'],
+                        'game_id' => $stats['game_id'],
+                        'season_id' => $stats['season_id'],
+                        'team_id' => $stats['team_id'],
+                        'quarter' => $quarter,
+                    ],
+                    $stats
+                );
+
+                
+                if($quarter == 'Q4' || $quarter == 'OT1' || $quarter == 'OT2' || $quarter == 'OT3'){
+                    $this->storeStats->storePlayerSeasonGameStats($stats['team_id'], $gameData->game_id, $stats['game_id']);
+                }
+            }
+
+            $homeQuarterScore = DB::table('player_per_quarter_stats')
+                ->where('team_id', $gameData->home_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->where('quarter', $quarter)
+                ->sum('points');
+
+            $awayQuarterScore = DB::table('player_per_quarter_stats')
+                ->where('team_id', $gameData->away_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->where('quarter', $quarter)
+                ->sum('points');
+            
+            DB::table('game_quarter_breakdown')
+            ->where('team_id',$gameData->home_team_id)
+            ->where('game_id', $gameData->game_id)
+            ->update([
+                $quarter => $homeQuarterScore,
+            ]);
+
+            DB::table('game_quarter_breakdown')
+            ->where('team_id',$gameData->away_team_id)
+            ->where('game_id', $gameData->game_id)
+            ->update([
+                $quarter => $awayQuarterScore,
+            ]);
+
+        } catch (\Exception $e) {
+
+            throw new \Exception("Failed to update quarter stats. Please check logs." . $e->getMessage());
+        }
+    }
+
     public function updateSeasonStats($playerGameStats, $gameData, $isPlayoff)
     {
         if (empty($playerGameStats)) {
@@ -926,8 +1045,6 @@ class PlayerStatsService
                     ],
                     $stats
                 );
-
-                $this->recordCareerHighs($stats);
 
                 // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
@@ -971,9 +1088,6 @@ class PlayerStatsService
                     ]
                 );
 
-                // Reduce hardship contract games for players on temporary contracts
-                $player = DB::table('players')->where('id', $stats['player_id'])->first();
-
             }
         } catch (\Exception $e) {
             // Log error for debugging
@@ -982,9 +1096,5 @@ class PlayerStatsService
             // Optionally, throw the error again to stop execution
             throw new \Exception("Failed to update season stats. Please check logs." . $e->getMessage());
         }
-    }
-
-    public function recordCareerHighs($stats){
-            return true;
     }
 }

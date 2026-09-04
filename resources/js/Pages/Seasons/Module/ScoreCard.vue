@@ -99,6 +99,14 @@
         >
           View Result
         </a>
+        <!-- <a
+          href="#"
+          v-if="match.status = 1"
+          class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
+          @click.prevent="simulateGame(match.game_id)"
+        >
+          Simulate Game {{ match }}
+        </a> -->
       </div>
     </div>
   </div>
@@ -156,11 +164,63 @@ const comparison = useForm({
   home_id: 0,
   away_id: 0,
 });
+
 const compareTeams = (home_id, away_id) => {
   comparison.season_id = props.match?.season_id;
   comparison.home_id = home_id;
   comparison.away_id = away_id;
   isTeamComparisonModalOpen.value = true;
+};
+
+const simulateGame = async (id) => {
+    try {
+        isHide.value = true;
+        activeIndex.value = index;
+
+        Swal.fire({
+            title: 'Simulating...',
+            text: 'Please wait while the game is being simulated.',
+            icon: 'info',
+            toast: true,
+            position: 'top',
+            showConfirmButton: false,
+            allowOutsideClick: true,
+            allowEscapeKey: true,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                Swal.showLoading();
+            }
+        });
+
+
+        const response = await axios.post(route("game.simulate.regular"), {
+            schedule_id: id,
+        });
+
+        Swal.close();
+        Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: response.data.message,
+            timer: 2000, // Auto-close after 2 seconds (2000ms)
+            showConfirmButton: false,
+            timerProgressBar: true
+        });
+
+
+        isGameResultModalOpen.value = game_id;
+        isHide.value = false;
+    } catch (error) {
+        console.error("Error simulating the game:", error);
+        Swal.close();
+        isHide.value = false;
+        Swal.fire({
+            icon: "error",
+            title: "Error!",
+            text: error.response?.data?.message || "Failed to simulate game.",
+        });
+        throw error; // Rethrow to allow caller to handle
+    }
 };
 const getConferenceClass = (home_conference, away_conference) => {
   const conferenceClasses = {

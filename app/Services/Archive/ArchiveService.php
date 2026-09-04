@@ -20,6 +20,78 @@ class ArchiveService
         $this->helper = new HelperService();
     }
 
+    public static function archivePerQuarterGameStats()
+    {
+        $currentSeasonId = get_current_season_id();
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = $currentSeasonId / $MODULO;
+
+        $archiveTable = "player_per_quarter_stats_batch_" . $tableBatch;
+
+        // 1) Only proceed if season is finished
+        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+        if (!$season || $season->status < 14) return;
+
+        // 2) Must be a modulo season
+        if ($currentSeasonId % $MODULO !== 0) return;
+
+        // 3) IF ARCHIVE TABLE EXISTS → STOP (no transaction)
+        if (Schema::hasTable($archiveTable)) {
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+
+            DB::statement("CREATE TABLE $archiveTable LIKE player_per_quarter_stats");
+            DB::statement("INSERT INTO $archiveTable SELECT * FROM player_per_quarter_stats");
+            DB::statement("DELETE FROM player_per_quarter_stats");
+
+            DB::commit();
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
+     public static function archiveQuarterGameBreakDown()
+    {
+        $currentSeasonId = get_current_season_id();
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = $currentSeasonId / $MODULO;
+
+        $archiveTable = "game_quarter_breakdown_batch_" . $tableBatch;
+
+        // 1) Only proceed if season is finished
+        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+        if (!$season || $season->status < 14) return;
+
+        // 2) Must be a modulo season
+        if ($currentSeasonId % $MODULO !== 0) return;
+
+        // 3) IF ARCHIVE TABLE EXISTS → STOP (no transaction)
+        if (Schema::hasTable($archiveTable)) {
+            return;
+        }
+
+        DB::beginTransaction();
+        try {
+
+            DB::statement("CREATE TABLE $archiveTable LIKE game_quarter_breakdown");
+            DB::statement("INSERT INTO $archiveTable SELECT * FROM game_quarter_breakdown");
+            DB::statement("DELETE FROM game_quarter_breakdown");
+
+            DB::commit();
+
+            return true;
+        } catch (\Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
+    }
+
     public static function archiveGameStats()
     {
         $currentSeasonId = get_current_season_id();

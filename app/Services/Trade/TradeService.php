@@ -1100,6 +1100,10 @@ class TradeService
 
             $this->archive->archiveGameStats();
 
+            $this->archive->archiveGameBreakdown();
+
+            $this->archive->archivePerQuarterGameStats();
+
             $this->archive->archivePlayerSeasonStats();
 
             $this->archive->archiveScheduleViewTable();
