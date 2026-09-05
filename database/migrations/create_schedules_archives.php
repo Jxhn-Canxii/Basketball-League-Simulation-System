@@ -25,6 +25,8 @@ return new class extends Migration
             $table->integer('away_score')->default(0);
             $table->integer('winner_id')->default(0);
             $table->integer('status')->default(1); // Assuming default status is 'pending'
+            $table->integer('is_overtime')->default(0);
+
         });
     }
 

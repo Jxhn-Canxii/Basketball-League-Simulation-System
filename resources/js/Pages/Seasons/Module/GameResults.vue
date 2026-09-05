@@ -145,23 +145,21 @@
                                 <th>Q2</th>
                                 <th>Q3</th>
                                 <th>Q4</th>
+                                <th v-for="ot in isOvertime" :key="ot">OT{{ ot }}</th>
                                 <th>TOTAL</th>
-                                <!-- <th>OT1</th>
-                                <th>OT2</th>
-                                <th>OT3</th> -->
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="b in breakDown" :key="b.id">
-                             <td>{{ b.team_name }}</td>
-                             <td>{{ b.Q1 }}</td>
-                             <td>{{ b.Q2 }}</td>
-                             <td>{{ b.Q3 }}</td>
-                             <td>{{ b.Q4 }}</td>
-                             <td class="text-bold text-red-500">{{ b.total }}</td>
-                             <!-- <td v-if="b.isOT">{{ b.OT1 }}</td>
-                             <td v-if="b.isOT">{{ b.OT2 }}</td>
-                             <td v-if="b.isOT">{{ b.OT3 }}</td> -->
+                                <td>{{ b.team_name }}</td>
+                                <td>{{ b.Q1 }}</td>
+                                <td>{{ b.Q2 }}</td>
+                                <td>{{ b.Q3 }}</td>
+                                <td>{{ b.Q4 }}</td>
+                                <td v-if="isOvertime > 0">{{ b.OT1 }}</td>
+                                <td v-if="isOvertime > 1">{{ b.OT2 }}</td>
+                                <td v-if="isOvertime > 2">{{ b.OT3 }}</td>
+                                <td class="text-bold text-red-500">{{ b.total }}</td>
                             </tr>
                         </tbody>
                     </table>
@@ -917,14 +915,10 @@
                         </div>
                     </div>
                     <div 
-                    :style="{
-                        backgroundColor:
-                            '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color : gameDetails?.away_team.primary_color),
-                    }"
-                    class="p-2 flex flex-wrap mt-3 text-white bg-dark"  v-if="!props.showBoxScore && seasonLeaders">
-                        <small class="text-xs text-nowrap text-white">{{ seasonLeaders.message }}</small>
+                    class="p-2 flex flex-wrap flex-col mt-1 text-white bg-gray-100"  v-if="!props.showBoxScore && seasonLeaders">
+                        <small class="text-xs text-nowrap text-gray-500">{{ seasonLeaders.message }}</small>
                         <small class="text-sm text-nowrap text-red-500 font-bold" :title="seasonLeaders.draft_status">{{ seasonLeaders.player_name }} ({{ seasonLeaders.stat_value }} {{ seasonLeaders.stat_type }})</small>
-                        <small class="text-xs text-nowrap text-gray-200 ml-2">{{ seasonLeaders.team_name }}</small>
+                        <small class="text-xs text-nowrap text-gray-900 hidden">{{ seasonLeaders.team_name }}</small>
                     </div>
                 </div>
             </div>
@@ -990,6 +984,7 @@ const showAwayDepthChart = ref(false);
 const showHomeDepthChart = ref(false);
 const gameNews = ref([]);
 const breakDown = ref([]);
+const isOvertime = ref(0);
 // Fetch the box score data
 const time = ref(0); // Timer in seconds
 const interval = ref(null); // Stores interval ID
@@ -1040,6 +1035,7 @@ const fetchBoxScore = async () => {
         seasonLeaders.value = data.league_leaders;
         gameNews.value = data.news;
         breakDown.value = data.per_quarter_breakdown;
+        isOvertime.value = data.is_overtime;
         gameFinished.value = true;
         // stopTimer(); // Stop the timer when the game finishes
     } catch (error) {

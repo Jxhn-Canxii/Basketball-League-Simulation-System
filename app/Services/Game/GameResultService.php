@@ -452,11 +452,15 @@ class GameResultService
             ->where('game_id', $game->game_id)
             ->first();
 
+        $isOT = DB::table('schedules')
+            ->where('game_id', $game->game_id)
+            ->value('is_overtime');
         // Format data for box score
         $boxScore = [
             'game_id' => $game->game_id,
             'round' => $game->round,
             'news' =>  $gameNews,
+            'is_overtime' => $isOT,
             'injury' => $injury,
             'league_leaders' => $randomSeasonStatsLeaders,
             'per_quarter_breakdown' => $quarterBreakDown,
@@ -716,7 +720,7 @@ class GameResultService
         return $streakResult;
     }
     
-    private function getQuarterBreakDown($gameId,$seasonId)
+    public function getQuarterBreakDown($gameId,$seasonId)
     {
         $breakDownDBName = $this->helper->getGameBreakDownDBName($seasonId);
         // Fetch the head-to-head matchup from the head_to_head_matchups table using homeTeamId as team_id

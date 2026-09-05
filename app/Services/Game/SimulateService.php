@@ -38,6 +38,7 @@ class SimulateService
     protected $archive;
     protected $career;
     protected $engine;
+    protected $gameResultService;
 
     public function __construct()
     {
@@ -55,6 +56,7 @@ class SimulateService
         $this->archive = new ArchiveService();
         $this->career = new PlayerCareerStatsService();
         $this->engine = new GameEngineService();
+        $this->gameResultService = new GameResultService();
         $this->helper = new HelperService();
     }
 
@@ -354,6 +356,12 @@ class SimulateService
             ->where('game_id', $gameData->game_id)
             ->first();
 
+        $quarterBreakDown = $this->gameResultService->getQuarterBreakDown($gameData->game_id,$currentSeasonId);
+
+        $isOT = DB::table('schedules')
+            ->where('game_id', $gameData->game_id)
+            ->value('is_overtime');
+
         // Format series response
         $seriesResponse = [
             'id' => $series->id,
@@ -396,6 +404,8 @@ class SimulateService
             'message' => 'Game simulated successfully',
             'series' => $seriesResponse,
             'news' => $gameNews,
+            'breakdown' => $quarterBreakDown,
+            'is_overtime' => $isOT
         ]);
     }
 
@@ -546,6 +556,5 @@ class SimulateService
             'transaction_count' => $transactionCount
         ]);
     }
-
 
 }

@@ -308,6 +308,7 @@ class ArchiveService
                     'away_score', 
                     'winner_id', 
                     'status', 
+                    'is_overtime', 
                     'game_number_formatted', 
                     'series_id_number', 
                     'home_team_name', 
@@ -372,6 +373,7 @@ class ArchiveService
                     'away_score',
                     'winner_id',
                     'status',
+                    'is_overtime',
                 )
                 ->where('status',2)
                 ->get();

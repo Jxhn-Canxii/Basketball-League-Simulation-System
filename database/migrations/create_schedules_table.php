@@ -31,6 +31,8 @@ return new class extends Migration
             $table->integer('winner_id')->default(0);
             $table->integer('status')->default(1);
 
+            $table->boolean('is_overtime')->default(0);
+
             $table->timestamps();
         });
 

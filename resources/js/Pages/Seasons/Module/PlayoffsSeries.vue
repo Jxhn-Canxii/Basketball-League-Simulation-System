@@ -104,6 +104,34 @@
     <div v-if="isGameNewsModalOpen && game_news" class="fixed bg-transparent top-[30%] right-[36%] bg-white p-2">
         <div class="flex justify-center bg-red-300 p-2 rounded-2xl shadow-lg shadow-blue-500" @click.prevent="isGameNewsModalOpen = false">
             <!-- <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3> -->
+            <div class="flex flex-col p-2 m-1 bg-slate-800 rounded text-white"  v-if="break_down">
+                <table class="table-xs text-xs">
+                    <thead>
+                        <tr class="text-bold bg-gray-600">
+                            <th>Team</th>
+                            <th>Q1</th>
+                            <th>Q2</th>
+                            <th>Q3</th>
+                            <th>Q4</th>
+                            <th v-if="is_overtime" v-for="ot in is_overtime" :key="ot">OT{{ ot }}</th>
+                            <th>TOTAL</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr v-for="b in break_down" :key="b.id">
+                            <td>{{ b.team_name }}</td>
+                            <td>{{ b.Q1 }}</td>
+                            <td>{{ b.Q2 }}</td>
+                            <td>{{ b.Q3 }}</td>
+                            <td>{{ b.Q4 }}</td>
+                            <td v-if="is_overtime > 0">{{ b.OT1 }}</td>
+                            <td v-if="is_overtime > 1">{{ b.OT2 }}</td>
+                            <td v-if="is_overtime > 2">{{ b.OT3 }}</td>
+                            <td class="text-bold text-red-500">{{ b.total }}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
             <GameNews :key="game_news.id" :data="game_news" :showNews="true" :textLarge="true" />
         </div>
     </div>
@@ -142,6 +170,8 @@ const season_playoffs = ref(false);
 const is_play_ins = ref(false);
 const active_series_id = ref(false);
 const game_news = ref(false);
+const break_down = ref(false);
+const is_overtime = ref(0);
 
 const form = useForm({
     seasons_id: 0,
@@ -350,6 +380,8 @@ const simulateGame = async (id, game_id, type, index, round) => {
         });
 
         game_news.value = response.data.news;
+        is_overtime.value = response.data.is_overtime;
+        break_down.value = response.data.breakdown;
         // season_playoffs.value.playoffs[round][index] = response.data.schedule;
 
         // active_series_id.value = season_playoffs.value.playoffs[round][index]?.series_id ?? 0;
@@ -475,8 +507,8 @@ const simulateFullPlayoffs = async () => {
                     nextRoundResponse.toLowerCase().includes("already created")) {
                     console.log(`Next round after ${roundName} already scheduled.`);
                 }else{
-                  currentRoundIndex++;
-                  continue;
+                    currentRoundIndex++;
+                    continue;
                 }
             }
 
