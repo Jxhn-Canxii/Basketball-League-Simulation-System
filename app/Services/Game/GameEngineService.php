@@ -209,9 +209,10 @@ class GameEngineService
             $otMinutes = $totalMinutes / 8;
 
             $OT = true;
-
+            $OTNumber = 0;
             while ($OT && $quarterNumber <= 7) {
                 $quarterNumber++;
+                $OTNumber++;
 
                  // Calculate scores based on player stats
                 $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
@@ -226,10 +227,10 @@ class GameEngineService
                     $OT = false;
                 }
 
-                $quarter = 'OT'.$quarterNumber;
+                $overtimeQuarter = 'OT'.$OTNumber;
 
                 $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$otMinutes);
-                $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter); 
+                $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter); 
             }
         }
 
