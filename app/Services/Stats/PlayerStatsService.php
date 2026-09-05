@@ -133,10 +133,10 @@ class PlayerStatsService
         ];
 
         $roleMinuteRanges = [
-            'star player' => [6, 12],
-            'all star'    => [6, 12],
-            'starter'     => [6, 10],
-            'role player' => [6, 8],
+            'star player' => [10, 12],
+            'all star'    => [8, 12],
+            'starter'     => [6, 12],
+            'role player' => [0, 10],
             'bench'       => [0, 6],
         ];
 
