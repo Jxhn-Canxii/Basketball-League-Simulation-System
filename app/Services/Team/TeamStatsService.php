@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\DB;
 
 class TeamStatsService
 {
-    public function getActivePlayersSorted($teamId, $rolePriority, $round)
+    public function getActivePlayersSorted($teamId, $gameId, $rolePriority, $round)
     {
         $seasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // You must implement this
@@ -50,6 +50,11 @@ class TeamStatsService
                 ->where('season_id', $seasonId)
                 ->first();
 
+            $playerFouls = DB::table('player_per_quarter_stats')
+                ->where('player_id', $playerId)
+                ->where('game_id', $gameId)
+                ->sum('fouls');
+
             $playerEfficiencies[] = [
                 'player' => $player,
                 'role' => $player->role,
@@ -58,6 +63,7 @@ class TeamStatsService
                 'is_rookie' => $draft ? true : false,
                 'draft_round' => $draft->round ?? null,
                 'draft_pick' => $draft->pick_number ?? null,
+                'player_fouls' => $playerFouls ?? 0,
                 'role_rank' => array_search($player->role, $rolePriority) !== false
                     ? array_search($player->role, $rolePriority)
                     : PHP_INT_MAX,

@@ -210,7 +210,7 @@ class GameEngineService
 
             $OT = true;
             $OTNumber = 0;
-            while ($OT && $quarterNumber < 8) {
+            while ($OT && $quarterNumber < 7) {
                 $quarterNumber++;
                 $OTNumber++;
 
@@ -218,7 +218,6 @@ class GameEngineService
 
                 $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$otMinutes);
                 $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
-
                  // Calculate scores based on player stats
                 $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
                     ->where('game_id', $gameData->game_id)
@@ -314,9 +313,6 @@ class GameEngineService
         
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
         $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
-        
-        $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
-        $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
         //check first to balance team positions
 
         $rolePriority = [
@@ -328,8 +324,8 @@ class GameEngineService
         ];
 
         // Fetching sorted active players for both teams
-        $homeTeamPlayers = $this->teamStats->getActivePlayersSorted($gameData->home_team_id, $rolePriority, $gameData->round);
-        $awayTeamPlayers = $this->teamStats->getActivePlayersSorted($gameData->away_team_id, $rolePriority, $gameData->round);
+        $homeTeamPlayers = $this->teamStats->getActivePlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+        $awayTeamPlayers = $this->teamStats->getActivePlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
 
 
         $playerGameStats = [];
@@ -344,7 +340,7 @@ class GameEngineService
          // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
             $minutes = (float) $homeMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured == 1) {
+            if ($minutes === 0 || $player->is_injured == 1 || $player->player_fouls >= 5) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -403,7 +399,7 @@ class GameEngineService
         // Repeat similar simulation for away team players...
         foreach ($awayTeamPlayers as $player) {
             $minutes = (float) $awayMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured == 1) {
+            if ($minutes === 0 || $player->is_injured == 1 || $player->player_fouls >= 5) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }

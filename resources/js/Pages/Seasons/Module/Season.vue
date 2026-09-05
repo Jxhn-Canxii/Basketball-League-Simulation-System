@@ -42,11 +42,11 @@
             </div>
         </div>
         <div
-            class="grid grid-cols-1 md:grid-cols-7 gap-6 p-2 bg-black rounded"
+            class="grid grid-cols-1 md:grid-cols-7 gap-4 p-2 bg-black rounded"
             v-if="season_info.seasons && season_info.seasons[0].type != 1"
         >
             <!-- Standings UI (Left Side) -->
-            <div class="md:col-span-3 sm:col-span-1 overflow-y-auto p-2 bg-black">
+            <div class="md:col-span-3 sm:col-span-1 overflow-y-auto p-1 bg-black">
                 <Standings v-if="selectedConference != 0" :key="updateKey" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
                 <Top15MVPCandidate v-else :key="updateKey" :current_round="updateKey"/>
 

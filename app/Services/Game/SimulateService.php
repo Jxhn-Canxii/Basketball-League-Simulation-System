@@ -289,17 +289,8 @@ class SimulateService
         $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
         // Determine series lead or result
         $seriesLead = '';
-        $winnerTeamId = 0;
         if ($series->completed) {
             $winnerName = $series->winner_team_id == $series->home_team_id ? $homeTeamName : $awayTeamName;
-            $loserName = $series->winner_team_id == $series->away_team_id ? $awayTeamName : $homeTeamName;
-
-            $winnerTeamId = $series->winner_team_id == $series->home_team_id ? $series->home_team_id : $series->away_team_id;
-            $loserTeamId = $series->winner_team_id == $series->away_team_id ? $series->away_team_id : $series->home_team_id;
-
-            $winnerTeamSeriesScore = $series->winner_team_id == $series->home_team_id ? $series->home_wins : $series->away_wins;
-            $loserTeamISeriesScore = $series->winner_team_id == $series->away_team_id ? $series->away_wins : $series->home_wins;
-
             $seriesLead = "{$winnerName} Wins {$series->home_wins}-{$series->away_wins}";
         } else {
             if ($series->home_wins == $series->away_wins) {
