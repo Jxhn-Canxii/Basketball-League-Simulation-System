@@ -296,6 +296,8 @@ class GameResultService
         // Query to get head-to-head record
         $headToHeadRecord = $this->getHeadToHeadRecord($game->home_id, $game->away_id);
 
+        $quarterBreakDown = $this->getQuarterBreakDown($game->game_id,$game->season_id);
+
         $homeTeamPlayersArray = [];
         $awayTeamPlayersArray = [];
 
@@ -457,6 +459,7 @@ class GameResultService
             'news' =>  $gameNews,
             'injury' => $injury,
             'league_leaders' => $randomSeasonStatsLeaders,
+            'per_quarter_breakdown' => $quarterBreakDown,
             'home_team' => [
                 'team_id' => $game->home_id, // Use the correct field from your query
                 'name' => $game->home_team_name,
@@ -711,6 +714,23 @@ class GameResultService
         $streakResult = $currentStreak > 0 ? ($isWinningStreak ? 'W' . $currentStreak : 'L' . $currentStreak) : 'N0';
 
         return $streakResult;
+    }
+    
+    private function getQuarterBreakDown($gameId,$seasonId)
+    {
+        $breakDownDBName = $this->helper->getGameBreakDownDBName($seasonId);
+        // Fetch the head-to-head matchup from the head_to_head_matchups table using homeTeamId as team_id
+        $breakDown = DB::table($breakDownDBName.' as bd')
+            ->select(
+                'bd.*',
+                't.name as team_name',
+                DB::raw('CASE WHEN bd.OT1 > 0 THEN 1 ELSE 0 END as is_ot')
+            )
+            ->join('teams as t','bd.team_id','=','t.id')
+            ->where('game_id', $gameId)
+            ->get(); // We expect at most one record, so using first()
+
+        return $breakDown;
     }
 
     private function getHeadToHeadRecord($homeTeamId, $awayTeamId)

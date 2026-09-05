@@ -412,6 +412,42 @@ class TestController extends Controller
 
     }
 
+    public function gameFlow(){
+        
+        $gameRunning = false;
+        
+        $message = '';
+        $quarter = 0;
+        $homeScore = 0;
+        $awayScore = 0;
+        while ($homeScore == $awayScore && $quarter > 3) {
+            $gameRunning = true;
+            $quarter++;
+
+            $quarterPrefix = ($quarter <= 4) ? 'Q' : 'OT';
+            $quarterFormat = $quarterPrefix.$quarter;
+
+            $homeScore =+ rand(1,10);
+            $awayScore =+ rand(1,10);
+
+            $message .= 'Game still running in'.$quarterFormat.' Score is home: '.$homeScore.' away: '.$awayScore;
+
+            // if($homeScore == $awayScore && $quarter > 3){
+            //     $gameRunning = false;
+            // }
+        }
+
+        $a = 0;
+
+        while ($a <= 3) {
+            # code...
+            $a++;
+
+            echo "shit! ".$a;
+        }
+
+        echo $message;
+    }
     public function checkUnderPerformedPlayersPerTeam(){
         
         $activeTeams = DB::table('teams')

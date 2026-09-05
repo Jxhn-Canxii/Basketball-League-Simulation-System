@@ -81,13 +81,13 @@ class SimulateService
         $gameData = $data['game_info'];
 
         // Calculate scores based on player stats
-        $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
+        $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
             ->where('game_id', $gameData->game_id)
-            ->sum('points');
+            ->value('total');
 
-        $awayScore = PlayerGameStats::where('team_id', $gameData->away_team_id)
+        $awayScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->away_team_id)
             ->where('game_id', $gameData->game_id)
-            ->sum('points');
+            ->value('total');
 
         // Check if the game is tied
         $reasons = [
@@ -198,16 +198,17 @@ class SimulateService
         // dd($data);
 
         $gameData = $data['game_info'];
+        $playerQuarterGameStats = $data['quarter_game_stats'];
         $playerGameStats = $data['game_stats'];
 
         // Calculate scores based on player stats
-        $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
+        $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
             ->where('game_id', $gameData->game_id)
-            ->sum('points');
+            ->value('total');
 
-        $awayScore = PlayerGameStats::where('team_id', $gameData->away_team_id)
+        $awayScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->away_team_id)
             ->where('game_id', $gameData->game_id)
-            ->sum('points');
+            ->value('total');
 
         // Check if the game is tied
         $reasons = [
@@ -311,11 +312,8 @@ class SimulateService
 
         // Save game data and update other tables in a transaction
         $winnerId = $gameData->winner_id;
-        DB::transaction(function () use ($gameData, $playerGameStats, $currentSeasonId, $winnerId) {
-            $this->playerStats->updateSeasonStats($playerGameStats, $gameData, true);
-            $this->career->recordPlayerCareerHigh($playerGameStats, $gameData);
+        DB::transaction(function () use ($gameData, $currentSeasonId, $winnerId) {
 
-            
             $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
             $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
 
@@ -427,13 +425,13 @@ class SimulateService
         $gameData = $data['game_info'];
     
         // Calculate scores based on player stats
-        $homeScore = PlayerGameStats::where('team_id', $gameData->home_team_id)
+        $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
             ->where('game_id', $gameData->game_id)
-            ->sum('points');
+            ->value('total');
 
-        $awayScore = PlayerGameStats::where('team_id', $gameData->away_team_id)
+        $awayScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->away_team_id)
             ->where('game_id', $gameData->game_id)
-            ->sum('points');
+            ->value('total');
 
         // Check if the game is tied
         $reasons = [

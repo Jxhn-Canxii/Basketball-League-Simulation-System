@@ -110,6 +110,8 @@ class LeaguesController extends Controller
             'injury_histories',
             'players',
             'player_game_stats',
+            'player_per_quarter_stats',
+            'game_quarter_breakdown',
             'player_playoff_appearances',
             'player_ratings',
             'player_season_stats',

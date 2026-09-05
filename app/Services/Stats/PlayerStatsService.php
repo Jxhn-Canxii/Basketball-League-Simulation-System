@@ -5,6 +5,7 @@ namespace App\Services\Stats;
 use App\Services\Stats\PlayerSeasonStatsService;
 use App\Models\PlayerGameStats;
 use App\Models\Player;
+use Hamcrest\Type\IsArray;
 use Illuminate\Support\Facades\DB;
 
 class PlayerStatsService
@@ -132,7 +133,7 @@ class PlayerStatsService
         ];
 
         $roleMinuteRanges = [
-            'star player' => [6,12],
+            'star player' => [6, 12],
             'all star'    => [6, 12],
             'starter'     => [6, 10],
             'role player' => [6, 8],
@@ -972,11 +973,6 @@ class PlayerStatsService
                     ],
                     $stats
                 );
-
-                
-                if($quarter == 'Q4' || $quarter == 'OT1' || $quarter == 'OT2' || $quarter == 'OT3'){
-                    $this->storeStats->storePlayerSeasonGameStats($stats['team_id'], $gameData->game_id, $stats['game_id']);
-                }
             }
 
             $homeQuarterScore = DB::table('player_per_quarter_stats')
@@ -990,34 +986,122 @@ class PlayerStatsService
                 ->where('game_id', $gameData->game_id)
                 ->where('quarter', $quarter)
                 ->sum('points');
-            
-            DB::table('game_quarter_breakdown')
-            ->where('team_id',$gameData->home_team_id)
-            ->where('game_id', $gameData->game_id)
-            ->update([
-                $quarter => $homeQuarterScore,
-            ]);
 
             DB::table('game_quarter_breakdown')
-            ->where('team_id',$gameData->away_team_id)
-            ->where('game_id', $gameData->game_id)
-            ->update([
-                $quarter => $awayQuarterScore,
-            ]);
+                ->where('team_id', $gameData->home_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->update([
+                    $quarter => $homeQuarterScore,
+                ]);
 
+            DB::table('game_quarter_breakdown')
+                ->where('team_id', $gameData->away_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->update([
+                    $quarter => $awayQuarterScore,
+                ]);
         } catch (\Exception $e) {
 
             throw new \Exception("Failed to update quarter stats. Please check logs." . $e->getMessage());
         }
     }
 
-    public function updateSeasonStats($playerGameStats, $gameData, $isPlayoff)
+    public function updateGameStats($playerId, $gameId, $seasonId)
+    {
+        if (empty($playerId)) {
+            throw new \Exception("Player quarter stats are empty. Cannot update season stats.");
+        }
+
+        try {
+            // dd($playerId, $gameId);
+            // Calculate the player's aggregated stats for the latest season
+            $playerStats = DB::table('player_per_quarter_stats')
+                ->where('player_id', $playerId)
+                // ->where('team_id', $teamId)
+                ->where('game_id', $gameId)
+                ->where('season_id', $seasonId)
+                ->select(
+                    'player_id',
+                    'team_id',
+                    DB::raw('MAX(role) as game_role'),
+                    DB::raw('SUM(minutes) as total_minutes'),
+                    DB::raw('SUM(points) as total_points'),
+                    DB::raw('SUM(rebounds) as total_rebounds'),
+                    DB::raw('SUM(assists) as total_assists'),
+                    DB::raw('SUM(steals) as total_steals'),
+                    DB::raw('SUM(blocks) as total_blocks'),
+                    DB::raw('SUM(turnovers) as total_turnovers'),
+                    DB::raw('SUM(fouls) as total_fouls'),
+                    DB::raw('SUM(field_goals_made) as total_field_goals_made'),
+                    DB::raw('SUM(field_goal_attempts) as total_field_goal_attempts'),
+                    DB::raw('SUM(two_pointers_made) as total_two_pointers_made'),
+                    DB::raw('SUM(two_point_attempts) as total_two_point_attempts'),
+                    DB::raw('SUM(three_pointers_made) as total_three_pointers_made'),
+                    DB::raw('SUM(three_point_attempts) as total_three_point_attempts'),
+                    DB::raw('SUM(free_throws_made) as total_free_throws_made'),
+                    DB::raw('SUM(free_throw_attempts) as total_free_throw_attempts')
+                )
+                ->groupBy('player_id','team_id')
+                ->first();
+
+            // Insert or update the player's season stats in the player_season_stats table
+
+            // dd($playerStats);
+            if ($playerStats) {
+
+                DB::table('player_game_stats')->updateOrInsert(
+                    [
+                        'player_id' => $playerId,
+                        'team_id' => $playerStats->team_id,
+                        'season_id' => $seasonId,
+                        'game_id' => $gameId,
+                    ],
+                    [
+                        'role' => $playerStats->game_role,
+                        'minutes' => $playerStats->total_minutes,
+                        'points' => $playerStats->total_points,
+                        'rebounds' => $playerStats->total_rebounds,
+                        'assists' => $playerStats->total_assists,
+                        'steals' => $playerStats->total_steals,
+                        'blocks' => $playerStats->total_blocks,
+                        'turnovers' => $playerStats->total_turnovers,
+                        'fouls' => $playerStats->total_fouls,
+                        'field_goals_made' => $playerStats->total_field_goals_made,
+                        'field_goal_attempts' => $playerStats->total_field_goal_attempts,
+                        'two_pointers_made' => $playerStats->total_two_pointers_made,
+                        'two_point_attempts' => $playerStats->total_two_point_attempts,
+                        'three_pointers_made' => $playerStats->total_three_pointers_made,
+                        'three_point_attempts' => $playerStats->total_three_point_attempts,
+                        'free_throws_made' => $playerStats->total_free_throws_made,
+                        'free_throw_attempts' => $playerStats->total_free_throw_attempts,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]
+                );
+
+                // return true;
+
+            }
+
+            // return false;
+        } catch (\Exception $e) {
+            // Log error for debugging
+            // Log::error("Error updating season stats: " . $e->getMessage());
+
+            // Optionally, throw the error again to stop execution
+            throw new \Exception("Failed to update season stats. Please check logs." . $e->getMessage());
+        }
+    }
+
+    public function updateSeasonStats($playerGameStats, $isPlayoff)
     {
         if (empty($playerGameStats)) {
             throw new \Exception("Player game stats are empty. Cannot update season stats.");
         }
 
         try {
+            $seasonStatsTable = $isPlayoff ? 'player_season_playoff_stats' : 'player_season_stats';
+
             // Find max values for each category
             $maxPoints = max(array_column($playerGameStats, 'points'));
             $maxRebounds = max(array_column($playerGameStats, 'rebounds'));
@@ -1035,18 +1119,6 @@ class PlayerStatsService
                     unset($stats['passing_rating']);
                 }
 
-                // Update Player Game Stats
-                PlayerGameStats::updateOrCreate(
-                    [
-                        'player_id' => $stats['player_id'],
-                        'game_id' => $stats['game_id'],
-                        'season_id' => $stats['season_id'],
-                        'team_id' => $stats['team_id'],
-                    ],
-                    $stats
-                );
-
-                // Calculate efficiency (EFF) for Best Player of the Game
                 $efficiency = ($stats['points'] + $stats['rebounds'] + $stats['assists'] + $stats['steals'] + $stats['blocks'])
                     - (($stats['fouls'] ?? 0) + ($stats['turnovers'] ?? 0)); // Assuming fg_missed exists
 
@@ -1061,10 +1133,6 @@ class PlayerStatsService
                 $stats['assists_game_leader'] = ($stats['assists'] == $maxAssists) ? 1 : 0;
                 $stats['steals_game_leader'] = ($stats['steals'] == $maxSteals) ? 1 : 0;
                 $stats['blocks_game_leader'] = ($stats['blocks'] == $maxBlocks) ? 1 : 0;
-            }
-
-            // Mark the Best Player of the Game (BPG)
-            foreach ($playerGameStats as &$stats) {
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
 
                 if ($isPlayoff) {
@@ -1072,8 +1140,6 @@ class PlayerStatsService
                 } else {
                     $this->storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
                 }
-
-                $seasonStatsTable = $isPlayoff ? 'player_season_playoff_stats' : 'player_season_stats';
 
                 // Update Player Season Stats (Incrementing Leader Fields)
                 DB::table($seasonStatsTable)->updateOrInsert(
@@ -1087,7 +1153,6 @@ class PlayerStatsService
                         'bpg_game_leader' => DB::raw("bpg_game_leader + {$stats['bpg_game_leader']}"),
                     ]
                 );
-
             }
         } catch (\Exception $e) {
             // Log error for debugging

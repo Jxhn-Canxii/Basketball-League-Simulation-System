@@ -340,7 +340,8 @@ Route::middleware('auth')->group(function () {
         Route::get('snap-test', [TestController::class, 'testSnapShot'])->name('test.snap');
         Route::get('underperformed-test', [TestController::class, 'checkUnderPerformedPlayersPerTeam'])->name('test.underperformed');
         Route::get('rookie-contract', [TestController::class, 'updateRookieContract'])->name('rookie.contract');
-    
+        Route::get('game-flow', [TestController::class, 'gameFlow'])->name('game.flow');
+
     });
 
 });
