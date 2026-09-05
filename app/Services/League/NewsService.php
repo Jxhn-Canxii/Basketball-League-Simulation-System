@@ -96,6 +96,7 @@ class NewsService
             ->select(
                 'sv.game_id',
                 'sv.season_id',
+                'sv.is_overtime',
                 'sv.round',
                 'sv.home_team_name as home_team',
                 'sv.home_id as home_team_id',
@@ -228,6 +229,7 @@ class NewsService
         $isGame7 = false;
         $isEliminationGame = false;
         $isPotentialClincher = false;
+        $isOvertime = $game->is_overtime;
 
         if ($isPlayoff) {
             $playoffSeries = DB::table('playoff_series')
@@ -236,10 +238,10 @@ class NewsService
                 ->where(function ($query) use ($game) {
                     $query->where(function ($q) use ($game) {
                         $q->where('home_team_id', $game->winner_id)
-                          ->where('away_team_id', $game->loser_id);
+                        ->where('away_team_id', $game->loser_id);
                     })->orWhere(function ($q) use ($game) {
                         $q->where('home_team_id', $game->loser_id)
-                          ->where('away_team_id', $game->winner_id);
+                        ->where('away_team_id', $game->winner_id);
                     });
                 })
                 ->first();
@@ -329,7 +331,16 @@ class NewsService
                 "{winner} Keeps the Pressure On With Victory Over {loser}",
                 "{winner} Rides Momentum Past {loser} in Round {round}",
             ];
-        } elseif ($winnerWasOnSkid >= 3) {
+        } elseif ($isOvertime > 0) {
+            $headlineTemplates = [
+                "{winner} Stops the Slide, Beats {loser} {home_score}-{away_score} in overtime",
+                "{winner} Finds Its Footing, Ends in Overtime #{$isOvertime}",
+                "Relief for {winner}: {home_score}-{away_score} Win Over {loser} in overtime",
+                "{winner} Stays Hot on overtime game, Handles {loser} {home_score}-{away_score}",
+                "{winner} Keeps the Pressure On With Overtime Victory Over {loser}",
+            ];
+        } 
+        elseif ($winnerWasOnSkid >= 3) {
             $headlineTemplates = [
                 "{winner} Stops the Slide, Beats {loser} {home_score}-{away_score}",
                 "{winner} Finds Its Footing, Ends {$winnerWasOnSkid}-Game Skid",
@@ -338,7 +349,8 @@ class NewsService
                 "{winner} Gets Back in the Win Column Against {loser}",
                 "A Much-Needed Response: {winner} Takes Down {loser}",
             ];
-        } elseif ($isTopVsWorst) {
+        } 
+        elseif ($isTopVsWorst) {
             $headlineTemplates = [
                 "No. 1 {winner} Handles Last-Place {loser} {home_score}-{away_score}",
                 "{winner} Takes Care of Business Against {loser}",
