@@ -210,7 +210,7 @@ class GameEngineService
 
             $OT = true;
             $OTNumber = 0;
-            while ($OT && $quarterNumber < 7) {
+            while ($OT) {
                 $quarterNumber++;
                 $OTNumber++;
 
