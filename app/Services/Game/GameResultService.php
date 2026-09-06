@@ -415,8 +415,8 @@ class GameResultService
 
         $injury = $this->getIngameInjury($game->id);
 
-        $homePlayersFatigue = $this->getMostFatiguePlayers($game->home_id);
-        $awayPlayersFatigue = $this->getMostFatiguePlayers($game->away_id);
+        $homePlayersFatigue = false;
+        $awayPlayersFatigue = false;
 
         $seasonData = DB::table('seasons')
             ->join('leagues', 'seasons.league_id', '=', 'leagues.id')
@@ -579,7 +579,8 @@ class GameResultService
                 'players.is_rookie',
                 'players.draft_status',
                 'players.name as player_name',
-                'teams.name as team_name'
+                'teams.name as team_name',
+                'teams.acronym as team_acronym'
             )
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
