@@ -17,7 +17,6 @@ use App\Services\Stats\PlayerCareerStatsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Stats\PlayerStatsService;
 use App\Services\Team\TeamManagementService;
-use App\Services\Team\TeamRoleService;
 use App\Services\Team\TeamStatsService;
 use App\Services\Team\TeamStreakService;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +25,6 @@ class SimulateService
 {
     protected $storeStats;
     protected $contract;
-    protected $teamRole;
     protected $teamManagement;
     protected $playerStats;
     protected $teamStats;
@@ -45,7 +43,6 @@ class SimulateService
         // instantiate once so other methods can use it via $this->storeStats
         // $this->storeStats = new AwardsController();
         $this->contract = new ContractService();
-        $this->teamRole = new TeamRoleService();
         $this->teamManagement = new TeamManagementService();
         $this->playOffStats = new PlayoffStatsService();
         $this->playerStats = new PlayerStatsService();
@@ -129,9 +126,6 @@ class SimulateService
 
         $transactionCount = $this->helper->getTransferTransactionCount();
 
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
-
         $this->teamManagement->updateInjuryAndWaiving($gameData->home_team_id);
         $this->teamManagement->updateInjuryAndWaiving($gameData->away_team_id);
 
@@ -197,11 +191,7 @@ class SimulateService
 
         $data = collect($this->engine->startPlayoffSeriesGame($request->schedule_id,240));
 
-        // dd($data);
-
         $gameData = $data['game_info'];
-        $playerQuarterGameStats = $data['quarter_game_stats'];
-        $playerGameStats = $data['game_stats'];
 
         // Calculate scores based on player stats
         $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
@@ -249,7 +239,7 @@ class SimulateService
 
         if (!$series) {
             return response()->json([
-                'message' => 'Series not found for the given schedule!',
+                'message' => 'Series #'.$gameData->series_id.' not found for the given schedule!',
             ], 404);
         }
 
@@ -306,9 +296,6 @@ class SimulateService
         // Save game data and update other tables in a transaction
         $winnerId = $gameData->winner_id;
         DB::transaction(function () use ($gameData, $currentSeasonId, $winnerId) {
-
-            $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
-            $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
 
             $this->teamManagement->updateInjuryAndWaiving($gameData->home_team_id);
             $this->teamManagement->updateInjuryAndWaiving($gameData->away_team_id);
@@ -384,6 +371,7 @@ class SimulateService
             ],
             'series_lead' => $seriesLead,
             'completed' => $series->completed,
+            'game_winner_id' => $winnerId,
             'winner_id' => $series->winner_team_id,
             'loser_id' => $series->loser_team_id,
             'created_at' => $series->created_at,
@@ -492,9 +480,6 @@ class SimulateService
         // check if round games is simulated
         $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId, $gameData->round);
         $transactionCount = $this->helper->getTransferTransactionCount();
-
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
 
         $this->teamManagement->updateInjuryAndWaiving($gameData->home_team_id);
         $this->teamManagement->updateInjuryAndWaiving($gameData->away_team_id);

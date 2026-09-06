@@ -15,12 +15,14 @@ class TeamsService
     protected $chemistry;
     protected $helper;
     protected $tradeService;
+    protected $streak;
 
     public function __construct(){
 
         $this->chemistry = new TeamChemistryService();
         $this->helper = new HelperService();
         $this->tradeService = new TradeService();
+        $this->streak = new TeamStreakService();
     }
     // Display a listing of the resource.
     public function index()
@@ -1221,6 +1223,54 @@ class TeamsService
             'prev_season' => $previousSeason->id,
             'curr_season' => $latestSeasonId,
         ];
+    }
+
+    public function storeTeamSeasonInfo()
+    {
+        $latestSeasonId = get_current_season_id();
+        $previousSeasonId = $latestSeasonId - 1;
+
+        $teamsCoach = DB::table('teams')->get();
+
+        // Get the previous season's champion team_id
+        $prevChampion = $this->helper->getNationalChampionId($previousSeasonId);
+
+        foreach ($teamsCoach as $team) {
+            try {
+                // Ensure necessary fields are present
+                if (!$team->id || !$latestSeasonId) {
+                    throw new \Exception("Missing team ID or season ID.");
+                }
+
+                $coach = DB::table('coaches')->where('id', $team->coach_id)->first();
+
+                $coachIq = $coach ? $coach->coach_iq : 0;
+                $chemistry = $this->chemistry->getChemistryCalculation($team->id,$latestSeasonId,$previousSeasonId) ?? 0;
+                $conferenceId = $team->conference_id ?? 0;
+                $isDefendingChampion = $team->id == $prevChampion ? 1 : 0;
+                // Perform the insert/update
+                DB::table('team_season_info')->updateOrInsert(
+                    [
+                        'team_id' => $team->id,
+                        'season_id' => $latestSeasonId,
+                    ],
+                    [
+                        'coach_id' => $team->coach_id,
+                        'coach_iq' => $coachIq,
+                        'chemistry' => $chemistry['chemistry_score'],
+                        'conference_id' => $conferenceId,
+                        'is_defending_champion' => $isDefendingChampion,
+                        'updated_at' => now(),
+                    ]
+                );
+
+                $this->streak->newTeamStreak($team->id);
+                
+            } catch (\Exception $e) {
+                // Optional: log individual team errors
+                throw new \Exception("Failed to store team season info for team ID {$team->id}: " . $e->getMessage());
+            }
+        }
     }
 
     // Store a newly created resource in storage.

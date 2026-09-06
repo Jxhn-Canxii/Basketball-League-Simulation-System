@@ -1,59 +1,39 @@
 <template>
     <div>
         <h2 class="text-sm font-semibold text-gray-800 mb-4">
-            Player Transactions
+            Player Career High
         </h2>
-
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 text-xs">
-                <thead class="bg-gray-50 text-nowrap">
-                    <tr>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Season
-                        </th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Player Name
-                        </th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Type
-                        </th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Highlight Details
-                        </th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Team Played
-                        </th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Opponent
-                        </th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                        </th>
-                    </tr>
-                </thead>
-                <tbody class="bg-white divide-y divide-gray-200 text-nowrap">
-                    <tr v-for="(transaction, index) in transactions" v-if="transactions?.length > 0 && !loading" :key="transaction.id" @click.prevent="isViewModalOpen = transaction.season_id" class="hover:bg-gray-100">
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.season_name }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.player_name }}</td>
-                        <td class="px-2 py-1 text-gray-700 capitalize">{{transaction.stats_type?.replaceAll('_',' ') }}</td>
-                        <td class="px-2 py-1 text-gray-700 text-wrap">{{ transaction.details }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.team_name ?? 'Free Agent' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.opponent_team_name ?? 'Free Agent' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.status }}</td>
-                    </tr>
-                    <tr class="hover:bg-gray-100" v-if="!transactions?.length && !loading">
-                        <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="7">No data available</td>
-                    </tr>
-                    <tr v-if="loading">
-                        <td class="px-2 py-1 text-gray-500 text-center" colspan="7">
-                            <div class="block text-center">
-                                <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
-                                <p>Loading player data...</p>
-                            </div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="overflow-x-auto p-2 grid md:grid-cols-4 xs:grid-cols-1 gap-2">
+            <div 
+            v-if="transactions?.length > 0 && !loading" 
+            v-for="(transaction, index) in transactions" :key="transaction.id" 
+            class="border-lg bg-yellow-500 p-2 flex flex-col text-center rounded-xl shadow-xl">
+                <span class="px-2 py-1 rounded-full text-[11px] uppercase hidden font-semibold bg-green-500 fixed text-white">
+                    {{ transaction.status.replaceAll('-',' ') }}
+                </span>
+                <b class="text-6xl text-red-500">{{ transaction.stats_value }}</b>
+                <div class="border-lg uppercase text-bold text-md">
+                    {{ transaction.stats_type?.replaceAll('_',' ') }}
+                </div>
+                <p class="text-xs text-gray-800">{{ transaction.details.replaceAll('_',' ') }} in Season {{ transaction.season_id }}</p>
+            </div>
+            <div 
+            v-if="transactions?.length > 0 && !loading"
+            v-for="i in (16 - transactions?.length)"
+            :key="i"
+            class="border-lg bg-gray-600 opacity-60 p-2 flex flex-col text-center rounded-xl shadow-xl"
+            >
+                
+            </div>
+            <div v-if="!transactions?.length && !loading">
+                
+            </div>
+            <div v-if="loading" class="md:col-span-4 xs:col-span-1 flex justify-center">
+                <div class="block text-center">
+                    <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
+                    <p>Loading player career highs...</p>
+                </div>
+            </div>
         </div>
     </div>
 </template>

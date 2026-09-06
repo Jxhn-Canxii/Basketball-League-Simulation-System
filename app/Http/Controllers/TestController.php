@@ -459,10 +459,9 @@ class TestController extends Controller
         $players = [];
 
         foreach($activeTeams as $team){
-            $uPlayer = $this->tradeService->findUnderperformingPlayers($team->id)[0];
+            $uPlayer = $this->tradeService->findUnderperformingPlayers($team->id);
 
-            // dd($uPlayer->name);
-            $players[$team->name]['players'] = $uPlayer->name.' declines '.ceil($uPlayer->performance_decline_percentage).'% on performance.';
+            $players[$team->name]['players'] = $uPlayer;
             $players[$team->name]['team_name'] = $team->name;
         }
 

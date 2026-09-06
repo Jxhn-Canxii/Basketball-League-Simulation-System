@@ -11,6 +11,7 @@ use App\Models\Teams;
 use App\Models\Schedules;
 use App\Services\Archive\ArchiveService;
 use App\Services\Helper\HelperService;
+use App\Services\Team\TeamsService;
 use App\Services\Team\TeamStreakService;
 use App\Services\Trade\TradeService;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,7 @@ class ScheduleService
     protected $helper;
     protected $streak;
     protected $tradeService;
+    protected $teamService;
 
     public function __construct()
     {
@@ -28,6 +30,7 @@ class ScheduleService
         $this->archive = new ArchiveService();
         $this->helper = new HelperService();
         $this->streak = new TeamStreakService();
+        $this->teamService = new TeamsService();
         $this->tradeService = new TradeService();
     }
     //
@@ -206,7 +209,7 @@ class ScheduleService
                 $this->streak->insertTeamStreak();
             }
 
-            $this->archive->storeTeamSeasonInfo();
+            $this->teamService->storeTeamSeasonInfo();
 
             DB::commit();
 

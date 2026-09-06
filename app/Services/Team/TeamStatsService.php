@@ -55,6 +55,7 @@ class TeamStatsService
                 ->where('game_id', $gameId)
                 ->sum('fouls');
 
+            $isFouledOut = ($playerFouls >= 5) ? 1 : 0;
             $playerEfficiencies[] = [
                 'player' => $player,
                 'role' => $player->role,
@@ -63,7 +64,7 @@ class TeamStatsService
                 'is_rookie' => $draft ? true : false,
                 'draft_round' => $draft->round ?? null,
                 'draft_pick' => $draft->pick_number ?? null,
-                'player_fouls' => $playerFouls ?? 0,
+                'is_fouled_out' =>  $isFouledOut,
                 'role_rank' => array_search($player->role, $rolePriority) !== false
                     ? array_search($player->role, $rolePriority)
                     : PHP_INT_MAX,

@@ -150,7 +150,13 @@
       <div class="ml-4">
         <p>
           <strong>Contract Type:</strong>
-          {{ main_performance.player_details?.contract_type ?? "unsigned" }}
+          {{ main_performance.player_details?.contract_type?.toUpperCase() ?? "unsigned" }}
+        </p>
+      </div>
+      <div class="ml-4">
+        <p>
+          <strong>Salary:</strong>
+          {{ moneyFormatter(main_performance.player_details?.salary ?? 0) ?? "unsigned" }}
         </p>
       </div>
       <div class="ml-4">
@@ -379,7 +385,6 @@
       <div v-else class="text-sm text-red-500 ml-4">
         <p>No MVP data available.</p>
       </div>
-     
     </div>
     <div class="awards bg-white mb-6 p-2 flex-1 rounded text-nowrap">
         <div class="flex max-w-full">
@@ -391,7 +396,7 @@
                 />
             </div>
         </div>
-         <h3 class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center">
+        <h3 class="text-md font-semibold text-yellow-500 mb-2 mt-4 flex items-center">
             <i class="fa fa-medal text-yellow-500 mr-2"></i>
             Awards
         </h3>
@@ -468,6 +473,7 @@ import {
   roleBadgeClass,
   playerExpStatusClass,
   playerExpStatusText,
+  moneyFormatter
 } from "@/Utility/Formatter";
 import PlayerRadarChart from "./PlayerRadarChart.vue";
 import LatestPlayerGameLogs from "./LatestPlayerGameLogs.vue";

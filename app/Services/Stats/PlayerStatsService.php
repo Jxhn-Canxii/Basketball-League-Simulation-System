@@ -154,19 +154,20 @@ class PlayerStatsService
 
         // Step 1: Sit injured players
         $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
+        $dnpPlayersCount = $dnpPlayers->count();
 
-        $maxDNPs = 3;
+        $fouledOutPlayers = $sorted->filter(fn($p) => $p['is_fouled_out']);
+        $fouledOutCount = count($fouledOutPlayers);
+
+        $minDNPs = 3;
+        $alreadyOutPlayers = $dnpPlayersCount + $fouledOutCount;
+
+        $dnpPlayers = $dnpPlayers->merge($fouledOutPlayers);
+
         // Step 2: Fill remaining DNP slots, but protect star players and all-stars
-        if ($dnpPlayers->count() < $maxDNPs) {
-            $remainingSlots = $maxDNPs - $dnpPlayers->count();
+        if ($alreadyOutPlayers < $minDNPs) {
+            $remainingSlots = $minDNPs - $alreadyOutPlayers;
             $additionalDNP = $sorted
-                ->reject(
-                    fn($p) =>
-                    $dnpPlayers->contains('id', $p['id']) ||
-                        $p['is_injured'] ||
-                        $p['role'] === 'star player' ||
-                        $p['role'] === 'all star'
-                )
                 ->sortBy([
                     ['per', 'asc'],
                     ['eff', 'asc'],
@@ -175,7 +176,7 @@ class PlayerStatsService
 
             $dnpPlayers = $dnpPlayers->merge($additionalDNP);
         }
-
+        
         // Ensure minimum of 8 players with minutes
         $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
 
@@ -183,7 +184,7 @@ class PlayerStatsService
             $needed = 8 - $rotation->count();
 
             $reAddCandidates = $dnpPlayers
-                ->filter(fn($p) => !$p['is_injured'])
+                ->filter(fn($p) => !$p['is_injured'] && !$p['is_fouled_out'])
                 ->sortBy([
                     ['per', 'desc'],
                     ['eff', 'desc'],
@@ -961,6 +962,9 @@ class PlayerStatsService
                 if (isset($stats['passing_rating'])) {
                     unset($stats['passing_rating']);
                 }
+                if (!isset($stats['is_fouled_out'])) {
+                    $stats['is_fouled_out'] = 0;
+                }
                 // dd($stats['points']);
                 // Update Player Game Stats
                 DB::table('player_per_quarter_stats')->updateOrInsert(
@@ -975,31 +979,6 @@ class PlayerStatsService
                 );
             }
 
-            $homeQuarterScore = DB::table('player_per_quarter_stats')
-                ->where('team_id', $gameData->home_team_id)
-                ->where('game_id', $gameData->game_id)
-                ->where('quarter', $quarter)
-                ->sum('points');
-
-            $awayQuarterScore = DB::table('player_per_quarter_stats')
-                ->where('team_id', $gameData->away_team_id)
-                ->where('game_id', $gameData->game_id)
-                ->where('quarter', $quarter)
-                ->sum('points');
-
-            DB::table('game_quarter_breakdown')
-                ->where('team_id', $gameData->home_team_id)
-                ->where('game_id', $gameData->game_id)
-                ->update([
-                    $quarter => $homeQuarterScore,
-                ]);
-
-            DB::table('game_quarter_breakdown')
-                ->where('team_id', $gameData->away_team_id)
-                ->where('game_id', $gameData->game_id)
-                ->update([
-                    $quarter => $awayQuarterScore,
-                ]);
         } catch (\Exception $e) {
 
             throw new \Exception("Failed to update quarter stats. Please check logs." . $e->getMessage());

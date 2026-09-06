@@ -18,13 +18,10 @@
                             Role
                         </th>
                         <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Transfer Details
+                            Details
                         </th>
                         <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Old Team
-                        </th>
-                        <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            New Team
+                            Team
                         </th>
                         <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
                             Status
@@ -32,20 +29,26 @@
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200 text-nowrap">
-                    <tr v-for="(transaction, index) in transactions" v-if="transactions?.length > 0 && !loading" :key="transaction.id" @click.prevent="isViewModalOpen = transaction.season_id" class="hover:bg-gray-100">
-                        <td class="px-2 py-1 text-gray-700">Season {{ transaction.season_id }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.player_name }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.latest_role }}</td>
-                        <td class="px-2 py-1 text-gray-700 text-wrap">{{ transaction.merged_details }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.from_team_name ?? 'Free Agent' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.to_team_name ?? 'Free Agent' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.status }}</td>
+                    <tr 
+                    
+                    v-for="(transaction, index) in transactions" 
+                    v-if="transactions?.length > 0 && !loading" 
+                    :style="{
+                        background: 'linear-gradient(to right, #' + transaction.secondary_color + ', #' + transaction.primary_color + ')'
+                    }"
+                    :key="transaction.id" @click.prevent="isViewModalOpen = transaction.season_id" class="hover:bg-gray-100">
+                        <td class="px-2 py-1 text-white">Season {{ transaction.season_id }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.player_name }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.latest_role }}</td>
+                        <td class="px-2 py-1 text-white text-wrap">{{ transaction.merged_details }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.team_name ?? 'Free Agent' }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.status }}</td>
                     </tr>
                     <tr class="hover:bg-gray-100" v-if="!transactions?.length && !loading">
-                        <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="7">No data available</td>
+                        <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="6">No data available</td>
                     </tr>
                     <tr v-if="loading">
-                        <td class="px-2 py-1 text-gray-500 text-center" colspan="7">
+                        <td class="px-2 py-1 text-gray-500 text-center" colspan="6">
                             <div class="block text-center">
                                 <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
                                 <p>Loading player data...</p>

@@ -23,10 +23,9 @@ class RoleService
             return response()->json(['error' => 'Player ID is required'], 400);
         }
 
-        $transactions = DB::table('transactions')
+        $transactions = DB::table('role_change_transactions as transactions')
             ->join('players', 'transactions.player_id', '=', 'players.id')
-            ->leftJoin('teams as from_team', 'transactions.from_team_id', '=', 'from_team.id')
-            ->leftJoin('teams as to_team', 'transactions.to_team_id', '=', 'to_team.id')
+            ->leftJoin('teams', 'transactions.team_id', '=', 'teams.id')
             ->leftJoinSub(
                 DB::table('player_season_stats as pss')
                     ->select('pss.player_id', 'pss.season_id', 'pss.role')
@@ -42,10 +41,10 @@ class RoleService
             ->select(
                 'transactions.id',
                 'transactions.season_id',
-                'transactions.from_team_id',
-                'from_team.name as from_team_name',
-                'transactions.to_team_id',
-                'to_team.name as to_team_name',
+                'transactions.team_id',
+                'teams.name as team_name',
+                'teams.primary_color',
+                'teams.secondary_color',
                 'transactions.status',
                 'players.name as player_name',
                 DB::raw('COALESCE(latest_stats.role, "Unknown") as latest_role'), // Get latest role per season
@@ -54,10 +53,8 @@ class RoleService
             ->groupBy(
                 'transactions.id',
                 'transactions.season_id',
-                'transactions.from_team_id',
-                'from_team.name',
-                'transactions.to_team_id',
-                'to_team.name',
+                'transactions.team_id',
+                'teams.name',
                 'transactions.status',
                 'players.name',
                 'latest_stats.role'

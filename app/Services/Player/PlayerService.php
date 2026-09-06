@@ -1078,6 +1078,8 @@ class PlayerService
                 'players.id as player_id',
                 'teams.primary_color',
                 'teams.secondary_color',
+                'players.contract_type',
+                'players.salary',
                 'players.type as archetype',
                 'players.hardship_contract',
                 'players.position as position',

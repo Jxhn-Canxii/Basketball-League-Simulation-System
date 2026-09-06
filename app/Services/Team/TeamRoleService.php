@@ -55,12 +55,13 @@ class TeamRoleService
                 // Total EFF including last 5 games of previous season (early season buffer)
                 $totalEff = $currentEff;
                 if ($round <= 5) {
-                    $lastFiveGames = DB::table('player_game_stats')
+                    $lastFiveGames = DB::table('player_game_stats_batch'.$previousSeasonId)
                         ->where('season_id', $previousSeasonId)
                         ->where('player_id', $playerId)
                         ->orderByDesc('id')
                         ->limit(5)
                         ->pluck('eff');
+                        
                     $totalEff += $lastFiveGames->sum();
                 }
 
@@ -178,12 +179,11 @@ class TeamRoleService
                     $status = $newRole === 'star player' ? 'star player change' : 'role change';
                     $roundName = is_numeric($round) ? "Round $round" : "Playoffs";
 
-                    DB::table('transactions')->insert([
+                    DB::table('role_change_transactions')->insert([
                         'player_id' => $playerId,
                         'season_id' => $seasonId,
                         'details' => "Has moved from $currentRole to $newRole for the upcoming games. $roundName",
-                        'from_team_id' => $teamId,
-                        'to_team_id' => $teamId,
+                        'team_id' => $teamId,
                         'status' => $status,
                     ]);
                 }
