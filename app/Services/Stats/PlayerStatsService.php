@@ -153,6 +153,11 @@ class PlayerStatsService
             ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
 
+        //dd($sorted);
+
+     
+        
+
         // Step 1: Sit injured players
         $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
         $dnpPlayersCount = $dnpPlayers->count();
@@ -160,10 +165,12 @@ class PlayerStatsService
         $fouledOutPlayers = $sorted->filter(fn($p) => $p['is_fouled_out']);
         $fouledOutCount = count($fouledOutPlayers);
 
-        $minDNPs = 3;
+        $minDNPs = 0;
         $alreadyOutPlayers = $dnpPlayersCount + $fouledOutCount;
 
         $dnpPlayers = $dnpPlayers->merge($fouledOutPlayers);
+        // dd($dnpPlayers);
+
 
         // Step 2: Fill remaining DNP slots, but protect star players and all-stars
         if ($alreadyOutPlayers < $minDNPs) {

@@ -165,10 +165,20 @@ class TeamRoleService
                 }
             }
 
-            // Remaining bench
+            $benchPlayerCount = 0;
+            foreach ($players as $player) {
+                if (in_array($player['player_id'], $usedPlayerIds)) continue;
+                if ($benchPlayerCount < 3) {
+                    $newRoles[$player['player_id']] = 'bench';
+                    $usedPlayerIds[] = $player['player_id'];
+                    $benchPlayerCount++;
+                }
+            }
+
+            // Remaining 3 reserved
             foreach ($players as $player) {
                 if (!in_array($player['player_id'], $usedPlayerIds)) {
-                    $newRoles[$player['player_id']] = 'bench';
+                    $newRoles[$player['player_id']] = 'reserved';
                 }
             }
 
@@ -182,7 +192,7 @@ class TeamRoleService
                     DB::table('role_change_transactions')->insert([
                         'player_id' => $playerId,
                         'season_id' => $seasonId,
-                        'details' => "Has moved from $currentRole to $newRole for the upcoming games. $roundName",
+                        'details' => "Has been moved from $currentRole to $newRole for the upcoming games. $roundName",
                         'team_id' => $teamId,
                         'status' => $status,
                     ]);

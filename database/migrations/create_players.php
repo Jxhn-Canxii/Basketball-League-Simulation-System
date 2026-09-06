@@ -27,6 +27,7 @@ return new class extends Migration
 
             // Position
             $table->string('position', 10)->nullable();
+            $table->boolean('is_reserved')->default(false);
 
             // Role
             $table->string('role', 100)->nullable();

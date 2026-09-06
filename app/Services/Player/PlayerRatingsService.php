@@ -147,6 +147,10 @@ class PlayerRatingsService
                 Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
             }
 
+            foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
+                Player::where('id', $playerStat->player_id)->update(['role' => 'reserved', 'is_reserved' => true]);
+            }
+
             foreach ($rankedPlayers as $player) {
     
                 $totalGames = $player->total_games ?? 0;

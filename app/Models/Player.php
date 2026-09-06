@@ -24,6 +24,7 @@ class Player extends Model
         'team_option',
         'hardship_contract',
         'contract_expires_at',
+        'is_reserved',
         'is_active',
         'is_rookie',
         'age',

@@ -11,6 +11,7 @@ use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Schedule\ScheduleService;
 use App\Services\Team\TeamChemistryService;
+use App\Services\Team\TeamRoleService;
 use App\Services\Team\TeamStreakService;
 use App\Services\Trade\TradeService;
 use Illuminate\Support\Facades\DB;
@@ -25,11 +26,13 @@ class TestController extends Controller
     protected $archive;
     protected $playoff;
     protected $tradeService;
+    protected $teamRole;
     protected $playerRatingService;
 
     public function __construct(){
 
 
+        $this->teamRole = new TeamRoleService();
         $this->chemistry = new TeamChemistryService();
         $this->streak = new TeamStreakService();
         $this->helper = new HelperService();
@@ -352,11 +355,10 @@ class TestController extends Controller
             $data = [];
 
             foreach($activeTeams as $team){
-
-                $data[$team->name] = $this->teamBalance->testFixTeamPositionBalance($team->id,true);
+                $this->teamRole->updateTeamRolesBasedOnStats($team->id, 20);
             }
 
-            return $data;
+            echo 'done naaaaaaaaaaaa!';
         
     }
 
@@ -413,40 +415,23 @@ class TestController extends Controller
     }
 
     public function gameFlow(){
-        
-        $gameRunning = false;
-        
-        $message = '';
-        $quarter = 0;
-        $homeScore = 0;
-        $awayScore = 0;
-        while ($homeScore == $awayScore && $quarter > 3) {
-            $gameRunning = true;
-            $quarter++;
+        $OT = true;
+        $tries = 0;
+        do {
+            $homeScore = rand(1,10);
+            $awayScore = rand(1,10);
 
-            $quarterPrefix = ($quarter <= 4) ? 'Q' : 'OT';
-            $quarterFormat = $quarterPrefix.$quarter;
+            $tries++;
 
-            $homeScore =+ rand(1,10);
-            $awayScore =+ rand(1,10);
+            if($homeScore == $awayScore){
+                $OT = false;
 
-            $message .= 'Game still running in'.$quarterFormat.' Score is home: '.$homeScore.' away: '.$awayScore;
+                echo $homeScore." - ".$awayScore;
+            }
+        } while ($OT);
 
-            // if($homeScore == $awayScore && $quarter > 3){
-            //     $gameRunning = false;
-            // }
-        }
+        echo 'Tied at '.$tries.'x tries';
 
-        $a = 0;
-
-        while ($a <= 3) {
-            # code...
-            $a++;
-
-            echo "shit! ".$a;
-        }
-
-        echo $message;
     }
     public function checkUnderPerformedPlayersPerTeam(){
         

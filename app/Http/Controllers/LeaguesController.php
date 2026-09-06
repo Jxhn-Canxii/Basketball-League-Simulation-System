@@ -193,7 +193,7 @@ class LeaguesController extends Controller
                 ->where(
                     'table_name',
                     'like',
-                    'player_game_stats_batch_%'
+                    'batch_%'
                 )
                 ->pluck('table_name');
 
@@ -205,7 +205,7 @@ class LeaguesController extends Controller
              */
                 if (
                     preg_match(
-                        '/^player_game_stats_batch_[0-9]+$/',
+                        '/^batch_[0-9]+$/',
                         $tableName
                     )
                 ) {

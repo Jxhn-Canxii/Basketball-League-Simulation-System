@@ -7,6 +7,100 @@ use Illuminate\Support\Facades\DB;
 
 class TeamStatsService
 {
+    public function prepareFinalRoster($teamId)
+    {
+        $seasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id(); // You must implement this
+
+        $rolePriority = [
+            'star player' => 1,
+            'all star' => 2,
+            'starter' => 2,
+            'role player' => 5,
+            'bench' => 5,
+        ];
+
+        $players = Player::where('team_id', $teamId)
+            ->where('is_active', 1)
+            ->get();
+
+        $playerEfficiencies = [];
+
+        foreach ($players as $player) {
+            $playerId = $player->id;
+            $role = $player->role;
+            $isInjured = $player->is_injured;
+
+            // Years pro = distinct seasons
+            $yearsPro = DB::table('player_season_stats_archives')
+                ->where('player_id', $playerId)
+                ->distinct('season_id')
+                ->count('season_id') + 1;
+
+            // Current season efficiency sum
+            $currentEff = DB::table('player_season_stats')
+                ->where('season_id', $seasonId)
+                ->where('player_id', $playerId)
+                ->sum('eff') ?? 0;
+
+            // Last 5 games from previous season (only if early season)
+            $lastFiveGamesEff = DB::table('player_game_stats')
+                ->where('season_id', $previousSeasonId)
+                ->where('player_id', $playerId)
+                ->orderByDesc('id')
+                ->limit(5)
+                ->sum('eff') ?? 0;
+
+            $totalEff = $currentEff + $lastFiveGamesEff;
+
+            // Draft info
+            $draft = DB::table('drafts')
+                ->where('player_id', $playerId)
+                ->where('season_id', $seasonId)
+                ->first();
+
+            $playerEfficiencies[] = [
+                'player' => $player,
+                'player_id' => $playerId,
+                'role' => $role,
+                'total_eff' => $totalEff,
+                'years_pro' => $yearsPro,
+                'is_rookie' => $draft ? true : false,
+                'draft_round' => $draft->round ?? null,
+                'draft_pick' => $draft->pick_number ?? null,
+                'is_injured' => $isInjured ?? 0,
+                'role_rank' => array_search($player->role, $rolePriority) !== false
+                    ? array_search($player->role, $rolePriority)
+                    : PHP_INT_MAX,
+            ];
+        }
+
+        // Sort by: total_eff DESC, years_pro DESC, role_priority ASC
+        $sortedPlayers = collect($playerEfficiencies)->sort(function ($a, $b) {
+            return $a['is_injured'] <=> $b['is_injured']
+                ?: $b['total_eff'] <=> $a['total_eff']
+                ?: $b['years_pro'] <=> $a['years_pro']
+                ?: $a['role_rank'] <=> $b['role_rank'];
+        })->pluck('player')->values();
+
+        $sortedPlayers->slice(1, 12)->each(function ($playerStat) {
+                $newFatigue = min(0,$playerStat->fatigue - 20);
+                
+                Player::where('id', $playerStat->id)->update(['is_reserved' => false,'fatigue' => $newFatigue, ]);    
+        });
+
+        foreach ($sortedPlayers->slice(12, 15) as $playerStat) {
+                Player::where('id', $playerStat->id)->update(['is_reserved' => true, 'fatigue' => 0, 'role' => 'reserved' ]);
+
+                DB::table('player_season_stats')
+                    ->where('id', $playerStat->id)
+                    ->where('team_id', $teamId)
+                    ->where('season_id', $seasonId)
+                    ->update(['role' => 'reserved' ]);   
+        }
+
+    }
+
     public function getActivePlayersSorted($teamId, $gameId, $rolePriority, $round)
     {
         $seasonId = get_current_season_id();

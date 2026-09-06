@@ -190,9 +190,9 @@ class GameEngineService
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->home_team_id,$gameData->season_id);
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->away_team_id,$gameData->season_id);
 
-        $this->teamManagement->resetFatigue($gameData->home_team_id);
-        $this->teamManagement->resetFatigue($gameData->away_team_id);
-            
+        $this->teamStats->prepareFinalRoster($gameData->home_team_id);
+        $this->teamStats->prepareFinalRoster($gameData->away_team_id);
+
          //core of the game
         $quarterMinutes = $totalMinutes / 4;
 
@@ -211,14 +211,18 @@ class GameEngineService
 
         $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
         
-        if($isTied && $quarterNumber >= 4){
+        if($isTied){
             $otMinutes = $totalMinutes / 8;
 
             $OT = true;
             $OTNumber = 0;
-            while ($OT) {
+
+            do{
                 $quarterNumber++;
                 $OTNumber++;
+
+                $homeScore = rand(1,10);
+                $awayScore = rand(1,10);
 
                 $overtimeQuarter = 'OT'.$OTNumber;
 
@@ -229,14 +233,16 @@ class GameEngineService
 
                 $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
         
-                if(!$isTied || $OTNumber > 3){
+                if(!$isTied){
                     $OT = false;
 
                     DB::table('schedules')
                         ->where('game_id', $gameData->game_id)
                         ->update(['is_overtime' => $OTNumber ]);
                 }
-            }
+
+            } while ($OT);
+    
         }
 
         $playerOverallQuarterStats =  DB::table('player_per_quarter_stats')
@@ -318,7 +324,7 @@ class GameEngineService
          // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
             $minutes = (float) $homeMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured == 1 || $player->is_fouled_out == 1) {
+            if ($minutes === 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -377,7 +383,7 @@ class GameEngineService
         // Repeat similar simulation for away team players...
         foreach ($awayTeamPlayers as $player) {
             $minutes = (float) $awayMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured == 1 || $player->is_fouled_out == 1) {
+            if ($minutes === 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -435,6 +441,7 @@ class GameEngineService
                 'is_fouled_out' => $player->is_fouled_out
             ];
         }
+        
         // Assist distribution logic remains similar but ensures 15-player roster
         // Convert to arrays
         $homeTeamPlayers = $homeTeamPlayers->toArray();
