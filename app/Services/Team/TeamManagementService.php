@@ -24,6 +24,17 @@ class TeamManagementService
         $this->freeAgencyService = new FreeAgencyService();
     }
 
+    public function resetFatigue($teamId){
+
+        DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_injured',0)
+            ->where('is_active',1)
+            ->update([
+                'fatigue' => 0,
+            ]);
+    }
+
     public function updateSeasonTeamChemistryBeforeGame($teamId)
     {
         $seasonId = get_current_season_id();
@@ -129,6 +140,8 @@ class TeamManagementService
                 ['team_id' => $teamId, 'season_id' => $seasonId],
                 ['chemistry' => $chemistry]
             );
+
+        // $fatigueValue = max(0, min(10, round(100 - $chemistry)));
     }
     /**
      * Fetches Coach IQ and Team Chemistry for a player's team.
