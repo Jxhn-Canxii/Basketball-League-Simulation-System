@@ -595,7 +595,7 @@
                         <p class="text-4xl font-extrabold mb-1 relative text-nowrap" :title="bestPlayer?.name">
                             {{ playerFormatter(bestPlayer?.name) }}
                             <sup class="text-xs text-right absolute top-0 ml-2 mt-2 text-nowrap" v-if="bestPlayer?.age">
-                               {{ bestPlayer?.age }} | {{ bestPlayer?.position }}
+                                {{ bestPlayer?.age }} | {{ bestPlayer?.position }}
                             </sup>
                         </p>
                         <div class="flex justify-center p-2">
@@ -719,6 +719,10 @@
                                 </label>
                             </sup>
                         </div>
+                    </div>
+                    <div class="text-wrap text-red-500 text-xs">
+                        <!-- <small>{{ gameDetails?.home_team.exhausted_players?.join(',') }}</small>
+                        <small>{{ gameDetails?.away_team.exhausted_players?.join(',') }}</small> -->
                     </div>
                 </div>
             </div>
@@ -931,7 +935,7 @@
                     <div 
                     class="p-2 flex flex-wrap flex-col mt-1 text-white bg-gray-100"  v-if="!props.showBoxScore && seasonLeaders">
                         <small class="text-xs text-nowrap text-gray-500">{{ seasonLeaders.message }}</small>
-                        <small class="text-sm text-nowrap text-red-500 font-bold" :title="seasonLeaders.draft_status">{{ seasonLeaders.player_name }} ({{ seasonLeaders.stat_value }} {{ seasonLeaders.stat_type }})</small>
+                        <small class="text-xs text-nowrap text-red-500 font-bold" :title="seasonLeaders.draft_status">{{ seasonLeaders.player_name }} ({{ seasonLeaders.stat_value }} {{ seasonLeaders.stat_type }}) | <b class="text-gray-700">{{ seasonLeaders.team_acronym }}</b></small>
                         <small class="text-xs text-nowrap text-gray-900 hidden">{{ seasonLeaders.team_name }}</small>
                     </div>
                 </div>

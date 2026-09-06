@@ -189,6 +189,9 @@ class GameEngineService
 
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->home_team_id,$gameData->season_id);
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->away_team_id,$gameData->season_id);
+
+        $this->teamManagement->resetFatigue($gameData->home_team_id);
+        $this->teamManagement->resetFatigue($gameData->away_team_id);
             
          //core of the game
         $quarterMinutes = $totalMinutes / 4;

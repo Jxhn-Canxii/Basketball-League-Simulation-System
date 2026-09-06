@@ -415,6 +415,9 @@ class GameResultService
 
         $injury = $this->getIngameInjury($game->id);
 
+        $homePlayersFatigue = $this->getMostFatiguePlayers($game->home_id);
+        $awayPlayersFatigue = $this->getMostFatiguePlayers($game->away_id);
+
         $seasonData = DB::table('seasons')
             ->join('leagues', 'seasons.league_id', '=', 'leagues.id')
             ->where('seasons.id', $game->season_id)
@@ -452,6 +455,7 @@ class GameResultService
                 'sponsor' => $game->home_sponsor, // Add secondary color
                 'streak' => $homeTeamStreak,
                 'ratings' => $homeTeamRatings,
+                'exhausted_players' => $homePlayersFatigue
             ],
             'away_team' => [
                 'team_id' => $game->away_id, // Use the correct field from your query
@@ -464,6 +468,7 @@ class GameResultService
                 'sponsor' => $game->away_sponsor, // Add secondary color
                 'streak' => $awayTeamStreak,
                 'ratings' => $awayTeamRatings,
+                'exhausted_players' => $awayPlayersFatigue
             ],
             'player_stats' => [
                 'home' => $homeTeamPlayersArray,
@@ -536,7 +541,8 @@ class GameResultService
                 'players.is_rookie',
                 'players.draft_status',
                 'players.name as player_name',
-                'teams.name as team_name'
+                'teams.name as team_name',
+                'teams.acronym as team_acronym'
             )
             ->join('players', 'player_season_stats.player_id', '=', 'players.id')
             ->join('teams', 'player_season_stats.team_id', '=', 'teams.id')
@@ -603,6 +609,7 @@ class GameResultService
         $responseData = [
             'player_name' => $selectedLeader->player_name,
             'team_name' => $selectedLeader->team_name,
+            'team_acronym' => $selectedLeader->team_acronym,
             'draft_status' => $selectedLeader->draft_status,
             'stat_type' => $statType,
             'stat_value' => $statValue,
@@ -612,6 +619,16 @@ class GameResultService
         return $responseData;
     }
 
+    private function getMostFatiguePlayers($teamId){
+
+        return DB::table('players')
+            // ->select('name','fatigue')
+            ->where('team_id',$teamId)
+            ->where('fatigue','!=',0)
+            ->limit(5)
+            ->orderBy('fatigue','desc')
+            ->pluck('name');
+    }
     private function getIngameInjury($gameId)
     {
         return DB::table('injured_players_view as i')
