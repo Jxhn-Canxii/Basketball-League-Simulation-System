@@ -460,9 +460,11 @@ class TestController extends Controller
 
         foreach($activeTeams as $team){
             $uPlayer = $this->tradeService->findUnderperformingPlayers($team->id);
-
-            $players[$team->name]['players'] = $uPlayer;
-            $players[$team->name]['team_name'] = $team->name;
+            if($uPlayer){
+                $players[$team->name]['players'] = $uPlayer;
+                $players[$team->name]['team_name'] = $team->name;
+            }
+            
         }
 
         return response()->json($players,200);

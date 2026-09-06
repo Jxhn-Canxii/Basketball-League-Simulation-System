@@ -237,7 +237,21 @@
         </div>
 
         <!-- Player Statistics Tables -->
-        <h3 class="text-xl font-semibold mb-2 text-white" v-if="props.showBoxScore">Player Statistics</h3>
+        <div class="flex justify-between"  v-if="props.showBoxScore">
+            <div>
+                <h3 class="text-xl font-semibold mb-2 text-white">Player Statistics</h3>  
+            </div>
+            <div class="flex flex-row">
+                <div class="space-x-3">
+                    <span @click.prevent="switchQuarter(0)" :class="quarter == 0 ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
+                        All
+                    </span>
+                    <span v-for="i in 4" :key="i"  @click.prevent="switchQuarter(i)" :class="quarter == i ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
+                        Quarter {{ i }}
+                    </span>
+                </div>
+            </div>  
+        </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4 text-white" v-if="props.showBoxScore">
             <!-- Home Team Player Stats -->
             <div
@@ -985,6 +999,7 @@ const showHomeDepthChart = ref(false);
 const gameNews = ref([]);
 const breakDown = ref([]);
 const isOvertime = ref(0);
+const quarter = ref(0);
 // Fetch the box score data
 const time = ref(0); // Timer in seconds
 const interval = ref(null); // Stores interval ID
@@ -1014,6 +1029,11 @@ const  formatTime  = (seconds) => {
   return `${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
 }
 
+const switchQuarter = async (activeQuarter) => {
+    quarter.value = activeQuarter;
+
+    await fetchBoxScore();
+}
 const fetchBoxScore = async () => {
     try {
         gameFinished.value = false; // Reset the game status
@@ -1022,7 +1042,8 @@ const fetchBoxScore = async () => {
         const response = await axios.post(route("game.boxscore"), {
             game_id: props.game_id,
             show_stats: props.showBoxScore,
-            season_id: props.season_id
+            season_id: props.season_id,
+            quarter: quarter.value
         });
         const data = response.data.box_score;
 

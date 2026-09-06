@@ -21,6 +21,7 @@ class GameResultService
         $show_stats = $request->show_stats;
         $game_id = $request->game_id; // Fetch game details from the schedule_view table and join with teams table
         $seasonId = $request->season_id; // Fetch game details from the schedule_view table and join with teams table
+        $quarter = $request->quarter; // Fetch game details from the schedule_view table and join with teams table
 
         $scheduleViewTable = $this->helper->getScheduleViewDBName($seasonId);
 
@@ -49,11 +50,13 @@ class GameResultService
             ], 404);
         }
 
-        $playerDatabase = $this->helper->getPlayerStatsDatabaseName($game->season_id);
+        $playerGameStatsDBName = $this->helper->getPlayerStatsDatabaseName($game->season_id);
         $seasonStatsDBName = $this->helper->getSeasonStatsDBName($game->season_id);
+        $playerQuarterStatsDBName = $this->helper->getPlayerQuarterStatsDatabaseName($game->season_id);
 
-        $playerStats = DB::table($playerDatabase.' as player_game_stats')
-            ->where('player_game_stats.game_id', $game_id)
+        $playerDatabase = $quarter == 0 ? $playerGameStatsDBName : $playerQuarterStatsDBName;
+
+        $query = DB::table($playerDatabase.' as player_game_stats')
             ->leftJoin('players as p', 'player_game_stats.player_id', '=', 'p.id') // Alias for players table
             ->leftJoin('teams as drafted_team', 'drafted_team.id', '=', 'p.drafted_team_id') // Alias for drafted teams
             ->leftJoin('teams as t', 'player_game_stats.team_id', '=', 't.id') // Alias for teams table
@@ -87,7 +90,6 @@ class GameResultService
                 'player_game_stats.turnovers',
                 'player_game_stats.fouls',
                 'player_game_stats.minutes',
-
                 'player_game_stats.field_goal_attempts',
                 'player_game_stats.field_goals_made',
                 'player_game_stats.two_point_attempts',
@@ -109,39 +111,14 @@ class GameResultService
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Rookie of the Season') THEN 1 ELSE 0 END) AS is_rookie_poy"),
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Most Improved Player') THEN 1 ELSE 0 END) AS is_most_improved"),
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Best Overall Player') THEN 1 ELSE 0 END) AS is_season_mvp"),
-                // Return the string for Finals MVP
-                // DB::raw("COALESCE(
-                //     (SELECT CONCAT('Finals MVP (Season ', s.id, ') by ',
-                //         CASE
-                //             WHEN pgs.team_id = s.finals_winner_id AND s.finals_winner_score > s.finals_loser_score THEN th.name
-                //             WHEN pgs.team_id = s.finals_loser_id AND s.finals_loser_score > s.finals_winner_score THEN ta.name
-                //             ELSE 'No Winner'
-                //         END)
-                //     FROM seasons s
-                //     LEFT JOIN teams th ON th.id = s.finals_winner_id  -- Join for winner team name
-                //     LEFT JOIN teams ta ON ta.id = s.finals_loser_id  -- Join for loser team name
-                //     JOIN player_game_stats pgs ON pgs.season_id = s.id AND pgs.player_id = p.id  -- Join to get the player’s game stats
-                //     WHERE s.finals_mvp_id = p.id
-                //     LIMIT 1), '') as finals_mvp"),
-
-                // DB::raw("COALESCE(
-                //     (SELECT CONCAT('Championship Won (Season ', s.id, ') by ',
-                //                    CASE
-                //                        WHEN pgs.team_id = s.finals_winner_id AND s.finals_winner_score > s.finals_loser_score THEN th.name
-                //                        WHEN pgs.team_id = s.finals_loser_id AND s.finals_loser_score > s.finals_winner_score THEN ta.name
-                //                    END)
-                //      FROM seasons s
-                //      JOIN player_game_stats pgs ON pgs.season_id = s.id AND pgs.player_id = p.id
-                //      LEFT JOIN teams th ON th.id = s.finals_winner_id  -- Join for home team name
-                //      LEFT JOIN teams ta ON ta.id = s.finals_loser_id  -- Join for away team name
-                //      WHERE (
-                //          (pgs.team_id = s.finals_winner_id AND s.finals_winner_score > s.finals_loser_score)  -- Home team wins
-                //          OR
-                //          (pgs.team_id = s.finals_loser_id AND s.finals_loser_score > s.finals_winner_score)  -- Away team wins
-                //      )
-                //      LIMIT 1), '') as championship_won"),
             )
-            ->groupBy(
+            ->where('player_game_stats.game_id', $game_id);
+        
+        if($quarter > 0){
+            $query->where('player_game_stats.quarter', 'Q'.$quarter);
+        }
+
+        $playerStats = $query->groupBy(
                 'player_game_stats.player_id',
                 'p.id',
                 'p.name',

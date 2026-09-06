@@ -42,6 +42,7 @@ class PlayerStatsService
             'two_pointers_made' => 0,
             'free_throw_attempts' => 0,
             'free_throws_made' => 0,
+            'is_fouled_out' => $player->is_fouled_out,
         ];
     }
 
