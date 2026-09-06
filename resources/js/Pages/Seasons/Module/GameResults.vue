@@ -935,7 +935,7 @@
                     <div 
                     class="p-2 flex flex-wrap flex-col mt-1 text-white bg-gray-100"  v-if="!props.showBoxScore && seasonLeaders">
                         <small class="text-xs text-nowrap text-gray-500">{{ seasonLeaders.message }}</small>
-                        <small class="text-xs text-nowrap text-red-500 font-bold" :title="seasonLeaders.draft_status"><b>{{ seasonLeaders.player_name }}</b> ({{ seasonLeaders.stat_value }} {{ seasonLeaders.stat_type }}) | <i class="text-gray-700">{{ seasonLeaders.team_acronym }}</i></small>
+                        <small class="text-xs text-nowrap text-red-500 font-bold" :title="seasonLeaders.draft_status"><b class="text-sm text-blue-500">{{ seasonLeaders.player_name }}</b> ({{ seasonLeaders.stat_value }} {{ seasonLeaders.stat_type }}) | <i class="text-gray-700">{{ seasonLeaders.team_acronym }}</i></small>
                         <small class="text-xs text-nowrap text-gray-900 hidden">{{ seasonLeaders.team_name }}</small>
                     </div>
                 </div>
