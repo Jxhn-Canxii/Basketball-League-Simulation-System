@@ -153,10 +153,6 @@ class PlayerStatsService
             ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
             ->values();
 
-        //dd($sorted);
-
-     
-        
 
        // Step 1: Sit injured players
         $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
