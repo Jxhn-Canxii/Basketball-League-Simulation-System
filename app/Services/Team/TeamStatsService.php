@@ -90,7 +90,7 @@ class TeamStatsService
         });
 
         foreach ($sortedPlayers->slice(12, 15) as $playerStat) {
-                Player::where('id', $playerStat->id)->update(['is_reserved' => true, 'fatigue' => 0, 'role' => 'reserved' ]);
+                Player::where('id', $playerStat->id)->update(['is_reserved' => true, 'fatigue' => 0, 'role' => 'bench' ]);
 
                 DB::table('player_season_stats')
                     ->where('id', $playerStat->id)
@@ -150,6 +150,10 @@ class TeamStatsService
                 ->sum('fouls');
 
             $isFouledOut = ($playerFouls >= 5) ? 1 : 0;
+
+            $player->is_fouled_out = $isFouledOut;
+            $player->last_quarter_fouls = $playerFouls;
+            
             $playerEfficiencies[] = [
                 'player' => $player,
                 'role' => $player->role,
@@ -253,56 +257,5 @@ class TeamStatsService
             ], 500); // Internal server error
         }
     }
-    
-    public function saveStandingsSnapshot()
-    {
-        try {
-            $snapshots = DB::table('standings_view')
-                ->select(
-                    'team_id',
-                    'team_name',
-                    'team_city',
-                    'team_acronym',
-                    'primary_color',
-                    'secondary_color',
-                    'conference_id',
-                    'conference_name',
-                    'season_id',
-                    'wins',
-                    'losses',
-                    'total_home_score',
-                    'total_away_score',
-                    'home_ppg',
-                    'away_ppg',
-                    'score_difference',
-                    'conference_rank',
-                    'overall_rank',
-                    'is_defending_champion',
-                    'chemistry',
-                    'last_playoff_season_name',
-                    'playoff_appearances',
-                    'finals_appearances',
-                    'conference_finals_appearances',
-                    'conference_championships',
-                    'championships',
-                    'streak_status',
-                    'last_5_games'
-                )
-                ->get();
 
-            foreach ($snapshots as $snapshot) {
-                DB::table('standings_snapshots')->updateOrInsert(
-                    [
-                        'team_id' => $snapshot->team_id,
-                        'season_id' => $snapshot->season_id,
-                    ],
-                    (array) $snapshot
-                );
-            }
-        } catch (\Exception $e) {
-            return response()->json([
-                'message' => 'Standing Snapshot Error' . $e->getMessage(),
-            ], 500);
-        }
-    }
 }

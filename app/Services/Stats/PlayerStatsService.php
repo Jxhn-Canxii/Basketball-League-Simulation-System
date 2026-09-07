@@ -169,6 +169,7 @@ class PlayerStatsService
                     $dnpPlayers->contains('id', $p['id']) ||
                         $p['is_injured'] ||
                         $p['is_reserved'] ||
+                        $p['is_fouled_out'] ||
                         $p['role'] === 'star player' ||
                         $p['role'] === 'all star'
                 )

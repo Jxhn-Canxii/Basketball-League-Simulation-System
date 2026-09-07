@@ -616,8 +616,8 @@
                             </p>
                         </div>
                     </div>
-                    <ul class="grid grid-cols-3 gap-4 p-4">
-                        <li class="flex flex-col items-center">
+                    <ul class="grid grid-cols-3 gap-4 p-4" v-if="bestPlayer">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.points > 0">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
@@ -627,7 +627,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">PTS</p>
                         </li>
-                        <li class="flex flex-col items-center">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.rebounds > 0">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
@@ -637,7 +637,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">REB</p>
                         </li>
-                        <li class="flex flex-col items-center">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.assists > 0">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
@@ -647,7 +647,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">AST</p>
                         </li>
-                        <li class="flex flex-col items-center">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.steals > 0">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
@@ -657,7 +657,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">STL</p>
                         </li>
-                        <li class="flex flex-col items-center">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.blocks > 0">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
@@ -667,7 +667,47 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">BLK</p>
                         </li>
-                        <li class="flex flex-col items-center">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.fg_percentage > 30">
+                            <span
+                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
+                            >
+                                <span class="text-6xl font-bold text-white">{{
+                                    bestPlayer?.fg_percent
+                                }}%</span>
+                            </span>
+                            <p class="text-xl text-gray-900 font-bold">FG %</p>
+                        </li>
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.three_point_percentage > 30">
+                            <span
+                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
+                            >
+                                <span class="text-6xl font-bold text-white">{{
+                                    bestPlayer?.three_point_percentage
+                                }}%</span>
+                            </span>
+                            <p class="text-xl text-gray-900 font-bold">3Point %</p>
+                        </li>
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.ft_percent > 80">
+                            <span
+                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
+                            >
+                                <span class="text-6xl font-bold text-white">{{
+                                    bestPlayer?.ft_percent
+                                }}%</span>
+                            </span>
+                            <p class="text-xl text-gray-900 font-bold">FT %</p>
+                        </li>
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.eff > 5">
+                            <span
+                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
+                            >
+                                <span class="text-6xl font-bold text-white">{{
+                                    bestPlayer?.eff
+                                }}</span>
+                            </span>
+                            <p class="text-xl text-gray-900 font-bold">EFF</p>
+                        </li>
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.turnovers > 0">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-red-600 rounded-full flex items-center justify-center"
                             >

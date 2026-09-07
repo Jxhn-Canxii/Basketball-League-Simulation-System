@@ -277,7 +277,7 @@
                                             v-if="player.championships_won > 0">
                                             {{ player.championships_won }}
                                         </span>
-                                         <span
+                                        <span
                                             :title="`Conference Championships: ${ player.conference_championships_won }`"
                                             class="inline-flex items-center px-3 py-1 text-xs font-bold leading-none text-gray-800 bg-gray-100 rounded-full"
                                             v-if="player.conference_championships_won > 0">
@@ -307,6 +307,9 @@
                                                 :title="`${getMoraleTitle(player.morale)} ${player.morale}%`"
                                                 style="font-size: 1em;"
                                             ></i>
+                                            <span>
+                                                <i v-if="player.is_reserved == 1" class="fa fa-lock fa-xs text-gray-500"></i>
+                                            </span>
                                             <!-- {{ player.has_improved }} -->
                                         </span>
                                     </td>

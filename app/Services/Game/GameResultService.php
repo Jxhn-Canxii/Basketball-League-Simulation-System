@@ -90,12 +90,16 @@ class GameResultService
                 'player_game_stats.turnovers',
                 'player_game_stats.fouls',
                 'player_game_stats.minutes',
+                'player_game_stats.field_goal_percentage',
                 'player_game_stats.field_goal_attempts',
                 'player_game_stats.field_goals_made',
+                'player_game_stats.two_point_percentage',
                 'player_game_stats.two_point_attempts',
                 'player_game_stats.two_pointers_made',
+                'player_game_stats.three_point_percentage',
                 'player_game_stats.three_point_attempts',
                 'player_game_stats.three_pointers_made',
+                'player_game_stats.free_throw_percentage',
                 'player_game_stats.free_throw_attempts',
                 'player_game_stats.free_throws_made',
                 'player_game_stats.per',
@@ -143,12 +147,16 @@ class GameResultService
                 'player_game_stats.turnovers',
                 'player_game_stats.fouls',
                 'player_game_stats.minutes',
+                'player_game_stats.field_goal_percentage',
                 'player_game_stats.field_goal_attempts',
                 'player_game_stats.field_goals_made',
+                'player_game_stats.two_point_percentage',
                 'player_game_stats.two_point_attempts',
                 'player_game_stats.two_pointers_made',
+                'player_game_stats.three_point_percentage',
                 'player_game_stats.three_point_attempts',
                 'player_game_stats.three_pointers_made',
+                'player_game_stats.free_throw_percentage',
                 'player_game_stats.free_throw_attempts',
                 'player_game_stats.free_throws_made',
                 'player_game_stats.per',
@@ -157,27 +165,6 @@ class GameResultService
             )
             ->get()
             ->keyBy('player_id');
-
-
-
-        // Fetch all players that might be relevant to the game (ignoring team_id here)
-        // Get all player stats with calculated percentages
-        $playerStats = $playerStats->map(function ($stat) {
-            // Calculate shooting percentages
-            $stat->field_goal_percent = $stat->field_goal_attempts > 0
-                ? round(($stat->field_goals_made / $stat->field_goal_attempts) * 100, 1)
-                : 0;
-
-            $stat->three_point_percent = $stat->three_point_attempts > 0
-                ? round(($stat->three_pointers_made / $stat->three_point_attempts) * 100, 1)
-                : 0;
-
-            $stat->free_throw_percent = $stat->free_throw_attempts > 0
-                ? round(($stat->free_throws_made / $stat->free_throw_attempts) * 100, 1)
-                : 0;
-
-            return $stat;
-        });
 
         // Calculate stat leaders with qualification thresholds
         $statLeaders = [
@@ -188,16 +175,16 @@ class GameResultService
             'blocks' => $playerStats->sortByDesc('blocks')->first(),
             'field_goal_percent' => $playerStats->filter(function ($stat) {
                 return $stat->field_goal_attempts >= 5;
-            })->sortByDesc('field_goal_percent')->first(),
+            })->sortByDesc('field_goal_percentage')->first(),
             'three_pointers' => [
                 'made' => $playerStats->sortByDesc('three_pointers_made')->first(),
                 'percent' => $playerStats->filter(function ($stat) {
                     return $stat->three_point_attempts >= 3;
-                })->sortByDesc('three_point_percent')->first()
+                })->sortByDesc('three_point_percentage')->first()
             ],
             'free_throw_percent' => $playerStats->filter(function ($stat) {
                 return $stat->free_throw_attempts >= 2;
-            })->sortByDesc('free_throw_percent')->first(),
+            })->sortByDesc('free_throw_percentage')->first(),
             'advanced' => [
                 'per' => $playerStats->sortByDesc('per')->first(),
                 'ts_percent' => $playerStats->sortByDesc('ts_percent')->first(),
@@ -251,6 +238,10 @@ class GameResultService
             'blocks' => $bestWinningTeamPlayer->blocks,
             'turnovers' => $bestWinningTeamPlayer->turnovers,
             'fouls' => $bestWinningTeamPlayer->fouls,
+            'fg_percent' => number_format($bestWinningTeamPlayer->field_goal_percentage,0),
+            'three_point_percentage' => number_format($bestWinningTeamPlayer->three_point_percentage,0),
+            'ft_percent' => number_format($bestWinningTeamPlayer->free_throw_percentage,0),
+            'eff' => $bestWinningTeamPlayer->eff,
             'role' => $bestWinningTeamPlayer->player_role,
             'minutes' => $bestWinningTeamPlayer->minutes,
             'draft_id' => $bestWinningTeamPlayer->draft_id,
