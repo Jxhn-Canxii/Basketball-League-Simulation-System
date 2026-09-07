@@ -136,6 +136,7 @@ class LeaguesController extends Controller
             'trade_logs',
             'trade_proposals',
             'trade_players',
+            'role_change_transactions',
             'transactions',
             'player_contracts',
         ];

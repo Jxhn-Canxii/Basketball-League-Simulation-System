@@ -158,24 +158,24 @@ class PlayerStatsService
      
         
 
-        // Step 1: Sit injured players
+       // Step 1: Sit injured players
         $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
-        $dnpPlayersCount = $dnpPlayers->count();
 
-        $fouledOutPlayers = $sorted->filter(fn($p) => $p['is_fouled_out']);
-        $fouledOutCount = count($fouledOutPlayers);
+        $maxDNPs = 0;
 
-        $minDNPs = 0;
-        $alreadyOutPlayers = $dnpPlayersCount + $fouledOutCount;
+       // Step 2: Fill remaining DNP slots, but protect star players and all-stars
+        if ($dnpPlayers->count() < $maxDNPs) {
+            $remainingSlots = $maxDNPs - $dnpPlayers->count();
 
-        $dnpPlayers = $dnpPlayers->merge($fouledOutPlayers);
-        // dd($dnpPlayers);
-
-
-        // Step 2: Fill remaining DNP slots, but protect star players and all-stars
-        if ($alreadyOutPlayers < $minDNPs) {
-            $remainingSlots = $minDNPs - $alreadyOutPlayers;
             $additionalDNP = $sorted
+                ->reject(
+                    fn($p) =>
+                    $dnpPlayers->contains('id', $p['id']) ||
+                        $p['is_injured'] ||
+                        $p['is_reserved'] ||
+                        $p['role'] === 'star player' ||
+                        $p['role'] === 'all star'
+                )
                 ->sortBy([
                     ['per', 'asc'],
                     ['eff', 'asc'],
@@ -192,7 +192,7 @@ class PlayerStatsService
             $needed = 8 - $rotation->count();
 
             $reAddCandidates = $dnpPlayers
-                ->filter(fn($p) => !$p['is_injured'] && !$p['is_fouled_out'])
+                ->filter(fn($p) => !$p['is_injured'] && !$p['is_fouled_out'] && !$p['is_reserved'])
                 ->sortBy([
                     ['per', 'desc'],
                     ['eff', 'desc'],

@@ -168,7 +168,7 @@ class TeamRoleService
             $benchPlayerCount = 0;
             foreach ($players as $player) {
                 if (in_array($player['player_id'], $usedPlayerIds)) continue;
-                if ($benchPlayerCount < 3) {
+                if ($benchPlayerCount < 4) {
                     $newRoles[$player['player_id']] = 'bench';
                     $usedPlayerIds[] = $player['player_id'];
                     $benchPlayerCount++;

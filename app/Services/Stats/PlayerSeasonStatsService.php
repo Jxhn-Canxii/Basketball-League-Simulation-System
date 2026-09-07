@@ -24,7 +24,7 @@ class PlayerSeasonStatsService
      * @return \Illuminate\Http\JsonResponse
      */
 
-    public static function storeAllPlayerSeasonStats()
+    public function storeAllPlayerSeasonStats()
     {
         // Get the latest season ID or set it to 12 if it doesn’t exist
         $latestSeasonId = get_current_season_id() ?? 1;
@@ -47,7 +47,7 @@ class PlayerSeasonStatsService
                 ->exists();
 
             // Query to count the total games played for a team in a given season
-            $gamesPlayedCount = self::totalRegularSeasonGames($latestSeasonId, $player->team_id);
+            $totalSeasonGames = $this->helper->totalRounds($latestSeasonId);
 
             if ($hasStats) {
                 // Calculate stats if stats are found for the player
@@ -80,7 +80,7 @@ class PlayerSeasonStatsService
                 // Set all stats to 0 if no stats are found
                 $playerStats = (object) [
                     'player_id' => $player->id,
-                    'total_games' => $gamesPlayedCount,
+                    'total_games' => $totalSeasonGames,
                     'total_games_played' => 0,
                     'total_points' => 0,
                     'total_rebounds' => 0,
@@ -212,7 +212,7 @@ class PlayerSeasonStatsService
      * @param int $playerId
      * @return \Illuminate\Http\JsonResponse
      */
-    public static function storePlayerSeasonStats($teamId, $playerId)
+    public function storePlayerSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or default to 1 if none exists
@@ -230,7 +230,7 @@ class PlayerSeasonStatsService
             }
 
             // Query to count the total games played for a team in a given season
-            $gamesPlayedCount = self::totalRegularSeasonGames($latestSeasonId, $teamId);
+            $totalSeasonGames = $this->helper->totalRounds($latestSeasonId);
 
             // Check if the player has stats in the latest season
             $hasStats = DB::table('player_game_stats')
@@ -283,7 +283,7 @@ class PlayerSeasonStatsService
                 // Set default stats if no game stats exist
                 $playerStats = (object) [
                     'player_id' => $player->id,
-                    'total_games' => $gamesPlayedCount,
+                    'total_games' => $totalSeasonGames,
                     'total_games_played' => 0,
                     'total_minutes_played' => 0,
                     'total_points' => 0,
@@ -336,7 +336,7 @@ class PlayerSeasonStatsService
                     'avg_blocks_per_game' => $playerStats->avg_blocks_per_game,
                     'avg_turnovers_per_game' => $playerStats->avg_turnovers_per_game,
                     'avg_fouls_per_game' => $playerStats->avg_fouls_per_game,
-                    'total_games' => $gamesPlayedCount,
+                    'total_games' =>$totalSeasonGames,
                     'total_games_played' => $playerStats->total_games_played,
                     'total_minutes_played' => $playerStats->total_minutes_played,
                     'total_points' => $playerStats->total_points,
@@ -366,7 +366,7 @@ class PlayerSeasonStatsService
         }
     }
 
-    public static function storePlayerSeasonPlayoffStats($teamId, $playerId)
+    public function storePlayerSeasonPlayoffStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or default to 1 if none exists
@@ -382,10 +382,6 @@ class PlayerSeasonStatsService
             if (!$player) {
                 return response()->json(['error' => 'Player not found or inactive'], 404);
             }
-
-            // Query to count the total games played for a team in a given season
-            // $gamesPlayedCount = self::totalRegularSeasonGames($latestSeasonId, $teamId);
-
             // Check if the player has stats in the latest season
             $hasStats = DB::table('player_game_stats')
                 ->where('player_id', $player->id)
@@ -521,7 +517,7 @@ class PlayerSeasonStatsService
         }
     }
 
-    public static function storePlayerNextSeasonStats($teamId, $playerId)
+    public function storePlayerNextSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
@@ -612,7 +608,7 @@ class PlayerSeasonStatsService
         }
     }
 
-    public static function storePlayerCurrentSeasonStats($teamId, $playerId)
+    public function storePlayerCurrentSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
@@ -699,21 +695,4 @@ class PlayerSeasonStatsService
         }
     } 
     
-    public static function totalRegularSeasonGames($seasonId, $teamId)
-    {
-        // $scheduleTable = $this->helper->getScheduleDBName($seasonId);
-
-        // dd($scheduleTable);
-
-        $gamesPlayedCount = DB::table('schedules')
-            ->where('season_id', $seasonId)
-            ->where('game_number',0)
-            ->where(function ($query) use ($teamId) {
-                $query->where('home_id', $teamId)
-                    ->orWhere('away_id', $teamId);
-            })
-            ->count();
-
-        return $gamesPlayedCount;
-    }
 }

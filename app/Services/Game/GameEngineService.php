@@ -233,13 +233,19 @@ class GameEngineService
 
                 $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
         
-                if(!$isTied){
-                    $OT = false;
+                DB::table('schedules')
+                    ->where('game_id', $gameData->game_id)
+                    ->update(['is_overtime' => $OTNumber ]);
 
-                    DB::table('schedules')
-                        ->where('game_id', $gameData->game_id)
-                        ->update(['is_overtime' => $OTNumber ]);
+                if($isTied || $OTNumber < 4){
+                    $OT = true;
+                    continue;
+
                 }
+                
+                $OT = false;
+
+                
 
             } while ($OT);
     
@@ -321,10 +327,12 @@ class GameEngineService
         $awayChemistry =  $this->teamStats->getTeamChemistry($currentSeasonId, $gameData->away_team_id);
         // Simulate home team player stats with detailed shooting metrics
 
+        // dd($homeTeamPlayers);
          // Simulate home team player stats with detailed shooting metrics
         foreach ($homeTeamPlayers as $player) {
-            $minutes = (float) $homeMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
+
+            $minutes = (int) $homeMinutes[$player->id];
+            if ($minutes == 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }
@@ -382,8 +390,8 @@ class GameEngineService
         }
         // Repeat similar simulation for away team players...
         foreach ($awayTeamPlayers as $player) {
-            $minutes = (float) $awayMinutes[$player->id];
-            if ($minutes === 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
+            $minutes = (int) $awayMinutes[$player->id];
+            if ($minutes == 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
                 $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
                 continue;
             }

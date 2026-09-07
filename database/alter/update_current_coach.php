@@ -8,6 +8,7 @@ SET
     contract_years = 0,
     career_losses = 0,
     team_id = 0,
+    experience_years = 0,
     winning_percentage = 0,
     age = age - 2;
 
