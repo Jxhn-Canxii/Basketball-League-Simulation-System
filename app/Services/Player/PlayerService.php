@@ -349,10 +349,10 @@ class PlayerService
                 $roleB = $rolePriority[$b['role']] ?? 6;
 
                 if ($roleA !== $roleB) {
-                    return $roleA <=> $roleB;
+                    return $a['is_reserved'] <=> $b['is_reserved'] ?: $roleA <=> $roleB;
                 }
 
-                return $b['per_game_score'] <=> $a['per_game_score'];
+                return $a['is_reserved'] <=> $b['is_reserved'] ?: $b['per_game_score'] <=> $a['per_game_score'];
             });
         }
 

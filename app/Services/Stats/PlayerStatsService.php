@@ -983,7 +983,8 @@ class PlayerStatsService
                     $stats
                 );
             }
-
+            
+            return true;
         } catch (\Exception $e) {
 
             throw new \Exception("Failed to update quarter stats. Please check logs." . $e->getMessage());

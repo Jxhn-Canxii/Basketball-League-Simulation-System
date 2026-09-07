@@ -84,13 +84,15 @@ class TeamStatsService
         })->pluck('player')->values();
 
         $sortedPlayers->slice(1, 12)->each(function ($playerStat) {
+                $newFatigue = min(0,($playerStat->fatigue - ($playerStat->fatigue * rand(0.5,0.50))));
 
-                Player::where('id', $playerStat->id)->update(['is_reserved' => false]);    
+                Player::where('id', $playerStat->id)->update(['is_reserved' => false,'fatigue' => $newFatigue]);    
         });
 
         foreach ($sortedPlayers->slice(12, 15) as $playerStat) {
+                $newFatigue = $playerStat->is_injured == 1 ? $playerStat->fatigue - 5 : 0;
 
-                Player::where('id', $playerStat->id)->update(['is_reserved' => true, 'role' => 'bench' ]);
+                Player::where('id', $playerStat->id)->update(['is_reserved' => true,'fatigue' => $newFatigue, 'role' => 'bench' ]);
 
                 DB::table('player_season_stats')
                     ->where('id', $playerStat->id)

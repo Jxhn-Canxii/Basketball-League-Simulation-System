@@ -21,8 +21,6 @@ use App\Services\Team\TeamRoleService;
 use App\Services\Team\TeamStatsService;
 use App\Services\Team\TeamStreakService;
 use Illuminate\Support\Facades\DB;
-use Spatie\ErrorSolutions\SolutionProviders\Laravel\ViewNotFoundSolutionProvider;
-
 class GameEngineService
 {
     protected $storeStats;
@@ -207,6 +205,7 @@ class GameEngineService
             $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$quarterMinutes);
 
             $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter);
+            
             $this->updateGameScore($gameData,$quarter);
         }
 
@@ -229,7 +228,8 @@ class GameEngineService
 
                 $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$otMinutes);
 
-                $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
+                $updateQuarterStatistics = $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
+                
                 $this->updateGameScore($gameData,$overtimeQuarter);
 
                 $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
@@ -238,7 +238,7 @@ class GameEngineService
                     ->where('game_id', $gameData->game_id)
                     ->update(['is_overtime' => $OTNumber ]);
 
-                if($isTied || $OTNumber < 4){
+                if($updateQuarterStatistics && $isTied || $OTNumber < 4){
                     $OT = true;
                     continue;
 
