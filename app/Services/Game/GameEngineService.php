@@ -75,7 +75,7 @@ class GameEngineService
         }
 
         $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
-      
+    
         $this->playerStats->updateSeasonStats($formattedPlayerGameStats, false);
         $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
 
@@ -106,7 +106,7 @@ class GameEngineService
                 'message' => 'Game has already been simulated.',
             ], 400);
         }
- 
+
         $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
 
         $this->playerStats->updateSeasonStats($formattedPlayerGameStats, true);
@@ -228,9 +228,9 @@ class GameEngineService
 
                 $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$otMinutes);
 
-                $updateQuarterStatistics = $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
+                $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
                 
-                $this->updateGameScore($gameData,$overtimeQuarter);
+                $scoreUpdate = $this->updateGameScore($gameData,$overtimeQuarter);
 
                 $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
         
@@ -238,10 +238,9 @@ class GameEngineService
                     ->where('game_id', $gameData->game_id)
                     ->update(['is_overtime' => $OTNumber ]);
 
-                if($updateQuarterStatistics && $isTied || $OTNumber < 4){
+                if($scoreUpdate && $isTied || $OTNumber < 4){
                     $OT = true;
                     continue;
-
                 }
                 
                 $OT = false;
@@ -544,7 +543,12 @@ class GameEngineService
                     ->pluck('total')
                     ->toArray();
         
-        return $results[0] == $results[1];
+        if($results[0] !=0 && $results[1] != 0)
+        {
+            return $results[0] == $results[1];
+        }
+
+        return true;
     }
 
     private function getScore($gameId,$teamId,$seasonId){
@@ -557,7 +561,8 @@ class GameEngineService
 
     private function updateGameScore($gameData,$quarter){
 
-        $homeQuarterScore = DB::table('player_per_quarter_stats')
+        try{
+            $homeQuarterScore = DB::table('player_per_quarter_stats')
                 ->where('team_id', $gameData->home_team_id)
                 ->where('game_id', $gameData->game_id)
                 ->where('quarter', $quarter)
@@ -582,5 +587,10 @@ class GameEngineService
                 ->update([
                     $quarter => $awayQuarterScore,
                 ]);
+
+            return true;
+        }catch(\Exception $e){
+            return false;
+        }
     }
 }

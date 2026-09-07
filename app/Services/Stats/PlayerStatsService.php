@@ -1147,4 +1147,6 @@ class PlayerStatsService
             throw new \Exception("Failed to update season stats. Please check logs." . $e->getMessage());
         }
     }
+
+    
 }

@@ -40,6 +40,13 @@ class HelperService
             ->value('conference_rank'); // Get the 'conference_rank' of the current season standings
     }
 
+    public function getPlayerTeamMarketSize($teamId){
+        
+        return DB::table('teams')
+            ->where('id', $teamId)
+            ->value('market_size'); // Get the 'conference_rank' of the current season standings
+    }
+
     public function totalRounds($seasonId){
 
         return DB::table('schedules')

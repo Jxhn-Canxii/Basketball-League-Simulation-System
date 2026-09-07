@@ -84,7 +84,8 @@ class TeamStatsService
         })->pluck('player')->values();
 
         $sortedPlayers->slice(1, 12)->each(function ($playerStat) {
-                $newFatigue = min(0,($playerStat->fatigue - ($playerStat->fatigue * rand(0.5,0.50))));
+
+                $newFatigue = $this->fatigueAdjustment($playerStat->morale,$playerStat->fatigue);
 
                 Player::where('id', $playerStat->id)->update(['is_reserved' => false,'fatigue' => $newFatigue]);    
         });
@@ -262,4 +263,36 @@ class TeamStatsService
         }
     }
 
+    private function fatigueAdjustment($morale,$fatigue){
+
+        $moraleFactor = $this->moraleFactor($morale);
+
+        $newFatigue = min(0,($fatigue - ($fatigue * $moraleFactor)));
+
+        return $newFatigue;
+    }
+
+    private function moraleFactor(int $morale){
+
+            switch ($morale) {
+                case $morale > 90:
+                    return 0.50;
+                    break;
+                case $morale > 80 && $morale < 90:
+                    return 0.40;
+                    break;
+                case $morale > 70 && $morale < 80:
+                    return 0.30;
+                    break;
+                case $morale > 60 && $morale < 70:
+                    return 0.20;
+                    break;
+                case $morale < 50:
+                    return 0.10;
+                    break;
+                default:
+                    return 0.05;
+                    break;
+            }
+    }
 }

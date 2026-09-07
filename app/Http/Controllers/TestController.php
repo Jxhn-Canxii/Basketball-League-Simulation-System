@@ -346,19 +346,17 @@ class TestController extends Controller
 
     public function testTeamBalance(){
 
-        $activeTeams = DB::table('teams')
-            ->select('teams.id', 'teams.name')
-            ->groupBy('teams.id', 'teams.name')
-            ->orderBy('teams.name')
-            ->get();
-            
-            $data = [];
+        $results = DB::table('game_quarter_breakdown')->whereIn('team_id', [9,4])
+                    ->where('game_id', '1-1-1-1')
+                    ->pluck('total')
+                    ->toArray();
+        
+        if($results[0] !=0 && $results[1] != 0)
+        {
+            return $results[0].' - '.$results[1];
+        }
 
-            foreach($activeTeams as $team){
-                $this->teamRole->updateTeamRolesBasedOnStats($team->id, 20);
-            }
-
-            echo 'done naaaaaaaaaaaa!';
+        return $results;
         
     }
 
