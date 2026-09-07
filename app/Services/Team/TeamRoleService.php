@@ -165,20 +165,10 @@ class TeamRoleService
                 }
             }
 
-            $benchPlayerCount = 0;
-            foreach ($players as $player) {
-                if (in_array($player['player_id'], $usedPlayerIds)) continue;
-                if ($benchPlayerCount < 4) {
-                    $newRoles[$player['player_id']] = 'bench';
-                    $usedPlayerIds[] = $player['player_id'];
-                    $benchPlayerCount++;
-                }
-            }
-
-            // Remaining 3 reserved
+            // Remaining bench
             foreach ($players as $player) {
                 if (!in_array($player['player_id'], $usedPlayerIds)) {
-                    $newRoles[$player['player_id']] = 'reserved';
+                    $newRoles[$player['player_id']] = 'bench';
                 }
             }
 
