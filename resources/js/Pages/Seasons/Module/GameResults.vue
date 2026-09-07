@@ -246,9 +246,13 @@
                     <span @click.prevent="switchQuarter(0)" :class="quarter == 0 ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
                         All
                     </span>
-                    <span v-for="i in 4" :key="i"  @click.prevent="switchQuarter(i)" :class="quarter == i ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
+                    <span v-for="i in 4" :key="i"  @click.prevent="switchQuarter('Q'+i)" :class="quarter == 'Q'+i ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
                         Quarter {{ i }}
                     </span>
+                    <span v-if="isOvertime > 0" v-for="i in isOvertime" :key="i"  @click.prevent="switchQuarter('OT'+i)" :class="quarter == 'OT'+i ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
+                        Overtime {{ i }}
+                    </span>
+
                 </div>
             </div>  
         </div>
@@ -667,7 +671,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">BLK</p>
                         </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.fg_percentage > 30 && bestPlayer?.fg_made > 5">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.fg_percent > 30 && bestPlayer?.fg_made > 5">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >

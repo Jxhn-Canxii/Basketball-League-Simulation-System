@@ -119,7 +119,7 @@ class GameResultService
             ->where('player_game_stats.game_id', $game_id);
         
         if($quarter > 0){
-            $query->where('player_game_stats.quarter', 'Q'.$quarter);
+            $query->where('player_game_stats.quarter', $quarter);
         }
 
         $playerStats = $query->groupBy(

@@ -214,15 +214,12 @@ class GameEngineService
         if($isTied){
             $otMinutes = $totalMinutes / 8;
 
-            $OT = true;
+            $hasWinner = false;
             $OTNumber = 0;
 
             do{
                 $quarterNumber++;
                 $OTNumber++;
-
-                $homeScore = rand(1,10);
-                $awayScore = rand(1,10);
 
                 $overtimeQuarter = 'OT'.$OTNumber;
 
@@ -233,21 +230,19 @@ class GameEngineService
                 $scoreUpdate = $this->updateGameScore($gameData,$overtimeQuarter);
 
                 $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
-        
-                DB::table('schedules')
-                    ->where('game_id', $gameData->game_id)
-                    ->update(['is_overtime' => $OTNumber ]);
 
-                if($scoreUpdate && $isTied || $OTNumber < 4){
-                    $OT = true;
-                    continue;
+                if($scoreUpdate && !$isTied){
+
+                    DB::table('schedules')
+                        ->where('game_id', $gameData->game_id)
+                        ->update(['is_overtime' => $OTNumber ]);
+
+                    $hasWinner = true;
                 }
                 
-                $OT = false;
+                $hasWinner = false;
 
-                
-
-            } while ($OT);
+            } while ($hasWinner);
     
         }
 
