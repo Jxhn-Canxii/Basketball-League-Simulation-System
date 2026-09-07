@@ -651,7 +651,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">AST</p>
                         </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.steals > 0">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.steals > 3">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
