@@ -707,7 +707,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">EFF</p>
                         </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.turnovers > 0">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.turnovers > 5">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-red-600 rounded-full flex items-center justify-center"
                             >

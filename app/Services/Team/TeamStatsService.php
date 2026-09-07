@@ -84,19 +84,19 @@ class TeamStatsService
         })->pluck('player')->values();
 
         $sortedPlayers->slice(1, 12)->each(function ($playerStat) {
-                $newFatigue = min(0,$playerStat->fatigue - 20);
+                // $newFatigue = min(0,$playerStat->fatigue - 20);
                 
-                Player::where('id', $playerStat->id)->update(['is_reserved' => false,'fatigue' => $newFatigue, ]);    
+                Player::where('id', $playerStat->id)->update(['is_reserved' => false]);    
         });
 
         foreach ($sortedPlayers->slice(12, 15) as $playerStat) {
-                Player::where('id', $playerStat->id)->update(['is_reserved' => true, 'fatigue' => 0, 'role' => 'bench' ]);
+                Player::where('id', $playerStat->id)->update(['is_reserved' => true, 'role' => 'bench' ]);
 
                 DB::table('player_season_stats')
                     ->where('id', $playerStat->id)
                     ->where('team_id', $teamId)
                     ->where('season_id', $seasonId)
-                    ->update(['role' => 'reserved' ]);   
+                    ->update(['role' => 'bench' ]);   
         }
 
     }

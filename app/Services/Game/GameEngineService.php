@@ -328,142 +328,13 @@ class GameEngineService
         $awayChemistry =  $this->teamStats->getTeamChemistry($currentSeasonId, $gameData->away_team_id);
         // Simulate home team player stats with detailed shooting metrics
 
-        // dd($homeTeamPlayers);
-         // Simulate home team player stats with detailed shooting metrics
-        foreach ($homeTeamPlayers as $player) {
-
-            $minutes = (int) $homeMinutes[$player->id];
-
-            $performanceFactor = $this->playerStats->calculatePerformanceFactor($player);
-            $defensiveImpact =  $this->playerStats->calculateDefensiveImpact($gameData->away_team_id);
-
-            $turnovers =  $this->playerStats->calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact);
-            $fouls =  $this->playerStats->calculateFoul($player, $minutes, $performanceFactor, $defensiveImpact);
-            
-            $totalFouls = $player->last_quarter_fouls + $fouls;
-            $isPlayerOut = $totalFouls > 5 ? 1 : 0;
-
-            //set is foul out to true
-            $player->is_fouled_out = $isPlayerOut;
-
-            if ($isPlayerOut == 1 || $minutes == 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
-                $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
-                continue;
-            }
-            else{
-                $shotStats =  $this->playerStats->calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $homeChemistry, true, true);
-
-                // Assign returned values to variables
-                $twoPointAttempts = $shotStats['two_point_attempts'];
-                $twoPointMade = $shotStats['two_point_made'];
-
-                $threePointAttempts = $shotStats['three_point_attempts'];
-                $threePointMade = $shotStats['three_point_made'];
-
-                $freeThrowAttempts = $shotStats['free_throw_attempts'];
-                $freeThrowMade = $shotStats['free_throw_made'];
-
-                $points =  $this->playerStats->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
-
-                // Simulate other stats
-                $rebounds =  $this->playerStats->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
-                $blocks =  $this->playerStats->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
-                $steals =  $this->playerStats->calculateSteals($player, $minutes, $performanceFactor, $fouls);
-
-                $playerGameStats[] = [
-                    'player_id' => $player->id,
-                    'game_id' => $gameData->game_id,
-                    'season_id' => $currentSeasonId,
-                    'team_id' => $player->team_id,
-                    'is_injured' => $player->is_injured,
-                    'role' => $player->role,
-                    'points' => $points,
-                    'rebounds' => $rebounds,
-                    'assists' => 0, // Temporary value
-                    'steals' => $steals,
-                    'blocks' => $blocks,
-                    'turnovers' => $turnovers,
-                    'fouls' => $fouls,
-                    'minutes' => $minutes,
-                    'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
-                    'field_goals_made' => $twoPointMade + $threePointMade,
-                    'three_point_attempts' => $threePointAttempts,
-                    'three_pointers_made' => $threePointMade,
-                    'two_pointers_made' => $twoPointMade,
-                    'two_point_attempts' => $twoPointAttempts,
-                    'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowMade,
-                ];
-            }
-        }
         // Repeat similar simulation for away team players...
+        foreach ($homeTeamPlayers as $player) {
+            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $homeMinutes, $homeChemistry);
+        }
+
         foreach ($awayTeamPlayers as $player) {
-
-            $minutes = (int) $awayMinutes[$player->id];
-
-            $performanceFactor = $this->playerStats->calculatePerformanceFactor($player);
-            $defensiveImpact =  $this->playerStats->calculateDefensiveImpact($gameData->away_team_id);
-
-            $turnovers =  $this->playerStats->calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact);
-            $fouls =  $this->playerStats->calculateFoul($player, $minutes, $performanceFactor, $defensiveImpact);
-
-            $totalFouls = $player->last_quarter_fouls + $fouls;
-            $isPlayerOut = $totalFouls > 5 ? 1 : 0;
-
-            //set is foul out to true
-            $player->is_fouled_out = $isPlayerOut;
-
-            if ($isPlayerOut == 1 || $minutes == 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
-                $playerGameStats[] = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
-                continue;
-            }
-            else{
-                $shotStats =  $this->playerStats->calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $awayChemistry, true, false);
-
-                // Assign returned values to variables
-                $twoPointAttempts = $shotStats['two_point_attempts'];
-                $twoPointMade = $shotStats['two_point_made'];
-
-                $threePointAttempts = $shotStats['three_point_attempts'];
-                $threePointMade = $shotStats['three_point_made'];
-
-                $freeThrowAttempts = $shotStats['free_throw_attempts'];
-                $freeThrowMade = $shotStats['free_throw_made'];
-
-
-                $points =  $this->playerStats->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
-
-                // Simulate other stats
-                $rebounds =  $this->playerStats->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
-                $blocks =  $this->playerStats->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
-                $steals =  $this->playerStats->calculateSteals($player, $minutes, $performanceFactor, $fouls);
-
-            
-                $playerGameStats[] = [
-                    'player_id' => $player->id,
-                    'game_id' => $gameData->game_id,
-                    'season_id' => $currentSeasonId,
-                    'team_id' => $player->team_id,
-                    'is_injured' => $player->is_injured,
-                    'role' => $player->role,
-                    'points' => $points,
-                    'rebounds' => $rebounds,
-                    'assists' => 0, // Temporary value
-                    'steals' => $steals,
-                    'blocks' => $blocks,
-                    'turnovers' => $turnovers,
-                    'fouls' => $fouls,
-                    'minutes' => $minutes,
-                    'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
-                    'field_goals_made' => $twoPointMade + $threePointMade,
-                    'three_point_attempts' => $threePointAttempts,
-                    'three_pointers_made' => $threePointMade,
-                    'two_pointers_made' => $twoPointMade,
-                    'two_point_attempts' => $twoPointAttempts,
-                    'free_throw_attempts' => $freeThrowAttempts,
-                    'free_throws_made' => $freeThrowMade,
-                ];
-            }
+            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $awayMinutes,  $awayChemistry);
         }
         
         // Assist distribution logic remains similar but ensures 15-player roster
@@ -531,6 +402,77 @@ class GameEngineService
         $this->playerStats->distributeAssists($playerGameStats, $gameData->away_team_id, $maxAwayAssists, $awayAssistsAssigned);
         
         return $playerGameStats ?? [];
+
+    }
+
+    private function statsEngine($currentSeasonId, $gameData, $player, $playerMinutes, $chemistry)
+    {
+        $minutes = (int) $playerMinutes[$player->id];
+
+        $performanceFactor = $this->playerStats->calculatePerformanceFactor($player);
+        $defensiveImpact =  $this->playerStats->calculateDefensiveImpact($gameData->away_team_id);
+
+        $turnovers =  $this->playerStats->calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact);
+        $fouls =  $this->playerStats->calculateFoul($player, $minutes, $performanceFactor, $defensiveImpact);
+
+        $totalFouls = $player->last_quarter_fouls + $fouls;
+        $isPlayerOut = $totalFouls > 5 ? 1 : 0;
+
+        //set is foul out to true
+        $player->is_fouled_out = $isPlayerOut;
+
+        if ($isPlayerOut == 1 || $minutes == 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
+            $playerGameStats = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
+        }
+        else{
+            $shotStats =  $this->playerStats->calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry, true, false);
+
+            // Assign returned values to variables
+            $twoPointAttempts = $shotStats['two_point_attempts'];
+            $twoPointMade = $shotStats['two_point_made'];
+
+            $threePointAttempts = $shotStats['three_point_attempts'];
+            $threePointMade = $shotStats['three_point_made'];
+
+            $freeThrowAttempts = $shotStats['free_throw_attempts'];
+            $freeThrowMade = $shotStats['free_throw_made'];
+
+
+            $points =  $this->playerStats->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
+
+            // Simulate other stats
+            $rebounds =  $this->playerStats->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
+            $blocks =  $this->playerStats->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
+            $steals =  $this->playerStats->calculateSteals($player, $minutes, $performanceFactor, $fouls);
+
+        
+            $playerGameStats = [
+                'player_id' => $player->id,
+                'game_id' => $gameData->game_id,
+                'season_id' => $currentSeasonId,
+                'team_id' => $player->team_id,
+                'is_injured' => $player->is_injured,
+                'role' => $player->role,
+                'points' => $points,
+                'rebounds' => $rebounds,
+                'assists' => 0, // Temporary value
+                'steals' => $steals,
+                'blocks' => $blocks,
+                'turnovers' => $turnovers,
+                'fouls' => $fouls,
+                'minutes' => $minutes,
+                'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
+                'field_goals_made' => $twoPointMade + $threePointMade,
+                'three_point_attempts' => $threePointAttempts,
+                'three_pointers_made' => $threePointMade,
+                'two_pointers_made' => $twoPointMade,
+                'two_point_attempts' => $twoPointAttempts,
+                'free_throw_attempts' => $freeThrowAttempts,
+                'free_throws_made' => $freeThrowMade,
+            ];
+        }
+
+        return $playerGameStats;
 
     }
 
