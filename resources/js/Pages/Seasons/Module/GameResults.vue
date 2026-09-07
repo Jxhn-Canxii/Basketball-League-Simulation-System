@@ -667,33 +667,33 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">BLK</p>
                         </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.fg_percentage > 30">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.fg_percentage > 30 && bestPlayer?.fg_made > 5">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
                                 <span class="text-6xl font-bold text-white">{{
                                     bestPlayer?.fg_percent
-                                }}%</span>
+                                }}</span>
                             </span>
                             <p class="text-xl text-gray-900 font-bold">FG %</p>
                         </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.three_point_percentage > 30">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.three_point_percentage > 30 && bestPlayer?.three_points_made > 5">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
                                 <span class="text-6xl font-bold text-white">{{
                                     bestPlayer?.three_point_percentage
-                                }}%</span>
+                                }}</span>
                             </span>
-                            <p class="text-xl text-gray-900 font-bold">3Point %</p>
+                            <p class="text-xl text-gray-900 font-bold">3P %</p>
                         </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.ft_percent > 80">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.ft_percent > 80 && bestPlayer?.ft_made > 5">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
                                 <span class="text-6xl font-bold text-white">{{
                                     bestPlayer?.ft_percent
-                                }}%</span>
+                                }}</span>
                             </span>
                             <p class="text-xl text-gray-900 font-bold">FT %</p>
                         </li>
