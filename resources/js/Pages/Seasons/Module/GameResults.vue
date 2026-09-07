@@ -687,7 +687,7 @@
                             </span>
                             <p class="text-xl text-gray-900 font-bold">3P %</p>
                         </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.ft_percent > 80 && bestPlayer?.ft_made > 5">
+                        <li class="flex flex-col items-center" v-if="bestPlayer?.ft_percent > 80 && bestPlayer?.ft_made > 10">
                             <span
                                 class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
                             >
