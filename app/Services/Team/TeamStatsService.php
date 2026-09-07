@@ -89,7 +89,7 @@ class TeamStatsService
         });
 
         foreach ($sortedPlayers->slice(12, 15) as $playerStat) {
-            
+
                 Player::where('id', $playerStat->id)->update(['is_reserved' => true, 'role' => 'bench' ]);
 
                 DB::table('player_season_stats')
@@ -163,17 +163,19 @@ class TeamStatsService
                 'draft_round' => $draft->round ?? null,
                 'draft_pick' => $draft->pick_number ?? null,
                 'is_fouled_out' =>  $isFouledOut,
+                'fatigue' =>  $player->fatigue,
                 'role_rank' => array_search($player->role, $rolePriority) !== false
                     ? array_search($player->role, $rolePriority)
                     : PHP_INT_MAX,
             ];
         }
 
-        // Sort by: total_eff DESC, years_pro DESC, role_priority ASC
+        // Sort by: total_eff DESC, role_priority ASC,fatigue ASC,years_pro DESC,
         $sortedPlayers = collect($playerEfficiencies)->sort(function ($a, $b) {
             return $b['total_eff'] <=> $a['total_eff']
-                ?: $b['years_pro'] <=> $a['years_pro']
-                ?: $a['role_rank'] <=> $b['role_rank'];
+                ?: $a['role_rank'] <=> $b['role_rank']
+                ?: $a['fatigue'] <=> $b['fatigue']
+                ?: $b['years_pro'] <=> $a['years_pro'];
         })->pluck('player')->values();
 
         return $sortedPlayers;
