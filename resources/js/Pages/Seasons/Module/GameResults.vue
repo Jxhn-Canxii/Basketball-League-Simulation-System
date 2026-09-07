@@ -673,7 +673,7 @@
                             >
                                 <span class="text-6xl font-bold text-white">{{
                                     bestPlayer?.fg_percent
-                                }}%</span>
+                                }}</span>
                             </span>
                             <p class="text-xl text-gray-900 font-bold">FG %</p>
                         </li>
@@ -683,7 +683,7 @@
                             >
                                 <span class="text-6xl font-bold text-white">{{
                                     bestPlayer?.three_point_percentage
-                                }}%</span>
+                                }}</span>
                             </span>
                             <p class="text-xl text-gray-900 font-bold">3P %</p>
                         </li>
@@ -693,7 +693,7 @@
                             >
                                 <span class="text-6xl font-bold text-white">{{
                                     bestPlayer?.ft_percent
-                                }}%</span>
+                                }}</span>
                             </span>
                             <p class="text-xl text-gray-900 font-bold">FT %</p>
                         </li>
