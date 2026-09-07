@@ -27,6 +27,9 @@ return new class extends Migration
             $table->integer('status')->default(1); // Assuming default status is 'pending'
             $table->integer('is_overtime')->default(0);
 
+            $table->timestamps();
+
+
         });
     }
 
