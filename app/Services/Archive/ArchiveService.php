@@ -340,7 +340,7 @@ class ArchiveService
             }
 
             //schedules table must left previous season record and current record for streak tracking
-            DB::statement("DELETE FROM schedules WHERE season_id < $currentSeasonId - 1");
+            DB::statement("DELETE FROM schedules WHERE season_id < ($currentSeasonId - 1)");
 
             DB::commit();
         } catch (\Exception $e) {
