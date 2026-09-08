@@ -221,7 +221,7 @@ class NewsService
         $playoffSeries = null;
         $seriesWins = 0;
         $seriesLosses = 0;
-        $bestOf = null;
+        $raceTo = null;
         $seriesLength = null;
         $seriesStatus = null;
         $isSeriesClinched = false;
@@ -247,7 +247,7 @@ class NewsService
                 ->first();
 
             if ($playoffSeries) {
-                $bestOf = (int) $playoffSeries->best_of;
+                $raceTo = (int) $playoffSeries->race_to;
                 $seriesLength = (int) $playoffSeries->series_length;
                 $seriesStatus = (int) $playoffSeries->status;
 
@@ -262,7 +262,7 @@ class NewsService
                     $seriesLosses = $homeWins;
                 }
 
-                $requiredWins = $bestOf;
+                $requiredWins = $raceTo;
 
                 $isSeriesClinched =
                     $seriesStatus === 2 ||
@@ -933,20 +933,20 @@ class NewsService
             $replace,
             $seriesWins,
             $seriesLosses,
-            $bestOf,
+            $raceTo,
             $seriesLength
         ) {
             return str_replace(
                 [
                     '{series_wins}',
                     '{series_losses}',
-                    '{best_of}',
+                    '{race_to}',
                     '{series_length}',
                 ],
                 [
                     $seriesWins,
                     $seriesLosses,
-                    $bestOf ?? 'N/A',
+                    $raceTo ?? 'N/A',
                     $seriesLength ?? 'N/A',
                 ],
                 $replace($template)

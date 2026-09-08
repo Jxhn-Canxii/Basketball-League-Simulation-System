@@ -327,6 +327,7 @@ class ArchiveService
                     'status',
                     'is_overtime',
                 )
+                ->where('season_id', $currentSeasonId)
                 ->where('status',2)
                 ->get();
 
@@ -340,7 +341,7 @@ class ArchiveService
             }
 
             //schedules table must left previous season record and current record for streak tracking
-            DB::statement("DELETE FROM schedules WHERE season_id < ($currentSeasonId - 1)");
+            DB::statement("DELETE FROM schedules WHERE season_id <= ($currentSeasonId - 1)");
 
             DB::commit();
         } catch (\Exception $e) {
@@ -370,7 +371,7 @@ class ArchiveService
                     'series_id',
                     'home_team_id',
                     'away_team_id',
-                    'best_of',
+                    'race_to',
                     'home_wins',
                     'away_wins',
                     'series_length',

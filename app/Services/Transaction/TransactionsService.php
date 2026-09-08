@@ -963,6 +963,7 @@ class TransactionsService
                 return $joinChance >= 60; // Raise threshold slightly with added influence
             });
 
+
         return $candidates->sortByDesc('overall_rating')->first();
     }
 

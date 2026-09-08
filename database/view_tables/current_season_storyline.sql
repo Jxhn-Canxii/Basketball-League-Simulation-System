@@ -101,7 +101,7 @@ redemption AS (
 /* =========================================================
    PLAYOFF SERIES
    IMPORTANT:
-   best_of = wins required
+   race_to = wins required
    series_length = maximum possible games
    ========================================================= */
 season_series AS (
@@ -151,7 +151,7 @@ series_summary AS (
         SUM(
             CASE
                 WHEN games_played = 3
-                 AND best_of = 3
+                 AND race_to = 3
                 THEN 1
                 ELSE 0
             END
@@ -160,7 +160,7 @@ series_summary AS (
         SUM(
             CASE
                 WHEN games_played = 5
-                 AND best_of = 3
+                 AND race_to = 3
                 THEN 1
                 ELSE 0
             END
@@ -169,7 +169,7 @@ series_summary AS (
         SUM(
             CASE
                 WHEN games_played = 7
-                 AND best_of = 4
+                 AND race_to = 4
                 THEN 1
                 ELSE 0
             END
@@ -177,7 +177,7 @@ series_summary AS (
 
         SUM(
             CASE
-                WHEN games_played = best_of
+                WHEN games_played = race_to
                 THEN 1
                 ELSE 0
             END
@@ -720,7 +720,7 @@ SELECT
         CASE
             WHEN fs.games_played = fs.series_length
                 THEN 'high-stakes basketball, capped by a Finals series that went the full distance'
-            WHEN fs.games_played = fs.best_of
+            WHEN fs.games_played = fs.race_to
                 THEN 'high-stakes basketball, capped by a decisive Finals sweep'
             ELSE
                 'high-stakes basketball, with contenders battling through a demanding playoff bracket'
@@ -913,7 +913,7 @@ SELECT
                     ' games, with the championship hanging in the balance until the final night.'
                 )
 
-            WHEN fs.games_played = fs.best_of THEN
+            WHEN fs.games_played = fs.race_to THEN
                 CONCAT(
                     fs.winner_name,
                     ' left no doubt in The Finals, sweeping ',
@@ -925,7 +925,7 @@ SELECT
                     ' to seize the championship in emphatic fashion.'
                 )
 
-            WHEN fs.games_played = fs.best_of + 1 THEN
+            WHEN fs.games_played = fs.race_to + 1 THEN
                 CONCAT(
                     fs.winner_name,
                     ' closed out The Finals against ',

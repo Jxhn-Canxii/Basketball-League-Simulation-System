@@ -517,13 +517,13 @@ class PlayoffStatsService
                 ->where('status', 2) // finished
                 ->first();
 
-            if($series->winner_team_id > 0){
+            if($series && $series->winner_team_id > 0){
 
                 $gamesPlayed =  DB::table('player_season_playoff_stats')
                             ->where('player_id', $playerId)
                             ->value('total_games_played');
             
-                $seriesGameCount = config('playoff_series.rounds.'.$round) ?? 1;
+                $seriesGameCount = config('playoff_series.rounds.'.$round.'.series_length') ?? 1;
 
                 $currentData =  DB::table('player_season_playoff_stats')
                     ->where('player_id', $playerId)
@@ -609,12 +609,12 @@ class PlayoffStatsService
 
         // Check if the series is completed
         if (
-            $updateData['home_wins'] >= $series->best_of ||
-            $updateData['away_wins'] >= $series->best_of
+            $updateData['home_wins'] >= $series->race_to ||
+            $updateData['away_wins'] >= $series->race_to
         ) {
             $updateData['status'] = 2; // Mark as completed
 
-            if ($updateData['home_wins'] >= $series->best_of) {
+            if ($updateData['home_wins'] >= $series->race_to) {
                 $updateData['winner_team_id'] = $series->home_team_id;
                 $updateData['loser_team_id'] = $series->away_team_id;
             } else {

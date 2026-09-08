@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('series_id', 255)->nullable();
             $table->integer('home_team_id')->default(0);;
             $table->integer('away_team_id')->default(0);;
-            $table->integer('best_of')->default(7);
+            $table->integer('race_to')->default(7);
             $table->integer('home_wins')->default(0);
             $table->integer('away_wins')->default(0);
             $table->integer('series_length')->default(0);

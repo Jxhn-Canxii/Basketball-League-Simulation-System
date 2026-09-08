@@ -54,10 +54,10 @@
                         <option value="1" disabled>
                             Single Elimination (Coming Soon)
                         </option>
-                        <option value="5">Super 5</option>
-                        <option value="6">Power 10</option>
                         <option value="2">Single Round Robin</option>
                         <option value="3">Double Round Robin</option>
+                        <option value="5">Super 5 (Test only)</option>
+                        <option value="6">Power 10 (Test only)</option>
                         <option value="4" disabled>Round Robin + Inter Conference</option>
                     </select>
                     <InputError
@@ -188,7 +188,7 @@ const isAddModalOpen = ref(false);
 const leagues_dropdown = ref([]);
 const isProcessing = ref(false);
 const form = useForm({
-    type: 3,
+    type: 2,
     start: 16,
     league_id: 1,
     seasons_id: 0,

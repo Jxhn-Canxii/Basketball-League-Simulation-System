@@ -219,7 +219,7 @@ class TeamsService
                 'playoff_series.series_id',
                 'playoff_series.home_team_id',
                 'playoff_series.away_team_id',
-                'playoff_series.best_of',
+                'playoff_series.race_to',
                 'playoff_series.home_wins',
                 'playoff_series.away_wins',
                 'playoff_series.series_length',

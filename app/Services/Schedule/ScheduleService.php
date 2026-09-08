@@ -66,6 +66,7 @@ class ScheduleService
             ->where('round', $round)
             ->where('status', 1)
             ->orderBy('id')
+            ->orderBy('game_number')
             ->select('id', 'conference_id')
             ->get();
 
