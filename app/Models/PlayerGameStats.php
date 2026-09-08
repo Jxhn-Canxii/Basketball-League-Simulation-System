@@ -26,7 +26,7 @@ class PlayerGameStats extends Model
         'blocks',
         'turnovers',
         'fouls',
-        'is_fouled_out'
+        'is_fouled_out',
 
         // New Stats
         'field_goals_made',

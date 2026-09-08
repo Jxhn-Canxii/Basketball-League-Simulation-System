@@ -699,13 +699,6 @@ class AwardsService
                 'season_id' =>  $latestSeasonId,
             ]);
         } catch (\Exception $e) {
-            // Log the error message if an exception occurs anywhere in the method
-            \Log::error('Error in storing season awards', [
-                'season_id' => $request->season_id,
-                'error_message' => $e->getMessage(),
-                'stack_trace' => $e->getTraceAsString(),
-            ]);
-
             // Return an error response
             return response()->json([
                 'message' => 'An error occurred while storing the season awards.',
@@ -782,11 +775,6 @@ class AwardsService
                 DB::commit();
             } catch (\Exception $e) {
                 DB::rollBack();
-                \Log::error('Error in insertAward:', [
-                    'error' => $e->getMessage(),
-                    'player_id' => $playerStats->player_id,
-                    'award' => $awardName
-                ]);
             }
         }
     }

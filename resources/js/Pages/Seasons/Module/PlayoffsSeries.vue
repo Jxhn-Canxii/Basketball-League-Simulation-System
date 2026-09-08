@@ -103,7 +103,7 @@
     <!-- Game News Modal -->
     <div v-if="isGameNewsModalOpen && game_news" class="fixed rounded-lg bg-transparent top-[20%] right-[36%] p-2">
         <div class="grid-cols-1 bg-gray-900 p-2 rounded-2xl shadow-lg shadow-blue-500" @click.prevent="isGameNewsModalOpen = false">
-            <h3 class="text-lg font-semibold mb-2 text-white">Game Result:</h3> <b class="float-right text-3xl text-red-500" v-if="season_playoffs">{{ season_playoffs.active_series_game ?? 0 }}</b>
+            <h3 class="text-lg font-semibold mb-2 text-white">Game Result:</h3>
             <div class="p-2 m-1 bg-slate-800 rounded text-white" v-if="break_down">
                 <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden text-sm">
                     <thead class="">
@@ -535,6 +535,7 @@ const simulateFullPlayoffs = async () => {
                 const match = matches[index];
                 try {
                     await simulateGame(match.id, match.game_id, 2, index, roundName);
+                    await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
                 } catch (error) {
                     console.error(`Error simulating game ${match.id} in ${roundName}:`, error);
 

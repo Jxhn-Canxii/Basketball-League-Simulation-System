@@ -185,8 +185,8 @@ class PlayoffService
                 ->join('playoff_series as ps', 'ps.series_id', '=', 's.series_id')
                 ->where('s.season_id', $seasonId)
                 ->where('s.status', 1)      // only pending games
-                ->where('s.game_number','<=', $gameNumber)      // only pending games
-                ->where('ps.status', '!=', 2) // exclude finished series
+                // ->where('s.game_number','<=', $gameNumber)      // only pending games
+                ->where('ps.status',1) // exclude finished series
                 ->orderBy('s.game_number', 'asc')
                 ->orderBy('s.round', 'asc')
                 ->get();
