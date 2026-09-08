@@ -143,12 +143,12 @@ class PlayerRatingsService
             }
 
             // Assign the next 2 players as "bench players"
-            foreach ($rankedPlayers->slice(10, 2) as $playerStat) {
+            foreach ($rankedPlayers->slice(10, 5) as $playerStat) {
                 Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
             }
 
             foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
-                Player::where('id', $playerStat->player_id)->update(['role' => 'reserved', 'is_reserved' => true]);
+                Player::where('id', $playerStat->player_id)->update(['is_reserved' => true]);
             }
 
             foreach ($rankedPlayers as $player) {
