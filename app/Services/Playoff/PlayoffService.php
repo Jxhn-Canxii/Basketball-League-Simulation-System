@@ -46,9 +46,12 @@ class PlayoffService
 
         $playoffs   = $this->playoffTreeWithGames($seasonId, $status, $type, $start);
         $games   = $this->playoffSeriesPendingGames($seasonId);
+        $activeRound = $this->activeRound($seasonId);
+
         return response()->json([
             'playoffs' => $playoffs,
             'pending' => $games,
+            'active_series_game' => $activeRound,
         ]);
     }
 
@@ -1612,6 +1615,20 @@ class PlayoffService
                 DB::table('player_game_stats')->insert($playerGameStats);
             }
         });
+    }
+
+    private function activeRound($seasonId){
+        
+        $activeRound = DB::table('schedules')
+                    ->select('game_number')
+                    ->where('season_id', $seasonId)
+                    ->where('status', 1)
+                    ->distinct('game_number')
+                    ->orderBy('id')
+                    ->first();
+        
+        return $activeRound ? $activeRound->game_number : 0;
+    
     }
 }
 

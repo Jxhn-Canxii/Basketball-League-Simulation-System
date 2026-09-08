@@ -180,7 +180,7 @@ class SimulateService
 
         $data = collect($this->engine->startPlayoffSeriesGame($request->schedule_id,240));
 
-        $gameData = $data['game_info'];
+        $gameData = $data ? $data['game_info'] : [];
 
         // Calculate scores based on player stats
         $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)

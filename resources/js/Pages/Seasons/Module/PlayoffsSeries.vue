@@ -535,7 +535,9 @@ const simulateFullPlayoffs = async () => {
                 const match = matches[index];
                 try {
                     await simulateGame(match.id, match.game_id, 2, index, roundName);
-                    await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
+                    if(season_playoffs.value.active_series_game > 4){
+                        await fetchSeasonPlayoffs(is_play_ins.value); // Refresh after each game
+                    }
                 } catch (error) {
                     console.error(`Error simulating game ${match.id} in ${roundName}:`, error);
 

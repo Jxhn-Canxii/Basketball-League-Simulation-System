@@ -24,7 +24,7 @@
     >
         <!-- Series score header -->
         <div class="px-5 py-2 bg-black bg-opacity-50 flex justify-between items-center">
-            <span class="text-white font-bold">Best of {{ series.best_of }}</span>
+            <span class="text-white font-bold">{{ series.best_of == 1 ? 'Win or Go Home!'  : 'Best of '+series.best_of }}</span>
             <span class="text-white font-bold">
                {{ series.series_lead }}
             </span>
