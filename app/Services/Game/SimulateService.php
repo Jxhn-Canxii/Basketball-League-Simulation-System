@@ -57,8 +57,8 @@ class SimulateService
 
     public function simulateRegular(Request $request)
     {
-        try{
-            DB::beginTransaction(); // Start transaction
+        // try{
+        //     DB::beginTransaction(); // Start transaction
         
             $currentSeasonId = get_current_season_id();
 
@@ -153,7 +153,7 @@ class SimulateService
             }
 
             // Commit the transaction
-            DB::commit();
+            // DB::commit();
 
             // Return the simulation result
             return response()->json([
@@ -165,15 +165,16 @@ class SimulateService
                 // 'data' => $gameResult,
                 // 'playerGameStats' => $playerGameStats,
             ]);
-        }catch(\Exception $e){
-            DB::rollBack();
+        // }
+        // catch(\Exception $e){
+        //     DB::rollBack();
 
-            return response()->json([
-                'message' => 'An error occurred while storing the season awards.',
-                'error' => $e->getMessage(),
-            ], 500);
+        //     return response()->json([
+        //         'message' => 'An error occurred while storing the season awards.',
+        //         'error' => $e->getMessage(),
+        //     ], 500);
 
-        }
+        // }
 
     }
 
@@ -191,14 +192,15 @@ class SimulateService
 
             $gameData = $data ? $data['game_info'] : [];
 
-            // Calculate scores based on player stats
-            $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
-                ->where('game_id', $gameData->game_id)
-                ->value('total');
+            $series = DB::table('playoff_series')
+                ->where('series_id', $gameData->series_id)
+                ->first();
 
-            $awayScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->away_team_id)
-                ->where('game_id', $gameData->game_id)
-                ->value('total');
+            if ($gameData && !$series) {
+                return response()->json([
+                    'message' => 'Series #'.$gameData->series_id.' not found for the given schedule!',
+                ], 404);
+            }
 
             // Check if the game is tied
             $reasons = [
@@ -211,6 +213,15 @@ class SimulateService
             ];
 
             $randomReason = $reasons[array_rand($reasons)];
+
+            // Calculate scores based on player stats
+            $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->value('total');
+
+            $awayScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->away_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->value('total');
 
             if ($homeScore === $awayScore) {
                 DB::rollBack();
@@ -232,15 +243,6 @@ class SimulateService
 
             $gameData->save();
             // Update playoff_series
-            $series = DB::table('playoff_series')
-                ->where('series_id', $gameData->series_id)
-                ->first();
-
-            if (!$series) {
-                return response()->json([
-                    'message' => 'Series #'.$gameData->series_id.' not found for the given schedule!',
-                ], 404);
-            }
 
             // Fetch updated series data
             $series = DB::table('playoff_series')

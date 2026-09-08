@@ -845,7 +845,7 @@ LEFT JOIN playoff_appearances
    CURRENT TEAM SEASON
    ========================================================= */
 
-LEFT JOIN current_team_season_info
+JOIN current_team_season_info
 
     ON standings.team_id =
        current_team_season_info.team_id
