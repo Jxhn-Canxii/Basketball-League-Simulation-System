@@ -76,7 +76,7 @@ class GameEngineService
 
         $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
     
-        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, $gameData->round, false);
+        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, false);
         $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
 
         $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
@@ -109,7 +109,7 @@ class GameEngineService
 
         $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
 
-        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, $gameData->round, true);
+        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, true);
         $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
 
         $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
@@ -171,7 +171,7 @@ class GameEngineService
         //core of the game
         $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
 
-        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, $gameData->round, true);
+        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, true);
         $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
 
         $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);

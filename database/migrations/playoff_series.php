@@ -10,19 +10,19 @@ return new class extends Migration
     {
         Schema::create('playoff_series', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('season_id');
+            $table->integer('season_id');
             $table->string('conference_id', 50)->nullable();
             $table->string('round', 50);
             $table->string('series_id', 255)->nullable();
-            $table->unsignedBigInteger('home_team_id');
-            $table->unsignedBigInteger('away_team_id');
+            $table->integer('home_team_id')->default(0);;
+            $table->integer('away_team_id')->default(0);;
             $table->integer('best_of')->default(7);
             $table->integer('home_wins')->default(0);
             $table->integer('away_wins')->default(0);
             $table->integer('series_length')->default(0);
             $table->tinyInteger('status')->default(0);
-            $table->unsignedBigInteger('winner_team_id')->nullable();
-            $table->unsignedBigInteger('loser_team_id')->nullable();
+            $table->integer('winner_team_id')->default(0);
+            $table->integer('loser_team_id')->default(0);
             $table->timestamps();
         });
     }

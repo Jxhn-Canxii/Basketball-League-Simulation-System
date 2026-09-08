@@ -4,14 +4,14 @@
             background: `
                 linear-gradient(45deg, 
                     ${
-                    (series.winner_id !== series.home_team?.id && series.winner_id !== null)
+                    (series.winner_id !== series.home_team?.id && series.winner_id !== 0)
                         ? '#b0b0b0 0%, #888888 50%, #666666 50%, #444444 100%'
                         : `#${series.home_team?.secondary_color} 0%, #${series.home_team?.secondary_color} 50%, #${series.home_team?.primary_color} 50%, #${series.home_team?.primary_color} 100%`
                     }
                 ),
                 linear-gradient(-45deg, 
                     ${
-                    (series.winner_id !== series.away_team?.id && series.winner_id !== null)
+                    (series.winner_id !== series.away_team?.id && series.winner_id !== 0)
                         ? '#b0b0b0 0%, #888888 50%, #666666 50%, #444444 100%'
                         : `#${series.away_team?.primary_color} 0%, #${series.away_team?.primary_color} 50%, #${series.away_team?.secondary_color} 50%, #${series.away_team?.secondary_color} 100%`
                     }

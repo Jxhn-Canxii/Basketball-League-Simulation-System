@@ -1078,7 +1078,7 @@ class PlayerStatsService
         }
     }
 
-    public function updateSeasonStats($playerGameStats, $round, $isPlayoff)
+    public function updateSeasonStats($playerGameStats, $isPlayoff)
     {
         if (empty($playerGameStats)) {
             throw new \Exception("Player game stats are empty. Cannot update season stats.");
@@ -1121,7 +1121,7 @@ class PlayerStatsService
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
 
                 if ($isPlayoff) {
-                    $this->storeStats->storePlayerSeasonPlayoffStats($stats['team_id'], $stats['player_id'], $round);
+                    $this->storeStats->storePlayerSeasonPlayoffStats($stats['team_id'], $stats['player_id']);
                 } else {
                     $this->storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
                 }

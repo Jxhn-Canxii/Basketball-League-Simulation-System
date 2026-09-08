@@ -366,7 +366,7 @@ class PlayerSeasonStatsService
         }
     }
 
-    public function storePlayerSeasonPlayoffStats($teamId, $playerId, $round)
+    public function storePlayerSeasonPlayoffStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or default to 1 if none exists
