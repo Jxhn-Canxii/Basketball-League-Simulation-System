@@ -30,6 +30,7 @@ return new class extends Migration
             
             // Career Totals
             $table->integer('total_playoff_appearances')->default(0);
+            $table->integer('total_playoff_games')->default(0);
             $table->integer('seasons_played_in_playoffs')->default(0);
             $table->integer('total_seasons_played')->default(0);
             $table->integer('championships_won')->default(0);

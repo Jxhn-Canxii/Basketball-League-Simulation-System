@@ -187,7 +187,7 @@ class PlayerSeasonStatsService
                     'avg_blocks_per_game' => $playerStats->avg_blocks_per_game,
                     'avg_turnovers_per_game' => $playerStats->avg_turnovers_per_game,
                     'avg_fouls_per_game' => $playerStats->avg_fouls_per_game,
-                    'total_games' => $gamesPlayedCount,
+                    'total_games' => $totalSeasonGames,
                     'total_games_played' => $playerStats->total_games_played,  // Add total_games_played here
                     'total_points' => $playerStats->total_points,
                     'total_rebounds' => $playerStats->total_rebounds,
@@ -366,7 +366,7 @@ class PlayerSeasonStatsService
         }
     }
 
-    public function storePlayerSeasonPlayoffStats($teamId, $playerId)
+    public function storePlayerSeasonPlayoffStats($teamId, $playerId, $round)
     {
         try {
             // Get the latest season ID or default to 1 if none exists
@@ -433,7 +433,6 @@ class PlayerSeasonStatsService
                 // Set default stats if no game stats exist
                 $playerStats = (object) [
                     'player_id' => $player->id,
-                    'total_games' => 0,
                     'total_games_played' => 0,
                     'total_minutes_played' => 0,
                     'total_points' => 0,
@@ -486,7 +485,6 @@ class PlayerSeasonStatsService
                     'avg_blocks_per_game' => $playerStats->avg_blocks_per_game,
                     'avg_turnovers_per_game' => $playerStats->avg_turnovers_per_game,
                     'avg_fouls_per_game' => $playerStats->avg_fouls_per_game,
-                    'total_games' => $playerStats->total_games_played,
                     'total_games_played' => $playerStats->total_games_played,
                     'total_minutes_played' => $playerStats->total_minutes_played,
                     'total_points' => $playerStats->total_points,

@@ -511,13 +511,39 @@ class PlayoffStatsService
                 ->where('series_identifier', $seriesIdentifier)
                 ->exists();
 
+            // Get the series data
+            $series = DB::table('playoff_series')
+                ->where('series_id', $gameData->series_id)
+                ->where('status', 2) // finished
+                ->first();
+
+            if($series->winner_team_id > 0){
+
+                $gamesPlayed =  DB::table('player_season_playoff_stats')
+                            ->where('player_id', $playerId)
+                            ->value('total_games_played');
+            
+                $seriesGameCount = config('playoff_series.rounds.'.$round) ?? 1;
+
+                $currentData =  DB::table('player_season_playoff_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $gameData->season_id)
+                    ->value('total_games_played');
+                    
+                $updatedTotalGames = $currentData + $seriesGameCount;
+
+                DB::table('player_playoff_appearances')
+                    ->where('player_id', $playerId)
+                    ->update(['total_playoff_games' => $gamesPlayed]);
+                
+                DB::table('player_season_playoff_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $gameData->season_id)
+                    ->update(['total_games' => $updatedTotalGames]);
+            }
+
             // Championship win condition: finals + winner + completed series
             if ($round === 'finals' && $playerTeamId) {
-                // Get the series data
-                $series = DB::table('playoff_series')
-                    ->where('series_id', $gameData->series_id)
-                    ->where('status', 2) // finished
-                    ->first();
 
                 // Check if the player's team is the series winner
                 if ($series && $series->winner_team_id == $playerTeamId) {
@@ -554,7 +580,7 @@ class PlayoffStatsService
             // Increment total playoff appearances
             DB::table('player_playoff_appearances')
                 ->where('player_id', $playerId)
-                ->increment('total_playoff_appearances');
+                ->increment('total_playoff_series_appearances');
         });
     }
 
