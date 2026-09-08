@@ -575,7 +575,7 @@ class PlayerStatsService
             foreach ($playmakers as &$playmaker) {
                 // Randomly assign assists to each playmaker in the range of 0 to remaining assists
                 $maxForThisPlayer = min($remainingAssists, rand(0, floor($remainingAssists / 2)));
-                $playmaker['assists'] = $maxForThisPlayer;  // Assign assists
+                $playmaker['assists'] = min(0,$maxForThisPlayer);  // Assign assists
 
                 // Deduct from remaining assists
                 $remainingAssists -= $maxForThisPlayer;

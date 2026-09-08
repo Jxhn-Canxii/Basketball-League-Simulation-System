@@ -16,7 +16,7 @@ return new class extends Migration
             $table->id();
 
             $table->string('game_id');
-            $table->string('series_id');
+            $table->string('series_id')->default(0);
 
             $table->string('round');
             $table->integer('season_id');

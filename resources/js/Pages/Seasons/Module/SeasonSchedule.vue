@@ -139,28 +139,39 @@
             <div class="flex justify-center items-center h-full">
                 <!-- Centered Loader -->
                 <div class="flex flex-col items-center space-y-6">
+                
+                    <div class="text-white text-xl text-center font-mono mb-4">
+                        <h2>Liga Pilipinas</h2>
+                        <small>#{{ activeGameId ?? '-' }}</small>
+                    </div>
+
+                    <div class="w-48 h-6 bg-purple-600 rounded-md animate-pulse mt-4"></div>
+                    
+                    <div class="w-32 h-6 bg-red-500 rounded-md animate-pulse mt-4"></div>
                     <!-- Placeholder for Home Team Name -->
-                    <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
+                    <div class="w-32 h-6 bg-orange-600 rounded-md animate-pulse"></div>
 
                     <!-- Placeholder for Home Team Score -->
                     <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
 
                     <!-- Placeholder for "VS" Text -->
                     <div class="text-white text-xl font-semibold block">
-                        <span class="animate-pulse">VS</span>
+                        <span class="animate-bounce">
+                            <i class="fa fa-basketball fa-4xl text-orange-800"></i>
+                        </span>
                     </div>
 
                     <!-- Placeholder for Away Team Score -->
-                    <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
+                    <div class="w-24 h-8 bg-blue-600 rounded-md animate-pulse"></div>
 
                     <!-- Placeholder for Away Team Name -->
                     <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
 
                     <!-- Placeholder for Round or Game Status -->
-                    <div class="w-48 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
+                    <div class="w-48 h-6 bg-purple-600 rounded-md animate-pulse mt-4"></div>
 
                     <!-- Placeholder for Matchup Record -->
-                    <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
+                    <div class="w-32 h-6 bg-red-500 rounded-md animate-pulse mt-4"></div>
                 </div>
             </div>
         </div>

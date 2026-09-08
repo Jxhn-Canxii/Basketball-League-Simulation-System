@@ -125,30 +125,30 @@ class PlayerRatingsService
 
             // Assign the top 3 players as "star player"
             $rankedPlayers->take(1)->each(function ($playerStat) {
-                Player::where('id', $playerStat->player_id)->update(['role' => 'star player']);
+                Player::where('id', $playerStat->player_id)->update(['role' => 'star player','is_reserved' => false]);
             });
             // Assign the next 2 players as "all star"
             $rankedPlayers->slice(1, 2)->each(function ($playerStat) {
-                Player::where('id', $playerStat->player_id)->update(['role' => 'all star']);
+                Player::where('id', $playerStat->player_id)->update(['role' => 'all star','is_reserved' => false]);
             });
 
             // Assign the next 2 players as "starter"
             $rankedPlayers->slice(3, 2)->each(function ($playerStat) {
-                Player::where('id', $playerStat->player_id)->update(['role' => 'starter']);
+                Player::where('id', $playerStat->player_id)->update(['role' => 'starter','is_reserved' => false]);
             });
 
             // Assign the next 5 players as "role players"
             foreach ($rankedPlayers->slice(5, 5) as $playerStat) {
-                Player::where('id', $playerStat->player_id)->update(['role' => 'role player']);
+                Player::where('id', $playerStat->player_id)->update(['role' => 'role player','is_reserved' => false]);
             }
 
             // Assign the next 2 players as "bench players"
-            foreach ($rankedPlayers->slice(10, 5) as $playerStat) {
-                Player::where('id', $playerStat->player_id)->update(['role' => 'bench']);
+            foreach ($rankedPlayers->slice(10, 2) as $playerStat) {
+                Player::where('id', $playerStat->player_id)->update(['role' => 'bench','is_reserved' => false]);
             }
 
             foreach ($rankedPlayers->slice(12, 3) as $playerStat) {
-                Player::where('id', $playerStat->player_id)->update(['is_reserved' => true]);
+                Player::where('id', $playerStat->player_id)->update(['role' => 'bench','is_reserved' => true]);
             }
 
             foreach ($rankedPlayers as $player) {

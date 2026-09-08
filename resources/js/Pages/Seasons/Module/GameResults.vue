@@ -11,15 +11,21 @@
                 </div> 
 
                 <!-- Existing skeleton loader content -->
-                <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
+                <div class="w-48 h-6 bg-purple-600 rounded-md animate-pulse mt-4"></div>
+                <div class="w-32 h-6 bg-red-500 rounded-md animate-pulse mt-4"></div>
+                <div class="w-32 h-6 bg-orange-600 rounded-md animate-pulse"></div>
                 <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
-                <div class="text-white text-md font-semibold">
-                   <span class="animate-pulse font-mono">Loading Game Data: {{ formatTime(time) }}</span>
+                <div class="text-white text-md flex flex-col font-semibold">
+                    <span class="animate-spin">
+                            <i class="fa fa-basketball text-4xl text-orange-800"></i>
+                    </span>
                 </div>
-                <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
+                <div class="w-24 h-8 bg-blue-600 flex justify-center items-center rounded-md animate-pulse">
+                    <!-- <sup class="mb-4 text-nowrap">Preparing {{ formatTime(time) }}s...</sup> -->
+                </div>
                 <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
-                <div class="w-48 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
-                <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse mt-4"></div>
+                <div class="w-48 h-6 bg-purple-600 rounded-md animate-pulse mt-4"></div>
+                <div class="w-32 h-6 bg-red-500 rounded-md animate-pulse mt-4"></div>
             </div>
         </div>
     </div>
@@ -588,7 +594,7 @@
                 <h3 class="text-lg text-white font-semibold mb-1">Player of the Game</h3>
                 <div
                     v-if="bestPlayer"
-                    class="bg-white shadow-lg p-4 rounded-lg text-black"
+                    class="bg-white shadow-lg p-4 rounded-lg text-black team-card"
                 >
                     <div class="flex flex-col items-center text-white mx-0 p-0 rounded"
                     :style="{
@@ -689,7 +695,7 @@
                                     bestPlayer?.three_point_percentage
                                 }}</span>
                             </span>
-                            <p class="text-xl text-gray-900 font-bold">3P %</p>
+                            <p class="text-xl text-gray-900 font-bold">3PT %</p>
                         </li>
                         <li class="flex flex-col items-center" v-if="bestPlayer?.ft_percent > 80 && bestPlayer?.ft_made > 10">
                             <span
@@ -794,7 +800,7 @@
                     <ul class="space-y-2">
                         <li
                             v-if="statLeaders.points"
-                            class="flex items-center bg-white text-black p-2 rounded  border-gray-300 pb-2"
+                            class="team-card flex items-center bg-white text-black p-2 rounded  border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -828,7 +834,7 @@
                                 backgroundColor:
                                     '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color  : gameDetails?.away_team.primary_color ),
                             }"
-                            class="flex items-center  p-2 border-gray-300 pb-2"
+                            class="team-card flex items-center  p-2 border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -858,7 +864,7 @@
                         </li>
                         <li
                             v-if="statLeaders.rebounds"
-                            class="flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
+                            class="team-card flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -892,7 +898,7 @@
                                 backgroundColor:
                                     '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color  : gameDetails?.away_team.primary_color ),
                             }"
-                            class="flex items-center  p-2 border-gray-300 pb-2"
+                            class="team-card flex items-center  p-2 border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -919,7 +925,7 @@
                         </li>
                         <li
                             v-if="statLeaders.blocks"
-                            class="flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
+                            class="team-card flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
                         >
                             <span
                                 class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
@@ -950,7 +956,7 @@
                         backgroundColor:
                             '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color : gameDetails?.away_team.primary_color),
                     }"
-                    class="p-2 flex-grow mt-3 text-white">
+                    class="team-card p-2 flex-grow mt-3 text-white">
                         <div class="border-l-4 border-red-500 h-full overflow-hidden">
                             <div class="flex items-center h-6 px-2">
                                 <span class="animate-pulse flex items-center">
@@ -977,7 +983,7 @@
                         </div>
                     </div>
                     <div 
-                    class="p-2 flex flex-wrap flex-col mt-1 text-white bg-gray-100"  v-if="!props.showBoxScore && seasonLeaders">
+                    class="team-card p-2 flex flex-wrap flex-col mt-1 text-white bg-gray-100"  v-if="!props.showBoxScore && seasonLeaders">
                         <small class="text-xs text-nowrap text-gray-500">{{ seasonLeaders.message }}</small>
                         <small class="text-xs text-nowrap text-red-500 font-bold" :title="seasonLeaders.draft_status"><b class="text-sm text-blue-500">{{ seasonLeaders.player_name }}</b> ({{ seasonLeaders.stat_value }} {{ seasonLeaders.stat_type }}) | <i class="text-gray-700">{{ seasonLeaders.team_acronym }}</i></small>
                         <small class="text-xs text-nowrap text-gray-900 hidden">{{ seasonLeaders.team_name }}</small>
@@ -1161,7 +1167,6 @@ onMounted(() => {
 
 <style scoped>
 .team-card {
-    background-color: #1a202c; /* Dark background for team cards */
     transition: transform 0.2s;
 }
 
