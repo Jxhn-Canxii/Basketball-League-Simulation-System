@@ -965,7 +965,7 @@ class PlayoffService
                 'conference_id' => $conferenceId,
                 'home_team_id' => $game['home_id'],
                 'away_team_id' => $game['away_id'],
-                'best_of' => 1,
+                'race_to' => 1,
                 'series_length' => 1, // Fixed best-of-1 for play-ins
                 'home_wins' => 0,
                 'away_wins' => 0,
@@ -1013,7 +1013,7 @@ class PlayoffService
 
         foreach ($pairings as $pairing) {
             $seriesId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}";
-            $bestOf = intval(floor($seriesLength / 2) + 1);
+            $raceTo = intval(floor($seriesLength / 2) + 1);
 
             if(($pairing[0] == 0) || ($pairing[1] == 0)){
                 throw new \Exception("Pairings should both have legit team IDs");
@@ -1026,7 +1026,7 @@ class PlayoffService
                 'conference_id' => $conferenceId,
                 'home_team_id' => $pairing[0],
                 'away_team_id' => $pairing[1],
-                'best_of' => $bestOf,
+                'race_to' => $raceTo,
                 'series_length' => $seriesLength,
                 'home_wins' => 0,
                 'away_wins' => 0,
