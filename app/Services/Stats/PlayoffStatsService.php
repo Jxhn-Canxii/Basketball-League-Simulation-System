@@ -621,11 +621,17 @@ class PlayoffStatsService
                 $updateData['winner_team_id'] = $series->away_team_id;
                 $updateData['loser_team_id'] = $series->home_team_id;
             }
+
+            DB::table('schedules')
+                ->where('series_id', $gameData->series_id)
+                ->where('status', 1)
+                ->update(['status' => 3]); //remove remaining schedules
         }
 
         // Update playoff_series table
         DB::table('playoff_series')
             ->where('series_id', $gameData->series_id)
             ->update($updateData);
+        
     }
 }

@@ -45,13 +45,13 @@ class PlayoffService
         $type     = $request->type; // 1 = finished playoffs, 2 = single update
 
         $playoffs   = $this->playoffTreeWithGames($seasonId, $status, $type, $start);
-        $games   = $this->playoffSeriesPendingGames($seasonId);
-        $activeRound = $this->activeRound($seasonId);
+        $gameNumber = $this->activeGameNumber($seasonId);
+        $games = $this->playoffSeriesPendingGames($seasonId,$gameNumber);
 
         return response()->json([
             'playoffs' => $playoffs,
             'pending' => $games,
-            'active_series_game' => $activeRound,
+            'active_series_game' => $gameNumber,
         ]);
     }
 
@@ -163,8 +163,9 @@ class PlayoffService
     {
         try {
             $seasonId = $request->seasonId; // Assuming seasonId is passed in the request
+            $gameNumber = $request->gameNumber; // Assuming seasonId is passed in the request
 
-            $pendingGames = $this->playoffSeriesPendingGames($seasonId); // Call the method
+            $pendingGames = $this->playoffSeriesPendingGames($seasonId,$gameNumber); // Call the method
 
             return response()->json([
                 'pending' => $pendingGames,
@@ -174,7 +175,7 @@ class PlayoffService
         }
     }
 
-    private function playoffSeriesPendingGames($seasonId)
+    private function playoffSeriesPendingGames($seasonId,$gameNumber)
     {
         try {
             $games = [];
@@ -184,6 +185,7 @@ class PlayoffService
                 ->join('playoff_series as ps', 'ps.series_id', '=', 's.series_id')
                 ->where('s.season_id', $seasonId)
                 ->where('s.status', 1)      // only pending games
+                ->where('s.game_number','<=', $gameNumber)      // only pending games
                 ->where('ps.status', '!=', 2) // exclude finished series
                 ->orderBy('s.game_number', 'asc')
                 ->orderBy('s.round', 'asc')
@@ -1617,9 +1619,9 @@ class PlayoffService
         });
     }
 
-    private function activeRound($seasonId){
+    private function activeGameNumber($seasonId){
         
-        $activeRound = DB::table('schedules')
+        $activeGameNumber = DB::table('schedules')
                     ->select('game_number')
                     ->where('season_id', $seasonId)
                     ->where('status', 1)
@@ -1627,7 +1629,7 @@ class PlayoffService
                     ->orderBy('id')
                     ->first();
         
-        return $activeRound ? $activeRound->game_number : 0;
+        return $activeGameNumber ? $activeGameNumber->game_number : 0;
     
     }
 }

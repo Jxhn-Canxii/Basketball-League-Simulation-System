@@ -773,6 +773,7 @@ class ScheduleService
                     'secondary_color' => optional($standingsData[$game->away_id])->secondary_color ?? '000000',
                 ],
                 'winner' => $game->winner_id,
+                'status' => $game->status,
                 'season_id' => $seasonId,
             ];
         }
