@@ -265,9 +265,10 @@
     const seasonStatus = ref(0);
     const transactionUpdate = ref(0);
     const showGameResults = ref(true);
+    const currentConference = ref(1);
     const flipTimer = ref(null);
 
-    const emit = defineEmits(["round","season_status","transaction_update","transaction_id", "simulate_next_conference"]);
+    const emit = defineEmits(["conference","round","season_status","transaction_update","transaction_id", "simulate_next_conference"]);
     const props = defineProps({
         season_id: { type: [Number, String], required: true },
         conference_id: { type: [Number, String], required: true },
@@ -434,14 +435,16 @@
             activeGameId.value = response.data.game_id ?? 0;
             seasonStatus.value = response.data.season_status ?? 0;
             currentRound.value = response.data.round ?? 0;
+            currentConference.value = response.data.conference_id ?? 0;
             transactionUpdate.value = response.data.transaction_count;
             showGameResults.value = true; // Show game results first
 
             // Wait for the user to view results before moving to the next game
             activeConferenceTab.value = conference_id;
-
+            
             emit('season_status',seasonStatus.value);
             emit('round',currentRound.value);
+            emit('conference',currentConference.value);
             emit('transaction_update',transactionUpdate.value);
             emit('transaction_id',conference_id);
 

@@ -48,12 +48,12 @@
             <!-- Standings UI (Left Side) -->
             <div class="md:col-span-3 sm:col-span-1 overflow-y-auto p-1 bg-black">
                 <Standings v-if="selectedConference != 0" :key="updateKey" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
-                <Top15MVPCandidate v-else :key="updateKey" :current_round="updateKey"/>
+                <Top15MVPCandidate v-else :key="updateKey" :current_round="currentRound"/>
 
-                <small class="text-white mt-3">Transaction ID:{{ updateKey }} || Conference ID: {{ selectedConference }} || Round {{ currentRound ?? 0 }} || Transaction Update: {{ transactionUpdate }}</small>   
+                <small class="text-white mt-3">Transaction ID:{{ updateKey }} || Conference ID: {{ currentConference }} || Round {{ currentRound ?? 0 }}</small>   
                 <!-- <Top15MVPCandidate v-if="activeConferenceTab" :key="updateKey" /> -->
-                <RecentTransactions v-if="!boostMode && seasonStatus < 3" :key="transactionUpdate"/>
-                <!-- <Top15MVPCandidate v-if="seasonStatus == 2 && (currentRound % 2 == 0)" :key="currentRound" :current_round="currentRound"/> -->
+                <!-- <RecentTransactions v-if="!boostMode && seasonStatus < 3" :key="transactionUpdate"/> -->
+                <!-- <Top15MVPCandidate v-if="seasonStatus == 2 && (currentRound % 2 != 0)" :key="currentRound" :current_round="currentRound"/> -->
             </div>
             <!-- Schedule and Results UI (Right Side) -->
             <div class="md:col-span-4 sm:col-span-1 overflow-y-auto pt-0 bg-black">
@@ -62,13 +62,14 @@
                 @season_status="(status) => handleSeasonStatus(status)" 
                 @transaction_update="(transaction_change) => handleTransactionUpdate(transaction_change)" 
                 @round="(round) => handleCurrentRound(round)" 
+                @conference="(conference) => handleCurrentConference(conference)" 
                 :season_id="props.season_id"
                 :key="selectedConference"
                 :conference_id="activeConferenceTab" 
                 :simulate_next="isAutoSimulate"
                 :season_data="season_info" />
                 <br>
-                <Top15MVPCandidate v-if="!boostMode && seasonStatus < 3 && (currentRound % 3 == 0) && currentRound != 0" :key="currentRound" :current_round="currentRound"/>
+                <!-- <Top15MVPCandidate v-if="!boostMode && seasonStatus < 3 && (currentRound % 3 == 0) && currentRound != 0" :key="currentRound" :current_round="currentRound"/> -->
                 <!-- <RecentNews v-if="seasonStatus < 3 && (currentRound % 2 != 0)" :key="updateKey" :season_status="seasonStatus" :season_id="props.season_id"/> -->
             </div>
         </div>
@@ -90,6 +91,7 @@ const season_info = ref(false);
 const seasonStatus = ref(false);
 const activeConferenceTab = ref(false);
 const currentRound = ref(0);
+const currentConference = ref(1);
 const isAutoSimulate = ref(false);
 const updateKey = ref(0);
 const selectedConference = ref(1);
@@ -134,6 +136,11 @@ const handleSeasonStatus = (status) => {
 const handleCurrentRound = (round) => {
     console.log('Active Round: '+round);
     currentRound.value = round;
+}
+
+const handleCurrentConference = (conference) => {
+    console.log('Active Conference: '+conference);
+    currentConference.value = conference;
 }
 
 const handleTransactionUpdate = (transaction_change) => {

@@ -101,53 +101,74 @@
   </div>
 
     <!-- Game News Modal -->
-    <div v-if="isGameNewsModalOpen && game_news" class="fixed rounded-lg bg-transparent top-[20%] right-[36%] p-2">
-        <div class="grid-cols-1 bg-gray-900 p-2 rounded-2xl shadow-lg shadow-blue-500" @click.prevent="isGameNewsModalOpen = false">
-            <h3 class="text-lg font-semibold mb-2 text-white">Game Result:</h3>
-            <div class="p-2 m-1 bg-slate-800 rounded text-white" v-if="break_down">
-                <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden text-sm">
-                    <thead class="">
-                        <tr class="text-bold bg-black">
-                            <th class="py-2 px-3 text-xs text-left border">Team</th>
-                            <th class="py-2 px-3 text-xs border">Q1</th>
-                            <th class="py-2 px-3 text-xs border">Q2</th>
-                            <th class="py-2 px-3 text-xs opacity-50 border">1H</th>
-                            <th class="py-2 px-3 text-xs border">Q3</th>
-                            <th class="py-2 px-3 text-xs border">Q4</th>
-                            <th class="py-2 px-3 text-xs opacity-50 text-gray-300 border">2H</th>
-                            <th class="py-2 px-3 text-xs border" v-if="is_overtime" v-for="ot in is_overtime" :key="ot">OT{{ ot }}</th>
-                            <th class="py-2 px-3 text-md text-red-500 border">TOTAL</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="b in break_down" :key="b.id"
-                        :style="{
-                            backgroundColor:
-                                '#' + (series?.home_team?.id == b?.team_id ? series?.home_team.primary_color : '00000f'),
-                        }"
-                        class="hover:bg-gray-700">
-                            <td class="py-2 px-3 text-sm text-left border">{{ b.team_name }}</td>
-                            <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q1 }}</td>
-                            <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q2 }}</td>
-                            <td class="py-2 px-3 text-xs text-white text-center opacity-50 border">{{ b.Q1 + b.Q2 }}</td>
-                            <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q3 }}</td>
-                            <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q4 }}</td>
-                            <td class="py-2 px-3 text-xs text-white text-center opacity-50 border">{{ b.Q3 + b.Q4 }}</td>
-                            <td class="py-2 px-3 text-md text-white text-center border" v-if="is_overtime > 0">{{ b.OT1 }}</td>
-                            <td class="py-2 px-3 text-md text-white text-center border" v-if="is_overtime > 1">{{ b.OT2 }}</td>
-                            <td class="py-2 px-3 text-md text-white text-center border" v-if="is_overtime > 2">{{ b.OT3 }}</td>
-                            <td class="py-2 px-3 text-lg text-center border font-bold text-white">
-                                {{ b.total }}
-                                <!-- <sup v-if="b.team_id == series?.game_winner_id">
-                                    <i class="fa fa-star fa-sm"></i>
-                                </sup> -->
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
+    <div v-if="isGameNewsModalOpen && series.news" class="fixed rounded-lg bg-transparent top-[20%] right-[25%] p-2">
+        <div class="grid grid-cols-3 bg-gray-900 p-2 rounded-2xl shadow-lg shadow-blue-500" @click.prevent="isGameNewsModalOpen = false">
+            <div class="col-span-2">
+                <h3 class="text-lg font-semibold mb-2 text-white">Game Result: ({{ series?.series_lead ?? '-' }})</h3>
+                <div class="p-2 m-1 bg-slate-800 rounded text-white" v-if="series.break_down">
+                    <table class="min-w-full bg-gray-800 rounded-lg overflow-hidden text-sm">
+                        <thead class="">
+                            <tr class="text-bold bg-black">
+                                <th class="py-2 px-3 text-xs text-left border">Team</th>
+                                <th class="py-2 px-3 text-xs border">Q1</th>
+                                <th class="py-2 px-3 text-xs border">Q2</th>
+                                <th class="py-2 px-3 text-xs opacity-50 border">1H</th>
+                                <th class="py-2 px-3 text-xs border">Q3</th>
+                                <th class="py-2 px-3 text-xs border">Q4</th>
+                                <th class="py-2 px-3 text-xs opacity-50 text-gray-300 border">2H</th>
+                                <th class="py-2 px-3 text-xs border" v-if="series.is_overtime" v-for="ot in series.is_overtime" :key="ot">OT{{ ot }}</th>
+                                <th class="py-2 px-3 text-md text-red-500 border">TOTAL</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr v-for="b in series.break_down" :key="b.id"
+                            :style="{
+                                backgroundColor:
+                                    '#' + (series?.home_team?.id == b?.team_id ? series?.home_team.primary_color : '00000f'),
+                            }"
+                            class="hover:bg-gray-700">
+                                <td class="py-2 px-3 text-sm text-left border">{{ b.team_name }}</td>
+                                <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q1 }}</td>
+                                <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q2 }}</td>
+                                <td class="py-2 px-3 text-xs text-white text-center opacity-50 border">{{ b.Q1 + b.Q2 }}</td>
+                                <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q3 }}</td>
+                                <td class="py-2 px-3 text-md text-white text-center border">{{ b.Q4 }}</td>
+                                <td class="py-2 px-3 text-xs text-white text-center opacity-50 border">{{ b.Q3 + b.Q4 }}</td>
+                                <td class="py-2 px-3 text-md text-white text-center border" v-if="series.is_overtime > 0">{{ b.OT1 }}</td>
+                                <td class="py-2 px-3 text-md text-white text-center border" v-if="series.is_overtime > 1">{{ b.OT2 }}</td>
+                                <td class="py-2 px-3 text-md text-white text-center border" v-if="series.is_overtime > 2">{{ b.OT3 }}</td>
+                                <td class="py-2 px-3 text-lg text-center border font-bold text-white">
+                                    {{ b.total }}
+                                    <!-- <sup v-if="b.team_id == series?.game_winner_id">
+                                        <i class="fa fa-star fa-sm"></i>
+                                    </sup> -->
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <h3 class="text-lg font-semibold text-white">Game Summary:</h3>
+                <GameNews :key="series?.news.id" :data="series?.news" :showNews="true" :textLarge="true" />
+                </div>
+            <div>
+                <h3 class="text-lg font-semibold mt-2 text-white" v-if="series.past_results?.length > 0">Past Results:</h3>
+                <div class="p-2 flex flex-wrap flex-col max-w-full m-1 bg-slate-800 rounded gap-2 text-white" v-if="series.past_results?.length > 0">
+                    <div 
+                    v-for="ps in series.past_results"
+                    :key="ps.id"
+                    :style="{
+                        backgroundColor:
+                            '#' + (ps?.primary_color ?? '00000f'),
+                    }"
+                    class="h-20 w-30 block text-center p-2 items-center rounded-lg">
+                        <p class="text-nowrap">{{ ps.home_score }} - {{ ps.away_score }} </p>
+                        <hr>
+                        <sup class="text-xs mt-2">{{ ps.winner_team_name ?? '-' }} wins</sup>
+                        <br>
+                        <sup class="text-white"><b class="text-yellow-400">G{{ ps.game_number }}</b> @{{ ps.home_team_name == ps.winner_team_name ? ps.home_team_name : ps.home_team_name}}</sup>
+                    </div>
+                </div>
             </div>
-            <h3 class="text-lg font-semibold text-white">Game Summary:</h3>
-            <GameNews :key="game_news.id" :data="game_news" :showNews="true" :textLarge="true" />
         </div>
     </div>
 </template>
@@ -184,9 +205,6 @@ const season_info = ref(false);
 const season_playoffs = ref(false);
 const is_play_ins = ref(false);
 const active_series_id = ref(false);
-const game_news = ref(false);
-const break_down = ref(false);
-const is_overtime = ref(0);
 const series = ref(0);
 
 const form = useForm({
@@ -395,9 +413,6 @@ const simulateGame = async (id, game_id, type, index, round) => {
             schedule_id: id,
         });
 
-        game_news.value = response.data.news;
-        is_overtime.value = response.data.is_overtime;
-        break_down.value = response.data.breakdown;
         series.value = response.data.series;
 
         // season_playoffs.value.playoffs[round][index] = response.data.schedule;

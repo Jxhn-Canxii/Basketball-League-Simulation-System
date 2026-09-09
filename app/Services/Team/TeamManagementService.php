@@ -24,6 +24,171 @@ class TeamManagementService
         $this->freeAgencyService = new FreeAgencyService();
     }
 
+     public function getActivePlayersSorted($teamId, $gameId, $rolePriority, $round)
+    {
+        $seasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id(); // You must implement this
+
+        $players = Player::where('team_id', $teamId)
+            ->where('is_active', 1)
+            ->get();
+
+        $playerEfficiencies = [];
+
+        foreach ($players as $player) {
+            $playerId = $player->id;
+            $role = $player->role;
+
+            // Years pro = distinct seasons
+            $yearsPro = DB::table('player_season_stats_archives')
+                ->where('player_id', $playerId)
+                ->distinct('season_id')
+                ->count('season_id') + 1;
+
+            // Current season efficiency sum
+            $currentEff = DB::table('player_season_stats')
+                ->where('season_id', $seasonId)
+                ->where('player_id', $playerId)
+                ->sum('eff') ?? 0;
+
+            // Last 5 games from previous season (only if early season)
+            $lastFiveGamesEff = DB::table('player_game_stats')
+                ->where('season_id', $previousSeasonId)
+                ->where('player_id', $playerId)
+                ->orderByDesc('id')
+                ->limit(5)
+                ->sum('eff') ?? 0;
+
+            $totalEff = $currentEff + $lastFiveGamesEff;
+
+            // Draft info
+            $draft = DB::table('drafts')
+                ->where('player_id', $playerId)
+                ->where('season_id', $seasonId)
+                ->first();
+
+            $playerFouls = DB::table('player_per_quarter_stats')
+                ->where('player_id', $playerId)
+                ->where('game_id', $gameId)
+                ->sum('fouls');
+
+            $isFouledOut = ($playerFouls >= 5) ? 1 : 0;
+
+            $player->is_fouled_out = $isFouledOut;
+            $player->last_quarter_fouls = $playerFouls;
+            
+            $playerEfficiencies[] = [
+                'player' => $player,
+                'role' => $player->role,
+                'total_eff' => $totalEff,
+                'years_pro' => $yearsPro,
+                'is_rookie' => $draft ? true : false,
+                'draft_round' => $draft->round ?? null,
+                'draft_pick' => $draft->pick_number ?? null,
+                'is_fouled_out' =>  $isFouledOut,
+                'fatigue' =>  $player->fatigue,
+                'role_rank' => array_search($player->role, $rolePriority) !== false
+                    ? array_search($player->role, $rolePriority)
+                    : PHP_INT_MAX,
+            ];
+        }
+
+        // Sort by: total_eff DESC, role_priority ASC,fatigue ASC,years_pro DESC,
+        $sortedPlayers = collect($playerEfficiencies)->sort(function ($a, $b) {
+            return $b['total_eff'] <=> $a['total_eff']
+                ?: $a['role_rank'] <=> $b['role_rank']
+                ?: $a['fatigue'] <=> $b['fatigue']
+                ?: $b['years_pro'] <=> $a['years_pro'];
+        })->pluck('player')->values();
+
+        return $sortedPlayers;
+    }
+    
+    public function prepareFinalRoster($teamId)
+    {
+        $seasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id(); // You must implement this
+
+        $rolePriority = [
+            'star player' => 1,
+            'all star' => 2,
+            'starter' => 2,
+            'role player' => 5,
+            'bench' => 5,
+        ];
+
+        $players = DB::table('players as players')
+            ->select('players.*','drafts.round','drafts.pick_number')
+            ->leftJoin('drafts','drafts.player_id','=','players.id')
+            ->where('players.team_id', $teamId)
+            ->where('players.is_active', 1)
+            ->get();
+
+        $playerEfficiencies = [];
+
+        foreach ($players as $player) {
+            $playerId = $player->id;
+            $role = $player->role;
+            $isInjured = $player->is_injured;
+
+            // Years pro = distinct seasons
+            $yearsPro = DB::table('player_season_stats_archives')
+                ->where('player_id', $playerId)
+                ->distinct('season_id')
+                ->count('season_id') + 1;
+
+            // Current season efficiency sum
+            $totalEff = DB::table('player_season_stats')
+                ->where('season_id', $seasonId)
+                ->where('player_id', $playerId)
+                ->sum('eff') ?? 0;
+
+
+            $playerEfficiencies[] = [
+                'player' => $player,
+                'player_id' => $playerId,
+                'role' => $role,
+                'total_eff' => $totalEff,
+                'years_pro' => $yearsPro,
+                'is_rookie' => $player->is_drafted == 1 ? true : false,
+                'draft_round' => $player->round ?? null,
+                'draft_pick' => $player->pick_number ?? null,
+                'is_injured' => $isInjured ?? 0,
+                'role_rank' => array_search($player->role, $rolePriority) !== false
+                    ? array_search($player->role, $rolePriority)
+                    : PHP_INT_MAX,
+            ];
+        }
+
+        // Sort by: total_eff DESC, years_pro DESC, role_priority ASC
+        $sortedPlayers = collect($playerEfficiencies)->sort(function ($a, $b) {
+            return $a['is_injured'] <=> $b['is_injured']
+                ?: $b['total_eff'] <=> $a['total_eff']
+                ?: $b['years_pro'] <=> $a['years_pro']
+                ?: $a['role_rank'] <=> $b['role_rank'];
+        })->pluck('player')->values();
+
+        $sortedPlayers->slice(1, 12)->each(function ($playerStat) {
+
+                $newFatigue = $this->fatigueAdjustment($playerStat->morale,$playerStat->fatigue);
+
+                Player::where('id', $playerStat->id)->update(['is_reserved' => false,'fatigue' => $newFatigue]);    
+        });
+
+        foreach ($sortedPlayers->slice(12, 15) as $playerStat) {
+                $newFatigue = $playerStat->is_injured == 1 ? $playerStat->fatigue - 5 : 0;
+
+                Player::where('id', $playerStat->id)->update(['is_reserved' => true,'fatigue' => $newFatigue, 'role' => 'bench' ]);
+
+                DB::table('player_season_stats')
+                    ->where('id', $playerStat->id)
+                    ->where('team_id', $teamId)
+                    ->where('season_id', $seasonId)
+                    ->update(['role' => 'bench' ]);   
+        }
+
+    }
+
     public function resetFatigue($teamId){
 
         DB::table('players')
@@ -35,132 +200,6 @@ class TeamManagementService
             ]);
     }
 
-    public function updateSeasonTeamChemistryBeforeGame($teamId)
-    {
-        $seasonId = get_current_season_id();
-
-        $chemistryRow = DB::table('team_season_info')
-            ->where('team_id', $teamId)
-            ->where('season_id', $seasonId)
-            ->first();
-
-        if (!$chemistryRow) {
-            DB::table('team_season_info')->insert([
-                'team_id' => $teamId,
-                'season_id' => $seasonId,
-                'chemistry' => 50, // default
-            ]);
-            $chemistry = 50;
-        } else {
-            $chemistry = $chemistryRow->chemistry;
-        }
-
-        $team = DB::table('teams')->where('id', $teamId)->first();
-        if (!$team) return;
-
-        $coachIQ = $chemistryRow->coach_iq;
-
-        // 🎯 Last game outcome
-        $lastGame = DB::table('schedules')
-            ->where(function ($query) use ($teamId) {
-                $query->where('home_id', $teamId)
-                    ->orWhere('away_id', $teamId);
-            })
-            ->where('season_id', $seasonId)
-            ->where('status', 2)
-            ->orderByDesc('id')
-            ->first();
-
-        if ($lastGame) {
-            $wonLastGame = $lastGame->winner_id === $teamId;
-            $chemistry += $wonLastGame ? 2 : -2;
-        }
-
-        // 🎯 Coach IQ
-        if ($coachIQ >= 90) $chemistry += 1;
-        elseif ($coachIQ <= 65) $chemistry -= 1;
-
-        // 🎯 Leadership
-        $leaders = DB::table('players')
-            ->where('team_id', $teamId)
-            ->orderByDesc('leadership_rating')
-            ->pluck('leadership_rating');
-
-        if ($leaders->isNotEmpty()) {
-            $avgLeadership = $leaders->avg();
-            if ($avgLeadership >= 85) $chemistry += 2;
-            elseif ($avgLeadership <= 60) $chemistry -= 2;
-        }
-
-        // 🎯 Season win percentage
-        $seasonGames = DB::table('schedules')
-            ->where(function ($query) use ($teamId) {
-                $query->where('home_id', $teamId)
-                    ->orWhere('away_id', $teamId);
-            })
-            ->where('season_id', $seasonId)
-            ->where('status', 2)
-            ->get();
-
-        $totalGames = $seasonGames->count();
-        $wins = $seasonGames->filter(fn($g) => $g->winner_id === $teamId)->count();
-
-        if ($totalGames >= 5) {
-            $winRate = $wins / $totalGames;
-            if ($winRate >= 0.7) $chemistry += 2;
-            elseif ($winRate <= 0.3) $chemistry -= 2;
-        }
-
-        // 🎯 Morale
-        $moraleAvg = DB::table('players')
-            ->where('team_id', $teamId)
-            ->avg('morale');
-
-        if (!is_null($moraleAvg)) {
-            if ($moraleAvg >= 85) $chemistry += 2;
-            elseif ($moraleAvg <= 60) $chemistry -= 2;
-        }
-
-        $injuredCount = DB::table('players')
-            ->where('team_id', $teamId)
-            ->where('is_injured', true) // assuming you track this
-            ->count();
-
-        if (!is_null($injuredCount)) {
-            if ($injuredCount >= 3) $chemistry -= 3;
-            elseif ($injuredCount === 1) $chemistry -= 1;
-        }
-
-        // 🧼 Clamp
-        $chemistry = max(0, min(100, round($chemistry)));
-
-        // ✅ Update
-        DB::table('team_season_info')
-            ->updateOrInsert(
-                ['team_id' => $teamId, 'season_id' => $seasonId],
-                ['chemistry' => $chemistry]
-            );
-
-        // $fatigueValue = max(0, min(10, round(100 - $chemistry)));
-    }
-    /**
-     * Fetches Coach IQ and Team Chemistry for a player's team.
-     * 
-     * @param int $teamId
-     * @return array ['coach_iq' => int, 'chemistry' => int]
-     */
-    private function getTeamCoachAndChemistry(int $teamId): array
-    {
-        $teamSeasonInfo = DB::table('team_season_info')
-            ->where('team_id', $teamId)
-            ->select('coach_iq', 'chemistry')
-            ->first();
-
-        return [
-            'coach_iq' => $teamSeasonInfo->coach_iq ?? 50, // Default if missing
-            'chemistry' => $teamSeasonInfo->chemistry ?? 50,
-        ];
-    }
 
     public function handleInjuredPlayer($player, $seasonId, $seasonStatus)
     {
@@ -912,5 +951,38 @@ class TeamManagementService
             ->count();
 
         return $gamesPlayedCount;
+    }
+
+      private function fatigueAdjustment($morale,$fatigue){
+
+        $moraleFactor = $this->moraleFactor($morale);
+
+        $newFatigue = min(0,($fatigue - ($fatigue * $moraleFactor)));
+
+        return $newFatigue;
+    }
+
+    private function moraleFactor(int $morale){
+
+            switch ($morale) {
+                case $morale > 90:
+                    return 0.50;
+                    break;
+                case $morale > 80 && $morale < 90:
+                    return 0.40;
+                    break;
+                case $morale > 70 && $morale < 80:
+                    return 0.30;
+                    break;
+                case $morale > 60 && $morale < 70:
+                    return 0.20;
+                    break;
+                case $morale < 50:
+                    return 0.10;
+                    break;
+                default:
+                    return 0.05;
+                    break;
+            }
     }
 }

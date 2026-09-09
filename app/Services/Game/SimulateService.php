@@ -59,7 +59,7 @@ class SimulateService
     {
         // try{
         //     DB::beginTransaction(); // Start transaction
-        
+    
             $currentSeasonId = get_current_season_id();
 
             $season = Seasons::find($currentSeasonId);
@@ -162,6 +162,7 @@ class SimulateService
                 'season_status' => $season->status,
                 'round' => $gameData->round,
                 'transaction_count' => $transactionCount,
+                'conference_id' => $gameData->conference_id,
                 // 'data' => $gameResult,
                 // 'playerGameStats' => $playerGameStats,
             ]);
@@ -255,6 +256,7 @@ class SimulateService
                     'playoff_series.home_team_id',
                     'playoff_series.away_team_id',
                     'playoff_series.series_length as best_of',
+                    'playoff_series.race_to',
                     'playoff_series.home_wins',
                     'playoff_series.away_wins',
                     DB::raw('CASE WHEN playoff_series.status = 2 THEN 1 ELSE 0 END as completed'),
@@ -280,13 +282,22 @@ class SimulateService
             $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
             // Determine series lead or result
             $seriesLead = '';
+            $series->home_wins = ($gameData->winner_id ==  $series->home_team_id) ? $series->home_wins + 1 : $series->home_wins;
+            $series->away_wins = ($gameData->winner_id ==  $series->away_team_id) ? $series->away_wins + 1 : $series->away_wins;
+
             if ($series->completed) {
                 $winnerName = $series->winner_team_id == $series->home_team_id ? $homeTeamName : $awayTeamName;
                 $seriesLead = "{$winnerName} Wins {$series->home_wins}-{$series->away_wins}";
             } else {
+    
+                if ($series->home_wins == $series->race_to || $series->away_wins == $series->race_to) {
+                    $winnerName = $series->winner_team_id == $series->home_team_id ? $homeTeamName : $awayTeamName;
+                    $seriesLead = "{$winnerName} Wins {$series->home_wins}-{$series->away_wins}";
+                }
                 if ($series->home_wins == $series->away_wins) {
                     $seriesLead = "Series Tied {$series->home_wins}-{$series->away_wins}";
-                } else {
+                } 
+                else {
                     $leaderName = $series->home_wins > $series->away_wins ? $homeTeamName : $awayTeamName;
                     $leadWins = max($series->home_wins, $series->away_wins);
                     $trailWins = min($series->home_wins, $series->away_wins);
@@ -343,6 +354,16 @@ class SimulateService
                 ->where('game_id', $gameData->game_id)
                 ->value('is_overtime');
 
+            $pastResults = DB::table('schedules')
+                ->join('teams as w','w.id','=','schedules.winner_id')
+                ->join('teams as h','h.id','=','schedules.home_id')
+                ->join('teams as a','a.id','=','schedules.home_id')
+                ->select('schedules.game_number','schedules.id','w.primary_color','w.acronym as winner_team_name','h.acronym as home_team_name','a.acronym as away_team_name','schedules.home_score','schedules.away_score','schedules.winner_id','schedules.game_number')
+                ->where('schedules.series_id', $gameData->series_id)
+                ->where('schedules.status',2)
+                ->orderBy('schedules.id','desc')
+                ->get();
+
             // Format series response
             $seriesResponse = [
                 'id' => $series->id,
@@ -352,6 +373,7 @@ class SimulateService
                 'conference' => $series->conference ?? 'Interconference',
                 'round' => $series->round,
                 'best_of' => $series->best_of,
+                'race_to' => $series->race_to,
                 'home_team' => [
                     'id' => $series->home_team_id,
                     'name' => $homeTeamName,
@@ -377,6 +399,10 @@ class SimulateService
                 'game_winner_id' => $winnerId,
                 'winner_id' => $series->winner_team_id,
                 'loser_id' => $series->loser_team_id,
+                'past_results' => $pastResults,
+                'news' => $gameNews,
+                'break_down' => $quarterBreakDown,
+                'is_overtime' => $isOT,
                 'created_at' => $series->created_at,
                 'updated_at' => $series->updated_at,
             ];
@@ -385,9 +411,6 @@ class SimulateService
             return response()->json([
                 'message' => 'Game simulated successfully',
                 'series' => $seriesResponse,
-                'news' => $gameNews,
-                'breakdown' => $quarterBreakDown,
-                'is_overtime' => $isOT
             ]);
         }catch(\Exception $e){
             DB::rollBack();
@@ -489,7 +512,7 @@ class SimulateService
 
         // check if round games is simulated
         $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId, $gameData->round);
-        $transactionCount = $this->helper->getTransferTransactionCount();
+        // $transactionCount = $this->helper->getTransferTransactionCount();
 
         $this->teamManagement->updateInjuryAndWaiving($gameData->home_team_id);
         $this->teamManagement->updateInjuryAndWaiving($gameData->away_team_id);
@@ -539,7 +562,7 @@ class SimulateService
         return response()->json([
             'message' => 'Game simulated successfully',
             'schedule' => $schedule,
-            'transaction_count' => $transactionCount
+            'transaction_count' => 0,
         ]);
     }
 

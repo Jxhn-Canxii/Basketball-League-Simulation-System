@@ -9,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('player_per_quarter_stats', function (Blueprint $table) {
+        Schema::create('player_per_quarter_stats_temp', function (Blueprint $table) {
             $table->id();
             $table->foreignId('season_id')->default(0);
             $table->string('role');
@@ -40,26 +40,26 @@ return new class extends Migration
 
         // Add computed columns using raw SQL since Laravel doesn't support GENERATED columns directly
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD per FLOAT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD per FLOAT GENERATED ALWAYS AS (
                 (points + rebounds + assists + steals + blocks - (field_goal_attempts - field_goals_made) - turnovers) 
                 / NULLIF(minutes, 0)
             ) STORED
         ');
 
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD ts_percent FLOAT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD ts_percent FLOAT GENERATED ALWAYS AS (
                 points / NULLIF(2 * (field_goal_attempts + (0.44 * free_throw_attempts)), 0)
             ) STORED
         ');
 
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD eff FLOAT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD eff FLOAT GENERATED ALWAYS AS (
                 (points + rebounds + assists + steals + blocks - (field_goal_attempts + free_throw_attempts + turnovers))
             ) STORED
         ');
 
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD field_goal_percentage FLOAT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD field_goal_percentage FLOAT GENERATED ALWAYS AS (
                 CASE
                     WHEN field_goal_attempts = 0 THEN 0
                     ELSE (field_goals_made / field_goal_attempts) * 100
@@ -68,7 +68,7 @@ return new class extends Migration
         ');
 
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD three_point_percentage FLOAT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD three_point_percentage FLOAT GENERATED ALWAYS AS (
                 CASE
                     WHEN three_point_attempts = 0 THEN 0
                     ELSE (three_pointers_made / three_point_attempts) * 100
@@ -77,7 +77,7 @@ return new class extends Migration
         ');
 
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD free_throw_percentage FLOAT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD free_throw_percentage FLOAT GENERATED ALWAYS AS (
                 CASE
                     WHEN free_throw_attempts = 0 THEN 0
                     ELSE (free_throws_made / free_throw_attempts) * 100
@@ -86,7 +86,7 @@ return new class extends Migration
         ');
 
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD two_point_percentage FLOAT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD two_point_percentage FLOAT GENERATED ALWAYS AS (
                 CASE
                     WHEN two_point_attempts = 0 THEN 0
                     ELSE (two_pointers_made / two_point_attempts) * 100
@@ -95,7 +95,7 @@ return new class extends Migration
         ');
 
         DB::statement('
-            ALTER TABLE player_per_quarter_stats ADD is_playoff INT GENERATED ALWAYS AS (
+            ALTER TABLE player_per_quarter_stats_temp ADD is_playoff INT GENERATED ALWAYS AS (
                 CASE
                     WHEN LOCATE("G", game_id) > 0
                         AND LENGTH(game_id) > LOCATE("G", game_id)
@@ -108,6 +108,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('player_per_quarter_stats');
+        Schema::dropIfExists('player_per_quarter_stats_temp');
     }
 };

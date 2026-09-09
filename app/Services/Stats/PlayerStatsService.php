@@ -956,6 +956,11 @@ class PlayerStatsService
         ];
     }
 
+    public function removeQuarterStats(){
+
+        DB::table('player_per_quarter_stats_temp')->delete();
+    }
+
     public function updateQuarterStats($playerGameStats, $gameData, $quarter = 'Q1')
     {
         if (empty($playerGameStats)) {
@@ -973,6 +978,17 @@ class PlayerStatsService
                 // dd($stats['points']);
                 // Update Player Game Stats
                 DB::table('player_per_quarter_stats')->updateOrInsert(
+                    [
+                        'player_id' => $stats['player_id'],
+                        'game_id' => $stats['game_id'],
+                        'season_id' => $stats['season_id'],
+                        'team_id' => $stats['team_id'],
+                        'quarter' => $quarter,
+                    ],
+                    $stats
+                );
+
+                DB::table('player_per_quarter_stats_temp')->updateOrInsert(
                     [
                         'player_id' => $stats['player_id'],
                         'game_id' => $stats['game_id'],

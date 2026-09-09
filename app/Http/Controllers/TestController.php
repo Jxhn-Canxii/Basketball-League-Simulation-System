@@ -413,22 +413,27 @@ class TestController extends Controller
     }
 
     public function gameFlow(){
-        $OT = true;
-        $tries = 0;
-        do {
-            $homeScore = rand(1,10);
-            $awayScore = rand(1,10);
+        for ($i=1; $i <= 4; $i++) { 
+            # code...
 
-            $tries++;
+            echo 'Q'.$i.'   ';
+        }
+        // $OT = true;
+        // $tries = 0;
+        // do {
+        //     $homeScore = rand(1,10);
+        //     $awayScore = rand(1,10);
 
-            if($homeScore == $awayScore){
-                $OT = false;
+        //     $tries++;
 
-                echo $homeScore." - ".$awayScore;
-            }
-        } while ($OT);
+        //     if($homeScore == $awayScore){
+        //         $OT = false;
 
-        echo 'Tied at '.$tries.'x tries';
+        //         echo $homeScore." - ".$awayScore;
+        //     }
+        // } while ($OT);
+
+        // echo 'Tied at '.$tries.'x tries';
 
     }
     public function checkUnderPerformedPlayersPerTeam(){

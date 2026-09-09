@@ -18,7 +18,7 @@
         No data available
       </div>
 
-      <ul v-else class="grid gap-4 grid-cols-3 xs:grid-cols-1">
+      <ul v-else class="grid gap-4 grid-cols-3 sm:grid-cols-1">
         <li
           v-for="(player, index) in leaders"
           :key="player.player_id"

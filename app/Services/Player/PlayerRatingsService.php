@@ -115,7 +115,14 @@ class PlayerRatingsService
                     'players.is_active as is_active',
                     'players.retirement_age as retirement_age',
                     'players.injury_recovery_games as injury_recovery_games',
-                    'players.position' // Add any additional player fields
+                    'players.position', // Add any additional player fields
+                    'players.salary', // Add any additional player fields
+                    'players.player_option', // Add any additional player fields
+                    'players.team_option', // Add any additional player fields
+                    'players.loyalty_rating', // Add any additional player fields
+                    'players.satisfaction_rating', // Add any additional player fields
+                    'players.negotiation_skill_rating', // Add any additional player fields
+                    'players.ambition_rating' // Add any additional player fields
                 )
                 ->orderByDesc('player_season_stats.eff') // Sort directly in the query
                 ->get();
@@ -151,78 +158,78 @@ class PlayerRatingsService
                 Player::where('id', $playerStat->player_id)->update(['role' => 'bench','is_reserved' => true]);
             }
 
-            foreach ($rankedPlayers as $player) {
+            // foreach ($rankedPlayers as $player) {
     
-                $totalGames = $player->total_games ?? 0;
-                $rolePctMap = [
-                    'star player' => 0.80,
-                    'all star'    => 0.70,
-                    'starter'     => 0.60,
-                    'role player' => 0.50,
-                    'bench'       => 0.40,
-                ];
+            //     $totalGames = $player->total_games ?? 0;
+            //     $rolePctMap = [
+            //         'star player' => 0.80,
+            //         'all star'    => 0.70,
+            //         'starter'     => 0.60,
+            //         'role player' => 0.50,
+            //         'bench'       => 0.40,
+            //     ];
 
-                $defaultPct = 0.30;
-                $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
+            //     $defaultPct = 0.30;
+            //     $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
 
-                // Base total games across contract
-                $totalContractGames = $totalGames * max($player->contract_years, 1);
+            //     // Base total games across contract
+            //     $totalContractGames = $totalGames * max($player->contract_years, 1);
 
-                // Cap to avoid excessive tolerance (realism)
-                $baseRecoveryGames = ceil($totalContractGames * $pct);
-                $maxRecoveryGames = 30;
-                $requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
+            //     // Cap to avoid excessive tolerance (realism)
+            //     $baseRecoveryGames = ceil($totalContractGames * $pct);
+            //     $maxRecoveryGames = 30;
+            //     $requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
 
-                // 🔥 ADJUST BASED ON TALENT
-                if ($player->overall_rating >= 90) {
-                    $requiredRecoveryGames += 5; // elite talent, more forgiveness
-                } elseif ($player->overall_rating >= 80) {
-                    $requiredRecoveryGames += 2;
-                } elseif ($player->overall_rating <= 70) {
-                    $requiredRecoveryGames -= 2; // low-rated, less tolerance
-                } elseif ($player->overall_rating <= 60) {
-                    $requiredRecoveryGames -= 4; // waiver bait
-                }
+            //     // 🔥 ADJUST BASED ON TALENT
+            //     if ($player->overall_rating >= 90) {
+            //         $requiredRecoveryGames += 5; // elite talent, more forgiveness
+            //     } elseif ($player->overall_rating >= 80) {
+            //         $requiredRecoveryGames += 2;
+            //     } elseif ($player->overall_rating <= 70) {
+            //         $requiredRecoveryGames -= 2; // low-rated, less tolerance
+            //     } elseif ($player->overall_rating <= 60) {
+            //         $requiredRecoveryGames -= 4; // waiver bait
+            //     }
 
-                // Clamp within logical bounds
-                $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
+            //     // Clamp within logical bounds
+            //     $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
 
-                // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
-                if ($player->injury_recovery_games > $requiredRecoveryGames) {
-                    $waiveChance = rand(1, 100); // Random chance for waiving the player
-                    if ($waiveChance <= 60) { // 50% chance to waive
-                        DB::table('transactions')->insert([
-                            'player_id' => $player->id,
-                            'season_id' => $seasonId,
-                            'details' => 'Waived by (' . $teamName . ') due to extended injury recovery period',
-                            'from_team_id' => $teamId,
-                            'to_team_id' => 0,
-                            'status' => 'waived',
-                        ]);
+            //     // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
+            //     if ($player->injury_recovery_games > $requiredRecoveryGames) {
+            //         $waiveChance = rand(1, 100); // Random chance for waiving the player
+            //         if ($waiveChance <= 60) { // 50% chance to waive
+            //             DB::table('transactions')->insert([
+            //                 'player_id' => $player->id,
+            //                 'season_id' => $seasonId,
+            //                 'details' => 'Waived by (' . $teamName . ') due to extended injury recovery period',
+            //                 'from_team_id' => $teamId,
+            //                 'to_team_id' => 0,
+            //                 'status' => 'waived',
+            //             ]);
 
-                        DB::table('player_contracts')
-                            ->where('player_id', $player->id)
-                            ->update(['status' => 'terminated']);
+            //             DB::table('player_contracts')
+            //                 ->where('player_id', $player->id)
+            //                 ->update(['status' => 'terminated']);
                         
-                        DB::table('players')
-                            ->where('id', $player->id)
-                            ->update([
-                                'team_id' => 0,
-                                'contract_years' => 0,
-                                'salary' => 0,
-                                'contract_type' => 0,
-                                'player_option' => 0,
-                                'team_option' => 0,
-                                'no_trade_clause' => 0
-                            ]);
+            //             DB::table('players')
+            //                 ->where('id', $player->id)
+            //                 ->update([
+            //                     'team_id' => 0,
+            //                     'contract_years' => 0,
+            //                     'salary' => 0,
+            //                     'contract_type' => 0,
+            //                     'player_option' => 0,
+            //                     'team_option' => 0,
+            //                     'no_trade_clause' => 0
+            //                 ]);
                 
-                        $player->team_id = 0; // Set team_id to 0 (free agent)
+            //             $player->team_id = 0; // Set team_id to 0 (free agent)
                         
-                        $player->contract_years = 0; // Remove contract
-                    }
-                }
+            //             $player->contract_years = 0; // Remove contract
+            //         }
+            //     }
 
-            }
+            // }
             // Fetch updated players
             $players = $query->get();
 
@@ -286,8 +293,12 @@ class PlayerRatingsService
                     $player->team_id = 0;
                 }
 
-                if($player->contract_years == 0){
+                if($player->contract_years == 0 || ($player->contract_years == 1 && $player->team_option == 1)){
                     $this->playerCoachDecision($player,$teamId, $teamName,$seasonId);
+                }
+
+                if($player->contract_years == 1 && $player->player_option == 1){
+                    $this->playerDecision($player,$teamId, $teamName,$seasonId);
                 }
                 // Check if the player was injured during the season
                 $injury = DB::table('injured_players_view')
@@ -927,4 +938,148 @@ class PlayerRatingsService
                 'status' => 'waived',
             ]);
     }
+
+    public function playerDecision($player,$teamId,$teamName,$seasonId){
+
+        $coach = $this->coachDecisionService
+                ->getTeamCoach($teamId);
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get normal contract offer
+        |--------------------------------------------------------------------------
+        */
+
+        $offer = $this->contractService
+            ->getContractOffer(
+                $player,
+                $teamId
+            );
+
+        if (!$offer) {
+            return false;
+        }
+
+        $baseScore = (float) (
+                $offer['valuation']
+                ?? $offer['salary']
+                ?? 50
+            );
+        
+        $signingScore = $this->coachDecisionService
+                ->getSigningScore(
+                    $coach,
+                    $player,
+                    $baseScore
+                );
+
+        $approvalChance = $this->coachDecisionService
+                ->getSigningApprovalChance(
+                    $coach,
+                    $signingScore
+                );
+
+        $isMaxContract = (
+                ($offer['contract_type'] ?? null) === 'max'
+            );
+
+        $salary = (float) (
+                $offer['salary']
+                ?? 0
+            );
+
+        // 'players.loyalty_rating', // Add any additional player fields
+        // 'players.satisfaction_rating', // Add any additional player fields
+        // 'players.negotiation_skill_rating', // Add any additional player fields
+        // 'players.ambition_rating' // Add any additional player fields
+
+        if($isMaxContract && $player->satisfaction_rating > 60) {
+                $shouldSign = true;
+        } 
+        else {
+
+            $isLoyalandSatisfied = ($player->satisfaction_rating > 75) && ($player->loyalty_rating > 90);
+            $isCoachCompetent = DB::table('coaches')->where('id',$coach->id)->sum('winning_percentage') > 150;
+            $isTeamWinner = DB::table('team_season_info')->where('team_id',$teamId)->sum('is_playoff_qualified') > 1;
+            $salaryFactor = $salary >= ($player->salary - ($player->salary * 0.15));
+            $shouldSign = ($isCoachCompetent && $isTeamWinner) || $isLoyalandSatisfied || $salaryFactor;
+
+            if($shouldSign) {
+
+                $years = (int) (
+                    $offer['years']
+                    ?? $offer['contract_years']
+                    ?? 1
+                );
+
+                DB::table('players')
+                    ->where('id', $player->id)
+                    ->update([
+                        'contract_years' => $years,
+                        'updated_at' => now(),
+                    ]);
+
+                $results[] = [
+                    'player_id' => $player->id,
+                    'team_id' => $teamId,
+                    'coach_id' => $coach?->id,
+                    'decision' => 'signed',
+                    'signing_score' => round($signingScore, 2),
+                    'approval_chance' => round($approvalChance, 2),
+                ];
+
+                // Insert the transaction record into the transactions table
+                DB::table('transactions')->insert([
+                    'player_id' => $player->id,
+                    'season_id' => $seasonId,
+                    'details' => $player->name . ' has signed for ' . $teamName . ' for ' . $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
+                    'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
+                    'to_team_id' => $teamId,
+                    'status' => 'signed',
+                ]);
+
+                DB::table('player_contracts')->insert([
+                    'player_id' => $player->id,
+                    'season_id' => $seasonId,
+                    'team_id' => $teamId,
+                    'salary' => $offer['salary'],
+                    'contract_years' => $offer['years'],
+                    'contract_type' => $offer['contract_type'],
+                    'player_option' => $offer['player_option'] ?? false,
+                    'team_option' => $offer['team_option'] ?? false,
+                    'no_trade_clause' => $offer['no_trade_clause'] ?? false,
+                    'status' => 'signed',
+                ]);
+
+            }
+
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'team_id' => 0,
+                    'contract_years' => 0,
+                    'salary' => 0,
+                    'contract_type' => 0,
+                    'player_option' => 0,
+                    'team_option' => 0,
+                    'no_trade_clause' => 0
+                ]);
+
+            DB::table('player_contracts')
+                ->where('player_id', $player->id)
+                ->where('status', 'signed')
+                ->update(['status' => 'ended']);
+            
+            // Insert the transaction record into the transactions table
+            DB::table('transactions')->insert([
+                'player_id' => $player->id,
+                'season_id' => $seasonId,
+                'details' => $player->name . ' has been waived by ' . $teamName .' and now is a free agent!.',
+                'from_team_id' => $teamId,
+                'to_team_id' => 0,
+                'status' => 'waived',
+            ]);
+        }
+    }
+    
 }

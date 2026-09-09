@@ -6,6 +6,123 @@ use Illuminate\Support\Facades\DB;
 
 class TeamChemistryService
 {
+    public function getTeamChemistry($seasonId, $teamId)
+    {
+        return DB::table('team_season_info')
+            ->where('season_id', $seasonId)
+            ->where('team_id', $teamId)
+            ->value('chemistry');
+    }
+
+    public function updateSeasonTeamChemistryBeforeGame($teamId)
+    {
+        $seasonId = get_current_season_id();
+
+        $chemistryRow = DB::table('team_season_info')
+            ->where('team_id', $teamId)
+            ->where('season_id', $seasonId)
+            ->first();
+
+        if (!$chemistryRow) {
+            DB::table('team_season_info')->insert([
+                'team_id' => $teamId,
+                'season_id' => $seasonId,
+                'chemistry' => 50, // default
+            ]);
+            $chemistry = 50;
+        } else {
+            $chemistry = $chemistryRow->chemistry;
+        }
+
+        $team = DB::table('teams')->where('id', $teamId)->first();
+        if (!$team) return;
+
+        $coachIQ = $chemistryRow->coach_iq;
+
+        // 🎯 Last game outcome
+        $lastGame = DB::table('schedules')
+            ->where(function ($query) use ($teamId) {
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->where('season_id', $seasonId)
+            ->where('status', 2)
+            ->orderByDesc('id')
+            ->first();
+
+        if ($lastGame) {
+            $wonLastGame = $lastGame->winner_id === $teamId;
+            $chemistry += $wonLastGame ? 2 : -2;
+        }
+
+        // 🎯 Coach IQ
+        if ($coachIQ >= 90) $chemistry += 1;
+        elseif ($coachIQ <= 65) $chemistry -= 1;
+
+        // 🎯 Leadership
+        $leaders = DB::table('players')
+            ->where('team_id', $teamId)
+            ->orderByDesc('leadership_rating')
+            ->pluck('leadership_rating');
+
+        if ($leaders->isNotEmpty()) {
+            $avgLeadership = $leaders->avg();
+            if ($avgLeadership >= 85) $chemistry += 2;
+            elseif ($avgLeadership <= 60) $chemistry -= 2;
+        }
+
+        // 🎯 Season win percentage
+        $seasonGames = DB::table('schedules')
+            ->where(function ($query) use ($teamId) {
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->where('season_id', $seasonId)
+            ->where('status', 2)
+            ->get();
+
+        $totalGames = $seasonGames->count();
+        $wins = $seasonGames->filter(fn($g) => $g->winner_id === $teamId)->count();
+
+        if ($totalGames >= 5) {
+            $winRate = $wins / $totalGames;
+            if ($winRate >= 0.7) $chemistry += 2;
+            elseif ($winRate <= 0.3) $chemistry -= 2;
+        }
+
+        // 🎯 Morale
+        $moraleAvg = DB::table('players')
+            ->where('team_id', $teamId)
+            ->avg('morale');
+
+        if (!is_null($moraleAvg)) {
+            if ($moraleAvg >= 85) $chemistry += 2;
+            elseif ($moraleAvg <= 60) $chemistry -= 2;
+        }
+
+        $injuredCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_injured', true) // assuming you track this
+            ->count();
+
+        if (!is_null($injuredCount)) {
+            if ($injuredCount >= 3) $chemistry -= 3;
+            elseif ($injuredCount === 1) $chemistry -= 1;
+        }
+
+        // 🧼 Clamp
+        $chemistry = max(0, min(100, round($chemistry)));
+
+        // ✅ Update
+        DB::table('team_season_info')
+            ->updateOrInsert(
+                ['team_id' => $teamId, 'season_id' => $seasonId],
+                ['chemistry' => $chemistry]
+            );
+
+        // $fatigueValue = max(0, min(10, round(100 - $chemistry)));
+    }
+
     public function getChemistryCalculation($teamId, $latestSeasonId, $previousSeasonId)
     {
         $retentionRate = $this->calculateRetentionRate($teamId, $latestSeasonId, $previousSeasonId) ?? 0;

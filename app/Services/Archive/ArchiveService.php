@@ -20,7 +20,7 @@ class ArchiveService
         $this->helper = new HelperService();
     }
 
-    public static function archivePerQuarterGameStats()
+     public static function archivePerQuarterGameStats()
     {
         $currentSeasonId = get_current_season_id();
         $MODULO = config('archive.DECADE_MODULO');
@@ -43,9 +43,9 @@ class ArchiveService
         DB::beginTransaction();
         try {
 
-            DB::statement("CREATE TABLE $archiveTable LIKE player_per_quarter_stats");
-            DB::statement("INSERT INTO $archiveTable SELECT * FROM player_per_quarter_stats");
-            DB::statement("DELETE FROM player_per_quarter_stats");
+            DB::statement("CREATE TABLE $archiveTable LIKE player_per_quarter_stats_achives");
+            DB::statement("INSERT INTO $archiveTable SELECT * FROM player_per_quarter_stats_archives");
+            DB::statement("DELETE FROM player_per_quarter_stats_achives");
 
             DB::commit();
 

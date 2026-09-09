@@ -21,7 +21,14 @@ return new class extends Migration
             $table->integer('OT1')->default(0);
             $table->integer('OT2')->default(0);
             $table->integer('OT3')->default(0);
-            $table->storedAs("Q1 + Q2 + Q3 + Q4 + OT1 + OT2 + OT3");
+            $table->integer('total')->storedAs("Q1 + Q2 + Q3 + Q4 + OT1 + OT2 + OT3");
+
+            // DB::statement('
+            //     ALTER TABLE game_quarter_breakdown
+            //     ADD total INT
+            //     GENERATED ALWAYS AS (Q1 + Q2 + Q3 + Q4 + OT1 + OT2 + OT3) STORED
+            //     AFTER OT3
+            // ');
         });
     }
 

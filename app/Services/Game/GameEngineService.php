@@ -16,9 +16,9 @@ use App\Services\Player\FreeAgencyService;
 use App\Services\Stats\PlayerCareerStatsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Stats\PlayerStatsService;
+use App\Services\Team\TeamChemistryService;
 use App\Services\Team\TeamManagementService;
 use App\Services\Team\TeamRoleService;
-use App\Services\Team\TeamStatsService;
 use App\Services\Team\TeamStreakService;
 use Illuminate\Support\Facades\DB;
 class GameEngineService
@@ -28,7 +28,6 @@ class GameEngineService
     protected $teamRole;
     protected $teamManagement;
     protected $playerStats;
-    protected $teamStats;
     protected $teamStreak;
     protected $freeAgent;
     protected $playOffStats;
@@ -36,6 +35,7 @@ class GameEngineService
     protected $news;
     protected $archive;
     protected $career;
+    protected $teamChemistry;
 
     public function __construct()
     {
@@ -43,10 +43,10 @@ class GameEngineService
         // $this->storeStats = new AwardsController();
         $this->contract = new ContractService();
         $this->teamRole = new TeamRoleService();
+        $this->teamChemistry = new TeamChemistryService();
         $this->teamManagement = new TeamManagementService();
         $this->playOffStats = new PlayoffStatsService();
         $this->playerStats = new PlayerStatsService();
-        $this->teamStats = new TeamStatsService();
         $this->teamStreak = new TeamStreakService();
         $this->freeAgent = new FreeAgencyService();
         $this->news = new NewsService();
@@ -62,6 +62,8 @@ class GameEngineService
         
         $gameData = $this->gameDataInfo($scheduleId);
 
+        //dd($gameData);
+        
         if (!$gameData) {
             return response()->json([
                 'message' => 'Error Fetching game data',
@@ -189,20 +191,18 @@ class GameEngineService
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->home_team_id,$gameData->season_id);
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->away_team_id,$gameData->season_id);
 
-        $this->teamStats->prepareFinalRoster($gameData->home_team_id);
-        $this->teamStats->prepareFinalRoster($gameData->away_team_id);
+        $this->teamManagement->prepareFinalRoster($gameData->home_team_id);
+        $this->teamManagement->prepareFinalRoster($gameData->away_team_id);
 
          //core of the game
         $quarterMinutes = $totalMinutes / 4;
 
-        $quarterNumber = 0;
-        
-        while ($quarterNumber <= 3) {
-            $quarterNumber++;
+
+        for ($quarterNumber=1; $quarterNumber <= 4; $quarterNumber++) { 
 
             $quarter = 'Q'.$quarterNumber;
 
-            $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$quarterMinutes);
+            $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$quarter,$quarterMinutes);
 
             $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter);
             
@@ -218,12 +218,11 @@ class GameEngineService
             $OTNumber = 0;
 
             do{
-                $quarterNumber++;
                 $OTNumber++;
 
                 $overtimeQuarter = 'OT'.$OTNumber;
 
-                $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$otMinutes);
+                $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$overtimeQuarter,$otMinutes);
 
                 $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
                 
@@ -246,19 +245,21 @@ class GameEngineService
     
         }
 
-        $playerOverallQuarterStats =  DB::table('player_per_quarter_stats')
-                ->select('player_id','game_id','season_id')
-                ->where('game_id', $gameData->game_id)
-                ->distinct('player_id')
+        $players =  DB::table('players')
+                ->select('id')
+                ->whereIn('team_id', [$gameData->home_team_id,$gameData->away_team_id])
+                ->where('is_active',1)
                 ->get();
 
-        foreach ($playerOverallQuarterStats as $playerStats) {
-            $this->playerStats->updateGameStats($playerStats->player_id,$playerStats->game_id,$playerStats->season_id);
+        foreach ($players as $player) {
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id);
         }
 
         $playerGameStats =  DB::table('player_game_stats')
                 ->where('game_id', $gameData->game_id)
                 ->get();
+
+        $this->playerStats->removeQuarterStats();
         
         $formattedGameStats = [];
         foreach ($playerGameStats as $playerStats) {
@@ -291,13 +292,13 @@ class GameEngineService
         return $formattedGameStats;
     }
 
-    private function gameEngine($scheduleId,$gameData,$totalMinutes)
+    private function gameEngine($scheduleId,$gameData,$quarter,$totalMinutes)
     {
 
         $currentSeasonId = get_current_season_id();
         
-        $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
-        $this->teamManagement->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
+        $this->teamChemistry->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
+        $this->teamChemistry->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
         //check first to balance team positions
 
         $rolePriority = [
@@ -309,8 +310,8 @@ class GameEngineService
         ];
 
         // Fetching sorted active players for both teams
-        $homeTeamPlayers = $this->teamStats->getActivePlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $gameData->round);
-        $awayTeamPlayers = $this->teamStats->getActivePlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+        $homeTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+        $awayTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
 
 
         $playerGameStats = [];
@@ -318,8 +319,8 @@ class GameEngineService
         $awayMinutes = $this->playerStats->distributeMinutes($awayTeamPlayers, $totalMinutes, $scheduleId);
 
         
-        $homeChemistry =  $this->teamStats->getTeamChemistry($currentSeasonId, $gameData->home_team_id);
-        $awayChemistry =  $this->teamStats->getTeamChemistry($currentSeasonId, $gameData->away_team_id);
+        $homeChemistry = $gameData->home_team_chemistry ?? 75;
+        $awayChemistry = $gameData->away_team_chemistry ?? 75;
         // Simulate home team player stats with detailed shooting metrics
 
         // Repeat similar simulation for away team players...
@@ -474,6 +475,37 @@ class GameEngineService
 
         $gameData = Schedules::join('teams as home', 'schedules.home_id', '=', 'home.id')
             ->join('teams as away', 'schedules.away_id', '=', 'away.id')
+            ->join('team_season_info as home_info', 'home_info.team_id', '=', 'schedules.home_id')
+            ->join('team_season_info as away_info', 'away_info.team_id', '=', 'schedules.away_id')
+            ->select(
+                'schedules.id',
+                'schedules.round',
+                'schedules.conference_id',
+                'schedules.season_id',
+                'schedules.game_id',
+                'schedules.series_id',
+                'home.id as home_team_id',
+                'home.name as home_team_name',
+                'away.id as away_team_id',
+                'away.name as away_team_name',
+                'home_info.chemistry as home_team_chemistry',
+                'away_info.chemistry as away_team_chemistry',
+                'schedules.home_score',
+                'schedules.away_score',
+                'schedules.winner_id',
+                'schedules.status'
+            )
+            ->findOrFail($scheduleId);
+
+        return $gameData;
+    }
+
+    private function gameDataInfoOld($scheduleId){
+
+        $gameData = Schedules::join('teams as home', 'schedules.home_id', '=', 'home.id')
+            ->join('teams as away', 'schedules.away_id', '=', 'away.id')
+            ->join('team_season_info as home_info', 'home_info.team_id', '=', 'schedules.home_id')
+            ->join('team_season_info as away_info', 'away_info.team_id', '=', 'schedules.away_id')
             ->join('standings_view as home_standings', function ($join) {
                 $join->on('home.id', '=', 'home_standings.team_id')
                     ->whereColumn('home_standings.season_id', 'schedules.season_id');
@@ -493,6 +525,8 @@ class GameEngineService
                 'home.name as home_team_name',
                 'away.id as away_team_id',
                 'away.name as away_team_name',
+                'home_info.chemistry as home_team_chemistry',
+                'away_info.chemistry as away_team_chemistry',
                 'home_standings.overall_rank as home_overall_rank',
                 'away_standings.overall_rank as away_overall_rank',
                 'home_standings.conference_name as home_conference_name',
@@ -557,13 +591,13 @@ class GameEngineService
     private function updateGameScore($gameData,$quarter){
 
         try{
-            $homeQuarterScore = DB::table('player_per_quarter_stats')
+            $homeQuarterScore = DB::table('player_per_quarter_stats_temp')
                 ->where('team_id', $gameData->home_team_id)
                 ->where('game_id', $gameData->game_id)
                 ->where('quarter', $quarter)
                 ->sum('points');
 
-            $awayQuarterScore = DB::table('player_per_quarter_stats')
+            $awayQuarterScore = DB::table('player_per_quarter_stats_temp')
                 ->where('team_id', $gameData->away_team_id)
                 ->where('game_id', $gameData->game_id)
                 ->where('quarter', $quarter)

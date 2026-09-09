@@ -28,9 +28,15 @@ class GameResultService
         $game = DB::table($scheduleViewTable.' as schedule_view')
             ->join('teams as away_team', 'schedule_view.away_id', '=', 'away_team.id') // Join for away team
             ->join('teams as home_team', 'schedule_view.home_id', '=', 'home_team.id') // Join for home team
+            ->join('team_season_info as away_team_info', 'away_team_info.team_id', '=', 'away_team.id') // Join for away team
+            ->join('team_season_info as home_team_info', 'home_team_info.team_id', '=', 'home_team.id') // Join for home team
+            ->join('coaches as away_team_coach', 'away_team_coach.id', '=', 'away_team_info.coach_id') // Join for away team
+            ->join('coaches as home_team_coach', 'home_team_coach.id', '=', 'home_team_info.coach_id') // Join for home team
             ->where('schedule_view.game_id', $game_id)
             ->select(
                 'schedule_view.*', // Select all columns from schedule_view
+                'away_team_coach.name as away_team_coach_name',
+                'home_team_coach.name as home_team_coach_name',
                 'away_team.description as away_description',
                 'away_team.sponsor as away_sponsor',
                 'away_team.primary_color as away_primary_color',
@@ -449,6 +455,7 @@ class GameResultService
                 'sponsor' => $game->home_sponsor, // Add secondary color
                 'streak' => $homeTeamStreak,
                 'ratings' => $homeTeamRatings,
+                'coach' => $game->home_team_coach_name,
                 'exhausted_players' => $homePlayersFatigue
             ],
             'away_team' => [
@@ -462,6 +469,7 @@ class GameResultService
                 'sponsor' => $game->away_sponsor, // Add secondary color
                 'streak' => $awayTeamStreak,
                 'ratings' => $awayTeamRatings,
+                'coach' => $game->away_team_coach_name,
                 'exhausted_players' => $awayPlayersFatigue
             ],
             'player_stats' => [

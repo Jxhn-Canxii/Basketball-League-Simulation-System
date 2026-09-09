@@ -100,6 +100,9 @@
                 <h2 class="text-sm absolute bottom-2 left-2 font-bold text-gray-200">
                     {{ gameDetails?.home_team.sponsor }}
                 </h2>
+                <h2 class="text-xs absolute bottom-2 right-2 font-bold text-yellow-200" :title="gameDetails?.home_team.coach">
+                    <i class="fa fa-user-secret"></i> {{ playerFormatter(gameDetails?.home_team.coach) }}
+                </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.home_team.team_id }}</small>
             </div>
 
@@ -235,8 +238,11 @@
                         </li>
                     </ul>
                 </div>
-                <h2 class="text-sm absolute bottom-2 left-2 font-bold text-gray-200">
+                <h2 class="text-sm absolute bottom-2 right-2 font-bold text-gray-200">
                     {{ gameDetails?.away_team.sponsor }}
+                </h2>
+                <h2 class="text-xs absolute bottom-2 left-2 font-bold text-yellow-200" :title="gameDetails?.away_team.coach">
+                    <i class="fa fa-user-secret"></i> {{ playerFormatter(gameDetails?.away_team.coach) }}
                 </h2>
                 <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.away_team.team_id }}</small>
             </div>
@@ -590,7 +596,7 @@
         }"
         class="block md:flex rounded">
             <!-- Best Player Section: 1/4 Width -->
-            <div class="w-full md:w-3/4 p-2 shadow-md">
+            <div class="w-full md:w-3/4 sm:w-full p-2 shadow-md">
                 <h3 class="text-lg text-white font-semibold mb-1">Player of the Game</h3>
                 <div
                     v-if="bestPlayer"
@@ -754,7 +760,7 @@
                                 <i class="fa fa-shield-alt text-blue-500 text-lg"></i>
                             </sup>
                             <sup v-if="bestPlayer?.is_rookie_poy" title="Rookie of the Season">
-                                 <b class="text-green-500 text-lg text-bold bg-green-200 rounded-full p-1 text-center">R</b>
+                                <b class="text-green-500 text-lg text-bold bg-green-200 rounded-full p-1 text-center">R</b>
                             </sup>
                             <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
                                 <i class="fa fa-chart-line text-purple-500 text-lg"></i>
