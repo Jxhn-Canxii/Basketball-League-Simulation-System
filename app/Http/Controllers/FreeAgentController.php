@@ -47,4 +47,63 @@ class FreeAgentController extends Controller
 
         return response()->json($players,200);
     }
+
+    public function waivePlayer(Request $request){
+
+        return $this->freeAgencyService->waivePlayer($request);
+    }
+
+    public function extendContract(Request $request){
+
+        $request->validate([
+            'id' => 'required|exists:players,id',
+            'additional_years' => 'required|integer|min:1|max:5',
+        ]);
+
+        return $this->freeAgencyService->extendContract($request);
+    }
+
+    public function assignPlayerToRandomTeam(Request $request){
+
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+        ]);
+
+        return $this->freeAgencyService->assignPlayerToRandomTeam($request);
+    }
+
+    public function assignPlayerToTeam($player, $team, $currentSeasonId, $seasonId)
+    {
+        return $this->freeAgencyService->assignPlayerToTeam($player, $team, $currentSeasonId, $seasonId);
+    }
+
+    public function signFreeAgent(Request $request)
+    {
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+            'team_id' => 'required|exists:teams,id',
+        ]);
+
+        return $this->freeAgencyService->signFreeAgent($request);
+    }
+
+    public function assignRemainingFreeAgents()
+    {
+        return $this->freeAgencyService->assignRemainingFreeAgents();
+    }
+
+    public function autoAssignFreeAgents()
+    {
+        return $this->freeAgencyService->autoAssignFreeAgents();
+    }
+
+    public function getTeamPositionCounts($teamId)
+    {
+        return $this->freeAgencyService->getTeamPositionCounts($teamId);
+    }
+
+    public function checkPositionAvailability()
+    {
+        return $this->freeAgencyService->checkPositionAvailability();
+    }
 }

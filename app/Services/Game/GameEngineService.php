@@ -273,7 +273,7 @@ class GameEngineService
                 'minutes' => $playerStats->minutes,
                 'points' => $playerStats->points,
                 'rebounds' => $playerStats->rebounds,
-                'assists' => $playerStats->assists,
+                'assists' => max(0,$playerStats->assists),
                 'steals' => $playerStats->steals,
                 'blocks' => $playerStats->blocks,
                 'turnovers' => $playerStats->turnovers,

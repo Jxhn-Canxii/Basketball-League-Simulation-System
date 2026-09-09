@@ -575,7 +575,7 @@ class PlayerStatsService
             foreach ($playmakers as &$playmaker) {
                 // Randomly assign assists to each playmaker in the range of 0 to remaining assists
                 $maxForThisPlayer = min($remainingAssists, rand(0, floor($remainingAssists / 2)));
-                $playmaker['assists'] = min(0,$maxForThisPlayer);  // Assign assists
+                $playmaker['assists'] = max(0,$maxForThisPlayer);  // Assign assists
 
                 // Deduct from remaining assists
                 $remainingAssists -= $maxForThisPlayer;
@@ -974,6 +974,7 @@ class PlayerStatsService
                 }
                 if (!isset($stats['is_fouled_out'])) {
                     $stats['is_fouled_out'] = 0;
+                    $stats['assists'] = max(0,$stats['assists']);
                 }
                 // dd($stats['points']);
                 // Update Player Game Stats
@@ -1062,7 +1063,7 @@ class PlayerStatsService
                         'minutes' => $playerStats->total_minutes,
                         'points' => $playerStats->total_points,
                         'rebounds' => $playerStats->total_rebounds,
-                        'assists' => $playerStats->total_assists,
+                        'assists' => max(0,$playerStats->total_assists),
                         'steals' => $playerStats->total_steals,
                         'blocks' => $playerStats->total_blocks,
                         'turnovers' => $playerStats->total_turnovers,

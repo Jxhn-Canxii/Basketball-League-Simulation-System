@@ -265,12 +265,6 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('transactions/')->group(function(){
 
-        Route::post('assign-team-free-agents', [TransactionsController::class, 'assignPlayerToRandomTeam'])->name('assign.freeagent.teams');
-        Route::post('sign-free-agent', [TransactionsController::class, 'signFreeAgent'])->name('players.sign.free.agent');
-        Route::post('auto-assign-team-free-agents', [TransactionsController::class, 'assignRemainingFreeAgents'])->name('auto.assign.freeagent.teams');
-        Route::get('override-assign-team-free-agents', [TransactionsController::class, 'assignRemainingFreeAgents'])->name('override.auto.assign.freeagent.teams');
-        Route::post('waive-player', [TransactionsController::class, 'waivePlayer'])->name('players.waive');
-        Route::post('extend-contract-player', [TransactionsController::class, 'extendContract'])->name('players.contract.extend');
         Route::post('player-transactions', [TransactionsController::class, 'getTransactions'])->name('players.transactions');
         Route::post('recent-transactions', [TransactionsController::class, 'getRecentTransferTransactions'])->name('recent.transactions');
         Route::post('season-transactions', [TransactionsController::class, 'getSeasonTransferTransactions'])->name('season.transactions');
@@ -303,6 +297,14 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('free-agency/')->group(function() {
         Route::post('run', [FreeAgentController::class, 'runFreeAgencyPeriod'])->name('free.agency.run');
+
+        Route::post('assign-team-free-agents', [FreeAgentController::class, 'assignPlayerToRandomTeam'])->name('assign.freeagent.teams');
+        Route::post('sign-free-agent', [FreeAgentController::class, 'signFreeAgent'])->name('players.sign.free.agent');
+        Route::post('auto-assign-team-free-agents', [FreeAgentController::class, 'assignRemainingFreeAgents'])->name('auto.assign.freeagent.teams');
+        Route::get('override-assign-team-free-agents', [FreeAgentController::class, 'assignRemainingFreeAgents'])->name('override.auto.assign.freeagent.teams');
+        Route::post('waive-player', [FreeAgentController::class, 'waivePlayer'])->name('players.waive');
+        Route::post('extend-contract-player', [FreeAgentController::class, 'extendContract'])->name('players.contract.extend');
+       
     });
 
     Route::prefix('users/')->group(function(){
