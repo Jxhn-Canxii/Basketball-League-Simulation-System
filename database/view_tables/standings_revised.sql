@@ -619,7 +619,7 @@ finals_appearances AS (
             home_team_id AS team_id,
             season_id
 
-        FROM playoff_series
+        FROM playoff_series_archives
 
         WHERE round = 'finals'
 
@@ -629,7 +629,7 @@ finals_appearances AS (
             away_team_id AS team_id,
             season_id
 
-        FROM playoff_series
+        FROM playoff_series_archives
 
         WHERE round = 'finals'
     ) AS finals_teams
@@ -653,7 +653,7 @@ conference_finals_appearances AS (
             home_team_id AS team_id,
             season_id
 
-        FROM playoff_series
+        FROM playoff_series_archives
 
         WHERE round = 'semi_finals'
 
@@ -663,7 +663,7 @@ conference_finals_appearances AS (
             away_team_id AS team_id,
             season_id
 
-        FROM playoff_series
+        FROM playoff_series_archives
 
         WHERE round = 'semi_finals'
     ) AS conference_final_teams
@@ -682,7 +682,7 @@ championships AS (
         COUNT(DISTINCT season_id)
             AS championships
 
-    FROM playoff_series
+    FROM playoff_series_archives
 
     WHERE
         round = 'finals'
@@ -702,7 +702,7 @@ conference_championships AS (
         COUNT(DISTINCT season_id)
             AS conference_championships
 
-    FROM playoff_series
+    FROM playoff_series_archives
 
     WHERE
         round = 'semi_finals'

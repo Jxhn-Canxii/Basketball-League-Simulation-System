@@ -500,51 +500,6 @@ class GameEngineService
         return $gameData;
     }
 
-    private function gameDataInfoOld($scheduleId){
-
-        $gameData = Schedules::join('teams as home', 'schedules.home_id', '=', 'home.id')
-            ->join('teams as away', 'schedules.away_id', '=', 'away.id')
-            ->join('team_season_info as home_info', 'home_info.team_id', '=', 'schedules.home_id')
-            ->join('team_season_info as away_info', 'away_info.team_id', '=', 'schedules.away_id')
-            ->join('standings_view as home_standings', function ($join) {
-                $join->on('home.id', '=', 'home_standings.team_id')
-                    ->whereColumn('home_standings.season_id', 'schedules.season_id');
-            })
-            ->join('standings_view as away_standings', function ($join) {
-                $join->on('away.id', '=', 'away_standings.team_id')
-                    ->whereColumn('away_standings.season_id', 'schedules.season_id');
-            })
-            ->select(
-                'schedules.id',
-                'schedules.round',
-                'schedules.conference_id',
-                'schedules.season_id',
-                'schedules.game_id',
-                'schedules.series_id',
-                'home.id as home_team_id',
-                'home.name as home_team_name',
-                'away.id as away_team_id',
-                'away.name as away_team_name',
-                'home_info.chemistry as home_team_chemistry',
-                'away_info.chemistry as away_team_chemistry',
-                'home_standings.overall_rank as home_overall_rank',
-                'away_standings.overall_rank as away_overall_rank',
-                'home_standings.conference_name as home_conference_name',
-                'away_standings.conference_name as away_conference_name',
-                'home_standings.conference_rank as home_conference_rank',
-                'away_standings.conference_rank as away_conference_rank',
-                'home_standings.wins as home_current_performance',
-                'away_standings.wins as away_current_performance',
-                'schedules.home_score',
-                'schedules.away_score',
-                'schedules.winner_id',
-                'schedules.status'
-            )
-            ->findOrFail($scheduleId);
-
-        return $gameData;
-    }
-
     private function insertGameQuarterBreakDown($gameId, $teamId, $seasonId){
 
             DB::table('game_quarter_breakdown')->updateOrInsert(
