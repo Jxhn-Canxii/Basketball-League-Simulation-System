@@ -430,6 +430,20 @@ const teamAchievements = (team) => {
     }
   }
 
+let reservedBlock = '';
+  if (team.reserved) {
+    const reservedArr = team.reserved.split('%%').map(r => r.trim()).filter(r => r);
+    if (reservedArr.length > 0) {
+      reservedBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
+        <span class='fa fa-user-plus text-yellow-200'></span>
+        <span class='font-semibold text-indigo-100'>Reserved Players:</span>
+      </div>
+      <div class='ml-7 flex flex-col gap-1'>
+        ${reservedArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
+      </div>`;
+    }
+  }
+
 let injuryBlock = '';
   if (team.rookies) {
     const injuryArr = team.injured_players.split('%%').map(r => r.trim()).filter(r => r);
@@ -444,7 +458,7 @@ let injuryBlock = '';
     }
   }
 
-  if (!achievementsRows && !rookiesBlock  && !newPlayersBlock && !topPlayersBlock && !injuryBlock) return '';
+  if (!achievementsRows && !rookiesBlock  && !newPlayersBlock && !topPlayersBlock && !injuryBlock && !reservedBlock) return '';
 
   // Use team colors for gradient bg
   const primary = team.primary_color ? formatHex(team.primary_color) : '#312e81';
@@ -462,6 +476,7 @@ let injuryBlock = '';
         ${topPlayersBlock}
         ${newPlayersBlock}
         ${rookiesBlock}
+        ${reservedBlock}
         ${injuryBlock}
       </div>
     </div>

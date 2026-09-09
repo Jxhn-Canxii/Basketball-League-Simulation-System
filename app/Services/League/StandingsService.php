@@ -83,10 +83,19 @@ class StandingsService
             $team->overall_rank_count      = $rankCounts[$team->team_id]->overall_rank_1_count ?? 0;
 
              // Get rookies + stats for this team
-            $rookies = DB::table('players as p')
+            $rookies = ($seasonId == 1) ? [] : DB::table('players as p')
                 ->join($playerSeasonStatsDBName.' as ps', 'p.id', '=', 'ps.player_id')
                 ->where('ps.team_id', $team->team_id)
                 ->where('p.draft_id', $seasonId) // Only rookies drafted in this season
+                ->where('ps.season_id', $seasonId)
+                ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
+                ->orderByDesc('ps.eff')
+                ->get();
+
+            $reservedPlayers = DB::table('players as p')
+                ->join($playerSeasonStatsDBName.' as ps', 'p.id', '=', 'ps.player_id')
+                ->where('ps.team_id', $team->team_id)
+                ->where('p.is_reserved', 1) // Only rookies drafted in this season
                 ->where('ps.season_id', $seasonId)
                 ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
                 ->orderByDesc('ps.eff')
@@ -111,7 +120,7 @@ class StandingsService
                 ->orderByDesc('ps.eff')
                 ->get();
 
-            $newPlayers = DB::table('players as p')
+            $newPlayers = ($seasonId == 1) ? [] : DB::table('players as p')
                 ->join($playerSeasonStatsDBName.' as ps', 'p.id', '=', 'ps.player_id')
                 ->where('ps.team_id', $team->team_id) // Filter by the team
                 ->where('p.team_id', $team->team_id) // Filter by the team
@@ -132,7 +141,20 @@ class StandingsService
                 ->get();
 
             // Format rookies as "Name (23.4ppg, 3.1apg, 5.2rpg)"
-            $team->rookies = $rookies->map(function ($r) {
+            $team->rookies = ($seasonId == 1) ? '' : $rookies->map(function ($r) {
+                $isInjured =  $r->is_injured ? 'x' : '';
+
+                return sprintf(
+                    "%s (%.1fppg, %.1fapg, %.1frpg) %s",
+                    $r->name,
+                    $r->avg_points_per_game,
+                    $r->avg_assists_per_game,
+                    $r->avg_rebounds_per_game,
+                    $isInjured,
+                );
+            })->implode('%%');
+
+            $team->reserved = $reservedPlayers->map(function ($r) {
                 $isInjured =  $r->is_injured ? 'x' : '';
 
                 return sprintf(
@@ -145,7 +167,7 @@ class StandingsService
                 );
             })->implode('%%');
             
-            $team->new_players = $newPlayers->map(function ($r) {
+            $team->new_players = ($seasonId == 1) ? '' : $newPlayers->map(function ($r) {
                 $isInjured =  $r->is_injured ? 'x' : '';
                 
                 return sprintf(

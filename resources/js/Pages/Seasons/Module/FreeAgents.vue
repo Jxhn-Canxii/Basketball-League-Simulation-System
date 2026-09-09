@@ -527,6 +527,7 @@ const assignTeamsAuto = async () => {
             });
 
             // Proceed with the request if confirmed
+            //free.agency.run
             const response = await axios.post(route("auto.assign.freeagent.teams"));
             const data = response.data;
             let message = "";
