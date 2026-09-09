@@ -870,10 +870,12 @@ class PlayerRatingsService
                     ?? 1
                 );
 
+                $updatedYears = ($player->contract_years == 0) ? $years : $player->contract_years + $years;
+
                 DB::table('players')
                     ->where('id', $player->id)
                     ->update([
-                        'contract_years' => $years,
+                        'contract_years' => $updatedYears,
                         'updated_at' => now(),
                     ]);
 
@@ -886,11 +888,12 @@ class PlayerRatingsService
                     'approval_chance' => round($approvalChance, 2),
                 ];
 
+                $transactionMessage = ($player->contract_years == 0) ? ' has signed for '.$teamName.' for ' : 'The team decided to sign via team-option for ';
                 // Insert the transaction record into the transactions table
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
                     'season_id' => $seasonId,
-                    'details' => $player->name . ' has signed for ' . $teamName . ' for ' . $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
+                    'details' => $player->name . $transactionMessage. $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
                     'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
                     'to_team_id' => $teamId,
                     'status' => 'signed',
@@ -911,30 +914,38 @@ class PlayerRatingsService
 
             }
             else{
-                DB::table('players')
-                    ->where('id', $player->id)
-                    ->update([
-                        'team_id' => 0,
-                        'contract_years' => 0,
-                        'salary' => 0,
-                        'contract_type' => 0,
-                        'player_option' => 0,
-                        'team_option' => 0,
-                        'no_trade_clause' => 0
-                    ]);
+                if($player->contract_years == 0)
+                {
+                    DB::table('players')
+                        ->where('id', $player->id)
+                        ->update([
+                            'team_id' => 0,
+                            'contract_years' => 0,
+                            'salary' => 0,
+                            'contract_type' => 0,
+                            'player_option' => 0,
+                            'team_option' => 0,
+                            'no_trade_clause' => 0
+                        ]);
 
-                DB::table('player_contracts')
-                    ->where('player_id', $player->id)
-                    ->where('status', 'signed')
-                    ->update(['status' => 'ended']);
+                    
+                        DB::table('player_contracts')
+                        ->where('player_id', $player->id)
+                        ->where('status', 'signed')
+                        ->update(['status' => 'ended']);
+                }
                 
+                $transactionMessage = ($player->contract_years == 0) 
+                        ? $player->name.' has been waived by '.$teamName .' and is now a free agent!.' 
+                        : $teamName.', chooses to decline the team option for '.$player->name;
+
                 // Insert the transaction record into the transactions table
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
                     'season_id' => $seasonId,
-                    'details' => $player->name . ' has been waived by ' . $teamName .' and now is a free agent!.',
+                    'details' => $transactionMessage,
                     'from_team_id' => $teamId,
-                    'to_team_id' => 0,
+                    'to_team_id' => ($player->contract_years == 0) ? 0 : $teamId,
                     'status' => 'waived',
                 ]);
             }
@@ -1016,7 +1027,7 @@ class PlayerRatingsService
                 DB::table('players')
                     ->where('id', $player->id)
                     ->update([
-                        'contract_years' => $years,
+                        'contract_years' => $player->contract_years + $years,
                         'updated_at' => now(),
                     ]);
 
@@ -1033,7 +1044,7 @@ class PlayerRatingsService
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
                     'season_id' => $seasonId,
-                    'details' => $player->name . ' has signed for ' . $teamName . ' for ' . $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
+                    'details' => $player->name . ' has decided to sign for ' . $teamName . 'on his player option for ' . $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
                     'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
                     'to_team_id' => $teamId,
                     'status' => 'signed',
@@ -1054,31 +1065,14 @@ class PlayerRatingsService
 
             }
             else{
-                DB::table('players')
-                    ->where('id', $player->id)
-                    ->update([
-                        'team_id' => 0,
-                        'contract_years' => 0,
-                        'salary' => 0,
-                        'contract_type' => 0,
-                        'player_option' => 0,
-                        'team_option' => 0,
-                        'no_trade_clause' => 0
-                    ]);
-
-                DB::table('player_contracts')
-                    ->where('player_id', $player->id)
-                    ->where('status', 'signed')
-                    ->update(['status' => 'ended']);
-                
                 // Insert the transaction record into the transactions table
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
                     'season_id' => $seasonId,
-                    'details' => $player->name . ' has been waived by ' . $teamName .' and now is a free agent!.',
-                    'from_team_id' => $teamId,
-                    'to_team_id' => 0,
-                    'status' => 'waived',
+                    'details' => $player->name . ' has declined his player option for' . $teamName .'.',
+                    'from_team_id' => 0,
+                    'to_team_id' => $teamId,
+                    'status' => 'declined',
                 ]);
             }
         }
