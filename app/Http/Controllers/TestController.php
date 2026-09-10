@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Teams;
 use App\Models\Player; // <-- Add this if not yet imported
 use App\Services\Archive\ArchiveService;
+use App\Services\Draft\DraftPickRightsService;
 use App\Services\Helper\HelperService;
 use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
@@ -28,10 +29,11 @@ class TestController extends Controller
     protected $tradeService;
     protected $teamRole;
     protected $playerRatingService;
+    protected $draftRights;
 
     public function __construct(){
 
-
+        $this->draftRights = new DraftPickRightsService();
         $this->teamRole = new TeamRoleService();
         $this->chemistry = new TeamChemistryService();
         $this->streak = new TeamStreakService();
@@ -400,6 +402,9 @@ class TestController extends Controller
     public function testGenerateTradeProposals()
     {
         return $this->tradeService->testGenerateTradeProposals();
+        // $seasonId = 3;
+
+        // return $this->draftRights->ensureFutureDraftRights($seasonId);
     }
 
     public function testGameStreak(Request $request){

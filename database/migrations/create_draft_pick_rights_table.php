@@ -14,7 +14,10 @@ return new class extends Migration
             $table->unsignedTinyInteger('round');
             $table->unsignedBigInteger('original_team_id');
             $table->unsignedBigInteger('current_owner_id');
+            $table->unsignedBigInteger('pick_number');
             $table->boolean('is_traded')->default(false);
+            $table->boolean('is_used')->default(false);
+            $table->timestamp('used_at')->nullable();
             $table->unsignedBigInteger('trade_proposal_id')->nullable();
             $table->string('protections', 255)->nullable();
             $table->timestamps();

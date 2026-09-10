@@ -76,7 +76,7 @@ class TradeService
             ->orderByDesc('created_at')
             ->get();
 
-        $this->attachTradePlayers($proposals);
+        $players = $this->attachTradePlayers($proposals);
 
         return response()->json([
             'trade_proposals' => $proposals,
@@ -235,7 +235,7 @@ class TradeService
 
                             $asset->player_name =
                                 'Draft Pick: ' .
-                                $asset->roundLabel ??
+                                $asset->pick_round ??
                                 (
                                     'Round ' .
                                     $asset->pick_round .
@@ -307,6 +307,7 @@ class TradeService
         $seasonId = $isOffSeason
             ? get_current_season_id() + 1
             : get_current_season_id();
+
 
         /*
         |--------------------------------------------------------------------------
@@ -2486,43 +2487,31 @@ class TradeService
             ->values();
     }
 
-    /*
-    |--------------------------------------------------------------------------
-    | GET TRADEABLE DRAFT PICKS
-    |--------------------------------------------------------------------------
-    */
-
-    private function getTradeableDraftPicks(
-        int $teamId,
-        int $seasonId
-    ) {
+    /**
+     * Get tradeable future draft picks.
+     *
+     * Rules:
+     * - Current season picks are NOT tradeable.
+     * - Only the next 3 draft seasons are tradeable.
+     * - Maximum 3 future draft picks can be traded by a team.
+     * - Already traded/proposed picks are excluded.
+     */
+    public function getTradeableDraftPicks(int $teamId)
+    {
+        $currentSeasonId = (int) get_current_season_id();
 
         return DB::table('draft_pick_rights')
-            ->where(
-                'current_owner_id',
-                $teamId
-            )
-            ->where(
-                'is_traded',
-                0
-            )
-            ->whereNull(
-                'trade_proposal_id'
-            )
-            ->where(
-                'season_id',
-                '>=',
-                $seasonId
-            )
-            ->orderBy(
-                'season_id'
-            )
-            ->orderBy(
-                'round'
-            )
+            ->where('current_owner_id', $teamId)
+            ->whereBetween('season_id', [
+                $currentSeasonId + 1,
+                $currentSeasonId + 5,
+            ])
+            ->where('is_used', 0)
+            ->whereNull('trade_proposal_id')
+            ->orderBy('season_id')
+            ->orderBy('round')
             ->get();
     }
-
     /*
     |--------------------------------------------------------------------------
     | DRAFT PICK VALUE

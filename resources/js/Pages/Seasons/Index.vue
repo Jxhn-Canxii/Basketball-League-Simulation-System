@@ -344,8 +344,8 @@
                     />
                 </div>
             </Modal>
-            <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'" title="Trade Plyers" @close="isTradeModalOpen = false">
-                <div class="mt-4 p-3 block">
+            <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'" title="Trade Players" @close="isTradeModalOpen = false">
+                <div class="mt-0 p-3 block bg-black">
                     <Trade
                         @newSeason="handleTradeSeason"
                     />

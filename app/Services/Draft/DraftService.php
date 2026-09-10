@@ -95,7 +95,7 @@ class DraftService
              * Make sure every franchise has a draft-right row.
              */
             $this->draftPickRightsService
-                ->createInitialDraftRights($currentSeasonId);
+                ->ensureFutureDraftRights($latestSeasonId);
 
             /*
              * ====================================================

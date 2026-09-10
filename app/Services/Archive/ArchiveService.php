@@ -22,22 +22,25 @@ class ArchiveService
 
     public function runArchives()
     {
-        $latestSeasonId = get_current_season_id();
-        
-        $this->archiveGameStats();
+        return DB::transaction(function () {
+            $latestSeasonId = get_current_season_id();
+            
+            $this->archiveGameStats();
 
-        $this->archiveQuarterGameBreakDown();
+            $this->archiveQuarterGameBreakDown();
 
-        $this->archivePerQuarterGameStats();
+            $this->archivePerQuarterGameStats();
 
-        $this->archivePlayerSeasonStats();
+            $this->archivePlayerSeasonStats();
 
-        $this->archiveScheduleViewTable();
+            $this->archiveScheduleViewTable();
 
-        $this->archiveScheduleWriteTable();
+            $this->archiveScheduleWriteTable();
 
-        $this->archivePlayoffSeriesTable();
-
+            $this->archivePlayoffSeriesTable();
+            
+            return true;
+        });
     }
 
     public static function archivePerQuarterGameStats()

@@ -3,74 +3,97 @@
 namespace App\Services\Draft;
 
 use Illuminate\Support\Facades\DB;
-use RuntimeException;
 
 class DraftPickRightsService
 {
     /**
-     * Create the initial draft rights for a season.
+     * ============================================================
+     * ENSURE FUTURE DRAFT RIGHTS
+     * ============================================================
      *
-     * One row represents one franchise's original pick right.
+     * Creates the permanent draft assets for the next 3 draft
+     * seasons.
      *
      * Example:
-     * Team A 2028 Round 1
      *
-     * original_team_id = A
-     * current_owner_id = A
+     * Current season = 13
+     *
+     * Creates:
+     *   Season 14 R1/R2
+     *   Season 15 R1/R2
+     *   Season 16 R1/R2
+     *
+     * It does NOT create Season 13 because that draft has already
+     * occurred before the trade event.
      */
-    public function createInitialDraftRights(int $seasonId): void
+    public function ensureFutureDraftRights(int $currentSeasonId): void
     {
+        $futureSeasons = [
+            $currentSeasonId + 1,
+            $currentSeasonId + 2,
+            $currentSeasonId + 3,
+            $currentSeasonId + 4,
+            $currentSeasonId + 5,
+        ];
+
         $teams = DB::table('teams')
             ->select('id')
-            ->orderBy('id')
             ->get();
 
-        foreach ($teams as $team) {
-            foreach ([1, 2] as $round) {
-                $exists = DB::table('draft_pick_rights')
-                    ->where('season_id', $seasonId)
-                    ->where('round', $round)
-                    ->where('original_team_id', $team->id)
-                    ->exists();
+        if ($teams->isEmpty()) {
+            return;
+        }
 
-                if ($exists) {
-                    continue;
+        foreach ($futureSeasons as $seasonId) {
+
+            foreach ($teams as $team) {
+
+                foreach ([1, 2] as $round) {
+
+                    DB::table('draft_pick_rights')
+                        ->insertOrIgnore([
+                            'season_id' => $seasonId,
+                            'round' => $round,
+
+                            /*
+                             * This never changes.
+                             *
+                             * It tells us which franchise originally
+                             * owned this draft asset.
+                             */
+                            'original_team_id' => $team->id,
+
+                            /*
+                             * Initially the original owner owns it.
+                             *
+                             * If traded, this becomes the acquiring team.
+                             */
+                            'current_owner_id' => $team->id,
+
+                            /*
+                             * Future draft order is not known yet.
+                             */
+                            'pick_number' => null,
+
+                            'is_traded' => 0,
+                            'trade_proposal_id' => null,
+
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
                 }
-
-                DB::table('draft_pick_rights')->insert([
-                    'season_id' => $seasonId,
-                    'round' => $round,
-                    'original_team_id' => $team->id,
-                    'current_owner_id' => $team->id,
-                    'is_traded' => 0,
-                    'trade_proposal_id' => null,
-                    'protections' => null,
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
             }
         }
     }
 
     /**
-     * Get all draft rights owned by a team.
-     */
-    public function getTeamDraftRights(
-        int $teamId,
-        ?int $seasonId = null
-    ) {
-        $seasonId ??= get_current_season_id() + 1;
-
-        return DB::table('draft_pick_rights')
-            ->where('season_id', $seasonId)
-            ->where('current_owner_id', $teamId)
-            ->orderBy('round')
-            ->orderBy('id')
-            ->get();
-    }
-
-    /**
-     * Get one original pick right.
+     * ============================================================
+     * GET ORIGINAL PICK RIGHT
+     * ============================================================
+     *
+     * Finds the permanent draft-right identity for:
+     *
+     * Season + Round + Original Team
      */
     public function getOriginalPickRight(
         int $seasonId,
@@ -85,160 +108,79 @@ class DraftPickRightsService
     }
 
     /**
-     * Transfer a draft right from one team to another.
+     * ============================================================
+     * GET TRADEABLE DRAFT PICKS
+     * ============================================================
+     *
+     * Only the next 3 future draft seasons can be traded.
+     *
+     * Example:
+     *
+     * Current = 13
+     *
+     * Allowed:
+     *   14
+     *   15
+     *   16
+     *
+     * Not allowed:
+     *   13
+     *   17+
      */
-    public function transferDraftRight(
-        int $draftPickRightId,
-        int $fromTeamId,
-        int $toTeamId,
-        ?int $tradeProposalId = null
-    ): bool {
-        $pick = DB::table('draft_pick_rights')
-            ->where('id', $draftPickRightId)
-            ->lockForUpdate()
-            ->first();
+    public function getTradeableDraftPicks(int $teamId)
+    {
+        $currentSeasonId = (int) get_current_season_id();
 
-        if (!$pick) {
-            throw new RuntimeException(
-                "Draft pick right {$draftPickRightId} does not exist."
-            );
-        }
-
-        if ((int) $pick->current_owner_id !== $fromTeamId) {
-            throw new RuntimeException(
-                "Draft pick right {$draftPickRightId} is not owned by team {$fromTeamId}."
-            );
-        }
-
-        if ($fromTeamId === $toTeamId) {
-            throw new RuntimeException(
-                'A draft pick cannot be transferred to the same team.'
-            );
-        }
-
-        DB::table('draft_pick_rights')
-            ->where('id', $draftPickRightId)
-            ->update([
-                'current_owner_id' => $toTeamId,
-                'is_traded' => 1,
-                'trade_proposal_id' => $tradeProposalId,
-                'updated_at' => now(),
-            ]);
-
-        return true;
-    }
-
-    /**
-     * Validate that a team still owns a pick.
-     */
-    public function validateOwnership(
-        int $draftPickRightId,
-        int $teamId
-    ): bool {
         return DB::table('draft_pick_rights')
-            ->where('id', $draftPickRightId)
             ->where('current_owner_id', $teamId)
-            ->exists();
+            ->whereBetween('season_id', [
+                $currentSeasonId + 1,
+                $currentSeasonId + 3,
+            ])
+            ->where('is_traded', 0)
+            ->whereNull('trade_proposal_id')
+            ->orderBy('season_id')
+            ->orderBy('round')
+            ->get();
     }
 
     /**
-     * Determine who receives a pick after protection rules.
+     * ============================================================
+     * RESOLVE PICK OWNER
+     * ============================================================
      *
-     * Currently supports:
-     * Top-5
-     * Top 5
-     * top-5
-     * Top-10
-     * Top 10
-     * Lottery protected
-     * None
+     * The original team's standings determine the draft slot.
      *
-     * Without a rollover column/schema, a protected pick simply
-     * remains with the original owner for this draft.
+     * The draft-right record determines who actually owns the
+     * selection.
      */
     public function resolvePickOwner(
         object $pickRight,
         int $pickNumber
     ): int {
-        $protection = trim((string) ($pickRight->protections ?? ''));
-
-        if ($protection === '' || strtolower($protection) === 'none') {
-            return (int) $pickRight->current_owner_id;
-        }
-
-        $normalized = strtolower(
-            str_replace([' ', '_'], '', $protection)
-        );
-
         /*
-         * Top-5 / top5
+         * If there is no protection system affecting this pick,
+         * the current owner makes the selection.
          */
-        if (
-            str_contains($normalized, 'top-5') ||
-            str_contains($normalized, 'top5')
-        ) {
-            if ($pickNumber <= 5) {
-                return (int) $pickRight->original_team_id;
-            }
-
-            return (int) $pickRight->current_owner_id;
-        }
-
-        /*
-         * Top-10 / top10
-         */
-        if (
-            str_contains($normalized, 'top-10') ||
-            str_contains($normalized, 'top10')
-        ) {
-            if ($pickNumber <= 10) {
-                return (int) $pickRight->original_team_id;
-            }
-
-            return (int) $pickRight->current_owner_id;
-        }
-
-        /*
-         * Lottery protected.
-         *
-         * Lottery picks are positions 1-14.
-         */
-        if (str_contains($normalized, 'lottery')) {
-            if ($pickNumber <= 14) {
-                return (int) $pickRight->original_team_id;
-            }
-
-            return (int) $pickRight->current_owner_id;
-        }
-
         return (int) $pickRight->current_owner_id;
     }
 
     /**
-     * Mark a pick as consumed after the draft.
+     * ============================================================
+     * CONSUME DRAFT RIGHT
+     * ============================================================
      *
-     * We don't delete the row because the row is the historical
-     * identity of the draft right.
+     * Once the actual draft occurs, this right can no longer be
+     * offered as a future asset.
      */
     public function consumeDraftRight(int $draftPickRightId): void
     {
         DB::table('draft_pick_rights')
             ->where('id', $draftPickRightId)
             ->update([
+                'is_used' => 1,
+                'used_at' => now(),
                 'updated_at' => now(),
             ]);
-    }
-
-    /**
-     * Get a human-readable description.
-     */
-    public function getPickDescription(object $pick): string
-    {
-        return sprintf(
-            '%s Round %d Pick Right - Season %d',
-            $pick->original_team_id,
-            $pick->round,
-            $pick->season_id
-        );
     }
 }
