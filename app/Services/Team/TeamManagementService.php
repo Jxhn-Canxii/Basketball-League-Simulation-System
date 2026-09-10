@@ -4,17 +4,23 @@ namespace App\Services\Team;
 
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
+use App\Services\Stats\PlayerSeasonStatsService;
 use App\Services\Helper\HelperService;
+use App\Services\Player\FreeAgencyService;
+
 
 class TeamManagementService
 {
     protected $teamWaiving;
+
     protected $helper;
+    protected $freeAgencyService;
     protected $teamInjury;
 
     public function __construct()
     {
         $this->helper = new HelperService();
+        $this->freeAgencyService = new FreeAgencyService();
         $this->teamInjury = new TeamInjuryService();
         $this->teamWaiving = new TeamWaivingService();
         
