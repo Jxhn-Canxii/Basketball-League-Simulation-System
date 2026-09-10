@@ -469,7 +469,7 @@ let injuryBlock = '';
     <div class="p-3 text-sm rounded-lg shadow-lg border border-indigo-700 inline-block w-auto max-w-[100vw]" style="${cardBg}">
       <h3 class="text-lg font-bold mb-2 flex items-center gap-2 text-yellow-200">
         <span class='fa fa-basketball-ball text-yellow-200'></span>
-        <span class='text-indigo-100'>${team.team_city} ${team.team_name}</span>
+        <span class='text-indigo-100'>#${team.team_id} | ${team.team_city} ${team.team_name}</span>
       </h3>
       <div class="grid grid-cols-1 gap-1">
         ${achievementsRows}

@@ -18,11 +18,13 @@ class PlayerRatingsService
 {
     protected  $contractService;
     protected  $coachDecisionService;
+    protected  $valuationService;
 
     public function __construct()
     {
         $this->coachDecisionService = new CoachDecisionService();
         $this->contractService = new ContractService();
+        $this->valuationService = new PlayerValuationService();
     }
 
     public function updateRookieContract($teamId){

@@ -175,6 +175,7 @@ class PlayerService
                         'conference_championships_won' => (int)$player->conference_championships_won,
                         'championships_won' => (int)$player->championships_won,
                         'awards_won' => (int)$player->awards_won,
+                        'player_valuation' => (int)$stats->player_valuation,
                         'is_latest' => $isLatestSeason,
                     ];
                 }
@@ -322,6 +323,7 @@ class PlayerService
                         'playoff_appearances' => (int)$player->conference_championships_won,
                         'championships_won' => (int)$player->championships_won,
                         'awards_won' => (int)$player->awards_won,
+                        'player_valuation' =>(int) $stats['player_valuation'] ?? 0,
                     ];
                 }
             }
@@ -577,6 +579,7 @@ class PlayerService
                 'players.name as player_name',
                 'player_season_stats.season_id',
                 'player_ratings.overall_rating',
+                'player_season_stats.player_valuation',
                 'seasons.name as season_name', // Select season name
                 DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY player_season_stats.id ASC) as team_names'),
                 DB::raw('GROUP_CONCAT(DISTINCT teams.primary_color ORDER BY player_season_stats.id ASC) as team_primary_colors'),
@@ -637,6 +640,7 @@ class PlayerService
                 'players.name as player_name',
                 'player_season_stats.season_id',
                 'player_ratings.overall_rating',
+                'player_season_stats.player_valuation',
                 'seasons.name as season_name', // Select season name
                 DB::raw('GROUP_CONCAT(DISTINCT teams.name ORDER BY player_season_stats.id ASC) as team_names'),
                 DB::raw('GROUP_CONCAT(DISTINCT teams.primary_color ORDER BY player_season_stats.id ASC) as team_primary_colors'),
@@ -746,6 +750,7 @@ class PlayerService
                 'total_free_throws_made' => $stats->total_free_throws_made,
                 'total_free_throw_attempts' => $stats->total_free_throw_attempts,
 
+                'player_valuation'  => $stats->player_valuation,
                 'latest' => true,
             ];
         }
@@ -802,6 +807,7 @@ class PlayerService
                 'total_free_throws_made' => $stats->total_free_throws_made,
                 'total_free_throw_attempts' => $stats->total_free_throw_attempts,
 
+                'player_valuation'  => $stats->player_valuation,
                 'latest' => false,
             ];
         }

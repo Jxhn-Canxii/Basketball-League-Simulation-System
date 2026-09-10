@@ -80,6 +80,11 @@
             >
               Ratings
             </th>
+            <th
+              class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider"
+            >
+              Value
+            </th>
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-200">
@@ -141,9 +146,12 @@
             <td class="px-2 py-1 whitespace-nowrap border font-bold">
               {{ player.overall_rating ? player.overall_rating.toFixed(2) : "Unrated" }}
             </td>
+            <td class="px-2 py-1 whitespace-nowrap border font-bold">
+              {{ player.player_valuation ? player.player_valuation : 0 }}
+            </td>
           </tr>
           <tr v-if="season_stats_loading">
-            <td colspan="12" class="text-center">
+            <td colspan="13" class="text-center">
               <div class="block text-center">
                 <i class="fa fa-spinner fa-spin text-blue-500 text-4xl"></i>
                 <p>Loading player data...</p>
@@ -151,8 +159,8 @@
             </td>
           </tr>
           <tr v-if="season_logs?.length == 0 && !season_stats_loading">
-            <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="12">
-              No data available
+            <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="13">
+              No seasons data available
             </td>
           </tr>
         </tbody>
@@ -311,7 +319,7 @@
           </tr>
           <tr v-if="playoff_logs?.length == 0 && !season_stats_loading">
             <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="12">
-              No data available
+              No Playoff data available
             </td>
           </tr>
         </tbody>

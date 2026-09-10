@@ -237,12 +237,12 @@
                                     >
                                         PER
                                     </th>
-                                    <!-- <th
+                                    <th
                                         class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
-                                        title="Fouls Per Game"
+                                        title="Player Valuation Estimation"
                                     >
-                                        Ratings
-                                    </th> -->
+                                        PVE
+                                    </th>
                                     <th
                                         class="px-2 py-1 text-left font-medium  uppercase tracking-wider"
                                     >
@@ -382,9 +382,9 @@
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         {{ player.per_game_score }}
                                     </td>
-                                    <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                        {{ player.combined_score }}
-                                    </td> -->
+                                    <td class="px-2 py-1 whitespace-nowrap border">
+                                        {{ player.player_valuation }}
+                                    </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         <!-- If the player is new to the team -->
                                         <span
@@ -435,7 +435,7 @@
                                     v-else
                                     class="hover:bg-gray-100"
                                 >
-                                    <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="24">***No Players Found***</td>
+                                    <td class="px-2 py-1 whitespace-nowrap border text-center font-bold text-red-500" colspan="25">***No Players Found***</td>
                                 </tr>
                             </tbody>
                         </table>

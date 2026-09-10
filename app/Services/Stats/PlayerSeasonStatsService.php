@@ -7,14 +7,17 @@ ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\Helper\HelperService;
+use App\Services\Player\PlayerValuationService;
 use Inertia\Inertia;
 
 class PlayerSeasonStatsService
 {
     protected $helper;
+    protected $valuationService;
 
     public function __construct(){
         $this->helper = new HelperService();
+        $this->valuationService = new PlayerValuationService();
     }
     /**
      * Store aggregated stats of a player's performance for a season in the player_season_stats table.
@@ -240,6 +243,8 @@ class PlayerSeasonStatsService
                 ->where('season_id', $latestSeasonId)
                 ->exists();
 
+            // $valuation = $this->valuationService->calculatePlayerValue($player);
+
             if ($hasStats) {
                 // Calculate the player's aggregated stats for the latest season
                 $playerStats = DB::table('player_game_stats')
@@ -311,6 +316,7 @@ class PlayerSeasonStatsService
                     'avg_blocks_per_game' => 0,
                     'avg_turnovers_per_game' => 0,
                     'avg_fouls_per_game' => 0,
+                    // 'player_valuation' => $valuation,
                 ];
             }
 
@@ -357,6 +363,7 @@ class PlayerSeasonStatsService
                     'total_three_point_attempts' => $playerStats->total_three_point_attempts,
                     'total_free_throws_made' => $playerStats->total_free_throws_made,
                     'total_free_throw_attempts' => $playerStats->total_free_throw_attempts,
+                    // 'player_valuation' => $valuation,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]
@@ -543,6 +550,8 @@ class PlayerSeasonStatsService
             // $playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
             $role = $player->role; // Default role if rating doesn't exist
 
+            $valuation = $this->valuationService->calculatePlayerValue($player);
+
             // Data to insert/update
             $data = [
                 'player_id' => $player->id,
@@ -575,6 +584,7 @@ class PlayerSeasonStatsService
                 'total_three_point_attempts' => 0,
                 'total_free_throws_made' => 0,
                 'total_free_throw_attempts' => 0,
+                'player_valuation' => $valuation,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
