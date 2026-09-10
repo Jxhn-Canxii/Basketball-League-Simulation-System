@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\DB;
 
 class CoachDecisionService
 {
-    
+
     /**
      * Get the current active coach of a team.
      */
@@ -333,7 +333,6 @@ class CoachDecisionService
 
             $score +=
                 ($development - 50) * 0.20;
-
         } elseif ($age <= 24) {
 
             $score +=
@@ -477,8 +476,8 @@ class CoachDecisionService
         return max(
             0,
             $baseValue +
-            $fitModifier +
-            $iqModifier
+                $fitModifier +
+                $iqModifier
         );
     }
 
@@ -566,7 +565,6 @@ class CoachDecisionService
             if ($fit < 35) {
 
                 $pressure += 18;
-
             } elseif ($fit < 45) {
 
                 $pressure += 10;
@@ -579,7 +577,6 @@ class CoachDecisionService
             if ($fit >= 80) {
 
                 $pressure -= 15;
-
             } elseif ($fit >= 70) {
 
                 $pressure -= 8;
@@ -906,4 +903,75 @@ class CoachDecisionService
             10000
         ) <= ($chance * 100);
     }
+
+    public function getRetentionModifier($coach, $player): float
+{
+    if (!$coach || !$player) {
+        return 0;
+    }
+
+    $fit = $this->getPlayerFitScore(
+        $coach,
+        $player
+    );
+
+    $quality = $this->getCoachQuality($coach);
+
+    /*
+     * Player fit is the biggest coach influence.
+     */
+    $modifier = ($fit - 50) * 0.20;
+
+    /*
+     * Better coaches have slightly more influence.
+     */
+    $influence = $this->getCoachInfluence($coach);
+
+    $modifier *= $influence;
+
+    /*
+     * Protect important players.
+     */
+    $role = $this->getPlayerRole($player);
+
+    if ($role === 'star player') {
+        $modifier += 2;
+    } elseif ($role === 'all star') {
+        $modifier += 1;
+    }
+
+    /*
+     * Development-oriented coaches are more likely
+     * to retain young players.
+     */
+    $age = $this->getPlayerAge($player);
+
+    $development = (float) (
+        $coach->development_rating ?? 50
+    );
+
+    if ($age <= 22) {
+        $modifier += ($development - 50) * 0.10;
+    } elseif ($age <= 24) {
+        $modifier += ($development - 50) * 0.06;
+    }
+
+    /*
+     * High IQ coaches should be slightly less likely
+     * to make irrational retention decisions.
+     *
+     * This does NOT override the score; it only reduces
+     * extreme coach preference.
+     */
+    if ($quality >= 85) {
+        $modifier *= 0.90;
+    } elseif ($quality <= 55) {
+        $modifier *= 1.10;
+    }
+
+    return max(
+        -15,
+        min(15, $modifier)
+    );
+}
 }

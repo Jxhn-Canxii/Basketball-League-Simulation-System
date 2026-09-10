@@ -18,7 +18,7 @@ return new class extends Migration
             $table->unsignedInteger('round');
             $table->unsignedBigInteger('winner_id')->nullable();
             $table->string('title', 255);
-            $table->text('content');
+            $table->longText('content');
             $table->timestamps();
         });
     }

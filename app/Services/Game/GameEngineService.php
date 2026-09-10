@@ -191,8 +191,8 @@ class GameEngineService
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->home_team_id,$gameData->season_id);
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->away_team_id,$gameData->season_id);
 
-        $this->teamManagement->prepareFinalRoster($gameData->home_team_id);
-        $this->teamManagement->prepareFinalRoster($gameData->away_team_id);
+        $this->teamManagement->prepareFinalRoster($gameData->home_team_id,$gameData->round);
+        $this->teamManagement->prepareFinalRoster($gameData->away_team_id,$gameData->round);
 
          //core of the game
         $quarterMinutes = $totalMinutes / 4;
@@ -211,38 +211,37 @@ class GameEngineService
 
         $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
         
-        if($isTied){
+        if ($isTied) {
+
             $otMinutes = $totalMinutes / 8;
 
-            $hasWinner = false;
-            $OTNumber = 0;
+            $maxOvertimes = 3;
 
-            do{
-                $OTNumber++;
+            for ($OTNumber = 1; $OTNumber <= $maxOvertimes; $OTNumber++) {
 
-                $overtimeQuarter = 'OT'.$OTNumber;
+                $overtimeQuarter = 'OT' . $OTNumber;
 
                 $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$overtimeQuarter,$otMinutes);
 
                 $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
-                
-                $scoreUpdate = $this->updateGameScore($gameData,$overtimeQuarter);
 
+                $this->updateGameScore($gameData,$overtimeQuarter);
+
+                // Check score after this overtime
                 $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
 
-                if($scoreUpdate && !$isTied){
+                // Game has a winner, stop overtime
+                if (!$isTied) {
 
                     DB::table('schedules')
                         ->where('game_id', $gameData->game_id)
-                        ->update(['is_overtime' => $OTNumber ]);
+                        ->update([
+                            'is_overtime' => $OTNumber
+                        ]);
 
-                    $hasWinner = true;
+                    break;
                 }
-                
-                $hasWinner = false;
-
-            } while ($hasWinner);
-    
+            }
         }
 
         $players =  DB::table('players')

@@ -48,6 +48,7 @@ class TradeController extends Controller
         return $this->tradeService->generateTradeProposals($request);
     }
 
+
     public function automatedTradeDecision(Request $request)
     {
         $request->validate([

@@ -2,6 +2,7 @@
 
 namespace App\Services\League;
 
+use App\Services\Archive\ArchiveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\Helper\HelperService;
@@ -9,10 +10,36 @@ use App\Services\Helper\HelperService;
 class StoryLineService
 {
    protected $helper;
+   protected $archive;
 
     public function __construct()
     {
         $this->helper = new HelperService();
+        $this->archive = new ArchiveService();
+    }
+
+    public function generateStoryLine()
+    {
+        $latestSeasonId = get_current_season_id();
+        
+        $storyline = $this->upsertCurrentSeasonStoryline();
+        if ($storyline) {
+
+            $this->archive->archiveGameStats();
+
+            $this->archive->archiveQuarterGameBreakDown();
+
+            $this->archive->archivePerQuarterGameStats();
+
+            $this->archive->archivePlayerSeasonStats();
+
+            $this->archive->archiveScheduleViewTable();
+
+            $this->archive->archiveScheduleWriteTable();
+
+            $this->archive->archivePlayoffSeriesTable();
+
+        }
     }
 
     public function upsertCurrentSeasonStoryline()

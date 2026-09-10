@@ -397,6 +397,11 @@ class TestController extends Controller
             ]);
     }
 
+    public function testGenerateTradeProposals()
+    {
+        return $this->tradeService->testGenerateTradeProposals();
+    }
+
     public function testGameStreak(Request $request){
         $gameId = $request->game_id;
         $teamId = 58;

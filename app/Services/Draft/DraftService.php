@@ -3,220 +3,455 @@
 namespace App\Services\Draft;
 
 use Illuminate\Http\Request;
-use App\Models\Seasons;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use App\Services\Helper\HelperService;
 use App\Services\Coach\CoachDecisionService;
 use App\Services\Contract\ContractService;
 
 class DraftService
 {
-
     protected $helper;
     protected $coachDecisionService;
     protected $contractService;
+    protected $draftPickRightsService;
 
     public function __construct()
     {
         $this->helper = new HelperService();
+
         $this->coachDecisionService = new CoachDecisionService();
+
         $this->contractService = new ContractService();
+
+        $this->draftPickRightsService = new DraftPickRightsService();
     }
 
+    /**
+     * ============================================================
+     * DRAFT ORDER
+     * ============================================================
+     *
+     * The important concept here is:
+     *
+     * standings determine ORIGINAL TEAM SLOT
+     *
+     * draft_pick_rights determine CURRENT OWNER
+     *
+     * Therefore:
+     *
+     * Team A can generate Pick #3,
+     * but Team B can actually make the selection.
+     */
     public function draftOrder()
     {
-        $latestSeasonId = get_current_season_id();
-        $currentSeasonId = $latestSeasonId + 1;
-
-        // === Check if draft already exists ===
-        $existingDraft = DB::table('drafts')
-            ->join('teams', 'drafts.team_id', '=', 'teams.id')
-            ->where('drafts.season_id', $currentSeasonId)
-            ->select(
-                'drafts.round',
-                'drafts.pick_number as pick',
-                'teams.name as team_name',
-                'drafts.team_id',
-                'drafts.draft_status',
-                'drafts.player_id'
-            )
-            ->orderBy('drafts.round')
-            ->orderBy('drafts.pick_number')
-            ->get();
-
-
-        if ($existingDraft->isNotEmpty()) {
-            return response()->json([
-                'season_id' => $currentSeasonId,
-                'draft_order' => $existingDraft,
-                'message' => 'Draft already exists for this season.',
-            ]);
-        }
-
-        // === Step 1: Get all teams for the latest season (ordered worst to best) ===
-        $allTeams = DB::table('standings_view')
-            ->select('team_id', 'team_name', 'wins', 'losses', 'overall_rank')
-            ->where('season_id', $latestSeasonId)
-            ->orderBy('overall_rank', 'desc')
-            ->get();
-
-        // === Step 2: Separate lottery teams (bottom 14) and rest ===
-        $lotteryTeams = $allTeams->take(14);
-        $nonLotteryTeams = $allTeams->slice(14);
-
-        // === Step 3: Define draft lottery odds (NBA-style) ===
-        $lotteryOdds = [140, 140, 140, 125, 105, 90, 75, 60, 45, 30, 20, 15, 10, 5];
-
-        // === Step 4: Lottery function (weighted random draw) ===
-        function weightedRandom(array $items)
-        {
-            $rand = mt_rand(1, array_sum(array_column($items, 'weight')));
-            foreach ($items as $item) {
-                if ($rand <= $item['weight']) {
-                    return $item;
-                }
-                $rand -= $item['weight'];
-            }
-        }
-
-        // === Step 5: Build weighted pool for lottery draw ===
-        $weightedPool = [];
-        foreach ($lotteryTeams as $i => $team) {
-            $weightedPool[] = [
-                'team' => $team,
-                'weight' => $lotteryOdds[$i],
-            ];
-        }
-
-        // === Step 6: Simulate top 4 lottery picks ===
-        $topPicks = [];
-        $selectedTeamIds = [];
-        while (count($topPicks) < 4) {
-            $winner = weightedRandom($weightedPool);
-            $teamId = $winner['team']->team_id;
-            if (!in_array($teamId, $selectedTeamIds)) {
-                $topPicks[] = $winner['team'];
-                $selectedTeamIds[] = $teamId;
-            }
-        }
-
-        // === Step 7: Remaining lottery teams (ordered by rank, excluding top 4) ===
-        $remainingLotteryTeams = $lotteryTeams->filter(function ($team) use ($selectedTeamIds) {
-            return !in_array($team->team_id, $selectedTeamIds);
-        });
-
-        // === Step 8: Merge full round 1 order: top 4 + remaining lottery + rest ===
-        $firstRoundOrder = array_merge(
-            $topPicks,
-            $remainingLotteryTeams->values()->all(),
-            $nonLotteryTeams->values()->all()
-        );
-
-        // === Step 9: Build full draft (2 rounds) and insert into DB ===
-        $twoRoundDraftOrder = [];
-
-        foreach ([1, 2] as $round) {
-            foreach ($firstRoundOrder as $pickIndex => $team) {
-                $pickNumber = $pickIndex + 1;
-                $draftStatus = "S{$currentSeasonId} R{$round} P{$pickNumber}";
-
-                $twoRoundDraftOrder[] = [
-                    'round' => $round,
-                    'pick' => $pickNumber,
-                    'team_id' => $team->team_id,
-                    'team_name' => $team->team_name,
-                    'wins' => $team->wins,
-                    'losses' => $team->losses,
-                    'overall_rank' => $team->overall_rank,
-                    'draft_status' => $draftStatus,
-                ];
-
-                DB::table('drafts')->insert([
-                    'team_id' => $team->team_id,
-                    'player_id' => 0,
-                    'season_id' => $currentSeasonId,
-                    'round' => $round,
-                    'pick_number' => $pickNumber,
-                    'draft_status' => $draftStatus,
-                ]);
-            }
-        }
-
-        $currentSeasonDraft = DB::table('drafts')
-            ->join('teams', 'drafts.team_id', '=', 'teams.id')
-            ->where('drafts.season_id', $currentSeasonId)
-            ->select(
-                'drafts.round',
-                'drafts.pick_number as pick',
-                'teams.name as team_name',
-                'drafts.team_id',
-                'drafts.draft_status',
-                'drafts.player_id'
-            )
-            ->orderBy('drafts.round')
-            ->orderBy('drafts.pick_number')
-            ->get();
-
-        return response()->json([
-            'season_id' => $currentSeasonId,
-            'draft_order' => $currentSeasonDraft,
-            'message' => 'Draft successfully generated.',
-        ]);
-    }
-
-    public function draftPlayers()
-    {
         DB::beginTransaction();
-        $draftResults = [];
 
         try {
             $latestSeasonId = get_current_season_id();
             $currentSeasonId = $latestSeasonId + 1;
 
+            /*
+             * Don't regenerate an existing draft.
+             */
+            $existingDraft = DB::table('drafts')
+                ->join(
+                    'teams',
+                    'drafts.team_id',
+                    '=',
+                    'teams.id'
+                )
+                ->where(
+                    'drafts.season_id',
+                    $currentSeasonId
+                )
+                ->select(
+                    'drafts.id',
+                    'drafts.draft_pick_right_id',
+                    'drafts.round',
+                    'drafts.pick_number as pick',
+                    'teams.name as team_name',
+                    'drafts.team_id',
+                    'drafts.draft_status',
+                    'drafts.player_id'
+                )
+                ->orderBy('drafts.round')
+                ->orderBy('drafts.pick_number')
+                ->get();
+
+            if ($existingDraft->isNotEmpty()) {
+
+                DB::commit();
+
+                return response()->json([
+                    'season_id' => $currentSeasonId,
+                    'draft_order' => $existingDraft,
+                    'message' => 'Draft already exists for this season.',
+                ]);
+            }
+
+            /*
+             * Make sure every franchise has a draft-right row.
+             */
+            $this->draftPickRightsService
+                ->createInitialDraftRights($currentSeasonId);
+
+            /*
+             * ====================================================
+             * STANDINGS
+             * ====================================================
+             */
+
+            $allTeams = DB::table('standings_view')
+                ->select(
+                    'team_id',
+                    'team_name',
+                    'wins',
+                    'losses',
+                    'overall_rank'
+                )
+                ->where(
+                    'season_id',
+                    $latestSeasonId
+                )
+                ->orderBy(
+                    'overall_rank',
+                    'desc'
+                )
+                ->get();
+
+            if ($allTeams->isEmpty()) {
+                throw new \RuntimeException(
+                    'No standings found for the previous season.'
+                );
+            }
+
+            /*
+             * ====================================================
+             * LOTTERY
+             * ====================================================
+             */
+
+            $lotteryTeams = $allTeams->take(14);
+
+            $nonLotteryTeams = $allTeams->slice(14);
+
+            $lotteryOdds = [
+                140,
+                140,
+                140,
+                125,
+                105,
+                90,
+                75,
+                60,
+                45,
+                30,
+                20,
+                15,
+                10,
+                5,
+            ];
+
+            $weightedPool = [];
+
+            foreach ($lotteryTeams as $i => $team) {
+                $weightedPool[] = [
+                    'team' => $team,
+                    'weight' => $lotteryOdds[$i] ?? 1,
+                ];
+            }
+
+            $topPicks = [];
+            $selectedTeamIds = [];
+
+            while (count($topPicks) < min(4, count($weightedPool))) {
+
+                $winner = $this->weightedRandom($weightedPool);
+
+                $teamId = (int) $winner['team']->team_id;
+
+                if (!in_array($teamId, $selectedTeamIds, true)) {
+
+                    $topPicks[] = $winner['team'];
+
+                    $selectedTeamIds[] = $teamId;
+                }
+            }
+
+            $remainingLotteryTeams = $lotteryTeams
+                ->filter(function ($team) use ($selectedTeamIds) {
+                    return !in_array(
+                        (int) $team->team_id,
+                        $selectedTeamIds,
+                        true
+                    );
+                })
+                ->values()
+                ->all();
+
+            $firstRoundOrder = array_merge(
+                $topPicks,
+                $remainingLotteryTeams,
+                $nonLotteryTeams->values()->all()
+            );
+
+            /*
+             * ====================================================
+             * CREATE ACTUAL DRAFT
+             * ====================================================
+             */
+
+            $draftOutput = [];
+
+            foreach ([1, 2] as $round) {
+
+                foreach ($firstRoundOrder as $pickIndex => $originalTeam) {
+
+                    $pickNumber = $pickIndex + 1;
+
+                    $originalTeamId = (int) $originalTeam->team_id;
+
+                    /*
+                     * Find the permanent draft-right identity.
+                     */
+                    $pickRight =
+                        $this->draftPickRightsService
+                        ->getOriginalPickRight(
+                            $currentSeasonId,
+                            $round,
+                            $originalTeamId
+                        );
+
+                    if (!$pickRight) {
+                        throw new \RuntimeException(
+                            "Missing draft pick right for team {$originalTeamId}, round {$round}."
+                        );
+                    }
+
+                    /*
+                     * Protection is resolved using the slot generated
+                     * by the ORIGINAL team's standings.
+                     */
+                    $currentOwnerId =
+                        $this->draftPickRightsService
+                        ->resolvePickOwner(
+                            $pickRight,
+                            $pickNumber
+                        );
+
+                    $currentOwner =
+                        DB::table('teams')
+                        ->where('id', $currentOwnerId)
+                        ->first();
+
+                    if (!$currentOwner) {
+                        throw new \RuntimeException(
+                            "Current owner {$currentOwnerId} does not exist."
+                        );
+                    }
+
+                    $draftStatus =
+                        "S{$currentSeasonId} R{$round} P{$pickNumber}";
+
+                    /*
+                     * Draft row now points to the permanent pick right.
+                     */
+                    DB::table('drafts')->insert([
+                        'team_id' => $currentOwnerId,
+                        'player_id' => 0,
+                        'draft_pick_right_id' => $pickRight->id,
+                        'season_id' => $currentSeasonId,
+                        'round' => $round,
+                        'pick_number' => $pickNumber,
+                        'draft_status' => $draftStatus,
+                    ]);
+
+                    $draftOutput[] = [
+                        'round' => $round,
+                        'pick' => $pickNumber,
+
+                        /*
+                         * Original team is useful for explaining
+                         * where the pick came from.
+                         */
+                        'original_team_id' => $originalTeamId,
+                        'original_team_name' => $originalTeam->team_name,
+
+                        /*
+                         * Current owner is the team actually making
+                         * the selection.
+                         */
+                        'team_id' => $currentOwnerId,
+                        'team_name' => $currentOwner->name,
+
+                        'draft_pick_right_id' => $pickRight->id,
+                        'draft_status' => $draftStatus,
+                    ];
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'season_id' => $currentSeasonId,
+                'draft_order' => $draftOutput,
+                'message' => 'Draft successfully generated.',
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            Log::error(
+                'Draft order generation failed',
+                [
+                    'exception' => $e,
+                ]
+            );
+
+            return response()->json([
+                'error' => true,
+                'message' => 'Draft order generation failed.',
+                'error_message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * ============================================================
+     * DRAFT PLAYERS
+     * ============================================================
+     */
+    public function draftPlayers()
+    {
+        DB::beginTransaction();
+
+        $draftResults = [];
+
+        try {
+
+            $latestSeasonId = get_current_season_id();
+
+            $currentSeasonId = $latestSeasonId + 1;
+
+            /*
+             * Get draft order.
+             */
             $draftOrder = DB::table('drafts')
-                ->where('season_id', $currentSeasonId)
+                ->where(
+                    'season_id',
+                    $currentSeasonId
+                )
                 ->orderBy('round')
                 ->orderBy('pick_number')
                 ->get();
 
-            $draftPlayerCountLimit = count($draftOrder) + 20;
-
-            $availablePlayers = collect(DB::table('players')
-                ->where('is_rookie', 1)
-                ->where('team_id', 0)
-                ->where('draft_id', $currentSeasonId)
-                ->where('is_drafted', 0)
-                ->orderBy('overall_rating', 'desc')
-                ->orderBy('age', 'asc')
-                ->get());
-
-            if ($availablePlayers->count() < $draftPlayerCountLimit) {
-                return response()->json([
-                    'error' => true,
-                    'message' => 'Not enough rookies available for the draft.',
-                ], 400);
+            if ($draftOrder->isEmpty()) {
+                throw new \RuntimeException(
+                    'No draft order exists. Generate the draft order first.'
+                );
             }
 
+            /*
+             * ====================================================
+             * ROOKIE POOL
+             * ====================================================
+             */
+
+            $availablePlayers = collect(
+                DB::table('players')
+                    ->where('is_rookie', 1)
+                    ->where('team_id', 0)
+                    ->where('draft_id', $currentSeasonId)
+                    ->where('is_drafted', 0)
+                    ->orderByDesc('overall_rating')
+                    ->orderBy('age')
+                    ->get()
+            );
+
+            /*
+             * We need enough players for every pick.
+             *
+             * The extra 20 allows undrafted players to remain.
+             */
+            $draftPlayerCountLimit =
+                $draftOrder->count() + 20;
+
+            if (
+                $availablePlayers->count()
+                <
+                $draftPlayerCountLimit
+            ) {
+                throw new \RuntimeException(
+                    'Not enough rookies available for the draft.'
+                );
+            }
+
+            /*
+             * Cache team position needs.
+             */
             $teamPositionNeeds = [];
+
             foreach ($draftOrder as $pick) {
-                $teamId = $pick->team_id;
-                $teamPositionNeeds[$teamId] = $this->getTeamPositionNeeds($teamId);
+
+                $teamId = (int) $pick->team_id;
+
+                if (!isset($teamPositionNeeds[$teamId])) {
+
+                    $teamPositionNeeds[$teamId] =
+                        $this->getTeamPositionNeeds(
+                            $teamId
+                        );
+                }
             }
 
+            /*
+             * ====================================================
+             * PROCESS EVERY PICK
+             * ====================================================
+             */
+
             foreach ($draftOrder as $pick) {
-                if ($availablePlayers->isEmpty()) break;
 
-                $originalTeamId = $pick->team_id;
-                $teamId = $pick->team_id;
-                $team = DB::table('teams')->where('id', $teamId)->first();
-                $neededPositions = array_keys($teamPositionNeeds[$teamId] ?? []);
+                if ($availablePlayers->isEmpty()) {
+                    break;
+                }
 
-                $coach = $this->coachDecisionService
+                $teamId = (int) $pick->team_id;
+
+                /*
+                 * Team making the selection.
+                 */
+                $team = DB::table('teams')
+                    ->where('id', $teamId)
+                    ->first();
+
+                if (!$team) {
+                    throw new \RuntimeException(
+                        "Team {$teamId} does not exist."
+                    );
+                }
+
+                /*
+                 * =================================================
+                 * COACH / POSITION SELECTION
+                 * =================================================
+                 */
+
+                $neededPositions =
+                    array_keys(
+                        $teamPositionNeeds[$teamId] ?? []
+                    );
+
+                $coach =
+                    $this->coachDecisionService
                     ->getTeamCoach($teamId);
 
-                $candidatePlayers = $availablePlayers
+                $candidatePlayers =
+                    $availablePlayers
                     ->sortByDesc(function ($player) {
+
                         return (float) (
                             $player->overall_rating
                             ?? $player->overall
@@ -226,17 +461,19 @@ class DraftService
                     ->take(15)
                     ->values();
 
-                $scoredCandidates = $candidatePlayers
+                $scoredCandidates =
+                    $candidatePlayers
                     ->map(function ($player) use (
                         $coach,
                         $neededPositions
                     ) {
 
-                        $draftScore = $this->calculateCoachDraftScore(
-                            $coach,
-                            $player,
-                            $neededPositions
-                        );
+                        $draftScore =
+                            $this->calculateCoachDraftScore(
+                                $coach,
+                                $player,
+                                $neededPositions
+                            );
 
                         return [
                             'player' => $player,
@@ -246,18 +483,32 @@ class DraftService
                     ->sortByDesc('draft_score')
                     ->values();
 
-                $topCandidates = $scoredCandidates
+                $topCandidates =
+                    $scoredCandidates
                     ->take(3)
                     ->values();
 
-                $selectedCandidate = $topCandidates->first();
+                $selectedCandidate =
+                    $topCandidates->first();
 
-                if ($topCandidates->count() > 1) {   
+                if (!$selectedCandidate) {
+                    throw new \RuntimeException(
+                        "No draft candidate available for pick {$pick->pick_number}."
+                    );
+                }
 
-                    $coachQuality = $this->coachDecisionService
+                /*
+                 * Coach uncertainty between top candidates.
+                 */
+                if ($topCandidates->count() > 1) {
+
+                    $coachQuality =
+                        $this->coachDecisionService
                         ->getCoachQuality($coach);
 
-                    $bestChance = 55 + (($coachQuality - 50) * 0.40);
+                    $bestChance =
+                        55 +
+                        (($coachQuality - 50) * 0.40);
 
                     $bestChance = max(
                         40,
@@ -268,127 +519,179 @@ class DraftService
                         !$this->coachDecisionService
                             ->randomDecision($bestChance)
                     ) {
-                        $selectedCandidate = $topCandidates
+
+                        $selectedCandidate =
+                            $topCandidates
                             ->slice(1)
                             ->random();
                     }
                 }
 
-                $selectedPlayer = $selectedCandidate['player'];
+                $selectedPlayer =
+                    $selectedCandidate['player'];
 
-                $selectedPlayer = $selectedCandidate['player'];
+                $selectedDraftScore =
+                    $selectedCandidate['draft_score'];
 
-                $selectedDraftScore = $selectedCandidate['draft_score'];
+                /*
+                 * Remove from available pool immediately.
+                 */
+                $availablePlayers =
+                    $availablePlayers
+                    ->reject(function ($player) use ($selectedPlayer) {
 
-                // dd($selectedPlayer->id);
-                // Remove selected player
-                $availablePlayers = $availablePlayers->reject(fn($p) => $p->id === $selectedPlayer->id)->values();
+                        return (int) $player->id
+                            ===
+                            (int) $selectedPlayer->id;
+                    })
+                    ->values();
 
-                // Determine if a player needs to be waived
-                $hasSpace = DB::table('players')->where('team_id', $teamId)->count() < 15;
-                $shouldWaive = false;
+                /*
+                 * =================================================
+                 * ROSTER MANAGEMENT
+                 * =================================================
+                 */
+
+                $hasSpace =
+                    $this->teamHasRosterSpace(
+                        $teamId
+                    );
+
+                /*
+                 * First round picks are valuable.
+                 *
+                 * We DO NOT allow a top first-round player to
+                 * randomly disappear into free agency simply
+                 * because the roster is full.
+                 */
+                $mustSign =
+                    $pick->round == 1;
+
+                $waivedPlayer = null;
 
                 if (!$hasSpace) {
-                    // Determine waiver probability based on round and pick number
-                    $waiverProbability = 0;
-                    if ($pick->round == 1) {
-                        if ($pick->pick_number <= 10) {
-                            $waiverProbability = 100;
-                        } elseif ($pick->pick_number <= 20) {
-                            $waiverProbability = 80;
-                        } elseif ($pick->pick_number <= 30) {
-                            $waiverProbability = 70;
-                        } elseif ($pick->pick_number <= 50) {
-                            $waiverProbability = 60;
-                        } elseif ($pick->pick_number <= 80) {
-                            $waiverProbability = 50;
-                        }
-                    } elseif ($pick->round == 2 && $pick->pick_number <= 30) {
-                        $waiverProbability = 20;
-                    }
 
-                    // Decide whether to waive based on probability
-                    $shouldWaive = $waiverProbability > 0 && rand(0, 99) < $waiverProbability;
-                }
+                    /*
+                     * First try to create space intelligently.
+                     */
+                    $waivedPlayer =
+                        $this->findPlayerToWaive(
+                            $teamId,
+                            $selectedPlayer,
+                            $currentSeasonId,
+                            $mustSign
+                        );
 
-                if (!$hasSpace && $shouldWaive) {
-                    // Try to waive low performer with matching position
-                    $previousSeasonId = $currentSeasonId;
+                    if ($waivedPlayer) {
 
-                    $playerToWaive = DB::table('players as p')
-                        ->leftJoin('player_season_stats_archives as stats', function ($join) use ($previousSeasonId) {
-                            $join->on('p.id', '=', 'stats.player_id')
-                                ->where('stats.season_id', '=', $previousSeasonId);
-                        })
-                        ->where('p.team_id', $teamId)
-                        ->where(function ($q) use ($selectedPlayer) {
-                            $q->where('p.position', 'like', '%' . $selectedPlayer->position . '%');
-                        })
-                        ->where(function ($q) {
-                            $q->where('p.contract_years', '<=', 1)
-                                ->orWhere('stats.eff', '<', 10);
-                        })
-                        ->orderBy('stats.eff', 'asc')
-                        ->select('p.id', 'p.name')
-                        ->first();
-
-                    if ($playerToWaive) {
-                        
-                        DB::table('players')
-                            ->where('id',$playerToWaive->id)
-                            ->update([
-                                'team_id' => 0,
-                                'contract_years' => 0,
-                                'salary' => 0,
-                                'contract_type' => 0,
-                                'player_option' => 0,
-                                'team_option' => 0,
-                                'no_trade_clause' => 0
-                            ]);
-
-                        DB::table('transactions')->insert([
-                            'player_id' => $playerToWaive->id,
-                            'season_id' => $currentSeasonId,
-                            'from_team_id' => $teamId,
-                            'to_team_id' => 0,
-                            'status' => 'waived',
-                            'details' => "Waived by {$team->name} to make space for draft pick",
-                        ]);
-
-                        DB::table('player_contracts')
-                            ->where('player_id', $playerToWaive->id)
-                            ->where('season_id',$currentSeasonId - 1)
-                            ->where('status', 'signed')
-                            ->update(['status' => 'terminated']);
+                        $this->waivePlayerForDraft(
+                            $waivedPlayer,
+                            $team,
+                            $currentSeasonId
+                        );
 
                         $hasSpace = true;
                     }
                 }
 
-                $contractYears = $pick->round === 1
-                    ? ($pick->pick_number <= 10 ? rand(3, 5) : rand(1, 4))
-                    : rand(1, 2);
+                /*
+                 * =================================================
+                 * FINAL SIGNING DECISION
+                 * =================================================
+                 *
+                 * First round:
+                 *   MUST sign.
+                 *
+                 * Second round:
+                 *   sign if space was created.
+                 *
+                 * If a second-round pick has no space and we
+                 * cannot create space, the player remains
+                 * undrafted/free agent.
+                 */
+                $finalTeamId =
+                    $hasSpace
+                    ? $teamId
+                    : ($mustSign ? $teamId : 0);
 
-                $finalTeamId = $hasSpace ? $teamId : 0;
-                $contract = $hasSpace ? $contractYears : 0;
+                /*
+                 * Safety:
+                 *
+                 * If a first-rounder somehow still has no space,
+                 * force one more roster cut.
+                 */
+                if (
+                    $mustSign
+                    &&
+                    !$this->teamHasRosterSpace($teamId)
+                ) {
 
-                // Assign player to team
-                DB::table('players')->where('id', $selectedPlayer->id)->update([
-                    'team_id' => $finalTeamId,
-                    'drafted_team_id' => $teamId,
-                    'is_drafted' => 1,
-                    'draft_order' => $pick->pick_number,
-                    'draft_status' => $pick->draft_status,
-                    'contract_years' => $contract,
-                ]);
+                    $forcedWaive =
+                        $this->findPlayerToWaive(
+                            $teamId,
+                            $selectedPlayer,
+                            $currentSeasonId,
+                            true
+                        );
 
-                DB::table('drafts')->where([
-                    'season_id' => $currentSeasonId,
-                    'round' => $pick->round,
-                    'pick_number' => $pick->pick_number,
-                ])->update([
-                    'player_id' => $selectedPlayer->id,
-                ]);
+                    if (!$forcedWaive) {
+
+                        throw new \RuntimeException(
+                            "Unable to create roster space for first-round pick {$pick->pick_number}."
+                        );
+                    }
+
+                    $this->waivePlayerForDraft(
+                        $forcedWaive,
+                        $team,
+                        $currentSeasonId
+                    );
+
+                    $finalTeamId = $teamId;
+                    $hasSpace = true;
+                }
+
+                /*
+                 * =================================================
+                 * MARK PLAYER AS DRAFTED
+                 * =================================================
+                 */
+
+                DB::table('players')
+                    ->where('id', $selectedPlayer->id)
+                    ->update([
+                        'team_id' => $finalTeamId,
+                        'drafted_team_id' => $teamId,
+                        'is_drafted' => 1,
+                        'draft_order' => $pick->pick_number,
+                        'draft_status' => $pick->draft_status,
+
+                        /*
+                         * ContractService becomes the authority
+                         * for actual contract years/salary.
+                         */
+                        'contract_years' => 0,
+                    ]);
+
+                /*
+                 * Update draft row.
+                 */
+                DB::table('drafts')
+                    ->where([
+                        'season_id' => $currentSeasonId,
+                        'round' => $pick->round,
+                        'pick_number' => $pick->pick_number,
+                    ])
+                    ->update([
+                        'player_id' => $selectedPlayer->id,
+                        'team_id' => $teamId,
+                    ]);
+
+                /*
+                 * =================================================
+                 * DRAFT TRANSACTION
+                 * =================================================
+                 */
 
                 DB::table('transactions')->insert([
                     'player_id' => $selectedPlayer->id,
@@ -396,68 +699,229 @@ class DraftService
                     'from_team_id' => 0,
                     'to_team_id' => $teamId,
                     'status' => 'draft',
-                    'details' => "Drafted by {$team->name} in round {$pick->round}, pick {$pick->pick_number}",
+                    'details' =>
+                    "Drafted by {$team->name} in round {$pick->round}, pick {$pick->pick_number}.",
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]);
 
-                if ($hasSpace) {
-                    $offer = $this->contractService->assignRookieContract($selectedPlayer, $pick->round, $pick->pick_number);
+                /*
+                 * =================================================
+                 * ROOKIE CONTRACT
+                 * =================================================
+                 *
+                 * FIRST ROUND:
+                 * always signs.
+                 *
+                 * SECOND ROUND:
+                 * signs only if roster space exists.
+                 */
+                $offer = null;
 
-                            // Insert the transaction record into the transactions table
-                    DB::table('transactions')->insert([
-                        'player_id' => $selectedPlayer->id,
-                        'season_id' => $currentSeasonId,
-                        'details' => $selectedPlayer->name . ' has signed for ' . $team->name . ' for ' . $contractYears . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
-                        'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
-                        'to_team_id' => $teamId,
-                        'status' => 'signed',
-                    ]);
+                if ($finalTeamId === $teamId) {
 
-                    DB::table('player_contracts')->insert([
-                        'player_id' => $selectedPlayer->id,
-                        'season_id' => $currentSeasonId,
-                        'team_id' => $teamId,
-                        'salary' => $offer['salary'],
-                        'contract_years' => $offer['years'],
-                        'contract_type' => $offer['contract_type'],
-                        'player_option' => $offer['player_option'] ?? false,
-                        'team_option' => $offer['team_option'] ?? false,
-                        'no_trade_clause' => $offer['no_trade_clause'] ?? false,
-                        'status' => 'signed',
-                    ]);
-                    
+                    $offer =
+                        $this->contractService
+                        ->assignRookieContract(
+                            $selectedPlayer,
+                            $pick->round,
+                            $pick->pick_number
+                        );
+
+                    /*
+                     * Update players from the ContractService
+                     * result.
+                     */
                     DB::table('players')
-                    ->where('id', $selectedPlayer->id)
-                    ->update([
-                        'team_id' => $teamId,
-                        'contract_years' => $offer['years'],
-                        'salary' => $offer['salary'],
-                        'contract_type' => $offer['contract_type'],
-                        'player_option' => $offer['player_option'],
-                        'team_option' => $offer['team_option'],
-                        'no_trade_clause' => $offer['no_trade_clause']
-                    ]);
+                        ->where('id', $selectedPlayer->id)
+                        ->update([
+                            'team_id' => $teamId,
+                            'contract_years' =>
+                            $offer['years'],
+                            'salary' =>
+                            $offer['salary'],
+                            'contract_type' =>
+                            $offer['contract_type'],
+                            'player_option' =>
+                            $offer['player_option'] ?? 0,
+                            'team_option' =>
+                            $offer['team_option'] ?? 0,
+                            'no_trade_clause' =>
+                            $offer['no_trade_clause'] ?? 0,
+                        ]);
 
+                    /*
+                     * player_contracts
+                     */
+                    DB::table('player_contracts')
+                        ->insert([
+                            'player_id' =>
+                            $selectedPlayer->id,
 
+                            'season_id' =>
+                            $currentSeasonId,
+
+                            'team_id' =>
+                            $teamId,
+
+                            'salary' =>
+                            $offer['salary'],
+
+                            'contract_years' =>
+                            $offer['years'],
+
+                            'contract_type' =>
+                            $offer['contract_type'],
+
+                            'player_option' =>
+                            $offer['player_option'] ?? false,
+
+                            'team_option' =>
+                            $offer['team_option'] ?? false,
+
+                            'no_trade_clause' =>
+                            $offer['no_trade_clause'] ?? false,
+
+                            'status' => 'signed',
+
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+
+                    /*
+                     * Signed transaction.
+                     */
+                    DB::table('transactions')
+                        ->insert([
+                            'player_id' =>
+                            $selectedPlayer->id,
+
+                            'season_id' =>
+                            $currentSeasonId,
+
+                            'details' =>
+                            $selectedPlayer->name .
+                                " signed with " .
+                                $team->name .
+                                " for " .
+                                $offer['years'] .
+                                " years on a " .
+                                $offer['contract_type'] .
+                                " contract worth ₱" .
+                                number_format(
+                                    (float) $offer['salary'],
+                                    2
+                                ) .
+                                '.',
+
+                            'from_team_id' => 0,
+
+                            'to_team_id' =>
+                            $teamId,
+
+                            'status' => 'signed',
+
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
                 }
+
+                /*
+                 * =================================================
+                 * CONSUME PICK RIGHT
+                 * =================================================
+                 */
+
+                if (!empty($pick->draft_pick_right_id)) {
+
+                    $this->draftPickRightsService
+                        ->consumeDraftRight(
+                            (int) $pick->draft_pick_right_id
+                        );
+                }
+
+                /*
+                 * =================================================
+                 * RESULT
+                 * =================================================
+                 */
 
                 $draftResults[] = [
                     'team_id' => $teamId,
-                    'player_id' => $selectedPlayer->id,
-                    'player_name' => $selectedPlayer->name,
-                    'position' => $selectedPlayer->position,
-                    'age' => $selectedPlayer->age,
-                    'archetype' => $selectedPlayer->type,
-                    'overall_rating' => $selectedPlayer->overall_rating,
-                    'team_name' => $team->name,
-                    'draft_id' => $currentSeasonId,
-                    'draft_order' => $pick->pick_number,
-                    'draft_status' => $pick->draft_status,
-                    'round' => $pick->round,
-                    'pick_number' => $pick->pick_number,
+
+                    'player_id' =>
+                    $selectedPlayer->id,
+
+                    'player_name' =>
+                    $selectedPlayer->name,
+
+                    'position' =>
+                    $selectedPlayer->position,
+
+                    'age' =>
+                    $selectedPlayer->age,
+
+                    'archetype' =>
+                    $selectedPlayer->type,
+
+                    'overall_rating' =>
+                    $selectedPlayer->overall_rating,
+
+                    'team_name' =>
+                    $team->name,
+
+                    'draft_id' =>
+                    $currentSeasonId,
+
+                    'draft_order' =>
+                    $pick->pick_number,
+
+                    'draft_status' =>
+                    $pick->draft_status,
+
+                    'round' =>
+                    $pick->round,
+
+                    'pick_number' =>
+                    $pick->pick_number,
+
+                    'draft_pick_right_id' =>
+                    $pick->draft_pick_right_id,
+
+                    'draft_score' =>
+                    $selectedDraftScore,
+
+                    'signed' =>
+                    $finalTeamId === $teamId,
+
+                    'contract_years' =>
+                    $offer['years'] ?? 0,
+
+                    'salary' =>
+                    $offer['salary'] ?? 0,
+
+                    'waived_player_id' =>
+                    $waivedPlayer->id ?? null,
+
+                    'waived_player_name' =>
+                    $waivedPlayer->name ?? null,
                 ];
 
-                $teamPositionNeeds[$teamId] = $this->updateTeamPositionNeeds($teamPositionNeeds[$teamId], $selectedPlayer->position);
+                /*
+                 * Update positional needs after drafting.
+                 */
+                $teamPositionNeeds[$teamId] =
+                    $this->updateTeamPositionNeeds(
+                        $teamPositionNeeds[$teamId] ?? [],
+                        $selectedPlayer->position
+                    );
             }
+
+            /*
+             * ====================================================
+             * UNDRAFTED ROOKIES
+             * ====================================================
+             */
 
             DB::table('players')
                 ->where('draft_id', $currentSeasonId)
@@ -465,13 +929,22 @@ class DraftService
                 ->update([
                     'team_id' => 0,
                     'contract_years' => 0,
+                    'salary' => 0,
                     'draft_status' => 'Undrafted',
                     'is_rookie' => 1,
                 ]);
 
+            /*
+             * ====================================================
+             * SEASON STATUS
+             * ====================================================
+             */
+
             DB::table('seasons')
                 ->where('id', $latestSeasonId)
-                ->update(['status' => config('timeline.draft')]);
+                ->update([
+                    'status' => config('timeline.draft'),
+                ]);
 
             DB::commit();
 
@@ -479,11 +952,20 @@ class DraftService
                 'error' => false,
                 'season_id' => $currentSeasonId,
                 'draft_results' => $draftResults,
-                'message' => 'Draft completed successfully.',
+                'message' =>
+                'Draft completed successfully.',
             ], 200);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
+
             DB::rollBack();
-            \Log::error('Drafting failed', ['exception' => $e]);
+
+            Log::error(
+                'Drafting failed',
+                [
+                    'exception' => $e,
+                ]
+            );
+
             return response()->json([
                 'error' => true,
                 'message' => 'Drafting failed.',
@@ -492,51 +974,472 @@ class DraftService
         }
     }
 
-    public function rookieDraftees(Request $request)
-    {
-        // Get pagination parameters from the request
-        $perPage = $request->input('itemsperpage', 10); // Number of items per page
-        $currentPage = $request->input('page_num', 1); // Current page number
-        $search = $request->input('search', ''); // Search term
+    /**
+     * ============================================================
+     * FIND PLAYER TO WAIVE
+     * ============================================================
+     */
+    private function findPlayerToWaive(
+        int $teamId,
+        object $selectedPlayer,
+        int $seasonId,
+        bool $mustCreateSpace = false
+    ) {
+        /*
+         * IMPORTANT:
+         *
+         * We look at the PREVIOUS completed season.
+         *
+         * Your old code incorrectly used:
+         *
+         * $previousSeasonId = $currentSeasonId;
+         */
+        $previousSeasonId =
+            $seasonId - 1;
 
-        // Calculate the offset for the query
-        $offset = ($currentPage - 1) * $perPage;
+        /*
+         * First attempt:
+         * matching position + weak contract/performance.
+         */
+        $candidate = DB::table('players as p')
+            ->leftJoin(
+                'player_season_stats as stats',
+                function ($join) use ($previousSeasonId) {
 
-        // Define role priorities
-        $rolePriorities = [
-            'star player' => 1,
-            'all star' => 2,
-            'starter' => 2,
-            'role player' => 5,
-            'bench' => 5,
-        ];
+                    $join->on(
+                        'p.id',
+                        '=',
+                        'stats.player_id'
+                    );
 
-        // Build the query with optional search filter
-        $query = Player::select('*')
-            ->where('contract_years', 0)
-            ->where('is_active', 1)
-            ->where('is_rookie', 1);
+                    $join->where(
+                        'stats.season_id',
+                        '=',
+                        $previousSeasonId
+                    );
+                }
+            )
+            ->where(
+                'p.team_id',
+                $teamId
+            )
+            ->where(
+                'p.id',
+                '!=',
+                $selectedPlayer->id
+            )
+            ->where(function ($q) use ($selectedPlayer) {
 
-        // Apply search filter if provided
-        if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+                $q->where(
+                    'p.position',
+                    'like',
+                    '%' . $selectedPlayer->position . '%'
+                );
+            })
+            ->where(function ($q) {
+
+                $q->where(
+                    'p.contract_years',
+                    '<=',
+                    1
+                )
+                    ->orWhere(
+                        'stats.eff',
+                        '<',
+                        10
+                    );
+            })
+            ->select(
+                'p.id',
+                'p.name',
+                'p.position',
+                'p.contract_years',
+                'p.salary',
+                'stats.eff'
+            )
+            ->orderByRaw(
+                'CASE
+                    WHEN p.contract_years <= 0 THEN 0
+                    WHEN stats.eff IS NULL THEN 1
+                    ELSE 2
+                 END'
+            )
+            ->orderBy('stats.eff', 'asc')
+            ->first();
+
+        if ($candidate) {
+            return $candidate;
         }
 
-        // Add role priority sorting
-        $query->orderByRaw(
-            "FIELD(role, 'star player','all star', 'starter', 'role player', 'bench')"
+        /*
+         * If a first-rounder MUST be signed, use a broader
+         * fallback.
+         *
+         * We still try to remove the least valuable player.
+         */
+        if ($mustCreateSpace) {
+
+            return DB::table('players as p')
+                ->leftJoin(
+                    'player_season_stats as stats',
+                    function ($join) use ($previousSeasonId) {
+
+                        $join->on(
+                            'p.id',
+                            '=',
+                            'stats.player_id'
+                        );
+
+                        $join->where(
+                            'stats.season_id',
+                            '=',
+                            $previousSeasonId
+                        );
+                    }
+                )
+                ->where(
+                    'p.team_id',
+                    $teamId
+                )
+                ->where(
+                    'p.id',
+                    '!=',
+                    $selectedPlayer->id
+                )
+                ->select(
+                    'p.id',
+                    'p.name',
+                    'p.position',
+                    'p.contract_years',
+                    'p.salary',
+                    'stats.eff'
+                )
+                ->orderByRaw(
+                    'COALESCE(stats.eff, 0) ASC'
+                )
+                ->orderBy(
+                    'p.contract_years',
+                    'asc'
+                )
+                ->orderBy(
+                    'p.salary',
+                    'asc'
+                )
+                ->first();
+        }
+
+        return null;
+    }
+
+    /**
+     * ============================================================
+     * WAIVE PLAYER FOR DRAFT
+     * ============================================================
+     */
+    private function waivePlayerForDraft(
+        object $player,
+        object $team,
+        int $seasonId
+    ): void {
+
+        DB::table('players')
+            ->where('id', $player->id)
+            ->update([
+                'team_id' => 0,
+                'contract_years' => 0,
+                'salary' => 0,
+                'contract_type' => null,
+                'player_option' => 0,
+                'team_option' => 0,
+                'no_trade_clause' => 0,
+            ]);
+
+        /*
+         * Terminate previous contract if one exists.
+         */
+        DB::table('player_contracts')
+            ->where('player_id', $player->id)
+            ->where('season_id', $seasonId - 1)
+            ->where('status', 'signed')
+            ->update([
+                'status' => 'terminated',
+                'updated_at' => now(),
+            ]);
+
+        DB::table('transactions')
+            ->insert([
+                'player_id' => $player->id,
+                'season_id' => $seasonId,
+                'from_team_id' => $team->id,
+                'to_team_id' => 0,
+                'status' => 'waived',
+                'details' =>
+                "Waived by {$team->name} to make roster space for a draft pick.",
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+    }
+
+    /**
+     * ============================================================
+     * ROSTER SPACE
+     * ============================================================
+     */
+    private function teamHasRosterSpace(int $teamId): bool
+    {
+        $count = DB::table('players')
+            ->where('team_id', $teamId)
+            ->count();
+
+        return $count < 15;
+    }
+
+    /**
+     * ============================================================
+     * LOTTERY RANDOM
+     * ============================================================
+     */
+    private function weightedRandom(array $items)
+    {
+        $totalWeight =
+            array_sum(
+                array_column(
+                    $items,
+                    'weight'
+                )
+            );
+
+        if ($totalWeight <= 0) {
+            return $items[array_rand($items)];
+        }
+
+        $rand =
+            mt_rand(
+                1,
+                $totalWeight
+            );
+
+        foreach ($items as $item) {
+
+            if ($rand <= $item['weight']) {
+                return $item;
+            }
+
+            $rand -= $item['weight'];
+        }
+
+        return end($items);
+    }
+
+    /**
+     * ============================================================
+     * POSITION NEEDS
+     * ============================================================
+     */
+    private function getTeamPositionNeeds($teamId)
+    {
+        $required = [
+            'PG' => 3,
+            'SG' => 3,
+            'SF' => 3,
+            'PF' => 3,
+            'C' => 3,
+        ];
+
+        $positionCount = [
+            'PG' => 0,
+            'SG' => 0,
+            'SF' => 0,
+            'PF' => 0,
+            'C' => 0,
+        ];
+
+        $roster = DB::table('players')
+            ->where('team_id', $teamId)
+            ->get();
+
+        foreach ($roster as $player) {
+
+            $positions =
+                explode(
+                    '/',
+                    strtoupper(
+                        (string) $player->position
+                    )
+                );
+
+            foreach ($positions as $pos) {
+
+                $pos = trim($pos);
+
+                if (isset($positionCount[$pos])) {
+                    $positionCount[$pos]++;
+                }
+            }
+        }
+
+        $needs = [];
+
+        foreach ($required as $pos => $minCount) {
+
+            if ($positionCount[$pos] < $minCount) {
+
+                $needs[$pos] =
+                    $minCount -
+                    $positionCount[$pos];
+            }
+        }
+
+        return $needs;
+    }
+
+    /**
+     * ============================================================
+     * UPDATE POSITION NEEDS
+     * ============================================================
+     */
+    private function updateTeamPositionNeeds(
+        $currentNeeds,
+        $playerPosition
+    ) {
+        $positions =
+            explode(
+                '/',
+                strtoupper(
+                    (string) $playerPosition
+                )
+            );
+
+        foreach ($positions as $position) {
+
+            $position = trim($position);
+
+            if (isset($currentNeeds[$position])) {
+
+                $currentNeeds[$position]--;
+
+                if ($currentNeeds[$position] <= 0) {
+                    unset(
+                        $currentNeeds[$position]
+                    );
+                }
+            }
+        }
+
+        return $currentNeeds;
+    }
+
+    /**
+     * ============================================================
+     * COACH DRAFT SCORE
+     * ============================================================
+     */
+    private function calculateCoachDraftScore(
+        $coach,
+        $player,
+        array $positionNeeds
+    ): float {
+
+        $baseScore = (float) (
+            $player->overall_rating
+            ?? $player->overall
+            ?? 0
         );
 
-        // Get total number of records
+        return (float)
+        $this->coachDecisionService
+            ->getDraftScore(
+                $coach,
+                $player,
+                $baseScore,
+                $positionNeeds
+            );
+    }
+
+    /**
+     * ============================================================
+     * ROOKIE DRAFTEES
+     * ============================================================
+     */
+    public function rookieDraftees(Request $request)
+    {
+        $perPage =
+            max(
+                1,
+                (int) $request->input(
+                    'itemsperpage',
+                    10
+                )
+            );
+
+        $currentPage =
+            max(
+                1,
+                (int) $request->input(
+                    'page_num',
+                    1
+                )
+            );
+
+        $search =
+            trim(
+                (string) $request->input(
+                    'search',
+                    ''
+                )
+            );
+
+        $offset =
+            ($currentPage - 1) *
+            $perPage;
+
+        $query =
+            Player::query()
+            ->where(
+                'contract_years',
+                0
+            )
+            ->where(
+                'is_active',
+                1
+            )
+            ->where(
+                'is_rookie',
+                1
+            );
+
+        if ($search !== '') {
+
+            $query->where(
+                'name',
+                'like',
+                "%{$search}%"
+            );
+        }
+
+        $query->orderByRaw(
+            "FIELD(
+                role,
+                'star player',
+                'all star',
+                'starter',
+                'role player',
+                'bench'
+            )"
+        );
+
         $total = $query->count();
 
-        // Fetch the paginated data
-        $freeAgents = $query->offset($offset)
+        $freeAgents =
+            $query
+            ->offset($offset)
             ->limit($perPage)
             ->get();
 
-        // Calculate total pages
-        $totalPages = (int) ceil($total / $perPage);
+        $totalPages =
+            (int) ceil(
+                $total / $perPage
+            );
 
         return response()->json([
             'current_page' => $currentPage,
@@ -547,76 +1450,245 @@ class DraftService
         ]);
     }
 
+    /**
+     * ============================================================
+     * DRAFT RESULTS
+     * ============================================================
+     */
+    public function draftResults()
+    {
+        $latestSeasonId =
+            get_current_season_id();
+
+        $draftSeasonId =
+            $latestSeasonId + 1;
+
+        $draftResults =
+            DB::table('drafts as d')
+            ->join(
+                'teams',
+                'd.team_id',
+                '=',
+                'teams.id'
+            )
+            ->join(
+                'players',
+                'd.player_id',
+                '=',
+                'players.id'
+            )
+            ->leftJoin(
+                'draft_pick_rights as pr',
+                'd.draft_pick_right_id',
+                '=',
+                'pr.id'
+            )
+            ->select(
+                'd.team_id',
+                'teams.name as team_name',
+                'd.player_id',
+                'players.name as player_name',
+                'players.age',
+                'players.position',
+                'players.type as archetype',
+                'players.overall_rating',
+                'd.season_id',
+                'd.round',
+                'd.pick_number',
+                'd.draft_status',
+                'd.draft_pick_right_id',
+                'pr.original_team_id',
+                'pr.current_owner_id'
+            )
+            ->where(
+                'd.season_id',
+                $draftSeasonId
+            )
+            ->orderBy('d.round')
+            ->orderBy('d.pick_number')
+            ->get();
+
+        return response()->json([
+            'season_id' => $draftSeasonId,
+            'draft_results' => $draftResults,
+        ]);
+    }
+
+    /**
+     * ============================================================
+     * DRAFT RESULTS PER SEASON
+     * ============================================================
+     *
+     * Kept close to your existing endpoint so your frontend
+     * doesn't need a complete rewrite.
+     */
     public function draftResultsPerSeason(Request $request)
     {
-        // Get the latest season_id from the request
-        $latestSeasonId = $request->season_id;
+        $latestSeasonId =
+            (int) $request->season_id;
 
-        // Determine if the season_id is the current season
-        $currentSeasonId = get_current_season_id();
+        $currentSeasonId =
+            get_current_season_id();
 
-        $playerSeasonStatsTable = $this->helper->getSeasonStatsDBName($latestSeasonId);
+        $playerSeasonStatsTable =
+            $this->helper
+            ->getSeasonStatsDBName(
+                $latestSeasonId
+            );
 
-        // If you want to include team names and player names, join the relevant tables
-        $draftResultsWithNames = DB::table('drafts')
-            ->join('teams', 'drafts.team_id', '=', 'teams.id')
-            ->join('players', 'drafts.player_id', '=', 'players.id')
-            ->leftJoin($playerSeasonStatsTable . ' as player_season_stats', 'players.id', '=', 'player_season_stats.player_id')
-            ->leftJoin('teams as signed_team', 'signed_team.id', '=', 'player_season_stats.team_id')
+        $draftResultsWithNames =
+            DB::table('drafts as d')
+            ->join(
+                'teams',
+                'd.team_id',
+                '=',
+                'teams.id'
+            )
+            ->join(
+                'players',
+                'd.player_id',
+                '=',
+                'players.id'
+            )
+            ->leftJoin(
+                $playerSeasonStatsTable . ' as player_season_stats',
+                'players.id',
+                '=',
+                'player_season_stats.player_id'
+            )
+            ->leftJoin(
+                'teams as signed_team',
+                'signed_team.id',
+                '=',
+                'player_season_stats.team_id'
+            )
             ->select(
                 'players.type as archetype',
                 'players.age',
                 'players.overall_rating',
                 'players.position',
-                'drafts.team_id',
+                'd.team_id',
                 'teams.name as team_name',
                 'teams.id as drafted_team_id',
                 'signed_team.name as signed_team_name',
                 'signed_team.id as signed_team_id',
-                'drafts.player_id',
+                'd.player_id',
                 'players.name as player_name',
-                'drafts.season_id',
-                'drafts.round',
-                'drafts.pick_number',
-                'drafts.draft_status'
+                'd.season_id',
+                'd.round',
+                'd.pick_number',
+                'd.draft_status',
+                'd.draft_pick_right_id'
             )
-            ->where('players.draft_id', $latestSeasonId)
-            ->orderBy('drafts.round')
-            ->orderBy('drafts.pick_number')
+            ->where(
+                'players.draft_id',
+                $latestSeasonId
+            )
+            ->orderBy('d.round')
+            ->orderBy('d.pick_number')
             ->groupBy('players.id')
             ->get();
 
-        // Extract player IDs from the draft results to create the rank group
-        $rankGroupPlayerIds = $draftResultsWithNames->pluck('player_id');
+        $rankGroupPlayerIds =
+            $draftResultsWithNames
+            ->pluck('player_id');
 
-        // Fetch player stats and calculate ranks only for the players drafted in the latest season
-        $playerStats = collect();
-        if ($latestSeasonId == $currentSeasonId) {
-            // Get player stats from the player_game_stats table for the current season, filtered by rank group and draft_id
-            $playerGameStats = DB::table('player_game_stats')
-                ->join('players', 'player_game_stats.player_id', '=', 'players.id')
-                ->where('players.draft_id', $currentSeasonId)
-                ->whereIn('player_game_stats.player_id', $rankGroupPlayerIds) // Filter by rank group
+        $playerStats =
+            collect();
+
+        if (
+            $latestSeasonId ==
+            $currentSeasonId
+        ) {
+
+            $playerStats =
+                DB::table('player_game_stats')
+                ->join(
+                    'players',
+                    'player_game_stats.player_id',
+                    '=',
+                    'players.id'
+                )
+                ->where(
+                    'players.draft_id',
+                    $currentSeasonId
+                )
+                ->whereIn(
+                    'player_game_stats.player_id',
+                    $rankGroupPlayerIds
+                )
                 ->select(
                     'player_game_stats.player_id',
-                    DB::raw('COUNT(CASE WHEN minutes > 0 THEN 1 END) as total_games_played'),
-                    DB::raw('AVG(player_game_stats.points) as avg_points_per_game'),
-                    DB::raw('AVG(player_game_stats.rebounds) as avg_rebounds_per_game'),
-                    DB::raw('AVG(player_game_stats.assists) as avg_assists_per_game'),
-                    DB::raw('AVG(player_game_stats.steals) as avg_steals_per_game'),
-                    DB::raw('AVG(player_game_stats.blocks) as avg_blocks_per_game'),
-                    DB::raw('AVG(player_game_stats.turnovers) as avg_turnovers_per_game'),
-                    DB::raw('AVG(player_game_stats.minutes) as avg_minutes_played')
+
+                    DB::raw(
+                        'COUNT(
+                                CASE
+                                    WHEN minutes > 0
+                                    THEN 1
+                                END
+                            ) as total_games_played'
+                    ),
+
+                    DB::raw(
+                        'AVG(player_game_stats.points)
+                            as avg_points_per_game'
+                    ),
+
+                    DB::raw(
+                        'AVG(player_game_stats.rebounds)
+                            as avg_rebounds_per_game'
+                    ),
+
+                    DB::raw(
+                        'AVG(player_game_stats.assists)
+                            as avg_assists_per_game'
+                    ),
+
+                    DB::raw(
+                        'AVG(player_game_stats.steals)
+                            as avg_steals_per_game'
+                    ),
+
+                    DB::raw(
+                        'AVG(player_game_stats.blocks)
+                            as avg_blocks_per_game'
+                    ),
+
+                    DB::raw(
+                        'AVG(player_game_stats.turnovers)
+                            as avg_turnovers_per_game'
+                    ),
+
+                    DB::raw(
+                        'AVG(player_game_stats.minutes)
+                            as avg_minutes_played'
+                    )
                 )
-                ->groupBy('player_game_stats.player_id')
+                ->groupBy(
+                    'player_game_stats.player_id'
+                )
                 ->get();
-            $playerStats = $playerGameStats;
         } else {
-            // Get player stats from the player_season_stats table for the previous season, filtered by rank group and draft_id
-            $playerSeasonStats = DB::table($playerSeasonStatsTable . ' as player_season_stats')
-                ->join('players', 'player_season_stats.player_id', '=', 'players.id')
-                ->where('players.draft_id', $latestSeasonId)
-                ->whereIn('player_season_stats.player_id', $rankGroupPlayerIds) // Filter by rank group
+
+            $playerStats =
+                DB::table(
+                    $playerSeasonStatsTable .
+                        ' as player_season_stats'
+                )
+                ->join(
+                    'players',
+                    'player_season_stats.player_id',
+                    '=',
+                    'players.id'
+                )
+                ->where(
+                    'players.draft_id',
+                    $latestSeasonId
+                )
+                ->whereIn(
+                    'player_season_stats.player_id',
+                    $rankGroupPlayerIds
+                )
                 ->select(
                     'player_season_stats.player_id',
                     'player_season_stats.avg_points_per_game',
@@ -629,168 +1701,103 @@ class DraftService
                     'player_season_stats.avg_minutes_per_game as avg_minutes_played'
                 )
                 ->get();
-            $playerStats = $playerSeasonStats;
         }
 
-        // Assign ranks based on the custom formula
-        $rankedPlayers = $playerStats->filter(function ($player) {
-            // Only include players who have played at least one game and have minutes played > 0
-            return $player->total_games_played > 0 && $player->avg_minutes_played > 0;
-        })->sort(function ($a, $b) {
-            // Calculate ranking scores for player A
-            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
-                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
-                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+        $rankedPlayers =
+            $playerStats
+            ->filter(function ($player) {
 
-            // Calculate ranking scores for player B
-            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
-                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
-                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+                return
+                    $player->total_games_played > 0
+                    &&
+                    $player->avg_minutes_played > 0;
+            })
+            ->sort(function ($a, $b) {
 
-            // Factor in total games played and minutes played for ranking score
-            // Example: Multiply score by total games played and average minutes played to give it weight
-            $aFinalScore = $aStats * $a->total_games_played * $a->avg_minutes_played;
-            $bFinalScore = $bStats * $b->total_games_played * $b->avg_minutes_played;
+                $aStats =
+                    ($a->avg_points_per_game * 1.0)
+                    +
+                    ($a->avg_rebounds_per_game * 1.2)
+                    +
+                    ($a->avg_assists_per_game * 1.5)
+                    +
+                    ($a->avg_steals_per_game * 2.0)
+                    +
+                    ($a->avg_blocks_per_game * 2.0)
+                    -
+                    ($a->avg_turnovers_per_game * 1.5);
 
-            return $bFinalScore <=> $aFinalScore;
-        })->values(); // Re-index after sorting
+                $bStats =
+                    ($b->avg_points_per_game * 1.0)
+                    +
+                    ($b->avg_rebounds_per_game * 1.2)
+                    +
+                    ($b->avg_assists_per_game * 1.5)
+                    +
+                    ($b->avg_steals_per_game * 2.0)
+                    +
+                    ($b->avg_blocks_per_game * 2.0)
+                    -
+                    ($b->avg_turnovers_per_game * 1.5);
 
-        // Add ranks to each player
-        $rankedPlayers = $rankedPlayers->map(function ($stats, $index) {
-            $stats->rank = $index + 1; // Add rank starting from 1
-            return $stats;
-        });
+                $aFinalScore =
+                    $aStats
+                    *
+                    $a->total_games_played
+                    *
+                    $a->avg_minutes_played;
 
-        // Merge ranks into the draft results
-        $draftResultsWithNamesAndRanks = $draftResultsWithNames->map(function ($draft) use ($rankedPlayers) {
-            $playerRank = $rankedPlayers->firstWhere('player_id', $draft->player_id);
-            $draft->rank = $playerRank->rank ?? null; // Add rank if found, otherwise null
-            return $draft;
-        });
+                $bFinalScore =
+                    $bStats
+                    *
+                    $b->total_games_played
+                    *
+                    $b->avg_minutes_played;
 
-        // Return the draft results as a JSON response
+                return
+                    $bFinalScore
+                    <=>
+                    $aFinalScore;
+            })
+            ->values();
+
+        $rankedPlayers =
+            $rankedPlayers->map(
+                function ($stats, $index) {
+
+                    $stats->rank =
+                        $index + 1;
+
+                    return $stats;
+                }
+            );
+
+        $draftResultsWithNamesAndRanks =
+            $draftResultsWithNames
+            ->map(
+                function ($draft) use (
+                    $rankedPlayers
+                ) {
+
+                    $playerRank =
+                        $rankedPlayers
+                        ->firstWhere(
+                            'player_id',
+                            $draft->player_id
+                        );
+
+                    $draft->rank =
+                        $playerRank->rank
+                        ?? null;
+
+                    return $draft;
+                }
+            );
+
         return response()->json([
             'season_id' => $latestSeasonId,
-            'draft_results' => $draftResultsWithNamesAndRanks,
+            'draft_results' =>
+            $draftResultsWithNamesAndRanks,
         ]);
-    }
-
-    public function draftResults()
-    {
-        // Get the latest season_id from the standings_view
-        $latestSeasonId = get_current_season_id();
-
-        // Fetch draft results for the latest season from the drafts table
-        $draftResults = DB::table('drafts')
-            ->select('team_id', 'player_id', 'season_id', 'round', 'pick_number', 'draft_status')
-            ->where('season_id', $latestSeasonId + 1) // Assuming the new season is the next one
-            ->get();
-
-        // If you want to include team names and player names, you can join the relevant tables
-        $draftResultsWithNames = DB::table('drafts')
-            ->join('teams', 'drafts.team_id', '=', 'teams.id')
-            ->join('players', 'drafts.player_id', '=', 'players.id')
-            ->select(
-                'drafts.team_id',
-                'teams.name as team_name',
-                'drafts.player_id',
-                'players.name as player_name',
-                'players.age',
-                'players.position',
-                'players.type as archetype',
-                'players.overall_rating',
-                'drafts.season_id',
-                'drafts.round',
-                'drafts.pick_number',
-                'drafts.draft_status'
-            )
-            ->where('drafts.season_id', $latestSeasonId + 1)
-            ->get();
-
-        // Return the draft results as a JSON response
-        return response()->json([
-            'season_id' => $latestSeasonId + 1, // Return the new season id
-            'draft_results' => $draftResultsWithNames,
-        ]);
-    }
-
-    
-    private function getTeamPositionNeeds($teamId)
-    {
-        // Minimum required count for each main position
-        $required = [
-            'PG' => 3,
-            'SG' => 3,
-            'SF' => 3,
-            'PF' => 3,
-            'C'  => 3,
-        ];
-
-        // Initialize counters
-        $positionCount = [
-            'PG' => 0,
-            'SG' => 0,
-            'SF' => 0,
-            'PF' => 0,
-            'C'  => 0,
-        ];
-
-        // Fetch players on the team
-        $roster = DB::table('players')->where('team_id', $teamId)->get();
-
-        foreach ($roster as $player) {
-            $positions = explode('/', $player->position);
-            foreach ($positions as $pos) {
-                if (isset($positionCount[$pos])) {
-                    $positionCount[$pos]++;
-                }
-            }
-        }
-
-        // Find unmet needs
-        $needs = [];
-        foreach ($required as $pos => $minCount) {
-            if ($positionCount[$pos] < $minCount) {
-                $needs[$pos] = $minCount - $positionCount[$pos];
-            }
-        }
-
-        return $needs; // returns ['PG' => 1, 'C' => 2] etc.
-    }
-
-
-    private function updateTeamPositionNeeds($currentNeeds, $playerPosition)
-    {
-        $positions = explode('/', $playerPosition);
-
-        foreach ($positions as $position) {
-            if (isset($currentNeeds[$position])) {
-                $currentNeeds[$position]--;
-
-                if ($currentNeeds[$position] <= 0) {
-                    unset($currentNeeds[$position]);
-                }
-            }
-        }
-
-        return $currentNeeds;
-    }
-
-    private function calculateCoachDraftScore($coach,$player, array $positionNeeds ): float 
-    {
-        $baseScore = (float) (
-            $player->overall_rating
-            ?? $player->overall
-            ?? 0
-        );
-
-        return $this->coachDecisionService
-            ->getDraftScore(
-                $coach,
-                $player,
-                $baseScore,
-                $positionNeeds
-            );
     }
 }
-

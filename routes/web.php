@@ -344,6 +344,9 @@ Route::middleware('auth')->group(function () {
         Route::get('rookie-contract', [TestController::class, 'updateRookieContract'])->name('rookie.contract');
         Route::get('game-flow', [TestController::class, 'gameFlow'])->name('game.flow');
 
+        Route::get('test-trade-generate', [TestController::class, 'testGenerateTradeProposals'])->name('test.trade.generate');
+
+
     });
 
 });

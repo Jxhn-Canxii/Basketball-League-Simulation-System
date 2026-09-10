@@ -19,9 +19,28 @@ class PlayerRatingsService
     protected  $contractService;
     protected  $coachDecisionService;
     protected  $valuationService;
+    protected  $retentionService;
+
+      // Define role priority (lower number = higher priority)
+    protected $rolePriority = [
+        'star player' => 1,
+        'all star' => 2,
+        'starter' => 2,
+        'role player' => 3,
+        'bench' => 4,
+    ];
+    
+    protected $roleThresholds = [
+        'star player' => 90,  // Star players should maintain at least 90 overall rating
+        'all star' => 85,      // Starters should maintain at least 85 overall rating
+        'starter' => 75,      // Starters should maintain at least 75 overall rating
+        'role player' => 60,  // Role players should maintain at least 60 overall rating
+        'bench' => 40,        // Bench players should maintain at least 40 overall rating
+    ];
 
     public function __construct()
     {
+        $this->retentionService = new PlayerRetentionService();
         $this->coachDecisionService = new CoachDecisionService();
         $this->contractService = new ContractService();
         $this->valuationService = new PlayerValuationService();
@@ -366,7 +385,10 @@ class PlayerRatingsService
                 $this->logPlayerRatings($player, $seasonId);
 
                 if($player->contract_years == 0 || ($player->contract_years == 1 && $player->team_option == 1)){
-                    $this->playerCoachDecision($player,$teamId, $teamName,$nextSeasonId);
+                    $retention = $this->retentionService->evaluate($player,$teamId,$seasonId);
+
+                    $this->processRetentionDecision($player,$retention,$teamId,$teamName,$seasonId,$nextSeasonId);
+                    
                 }
 
                 if($player->contract_years == 1 && $player->player_option == 1){
@@ -640,23 +662,6 @@ class PlayerRatingsService
         }
     }
 
-    // Define role priority (lower number = higher priority)
-    protected $rolePriority = [
-        'star player' => 1,
-        'all star' => 2,
-        'starter' => 2,
-        'role player' => 3,
-        'bench' => 4,
-    ];
-    
-    protected $roleThresholds = [
-        'star player' => 90,  // Star players should maintain at least 90 overall rating
-        'all star' => 85,      // Starters should maintain at least 85 overall rating
-        'starter' => 75,      // Starters should maintain at least 75 overall rating
-        'role player' => 60,  // Role players should maintain at least 60 overall rating
-        'bench' => 40,        // Bench players should maintain at least 40 overall rating
-    ];
-
     private function logPlayerRatings($player, $seasonId)
     {
         // Check if the player ratings for the current season already exist
@@ -881,6 +886,7 @@ class PlayerRatingsService
                 DB::table('players')
                     ->where('id', $player->id)
                     ->update([
+                        'team_id' => $teamId,
                         'contract_years' => $updatedYears,
                         'updated_at' => now(),
                     ]);
@@ -1034,6 +1040,7 @@ class PlayerRatingsService
                 DB::table('players')
                     ->where('id', $player->id)
                     ->update([
+                        'team_id' => $teamId,
                         'contract_years' => $player->contract_years + $years,
                         'updated_at' => now(),
                     ]);
@@ -1085,4 +1092,112 @@ class PlayerRatingsService
         }
     }
     
+    private function processRetentionDecision($player,array $decision,int $teamId,string $teamName,int $seasonId,int $nextSeasonId) 
+    {
+        switch ($decision['action']) {
+
+            case 'WAIVE':
+
+                $this->waivePlayer(
+                    $player,
+                    $teamId,
+                    $teamName,
+                    $seasonId,
+                    $decision
+                );
+
+                break;
+
+            case 'REVIEW' || 'REPLACE' || 'KEEP':
+
+                // Let existing ContractService / coach logic
+                // make the final decision.
+                $this->playerCoachDecision(
+                    $player,
+                    $teamId,
+                    $teamName,
+                    $nextSeasonId
+                );
+
+                break;
+
+            case 'SHOP':
+
+                // Do not automatically waive.
+                // This can later feed your trade system.
+                break;
+        }
+    }
+
+
+    private function waivePlayer(
+        $player,
+        int $teamId,
+        string $teamName,
+        int $seasonId,
+        array $decision = []
+    ): void 
+    {
+        // Terminate the current signed contract for this season.
+        DB::table('player_contracts')
+            ->where('player_id', $player->id)
+            ->where('season_id', $seasonId)
+            ->where('status', 'signed')
+            ->update([
+                'status' => 'terminated',
+            ]);
+
+        // Move player to free agency.
+        DB::table('players')
+            ->where('id', $player->id)
+            ->update([
+                'team_id' => 0,
+                'contract_years' => 0,
+                'salary' => 0,
+                'contract_type' => 0,
+                'player_option' => 0,
+                'team_option' => 0,
+                'no_trade_clause' => 0,
+                'is_reserved' => 0,
+            ]);
+
+        // Build useful transaction details.
+        $score = $decision['score'] ?? null;
+        $reason = $decision['action'] ?? 'WAIVE';
+
+        $details = 'Waived by (' . $teamName . ')';
+
+        if ($score !== null) {
+            $details .= ' after season-end evaluation. ';
+            $details .= 'Retention score: ' . round($score, 2) . '.';
+        }
+
+        if (!empty($decision['replacement']['player_name'])) {
+            $details .= ' Replacement considered: '
+                . $decision['replacement']['player_name'] . '.';
+        }
+
+        // Record transaction.
+        DB::table('transactions')->insert([
+            'player_id' => $player->id,
+            'season_id' => $seasonId,
+            'details' => $details,
+            'from_team_id' => $teamId,
+            'to_team_id' => 0,
+            'status' => 'waived',
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        // Update the in-memory object as well.
+        $player->team_id = 0;
+        $player->contract_years = 0;
+        $player->salary = 0;
+        $player->contract_type = 0;
+        $player->player_option = 0;
+        $player->team_option = 0;
+        $player->no_trade_clause = 0;
+    }
+
+
 }

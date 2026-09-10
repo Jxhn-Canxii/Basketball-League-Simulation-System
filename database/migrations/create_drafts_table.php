@@ -11,6 +11,7 @@ return new class extends Migration {
             $table->id(); // Auto-increment primary key
             $table->integer('team_id');
             $table->integer('player_id');
+            $table->integer('draft_pick_right_id');
             $table->integer('season_id');
             $table->integer('round');
             $table->integer('pick_number');

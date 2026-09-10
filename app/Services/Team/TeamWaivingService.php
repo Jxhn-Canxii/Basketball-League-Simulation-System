@@ -1,0 +1,581 @@
+<?php
+
+namespace App\Services\Team;
+
+use App\Models\Player;
+use Illuminate\Support\Facades\DB;
+use App\Services\Stats\PlayerSeasonStatsService;
+use App\Services\Helper\HelperService;
+use App\Services\Player\FreeAgencyService;
+
+
+class TeamWaivingService
+{
+    protected $storeStats;
+    protected $freeAgent;
+    protected $helper;
+    protected $freeAgencyService;
+
+    public function __construct()
+    {
+        // instantiate once so other methods can use it via $this->storeStats
+        $this->storeStats = new PlayerSeasonStatsService();
+        $this->helper = new HelperService();
+        $this->freeAgencyService = new FreeAgencyService();
+    }
+
+    public function playerWaiverEvaluator($player, $seasonId, $seasonStatus)
+    {
+        if (is_array($player)) {
+            $player = (object) $player;
+        }
+
+        $evaluation = $this->playerMovementDecisionMaker($player, $seasonId, $seasonStatus);
+
+        if ($evaluation['waived'] && $evaluation['performance_points'] < 70) {
+            $reason = $evaluation['reason'] ?? 'No specific reason provided';
+            $teamId = $player->team_id;
+
+            // 🔁 Log waiver transaction
+            DB::table('transactions')->insert([
+                'player_id' => $player->id,
+                'season_id' => $seasonId,
+                'details' => 'Waived: ' . $reason,
+                'from_team_id' => $teamId,
+                'to_team_id' => 0,
+                'status' => 'waived',
+            ]);
+
+            // 🚫 Remove player from team
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'team_id' => 0,
+                    'contract_years' => 0,
+                    'salary' => 0,
+                    'contract_type' => 0,
+                    'player_option' => 0,
+                    'team_option' => 0,
+                    'no_trade_clause' => 0
+                ]);
+
+            DB::table('player_contracts')
+                ->where('player_id', $player->id)
+                ->where('status', 'signed')
+                ->update(['status' => 'terminated']);
+
+            // ✅ Find replacement
+            $replacement = $this->freeAgencyService->getBestFreeAgentAvailable($player->position);
+            $bundle = $this->freeAgencyService->generateFreeAgencyOffers($seasonId);
+            $bestOffer = array_rand($bundle['best_offer'], 1);
+            if (!$bestOffer) {
+                return true;
+            }
+
+            $bestOffer = $this->freeAgencyService->handleRestrictedFA($player, $bestOffer);
+            if ($replacement) {
+
+                $this->freeAgencyService->signPlayer($replacement, $teamId, $bestOffer, $seasonId);
+                $this->storeStats->storePlayerCurrentSeasonStats($teamId, $replacement->player_id);
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private function playerMovementDecisionMaker($player, int $seasonId, int $seasonStatus): array
+    {
+        $waivePoints = 0;
+        // Waivers only allowed in first half of season
+        // Get the number of rounds that are already simulated (status != 2)
+        $simulatedRounds = $this->helper->simulatedRounds($seasonId);
+
+        // Get the total number of rounds in the season
+        $totalRounds = $this->helper->totalRounds($seasonId);
+
+        $canWaivePlayerTreshold = ceil($totalRounds / 2) - 3;
+
+        $canWaivePlayer = $simulatedRounds <= $canWaivePlayerTreshold && $seasonStatus == 1;
+
+        if (!$canWaivePlayer) {
+            return ['waived' => false, 'reason' => 'Season too late to waive'];
+        }
+
+        // Protect key players
+        $protectedRoles = ['star player', 'all star', 'starter'];
+        if (in_array(strtolower($player->role), $protectedRoles) && $player->contract_years >= 3) {
+            return ['waived' => false, 'reason' => 'Protected star/all-star with long contract'];
+        }
+
+        if ($player->is_rookie && $this->isHighPickRookie($player->id)) {
+            return ['waived' => false, 'reason' => 'Protected high-pick rookie'];
+        }
+
+        if ($this->isDevelopmentalPlayer($player) || $this->wasRecentlyDrafted($player->id, $seasonId)) {
+            return ['waived' => false, 'reason' => 'Protected developmental or recently drafted player'];
+        }
+
+        if ($this->calculatePotentialScore($player) >= 75) {
+            return ['waived' => false, 'reason' => 'High potential player'];
+        }
+
+        // Get season stats and team games
+        $seasonStats = $this->getPlayerSeasonStats($player->id, $player->team_id, $seasonId);
+        if (!$seasonStats) {
+            return ['waived' => false, 'reason' => 'Missing season stats'];
+        }
+
+        $totalGames = $this->helper->totalTeamGames($seasonId);
+        $minGamesPlayed = max(3, floor($totalGames * 0.20)); // 20% of team games
+        $hasPlayedMinimumGames = ($seasonStats->total_games_played ?? 0) >= $minGamesPlayed;
+
+        // Role-based usage threshold
+        $role = strtolower($player->role);
+        $usageMinutesThreshold = 7;
+        if (in_array($role, ['bench', 'role player'])) {
+            $usageMinutesThreshold = 5; // More tolerance for bench/role players
+        }
+
+        // Injury-based waiver (aligned with handleInjuredPlayer and injuries.php)
+        $rolePctMap = [
+            'star player' => 0.80,
+            'all star'    => 0.70,
+            'starter'     => 0.60,
+            'role player' => 0.50,
+            'bench'       => 0.40,
+        ];
+        $defaultPct = 0.30;
+        $pct = $rolePctMap[$role] ?? $defaultPct;
+
+        $totalContractGames = $totalGames * max($player->contract_years, 1);
+        $baseRecoveryGames = ceil($totalContractGames * $pct);
+        $maxRecoveryGames = 30;
+        $requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
+
+        if ($player->overall_rating >= 90) {
+            $requiredRecoveryGames += 5;
+        } elseif ($player->overall_rating >= 80) {
+            $requiredRecoveryGames += 2;
+        } elseif ($player->overall_rating <= 70) {
+            $requiredRecoveryGames -= 2;
+        } elseif ($player->overall_rating <= 60) {
+            $requiredRecoveryGames -= 4;
+        }
+        $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
+
+        if ($player->injury_recovery_games > $requiredRecoveryGames) {
+
+            $waivePoints += rand(10, 30);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Injured too long'];
+        }
+
+        // Combined criteria for efficiency and improvement (stricter to reduce waivers)
+        $isRebuilding = $this->isRebuildingTeam($player->team_id);
+        $hasNotImproved = $this->hasNotImproved($player->id, $player->team_id, $seasonId);
+
+        // Adjusted efficiency threshold (from eff < 4 to eff < 6)
+        if ($seasonStats->eff !== null && $seasonStats->eff < 6 && $hasNotImproved && $hasPlayedMinimumGames && !$isRebuilding) {
+
+            $waivePoints += rand(1, 10);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Low efficiency and no improvement'];
+        }
+
+        // Adjusted composite score (from < 5 to < 7)
+        $usageScore = ($seasonStats->avg_minutes_per_game * 0.5) +
+            ($seasonStats->avg_points_per_game * 0.3) +
+            ($seasonStats->avg_rebounds_per_game * 0.2);
+        $compositeScore = $usageScore * ($seasonStats->eff / 10);
+
+        if (
+            $compositeScore < 7 && $seasonStats->avg_minutes_per_game < $usageMinutesThreshold &&
+            $seasonStats->total_games_played <= ($totalGames * 0.30) && $hasNotImproved && $hasPlayedMinimumGames
+        ) {
+
+            $waivePoints += rand(1, 5);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Low composite efficiency and no improvement'];
+        }
+
+        // Rebuilding team: waive veterans with moderate performance
+        if ($isRebuilding && $player->age >= 32 && $seasonStats->eff < 12 && $hasPlayedMinimumGames) {
+
+            $waivePoints += rand(1, 15);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Veteran waived by rebuilding team'];
+        }
+
+        // High fatigue or morale issues (require multiple conditions)
+        if ($player->fatigue >= 85 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
+
+            $waivePoints += rand(1, 6);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'High fatigue and underperforming with no improvement'];
+        }
+
+        if ($player->morale !== null && $player->morale < 40 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
+
+            $waivePoints += rand(1, 6);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Low morale and underperforming with no improvement'];
+        }
+
+        // Aging players (stricter criteria)
+        if ($player->age >= 34 && $seasonStats->eff < 10 && $hasNotImproved && $hasPlayedMinimumGames) {
+
+            $waivePoints += rand(10, 20);
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Aging player with poor impact and no improvement'];
+        }
+
+        // Bad value contract (require no improvement)
+        if ($player->contract_years <= 2 && $seasonStats->eff < 8 && $hasNotImproved && $hasPlayedMinimumGames) {
+
+            $waivePoints += rand(1, 15);
+
+
+            $newPerformancePoints = $this->updatePlayerPerformancePoints($player->id, $seasonId, $player->team_id, $waivePoints);
+            return ['waived' => true, 'performance_points' =>  $newPerformancePoints, 'reason' => 'Bad value contract with no improvement'];
+        }
+
+        return ['waived' => false, 'reason' => null];
+    }
+
+    private function updatePlayerPerformancePoints($playerId, $seasonId, $teamId, $waivePoints)
+    {
+        $performancePoints = DB::table('player_season_stats')
+            ->where('player_id', $playerId)
+            ->where('team_id', $teamId)
+            ->where('season_id', $seasonId)
+            ->value('performance_points');
+
+        $newPerformancePoints = $performancePoints - $waivePoints;
+
+        DB::table('player_season_stats')->updateOrInsert(
+            [
+                'player_id' => $playerId,
+                'season_id' => $seasonId,
+                'team_id' => $teamId,
+            ],
+            [
+                // Insert actual shooting stats
+                'performance_points' =>  $newPerformancePoints,
+
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
+        return  $newPerformancePoints;
+    }
+
+    private array $playerYearsProCache = [];
+
+
+    private function getYearsPro(int $playerId): int
+    {
+        if (isset($this->playerYearsProCache[$playerId])) {
+            return $this->playerYearsProCache[$playerId];
+        }
+
+        $yearsPro = DB::table('player_season_stats_archives')
+            ->where('player_id', $playerId)
+            ->distinct()
+            ->count('season_id');
+
+        return $this->playerYearsProCache[$playerId] = $yearsPro + 1;
+    }
+
+    private function isDevelopmentalPlayer($player): bool
+    {
+        $yearsPro = $this->getYearsPro($player->id);
+        return ($player->age <= 23 || $yearsPro <= 2 || $player->is_rookie);
+    }
+
+    private function wasRecentlyDrafted(int $playerId, int $seasonId, int $roundLimit = 2): bool
+    {
+        $draft = DB::table('drafts')
+            ->where('player_id', $playerId)
+            ->where('season_id', $seasonId)
+            ->first();
+
+        return $draft && $draft->round <= $roundLimit;
+    }
+
+    private function calculatePotentialScore($player): int
+    {
+        $score = 0;
+
+        if ($player->age <= 23) $score += 30;
+        if ($this->getYearsPro($player->id) <= 2) $score += 20;
+        if ($player->work_ethic_rating >= 75) $score += 20;
+        if ($player->basketball_iq_rating >= 70) $score += 15;
+        if (isset($player->draft_pick_number) && $player->draft_pick_number <= 15) $score += 15;
+
+        return $score; // Max score: 100
+    }
+
+    private function isHighPickRookie($playerId): bool
+    {
+        $draft = DB::table('drafts')
+            ->where('player_id', $playerId)
+            ->first();
+
+        if (!$draft) return false;
+
+        return $draft->round == 1 && $draft->pick_number <= 10;
+    }
+
+    private function hasNotImproved(int $playerId, int $teamId, int $currentSeasonId): bool
+    {
+        // Get the earliest season ID
+        $firstSeasonId = DB::table('seasons')->min('id');
+
+        if ($currentSeasonId == $firstSeasonId) {
+            return false; // No past data
+        }
+
+        // Calculate composite improvement index
+        $improvementIndex = $this->calculateImprovementIndex($playerId, $teamId, $currentSeasonId);
+
+        if (is_null($improvementIndex)) {
+            // Handle players with no recent prior season data
+            $seasonStats = $this->getPlayerSeasonStats($playerId, $teamId, $currentSeasonId);
+            if (!$seasonStats || $seasonStats->total_games_played < max(3, floor($seasonStats->total_games * 0.15))) {
+                return false; // Not enough current season data
+            }
+
+            // Role-based efficiency threshold, adjusted for injuries
+            $role = strtolower($seasonStats->role ?? 'bench');
+            $effThresholds = [
+                'star player' => 18,
+                'all star' => 15,
+                'starter' => 12,
+                'role player' => 10,
+                'bench' => 8,
+            ];
+            $effThreshold = $effThresholds[$role] ?? 8;
+
+            // Check injury history for adjustment
+            $injuryCount = DB::table('injury_histories')
+                ->where('player_id', $playerId)
+                ->where('season_id', '<', $currentSeasonId)
+                ->whereNull('recovery_date')
+                ->count();
+            $effThreshold += $injuryCount * 1; // Increase threshold for each unrecovered injury
+
+            // Also check per-minute efficiency
+            $perPerMinute = $seasonStats->per / max($seasonStats->avg_minutes_per_game, 1);
+            $perThresholds = [
+                'star player' => 0.8,
+                'all star' => 0.7,
+                'starter' => 0.6,
+                'role player' => 0.5,
+                'bench' => 0.4,
+            ];
+            $perThreshold = $perThresholds[$role] ?? 0.4;
+
+            return $seasonStats->eff < $effThreshold && $perPerMinute < $perThreshold;
+        }
+
+        // Dynamic decline threshold based on role
+        $seasonStats = $this->getPlayerSeasonStats($playerId, $teamId, $currentSeasonId);
+        $role = strtolower($seasonStats->role ?? 'bench');
+        $declineThreshold = in_array($role, ['bench', 'role player']) ? -0.10 : -0.15;
+
+        return $improvementIndex <= $declineThreshold;
+    }
+
+    private function calculateImprovementIndex(int $playerId, int $teamId, int $currentSeasonId): ?float
+    {
+        $firstSeasonId = DB::table('seasons')->min('id');
+        if ($currentSeasonId == $firstSeasonId) {
+            return null; // No prior data
+        }
+
+        $yearsPro = $this->getYearsPro($playerId);
+
+        // Fetch stats from last played season and one prior
+        $pastSeasons = DB::table('player_season_stats_archives as pss')
+            ->join(DB::raw('(
+            SELECT season_id, player_id, role
+            FROM player_season_stats_archives
+            WHERE id IN (
+                SELECT MAX(id)
+                FROM player_season_stats_archives
+                GROUP BY season_id, player_id
+            )
+        ) as latest_stats'), function ($join) {
+                $join->on('pss.season_id', '=', 'latest_stats.season_id')
+                    ->on('pss.player_id', '=', 'latest_stats.player_id');
+            })
+            ->join('players as p', 'pss.player_id', '=', 'p.id')
+            ->leftJoin('injury_histories as ih', function ($join) use ($currentSeasonId) {
+                $join->on('pss.player_id', '=', 'ih.player_id')
+                    ->where('ih.season_id', '<', $currentSeasonId)
+                    ->whereNull('ih.recovery_date');
+            })
+            ->select(
+                'pss.season_id',
+                DB::raw('AVG(pss.per / NULLIF(pss.avg_minutes_per_game, 0)) as per_per_minute'),
+                DB::raw('LOWER(latest_stats.role) as role'),
+                DB::raw('AVG(pss.avg_minutes_per_game) as avg_mpg'),
+                DB::raw('MAX(pss.total_games_played) as games_played'),
+                DB::raw('MAX(pss.total_games) as total_games'),
+                'p.age',
+                DB::raw('COUNT(ih.id) as injury_count'),
+                DB::raw('AVG(pss.eff) as avg_eff')
+            )
+            ->where('pss.player_id', $playerId)
+            ->where('pss.team_id', $teamId)
+            ->where('pss.season_id', '<', $currentSeasonId)
+            ->groupBy('pss.season_id', 'latest_stats.role', 'p.age')
+            ->orderByDesc('pss.season_id')
+            ->limit(2)
+            ->get()
+            ->toArray();
+
+        // Check for no prior data
+        if (count($pastSeasons) < 1) {
+            return null;
+        }
+
+        $latestSeason = $pastSeasons[0];
+        $olderSeason = count($pastSeasons) > 1 ? $pastSeasons[1] : null;
+
+        // Dynamic minimum games
+        $minGamesPlayed = max(3, floor($latestSeason->total_games * 0.15));
+        if ($latestSeason->games_played < $minGamesPlayed) {
+            return null;
+        }
+
+        // Handle non-consecutive seasons
+        if ($latestSeason->season_id < $currentSeasonId - 1) {
+            return null; // Trigger current season eff/per check in hasNotImproved
+        }
+
+        // If only one prior season, return null
+        if (!$olderSeason) {
+            return null;
+        }
+
+        // Require similar minutes (within 25%) and minimum games for older season
+        $olderMinGamesPlayed = max(3, floor($olderSeason->total_games * 0.15));
+        if (
+            $olderSeason->games_played < $olderMinGamesPlayed ||
+            ($olderSeason->avg_mpg > 0 && abs($latestSeason->avg_mpg - $olderSeason->avg_mpg) / $olderSeason->avg_mpg > 0.25)
+        ) {
+            return null;
+        }
+
+        // Role scores
+        $roleScores = [
+            'star player' => 5,
+            'all star' => 4,
+            'starter' => 3,
+            'role player' => 2,
+            'bench' => 1,
+        ];
+
+        $latestRoleScore = $roleScores[$latestSeason->role] ?? 1;
+        $olderRoleScore = $roleScores[$olderSeason->role] ?? 1;
+
+        // Per-minute efficiency difference
+        $perDiffPct = $olderSeason->per_per_minute > 0 ? ($latestSeason->per_per_minute - $olderSeason->per_per_minute) / $olderSeason->per_per_minute : 0;
+        $roleDiff = $latestRoleScore - $olderRoleScore;
+        $mpgDiffPct = $olderSeason->avg_mpg > 0 ? ($latestSeason->avg_mpg - $olderSeason->avg_mpg) / $olderSeason->avg_mpg : 0;
+
+        // Injury adjustment (using injuries.php performance_impact approximation)
+        $injuryPenalty = $latestSeason->injury_count > 0 ? -0.05 * $latestSeason->injury_count : 0;
+
+        // Age penalty
+        $age = $latestSeason->age ?? 25;
+        if ($age < 27) {
+            $agePenalty = 0;
+        } elseif ($age <= 30) {
+            $agePenalty = -0.03 * ($age - 27);
+        } else {
+            $agePenalty = -0.12 - 0.05 * ($age - 30);
+        }
+
+        // Calculate improvement index with reduced role weight
+        $improvementIndex = ($perDiffPct * 0.65) + ($roleDiff * 0.05) + ($mpgDiffPct * 0.2) + $agePenalty + $injuryPenalty;
+
+        if ($yearsPro < 2 && $improvementIndex < 0) {
+            $improvementIndex *= 0.5; // Leniency for young players
+        }
+
+        return $improvementIndex;
+    }
+
+    private function isRebuildingTeam(int $teamId): bool
+    {
+        $seasonCount = DB::table('seasons')->count();
+
+        $standings = DB::table('standings_view')
+            ->where('team_id', $teamId)
+            ->first();
+
+        if (!$standings) return false;
+
+        $wins = (int) ($standings->wins ?? 0);
+        $losses = (int) ($standings->losses ?? 0);
+        $totalGames = $wins + $losses;
+
+        // Avoid calling a team "rebuilding" too early
+        if ($totalGames < 5) return false;
+
+        $scoreDiff = $standings->score_difference ?? 0;
+        $chemistry = $standings->chemistry ?? 100;
+        $last5 = strtolower($standings->last_5_games ?? '');
+        $recentWins = substr_count($last5, 'w');
+
+        // Flags that apply in all seasons
+        $flags = 0;
+        $flags += $wins < 10 ? 1 : 0;
+        $flags += $scoreDiff < -5 ? 1 : 0;
+        $flags += $chemistry < 50 ? 1 : 0;
+        $flags += $recentWins <= 1 ? 1 : 0;
+
+        // If league has history, add legacy-based flags
+        if ($seasonCount > 1) {
+            $flags += ($standings->championships ?? 0) == 0 ? 1 : 0;
+            $flags += ($standings->playoff_appearances ?? 0) < 2 ? 1 : 0;
+        }
+
+        // You can adjust how many flags are needed (3 is safe)
+        return $flags >= 3;
+    }
+
+
+    private function getPlayerSeasonStats(int $playerId, int $teamId, int $seasonId)
+    {
+        $dbName = $this->helper->getSeasonStatsDBName($seasonId);
+
+        $stats = DB::table($dbName)
+            ->where('player_id', $playerId)
+            ->where('season_id', $seasonId)
+            ->where('team_id', $teamId)
+            ->first();
+
+        return $stats;
+    }
+
+}

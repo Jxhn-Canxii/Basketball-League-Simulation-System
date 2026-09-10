@@ -47,6 +47,16 @@ return new class extends Migration
             $table->decimal('clutch_rating', 5, 2)->default(0);
             $table->decimal('leadership_rating', 5, 2)->default(0);
             $table->decimal('work_ethic_rating', 5, 2)->default(0);
+            $table->decimal('offensive_rating', 5, 2)
+            ->storedAs('LEAST(100, GREATEST(0, ROUND(
+                (shooting_rating * 0.20) +
+                (two_point_rating * 0.15) +
+                (three_point_rating * 0.20) +
+                (free_throw_rating * 0.10) +
+                (passing_rating * 0.15) +
+                (basketball_iq_rating * 0.10) +
+                (athleticism_rating * 0.10)
+            , 2)))');
             $table->decimal('overall_rating', 5, 2)->default(0);
             $table->decimal('potential_rating', 5, 2)->default(0);
             $table->string('type', 50)->nullable();

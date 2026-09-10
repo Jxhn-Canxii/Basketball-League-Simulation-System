@@ -270,6 +270,18 @@ class HelperService
 
     }
 
+    public function totalTeamGames($seasonId)
+    {
+
+        $gamesPlayedCount = DB::table('schedules')
+            ->where('season_id', $seasonId)
+            ->where('series_id',0)
+            ->select('MAX(round) as maximum_round')
+            ->value('maximum_round');
+
+        return $gamesPlayedCount;
+    }
+
     public function roundFormatter($round){
         
         if (!is_numeric($round)){
