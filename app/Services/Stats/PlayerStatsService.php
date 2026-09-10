@@ -1026,6 +1026,7 @@ class PlayerStatsService
                     'player_id',
                     'team_id',
                     DB::raw('MAX(role) as game_role'),
+                    DB::raw('MAX(is_fouled_out) as is_fouled_out'),
                     DB::raw('SUM(minutes) as total_minutes'),
                     DB::raw('SUM(points) as total_points'),
                     DB::raw('SUM(rebounds) as total_rebounds'),
@@ -1076,6 +1077,7 @@ class PlayerStatsService
                         'three_point_attempts' => $playerStats->total_three_point_attempts,
                         'free_throws_made' => $playerStats->total_free_throws_made,
                         'free_throw_attempts' => $playerStats->total_free_throw_attempts,
+                        'is_fouled_out' => $playerStats->is_fouled_out,
                         'created_at' => now(),
                         'updated_at' => now(),
                     ]

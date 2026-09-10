@@ -39,22 +39,22 @@ export const gameRoleBadgeClass = (role, minutes) => {
       hover: 'hover:bg-yellow-600',
     },
     'all star': {
-      background: 'bg-yellow-500',
+      background: 'bg-red-500',
       text: 'text-white',
-      border: 'border border-yellow-400',
+      border: 'border border-red-400',
       hover: 'hover:bg-yellow-600',
     },
     'starter': {
-      background: 'bg-yellow-500',
+      background: 'bg-blue-500',
       text: 'text-white',
-      border: 'border border-yellow-400',
-      hover: 'hover:bg-yellow-600',
+      border: 'border border-blue-400',
+      hover: 'hover:bg-blue-600',
     },
     'role player': {
-      background: 'bg-purple-500',
+      background: 'bg-green-500',
       text: 'text-white',
-      border: 'border border-red-400',
-      hover: 'hover:bg-red-600',
+      border: 'border border-green-400',
+      hover: 'hover:bg-green-600',
     },
     'bench': {
       background: 'bg-purple-500',
@@ -76,7 +76,62 @@ export const gameRoleBadgeClass = (role, minutes) => {
   return `<span class="${className}">${text}</span>`;
 };
 
+export const boxScoreRoleBadgeClass = (role, minutes) => {
+  const baseClasses = 'shadow-sm transition-colors duration-150';
 
+  if (minutes === 0) {
+    const className = `${baseClasses} border-l-4 border-gray-300 hover:bg-gray-300`;
+    return `<span class="${className}">Did Not Play</span>`;
+  }
+
+  const normalizedRole = role?.toLowerCase() || '';
+  const isStarter = ['star player', 'all star', 'starter'].includes(normalizedRole);
+  const text = isStarter ? 'Starting 5' : 'Bench';
+
+  const roleStyles = {
+    'star player': {
+      background: 'bg-yellow-500',
+      text: 'text-white',
+      border: 'border-l-4 border-yellow-400',
+      hover: 'hover:bg-yellow-600',
+    },
+    'all star': {
+      background: 'bg-red-500',
+      text: 'text-white',
+      border: 'border-l-4 border-red-400',
+      hover: 'hover:bg-yellow-600',
+    },
+    'starter': {
+      background: 'bg-blue-500',
+      text: 'text-white',
+      border: 'border-l-4 border-blue-400',
+      hover: 'hover:bg-blue-600',
+    },
+    'role player': {
+      background: 'bg-green-500',
+      text: 'text-white',
+      border: 'border-l-4 border-green-400',
+      hover: 'hover:bg-green-600',
+    },
+    'bench': {
+      background: 'bg-purple-500',
+      text: 'text-white',
+      border: 'border-l-4 border-purple-300',
+      hover: 'hover:bg-purple-600',
+    }
+  };
+
+  const style = roleStyles[normalizedRole] || {
+    background: 'bg-gray-200',
+    text: 'text-gray-700',
+    border: 'border-l-4 border-gray-300',
+    hover: 'hover:bg-gray-300',
+  };
+
+  const className = `${baseClasses} ${style.border} ${role}`;
+
+  return className;
+};
 
 export const roundNameFormatter = (round) => {
     if (typeof round === 'number') {

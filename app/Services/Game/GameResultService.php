@@ -110,6 +110,7 @@ class GameResultService
                 'player_game_stats.free_throws_made',
                 'player_game_stats.per',
                 'player_game_stats.ts_percent',
+                'player_game_stats.is_fouled_out',
                 'player_game_stats.eff',
                 'ppa.championships_won',
                 'ppa.round_of_16_appearances as playoff_appearance',
@@ -300,10 +301,10 @@ class GameResultService
                 $stats = $playerStats->get($player->id);
 
                 // Field goal percentage, 2-point percentage, 3-point percentage, and free throw percentage calculation
-                $fgPercentage = $stats && $stats->field_goal_attempts ? ($stats->field_goals_made / $stats->field_goal_attempts) * 100 : 0;
-                $twoPPercentage = $stats && $stats->two_point_attempts ? ($stats->two_pointers_made / $stats->two_point_attempts) * 100 : 0;
-                $threePPercentage = $stats && $stats->three_point_attempts ? ($stats->three_pointers_made / $stats->three_point_attempts) * 100 : 0;
-                $ftPercentage = $stats && $stats->free_throw_attempts ? ($stats->free_throws_made / $stats->free_throw_attempts) * 100 : 0;
+                $fgPercentage = $stats && $stats->field_goal_percentage;
+                $twoPPercentage = $stats && $stats->two_point_percentage;
+                $threePPercentage = $stats && $stats->three_point_percentage;
+                $ftPercentage = $stats && $stats->free_throw_percentage;
 
                 // Calculate a composite score based on various stats (weights are customizable)
                 $compositeScore = (
@@ -350,7 +351,7 @@ class GameResultService
                     'efficiency' => $stats ? $stats->eff : null,  // Efficiency
                     'composite_score' => $compositeScore  // Add composite score to the array
                 ];
-            })->sortByDesc('composite_score')->values()->toArray();  // Sort by composite score in descending order
+            })->sortByDesc('minutes')->values()->toArray();  // Sort by composite score in descending order
 
             // Convert away team player stats to an array, including those with no recorded stats
             $awayTeamPlayersArray = $awayTeamPlayers->map(function ($player) use ($playerStats) {
@@ -402,6 +403,7 @@ class GameResultService
                     'two_point_percentage' => $twoPPercentage,
                     'three_point_percentage' => $threePPercentage,
                     'free_throw_percentage' => $ftPercentage,
+                    'is_fouled_out' => $stats ? $stats->is_fouled_out : 0,
                     'per' => $stats ? $stats->per : null,
                     'ts_percent' => $stats ? $stats->ts_percent : null,
                     'efficiency' => $stats ? $stats->eff : null,

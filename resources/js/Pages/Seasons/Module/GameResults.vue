@@ -367,11 +367,12 @@
                             }"
                             class=" hover:bg-gray-600 text-xs"
                         >
-                            <td class="py-1 px-3">
+                            <td class="py-1 px-3" :class="boxScoreRoleBadgeClass(player.role, player.minutes)">
                                 {{ player.name }}
                                 <sup>
                                     {{ player.is_rookie ? "R" : "V" }} 
                                     <i v-if="player.is_injured" class="fa fa-plus-square text-red-500"></i>
+                                    <i v-if="player.fouled_out" class="fa fa-square text-red-500"></i>
                                 </sup>
                             </td>
                             <td class="py-1 px-3">
@@ -524,10 +525,11 @@
                             :class="{
                                 'bg-yellow-100 text-black':
                                     top5AwayPlayers.includes(player.name),
+                                
                             }"
                             class=" hover:bg-gray-600 text-xs"
                         >
-                            <td class="py-1 px-3 text-wrap">
+                            <td class="py-1 px-3 text-wrap" :class="boxScoreRoleBadgeClass(player.role, player.minutes)">
                                 {{ player.name }}
                                 <sup>
                                     {{ player.is_rookie ? "R" : "V" }} 
@@ -1019,7 +1021,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from "vue";
 import axios from "axios"; 
-import { roundNameFormatter, roleBadgeClass, playerFormatter } from "@/Utility/Formatter";
+import { roundNameFormatter, roleBadgeClass, playerFormatter,boxScoreRoleBadgeClass } from "@/Utility/Formatter";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";

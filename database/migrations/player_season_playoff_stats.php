@@ -47,6 +47,7 @@ return new class extends Migration
             $table->integer('total_blocks')->default(0);
             $table->integer('total_turnovers')->default(0);
             $table->integer('total_fouls')->default(0);
+            $table->boolean('total_fouled_out')->default(0);
             $table->integer('total_minutes_played')->default(0);
             $table->integer('total_games_played')->default(0);
             $table->integer('total_games')->default(0);
