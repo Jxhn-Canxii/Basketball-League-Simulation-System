@@ -251,7 +251,7 @@ class PlayerSeasonStatsService
                     ->select(
                         'player_id',
                         'team_id',
-                        DB::raw('COUNT(is_fouled_out) as total_fouled_out'),
+                        DB::raw('SUM(is_fouled_out) as total_fouled_out'),
                         DB::raw('COUNT(id) as total_games_played'),
                         DB::raw('SUM(minutes) as total_minutes_played'),
                         DB::raw('SUM(points) as total_points'),
