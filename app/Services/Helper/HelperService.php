@@ -278,10 +278,9 @@ class HelperService
             ->where('series_id',0)
             ->select('round')
             ->orderBy('id','desc')
-            ->limit(1)
-            ->value('round');
+            ->first();
 
-        return $gamesPlayedCount;
+        return $gamesPlayedCount ? $gamesPlayedCount->round : 15;
     }
 
     public function roundFormatter($round){
