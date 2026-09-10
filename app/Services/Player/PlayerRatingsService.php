@@ -77,7 +77,7 @@ class PlayerRatingsService
             $players = $query->get();
 
             $seasonId = get_current_season_id();
-
+            $nextSeasonId = get_current_season_id() + 1;
             // Fetch the team name if team_id is provided
             $teamName = '';
             if ($teamId) {
@@ -274,6 +274,8 @@ class PlayerRatingsService
 
                     DB::table('player_contracts')
                         ->where('player_id', $player->id)
+                        ->where('season_id',$seasonId)
+                        ->where('status','signed')
                         ->update(['status' => 'terminated']);
 
                     DB::table('players')
@@ -293,13 +295,6 @@ class PlayerRatingsService
                     $player->team_id = 0;
                 }
 
-                if($player->contract_years == 0 || ($player->contract_years == 1 && $player->team_option == 1)){
-                    $this->playerCoachDecision($player,$teamId, $teamName,$seasonId);
-                }
-
-                if($player->contract_years == 1 && $player->player_option == 1){
-                    $this->playerDecision($player,$teamId, $teamName,$seasonId);
-                }
                 // Check if the player was injured during the season
                 $injury = DB::table('injured_players_view')
                     ->where('player_id', $player->id)
@@ -348,10 +343,11 @@ class PlayerRatingsService
                 }
 
                 $player->overall_rating = ($player->overall_rating > $player->potential_rating) ? $player->potential_rating : $player->overall_rating;
-                
+                $updateTeamId = ($player->contract_years == 0) ? 0 : $player->team_id;
+
                 DB::table('players')->where('id', $player->id)->update([
                     'contract_years' => $player->contract_years,
-                    'team_id' => $player->team_id,
+                    'team_id' => $updateTeamId,
                     'is_active' => $player->is_active,
                     'is_rookie' => $player->is_rookie,
                     'age' => $player->age,
@@ -366,6 +362,14 @@ class PlayerRatingsService
 
                 // Log the updated ratings
                 $this->logPlayerRatings($player, $seasonId);
+
+                if($player->contract_years == 0 || ($player->contract_years == 1 && $player->team_option == 1)){
+                    $this->playerCoachDecision($player,$teamId, $teamName,$nextSeasonId);
+                }
+
+                if($player->contract_years == 1 && $player->player_option == 1){
+                    $this->playerDecision($player,$teamId, $teamName,$nextSeasonId);
+                }
             }
 
             // Show alert if this is the last update
@@ -888,7 +892,7 @@ class PlayerRatingsService
                     'approval_chance' => round($approvalChance, 2),
                 ];
 
-                $transactionMessage = ($player->contract_years == 0) ? ' has signed for '.$teamName.' for ' : 'The team decided to sign via team-option for ';
+                $transactionMessage = ($player->contract_years == 0) ? ' has signed for '.$teamName.' for ' : ', The team decided to sign via team-option for ';
                 // Insert the transaction record into the transactions table
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
@@ -932,6 +936,7 @@ class PlayerRatingsService
                         DB::table('player_contracts')
                         ->where('player_id', $player->id)
                         ->where('status', 'signed')
+                        ->where('season_id',$seasonId - 1)
                         ->update(['status' => 'ended']);
                 }
                 
@@ -946,7 +951,7 @@ class PlayerRatingsService
                     'details' => $transactionMessage,
                     'from_team_id' => $teamId,
                     'to_team_id' => ($player->contract_years == 0) ? 0 : $teamId,
-                    'status' => 'waived',
+                    'status' => ($player->contract_years == 0) ? 'waived' : 'declined',
                 ]);
             }
     }

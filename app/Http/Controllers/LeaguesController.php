@@ -175,6 +175,7 @@ class LeaguesController extends Controller
             career_wins = 0,
             contract_years = 0,
             career_losses = 0,
+            experience_years = 0,
             team_id = 0,
             winning_percentage = 0'
         );
@@ -194,9 +195,11 @@ class LeaguesController extends Controller
                 ->where(
                     'table_name',
                     'like',
-                    'batch_%'
+                    '%_batch_%'
                 )
                 ->pluck('table_name');
+
+            // dd($batchTables);
 
             foreach ($batchTables as $tableName) {
 
@@ -206,7 +209,7 @@ class LeaguesController extends Controller
              */
                 if (
                     preg_match(
-                        '/^batch_[0-9]+$/',
+                        '/^_batch_[0-9]+$/',
                         $tableName
                     )
                 ) {

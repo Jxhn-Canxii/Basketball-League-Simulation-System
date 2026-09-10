@@ -357,6 +357,7 @@ class DraftService
 
                         DB::table('player_contracts')
                             ->where('player_id', $playerToWaive->id)
+                            ->where('season_id',$currentSeasonId - 1)
                             ->where('status', 'signed')
                             ->update(['status' => 'terminated']);
 

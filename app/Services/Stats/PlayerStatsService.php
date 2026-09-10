@@ -781,7 +781,7 @@ class PlayerStatsService
         $foulPenalty = max(0.65, 1 - ($fouls * 0.07));
         $expected = $minutes * $baseRate * $skill * $performanceFactor * $foulPenalty;
 
-        return min(8, $this->poissonRandomizer(max(0.001, $expected)));
+        return min(30, $this->poissonRandomizer(max(0.001, $expected)));
     }
 
     public function calculateSteals(Player $player, int $minutes, float $performanceFactor, int $fouls): int
@@ -813,7 +813,7 @@ class PlayerStatsService
         $foulPenalty = max(0.70, 1 - ($fouls * 0.05));
         $expected = $minutes * $baseRate * $skill * $performanceFactor * $foulPenalty;
 
-        return min(7, $this->poissonRandomizer(max(0.001, $expected)));
+        return min(30, $this->poissonRandomizer(max(0.001, $expected)));
     }
 
     // $this->calculateShotAttempts($player, $minutes, $defensiveImpact,$fouls, $turnovers,$homeChemistry, true, true);

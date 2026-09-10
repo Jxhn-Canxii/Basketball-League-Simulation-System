@@ -124,7 +124,7 @@
                             <tr v-for="b in series.break_down" :key="b.id"
                             :style="{
                                 backgroundColor:
-                                    '#' + (series?.home_team?.id == b?.team_id ? series?.home_team.primary_color : '00000f'),
+                                    '#' + (series?.home_team?.id == b?.team_id ? series?.home_team.primary_color : series?.away_team.primary_color),
                             }"
                             class="hover:bg-gray-700">
                                 <td class="py-2 px-3 text-sm text-left border">{{ b.team_name }}</td>
