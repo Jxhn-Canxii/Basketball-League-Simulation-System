@@ -821,7 +821,7 @@ class PlayerRatingsService
                 ?? 0
             );
 
-         if ($isMaxContract) {
+        if ($isMaxContract) {
                 $shouldSign = true;
             } 
             else {
@@ -860,7 +860,7 @@ class PlayerRatingsService
                             );
                 }
             }
-             /*
+            /*
             |--------------------------------------------------------------------------
             | Sign player
             |--------------------------------------------------------------------------
