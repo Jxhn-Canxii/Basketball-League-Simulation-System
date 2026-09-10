@@ -276,8 +276,10 @@ class HelperService
         $gamesPlayedCount = DB::table('schedules')
             ->where('season_id', $seasonId)
             ->where('series_id',0)
-            ->select('MAX(round) as maximum_round')
-            ->value('maximum_round');
+            ->select('round')
+            ->orderBy('id','desc')
+            ->limit(1)
+            ->value('round');
 
         return $gamesPlayedCount;
     }
