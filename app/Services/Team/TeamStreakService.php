@@ -97,7 +97,7 @@ class TeamStreakService
             'best_winning_streak_end_id' =>  $winningStreakEndId,
             'best_losing_streak_start_id' => $losingStreakStartId,
             'best_losing_streak_end_id' =>  $losingStreakEndId,
-            'created_at' => $streakStatus,
+            'created_at' => now(),
             'updated_at' => now(),
         ];
     }

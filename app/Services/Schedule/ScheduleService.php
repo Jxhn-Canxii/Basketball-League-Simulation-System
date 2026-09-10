@@ -192,7 +192,6 @@ class ScheduleService
                 ->whereRaw('round REGEXP "^[0-9]+$"')   // only numeric rounds
                 ->count();
 
-
             $season = Seasons::create([
                 'id' => $nextSeasonid,
                 'name' => $request->season_name,

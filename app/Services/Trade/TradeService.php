@@ -4,6 +4,7 @@ namespace App\Services\Trade;
 
 ini_set('max_execution_time', 0);
 
+use App\Services\Archive\ArchiveService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Services\Player\PlayerValuationService;
@@ -17,6 +18,7 @@ class TradeService
     protected $helper;
     protected $coachDecisionService;
     protected $valuationService;
+    protected $archive;
 
     /*
     |--------------------------------------------------------------------------
@@ -45,6 +47,8 @@ class TradeService
         $this->coachDecisionService = new CoachDecisionService();
 
         $this->storyLineService = new StoryLineService();
+
+        $this->archive = new ArchiveService();
     }
 
     /*
@@ -2236,17 +2240,14 @@ class TradeService
         | orchestration service.
         |--------------------------------------------------------------------------
         */
+        $this->storyLineService->generateStoryLine();
+        $this->archive->runArchives();
 
         DB::table('seasons')
-            ->where(
-                'id',
-                $seasonId
-            )
-            ->update([
-                'status' =>
-                config('timeline.off_season_trade'),
-            ]);
+            ->where('id',$seasonId)
+            ->update(['status' =>config('timeline.off_season_trade'),]);
 
+        
         return response()->json([
             'message' =>
             'Trade window ended!',

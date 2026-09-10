@@ -20,7 +20,27 @@ class ArchiveService
         $this->helper = new HelperService();
     }
 
-     public static function archivePerQuarterGameStats()
+    public function runArchives()
+    {
+        $latestSeasonId = get_current_season_id();
+        
+        $this->archiveGameStats();
+
+        $this->archiveQuarterGameBreakDown();
+
+        $this->archivePerQuarterGameStats();
+
+        $this->archivePlayerSeasonStats();
+
+        $this->archiveScheduleViewTable();
+
+        $this->archiveScheduleWriteTable();
+
+        $this->archivePlayoffSeriesTable();
+
+    }
+
+    public static function archivePerQuarterGameStats()
     {
         $currentSeasonId = get_current_season_id();
         $MODULO = config('archive.DECADE_MODULO');
@@ -341,7 +361,7 @@ class ArchiveService
             }
 
             //schedules table must left previous season record and current record for streak tracking
-            DB::statement("DELETE FROM schedules WHERE season_id <= ($currentSeasonId - 1)");
+            DB::statement("DELETE FROM schedules");
 
             DB::commit();
         } catch (\Exception $e) {

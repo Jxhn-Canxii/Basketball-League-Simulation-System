@@ -21,25 +21,7 @@ class StoryLineService
     public function generateStoryLine()
     {
         $latestSeasonId = get_current_season_id();
-        
-        $storyline = $this->upsertCurrentSeasonStoryline();
-        if ($storyline) {
-
-            $this->archive->archiveGameStats();
-
-            $this->archive->archiveQuarterGameBreakDown();
-
-            $this->archive->archivePerQuarterGameStats();
-
-            $this->archive->archivePlayerSeasonStats();
-
-            $this->archive->archiveScheduleViewTable();
-
-            $this->archive->archiveScheduleWriteTable();
-
-            $this->archive->archivePlayoffSeriesTable();
-
-        }
+        $this->upsertCurrentSeasonStoryline();
     }
 
     public function upsertCurrentSeasonStoryline()

@@ -293,5 +293,4 @@ class SeasonsService
         // Optionally, you can return a default value if no status matches
         return null;
     }
-   
 }
