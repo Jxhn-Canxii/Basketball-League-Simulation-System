@@ -643,7 +643,7 @@ class TeamManagementService
         */
 
         $offense = (float) ($player->offensive_rating ?? 50);
-        $defense = (float) ($player->defensive_rating ?? 50);
+        $defense = (float) ($player->defense_rating ?? 50);
         $overall = (float) ($player->overall_rating ?? 50);
 
         /*
@@ -925,7 +925,7 @@ class TeamManagementService
                 'position',
                 'overall_rating',
                 'offensive_rating',
-                'defensive_rating',
+                'defense_rating',
                 'is_reserved',
                 'is_injured',
                 'role',
@@ -1030,7 +1030,7 @@ class TeamManagementService
 
                 $offense = (float) ($player->offensive_rating ?? 50);
 
-                $defense = (float) ($player->defensive_rating ?? 50);
+                $defense = (float) ($player->defense_rating ?? 50);
 
                 $quality = (
                     ($overall * 0.50) +
