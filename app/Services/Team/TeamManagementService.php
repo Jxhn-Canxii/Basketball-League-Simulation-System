@@ -612,7 +612,7 @@ class TeamManagementService
 
         $players = DB::table('players')->where('team_id', $teamId)->get();
         foreach ($players as $player) {
-            $this->teamWaiving->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
+            // $this->teamWaiving->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
             $this->teamInjury->handleInjuredPlayer($player, $seasonId, $seasonStatus);
         }
     }
