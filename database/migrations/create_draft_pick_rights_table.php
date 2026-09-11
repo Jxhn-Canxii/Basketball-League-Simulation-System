@@ -12,8 +12,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('season_id');
             $table->unsignedTinyInteger('round');
-            $table->unsignedBigInteger('original_team_id');
-            $table->unsignedBigInteger('current_owner_id');
+            $table->unsignedBigInteger('original_team_id')->default(0);
+            $table->unsignedBigInteger('current_owner_id')->default(0);
             $table->unsignedBigInteger('pick_number');
             $table->boolean('is_traded')->default(false);
             $table->boolean('is_used')->default(false);

@@ -320,149 +320,203 @@ class DraftService
 
     /**
      * ============================================================
-     * DRAFT PLAYERS
+     * DRAFT ONE PICK
      * ============================================================
+     *
+     * Processes EXACTLY ONE draft pick.
+     *
+     * Example:
+     *
+     * /draft/decision/4/round1/pick1
+     *
+     * Then the frontend calls:
+     *
+     * /draft/decision/4/round1/pick2
+     *
+     * etc.
+     *
+     * The backend NEVER loops through the entire draft.
      */
-    public function draftPlayers()
-    {
-        DB::beginTransaction();
-
-        $draftResults = [];
-
+    public function draftDecision(
+        int $seasonId,
+        int $round,
+        int $pickNumber
+    ) {
         try {
 
-            $latestSeasonId = get_current_season_id();
+            $result = DB::transaction(function () use ($seasonId,$round,$pickNumber)
+            {
 
-            $currentSeasonId = $latestSeasonId + 1;
-
-            /*
-             * Get draft order.
-             */
-            $draftOrder = DB::table('drafts')
-                ->where(
-                    'season_id',
-                    $currentSeasonId
-                )
-                ->orderBy('round')
-                ->orderBy('pick_number')
-                ->get();
-
-            if ($draftOrder->isEmpty()) {
-                throw new \RuntimeException(
-                    'No draft order exists. Generate the draft order first.'
-                );
-            }
-
-            /*
-             * ====================================================
-             * ROOKIE POOL
-             * ====================================================
-             */
-
-            $availablePlayers = collect(
-                DB::table('players')
-                    ->where('is_rookie', 1)
-                    ->where('team_id', 0)
-                    ->where('draft_id', $currentSeasonId)
-                    ->where('is_drafted', 0)
-                    ->orderByDesc('overall_rating')
-                    ->orderBy('age')
-                    ->get()
-            );
-
-            /*
-             * We need enough players for every pick.
-             *
-             * The extra 20 allows undrafted players to remain.
-             */
-            $draftPlayerCountLimit =
-                $draftOrder->count() + 20;
-
-            if (
-                $availablePlayers->count()
-                <
-                $draftPlayerCountLimit
-            ) {
-                throw new \RuntimeException(
-                    'Not enough rookies available for the draft.'
-                );
-            }
-
-            /*
-             * Cache team position needs.
-             */
-            $teamPositionNeeds = [];
-
-            foreach ($draftOrder as $pick) {
-
-                $teamId = (int) $pick->team_id;
-
-                if (!isset($teamPositionNeeds[$teamId])) {
-
-                    $teamPositionNeeds[$teamId] =
-                        $this->getTeamPositionNeeds(
-                            $teamId
-                        );
-                }
-            }
-
-            /*
-             * ====================================================
-             * PROCESS EVERY PICK
-             * ====================================================
-             */
-
-            foreach ($draftOrder as $pick) {
-
-                if ($availablePlayers->isEmpty()) {
-                    break;
-                }
-
-                $teamId = (int) $pick->team_id;
-
-                /*
-                 * Team making the selection.
+                /**
+                 * ==================================================
+                 * GET THE EXACT PICK
+                 * ==================================================
+                 *
+                 * lockForUpdate() prevents two requests from
+                 * processing the same pick simultaneously.
                  */
+                $pick = DB::table('drafts as d')
+                    ->leftJoin('draft_pick_rights as dpr','d.draft_pick_right_id','=','dpr.id')
+                    ->select('d.*','dpr.current_owner_id')
+                    ->where('d.season_id', $seasonId)
+                    ->where('d.round', $round)
+                    ->where('d.pick_number', $pickNumber)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$pick) {
+                    throw new \RuntimeException(
+                        "Draft pick does not exist: "
+                            . "Season {$seasonId}, "
+                            . "Round {$round}, "
+                            . "Pick {$pickNumber}."
+                    );
+                }
+
+                /**
+                 * ==================================================
+                 * PREVENT DOUBLE DRAFTING
+                 * ==================================================
+                 */
+                if (!empty($pick->player_id) && (int) $pick->player_id !== 0) {
+
+                    $existingPlayer = DB::table('players')
+                        ->where('id', $pick->player_id)
+                        ->first();
+
+                    return $this->buildAlreadyProcessedPickResponse(
+                        $pick,
+                        $existingPlayer
+                    );
+                }
+
+                /**
+                 * ==================================================
+                 * CURRENT OWNER
+                 * ==================================================
+                 *
+                 * drafts.team_id already contains the current
+                 * owner resolved by draftOrder().
+                 *
+                 * This is extremely important because:
+                 *
+                 * ORIGINAL TEAM != CURRENT OWNER
+                 *
+                 * Example:
+                 *
+                 * Pick #3 originally belonged to Team A.
+                 * Team A traded the pick to Team B.
+                 *
+                 * Team B is the team making the selection.
+                 */
+                $teamId = $pick->current_owner_id == 0 ? $pick->team_id : $pick->current_owner_id;
+
                 $team = DB::table('teams')
                     ->where('id', $teamId)
                     ->first();
 
                 if (!$team) {
                     throw new \RuntimeException(
-                        "Team {$teamId} does not exist."
+                        "Draft team {$teamId} does not exist."
                     );
                 }
 
-                /*
-                 * =================================================
-                 * COACH / POSITION SELECTION
-                 * =================================================
+                /**
+                 * ==================================================
+                 * ORIGINAL PICK RIGHT
+                 * ==================================================
                  */
+                $pickRight = null;
 
-                $neededPositions =
-                    array_keys(
-                        $teamPositionNeeds[$teamId] ?? []
+                if (!empty($pick->draft_pick_right_id)) {
+
+                    $pickRight = DB::table('draft_pick_rights')
+                        ->where(
+                            'id',
+                            $pick->draft_pick_right_id
+                        )
+                        ->first();
+                }
+
+                /**
+                 * ==================================================
+                 * AVAILABLE ROOKIES
+                 * ==================================================
+                 *
+                 * Fresh query on every pick.
+                 *
+                 * We don't keep an in-memory rookie collection
+                 * because every request is a separate draft event.
+                 */
+                $availablePlayers = DB::table('players')
+                    ->where('is_rookie', 1)
+                    ->where('team_id', 0)
+                    ->where('draft_id', $seasonId)
+                    ->where('is_drafted', 0)
+                    ->orderByDesc('overall_rating')
+                    ->orderBy('age')
+                    ->get();
+
+                if ($availablePlayers->isEmpty()) {
+                    throw new \RuntimeException(
+                        "No available rookies remain for "
+                            . "Round {$round}, Pick {$pickNumber}."
                     );
+                }
 
-                $coach =
-                    $this->coachDecisionService
-                    ->getTeamCoach($teamId);
+                /**
+                 * ==================================================
+                 * POSITION NEEDS
+                 * ==================================================
+                 *
+                 * Recalculate from the database.
+                 *
+                 * This is safer than keeping cached needs between
+                 * HTTP requests.
+                 */
+                $positionNeeds = $this->getTeamPositionNeeds(
+                    $teamId
+                );
 
-                $candidatePlayers =
-                    $availablePlayers
+                $neededPositions = array_keys(
+                    $positionNeeds
+                );
+
+                /**
+                 * ==================================================
+                 * GET COACH
+                 * ==================================================
+                 */
+                $coach = $this->coachDecisionService->getTeamCoach($teamId);
+
+                /**
+                 * ==================================================
+                 * CANDIDATES
+                 * ==================================================
+                 *
+                 * We evaluate the best 15 available prospects,
+                 * exactly like your existing system.
+                 */
+                $candidatePlayers = $availablePlayers
                     ->sortByDesc(function ($player) {
 
                         return (float) (
                             $player->overall_rating
-                            ?? $player->overall
-                            ?? 0
+                            ??
+                            $player->overall
+                            ??
+                            0
                         );
                     })
                     ->take(15)
                     ->values();
 
-                $scoredCandidates =
-                    $candidatePlayers
+                /**
+                 * ==================================================
+                 * SCORE CANDIDATES
+                 * ==================================================
+                 */
+                $scoredCandidates = $candidatePlayers
                     ->map(function ($player) use (
                         $coach,
                         $neededPositions
@@ -483,102 +537,65 @@ class DraftService
                     ->sortByDesc('draft_score')
                     ->values();
 
-                $topCandidates =
-                    $scoredCandidates
+                $topCandidates = $scoredCandidates
                     ->take(3)
                     ->values();
 
-                $selectedCandidate =
-                    $topCandidates->first();
+                if ($topCandidates->isEmpty()) {
 
-                if (!$selectedCandidate) {
                     throw new \RuntimeException(
-                        "No draft candidate available for pick {$pick->pick_number}."
+                        "No draft candidates available for "
+                            . "Round {$round}, Pick {$pickNumber}."
                     );
                 }
 
-                /*
-                 * Coach uncertainty between top candidates.
+                /**
+                 * ==================================================
+                 * COACH DECISION
+                 * ==================================================
                  */
-                if ($topCandidates->count() > 1) {
+                $decision = $this->makeDraftDecision(
+                    $team,
+                    $coach,
+                    $topCandidates,
+                    $positionNeeds,
+                    $pick
+                );
 
-                    $coachQuality =
-                        $this->coachDecisionService
-                        ->getCoachQuality($coach);
+                $selectedCandidate = $decision['candidate'];
 
-                    $bestChance =
-                        55 +
-                        (($coachQuality - 50) * 0.40);
+                $selectedPlayer = $selectedCandidate['player'];
 
-                    $bestChance = max(
-                        40,
-                        min(90, $bestChance)
-                    );
+                $selectedDraftScore = (float) $selectedCandidate['draft_score'];
 
-                    if (
-                        !$this->coachDecisionService
-                            ->randomDecision($bestChance)
-                    ) {
+                $decisionMakerType = $decision['decision_maker_type'];
 
-                        $selectedCandidate =
-                            $topCandidates
-                            ->slice(1)
-                            ->random();
-                    }
-                }
+                $decisionMakerName = $decision['decision_maker_name'];
 
-                $selectedPlayer =
-                    $selectedCandidate['player'];
+                $decisionReason = $decision['decision_reason'];
 
-                $selectedDraftScore =
-                    $selectedCandidate['draft_score'];
+                $decisionFactors = $decision['decision_factors'];
 
-                /*
-                 * Remove from available pool immediately.
-                 */
-                $availablePlayers =
-                    $availablePlayers
-                    ->reject(function ($player) use ($selectedPlayer) {
+                $decisionScore = $decision['draft_score'];
 
-                        return (int) $player->id
-                            ===
-                            (int) $selectedPlayer->id;
-                    })
-                    ->values();
-
-                /*
-                 * =================================================
+                /**
+                 * ==================================================
                  * ROSTER MANAGEMENT
-                 * =================================================
+                 * ==================================================
                  */
+                $hasSpace = $this->teamHasRosterSpace($teamId);
 
-                $hasSpace =
-                    $this->teamHasRosterSpace(
-                        $teamId
-                    );
-
-                /*
-                 * First round picks are valuable.
-                 *
-                 * We DO NOT allow a top first-round player to
-                 * randomly disappear into free agency simply
-                 * because the roster is full.
-                 */
-                $mustSign =
-                    $pick->round == 1;
+                $mustSign = ((int) $round === 1);
 
                 $waivedPlayer = null;
 
                 if (!$hasSpace) {
 
-                    /*
-                     * First try to create space intelligently.
-                     */
                     $waivedPlayer =
                         $this->findPlayerToWaive(
                             $teamId,
                             $selectedPlayer,
-                            $currentSeasonId,
+                            $seasonId,
                             $mustSign
                         );
 
@@ -587,134 +604,89 @@ class DraftService
                         $this->waivePlayerForDraft(
                             $waivedPlayer,
                             $team,
-                            $currentSeasonId
+                            $seasonId
                         );
 
                         $hasSpace = true;
                     }
                 }
 
-                /*
-                 * =================================================
+                /**
+                 * ==================================================
                  * FINAL SIGNING DECISION
-                 * =================================================
-                 *
-                 * First round:
-                 *   MUST sign.
-                 *
-                 * Second round:
-                 *   sign if space was created.
-                 *
-                 * If a second-round pick has no space and we
-                 * cannot create space, the player remains
-                 * undrafted/free agent.
+                 * ==================================================
                  */
-                $finalTeamId =
-                    $hasSpace
-                    ? $teamId
-                    : ($mustSign ? $teamId : 0);
+                $finalTeamId = $hasSpace ? $teamId : ($mustSign ? $teamId : 0);
 
-                /*
-                 * Safety:
+                /**
+                 * ==================================================
+                 * FIRST ROUND SAFETY
+                 * ==================================================
                  *
-                 * If a first-rounder somehow still has no space,
-                 * force one more roster cut.
+                 * A first-round pick must sign.
+                 *
+                 * If the normal waiver candidate failed to create
+                 * space, force a roster cut.
                  */
-                if (
-                    $mustSign
-                    &&
-                    !$this->teamHasRosterSpace($teamId)
-                ) {
+                if ($mustSign && !$this->teamHasRosterSpace($teamId)) {
 
-                    $forcedWaive =
-                        $this->findPlayerToWaive(
-                            $teamId,
-                            $selectedPlayer,
-                            $currentSeasonId,
-                            true
-                        );
+                    $forcedWaive = $this->findPlayerToWaive($teamId,$selectedPlayer,$seasonId,true);
 
                     if (!$forcedWaive) {
 
                         throw new \RuntimeException(
-                            "Unable to create roster space for first-round pick {$pick->pick_number}."
+                            "Unable to create roster space for "
+                                . "first-round pick {$pickNumber}."
                         );
                     }
 
-                    $this->waivePlayerForDraft(
-                        $forcedWaive,
-                        $team,
-                        $currentSeasonId
-                    );
+                    $this->waivePlayerForDraft($forcedWaive,$team,$seasonId);
 
                     $finalTeamId = $teamId;
                     $hasSpace = true;
+
+                    $waivedPlayer = $forcedWaive;
                 }
 
-                /*
-                 * =================================================
+                /**
+                 * ==================================================
                  * MARK PLAYER AS DRAFTED
-                 * =================================================
+                 * ==================================================
                  */
-
                 DB::table('players')
                     ->where('id', $selectedPlayer->id)
                     ->update([
                         'team_id' => $finalTeamId,
                         'drafted_team_id' => $teamId,
                         'is_drafted' => 1,
-                        'draft_order' => $pick->pick_number,
+                        'draft_order' => $pickNumber,
                         'draft_status' => $pick->draft_status,
-
-                        /*
-                         * ContractService becomes the authority
-                         * for actual contract years/salary.
-                         */
                         'contract_years' => 0,
                     ]);
 
-                /*
-                 * Update draft row.
-                 */
-                DB::table('drafts')
-                    ->where([
-                        'season_id' => $currentSeasonId,
-                        'round' => $pick->round,
-                        'pick_number' => $pick->pick_number,
-                    ])
-                    ->update([
-                        'player_id' => $selectedPlayer->id,
-                        'team_id' => $teamId,
-                    ]);
-
-                /*
-                 * =================================================
+                /**
+                 * ==================================================
                  * DRAFT TRANSACTION
-                 * =================================================
+                 * ==================================================
                  */
-
                 DB::table('transactions')->insert([
                     'player_id' => $selectedPlayer->id,
-                    'season_id' => $currentSeasonId,
+                    'season_id' => $seasonId,
                     'from_team_id' => 0,
                     'to_team_id' => $teamId,
                     'status' => 'draft',
                     'details' =>
-                    "Drafted by {$team->name} in round {$pick->round}, pick {$pick->pick_number}.",
+                    "Drafted by {$team->name} "
+                        . "in round {$round}, "
+                        . "pick {$pickNumber}.",
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
 
-                /*
-                 * =================================================
+                /**
+                 * ==================================================
                  * ROOKIE CONTRACT
-                 * =================================================
-                 *
-                 * FIRST ROUND:
-                 * always signs.
-                 *
-                 * SECOND ROUND:
-                 * signs only if roster space exists.
+                 * ==================================================
                  */
                 $offer = null;
 
@@ -724,14 +696,10 @@ class DraftService
                         $this->contractService
                         ->assignRookieContract(
                             $selectedPlayer,
-                            $pick->round,
-                            $pick->pick_number
+                            $round,
+                            $pickNumber
                         );
 
-                    /*
-                     * Update players from the ContractService
-                     * result.
-                     */
                     DB::table('players')
                         ->where('id', $selectedPlayer->id)
                         ->update([
@@ -750,16 +718,13 @@ class DraftService
                             $offer['no_trade_clause'] ?? 0,
                         ]);
 
-                    /*
-                     * player_contracts
-                     */
                     DB::table('player_contracts')
                         ->insert([
                             'player_id' =>
                             $selectedPlayer->id,
 
                             'season_id' =>
-                            $currentSeasonId,
+                            $seasonId,
 
                             'team_id' =>
                             $teamId,
@@ -788,31 +753,28 @@ class DraftService
                             'updated_at' => now(),
                         ]);
 
-                    /*
-                     * Signed transaction.
-                     */
                     DB::table('transactions')
                         ->insert([
                             'player_id' =>
                             $selectedPlayer->id,
 
                             'season_id' =>
-                            $currentSeasonId,
+                            $seasonId,
 
                             'details' =>
-                            $selectedPlayer->name .
-                                " signed with " .
-                                $team->name .
-                                " for " .
-                                $offer['years'] .
-                                " years on a " .
-                                $offer['contract_type'] .
-                                " contract worth ₱" .
-                                number_format(
+                            $selectedPlayer->name
+                                . " signed with "
+                                . $team->name
+                                . " for "
+                                . $offer['years']
+                                . " years on a "
+                                . $offer['contract_type']
+                                . " contract worth ₱"
+                                . number_format(
                                     (float) $offer['salary'],
                                     2
-                                ) .
-                                '.',
+                                )
+                                . '.',
 
                             'from_team_id' => 0,
 
@@ -826,12 +788,42 @@ class DraftService
                         ]);
                 }
 
-                /*
-                 * =================================================
-                 * CONSUME PICK RIGHT
-                 * =================================================
+                /**
+                 * ==================================================
+                 * SAVE DECISION TO DRAFT
+                 * ==================================================
                  */
+                DB::table('drafts')
+                    ->where('id', $pick->id)
+                    ->update([
+                        'player_id' =>
+                        $selectedPlayer->id,
 
+                        'team_id' =>
+                        $teamId,
+
+                        'decision_maker_type' =>
+                        $decisionMakerType,
+
+                        'decision_maker_name' =>
+                        $decisionMakerName,
+
+                        'decision_reason' =>
+                        $decisionReason,
+
+                        'decision_factors' =>
+                        json_encode(
+                            $decisionFactors
+                        ),
+
+                        'updated_at' => now(),
+                    ]);
+
+                /**
+                 * ==================================================
+                 * CONSUME PICK RIGHT
+                 * ==================================================
+                 */
                 if (!empty($pick->draft_pick_right_id)) {
 
                     $this->draftPickRightsService
@@ -840,136 +832,227 @@ class DraftService
                         );
                 }
 
-                /*
-                 * =================================================
-                 * RESULT
-                 * =================================================
+                /**
+                 * ==================================================
+                 * FIND NEXT PICK
+                 * ==================================================
+                 *
+                 * This automatically moves:
+                 *
+                 * R1 P30 -> R2 P1
                  */
+                $nextPick = DB::table('drafts')
+                    ->where('season_id', $seasonId)
+                    ->where(function ($query) use (
+                        $round,
+                        $pickNumber
+                    ) {
 
-                $draftResults[] = [
-                    'team_id' => $teamId,
+                        $query
+                            ->where('round', '>', $round)
+                            ->orWhere(function ($q) use (
+                                $round,
+                                $pickNumber
+                            ) {
 
-                    'player_id' =>
-                    $selectedPlayer->id,
+                                $q->where(
+                                    'round',
+                                    $round
+                                )
+                                    ->where(
+                                        'pick_number',
+                                        '>',
+                                        $pickNumber
+                                    );
+                            });
+                    })
+                    ->orderBy('round')
+                    ->orderBy('pick_number')
+                    ->first();
 
-                    'player_name' =>
-                    $selectedPlayer->name,
+                /**
+                 * ==================================================
+                 * DETERMINE COMPLETION
+                 * ==================================================
+                 */
+                $isComplete = !$nextPick;
 
-                    'position' =>
-                    $selectedPlayer->position,
+                /**
+                 * ==================================================
+                 * SEASON STATUS
+                 * ==================================================
+                 *
+                 * Only change the season status after the FINAL
+                 * pick has actually been processed.
+                 */
+                if ($isComplete) {
 
-                    'age' =>
-                    $selectedPlayer->age,
+                    DB::table('players')
+                        ->where('draft_id', $seasonId)
+                        ->where('is_drafted', 0)
+                        ->update([
+                            'team_id' => 0,
+                            'contract_years' => 0,
+                            'salary' => 0,
+                            'draft_status' => 'Undrafted',
+                            'is_rookie' => 1,
+                        ]);
 
-                    'archetype' =>
-                    $selectedPlayer->type,
+                    $latestSeasonId =
+                        get_current_season_id();
 
-                    'overall_rating' =>
-                    $selectedPlayer->overall_rating,
+                    DB::table('seasons')
+                        ->where('id', $latestSeasonId)
+                        ->update([
+                            'status' =>
+                            config('timeline.draft'),
+                        ]);
+                }
 
-                    'team_name' =>
-                    $team->name,
+                /**
+                 * ==================================================
+                 * RESPONSE DATA
+                 * ==================================================
+                 */
+                return [
+                    'season_id' => $seasonId,
 
-                    'draft_id' =>
-                    $currentSeasonId,
+                    'round' => $round,
 
-                    'draft_order' =>
-                    $pick->pick_number,
+                    'pick_number' =>
+                    $pickNumber,
 
                     'draft_status' =>
                     $pick->draft_status,
 
-                    'round' =>
-                    $pick->round,
+                    'team' => [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                    ],
 
-                    'pick_number' =>
-                    $pick->pick_number,
+                    'original_team' => [
+                        'id' =>
+                        $pickRight->original_team_id
+                            ?? null,
+                    ],
 
-                    'draft_pick_right_id' =>
-                    $pick->draft_pick_right_id,
+                    'current_owner' => [
+                        'id' => $team->id,
+                        'name' => $team->name,
+                    ],
 
-                    'draft_score' =>
-                    $selectedDraftScore,
+                    'player' => [
+                        'id' =>
+                        $selectedPlayer->id,
 
-                    'signed' =>
-                    $finalTeamId === $teamId,
+                        'name' =>
+                        $selectedPlayer->name,
 
-                    'contract_years' =>
-                    $offer['years'] ?? 0,
+                        'position' =>
+                        $selectedPlayer->position,
 
-                    'salary' =>
-                    $offer['salary'] ?? 0,
+                        'age' =>
+                        $selectedPlayer->age,
 
-                    'waived_player_id' =>
-                    $waivedPlayer->id ?? null,
+                        'overall_rating' =>
+                        $selectedPlayer->overall_rating,
 
-                    'waived_player_name' =>
-                    $waivedPlayer->name ?? null,
+                        'archetype' =>
+                        $selectedPlayer->type,
+                    ],
+
+                    'decision' => [
+                        'maker_type' =>
+                        $decisionMakerType,
+
+                        'maker_name' =>
+                        $decisionMakerName,
+
+                        'reason' =>
+                        $decisionReason,
+
+                        'factors' =>
+                        $decisionFactors,
+
+                        'draft_score' =>
+                        $selectedDraftScore,
+                    ],
+
+                    'signing' => [
+                        'signed' =>
+                        $finalTeamId === $teamId,
+
+                        'team_id' =>
+                        $finalTeamId,
+
+                        'contract_years' =>
+                        $offer['years'] ?? 0,
+
+                        'salary' =>
+                        $offer['salary'] ?? 0,
+
+                        'contract_type' =>
+                        $offer['contract_type'] ?? null,
+                    ],
+
+                    'waiver' => [
+                        'waived' =>
+                        $waivedPlayer !== null,
+
+                        'player_id' =>
+                        $waivedPlayer->id ?? null,
+
+                        'player_name' =>
+                        $waivedPlayer->name ?? null,
+                    ],
+
+                    'next_pick' => $nextPick
+                        ? [
+                            'round' =>
+                            (int) $nextPick->round,
+
+                            'pick_number' =>
+                            (int) $nextPick->pick_number,
+
+                            'draft_status' =>
+                            $nextPick->draft_status,
+
+                            'team_id' =>
+                            (int) $nextPick->team_id,
+                        ]
+                        : null,
+
+                    'is_complete' =>
+                    $isComplete,
                 ];
-
-                /*
-                 * Update positional needs after drafting.
-                 */
-                $teamPositionNeeds[$teamId] =
-                    $this->updateTeamPositionNeeds(
-                        $teamPositionNeeds[$teamId] ?? [],
-                        $selectedPlayer->position
-                    );
-            }
-
-            /*
-             * ====================================================
-             * UNDRAFTED ROOKIES
-             * ====================================================
-             */
-
-            DB::table('players')
-                ->where('draft_id', $currentSeasonId)
-                ->where('is_drafted', 0)
-                ->update([
-                    'team_id' => 0,
-                    'contract_years' => 0,
-                    'salary' => 0,
-                    'draft_status' => 'Undrafted',
-                    'is_rookie' => 1,
-                ]);
-
-            /*
-             * ====================================================
-             * SEASON STATUS
-             * ====================================================
-             */
-
-            DB::table('seasons')
-                ->where('id', $latestSeasonId)
-                ->update([
-                    'status' => config('timeline.draft'),
-                ]);
-
-            DB::commit();
+            });
 
             return response()->json([
                 'error' => false,
-                'season_id' => $currentSeasonId,
-                'draft_results' => $draftResults,
+                'data' => $result,
                 'message' =>
-                'Draft completed successfully.',
-            ], 200);
+                $result['is_complete']
+                    ? 'Draft completed successfully.'
+                    : "Pick {$pickNumber} completed.",
+            ]);
         } catch (\Throwable $e) {
 
-            DB::rollBack();
-
             Log::error(
-                'Drafting failed',
+                'Single draft pick failed',
                 [
+                    'season_id' => $seasonId,
+                    'round' => $round,
+                    'pick_number' => $pickNumber,
                     'exception' => $e,
                 ]
             );
 
             return response()->json([
                 'error' => true,
-                'message' => 'Drafting failed.',
-                'error_message' => $e->getMessage(),
+                'message' =>
+                'Draft pick failed.',
+                'error_message' =>
+                $e->getMessage(),
             ], 500);
         }
     }
@@ -1180,6 +1263,503 @@ class DraftService
             ]);
     }
 
+
+    /**
+     * ============================================================
+     * MAKE DRAFT DECISION
+     * ============================================================
+     *
+     * Selects exactly one player from the top candidates and
+     * generates the explanation for the selection.
+     */
+    private function makeDraftDecision(
+        object $team,
+        $coach,
+        $topCandidates,
+        array $neededPositions,
+        object $pick
+    ): array {
+
+        if ($topCandidates->isEmpty()) {
+
+            throw new \RuntimeException(
+                "No candidates available for pick "
+                    . $pick->pick_number
+                    . "."
+            );
+        }
+
+        /**
+         * ========================================================
+         * DECISION MAKER
+         * ========================================================
+         *
+         * Your current system has CoachDecisionService, so the
+         * coach is the decision maker.
+         *
+         * You can later plug a GM service into this without
+         * changing the draft engine.
+         */
+        $decisionMakerType = 'coach';
+
+        $decisionMakerName =
+            $coach->name
+            ??
+            'Head Coach';
+
+        /**
+         * ========================================================
+         * COACH UNCERTAINTY
+         * ========================================================
+         */
+        $selectedCandidate =
+            $topCandidates->first();
+
+        if ($topCandidates->count() > 1) {
+
+            $coachQuality =
+                $this->coachDecisionService
+                ->getCoachQuality($coach);
+
+            $bestChance =
+                55
+                +
+                (($coachQuality - 50) * 0.40);
+
+            $bestChance =
+                max(
+                    40,
+                    min(
+                        90,
+                        $bestChance
+                    )
+                );
+
+            /**
+             * Coach does not always take the #1
+             * statistically-scored prospect.
+             */
+            if (
+                !$this->coachDecisionService
+                    ->randomDecision($bestChance)
+            ) {
+
+                $selectedCandidate =
+                    $topCandidates
+                    ->slice(1)
+                    ->random();
+            }
+        }
+
+        /**
+         * ========================================================
+         * PLAYER
+         * ========================================================
+         */
+        $selectedPlayer =
+            $selectedCandidate['player'];
+
+        $draftScore =
+            (float) $selectedCandidate['draft_score'];
+
+        /**
+         * ========================================================
+         * BUILD REASON
+         * ========================================================
+         */
+        $reasonData =
+            $this->buildDraftDecisionReason(
+                $selectedPlayer,
+                $topCandidates,
+                $neededPositions,
+                $draftScore,
+                $pick
+            );
+
+        return [
+            'candidate' =>
+            $selectedCandidate,
+
+            'decision_maker_type' =>
+            $decisionMakerType,
+
+            'decision_maker_name' =>
+            $decisionMakerName,
+
+            'decision_reason' =>
+            $reasonData['reason'],
+
+            'decision_factors' =>
+            $reasonData['factors'],
+
+            'draft_score' => $selectedCandidate['draft_score'],
+        ];
+    }
+
+    /**
+     * ============================================================
+     * ALREADY PROCESSED PICK
+     * ============================================================
+     */
+    private function buildAlreadyProcessedPickResponse(
+        object $pick,
+        $player
+    ): array {
+
+        $team = DB::table('teams')
+            ->where('id', $pick->team_id)
+            ->first();
+
+        $nextPick = DB::table('drafts')
+            ->where('season_id', $pick->season_id)
+            ->where(function ($query) use ($pick) {
+
+                $query
+                    ->where(
+                        'round',
+                        '>',
+                        $pick->round
+                    )
+                    ->orWhere(function ($q) use ($pick) {
+
+                        $q->where(
+                            'round',
+                            $pick->round
+                        )
+                            ->where(
+                                'pick_number',
+                                '>',
+                                $pick->pick_number
+                            );
+                    });
+            })
+            ->orderBy('round')
+            ->orderBy('pick_number')
+            ->first();
+
+        return [
+            'season_id' =>
+            (int) $pick->season_id,
+
+            'round' =>
+            (int) $pick->round,
+
+            'pick_number' =>
+            (int) $pick->pick_number,
+
+            'draft_status' =>
+            $pick->draft_status,
+
+            'already_processed' =>
+            true,
+
+            'team' => [
+                'id' =>
+                $team->id ?? $pick->team_id,
+
+                'name' =>
+                $team->name ?? 'Unknown Team',
+            ],
+
+            'player' => $player
+                ? [
+                    'id' =>
+                    $player->id,
+
+                    'name' =>
+                    $player->name,
+
+                    'position' =>
+                    $player->position,
+
+                    'age' =>
+                    $player->age,
+
+                    'overall_rating' =>
+                    $player->overall_rating,
+
+                    'archetype' =>
+                    $player->type,
+                ]
+                : null,
+
+            'decision' => [
+                'maker_type' =>
+                $pick->decision_maker_type,
+
+                'maker_name' =>
+                $pick->decision_maker_name,
+
+                'reason' =>
+                $pick->decision_reason,
+
+                'factors' =>
+                $pick->decision_factors
+                    ? json_decode(
+                        $pick->decision_factors,
+                        true
+                    )
+                    : [],
+            ],
+
+            'next_pick' => $nextPick
+                ? [
+                    'round' =>
+                    (int) $nextPick->round,
+
+                    'pick_number' =>
+                    (int) $nextPick->pick_number,
+
+                    'draft_status' =>
+                    $nextPick->draft_status,
+
+                    'team_id' =>
+                    (int) $nextPick->team_id,
+                ]
+                : null,
+
+            'is_complete' =>
+            $nextPick === null,
+        ];
+    }
+    /**
+     * ============================================================
+     * BUILD DRAFT DECISION REASON
+     * ============================================================
+     */
+    private function buildDraftDecisionReason(
+        object $player,
+        $topCandidates,
+        array $neededPositions,
+        float $draftScore,
+        object $pick
+    ): array {
+        $overall = (float) ($player->overall_rating ?? $player->overall ?? 0);
+
+        $position = strtoupper(trim((string) $player->position));
+
+        /*
+        * --------------------------------------------------------
+        * DETERMINE POSITION FIT
+        * --------------------------------------------------------
+        */
+        $positionFit = false;
+
+        foreach (array_keys($neededPositions) as $neededPosition) {
+
+            if (
+                str_contains(
+                    $position,
+                    strtoupper($neededPosition)
+                )
+            ) {
+                $positionFit = true;
+                break;
+            }
+        }
+
+        /*
+        * --------------------------------------------------------
+        * COMPARE AGAINST TOP ALTERNATIVES
+        * --------------------------------------------------------
+        */
+        $bestAlternative = null;
+
+        foreach ($topCandidates as $candidate) {
+
+            $candidatePlayer = $candidate['player'];
+
+            if (
+                (int) $candidatePlayer->id ===
+                (int) $player->id
+            ) {
+                continue;
+            }
+
+            if (!$bestAlternative) {
+                $bestAlternative = $candidate;
+                continue;
+            }
+
+            if (
+                (float) $candidate['draft_score'] >
+                (float) $bestAlternative['draft_score']
+            ) {
+                $bestAlternative = $candidate;
+            }
+        }
+
+        /*
+        * --------------------------------------------------------
+        * SCORE DIFFERENCE
+        * --------------------------------------------------------
+        */
+        $scoreDifference = 0;
+
+        if ($bestAlternative) {
+
+            $scoreDifference =
+                $draftScore -
+                (float) $bestAlternative['draft_score'];
+        }
+
+        /*
+        * --------------------------------------------------------
+        * DECISION FACTORS
+        * --------------------------------------------------------
+        */
+        $factors = [];
+
+        if ($positionFit) {
+            $factors[] = 'position_need';
+        }
+
+        if ($overall >= 85) {
+            $factors[] = 'elite_talent';
+        } elseif ($overall >= 78) {
+            $factors[] = 'strong_talent';
+        }
+
+        if ($scoreDifference >= 3) {
+            $factors[] = 'best_fit';
+        } elseif ($scoreDifference >= 1) {
+            $factors[] = 'draft_value';
+        }
+
+        if (empty($factors)) {
+            $factors[] = 'best_available';
+        }
+
+        /*
+        * --------------------------------------------------------
+        * GENERATE REASON
+        * --------------------------------------------------------
+        */
+        $reason = $this->generateDraftReason(
+            $player,
+            $positionFit,
+            $overall,
+            $scoreDifference,
+            $factors
+        );
+
+        return [
+            'reason' => $reason,
+            'factors' => $factors,
+        ];
+    }
+
+
+    /**
+     * ============================================================
+     * GENERATE DRAFT REASON
+     * ============================================================
+     */
+    private function generateDraftReason(
+        object $player,
+        bool $positionFit,
+        float $overall,
+        float $scoreDifference,
+        array $factors
+    ): string {
+        $name = $player->name ?? 'the player';
+
+        $position = strtoupper(trim((string) $player->position));
+
+        /*
+            * --------------------------------------------------------
+            * POSITION NEED + ELITE TALENT
+            * --------------------------------------------------------
+            */
+        if ($positionFit && in_array('elite_talent', $factors, true)) {
+            return
+                "We had a need at {$position}, and {$name} "
+                . "was too talented to pass up. His overall ability "
+                . "gives us both immediate impact and long-term value.";
+        }
+
+        /*
+            * --------------------------------------------------------
+            * POSITION NEED + BEST FIT
+            * --------------------------------------------------------
+            */
+        if ($positionFit && in_array('best_fit', $factors, true)) {
+            return
+                "We wanted help at {$position}, and {$name} "
+                . "was the best fit among the players available. "
+                . "His skill set matches what we need from this roster.";
+        }
+
+        /*
+            * --------------------------------------------------------
+            * POSITION NEED + VALUE
+            * --------------------------------------------------------
+            */
+        if ($positionFit && in_array('draft_value', $factors, true)) {
+            return
+                "Addressing {$position} was important for us, "
+                . "and {$name} offered excellent value at this point "
+                . "in the draft.";
+        }
+
+        /*
+            * --------------------------------------------------------
+            * ELITE TALENT
+            * --------------------------------------------------------
+            */
+        if (in_array('elite_talent', $factors, true)) {
+            return
+                "{$name} was simply too good to pass up. "
+                . "His talent gives us another high-level piece "
+                . "to build around.";
+        }
+
+        /*
+            * --------------------------------------------------------
+            * STRONG TALENT
+            * --------------------------------------------------------
+            */
+        if (in_array('strong_talent', $factors, true)) {
+            return
+                "We liked {$name}'s combination of talent and upside. "
+                . "He gives us a strong player without forcing us "
+                . "to reach for a specific position.";
+        }
+
+        /*
+            * --------------------------------------------------------
+            * BEST FIT
+            * --------------------------------------------------------
+            */
+        if (in_array('best_fit', $factors, true)) {
+            return
+                "After evaluating the remaining prospects, "
+                . "{$name} stood out as the best overall fit for "
+                . "what we're trying to build.";
+        }
+
+        /*
+            * --------------------------------------------------------
+            * DRAFT VALUE
+            * --------------------------------------------------------
+            */
+        if (in_array('draft_value', $factors, true)) {
+            return
+                "We felt {$name} represented excellent value at "
+                . "this point in the draft. The combination of "
+                . "talent and fit made the decision easier.";
+        }
+
+        /*
+            * --------------------------------------------------------
+            * FALLBACK
+            * --------------------------------------------------------
+            */
+        return
+            "We believe {$name} was the best player available "
+            . "for us at this point in the draft.";
+    }
+
     /**
      * ============================================================
      * ROSTER SPACE
@@ -1189,6 +1769,7 @@ class DraftService
     {
         $count = DB::table('players')
             ->where('team_id', $teamId)
+            ->where('is_active', 1)
             ->count();
 
         return $count < 15;
@@ -1578,7 +2159,10 @@ class DraftService
                 'd.round',
                 'd.pick_number',
                 'd.draft_status',
-                'd.draft_pick_right_id'
+                'd.draft_pick_right_id',
+                'd.decision_maker_type',
+                'd.decision_maker_name',
+                'd.decision_reason',
             )
             ->where(
                 'players.draft_id',

@@ -174,6 +174,7 @@ Route::middleware('auth')->group(function () {
         Route::get('draft-latest-results', [DraftController::class, 'draftResults'])->name('draft.results');
         Route::post('draft-season-results', [DraftController::class, 'draftResultsPerSeason'])->name('draft.season.results');
         Route::get('draft-players', [DraftController::class, 'draftPlayers'])->name('draft.players');
+        Route::post('draft-decision', [DraftController::class, 'draftDecision'])->name('draft.decision');
 
     });
 

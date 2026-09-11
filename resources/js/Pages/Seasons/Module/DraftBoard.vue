@@ -1,118 +1,558 @@
 <template>
-    <div class="p-2 text-white bg-black">
-        <!-- Available Players Section -->
-        <h3 class="text-lg font-semibold text-yellow-600">Season {{ props.season_id }} Draft Results</h3>
-        <hr class="my-4 border-t border-gray-200" />
-        <div class="overflow-x-auto mb-8 px-8" v-if="draftResults.length > 0">
-            <!-- Tabs for Rounds -->
-            <div class="flex border-b mb-4">
-                <button
-                    class="px-4 py-2 text-sm font-medium"
-                    :class="selectedRound === 1 ? 'text-yellow-600 border-b-2 border-blue-600' : 'text-gray-600'"
-                    @click="selectedRound = 1"
+    <div class="min-h-screen bg-black p-2 text-white">
+        <!-- ========================================================= -->
+        <!-- HEADER                                                    -->
+        <!-- ========================================================= -->
+
+        <div
+            class="mb-4 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#111] via-[#090909] to-black"
+        >
+            <div class="relative px-5 py-6 md:px-8">
+                <!-- Background decoration -->
+                <div
+                    class="pointer-events-none absolute -right-10 -top-20 text-[180px] font-black leading-none text-white/[0.025]"
                 >
-                    Round 1
-                </button>
-                <button
-                    class="px-4 py-2 text-sm font-medium"
-                    :class="selectedRound === 2 ? 'text-yellow-600 border-b-2 border-blue-600' : 'text-gray-600'"
-                    @click="selectedRound = 2"
+                    {{ props.season_id }}
+                </div>
+
+                <div
+                    class="relative z-10 flex flex-wrap items-center justify-between gap-5"
                 >
-                    Round 2
-                </button>
+                    <div>
+                        <div
+                            class="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500"
+                        >
+                            <span
+                                class="h-2 w-2 rounded-full bg-yellow-500"
+                            ></span>
+
+                            Draft History
+                        </div>
+
+                        <h1
+                            class="text-3xl font-black tracking-tight md:text-5xl"
+                        >
+                            Season {{ props.season_id }}
+                        </h1>
+
+                        <p
+                            class="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-gray-600"
+                        >
+                            Rookie Draft Results
+                        </p>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="flex flex-wrap gap-2">
+                        <div
+                            class="min-w-[110px] rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
+                        >
+                            <div
+                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
+                            >
+                                Total Picks
+                            </div>
+
+                            <div class="mt-1 text-2xl font-black">
+                                {{ draftResults.length }}
+                            </div>
+                        </div>
+
+                        <div
+                            class="min-w-[110px] rounded-xl border border-green-500/10 bg-green-500/[0.04] px-4 py-3"
+                        >
+                            <div
+                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
+                            >
+                                Stayed
+                            </div>
+
+                            <div
+                                class="mt-1 text-2xl font-black text-green-400"
+                            >
+                                {{ stayedWithDraftedTeam }}
+                            </div>
+                        </div>
+
+                        <div
+                            class="min-w-[110px] rounded-xl border border-red-500/10 bg-red-500/[0.04] px-4 py-3"
+                        >
+                            <div
+                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
+                            >
+                                Changed
+                            </div>
+
+                            <div
+                                class="mt-1 text-2xl font-black text-red-400"
+                            >
+                                {{ changedTeam }}
+                            </div>
+                        </div>
+
+                        <div
+                            class="min-w-[110px] rounded-xl border border-gray-500/10 bg-gray-500/[0.04] px-4 py-3"
+                        >
+                            <div
+                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
+                            >
+                                Unsigned
+                            </div>
+
+                            <div
+                                class="mt-1 text-2xl font-black text-gray-400"
+                            >
+                                {{ unsignedPlayers }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- ROUND TABS                                                -->
+        <!-- ========================================================= -->
+
+        <div
+            v-if="draftResults.length > 0"
+            class="mb-4 flex overflow-hidden rounded-xl border border-white/10 bg-[#0b0b0b]"
+        >
+            <button
+                type="button"
+                class="flex-1 px-5 py-4 text-xs font-black uppercase tracking-widest transition"
+                :class="
+                    selectedRound === 1
+                        ? 'bg-yellow-500 text-black'
+                        : 'text-gray-500 hover:bg-white/5 hover:text-white'
+                "
+                @click="selectedRound = 1"
+            >
+                <span>Round 1</span>
+
+                <span
+                    class="ml-2 rounded-md px-2 py-1 text-[9px]"
+                    :class="
+                        selectedRound === 1
+                            ? 'bg-black/20'
+                            : 'bg-white/5'
+                    "
+                >
+                    {{ round1Results.length }}
+                </span>
+            </button>
+
+            <button
+                type="button"
+                class="flex-1 px-5 py-4 text-xs font-black uppercase tracking-widest transition"
+                :class="
+                    selectedRound === 2
+                        ? 'bg-yellow-500 text-black'
+                        : 'text-gray-500 hover:bg-white/5 hover:text-white'
+                "
+                @click="selectedRound = 2"
+            >
+                <span>Round 2</span>
+
+                <span
+                    class="ml-2 rounded-md px-2 py-1 text-[9px]"
+                    :class="
+                        selectedRound === 2
+                            ? 'bg-black/20'
+                            : 'bg-white/5'
+                    "
+                >
+                    {{ round2Results.length }}
+                </span>
+            </button>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- EMPTY STATE                                               -->
+        <!-- ========================================================= -->
+
+        <div
+            v-if="draftResults.length === 0"
+            class="flex min-h-[400px] items-center justify-center rounded-2xl border border-white/10 bg-[#0b0b0b]"
+        >
+            <div class="text-center">
+                <div
+                    class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"
+                >
+                    <i
+                        class="fa fa-basketball-ball text-2xl text-gray-600"
+                    ></i>
+                </div>
+
+                <h2 class="text-xl font-black">
+                    NO DRAFT RECORDS
+                </h2>
+
+                <p class="mt-2 text-xs text-gray-600">
+                    No draft history is available for Season
+                    {{ props.season_id }}.
+                </p>
+            </div>
+        </div>
+
+        <!-- ========================================================= -->
+        <!-- DRAFT TABLE                                               -->
+        <!-- ========================================================= -->
+
+        <div
+            v-else
+            class="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0b]"
+        >
+            <!-- Table Header -->
+            <div
+                class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-4 md:px-5"
+            >
+                <div>
+                    <h2 class="text-sm font-black uppercase">
+                        Round {{ selectedRound }} Results
+                    </h2>
+
+                    <p
+                        class="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-600"
+                    >
+                        Complete draft recap
+                    </p>
+                </div>
+
+                <div
+                    class="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500"
+                >
+                    {{ selectedRoundResults.length }}
+                    Selections
+                </div>
             </div>
 
-            <!-- Round 1 Table -->
-            <div v-if="selectedRound === 1">
-                <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-900 text-nowrap">
-                        <tr>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Draft #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rank #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
+            <!-- ===================================================== -->
+            <!-- TABLE                                                  -->
+            <!-- ===================================================== -->
+
+            <div class="overflow-x-auto">
+                <table class="min-w-[1200px] w-full text-xs">
+                    <thead>
+                        <tr
+                            class="border-b border-white/10 bg-white/[0.025]"
+                        >
+                            <th
+                                class="w-[70px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Pick
+                            </th>
+
+                            <th
+                                class="w-[80px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Draft #
+                            </th>
+
+                            <th
+                                class="w-[70px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Rank
+                            </th>
+
+                            <th
+                                class="px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Player
+                            </th>
+
+                            <th
+                                class="w-[90px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Position
+                            </th>
+
+                            <th
+                                class="w-[90px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Overall
+                            </th>
+
+                            <th
+                                class="w-[180px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Archetype
+                            </th>
+
+                            <th
+                                class="w-[190px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Drafted By
+                            </th>
+
+                            <th
+                                class="w-[190px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Signed By
+                            </th>
+
+                            <th
+                                class="w-[100px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Status
+                            </th>
                         </tr>
                     </thead>
-                    <tbody class="bg-dark text-white divide-y divide-gray-200">
-                        <tr v-for="player in draftResults.filter(player => player.round === 1)" :key="player.player_id" class="hover:bg-gray-900" @click.prevent="showPlayerProfileModal = player.player_id">
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-900': player.pick_number >= player.rank, 'bg-red-900': player.pick_number < player.rank}">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.overall_rating ?? 0 }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border"  :class="playerSigningStatus(player.drafted_team_id,player.signed_team_id)">{{ player.signed_team_name }}</td>
+
+                    <tbody>
+                        <tr
+                            v-for="player in selectedRoundResults"
+                            :key="`${player.round}-${player.pick_number}-${player.player_id}`"
+                            class="group cursor-pointer border-b border-white/5 transition hover:bg-white/[0.035]"
+                            @click.prevent="
+                                showPlayerProfileModal =
+                                    player.player_id
+                            "
+                        >
+                            <!-- PICK -->
+                            <td class="px-3 py-4 text-center">
+                                <div
+                                    class="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-sm font-black transition group-hover:bg-yellow-500 group-hover:text-black"
+                                >
+                                    {{ player.pick_number }}
+                                </div>
+                            </td>
+
+                            <!-- DRAFT # -->
+                            <td class="px-3 py-4 text-center">
+                                <span
+                                    class="inline-flex min-w-[42px] justify-center rounded-md px-2 py-1 font-black"
+                                    :class="
+                                        draftValueClass(player)
+                                    "
+                                >
+                                    {{ getOverallDraftNumber(player) }}
+                                </span>
+                            </td>
+
+                            <!-- RANK -->
+                            <td class="px-3 py-4 text-center">
+                                <span
+                                    class="font-black text-gray-300"
+                                >
+                                    {{ player.rank ?? "-" }}
+                                </span>
+                            </td>
+
+                            <!-- PLAYER -->
+                            <td class="px-3 py-4">
+                                <div class="flex items-center gap-3">
+                                    <div
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5"
+                                    >
+                                        <i
+                                            class="fa fa-user text-sm text-gray-600"
+                                        ></i>
+                                    </div>
+
+                                    <div>
+                                        <div
+                                            class="font-black text-white group-hover:text-yellow-400"
+                                        >
+                                            {{ player.player_name }}
+                                            <sup
+                                                class="ml-1 text-[9px] font-bold text-gray-600"
+                                            >
+                                                {{ player.age }}
+                                            </sup>
+                                        </div>
+
+                                        <div
+                                            class="mt-1 text-[9px] font-bold uppercase tracking-wider text-gray-600"
+                                        >
+                                            Player #{{ player.player_id }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <!-- POSITION -->
+                            <td class="px-3 py-4">
+                                <span
+                                    class="rounded-md bg-white/5 px-2 py-1 text-[10px] font-black uppercase"
+                                >
+                                    {{ player.position ?? "-" }}
+                                </span>
+                            </td>
+
+                            <!-- OVERALL -->
+                            <td class="px-3 py-4 text-center">
+                                <div
+                                    class="text-lg font-black"
+                                    :class="
+                                        ratingClass(
+                                            player.overall_rating
+                                        )
+                                    "
+                                >
+                                    {{
+                                        player.overall_rating ?? 0
+                                    }}
+                                </div>
+
+                                <div
+                                    class="text-[8px] font-bold uppercase tracking-wider text-gray-700"
+                                >
+                                    Overall
+                                </div>
+                            </td>
+
+                            <!-- ARCHETYPE -->
+                            <td class="px-3 py-4">
+                                <span
+                                    class="font-bold capitalize text-gray-300"
+                                >
+                                    {{
+                                        formatArchetype(
+                                            player.archetype
+                                        )
+                                    }}
+                                </span>
+                            </td>
+
+                            <!-- DRAFTED TEAM -->
+                            <td class="px-3 py-4">
+                                <div
+                                    class="font-black text-gray-200"
+                                >
+                                    {{
+                                        player.team_name ??
+                                        "Undrafted"
+                                    }}
+                                </div>
+
+                                <div
+                                    class="mt-1 text-[8px] font-bold uppercase tracking-wider text-gray-600"
+                                >
+                                    Original Selection
+                                </div>
+                            </td>
+
+                            <!-- SIGNED TEAM -->
+                            <td class="px-3 py-4">
+                                <div
+                                    class="font-black"
+                                    :class="
+                                        signingTextClass(
+                                            player.drafted_team_id,
+                                            player.signed_team_id
+                                        )
+                                    "
+                                >
+                                    {{
+                                        player.signed_team_name ??
+                                        "Unsigned"
+                                    }}
+                                </div>
+
+                                <div
+                                    class="mt-1 text-[8px] font-bold uppercase tracking-wider text-gray-600"
+                                >
+                                    Final Destination
+                                </div>
+                            </td>
+
+                            <!-- STATUS -->
+                            <td class="px-3 py-4 text-center">
+                                <span
+                                    class="inline-flex rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-wider"
+                                    :class="
+                                        signingStatusBadge(
+                                            player.drafted_team_id,
+                                            player.signed_team_id
+                                        )
+                                    "
+                                >
+                                    {{
+                                        signingStatusText(
+                                            player.drafted_team_id,
+                                            player.signed_team_id
+                                        )
+                                    }}
+                                </span>
+                            </td>
                         </tr>
                     </tbody>
                 </table>
             </div>
 
-            <!-- Round 2 Table -->
-            <div v-if="selectedRound === 2">
-                <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-900 text-nowrap">
-                        <tr>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Draft #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rank #</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rating</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
-                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
-                        </tr>
-                    </thead>
-                    <tbody class="bg-dark text-white divide-y divide-gray-200">
-                        <tr v-for="player in draftResults.filter(player => player.round === 2)" :key="player.player_id" class="hover:bg-gray-900" @click.prevent="showPlayerProfileModal = player.player_id">
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.round }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border" :class="{'bg-green-900': (player.pick_number + round1Length) >= player.rank, 'bg-red-900': (player.pick_number + round1Length) < player.rank}">{{ player.pick_number + round1Length }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.overall_rating ?? 0 }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border" :class="playerSigningStatus(player.drafted_team_id,player.signed_team_id)">{{ player.signed_team_name }}</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <!-- ===================================================== -->
+            <!-- FOOTER                                                 -->
+            <!-- ===================================================== -->
+
+            <div
+                class="border-t border-white/10 bg-white/[0.015] px-4 py-3"
+            >
+                <div
+                    class="flex flex-wrap items-center justify-between gap-3 text-[9px] font-bold uppercase tracking-wider text-gray-600"
+                >
+                    <div>
+                        Click any player to view their profile
+                    </div>
+
+                    <div class="flex items-center gap-4">
+                        <span class="flex items-center gap-1">
+                            <span
+                                class="h-2 w-2 rounded-full bg-green-500"
+                            ></span>
+                            Stayed
+                        </span>
+
+                        <span class="flex items-center gap-1">
+                            <span
+                                class="h-2 w-2 rounded-full bg-red-500"
+                            ></span>
+                            Changed
+                        </span>
+
+                        <span class="flex items-center gap-1">
+                            <span
+                                class="h-2 w-2 rounded-full bg-gray-500"
+                            ></span>
+                            Unsigned
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
-    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
-        <div class="p-6 block">
-            <PlayerPerformance :key="showPlayerProfileModal" :player_id="showPlayerProfileModal" />
+
+    <!-- ============================================================= -->
+    <!-- PLAYER PROFILE                                                -->
+    <!-- ============================================================= -->
+
+    <Modal
+        :show="!!showPlayerProfileModal"
+        :maxWidth="'6xl'"
+        title="Player Profile"
+        @close="showPlayerProfileModal = false"
+    >
+        <div class="bg-black p-6">
+            <PlayerPerformance
+                :key="showPlayerProfileModal"
+                :player_id="showPlayerProfileModal"
+            />
         </div>
     </Modal>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from "vue";
-import Swal from "sweetalert2";
-import Modal from "@/Components/Modal.vue";
+import {
+    ref,
+    onMounted,
+    computed,
+} from "vue";
+
 import axios from "axios";
-import Paginator from "@/Components/Paginator.vue";
-import TopStatistics from "@/Pages/Analytics/Module/TopStatistics.vue";
+
+import Modal from "@/Components/Modal.vue";
 import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 
-const emits = defineEmits(["newSeason"]);
-const showPlayerProfileModal = ref(false);
-const draftResults = ref([]);
-const selectedRound = ref(1);
-const isHide = ref(true);
-const key = ref(0);
 const props = defineProps({
     season_id: {
         type: [Number, String],
@@ -120,10 +560,69 @@ const props = defineProps({
     },
 });
 
-// Compute the total number of Round 1 picks
-const round1Length = computed(() => {
-    return draftResults.value.filter(player => player.round === 1).length;
+const draftResults = ref([]);
+const selectedRound = ref(1);
+const showPlayerProfileModal = ref(false);
+
+/*
+|--------------------------------------------------------------------------
+| COMPUTED RESULTS
+|--------------------------------------------------------------------------
+*/
+
+const round1Results = computed(() => {
+    return draftResults.value.filter(
+        (player) => Number(player.round) === 1
+    );
 });
+
+const round2Results = computed(() => {
+    return draftResults.value.filter(
+        (player) => Number(player.round) === 2
+    );
+});
+
+const selectedRoundResults = computed(() => {
+    return selectedRound.value === 1
+        ? round1Results.value
+        : round2Results.value;
+});
+
+/*
+|--------------------------------------------------------------------------
+| SIGNING SUMMARY
+|--------------------------------------------------------------------------
+*/
+
+const stayedWithDraftedTeam = computed(() => {
+    return draftResults.value.filter(
+        (player) =>
+            player.signed_team_id != null &&
+            Number(player.drafted_team_id) ===
+                Number(player.signed_team_id)
+    ).length;
+});
+
+const changedTeam = computed(() => {
+    return draftResults.value.filter(
+        (player) =>
+            player.signed_team_id != null &&
+            Number(player.drafted_team_id) !==
+                Number(player.signed_team_id)
+    ).length;
+});
+
+const unsignedPlayers = computed(() => {
+    return draftResults.value.filter(
+        (player) => player.signed_team_id == null
+    ).length;
+});
+
+/*
+|--------------------------------------------------------------------------
+| LOAD DATA
+|--------------------------------------------------------------------------
+*/
 
 onMounted(async () => {
     await fetchDraftResults();
@@ -132,35 +631,229 @@ onMounted(async () => {
 const fetchDraftResults = async () => {
     try {
         draftResults.value = [];
-        const response = await axios.post(route("draft.season.results"), { season_id: props.season_id });
-        draftResults.value = response.data.draft_results;
+
+        const response = await axios.post(
+            route("draft.season.results"),
+            {
+                season_id: props.season_id,
+            }
+        );
+
+        draftResults.value =
+            response.data?.draft_results ?? [];
+
+        /*
+         * If this season has no Round 1 but has Round 2,
+         * automatically show the available round.
+         */
+        if (
+            round1Results.value.length === 0 &&
+            round2Results.value.length > 0
+        ) {
+            selectedRound.value = 2;
+        }
     } catch (error) {
-        console.error("Error fetching draft history:", error);
+        console.error(
+            "Error fetching draft history:",
+            error
+        );
+
+        draftResults.value = [];
     }
 };
 
-const playerSigningStatus = (drafted_team,signed_team) => {
+/*
+|--------------------------------------------------------------------------
+| DRAFT NUMBER
+|--------------------------------------------------------------------------
+|
+| Round 1:
+|   Pick 1 -> Draft #1
+|
+| Round 2:
+|   Pick 1 -> Draft #(round1 picks + 1)
+|
+*/
 
-    const statusClass = [
-        'bg-green-500',
-        'bg-red-500',
-        'bg-gray-500'
-    ];
+const getOverallDraftNumber = (player) => {
+    const round = Number(player.round);
+    const pick = Number(player.pick_number);
 
-    if(signed_team == null) return statusClass[2];
-    if(signed_team != null && drafted_team != signed_team) return statusClass[1];
-    
-    return statusClass[0];
-    
+    if (round === 1) {
+        return pick;
+    }
 
-}
+    return round1Results.value.length + pick;
+};
+
+/*
+|--------------------------------------------------------------------------
+| DRAFT VALUE
+|--------------------------------------------------------------------------
+|
+| Better than expected:
+|   pick >= rank
+|
+| Worse than expected:
+|   pick < rank
+|
+*/
+
+const draftValueClass = (player) => {
+    const pick = getOverallDraftNumber(player);
+    const rank = Number(player.rank);
+
+    if (!rank) {
+        return "bg-white/5 text-gray-400";
+    }
+
+    if (pick > rank) {
+        return "bg-green-500/15 text-green-400";
+    }
+
+    if (pick < rank) {
+        return "bg-red-500/15 text-red-400";
+    }
+
+    return "bg-white/5 text-gray-400";
+};
+
+/*
+|--------------------------------------------------------------------------
+| RATING
+|--------------------------------------------------------------------------
+*/
+
+const ratingClass = (rating) => {
+    const value = Number(rating);
+
+    if (value >= 85) {
+        return "text-yellow-400";
+    }
+
+    if (value >= 75) {
+        return "text-green-400";
+    }
+
+    if (value >= 65) {
+        return "text-blue-400";
+    }
+
+    return "text-gray-400";
+};
+
+/*
+|--------------------------------------------------------------------------
+| ARCHETYPE
+|--------------------------------------------------------------------------
+*/
+
+const formatArchetype = (archetype) => {
+    if (!archetype) {
+        return "-";
+    }
+
+    return archetype
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, (letter) =>
+            letter.toUpperCase()
+        );
+};
+
+/*
+|--------------------------------------------------------------------------
+| SIGNING STATUS
+|--------------------------------------------------------------------------
+*/
+
+const signingStatusText = (
+    draftedTeam,
+    signedTeam
+) => {
+    if (signedTeam == null) {
+        return "Unsigned";
+    }
+
+    if (
+        Number(draftedTeam) !==
+        Number(signedTeam)
+    ) {
+        return "Changed Team";
+    }
+
+    return "Signed";
+};
+
+const signingStatusBadge = (
+    draftedTeam,
+    signedTeam
+) => {
+    if (signedTeam == null) {
+        return "bg-gray-500/10 text-gray-400";
+    }
+
+    if (
+        Number(draftedTeam) !==
+        Number(signedTeam)
+    ) {
+        return "bg-red-500/10 text-red-400";
+    }
+
+    return "bg-green-500/10 text-green-400";
+};
+
+const signingTextClass = (
+    draftedTeam,
+    signedTeam
+) => {
+    if (signedTeam == null) {
+        return "text-gray-500";
+    }
+
+    if (
+        Number(draftedTeam) !==
+        Number(signedTeam)
+    ) {
+        return "text-red-400";
+    }
+
+    return "text-green-400";
+};
 </script>
 
 <style scoped>
-.draft-board {
-    padding: 16px;
+/*
+|--------------------------------------------------------------------------
+| Scrollbar
+|--------------------------------------------------------------------------
+*/
+
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
 }
-.team-card {
-    background: #f9fafb; /* Tailwind gray-50 */
+
+::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #333;
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Table
+|--------------------------------------------------------------------------
+*/
+
+table {
+    border-collapse: collapse;
 }
 </style>
+
