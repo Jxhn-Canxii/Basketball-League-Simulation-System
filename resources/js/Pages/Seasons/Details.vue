@@ -212,6 +212,29 @@
                                 >
                             </li>
                             <li
+                                @click="changeTab('Reset')"
+                                :class="{
+                                    'text-yellow-500 border-b-2 border-yellow-500':
+                                        currentTab === 'Reset',
+                                }"
+                                class="whitespace-nowrap group flex items-center px-3 py-2 cursor-pointer relative flex-shrink-0 max-w-xs"
+                            >
+                                <i
+                                    class="fa fa-rotate-left mr-2 text-red-500 group-hover:text-red-500"
+                                    title="Reset"
+                                ></i>
+                                <span
+                                    class="text-truncate hidden sm:inline md:inline"
+                                    >Reset</span
+                                >
+                                <!-- Warning Badge Notification Counter -->
+                                <span
+                                    hidden
+                                    class="bg-red-500 text-white rounded-full h-4 w-4 text-center m-1 text-xs"
+                                    >6</span
+                                >
+                            </li>
+                            <li
                                 class="whitespace-nowrap group flex items-center px-3 py-2 cursor-pointer relative flex-shrink-0 max-w-xs"
                             >
                                 <select
@@ -281,6 +304,12 @@
                     >
                         <ProposedTrade :isOffSeason="false" :seasonId="props.season_id" :key="props.season_id"/>
                     </div>
+                    <div
+                        v-if="currentTab === 'Reset' && season_id != 0"
+                        class="min-w-full overflow-x-auto p-4"
+                    >
+                        <ResetControls :seasonId="props.season_id" :key="props.season_id"/>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>
@@ -306,6 +335,7 @@ import DraftBoard from "./Module/DraftBoard.vue";
 import Transactions from "./Module/Transactions.vue";
 import AllNews from "./Module/AllNews.vue";
 import ProposedTrade from "./Module/ProposedTrade.vue";
+import ResetControls from "./Module/ResetControls.vue";
 
 const props = defineProps({
     season_id: {

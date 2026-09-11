@@ -25,6 +25,7 @@ use App\Http\Controllers\TradeController;
 use App\Http\Controllers\StandingsController;
 use App\Http\Controllers\PlayoffController;
 use App\Http\Controllers\RoundController;
+use App\Http\Controllers\PlayoffResetController;
 use App\Http\Controllers\TestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -119,6 +120,18 @@ Route::middleware('auth')->group(function () {
         Route::post('conference-playoffs', [PlayoffController::class, 'seasonsPlayoffs'])->name('seasons.playoffs');
         Route::post('conference-playoffs-series', [PlayoffController::class, 'seasonsPlayoffsSeries'])->name('seasons.playoffs.series');
         Route::post('conference-playoffs-pending-games', [PlayoffController::class, 'getPlayoffPendingGames'])->name('seasons.playoffs.pending.games');
+    });
+
+    Route::prefix('playoff-reset/')->group(function () {
+
+        // Reset selected round and everything after it
+        Route::post('round', [PlayoffResetController::class,'resetRound'])->name('playoff.reset.round');
+
+        // Reset entire playoffs
+        Route::post('playoffs', [PlayoffResetController::class,'resetPlayoffs'])->name('playoff.reset.all');
+
+        // Reset entire season
+        Route::post('season', [PlayoffResetController::class,'resetSeason'])->name('season.reset.all');
     });
 
     Route::prefix('leaders/')->group(function(){
