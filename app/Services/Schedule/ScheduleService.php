@@ -77,24 +77,26 @@ class ScheduleService
         // // Check if the time is between 6 PM (18) and 6 AM (6)
         // $isTimeRestricted = ($currentHour >= 18 || $currentHour < 6);
 
-        $tradeProposalDeadline = CEIL($totalRounds / 2) - 4;
+        $tradeProposalDeadline = CEIL($totalRounds / 2);
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
 
-        $isTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
+        $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
 
-        if($isTradeProposalDeadline && $simulatedRounds % $tradeProposalDeadline == 0){
-            $this->tradeService->generateTradeProposals(false);
+        if($simulatedRounds <= $isTradeProposalDeadline){
+            if($simulatedRounds % 2 == 0){
+                $this->tradeService->automatedTradeDecision(false);
+            }else{
+                $this->tradeService->generateTradeProposals(false);
+            }
         }
-        if($isTradeDeadline) {
-
-            $this->tradeService->automatedTradeDecision(false);
+        if($isEndTradeDeadline) {
 
             DB::table('seasons')
                 ->where('id', $seasonId)
                 ->update(['status' => config('timeline.in_season_trade')]);
             
-            $isTradeDeadline = false; // Reset after executing
+            $isEndTradeDeadline = true; // Reset after executing
         }
 
         // Group by conference_id
@@ -121,7 +123,7 @@ class ScheduleService
         return response()->json([
             'schedule_ids' => $interleaved,
             'conference_count' => $conferenceCount,
-            'is_trade_deadline' => $isTradeDeadline, // Add trade deadline info
+            'is_end_trade_deadline' => $isEndTradeDeadline, // Add trade deadline info
             'simulated_rounds' => $simulatedRounds,
             'total_rounds' => $totalRounds,
             'status' => $latestSeasonStatus,

@@ -347,28 +347,28 @@
             <Modal :show="isTradeModalOpen" :maxWidth="'fullscreen'" title="Trade Players" @close="isTradeModalOpen = false">
                 <div class="mt-0 p-3 block bg-black">
                     <Trade
-                        @newSeason="handleTradeSeason"
+                        @newSeason="handleSeasonInfo"
                     />
                 </div>
             </Modal>
             <Modal :show="isSeasonAwardsModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonAwardsModalOpen} Awards`" @close="isSeasonAwardsModalOpen = false">
                 <div class="mt-4 p-3 block">
-                    <SeasonAwards :key="isSeasonAwardsModalOpen" :season_id="isSeasonAwardsModalOpen" @newSeason="handleTradeSeason" />
+                    <SeasonAwards :key="isSeasonAwardsModalOpen" :season_id="isSeasonAwardsModalOpen" @newSeason="handleSeasonInfo" />
                 </div>
             </Modal>
-             <Modal :show="isSeasonDraftModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonDraftModalOpen} Draft Results`" @close="isSeasonDraftModalOpen = false">
+            <Modal :show="isSeasonDraftModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonDraftModalOpen} Draft Results`" @close="isSeasonDraftModalOpen = false">
                 <div class="block bg-dark">
-                    <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" @newSeason="handleTradeSeason" />
+                    <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" @newSeason="handleSeasonInfo" />
                 </div>
             </Modal>
             <Modal :show="isCoachSigningModalOpen" :maxWidth="'fullscreen'" :title="`Season Coach Signing`" @close="isCoachSigningModalOpen = false">
                 <div class="mt-4 p-3 block">
-                    <FreeAgentsCoach :showControls="true" :key="isCoachSigningModalOpen" @newSeason="handleTradeSeason"  />
+                    <FreeAgentsCoach :showControls="true" :key="isCoachSigningModalOpen" @newSeason="handleSeasonInfo"  />
                 </div>
             </Modal>
             <Modal :show="isSeasonStoryLineModalOpen" :maxWidth="'4xl'" :title="`Season ${isSeasonStoryLineModalOpen} Storyline`" @close="isSeasonStoryLineModalOpen = false">
                 <div class="mt-4 p-3 block">
-                    <StoryLine :key="isSeasonStoryLineModalOpen" :season_id="isSeasonStoryLineModalOpen" @newSeason="handleTradeSeason"  />
+                    <StoryLine :key="isSeasonStoryLineModalOpen" :season_id="isSeasonStoryLineModalOpen" @newSeason="handleSeasonInfo"  />
                 </div>
             </Modal>
            
@@ -445,7 +445,7 @@ const handlePagination = (page_num) => {
     fetchSeasons();
 };
 
-const handleTradeSeason = (newSeason) => {
+const handleSeasonInfo = (newSeason) => {
     fetchSeasons();
 };
 const handleCreateSeason = (newSeason) => {

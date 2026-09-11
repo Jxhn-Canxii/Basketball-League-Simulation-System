@@ -76,8 +76,8 @@ class GameEngineService
             ], 400);
         }
 
-        $this->freeAgent->fillOpenRosterSpotsAfterTrade($gameData->home_team_id);
-        $this->freeAgent->fillOpenRosterSpotsAfterTrade($gameData->away_team_id);
+        $this->freeAgent->auditTeamRosterSpot($gameData->home_team_id);
+        $this->freeAgent->auditTeamRosterSpot($gameData->away_team_id);
 
         $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
     

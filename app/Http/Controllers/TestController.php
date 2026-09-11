@@ -401,10 +401,10 @@ class TestController extends Controller
 
     public function testGenerateTradeProposals()
     {
-        return $this->tradeService->testGenerateTradeProposals();
-        // $seasonId = 3;
+        // return $this->tradeService->testGenerateTradeProposals();
+        $seasonId = 5;
 
-        // return $this->draftRights->ensureFutureDraftRights($seasonId);
+        return $this->draftRights->ensureFutureDraftRights($seasonId);
     }
 
     public function testGameStreak(Request $request){

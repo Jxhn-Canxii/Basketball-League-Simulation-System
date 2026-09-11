@@ -34,10 +34,7 @@ class StoryLineService
 
             if (!$storylineData) {
 
-                return response()->json([
-                    'message' =>
-                    'No current season storyline found.',
-                ], 404);
+                return false;
             }
 
             DB::table('storylines')

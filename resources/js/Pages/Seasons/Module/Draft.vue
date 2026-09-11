@@ -1323,6 +1323,7 @@ const normalizePick = (pick) => {
     team_name:
       pick.team_name ??
       pick.team?.name ??
+      pick.next_pick?.team_name ??
       "Unknown Team",
   };
 };
@@ -1441,10 +1442,7 @@ const runNextPick = async () => {
      */
     key.value = Math.random();
 
-    emits(
-      "newSeason",
-      Math.random()
-    );
+    emits("newSeason",Math.random());
 
     /*
      * Pick is finished processing.
