@@ -263,6 +263,14 @@ class PlayoffResetService
                 ->where('season_id', $seasonId)
                 ->delete();
 
+            $deletedTradeLogs = DB::table('trade_logs')
+                ->where('season_id', $seasonId)
+                ->delete();
+
+            $undoInSeasonTradeProposals = DB::table('trade_proposals')
+                ->where('season_id', $seasonId)
+                ->where('status','!=','approved')
+                ->delete();
             // ---------------------------------------------------------
             // Delete player playoff stats.
             // ---------------------------------------------------------
