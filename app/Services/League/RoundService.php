@@ -178,6 +178,42 @@ class RoundService
         }
     }
 
+    public function prevRoundFormatter($round)
+    {
+
+        switch ($round) {
+            case 'round_of_32':
+                return 'none';
+                break;
+            case 'play_ins_elims_round_1':
+                return 'none';
+                break;
+            case 'play_ins_elims_round_2':
+                return 'play_ins_elims_round_1';
+                break;
+            case 'play_ins_finals':
+                return 'play_ins_elims_round_2';
+                break;
+            case 'round_of_16':
+                return 'play_ins_finals';
+                break;
+            case 'quarter_finals':
+                return 'round_of_16';
+                break;
+            case 'semi_finals':
+                return 'quarter_finals';
+            case 'interconference_semi_finals':
+                return 'semi_finals';
+                break;
+            case 'finals':
+                return 'interconference_semi_finals';
+                break;
+            default:
+                return 8;
+                break;
+        }
+    }
+
     public function buildRoundsFromSequence($roundSequence, $status)
     {
         // Map status to cumulative rounds for single_elim_16_with_playins

@@ -783,12 +783,11 @@ class PlayoffService
             if ($round == 'play_ins_elims_round_1') {
                 foreach ($conferences as $conferenceId) {
                     $scheduleFirstRound = $this->getPlayInSchedule($seasonId, $conferenceId, [7, 8], 2, $round);
-
                     list($seriesData, $scheduleData) = $this->createPlayInSeriesAndSchedule(
                         $scheduleFirstRound,
                         $seasonId,
                         $round,
-                        $conferenceId
+                        $conferenceId,
                     );
 
                     $allSeries = array_merge($allSeries, $seriesData);
@@ -797,7 +796,6 @@ class PlayoffService
             } else if ($round == 'play_ins_elims_round_2') {
                 foreach ($conferences as $conferenceId) {
                     $scheduleFirstRound = $this->getPlayInSchedule($seasonId, $conferenceId, [9, 10], 2, $round);
-
                     list($seriesData, $scheduleData) = $this->createPlayInSeriesAndSchedule(
                         $scheduleFirstRound,
                         $seasonId,
@@ -950,6 +948,22 @@ class PlayoffService
      */
     private function createPlayInSeriesAndSchedule($scheduleData, $seasonId, $round, $conferenceId)
     {
+        $previousRounds = $this->roundService->prevRoundFormatter($round);
+
+        $isPrevRoundsIsNotNone = ($round != 'none');
+
+        $isPastRoundHasPendingSeries = DB::table('playoff_series')
+            ->where('season_id', $seasonId)
+            ->where('round', $previousRounds)
+            ->where('status', 1)
+            ->exists();
+
+        if($isPastRoundHasPendingSeries && $isPrevRoundsIsNotNone){
+            
+            return response()->json(['success' => false, 'message' => "Can't create schedule: Previous rounds not finished"],500);
+
+        }
+
         $seriesData = [];
         $formattedSchedule = [];
         $seriesIndex = 1;
@@ -1168,11 +1182,25 @@ class PlayoffService
     {
         $status = $this->roundService->roundStatusFormatter($round);
 
+        $previousRounds = $this->roundService->prevRoundFormatter($round);
         // Get current status first
         $currentStatus = DB::table('seasons')
             ->where('id', $seasonId)
             ->value('status');
 
+        $isPastRoundHasPendingSeries = DB::table('playoff_series')
+            ->where('season_id', $seasonId)
+            ->where('round', $previousRounds)
+            ->where('status', 1)
+            ->exists();
+
+        if($isPastRoundHasPendingSeries){
+
+            return response()->json([
+                'success' => false, 
+                'message' => "Can't update season status: Previous rounds not finished"
+                ],500);
+        }
         // Only update if current status is NOT 11
         if ($currentStatus !== 11) {
             DB::table('seasons')
