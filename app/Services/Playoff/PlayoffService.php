@@ -1241,7 +1241,7 @@ class PlayoffService
             })
             ->exists();
 
-        if ($isPastRoundHasPendingSeries) {
+        if ($isPastRoundHasPendingSeries && $previousRounds != 'none') {
             return response()->json([
                 'success' => false,
                 'message' => "Can't update season status: Previous rounds not finished"
