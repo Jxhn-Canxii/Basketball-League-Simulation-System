@@ -586,52 +586,136 @@ class PlayoffStatsService
 
     public function updateSeriesAndSchedule($gameData, $winnerId)
     {
-        // Fetch the series
-        $series = DB::table('playoff_series')
-            ->where('series_id', $gameData->series_id)
-            ->first();
+        return DB::transaction(function () use ($gameData, $winnerId) {
 
-        if (!$series) {
-            throw new \Exception("Series not found for series_id: {$gameData->series_id}");
-        }
+            /*
+            * Lock the series row so two simultaneous requests
+            * cannot modify the same series at the same time.
+            */
+            $series = DB::table('playoff_series')
+                ->where('series_id', $gameData->series_id)
+                ->lockForUpdate()
+                ->first();
 
-        if ($series->status == 2) {
-            return false; // Series already completed, stop here
-        }
-
-        // Update wins based on the winner
-        $updateData = [
-            'home_wins' => $series->home_team_id == $winnerId ? $series->home_wins + 1 : $series->home_wins,
-            'away_wins' => $series->away_team_id == $winnerId ? $series->away_wins + 1 : $series->away_wins,
-            'updated_at' => Carbon::now(),
-            'status' => 1, // Default to "in progress"
-        ];
-
-        // Check if the series is completed
-        if (
-            $updateData['home_wins'] >= $series->race_to ||
-            $updateData['away_wins'] >= $series->race_to
-        ) {
-            $updateData['status'] = 2; // Mark as completed
-
-            if ($updateData['home_wins'] >= $series->race_to) {
-                $updateData['winner_team_id'] = $series->home_team_id;
-                $updateData['loser_team_id'] = $series->away_team_id;
-            } else {
-                $updateData['winner_team_id'] = $series->away_team_id;
-                $updateData['loser_team_id'] = $series->home_team_id;
+            if (!$series) {
+                throw new \Exception(
+                    "Series not found for series_id: {$gameData->series_id}"
+                );
             }
 
-            DB::table('schedules')
+            /*
+            * IMPORTANT:
+            *
+            * Do NOT increment home_wins / away_wins from the
+            * existing playoff_series values.
+            *
+            * Instead, calculate the score from the actual completed
+            * games in schedules.
+            *
+            * This makes the operation idempotent.
+            *
+            * If the browser reloads and this method runs again,
+            * the same completed game is counted only once because
+            * schedules contains that game only once.
+            */
+            $completedGames = DB::table('schedules')
                 ->where('series_id', $gameData->series_id)
-                ->where('status', 1)
-                ->update(['status' => 3]); //remove remaining schedules
-        }
+                ->where('status', 2)
+                ->select('winner_id')
+                ->get();
 
-        // Update playoff_series table
-        DB::table('playoff_series')
-            ->where('series_id', $gameData->series_id)
-            ->update($updateData);
-        
-    }
+            /*
+            * Recalculate the series wins.
+            */
+            $homeWins = $completedGames
+                ->where('winner_id', $series->home_team_id)
+                ->count();
+
+            $awayWins = $completedGames
+                ->where('winner_id', $series->away_team_id)
+                ->count();
+
+            /*
+            * Determine whether the series is complete.
+            */
+            $seriesStatus = 1; // In progress
+
+            $winnerTeamId = null;
+            $loserTeamId = null;
+
+            if ($homeWins >= $series->race_to) {
+
+                $seriesStatus = 2;
+
+                $winnerTeamId = $series->home_team_id;
+                $loserTeamId = $series->away_team_id;
+
+            } elseif ($awayWins >= $series->race_to) {
+
+                $seriesStatus = 2;
+
+                $winnerTeamId = $series->away_team_id;
+                $loserTeamId = $series->home_team_id;
+            }
+
+            /*
+            * Update the series using the recalculated values.
+            */
+            $updateData = [
+                'home_wins'  => $homeWins,
+                'away_wins'  => $awayWins,
+                'status'     => $seriesStatus,
+                'updated_at' => Carbon::now(),
+            ];
+
+            /*
+            * Only set winner/loser when the series is actually complete.
+            */
+            if ($seriesStatus === 2) {
+
+                $updateData['winner_team_id'] = $winnerTeamId;
+                $updateData['loser_team_id'] = $loserTeamId;
+
+                /*
+                * Remove all remaining unplayed games from the series.
+                *
+                * status = 1 means scheduled/not played.
+                * status = 3 means cancelled/removed because the series
+                * has already been decided.
+                */
+                DB::table('schedules')
+                    ->where('series_id', $gameData->series_id)
+                    ->where('status', 1)
+                    ->update([
+                        'status' => 3,
+                    ]);
+            } else {
+
+                /*
+                * If the series is still in progress, make sure we don't
+                * accidentally leave stale winner/loser values.
+                */
+                $updateData['winner_team_id'] = null;
+                $updateData['loser_team_id'] = null;
+            }
+
+            /*
+            * Save the authoritative series state.
+            */
+            DB::table('playoff_series')
+                ->where('series_id', $gameData->series_id)
+                ->update($updateData);
+
+            return [
+                'series_id'      => $gameData->series_id,
+                'home_wins'      => $homeWins,
+                'away_wins'      => $awayWins,
+                'status'         => $seriesStatus,
+                'winner_team_id' => $winnerTeamId,
+                'loser_team_id'  => $loserTeamId,
+            ];
+    });
+}
+
+
 }
