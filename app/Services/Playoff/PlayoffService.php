@@ -532,9 +532,10 @@ class PlayoffService
         }
         // Insert all playoff schedules into the database in a single batch
         try {
+            $this->insertSchedule($seasonId, $round, $allSchedules);
+
             $this->updateSeasonPlayoffRound($seasonId, $round);
 
-            $this->insertSchedule($seasonId, $round, $allSchedules);
             // If the schedule was inserted successfully, return a success response
             return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
         } catch (\Exception $e) {
@@ -718,9 +719,10 @@ class PlayoffService
             // Insert all playoff schedules into the database in a single batch
 
             try {
+                $this->insertSchedule($seasonId, $round, $allSchedules);
+
                 $this->updateSeasonPlayoffRound($seasonId, $round);
 
-                $this->insertSchedule($seasonId, $round, $allSchedules);
                 // If the schedule was inserted successfully, return a success response
                 return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
             } catch (\Exception $e) {
@@ -1232,12 +1234,12 @@ class PlayoffService
         $isPastRoundHasPendingSeries = DB::table('playoff_series as ps')
             ->where('ps.season_id', $seasonId)
             ->where('ps.round', $previousRounds)
-            ->where('ps.status', 1)
+            ->where('ps.status','!=', 2)
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('schedules as s')
                     ->whereColumn('s.series_id', 'ps.series_id')
-                    ->where('s.status', 1);
+                    ->where('s.status', '!=', 2);
             })
             ->exists();
 

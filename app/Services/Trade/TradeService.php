@@ -2510,7 +2510,7 @@ class TradeService
                     default => $round . 'th',
                 };
 
-                $pickText = "{$season} {$roundText} Round Draft Pick";
+                $pickText = "Season {$season} {$roundText} Round Draft Pick";
 
                 if ($pickNumber !== null) {
                     $pickText .= " (#{$pickNumber})";
@@ -2533,7 +2533,7 @@ class TradeService
                 $season = $right['season_id'] ?? null;
 
                 if ($season) {
-                    $assets[] = "{$season} Draft Rights";
+                    $assets[] = "Season {$season} Draft Rights";
                 }
             }
 

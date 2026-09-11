@@ -280,7 +280,7 @@ class HelperService
             ->orderBy('id','desc')
             ->first();
 
-        return $gamesPlayedCount ? $gamesPlayedCount->round : 15;
+        return $gamesPlayedCount ? (int) $gamesPlayedCount->round : 15;
     }
 
     public function roundFormatter($round){

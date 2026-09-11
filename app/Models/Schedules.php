@@ -12,7 +12,7 @@ class Schedules extends Model
         'game_id',
         'game_number',
         'round',
-        'series_number',
+        'series_id',
         'season_id',
         'conference_id',
         'home_id',

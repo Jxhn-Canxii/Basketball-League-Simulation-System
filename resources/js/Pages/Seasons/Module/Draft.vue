@@ -1,5 +1,5 @@
 <template>
-    <div class="draft-board">
+    <div class="p-2 text-white bg-black">
         <h2 class="text-xl font-semibold text-gray-800">Draft Board</h2>
 
         <!-- Divider -->
@@ -28,7 +28,7 @@
 
         <h3 class="text-lg font-semibold text-gray-800">Draft Results</h3>
         <hr class="my-4 border-t border-gray-200" />
-        <div class="overflow-x-auto mb-8" v-if="draftOrder.length > 0">
+        <div class="overflow-x-auto mb-8 px-8" v-if="draftOrder.length > 0">
             <table class="min-w-full divide-y divide-gray-200 text-xs">
                 <thead class="bg-gray-50 text-nowrap">
                     <tr>
@@ -68,7 +68,7 @@
                 </tbody>
             </table>
         </div>
-        <div class="overflow-x-auto mb-8" v-if="draftResults.length > 0">
+        <div class="overflow-x-auto mb-8 px-8" v-if="draftResults.length > 0">
             <!-- Tabs for Rounds -->
             <div class="flex border-b mb-4">
                 <button
@@ -96,6 +96,7 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rating</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                         </tr>
@@ -106,6 +107,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.overall_rating ?? 0 }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                         </tr>
@@ -122,6 +124,7 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rating</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                         </tr>
@@ -132,6 +135,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.pick_number }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.overall_rating ?? 0 }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                         </tr>

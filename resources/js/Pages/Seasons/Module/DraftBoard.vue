@@ -1,9 +1,9 @@
 <template>
-    <div class="draft-board text-white bg-dark">
+    <div class="p-2 text-white bg-black">
         <!-- Available Players Section -->
         <h3 class="text-lg font-semibold text-yellow-600">Season {{ props.season_id }} Draft Results</h3>
         <hr class="my-4 border-t border-gray-200" />
-        <div class="overflow-x-auto mb-8" v-if="draftResults.length > 0">
+        <div class="overflow-x-auto mb-8 px-8" v-if="draftResults.length > 0">
             <!-- Tabs for Rounds -->
             <div class="flex border-b mb-4">
                 <button
@@ -25,7 +25,7 @@
             <!-- Round 1 Table -->
             <div v-if="selectedRound === 1">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-50 text-nowrap">
+                    <thead class="bg-gray-900 text-nowrap">
                         <tr>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
@@ -33,6 +33,7 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rank #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rating</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
@@ -46,6 +47,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.overall_rating ?? 0 }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border"  :class="playerSigningStatus(player.drafted_team_id,player.signed_team_id)">{{ player.signed_team_name }}</td>
@@ -57,7 +59,7 @@
             <!-- Round 2 Table -->
             <div v-if="selectedRound === 2">
                 <table class="min-w-full divide-y divide-gray-200 text-xs">
-                    <thead class="bg-gray-50 text-nowrap">
+                    <thead class="bg-gray-900 text-nowrap">
                         <tr>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Round #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Pick #</th>
@@ -65,6 +67,7 @@
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rank #</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Name</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Position</th>
+                            <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Rating</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Archetype</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Team</th>
                             <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">Signed Team</th>
@@ -78,6 +81,7 @@
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.rank }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.player_name }}<sup>{{ player.age }}</sup></td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.position }}</td>
+                            <td class="px-2 py-1 whitespace-nowrap border">{{ player.overall_rating ?? 0 }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border first-letter:uppercase">{{ player.archetype?.replaceAll('_',' ') }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border">{{ player.team_name }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border" :class="playerSigningStatus(player.drafted_team_id,player.signed_team_id)">{{ player.signed_team_name }}</td>

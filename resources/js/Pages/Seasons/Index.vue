@@ -332,7 +332,7 @@
                 </div>
             </Modal>
             <Modal :show="isDraftModalOpen" :maxWidth="'6xl'" title="Draft Rookie Players" @close="isDraftModalOpen = false">
-                <div class="p-3 block">
+                <div class="p-0 block bg-black">
                     <Draft @newSeason="handleNewSeason" />
                 </div>
             </Modal>
@@ -357,7 +357,7 @@
                 </div>
             </Modal>
              <Modal :show="isSeasonDraftModalOpen" :maxWidth="'fullscreen'" :title="`Season ${isSeasonDraftModalOpen} Draft Results`" @close="isSeasonDraftModalOpen = false">
-                <div class="mt-4 p-3 block bg-dark">
+                <div class="block bg-dark">
                     <DraftBoard :key="isSeasonDraftModalOpen" :season_id="isSeasonDraftModalOpen" @newSeason="handleTradeSeason" />
                 </div>
             </Modal>

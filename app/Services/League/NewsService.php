@@ -378,9 +378,9 @@ class NewsService
         |--------------------------------------------------------------------------
         */
         
-        $totalRegularGames = $this->helper->totalTeamGames($game->season_id);
+        $totalRegularGames = (int) $this->helper->totalTeamGames($game->season_id);
 
-        $isLast3Rounds = $game->round >=  $totalRegularGames - 3;
+        $isLast3Rounds = $game->round >=  ($totalRegularGames - 3);
 
         /*
         |--------------------------------------------------------------------------

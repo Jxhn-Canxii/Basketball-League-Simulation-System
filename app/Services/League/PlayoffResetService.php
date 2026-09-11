@@ -211,33 +211,6 @@ class PlayoffResetService
         });
     }
 
-    private function redoSeasonSchedule($type,$nextSeasonId,$leagueId){
-         // Create schedule based on type
-            switch ((int)$type) {
-                case 2:
-                    $this->schedule->createSingleRoundRobinScheduleByConference($nextSeasonId, $leagueId);
-                    break;
-                case 3:
-                    $this->schedule->createDoubleRoundRobinScheduleByConference($nextSeasonId, $leagueId);
-                    break;
-                case 4:
-                    $this->schedule->createHybridRoundRobinScheduleByConference($nextSeasonId, $leagueId);
-                    break;
-                case 5:
-                    $this->schedule->createCustomRoundRobinScheduleByConference($nextSeasonId, $leagueId, 5);
-                    break;
-                case 6:
-                    $this->schedule->createCustomRoundRobinScheduleByConference($nextSeasonId, $leagueId, 10);
-                    break;
-                case 7:
-                    $this->schedule->createRoundRobinSchedule($nextSeasonId, $leagueId);
-                    break;
-                case 1:
-                    throw new \Exception('Single Elimination not available for this season type.');
-                default:
-                    throw new \Exception('Invalid season type.');
-            }
-    }
     /**
      * Reset the ENTIRE season.
      *
@@ -351,6 +324,34 @@ class PlayoffResetService
                 'deleted_game_data' => $deleted,
             ];
         });
+    }
+
+    private function redoSeasonSchedule($type,$nextSeasonId,$leagueId){
+         // Create schedule based on type
+            switch ((int)$type) {
+                case 2:
+                    $this->schedule->createSingleRoundRobinScheduleByConference($nextSeasonId, $leagueId);
+                    break;
+                case 3:
+                    $this->schedule->createDoubleRoundRobinScheduleByConference($nextSeasonId, $leagueId);
+                    break;
+                case 4:
+                    $this->schedule->createHybridRoundRobinScheduleByConference($nextSeasonId, $leagueId);
+                    break;
+                case 5:
+                    $this->schedule->createCustomRoundRobinScheduleByConference($nextSeasonId, $leagueId, 5);
+                    break;
+                case 6:
+                    $this->schedule->createCustomRoundRobinScheduleByConference($nextSeasonId, $leagueId, 10);
+                    break;
+                case 7:
+                    $this->schedule->createRoundRobinSchedule($nextSeasonId, $leagueId);
+                    break;
+                case 1:
+                    throw new \Exception('Single Elimination not available for this season type.');
+                default:
+                    throw new \Exception('Invalid season type.');
+            }
     }
 
     protected function getPlayoffGameIdsFromStage(
