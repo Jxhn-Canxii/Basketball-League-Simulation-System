@@ -3,6 +3,7 @@
 namespace App\Services\League;
 
 use App\Services\Schedule\ScheduleService;
+use App\Services\Stats\PlayerSeasonStatsService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -10,9 +11,11 @@ use Throwable;
 class PlayoffResetService
 {
     protected $schedule;
+    protected $storeStats;
 
     public function __construct(){
         $this->schedule = new ScheduleService();
+        $this->storeStats = new PlayerSeasonStatsService();
     }
     /**
      * Playoff stage status mapping.
@@ -299,10 +302,13 @@ class PlayoffResetService
                         'status'      => 1,
                         'updated_at'  => now(),
                     ]);
+
             }
             else{
                 $this->redoSeasonSchedule($seasonInfo->type,$seasonId,$seasonInfo->league_id);
             }
+
+            $playerSeasonStatsStored = $this->storeNextSeasonStatsPerTeam();
             // ---------------------------------------------------------
             // Delete playoff series.
             // ---------------------------------------------------------
@@ -327,14 +333,6 @@ class PlayoffResetService
                 ->where('season_id', $seasonId)
                 ->delete();
 
-            // ---------------------------------------------------------
-            // Delete regular season player stats.
-            // ---------------------------------------------------------
-            $deletedSeasonStats = DB::table(
-                'player_season_stats'
-            )
-                ->where('season_id', $seasonId)
-                ->delete();
 
             // ---------------------------------------------------------
             // Reset season record.
@@ -354,12 +352,12 @@ class PlayoffResetService
             return [
                 'success' => true,
                 'type' => 'season',
+                'restored_season_stats' => $playerSeasonStatsStored,
                 'season_id' => $seasonId,
                 'deleted_games' => count($gameIds),
-                'deleted_schedules' => $resetSchedules,
+                'schedules_created_or_reseted' => $resetSchedules,
                 'deleted_series' => $deletedSeries,
                 'deleted_playoff_stats' => $deletedPlayoffStats,
-                'deleted_season_stats' => $deletedSeasonStats,
                 'deleted_game_data' => $deleted,
             ];
         });
@@ -774,5 +772,37 @@ class PlayoffResetService
 
                 'updated_at' => now(),
             ]);
+    }
+
+    private function storeNextSeasonStatsPerTeam()
+    {
+        $teams = DB::table('teams')->pluck('id');
+
+        foreach ($teams as $teamId) {
+            DB::beginTransaction(); // Keep transaction but check rollback issues
+
+            try {
+                //Log::info("Processing Team ID: {$teamId}");
+
+                $allPlayersStats = DB::table('players')
+                    ->where('team_id', $teamId)
+                    ->where('is_active', 1)
+                    ->where('contract_years', '>', 0)
+                    ->get();
+
+                foreach ($allPlayersStats as $playerStat) {
+                    // use shared PlayerSeasonStatsController instance
+                    $this->storeStats->storePlayerCurrentSeasonStats($teamId, $playerStat->id);
+                }
+
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                //Log::error("Error assigning role for team {$teamId}: " . $e->getMessage());
+                return $e->getMessage();
+            }
+        }
+
+        return true;
     }
 }

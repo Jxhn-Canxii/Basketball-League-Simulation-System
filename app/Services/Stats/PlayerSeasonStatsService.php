@@ -528,7 +528,8 @@ class PlayerSeasonStatsService
         }
     }
 
-    public function storePlayerNextSeasonStats($teamId, $playerId)
+    
+public function storePlayerNextSeasonStats($teamId, $playerId)
     {
         try {
             // Get the latest season ID or set it to 1 if none exists
@@ -621,7 +622,6 @@ class PlayerSeasonStatsService
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
     public function storePlayerCurrentSeasonStats($teamId, $playerId)
     {
         try {
@@ -642,6 +642,7 @@ class PlayerSeasonStatsService
             // Fetch player rating if available
             //$playerRating = DB::table('player_ratings')->where('player_id', $playerId)->first();
             $role = $player->role; // Default role if rating doesn't exist
+            $valuation = $this->valuationService->calculatePlayerValue($player);
 
             // Data to insert/update
             $data = [
@@ -675,6 +676,7 @@ class PlayerSeasonStatsService
                 'total_three_point_attempts' => 0,
                 'total_free_throws_made' => 0,
                 'total_free_throw_attempts' => 0,
+                'player_valuation' => $valuation,
                 'created_at' => now(),
                 'updated_at' => now(),
             ];
