@@ -282,6 +282,8 @@ class PlayoffResetService
             $schedulesExists = DB::table('schedules')
                 ->where('season_id', $seasonId)
                 ->exists();
+
+            $resetSchedules = [];
             // status:
             //   1 = unplayed
             //   2 = finished
