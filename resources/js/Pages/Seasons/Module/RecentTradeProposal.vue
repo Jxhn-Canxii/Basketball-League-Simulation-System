@@ -1,5 +1,5 @@
 <template>
-  <div class="trade-page bg-black rounded-lg">
+  <div class="trade-page bg-black rounded-lg" v-if="proposals.length > 0">
 
     <!-- =========================================================
         HEADER
@@ -12,8 +12,8 @@
           </div>
 
           <div>
-            <h2 class="text-2xl font-bold text-gray-900">
-              {{ props.isOffSeason ? "Off-Season" : "In-Season" }} Proposed Trades
+            <h2 class="text-sm font-bold text-gray-900">
+              Recent {{ props.isOffSeason ? "Off-Season" : "In-Season" }} Proposed Trades
             </h2>
 
             <p class="text-sm text-gray-500">
@@ -40,6 +40,7 @@
     >
 
       <div
+        v-if="proposals.length > 0"
         v-for="proposal in proposals"
         :key="proposal.id"
         class="trade-card"
@@ -81,7 +82,7 @@
 
 
         <!-- =====================================================
-             TRADE FLOW
+            TRADE FLOW
         ====================================================== -->
         <div class="trade-flow">
 
@@ -288,14 +289,12 @@
               </div>
 
             </div>
-
           </div>
-
         </div>
 
 
         <!-- =====================================================
-             TRADE SUMMARY
+            TRADE SUMMARY
         ====================================================== -->
         <div class="trade-summary">
 
@@ -343,7 +342,7 @@
 
 
         <!-- =====================================================
-             PENDING / APPROVED MESSAGE
+            PENDING / APPROVED MESSAGE
         ====================================================== -->
         <div
           v-if="proposal.status === 'pending'"
@@ -368,7 +367,11 @@
         </div>
 
       </div>
-
+      <div v-else>
+          <h2 class="text-2xl text-left font-black text-nowrap">
+            NO TRADE PROPOSAL
+          </h2>
+      </div>
     </div>
 
 
@@ -486,10 +489,11 @@ const fetchTradeProposals = async () => {
   try {
 
     const response = await axios.post(
-      route("trade.list.all"),
+      route("trade.list.recent"),
       {
         is_off_season: props.isOffSeason,
-        season_id: props.seasonId
+        season_id: props.seasonId,
+        limit: 1
       }
     );
 
@@ -752,7 +756,7 @@ const formatTradeDate = (date) => {
   width: 100%;
   max-width: 1500px;
   margin: 0 auto;
-  padding: 20px;
+  padding: 2px;
 
   color: #18181a;
 }
@@ -773,8 +777,8 @@ const formatTradeDate = (date) => {
 }
 
 .trade-header-icon {
-  width: 48px;
-  height: 48px;
+  width: 32px;
+  height: 32px;
 
   display: flex;
   align-items: center;

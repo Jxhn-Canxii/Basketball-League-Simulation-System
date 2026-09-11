@@ -31,6 +31,17 @@ class TradeController extends Controller
         return $this->tradeService->getAllTradeProposals($request);
     }
 
+    public function getRecentTradeProposals(Request $request)
+    {
+        $request->validate([
+            'is_off_season' => 'required|boolean',
+            'season_id' => 'required|int',
+            'limit' => 'required|int',
+        ]);
+
+        return $this->tradeService->getRecentTradeProposals($request);
+    }
+
     public function getPendingTradeProposals(Request $request)
     {
         $request->validate([
