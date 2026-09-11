@@ -946,36 +946,64 @@ class PlayoffService
     /**
      * Create playoff series and schedule for play-in rounds (best-of-1)
      */
-    private function createPlayInSeriesAndSchedule($scheduleData, $seasonId, $round, $conferenceId)
+
+    private function createPlayInSeriesAndSchedule($scheduleData,$seasonId,$round,$conferenceId) 
     {
         $previousRounds = $this->roundService->prevRoundFormatter($round);
 
         $isPrevRoundsIsNotNone = ($round != 'none');
 
-        $isPastRoundHasPendingSeries = DB::table('playoff_series')
-            ->where('season_id', $seasonId)
-            ->where('round', $previousRounds)
-            ->where('status', 1)
+        /*
+        * Only prevent creation when the previous round has:
+        *
+        * 1. A series with status = 1 (in progress)
+        * 2. AND that series still has a schedule with status = 1
+        *    (unplayed/pending game)
+        *
+        * This prevents a stale playoff_series.status from blocking
+        * the creation of the next round when all games are already
+        * completed.
+        */
+        $isPastRoundHasPendingSeries = DB::table('playoff_series as ps')
+            ->where('ps.season_id', $seasonId)
+            ->where('ps.round', $previousRounds)
+            ->where('ps.status', 1)
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('schedules as s')
+                    ->whereColumn('s.series_id', 'ps.series_id')
+                    ->where('s.status', 1);
+            })
             ->exists();
 
-        if($isPastRoundHasPendingSeries && $isPrevRoundsIsNotNone){
-            
-            return response()->json(['success' => false, 'message' => "Can't create schedule: Previous rounds not finished"],500);
-
+        if ($isPastRoundHasPendingSeries && $isPrevRoundsIsNotNone) {
+            return response()->json([
+                'success' => false,
+                'message' => "Can't create schedule: Previous rounds not finished",
+            ], 500);
         }
 
         $seriesData = [];
         $formattedSchedule = [];
         $seriesIndex = 1;
-        // Get conference name (e.g., "East") or use "Interconference" for conferenceId = 0
+
+        // Get conference name (e.g., "East") or use "Interconference"
+        // for conferenceId = 0
         $conferenceName = $conferenceId
-            ? DB::table('conferences')->where('id', $conferenceId)->value('name')
+            ? DB::table('conferences')
+                ->where('id', $conferenceId)
+                ->value('name')
             : 'Interconference';
 
         foreach ($scheduleData as $game) {
-            // Generate series_id (e.g., play_ins_elims_round_1-East-S1)
+
+            // Generate series_id
+            // Example:
+            // S13-C1-Rplay_ins_elims_round_1-Series1
             $seriesId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}";
+
             $gameId = "S{$seasonId}-C{$conferenceId}-R{$round}-Series{$seriesIndex}-G1";
+
             // Create playoff series entry (best-of-1)
             $seriesData[] = [
                 'series_id' => $seriesId,
@@ -985,27 +1013,27 @@ class PlayoffService
                 'home_team_id' => $game['home_id'],
                 'away_team_id' => $game['away_id'],
                 'race_to' => 1,
-                'series_length' => 1, // Fixed best-of-1 for play-ins
+                'series_length' => 1,
                 'home_wins' => 0,
                 'away_wins' => 0,
-                'status' => 1, // Integer status
+                'status' => 1,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ];
 
             // Create schedule entry
             $formattedSchedule[] = [
-                'game_id' => $gameId, // Generate or retrieve game_id if needed
+                'game_id' => $gameId,
                 'round' => $round,
                 'season_id' => $seasonId,
                 'conference_id' => $conferenceId,
-                'home_id' => $game['home_id'], // Higher seed as home team
+                'home_id' => $game['home_id'],
                 'home_score' => 0,
                 'away_id' => $game['away_id'],
                 'away_score' => 0,
                 'winner_id' => 0,
                 'status' => 1,
-                'series_id' => $seriesId, // Use series_id instead of series_number
+                'series_id' => $seriesId,
                 'created_at' => Carbon::now(),
                 'updated_at' => Carbon::now(),
             ];
@@ -1013,8 +1041,13 @@ class PlayoffService
             $seriesIndex++;
         }
 
-        return [$seriesData, $formattedSchedule];
+        return [
+            $seriesData,
+            $formattedSchedule
+        ];
     }
+
+
 
     /**
      * Create both playoff series and schedule for game one (non-play-in rounds)
@@ -1183,32 +1216,47 @@ class PlayoffService
         $status = $this->roundService->roundStatusFormatter($round);
 
         $previousRounds = $this->roundService->prevRoundFormatter($round);
+
         // Get current status first
         $currentStatus = DB::table('seasons')
             ->where('id', $seasonId)
             ->value('status');
 
-        $isPastRoundHasPendingSeries = DB::table('playoff_series')
-            ->where('season_id', $seasonId)
-            ->where('round', $previousRounds)
-            ->where('status', 1)
+        /*
+        * Block the round transition ONLY when:
+        *
+        * 1. A series exists in the previous round
+        * 2. That series is still in progress (status = 1)
+        * 3. That series still has an unplayed schedule (status = 1)
+        */
+        $isPastRoundHasPendingSeries = DB::table('playoff_series as ps')
+            ->where('ps.season_id', $seasonId)
+            ->where('ps.round', $previousRounds)
+            ->where('ps.status', 1)
+            ->whereExists(function ($query) {
+                $query->select(DB::raw(1))
+                    ->from('schedules as s')
+                    ->whereColumn('s.series_id', 'ps.series_id')
+                    ->where('s.status', 1);
+            })
             ->exists();
 
-        if($isPastRoundHasPendingSeries){
-
+        if ($isPastRoundHasPendingSeries) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => "Can't update season status: Previous rounds not finished"
-                ],500);
+            ], 500);
         }
+
         // Only update if current status is NOT 11
         if ($currentStatus !== 11) {
             DB::table('seasons')
                 ->where('id', $seasonId)
-                ->update(['status' => $status]);
+                ->update([
+                    'status' => $status
+                ]);
         }
     }
-
 
     private function getPlayInEliminationTeams($seasonId, $conferenceId)
     {
