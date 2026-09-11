@@ -296,9 +296,9 @@ class TradeService
     |--------------------------------------------------------------------------
     */
 
-    public function generateTradeProposals($request)
+    public function generateTradeProposals($isOffSeason)
     {
-        $isOffSeason = (bool) $request->is_off_season;
+        // $isOffSeason = (bool) $request->is_off_season;
 
         $tradeType = $isOffSeason
             ? 'off-season'
@@ -1251,10 +1251,9 @@ class TradeService
     |--------------------------------------------------------------------------
     */
 
-    public function automatedTradeDecision($request)
+    public function automatedTradeDecision($isOffSeason)
     {
-        $isOffSeason = (bool) $request->is_off_season;
-
+    
         $seasonId = $isOffSeason
             ? get_current_season_id() + 1
             : get_current_season_id();
@@ -1871,7 +1870,8 @@ class TradeService
         $proposal,
         $tradePlayers,
         bool $isOffSeason
-    ): array {
+    ): array 
+    {
 
         /*
         |--------------------------------------------------------------------------
@@ -1879,22 +1879,120 @@ class TradeService
         |--------------------------------------------------------------------------
         */
 
-        $validation =
-            $this->validateTradeAssets(
-                $tradePlayers
-            );
+        $validation = $this->validateTradeAssets($tradePlayers);
 
         if (!$validation['valid']) {
-
             return [
                 'success' => false,
                 'reason' => $validation['reason'],
             ];
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | Move assets
+        | Build complete N-way trade information
+        |--------------------------------------------------------------------------
+        |
+        | Do this BEFORE moving anything.
+        |
+        | This gives logTrade() the complete picture of the trade:
+        |
+        | Team A -> Team B
+        |   Player 1
+        |   Draft Pick
+        |
+        | Team B -> Team C
+        |   Player 2
+        |
+        | Team C -> Team A
+        |   Player 3
+        |
+        */
+
+        $tradeDetails = [];
+
+
+        foreach ($tradePlayers as $tradePlayer) {
+
+            $fromTeamId = $tradePlayer->from_team_id;
+            $toTeamId   = $tradePlayer->to_team_id;
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Find / create this route
+            |--------------------------------------------------------------------------
+            */
+
+            $routeKey = $fromTeamId . '_' . $toTeamId;
+
+            if (!isset($tradeDetails[$routeKey])) {
+
+                $tradeDetails[$routeKey] = [
+                    'from_team_id' => $fromTeamId,
+                    'to_team_id'   => $toTeamId,
+
+                    'players' => [],
+
+                    'draft_picks' => [],
+                ];
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Player Asset
+            |--------------------------------------------------------------------------
+            */
+
+            if (!empty($tradePlayer->player_id)) {
+
+                $tradeDetails[$routeKey]['players'][] = [
+                    'id' => $tradePlayer->player_id,
+                ];
+            }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Draft Pick Asset
+            |--------------------------------------------------------------------------
+            */
+
+            if (!empty($tradePlayer->draft_pick_right_id)) {
+
+                    $draftPick = DB::table('draft_pick_rights')
+                        ->where('id', $tradePlayer->draft_pick_right_id)
+                        ->first();
+
+                    if ($draftPick) {
+
+                        $tradeDetails[$routeKey]['draft_picks'][] = [
+                            'id' => $draftPick->id,
+                            'season_id' => $draftPick->season_id,
+                            'round' => $draftPick->round,
+                            'pick_number' => $draftPick->pick_number,
+                            'original_team_id' => $draftPick->original_team_id,
+                            'protections' => $draftPick->protections,
+                        ];
+                    }
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Convert associative array to normal array
+        |--------------------------------------------------------------------------
+        */
+
+        $tradeDetails = array_values($tradeDetails);
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Move Assets
         |--------------------------------------------------------------------------
         */
 
@@ -1908,8 +2006,7 @@ class TradeService
 
             if (!empty($tradePlayer->player_id)) {
 
-                $updated =
-                    DB::table('players')
+                $updated = DB::table('players')
                     ->where(
                         'id',
                         $tradePlayer->player_id
@@ -1920,38 +2017,23 @@ class TradeService
                     )
                     ->update([
                         'team_id' =>
-                        $tradePlayer->to_team_id,
+                            $tradePlayer->to_team_id,
 
                         'updated_at' =>
-                        now(),
+                            now(),
                     ]);
+
 
                 if (!$updated) {
 
                     return [
                         'success' => false,
                         'reason' =>
-                        'Player could not be transferred.',
+                            'Player could not be transferred.',
                     ];
                 }
-
-                /*
-                |--------------------------------------------------------------------------
-                | Trade log
-                |--------------------------------------------------------------------------
-                */
-
-                self::logTrade(
-                    $tradePlayer->from_team_id,
-                    $tradePlayer->to_team_id,
-                    $tradePlayer->player_id,
-                    $tradePlayer->id,
-                    'Trade approved by all teams.',
-                    $isOffSeason,
-                    $proposal->id,
-                    $proposal->season_id
-                );
             }
+
 
             /*
             |--------------------------------------------------------------------------
@@ -1961,8 +2043,7 @@ class TradeService
 
             if (!empty($tradePlayer->draft_pick_right_id)) {
 
-                $updated =
-                    DB::table('draft_pick_rights')
+                $updated = DB::table('draft_pick_rights')
                     ->where(
                         'id',
                         $tradePlayer->draft_pick_right_id
@@ -1973,46 +2054,99 @@ class TradeService
                     )
                     ->update([
                         'current_owner_id' =>
-                        $tradePlayer->to_team_id,
+                            $tradePlayer->to_team_id,
 
                         'is_traded' => 1,
 
                         'trade_proposal_id' =>
-                        $proposal->id,
+                            $proposal->id,
 
                         'updated_at' =>
-                        now(),
+                            now(),
                     ]);
+
 
                 if (!$updated) {
 
                     return [
                         'success' => false,
                         'reason' =>
-                        'Draft pick could not be transferred.',
+                            'Draft pick could not be transferred.',
                     ];
                 }
             }
         }
 
+
         /*
         |--------------------------------------------------------------------------
-        | Approve proposal
+        | Log Player Transactions
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        |
+        | We only log AFTER every asset has successfully moved.
+        |
+        | Every player receives the same complete N-way trade context.
+        |
+        */
+
+        foreach ($tradePlayers as $tradePlayer) {
+
+            if (empty($tradePlayer->player_id)) {
+                continue;
+            }
+
+
+            $logged = self::logTrade(
+                $tradePlayer->from_team_id,
+                $tradePlayer->to_team_id,
+                $tradePlayer->player_id,
+                $tradePlayer->id,
+                'Trade approved by all teams.',
+                $isOffSeason,
+                $proposal->id,
+                $proposal->season_id,
+                $tradeDetails
+            );
+
+
+            if (!$logged) {
+
+                return [
+                    'success' => false,
+                    'reason' =>
+                        'Trade was completed but transaction logging failed.',
+                ];
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Approve Proposal
         |--------------------------------------------------------------------------
         */
 
         DB::table('trade_proposals')
-            ->where('id', $proposal->id)
+            ->where(
+                'id',
+                $proposal->id
+            )
             ->update([
                 'status' => 'approved',
+
                 'updated_at' => now(),
             ]);
+
 
         return [
             'success' => true,
             'reason' => null,
         ];
     }
+
+
 
     /*
     |--------------------------------------------------------------------------
@@ -2035,7 +2169,6 @@ class TradeService
     | LOG TRADE
     |--------------------------------------------------------------------------
     */
-
     public static function logTrade(
         $teamFromId,
         $teamToId,
@@ -2044,43 +2177,39 @@ class TradeService
         $message = 'Trade completed.',
         $isOffSeason = false,
         $tradeProposalId = null,
-        $seasonId = null
-    ) {
-
+        $seasonId = null,
+        array $tradeDetails = []
+    ) 
+    {
         try {
 
             /*
             |--------------------------------------------------------------------------
-            | Use actual proposal season when available
+            | Season
             |--------------------------------------------------------------------------
             */
 
-            $seasonId =
-                $seasonId
-                ?? get_current_season_id();
+            $seasonId = $seasonId ?? get_current_season_id();
 
-            $tradeType =
-                $isOffSeason
+            $tradeType = $isOffSeason
                 ? 'off-season trade'
                 : 'in-season trade';
 
+
             /*
             |--------------------------------------------------------------------------
-            | Player
+            | Main Player
             |--------------------------------------------------------------------------
             */
 
-            $player =
-                DB::table('players')
+            $player = DB::table('players')
                 ->select(
                     'name',
                     'role'
                 )
-                ->where(
-                    'id',
-                    $playerId
-                )
+                ->where('id', $playerId)
                 ->first();
+
 
             /*
             |--------------------------------------------------------------------------
@@ -2088,29 +2217,54 @@ class TradeService
             |--------------------------------------------------------------------------
             */
 
-            $teamFrom =
-                DB::table('teams')
-                ->where(
-                    'id',
-                    $teamFromId
-                )
+            $teamFrom = DB::table('teams')
+                ->where('id', $teamFromId)
                 ->value('name');
 
-            $teamTo =
-                DB::table('teams')
-                ->where(
-                    'id',
-                    $teamToId
-                )
+            $teamTo = DB::table('teams')
+                ->where('id', $teamToId)
                 ->value('name');
 
-            if (
-                !$player ||
-                !$teamFrom ||
-                !$teamTo
-            ) {
+
+            if (!$player || !$teamFrom || !$teamTo) {
                 return false;
             }
+
+
+            /*
+            |--------------------------------------------------------------------------
+            | Build Detailed Trade Description
+            |--------------------------------------------------------------------------
+            |
+            | $tradeDetails example:
+            |
+            | [
+            |     [
+            |         'from_team_id' => 1,
+            |         'to_team_id'   => 2,
+            |         'players' => [
+            |             ['id' => 10],
+            |             ['id' => 15],
+            |         ],
+            |         'draft_picks' => [
+            |             [
+            |                 'season_id' => 15,
+            |                 'round'     => 1,
+            |                 'pick'      => 5,
+            |             ]
+            |         ]
+            |     ],
+            | ]
+            |
+            */
+
+            $tradeDescription = self::buildTradeDescription(
+                $teamFromId,
+                $teamToId,
+                $playerId,
+                $tradeDetails
+            );
+
 
             /*
             |--------------------------------------------------------------------------
@@ -2118,65 +2272,50 @@ class TradeService
             |--------------------------------------------------------------------------
             */
 
-            DB::table('transactions')
-                ->insert([
-                    'player_id' => $playerId,
+            DB::table('transactions')->insert([
+                'player_id' => $playerId,
+                'season_id' => $seasonId,
 
-                    'season_id' => $seasonId,
+                'details' => $tradeDescription,
 
-                    'details' =>
-                    "Traded {$player->name} ({$teamFrom}) to {$teamTo}",
+                'from_team_id' => $teamFromId,
+                'to_team_id' => $teamToId,
 
-                    'from_team_id' => $teamFromId,
+                'status' => $tradeType,
 
-                    'to_team_id' => $teamToId,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-                    'status' => $tradeType,
-
-                    'created_at' => now(),
-
-                    'updated_at' => now(),
-                ]);
 
             /*
             |--------------------------------------------------------------------------
-            | Trade log
+            | Trade Log
             |--------------------------------------------------------------------------
             */
 
-            DB::table('trade_logs')
-                ->insert([
-                    'season_id' => $seasonId,
+            DB::table('trade_logs')->insert([
+                'season_id' => $seasonId,
 
-                    'trade_proposal_id' =>
-                    $tradeProposalId,
+                'trade_proposal_id' => $tradeProposalId,
 
-                    'team_from_id' =>
-                    $teamFromId,
+                'team_from_id' => $teamFromId,
+                'team_to_id' => $teamToId,
 
-                    'team_to_id' =>
-                    $teamToId,
+                'player_id' => $playerId,
 
-                    'player_id' =>
-                    $playerId,
+                'player_name' => $player->name,
+                'role' => $player->role,
 
-                    'player_name' =>
-                    $player->name,
+                'trade_reason' => $message,
 
-                    'role' =>
-                    $player->role,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-                    'trade_reason' =>
-                    $message,
-
-                    'created_at' =>
-                    now(),
-
-                    'updated_at' =>
-                    now(),
-                ]);
 
             return true;
+
         } catch (\Throwable $e) {
 
             Log::error(
@@ -2191,6 +2330,255 @@ class TradeService
             return false;
         }
     }
+
+
+    /*
+    |--------------------------------------------------------------------------
+    | Build Detailed Trade Description
+    |--------------------------------------------------------------------------
+    */
+
+    private static function buildTradeDescription(
+        $teamFromId,
+        $teamToId,
+        $playerId,
+        array $tradeDetails = []
+    ) 
+    {
+
+        $teamNames = DB::table('teams')
+            ->whereIn(
+                'id',
+                collect($tradeDetails)
+                    ->flatMap(function ($trade) {
+                        return [
+                            $trade['from_team_id'] ?? null,
+                            $trade['to_team_id'] ?? null,
+                        ];
+                    })
+                    ->push($teamFromId)
+                    ->push($teamToId)
+                    ->filter()
+                    ->unique()
+                    ->values()
+                    ->toArray()
+            )
+            ->pluck('name', 'id');
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | If no N-way information was supplied
+        |--------------------------------------------------------------------------
+        */
+
+        if (empty($tradeDetails)) {
+
+            $player = DB::table('players')
+                ->where('id', $playerId)
+                ->value('name');
+
+            $from = $teamNames[$teamFromId] ?? 'Unknown Team';
+            $to   = $teamNames[$teamToId] ?? 'Unknown Team';
+
+            return "Traded {$player} ({$from}) to {$to}.";
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Determine number of teams
+        |--------------------------------------------------------------------------
+        */
+
+        $teams = collect($tradeDetails)
+            ->flatMap(function ($trade) {
+                return [
+                    $trade['from_team_id'] ?? null,
+                    $trade['to_team_id'] ?? null,
+                ];
+            })
+            ->filter()
+            ->unique()
+            ->values();
+
+        $teamCount = $teams->count();
+
+        $tradeLabel = match ($teamCount) {
+            2 => '2-team trade',
+            3 => '3-team trade',
+            4 => '4-team trade',
+            default => "{$teamCount}-team trade",
+        };
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Build Each Team's Outgoing Assets
+        |--------------------------------------------------------------------------
+        */
+
+        $teamSummaries = [];
+
+        foreach ($tradeDetails as $trade) {
+
+            $fromId = $trade['from_team_id'] ?? null;
+            $toId   = $trade['to_team_id'] ?? null;
+
+            if (!$fromId || !$toId) {
+                continue;
+            }
+
+            $fromName = $teamNames[$fromId] ?? 'Unknown Team';
+            $toName   = $teamNames[$toId] ?? 'Unknown Team';
+
+            $assets = [];
+
+
+            /*
+            |----------------------------------------------------------------------
+            | Players
+            |----------------------------------------------------------------------
+            */
+
+            $playerIds = collect($trade['players'] ?? [])
+                ->map(function ($player) {
+                    return is_array($player)
+                        ? ($player['id'] ?? null)
+                        : $player;
+                })
+                ->filter()
+                ->values();
+
+            if ($playerIds->isNotEmpty()) {
+
+                $players = DB::table('players')
+                    ->whereIn('id', $playerIds)
+                    ->pluck('name', 'id');
+
+                foreach ($playerIds as $id) {
+
+                    if (isset($players[$id])) {
+                        $assets[] = $players[$id];
+                    }
+                }
+            }
+
+
+            /*
+            |----------------------------------------------------------------------
+            | Draft Picks
+            |----------------------------------------------------------------------
+            */
+
+            foreach ($trade['draft_picks'] ?? [] as $pick) {
+
+                $season = $pick['season_id'] ?? null;
+                $round = $pick['round'] ?? null;
+                $pickNumber = $pick['pick_number'] ?? null;
+                $protections = $pick['protections'] ?? null;
+
+                if (!$season || !$round) {
+                    continue;
+                }
+
+                $roundText = match ((int) $round) {
+                    1 => '1st',
+                    2 => '2nd',
+                    3 => '3rd',
+                    default => $round . 'th',
+                };
+
+                $pickText = "{$season} {$roundText} Round Draft Pick";
+
+                if ($pickNumber !== null) {
+                    $pickText .= " (#{$pickNumber})";
+                }
+
+                if (!empty($protections)) {
+                    $pickText .= " ({$protections})";
+                }
+
+                $assets[] = $pickText;
+            }
+            /*
+            |----------------------------------------------------------------------
+            | Future Draft Rights
+            |----------------------------------------------------------------------
+            */
+
+            foreach ($trade['draft_rights'] ?? [] as $right) {
+
+                $season = $right['season_id'] ?? null;
+
+                if ($season) {
+                    $assets[] = "{$season} Draft Rights";
+                }
+            }
+
+
+            /*
+            |----------------------------------------------------------------------
+            | Cash / Other Assets
+            |----------------------------------------------------------------------
+            */
+
+            foreach ($trade['other_assets'] ?? [] as $asset) {
+
+                if (!empty($asset)) {
+                    $assets[] = $asset;
+                }
+            }
+
+
+            /*
+            |----------------------------------------------------------------------
+            | Build Summary
+            |----------------------------------------------------------------------
+            */
+
+            if (!empty($assets)) {
+
+                $teamSummaries[] =
+                    "{$fromName} sent "
+                    . implode(', ', $assets)
+                    . " to {$toName}";
+            }
+        }
+
+
+        /*
+        |--------------------------------------------------------------------------
+        | Final Description
+        |--------------------------------------------------------------------------
+        */
+
+        $mainPlayer = DB::table('players')
+            ->where('id', $playerId)
+            ->value('name');
+
+        $mainFrom = $teamNames[$teamFromId] ?? 'Unknown Team';
+        $mainTo   = $teamNames[$teamToId] ?? 'Unknown Team';
+
+
+        $description =
+            "Traded {$mainPlayer} ({$mainFrom}) to {$mainTo} "
+            . "as part of a {$tradeLabel}. ";
+
+
+        if (!empty($teamSummaries)) {
+
+            $description .=
+                "Trade details: "
+                . implode('; ', $teamSummaries)
+                . '.';
+        }
+
+
+        return $description;
+    }
+
+
 
     /*
     |--------------------------------------------------------------------------

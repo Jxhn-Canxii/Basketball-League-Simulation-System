@@ -377,14 +377,10 @@ class NewsService
         | Season
         |--------------------------------------------------------------------------
         */
+        
+        $totalRegularGames = $this->helper->totalTeamGames($game->season_id);
 
-        $season = DB::table("seasons")
-            ->select("total_regular_games")
-            ->where("id", $game->season_id)
-            ->first();
-
-        $isLast3Rounds =
-            $season && $game->round >= $season->total_regular_games - 3;
+        $isLast3Rounds = $game->round >=  $totalRegularGames - 3;
 
         /*
         |--------------------------------------------------------------------------

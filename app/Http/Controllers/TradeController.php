@@ -45,7 +45,7 @@ class TradeController extends Controller
             'is_off_season' => 'required|boolean',
         ]);
 
-        return $this->tradeService->generateTradeProposals($request);
+        return $this->tradeService->generateTradeProposals($request->is_off_season);
     }
 
 
@@ -55,7 +55,7 @@ class TradeController extends Controller
             'is_off_season' => 'required|boolean',
         ]);
 
-        return $this->tradeService->automatedTradeDecision($request);
+        return $this->tradeService->automatedTradeDecision($request->is_off_season);
     }
 
     /*

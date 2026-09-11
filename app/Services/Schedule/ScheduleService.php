@@ -77,29 +77,22 @@ class ScheduleService
         // // Check if the time is between 6 PM (18) and 6 AM (6)
         // $isTimeRestricted = ($currentHour >= 18 || $currentHour < 6);
 
-        $tradeDeadlineThreshold = ($totalRounds / 2) + 2;
+        $tradeProposalDeadline = CEIL($totalRounds / 2) - 4;
+        $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
 
         $isTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
+        $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
 
-        if ($isTradeDeadline) {
+        if($isTradeProposalDeadline && $simulatedRounds % $tradeProposalDeadline == 0){
+            $this->tradeService->generateTradeProposals(false);
+        }
+        if($isTradeDeadline) {
+
+            $this->tradeService->automatedTradeDecision(false);
 
             DB::table('seasons')
                 ->where('id', $seasonId)
                 ->update(['status' => config('timeline.in_season_trade')]);
-            // $tradeProposalOffers = $this->tradeService->generateTradeProposals();
-            // if($tradeProposalOffers){
-
-            //     DB::table('seasons')
-            //     ->where('id', $seasonId)
-            //     ->update(['status' => config('timeline.in_season_trade')]);
-            //     // $decisionFinished = $this->tradeService->automatedTradeDecision();
-            //     // if($decisionFinished){
-            //     //         // Update the season status to indicate trade deadline
-            //     //         DB::table('seasons')
-            //     //             ->where('id', $seasonId)
-            //     //             ->update(['status' => config('timeline.in_season_trade')]);
-            //     // }
-            // }
             
             $isTradeDeadline = false; // Reset after executing
         }
