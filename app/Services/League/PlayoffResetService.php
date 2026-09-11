@@ -2,12 +2,18 @@
 
 namespace App\Services\League;
 
+use App\Services\Schedule\ScheduleService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class PlayoffResetService
 {
+    protected $schedule;
+
+    public function __construct(){
+        $this->schedule = new ScheduleService();
+    }
     /**
      * Playoff stage status mapping.
      *
@@ -212,6 +218,33 @@ class PlayoffResetService
         });
     }
 
+    private function redoSeasonSchedule($type,$nextSeasonId,$leagueId){
+         // Create schedule based on type
+            switch ((int)$type) {
+                case 2:
+                    $this->schedule->createSingleRoundRobinScheduleByConference($nextSeasonId, $leagueId);
+                    break;
+                case 3:
+                    $this->schedule->createDoubleRoundRobinScheduleByConference($nextSeasonId, $leagueId);
+                    break;
+                case 4:
+                    $this->schedule->createHybridRoundRobinScheduleByConference($nextSeasonId, $leagueId);
+                    break;
+                case 5:
+                    $this->schedule->createCustomRoundRobinScheduleByConference($nextSeasonId, $leagueId, 5);
+                    break;
+                case 6:
+                    $this->schedule->createCustomRoundRobinScheduleByConference($nextSeasonId, $leagueId, 10);
+                    break;
+                case 7:
+                    $this->schedule->createRoundRobinSchedule($nextSeasonId, $leagueId);
+                    break;
+                case 1:
+                    throw new \Exception('Single Elimination not available for this season type.');
+                default:
+                    throw new \Exception('Invalid season type.');
+            }
+    }
     /**
      * Reset the ENTIRE season.
      *
@@ -241,21 +274,33 @@ class PlayoffResetService
                 $gameIds
             );
 
+            $seasonInfo =  DB::table('seasons')
+                ->select('league_id','type')
+                ->where('id', $seasonId)
+                ->first();
+
+            $schedulesExists = DB::table('schedules')
+                ->where('season_id', $seasonId)
+                ->exists();
             // status:
             //   1 = unplayed
             //   2 = finished
             // ---------------------------------------------------------
-            $resetSchedules = DB::table('schedules')
-                ->where('season_id', $seasonId)
-                ->update([
-                    'home_score'  => 0,
-                    'away_score'  => 0,
-                    'winner_id'   => 0,
-                    'is_overtime' => 0,
-                    'status'      => 1,
-                    'updated_at'  => now(),
-                ]);
-
+            if($schedulesExists){
+                $resetSchedules = DB::table('schedules')
+                    ->where('season_id', $seasonId)
+                    ->update([
+                        'home_score'  => 0,
+                        'away_score'  => 0,
+                        'winner_id'   => 0,
+                        'is_overtime' => 0,
+                        'status'      => 1,
+                        'updated_at'  => now(),
+                    ]);
+            }
+            else{
+                $this->redoSeasonSchedule($seasonInfo->type,$seasonId,$seasonInfo->league_id);
+            }
             // ---------------------------------------------------------
             // Delete playoff series.
             // ---------------------------------------------------------
@@ -696,9 +741,6 @@ class PlayoffResetService
             ->where('id', $seasonId)
             ->update([
                 'status' => 1,
-
-                'start_playoffs' => 0,
-
                 'finals_mvp_id' => null,
                 'finals_mvp' => null,
 

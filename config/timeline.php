@@ -3,7 +3,7 @@
 return [
     'start' => 1,
     'in_season_trade' => 2,
-    'play_offs' => 3,
+    'play_offs' => 3, //play_in_elims_round_1 schedule generation
     // 'round_of_32' => 6,
     'play_ins_elims_round_1' => 4,
     'play_ins_elims_round_2' => 5,

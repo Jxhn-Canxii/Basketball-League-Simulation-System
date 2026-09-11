@@ -221,7 +221,7 @@ class ScheduleService
     }
 
     /// regular match schedule
-    private function createRoundRobinSchedule($seasonId, $leagueId)
+    public function createRoundRobinSchedule($seasonId, $leagueId)
     {
         DB::beginTransaction(); // Start transaction
         try {
@@ -284,7 +284,7 @@ class ScheduleService
         }
     }
     ///per conference match schedule
-    private function createDoubleRoundRobinScheduleByConference($seasonId, $leagueId)
+    public function createDoubleRoundRobinScheduleByConference($seasonId, $leagueId)
     {
         DB::beginTransaction(); // Start transaction
         try {
@@ -386,7 +386,7 @@ class ScheduleService
         }
     }
 
-    private function createSingleRoundRobinScheduleByConference($seasonId, $leagueId)
+    public function createSingleRoundRobinScheduleByConference($seasonId, $leagueId)
     {
         DB::beginTransaction(); // Start transaction
         try {
@@ -453,7 +453,7 @@ class ScheduleService
         }
     }
 
-    private function createCustomRoundRobinScheduleByConference($seasonId, $leagueId, $roundLimit)
+    public function createCustomRoundRobinScheduleByConference($seasonId, $leagueId, $roundLimit)
     {
         DB::beginTransaction(); // Start transaction
         try {
@@ -515,7 +515,7 @@ class ScheduleService
         }
     }
 
-    private function createHybridRoundRobinScheduleByConference($seasonId, $leagueId, $maxInterGames = 5)
+    public function createHybridRoundRobinScheduleByConference($seasonId, $leagueId, $maxInterGames = 5)
     {
         DB::beginTransaction();
         try {
