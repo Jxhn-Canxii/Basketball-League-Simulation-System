@@ -32,7 +32,7 @@ class TeamWaivingService
 
         $evaluation = $this->playerMovementDecisionMaker($player, $seasonId, $seasonStatus);
 
-        if ($evaluation['waived'] && $evaluation['performance_points'] < 70) {
+        if ($evaluation['waived'] && $evaluation['performance_points'] < 50) {
             $reason = $evaluation['reason'] ?? 'No specific reason provided';
             $teamId = $player->team_id;
 
