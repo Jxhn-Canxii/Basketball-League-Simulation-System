@@ -187,51 +187,7 @@ class SimulateService
             $currentSeasonId = get_current_season_id();
 
             // $season = Seasons::find($currentSeasonId);
-
-            $seriesId = DB::table('schedules')
-                ->where('id', $request->schedule_id)
-                ->where('status', 2)  // Fetch previous round and current round in one query
-                ->value('series_id'); // Use exists() for a boolean result
-
-            $seriesInfo = DB::table('playoff_series')
-                ->where('series_id', $seriesId)
-                ->first(); // Use exists() for a boolean result
-        
-            $finishedSeriesGames = DB::table('schedules')
-                ->where('series_id', $seriesId)
-                ->where('status', 2)  // Fetch previous round and current round in one query
-                ->count(); // Use exists() for a boolean result
-
-            $isGameFinished = DB::table('schedules')
-                ->where('id', $request->schedule_id)
-                ->where('status', 2)  // Fetch previous round and current round in one query
-                ->exists(); // Use exists() for a boolean result
-
-
-            if ($isGameFinished) {
-                return response()->json([
-                    'message' => 'Game already simulated!',
-                ], 400); // 400 - Bad Request is more appropriate for this scenario
-            }
-
-            if($seriesInfo){
-                $seriesGamesCombined = $seriesInfo->home_wins + $seriesInfo->away_wins;
-                $seriesReachedMaxGame = $seriesInfo->home_wins == $seriesInfo->race_to || $seriesInfo->away_wins == $seriesInfo->race_to;
-                if ($seriesGamesCombined != $finishedSeriesGames) {
-
-                    return response()->json([
-                        'message' => 'Series Audit Warning: Finished series game schedule doesnt match playoff series records!',
-                    ], 400);
-
-                }
-
-                if ($seriesReachedMaxGame) {
-
-                    return response()->json([
-                        'message' => 'Series Already Finished: Cant proceed to simulate this game!',
-                    ], 400);
-                }
-            }
+            $this->seriesAudit($request->schedule_id);
 
             $data = collect($this->engine->startPlayoffSeriesGame($request->schedule_id,240));
 

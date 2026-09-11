@@ -145,11 +145,7 @@ class PlayoffResetService
             // ---------------------------------------------------------
             $gameIds = DB::table('schedules')
                 ->where('season_id', $seasonId)
-                ->where(function ($query) {
-                    $query
-                        ->whereNotNull('series_id')
-                        ->orWhereIn('round', array_keys($this->playoffStages));
-                })
+                ->where('series_id','!=',0)
                 ->pluck('game_id')
                 ->filter()
                 ->unique()
@@ -169,11 +165,7 @@ class PlayoffResetService
             // ---------------------------------------------------------
             $deletedSchedules = DB::table('schedules')
                 ->where('season_id', $seasonId)
-                ->where(function ($query) {
-                    $query
-                        ->whereNotNull('series_id')
-                        ->orWhereIn('round', array_keys($this->playoffStages));
-                })
+                ->where('series_id','!=',0)
                 ->delete();
 
             // ---------------------------------------------------------
@@ -186,9 +178,7 @@ class PlayoffResetService
             // ---------------------------------------------------------
             // Delete playoff aggregate stats
             // ---------------------------------------------------------
-            $deletedPlayoffStats = DB::table(
-                'player_season_playoff_stats'
-            )
+            $deletedPlayoffStats = DB::table('player_season_playoff_stats')
                 ->where('season_id', $seasonId)
                 ->delete();
 
