@@ -842,32 +842,41 @@ class DraftService
                  * R1 P30 -> R2 P1
                  */
                 $nextPick = DB::table('drafts')
-                    ->where('season_id', $seasonId)
+                    ->join('teams as original','drafts.team_id','=','original.id')
+                    ->leftJoin('draft_pick_rights','draft_pick_rights.id','=','drafts.draft_pick_right_id')
+                    ->leftJoin('teams as current_owner','current_owner.id','=','draft_pick_rights.current_owner_id')
+                    ->select(
+                        'drafts.*',
+                        'original.name as original_team_name',
+                        'current_owner.name as team_name',
+                        'current_owner.id as current_team_id'
+                    )
+                    ->where('drafts.season_id', $seasonId)
                     ->where(function ($query) use (
                         $round,
                         $pickNumber
                     ) {
 
                         $query
-                            ->where('round', '>', $round)
+                            ->where('drafts.round', '>', $round)
                             ->orWhere(function ($q) use (
                                 $round,
                                 $pickNumber
                             ) {
 
                                 $q->where(
-                                    'round',
+                                    'drafts.round',
                                     $round
                                 )
                                     ->where(
-                                        'pick_number',
+                                        'drafts.pick_number',
                                         '>',
                                         $pickNumber
                                     );
                             });
                     })
-                    ->orderBy('round')
-                    ->orderBy('pick_number')
+                    ->orderBy('drafts.round')
+                    ->orderBy('drafts.pick_number')
                     ->first();
 
                 /**
@@ -1018,6 +1027,9 @@ class DraftService
                             $nextPick->draft_status,
 
                             'team_id' =>
+                            (int) $nextPick->current_team_id ? $nextPick->current_team_id : $nextPick->team_id,
+
+                            'original_team_id' =>
                             (int) $nextPick->team_id,
                         ]
                         : null,
