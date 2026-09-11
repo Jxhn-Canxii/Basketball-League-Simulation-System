@@ -141,7 +141,7 @@
                                 >
                             </li>
                             <li
-                              
+                        
                                 @click="changeTab('News')"
                                 :class="{
                                     'text-yellow-500 border-b-2 border-yellow-500':
@@ -156,6 +156,30 @@
                                 <span
                                     class="text-truncate hidden sm:inline md:inline"
                                     >News</span
+                                >
+                                <!-- Warning Badge Notification Counter -->
+                                <span
+                                    hidden
+                                    class="bg-red-500 text-white rounded-full h-4 w-4 text-center m-1 text-xs"
+                                    >6</span
+                                >
+                            </li>
+                            <li
+                        
+                                @click="changeTab('Trade')"
+                                :class="{
+                                    'text-yellow-500 border-b-2 border-yellow-500':
+                                        currentTab === 'Trade',
+                                }"
+                                class="whitespace-nowrap group flex items-center px-3 py-2 cursor-pointer relative flex-shrink-0 max-w-xs"
+                            >
+                                <i
+                                    class="fa fa-exchange mr-2 text-gray-500 group-hover:text-yellow-500"
+                                    title="Trade"
+                                ></i>
+                                <span
+                                    class="text-truncate hidden sm:inline md:inline"
+                                    >Trade</span
                                 >
                                 <!-- Warning Badge Notification Counter -->
                                 <span
@@ -251,6 +275,12 @@
                     >
                         <AllNews :key="season_id" :season_id="season_id" />
                     </div>
+                    <div
+                        v-if="currentTab === 'Trade' && season_id != 0"
+                        class="min-w-full overflow-x-auto p-4"
+                    >
+                        <ProposedTrade :isOffSeason="false" :seasonId="props.season_id" :key="props.season_id"/>
+                    </div>
                 </div>
             </div>
         </AuthenticatedLayout>
@@ -275,6 +305,7 @@ import SeasonLeaders from "../Analytics/Module/SeasonLeaders.vue";
 import DraftBoard from "./Module/DraftBoard.vue";
 import Transactions from "./Module/Transactions.vue";
 import AllNews from "./Module/AllNews.vue";
+import ProposedTrade from "./Module/ProposedTrade.vue";
 
 const props = defineProps({
     season_id: {
@@ -294,9 +325,11 @@ const seasons = ref(0);
 const currentTab = ref("Regular"); // Set the default tab
 const changeTab = (tab) => {
     currentTab.value = tab;
+    localStorage.setItem('active_tab',tab);
 };
 const loadSeason = () => {
     season_id.value = props.season_id;
+    currentTab.value = localStorage.getItem('active_tab') ?? 'Regular';
     seasonsDropdown();
     fetchSeasonInfo();
 };

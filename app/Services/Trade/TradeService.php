@@ -85,6 +85,27 @@ class TradeService
         ]);
     }
 
+     public function getAllTradeProposals($request)
+    {
+        $isOffSeason = (bool) $request->is_off_season;
+        $seasonId = (int) $request->season_id;
+
+        $proposals = DB::table('trade_proposals')
+            ->where('season_id', $seasonId)
+            ->orderBy('type')
+            ->orderBy('status')
+            ->orderByDesc('created_at')
+            ->get();
+
+        $players = $this->attachTradePlayers($proposals);
+
+        return response()->json([
+            'trade_proposals' => $proposals,
+            'current_season' => $seasonId,
+            'trade_type' => 'all',
+        ]);
+    }
+
     /*
     |--------------------------------------------------------------------------
     | APPROVED TRADE PROPOSALS

@@ -49,7 +49,6 @@
             <div class="md:col-span-3 sm:col-span-1 overflow-y-auto p-1 bg-black">
                 <Standings v-if="selectedConference != 0" :key="updateKey" :showLegend="false" :season_id="props.season_id" :conference_id="activeConferenceTab" :season_data="season_info.seasons" />
                 <Top15MVPCandidate v-else :key="updateKey" :current_round="currentRound"/>
-
                 <small class="text-white mt-3">Transaction ID:{{ updateKey }} || Conference ID: {{ currentConference }} || Round {{ currentRound ?? 0 }}</small>   
                 <!-- <Top15MVPCandidate v-if="activeConferenceTab" :key="updateKey" /> -->
                 <!-- <RecentTransactions v-if="!boostMode && seasonStatus < 3" :key="transactionUpdate"/> -->
@@ -86,6 +85,7 @@ import SeasonSchedule from "./SeasonSchedule.vue";
 import Top15MVPCandidate from "@/Pages/Seasons/Module/Top15MVPCandidate.vue";
 import RecentTransactions from "@/Pages/Seasons/Module/RecentTransactions.vue";
 import RecentNews from "@/Pages/Seasons/Module/RecentNews.vue";
+import ProposedTrade from "@/Pages/Seasons/Module/ProposedTrade.vue";
 
 const season_info = ref(false);
 const seasonStatus = ref(false);
