@@ -532,9 +532,9 @@ class PlayoffService
         }
         // Insert all playoff schedules into the database in a single batch
         try {
-            $this->insertSchedule($seasonId, $round, $allSchedules);
-
             $this->updateSeasonPlayoffRound($seasonId, $round);
+
+            $this->insertSchedule($seasonId, $round, $allSchedules);
             // If the schedule was inserted successfully, return a success response
             return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
         } catch (\Exception $e) {
@@ -718,9 +718,9 @@ class PlayoffService
             // Insert all playoff schedules into the database in a single batch
 
             try {
-                $this->insertSchedule($seasonId, $round, $allSchedules);
-
                 $this->updateSeasonPlayoffRound($seasonId, $round);
+
+                $this->insertSchedule($seasonId, $round, $allSchedules);
                 // If the schedule was inserted successfully, return a success response
                 return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
             } catch (\Exception $e) {
@@ -925,14 +925,14 @@ class PlayoffService
             // Insert series and schedules in a transaction
             try {
                 DB::transaction(function () use ($seasonId, $round, $allSeries, $allSchedules) {
+                    $this->updateSeasonPlayoffRound($seasonId, $round);
+                    
                     if (!empty($allSeries)) {
                         $this->insertPlayoffSeries($seasonId, $round, $allSeries);
                     }
                     if (!empty($allSchedules)) {
                         $this->insertSeriesSchedule($seasonId, $round, $allSchedules);
                     }
-
-                    $this->updateSeasonPlayoffRound($seasonId, $round);
                 });
 
                 return response()->json(['success' => true, 'message' => 'Series and schedule inserted successfully']);
