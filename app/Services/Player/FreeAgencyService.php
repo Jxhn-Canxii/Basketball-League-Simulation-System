@@ -410,6 +410,312 @@ class FreeAgencyService
         ];
     }
 
+    /**
+        * Fill open roster spots for a team after a trade.
+        *
+        * This is specifically for in-season roster vacancies.
+        * It does NOT run the entire free agency process.
+        *
+        * @param int $teamId
+        * @param int|null $maxSignings
+        * @param int|null $preferredPosition
+        * @return array
+    */
+    public function fillOpenRosterSpotsAfterTrade(
+        int $teamId,
+        ?int $maxSignings = null,
+        ?string $preferredPosition = null
+    ): array 
+    {
+        $seasonId = get_current_season_id();
+
+        if (!$seasonId) {
+            return [
+                'success' => false,
+                'team_id' => $teamId,
+                'signed' => [],
+                'message' => 'Current season could not be determined.',
+            ];
+        }
+
+         // Get the total number of rounds in the season
+        $totalRounds = $this->helper->totalRounds($seasonId);
+
+        $latestSeasonStatus = $this->helper->seasonStatus($seasonId);
+
+        // Get the number of rounds that are already simulated (status != 2)
+        $simulatedRounds = $this->helper->simulatedRounds($seasonId);
+
+        $tradeDeadlineThreshold = ceil($totalRounds / 2) + 2;
+
+        $isTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold  && $latestSeasonStatus == 1;
+
+        if(!$isTradeDeadline){
+            return [
+                'success' => false,
+                'team_id' => $teamId,
+                'signed' => [],
+                'message' => 'Trade deadline not ended cant fill roster spot!.',
+            ];
+        }
+
+        $signed = [];
+        $skipped = [];
+
+        /*
+        * Keep filling until the roster reaches 15 players
+        * or no suitable free agent can be signed.
+        */
+        while (true) {
+
+            /*
+            * Count active players only.
+            */
+            $rosterCount = DB::table('players')
+                ->where('team_id', $teamId)
+                ->where('is_active', 1)
+                ->count();
+
+            /*
+            * Roster is full.
+            */
+            if ($rosterCount >= 15) {
+                break;
+            }
+
+            /*
+            * Optional safety limit.
+            *
+            * Example:
+            * fillOpenRosterSpotsAfterTrade($teamId, 1)
+            *
+            * means only sign one player.
+            */
+            if ($maxSignings !== null && count($signed) >= $maxSignings) {
+                break;
+            }
+
+            /*
+            * Determine the position we should target.
+            *
+            * If a preferred position was supplied, use it.
+            * Otherwise automatically determine the weakest position.
+            */
+            $position = $preferredPosition;
+
+            if (!$position) {
+                $position = $this->getTeamReplacementPosition($teamId);
+            }
+
+            /*
+            * Find the best available free agent.
+            *
+            * First try the team's positional need.
+            */
+            $candidate = null;
+
+            if ($position) {
+                $candidate = $this->getBestFreeAgentAvailable($position);
+            }
+
+            /*
+            * If no player exists at the needed position,
+            * fall back to the best available free agent.
+            */
+            if (!$candidate) {
+                $candidate = $this->getBestFreeAgentAvailable(null);
+            }
+
+            /*
+            * Nothing available.
+            */
+            if (!$candidate) {
+                $skipped[] = [
+                    'reason' => 'No suitable free agent available.',
+                    'position' => $position,
+                ];
+
+                break;
+            }
+
+            /*
+            * getBestFreeAgentAvailable() returns player_id,
+            * so retrieve the actual Player model.
+            */
+            $playerId = $candidate->player_id ?? $candidate->id ?? null;
+
+            if (!$playerId) {
+                $skipped[] = [
+                    'reason' => 'Free agent candidate has no valid player ID.',
+                ];
+
+                break;
+            }
+
+            $player = Player::find($playerId);
+
+            if (!$player) {
+                $skipped[] = [
+                    'reason' => 'Candidate player could not be found.',
+                    'player_id' => $playerId,
+                ];
+
+                break;
+            }
+
+            /*
+            * Make sure the player is still a free agent.
+            *
+            * This protects against another operation signing
+            * the player between queries.
+            */
+            if (
+                (int) $player->team_id !== 0 ||
+                !(bool) $player->is_active ||
+                (bool) $player->is_injured
+            ) {
+                $skipped[] = [
+                    'reason' => 'Candidate is no longer available.',
+                    'player_id' => $player->id,
+                    'player_name' => $player->name,
+                ];
+
+                continue;
+            }
+
+            /*
+            * Let ContractService determine the contract.
+            *
+            * This is important because we don't want another
+            * salary/contract calculation specifically for trades.
+            */
+            $offer = $this->contractService->getContractOffer(
+                $player,
+                $teamId
+            );
+
+            if (!$offer) {
+                $skipped[] = [
+                    'reason' => 'No contract offer could be generated.',
+                    'player_id' => $player->id,
+                    'player_name' => $player->name,
+                ];
+
+                continue;
+            }
+
+            /*
+            * Respect the team's salary-cap rules.
+            */
+            if (
+                !$this->contractService->canSignPlayer(
+                    $teamId,
+                    $offer['salary'] ?? 0,
+                    $seasonId
+                )
+            ) {
+                $skipped[] = [
+                    'reason' => 'Team cannot afford the available free agent.',
+                    'player_id' => $player->id,
+                    'player_name' => $player->name,
+                    'salary' => $offer['salary'] ?? 0,
+                ];
+
+                /*
+                * We should not repeatedly select the same player.
+                *
+                * Try another available candidate by temporarily
+                * excluding this player below.
+                */
+                $candidate = $this->getNextAffordableFreeAgent(
+                    $teamId,
+                    $position,
+                    [$player->id],
+                    $seasonId
+                );
+
+                if (!$candidate) {
+                    break;
+                }
+
+                $player = $candidate;
+                $offer = $this->contractService->getContractOffer(
+                    $player,
+                    $teamId
+                );
+
+                if (
+                    !$offer ||
+                    !$this->contractService->canSignPlayer(
+                        $teamId,
+                        $offer['salary'] ?? 0,
+                        $seasonId
+                    )
+                ) {
+                    break;
+                }
+            }
+
+            /*
+            * Use the EXISTING signPlayer() method.
+            *
+            * This means:
+            * - players table is updated
+            * - contract years are assigned
+            * - salary is assigned
+            * - contract type is assigned
+            * - options are assigned
+            * - transaction is logged
+            * - player_contracts is created
+            */
+            $signedPlayer = $this->signPlayer(
+                $player,
+                $teamId,
+                $offer,
+                $seasonId
+            );
+
+            if (!$signedPlayer) {
+                $skipped[] = [
+                    'reason' => 'Contract signing failed.',
+                    'player_id' => $player->id,
+                    'player_name' => $player->name,
+                ];
+
+                break;
+            }
+
+            $signed[] = [
+                'player_id' => $player->id,
+                'player_name' => $player->name,
+                'position' => $player->position,
+                'salary' => $offer['salary'],
+                'years' => $offer['years'],
+                'contract_type' => $offer['contract_type'],
+            ];
+
+            /*
+            * If a preferred position was supplied, only use it
+            * for the first signing. After that, recalculate needs.
+            */
+            $preferredPosition = null;
+        }
+
+        $finalRosterCount = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_active', 1)
+            ->count();
+
+        return [
+            'success' => true,
+            'team_id' => $teamId,
+            'signed' => $signed,
+            'signed_count' => count($signed),
+            'roster_count' => $finalRosterCount,
+            'open_spots' => max(0, 15 - $finalRosterCount),
+            'skipped' => $skipped,
+        ];
+    }
     // Waive a player (make them inactive)
     public function waivePlayer($request)
     {
@@ -1088,6 +1394,113 @@ class FreeAgencyService
         }
 
         return true;
+    }
+
+    /**
+     * Determine the position that needs the most help.
+     *
+     * Supports players with multi-position values such as:
+     * PG/SG, SF/PF, PF/C, etc.
+     */
+    private function getTeamReplacementPosition(int $teamId): ?string
+    {
+        $positions = [
+            'PG' => 0,
+            'SG' => 0,
+            'SF' => 0,
+            'PF' => 0,
+            'C'  => 0,
+        ];
+
+        $players = DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_active', 1)
+            ->select('position')
+            ->get();
+
+        foreach ($players as $player) {
+            if (!$player->position) {
+                continue;
+            }
+
+            $playerPositions = array_map(
+                'trim',
+                explode('/', strtoupper($player->position))
+            );
+
+            foreach ($playerPositions as $position) {
+                if (isset($positions[$position])) {
+                    $positions[$position]++;
+                }
+            }
+        }
+
+        /*
+        * Your target is effectively 3 players per position.
+        *
+        * The position with the lowest coverage becomes the
+        * preferred replacement position.
+        */
+        asort($positions);
+
+        return array_key_first($positions);
+    }
+
+    /**
+     * Find an affordable free agent.
+     *
+     * Used when the highest-rated candidate cannot be signed
+     * because of the salary-cap rules.
+     */
+    private function getNextAffordableFreeAgent(
+        int $teamId,
+        ?string $position,
+        array $excludePlayerIds,
+        int $seasonId
+    ) 
+    {
+        $query = DB::table('players')
+            ->where('team_id', 0)
+            ->where('is_active', 1)
+            ->where('is_injured', 0);
+
+        if (!empty($excludePlayerIds)) {
+            $query->whereNotIn('id', $excludePlayerIds);
+        }
+
+        if ($position) {
+            $query->where(
+                'position',
+                'LIKE',
+                '%' . $position . '%'
+            );
+        }
+
+        $players = $query
+            ->orderByDesc('overall_rating')
+            ->limit(25)
+            ->get();
+
+        foreach ($players as $player) {
+
+            $offer = $this->contractService->getContractOffer(
+                $player,
+                $teamId
+            );
+
+            if (
+                $offer &&
+                $this->contractService->canSignPlayer(
+                    $teamId,
+                    $offer['salary'] ?? 0,
+                    $seasonId
+                )
+            ) {
+                return Player::find($player->id);
+            }
+        }
+
+        return null;
     }
 
     private function scoreOffer($player, $team, array $offer, int $seasonId): float

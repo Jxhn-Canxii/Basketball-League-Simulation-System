@@ -125,8 +125,8 @@ class SimulateService
 
             $transactionCount = $this->helper->getTransferTransactionCount();
 
-            $this->teamManagement->updateInjuryAndWaiving($gameData->home_team_id);
-            $this->teamManagement->updateInjuryAndWaiving($gameData->away_team_id);
+            $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
+            $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
 
             $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $gameData->winner_id);
             $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $gameData->winner_id);
@@ -309,8 +309,8 @@ class SimulateService
             $winnerId = $gameData->winner_id;
             DB::transaction(function () use ($gameData, $currentSeasonId, $winnerId) {
 
-                $this->teamManagement->updateInjuryAndWaiving($gameData->home_team_id);
-                $this->teamManagement->updateInjuryAndWaiving($gameData->away_team_id);
+                $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
+                $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
 
                 $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId);
                 $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId);
@@ -514,8 +514,8 @@ class SimulateService
         $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId, $gameData->round);
         // $transactionCount = $this->helper->getTransferTransactionCount();
 
-        $this->teamManagement->updateInjuryAndWaiving($gameData->home_team_id);
-        $this->teamManagement->updateInjuryAndWaiving($gameData->away_team_id);
+        $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
+        $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
 
         $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId);
         $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId);

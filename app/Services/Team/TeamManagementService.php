@@ -600,7 +600,7 @@ class TeamManagementService
         ];
     }
 
-    public function updateInjuryAndWaiving($teamId)
+    public function evaluatePlayerInjury($teamId)
     {
         $seasonId = get_current_season_id();
 
@@ -612,7 +612,6 @@ class TeamManagementService
 
         $players = DB::table('players')->where('team_id', $teamId)->get();
         foreach ($players as $player) {
-            // $this->teamWaiving->playerWaiverEvaluator($player, $seasonId, $seasonStatus);
             $this->teamInjury->handleInjuredPlayer($player, $seasonId, $seasonStatus);
         }
     }
