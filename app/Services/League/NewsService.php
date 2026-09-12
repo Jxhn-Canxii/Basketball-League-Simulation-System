@@ -175,7 +175,6 @@ class NewsService
             "team_id",
             $game->away_team_id
         );
-
         /*
         |--------------------------------------------------------------------------
         | Safe fallback
@@ -378,7 +377,7 @@ class NewsService
         |--------------------------------------------------------------------------
         */
         
-        $totalRegularGames = (int) $this->helper->totalTeamGames($game->season_id);
+        $totalRegularGames = (int)$this->helper->totalTeamGames($game->season_id);
 
         $isLast3Rounds = $game->round >=  ($totalRegularGames - 3);
 
@@ -1455,12 +1454,17 @@ class NewsService
             }
         }
 
+        if ($winnerStats && $winnerStats->championships > 0) {
+                $contentEnders[] =
+                    "With championship banners already in its history, {winner} knows regular-season wins serve a bigger goal.";
+        }
+
         /*
         |--------------------------------------------------------------------------
         | Add quarter breakdown to article middle
         |--------------------------------------------------------------------------
         */
-
+        $quarterStory = '';
         if ($quarterStoryTemplates) {
             /*
             | Shuffle so the quarter information does not always appear
@@ -1469,7 +1473,8 @@ class NewsService
 
             shuffle($quarterStoryTemplates);
 
-            $contentMiddles[] = $quarterStoryTemplates[0];
+            $quarterStory = $quarterStoryTemplates[0];
+
         }
 
         /*
@@ -1477,11 +1482,12 @@ class NewsService
         | Add overtime narrative
         |--------------------------------------------------------------------------
         */
+        $overtimeStory = '';
 
         if ($overtimeStoryTemplates) {
             shuffle($overtimeStoryTemplates);
 
-            $contentMiddles[] = $overtimeStoryTemplates[0];
+            $overtimeStory = $overtimeStoryTemplates[0];
         }
 
         /*
@@ -1723,16 +1729,24 @@ class NewsService
         | Generate article
         |--------------------------------------------------------------------------
         */
-
+        // $quarterStory $overtimeStory
         $content = $isPlayoff
             ? $replacePlayoff($contentStarters[array_rand($contentStarters)]) .
                 " " .
                 $replacePlayoff($contentMiddles[array_rand($contentMiddles)]) .
                 " " .
+                $replacePlayoff($quarterStory) .
+                " " .
+                $replacePlayoff($overtimeStory) .
+                " " .
                 $replacePlayoff($contentEnders[array_rand($contentEnders)])
             : $replace($contentStarters[array_rand($contentStarters)]) .
                 " " .
                 $replace($contentMiddles[array_rand($contentMiddles)]) .
+                " " .
+                $replace($quarterStory) .
+                " " .
+                $replace($overtimeStory) .
                 " " .
                 $replace($contentEnders[array_rand($contentEnders)]);
 

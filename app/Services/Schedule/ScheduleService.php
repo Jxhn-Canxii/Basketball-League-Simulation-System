@@ -83,7 +83,7 @@ class ScheduleService
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
 
-        if($simulatedRounds <= $isTradeProposalDeadline){
+        if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
             if($simulatedRounds % 2 == 0){
                 $this->tradeService->automatedTradeDecision(false);
             }else{
