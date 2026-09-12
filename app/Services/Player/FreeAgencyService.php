@@ -274,6 +274,8 @@ class FreeAgencyService
     //getFreeAgentsByPositionAndCompositeScore
     public function getBestAvailableFreeAgent($position, $usedPlayerIds)
     {
+        $seasonId = get_current_season_id();
+
         $query = Player::select(
             'players.*',
             'teams.acronym as drafted_team',
@@ -317,6 +319,11 @@ class FreeAgencyService
             is_finals_mvp DESC,
             FIELD(role, 'star player', 'all star', 'starter', 'role player', 'bench')
         ");
+
+        if($seasonId == 0){
+            $query->limit(20); // Add randomization
+            $query->inRandomOrder(); // Add randomization
+        }
 
         return $query->first();
     }
@@ -479,7 +486,7 @@ class FreeAgencyService
             /*
             * Roster is full.
             */
-            if ($rosterCount = 15) {
+            if ($rosterCount == 15) {
                 break;
             }
 
@@ -488,9 +495,11 @@ class FreeAgencyService
             * Roster is overloaded.
             */
             if ($rosterCount > 15) {
-                $playerNeedsToWaive = $rosterCount - 15; //18 - 15 = 3 needs to be waived
+                $playerNeedsToWaive = CEIL($rosterCount - 15); //18 - 15 = 3 needs to be waived
 
                 $this->clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive);
+
+                break;
             }
 
             /*
@@ -1412,53 +1421,55 @@ class FreeAgencyService
                 ->select('teams.name as team_name','pss.season_id','pss.team_id','pss.player_id')
                 ->join('teams','teams.id','=','pss.team_id')
                 ->join('players as p','p.id','=','pss.player_id')
-                ->where('pss.team_id', $teamId)
+                ->where('p.team_id', $teamId)
                 ->where('pss.season_id', $seasonId)
                 ->where('p.is_active', 1)
-                ->limit($playerNeedsToWaive)
                 ->orderBy('pss.player_valuation','asc')
                 ->orderBy('p.salary','asc')
+                ->limit($playerNeedsToWaive)
                 ->get();
+                
+        if($playersToCut->count() == $playerNeedsToWaive){
+    
+            foreach ($playersToCut as $player) {
 
-        foreach ($playersToCut as $player) {
+                DB::table('players')
+                ->where('id', $player->player_id)
+                ->update([
+                    'team_id' => 0,
+                    'contract_years' => 0,
+                    'salary' => 0,
+                    'contract_type' => null,
+                    'player_option' => 0,
+                    'team_option' => 0,
+                    'no_trade_clause' => 0,
+                ]);
 
-            DB::table('players')
-            ->where('id', $player->player_id)
-            ->update([
-                'team_id' => 0,
-                'contract_years' => 0,
-                'salary' => 0,
-                'contract_type' => null,
-                'player_option' => 0,
-                'team_option' => 0,
-                'no_trade_clause' => 0,
-            ]);
+            /*
+            * Terminate previous contract if one exists.
+            */
+            DB::table('player_contracts')
+                ->where('player_id', $player->player_id)
+                ->where('status', 'signed')
+                ->update([
+                    'status' => 'terminated',
+                    'updated_at' => now(),
+                ]);
 
-        /*
-         * Terminate previous contract if one exists.
-         */
-        DB::table('player_contracts')
-            ->where('player_id', $player->player_id)
-            ->where('status', 'signed')
-            ->update([
-                'status' => 'terminated',
-                'updated_at' => now(),
-            ]);
-
-            DB::table('transactions')
-            ->insert([
-                'player_id' => $player->player_id,
-                'season_id' => $player->season_id,
-                'from_team_id' => $player->team_id,
-                'to_team_id' => 0,
-                'status' => 'waived',
-                'details' =>
-                "Waived by {$player->team_name} to make roster space",
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+                DB::table('transactions')
+                ->insert([
+                    'player_id' => $player->player_id,
+                    'season_id' => $player->season_id,
+                    'from_team_id' => $player->team_id,
+                    'to_team_id' => 0,
+                    'status' => 'waived',
+                    'details' =>
+                    "Waived by {$player->team_name} to make roster space",
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
-
     }
     /**
      * Determine the position that needs the most help.

@@ -195,7 +195,7 @@ class LeaguesController extends Controller
                 ->where(
                     'table_name',
                     'like',
-                    '%_batch_%'
+                    '%batch_%'
                 )
                 ->pluck('table_name');
 
@@ -203,22 +203,8 @@ class LeaguesController extends Controller
 
             foreach ($batchTables as $tableName) {
 
-                /*
-             * Extra safety:
-             * only allow the expected table-name pattern.
-             */
-                if (
-                    preg_match(
-                        '/^_batch_[0-9]+$/',
-                        $tableName
-                    )
-                ) {
-                    DB::statement(
-                        'DROP TABLE IF EXISTS `' .
-                            str_replace('`', '``', $tableName) .
-                            '`'
-                    );
-                }
+                DB::statement("DROP TABLE IF EXISTS $tableName");
+                
             }
         } finally {
 
