@@ -47,7 +47,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 15)) return;
+        if (!$season || ($season->status < 14 && $season->status > 17)) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -57,20 +57,20 @@ class ArchiveService
             return;
         }
 
-        DB::beginTransaction();
-        try {
+        // DB::beginTransaction();
+        // try {
 
             DB::statement("CREATE TABLE $archiveTable LIKE player_per_quarter_stats");
             DB::statement("INSERT INTO $archiveTable SELECT * FROM player_per_quarter_stats WHERE season_id=$seasonId");
             DB::statement("DELETE FROM player_per_quarter_stats WHERE season_id=$seasonId");
 
-            DB::commit();
+        //     DB::commit();
 
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        //     return true;
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     throw $e;
+        // }
     }
 
     public static function archiveQuarterGameBreakDown(int $seasonId)
@@ -83,7 +83,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 15)) return;
+        if (!$season || ($season->status < 14 && $season->status > 17)) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -93,20 +93,20 @@ class ArchiveService
             return;
         }
 
-        DB::beginTransaction();
-        try {
+        // DB::beginTransaction();
+        // try {
 
             DB::statement("CREATE TABLE $archiveTable LIKE game_quarter_breakdown");
             DB::statement("INSERT INTO $archiveTable SELECT * FROM game_quarter_breakdown WHERE season_id=$seasonId");
             DB::statement("DELETE FROM game_quarter_breakdown WHERE season_id=$seasonId");
 
-            DB::commit();
+            //DB::commit();
 
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        //     return true;
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     throw $e;
+        // }
     }
 
     public static function archiveGameStats(int $seasonId)
@@ -118,7 +118,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 15)) return;
+        if (!$season || ($season->status < 14 && $season->status > 17)) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -128,20 +128,20 @@ class ArchiveService
             return;
         }
 
-        DB::beginTransaction();
-        try {
+        // DB::beginTransaction();
+        // try {
 
             DB::statement("CREATE TABLE $archiveTable LIKE player_game_stats");
             DB::statement("INSERT INTO $archiveTable SELECT * FROM player_game_stats WHERE season_id=$seasonId");
             DB::statement("DELETE FROM player_game_stats WHERE season_id=$seasonId");
 
-            DB::commit();
+            //DB::commit();
 
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        //     return true;
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     throw $e;
+        // }
     }
 
     public static function archivePlayerSeasonStats(int $seasonId)
@@ -155,10 +155,10 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 15)) return;
+        if (!$season || ($season->status < 14 && $season->status > 17)) return;
 
-        DB::beginTransaction();
-        try {
+        // DB::beginTransaction();
+        // try {
 
             // 3) IF ARCHIVE TABLE EXISTS → STOP (no transaction)
             if (!Schema::hasTable($archiveSeasonStatsTable)) {
@@ -175,13 +175,13 @@ class ArchiveService
             DB::statement("INSERT INTO $archiveSeasonPlayoffStatsTable SELECT CONCAT('P-',player_id,'S-',season_id,'T-',team_id,'C-',id) as id, player_id, team_id, season_id, role, avg_minutes_per_game, avg_points_per_game, avg_rebounds_per_game, avg_assists_per_game, avg_steals_per_game, avg_blocks_per_game, avg_turnovers_per_game, avg_fouls_per_game, total_field_goals_made, total_field_goal_attempts, total_two_pointers_made, total_two_point_attempts, total_three_pointers_made, total_three_point_attempts, total_free_throws_made, total_free_throw_attempts, total_points, total_rebounds, total_assists, total_steals, total_blocks, total_turnovers, total_fouls, total_fouled_out, total_minutes_played, total_games_played, total_games, bpg_game_leader, points_game_leader, rebounds_game_leader, assists_game_leader, steals_game_leader, blocks_game_leader, per, ts_percent, eff, field_goal_percentage, two_point_percentage, three_point_percentage, free_throw_percentage, performance_points, created_at, updated_at FROM player_season_playoff_stats WHERE season_id=$seasonId");
             DB::statement("DELETE FROM player_season_playoff_stats WHERE season_id=$seasonId");
 
-            DB::commit();
+        //     DB::commit();
 
-            return true;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            throw $e;
-        }
+        //     return true;
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     throw $e;
+        // }
     }
 
     ///other group
@@ -239,6 +239,7 @@ class ArchiveService
                     (array) $snapshot
                 );
             }
+
             DB::commit();
 
             return true;

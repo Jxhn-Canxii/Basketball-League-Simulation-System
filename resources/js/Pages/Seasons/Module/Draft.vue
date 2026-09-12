@@ -1481,6 +1481,8 @@ const runNextPick = async () => {
         result.next_pick
       );
 
+    console.log(nextPickToDraft);
+
     /*
      * Refresh board data in background.
      */

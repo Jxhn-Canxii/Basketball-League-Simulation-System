@@ -26,7 +26,7 @@ class ArchiveController extends Controller
     public function runArchives(Request $request)
     {
         $seasonId = $request->season_id;
-        $disabled = true;
+        $disabled = false;
         if($disabled){
             return response()->json([
                 'message' => 'Archiving end-point disabled!',

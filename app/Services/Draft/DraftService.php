@@ -848,7 +848,14 @@ class DraftService
                     ->select(
                         'drafts.*',
                         'original.name as original_team_name',
-                        'current_owner.name as team_name',
+                        DB::raw("
+                            CASE 
+                            WHEN drafts.draft_pick_right_id = 0 THEN 
+                                original.name
+                            ELSE
+                                current_owner.name
+                            END as team_name
+                        "),
                         'current_owner.id as current_team_id'
                     )
                     ->where('drafts.season_id', $seasonId)
@@ -1031,6 +1038,12 @@ class DraftService
 
                             'original_team_id' =>
                             (int) $nextPick->team_id,
+
+                            'team_name' =>
+                            (int) $nextPick->team_name,
+
+                            'next_pick_data' => 
+                            $nextPick
                         ]
                         : null,
 
@@ -1527,6 +1540,9 @@ class DraftService
 
                     'team_id' =>
                     (int) $nextPick->team_id,
+
+                    'team_name' =>
+                    (int) $nextPick->team_name,
                 ]
                 : null,
 

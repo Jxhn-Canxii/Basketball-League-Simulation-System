@@ -280,14 +280,14 @@ class SeasonsService
         } elseif ($lastSeasonStatus == config('timeline.awards')) {
             return 2; //update player status update to 10
         } elseif ($lastSeasonStatus == config('timeline.player_update')) {
-            return 3; //player rookie drafting update
+            return 3; //coach signings
         }  elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
-            return 4; // coach_signings
+            return 4; // draft
         } elseif ($lastSeasonStatus == config('timeline.draft')) {
-            return 5; //player signing
+            return 5; //trade
         } 
         elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
-            return 6; // trade
+            return 6; // player signing
         } elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 7; // new season
         }
