@@ -1058,7 +1058,7 @@ class PlayerRatingsService
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
                     'season_id' => $seasonId,
-                    'details' => $player->name . ' has decided to sign for ' . $teamName . 'on his player option for ' . $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
+                    'details' => $player->name . ' has decided to sign for ' . $teamName . ' on his player option for ' . $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
                     'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
                     'to_team_id' => $teamId,
                     'status' => 'signed',
