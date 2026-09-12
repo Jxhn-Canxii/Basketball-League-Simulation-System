@@ -448,9 +448,9 @@ class FreeAgencyService
 
         $tradeDeadlineThreshold = ceil($totalRounds / 2) + 2;
 
-        $isTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold  && $latestSeasonStatus == 1;
+        $isTradeDeadlineEnd = $simulatedRounds >= $tradeDeadlineThreshold  && $latestSeasonStatus == 2;
 
-        if(!$isTradeDeadline){
+        if(!$isTradeDeadlineEnd){
             return [
                 'success' => false,
                 'team_id' => $teamId,
