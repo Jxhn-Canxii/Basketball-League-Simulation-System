@@ -795,7 +795,7 @@ class NewsService
                 $quarterStoryTemplates[] = "The highest-scoring period was the fourth quarter, with both teams combining for {$biggestQuarterTotal} points.";
 
                 if ($biggestQuarter !== 4) {
-                    $quarterStoryTemplates[] = "The game opened up in the {$biggestQuarter}th quarter, which produced {$biggestQuarterTotal} combined points.";
+                    $quarterStoryTemplates[] = "The game opened up in the Quarter #{$biggestQuarter}, which produced {$biggestQuarterTotal} combined points.";
                 }
             }
 
