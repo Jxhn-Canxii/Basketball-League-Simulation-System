@@ -55,7 +55,7 @@ class PlayerStatsService
         $wonGame = ($teamId == $winnerId);
 
         $totalRounds = $this->helper->totalRounds($seasonId);
-        $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
+        $tradeDeadlineThreshold = CEIL($totalRounds / 2);
 
         $players = DB::table('players')->where('team_id', $teamId)->get();
 
