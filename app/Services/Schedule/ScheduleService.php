@@ -85,9 +85,9 @@ class ScheduleService
 
         if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
             if($simulatedRounds % 2 == 0){
-                $this->tradeService->automatedTradeDecision(false);
-            }else{
                 $this->tradeService->generateTradeProposals(false);
+            }else{
+                $this->tradeService->automatedTradeDecision(false);
             }
         }
         if($isEndTradeDeadline) {
