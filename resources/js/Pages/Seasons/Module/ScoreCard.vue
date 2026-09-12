@@ -82,6 +82,9 @@
           </span>
         </div>
         <div class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center">
+          <span v-if="match.is_overtime > 0" title="Overtime Game" class="text-white bg-yellow-500 rounded-full px-2 py-1 mr-2">
+            <i class="fa fa-stopwatch"></i>
+          </span>
           <button
             class="text-white bg-orange-500 rounded-full px-2 py-1"
             @click.prevent="compareTeams(match.home_team.id, match.away_team.id)"
@@ -96,6 +99,7 @@
           href="#"
           class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
           @click.prevent="isGameResultModalOpen = [match.game_id,match.season_id]"
+          :title="'Game ID:'+match.game_id"
         >
           View Result
         </a>

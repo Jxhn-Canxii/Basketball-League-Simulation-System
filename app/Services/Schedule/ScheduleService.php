@@ -998,6 +998,7 @@ class ScheduleService
                     'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
                 ],
                 'winner' => $game->winner_id,
+                'is_overtime' => $game->is_overtime,
                 'season_id' => $seasonId,
             ];
         }
