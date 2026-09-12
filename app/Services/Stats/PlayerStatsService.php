@@ -5,16 +5,19 @@ namespace App\Services\Stats;
 use App\Services\Stats\PlayerSeasonStatsService;
 use App\Models\PlayerGameStats;
 use App\Models\Player;
+use App\Services\Helper\HelperService;
 use Hamcrest\Type\IsArray;
 use Illuminate\Support\Facades\DB;
 
 class PlayerStatsService
 {
     protected $storeStats;
+    protected $helper;
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
         $this->storeStats = new PlayerSeasonStatsService();
+        $this->helper = new HelperService();
     }
 
     public function createInactivePlayerStats($player, $gameData, $seasonId)
@@ -46,16 +49,28 @@ class PlayerStatsService
         ];
     }
 
-    public function updatePlayerMoraleBasedOnStats($teamId, $winnerId)
+    public function updatePlayerMoraleBasedOnStats($teamId, $winnerId, $round)
     {
         $seasonId = get_current_season_id();
         $wonGame = ($teamId == $winnerId);
 
+        $totalRounds = $this->helper->totalRounds($seasonId);
+        $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
+
         $players = DB::table('players')->where('team_id', $teamId)->get();
+
         $chemistry = DB::table('team_season_info')
             ->where('team_id', $teamId)
             ->where('season_id', $seasonId)
             ->value('chemistry') ?? 75;
+
+        
+        $currentConferenceRank = DB::table('standings_view')
+            ->where('team_id', $teamId)
+            ->where('season_id', $seasonId)
+            ->value('conference_rank') ?? 0;
+
+        $resetMoral = ($round == $tradeDeadlineThreshold) && ( $currentConferenceRank > 6);
 
         foreach ($players as $player) {
             // Fetch the most recent game stats for the player
@@ -102,6 +117,18 @@ class PlayerStatsService
                 $morale -= 1;
             } elseif ($chemistry >= 85) {
                 $morale += 1;
+            }
+
+            if($resetMoral && $currentConferenceRank > 6 && $currentConferenceRank <= 10){
+                $morale += 50;
+            }
+
+            if($resetMoral && $currentConferenceRank > 10 && $currentConferenceRank <= 14){
+                $morale += 40;
+            }
+
+            if($resetMoral && $currentConferenceRank > 14){
+                $morale += 30;
             }
 
             // 🎯 5. Clamp morale between 50 and 100

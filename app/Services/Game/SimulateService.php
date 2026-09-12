@@ -128,8 +128,8 @@ class SimulateService
             $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
             $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
 
-            $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $gameData->winner_id);
-            $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $gameData->winner_id);
+            $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $gameData->winner_id,  $gameData->round);
+            $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $gameData->winner_id,  $gameData->round);
 
             $this->teamStreak->updateTeamStreaks($gameData->id);
 
@@ -312,8 +312,8 @@ class SimulateService
                 $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
                 $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
 
-                $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId);
-                $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId);
+                $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId,  $gameData->round);
+                $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId,  $gameData->round);
                 
                 $this->teamStreak->updateTeamStreaks($gameData->id);
 
@@ -517,8 +517,8 @@ class SimulateService
         $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
         $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
 
-        $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId);
-        $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId);
+        $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->home_team_id, $winnerId,  $gameData->round);
+        $this->playerStats->updatePlayerMoraleBasedOnStats($gameData->away_team_id, $winnerId,  $gameData->round);
         
         $this->teamStreak->updateTeamStreaks($gameData->id);
         $this->teamStats->updateHeadToHeadResults($gameData->id);
