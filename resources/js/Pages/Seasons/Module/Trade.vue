@@ -1,5 +1,5 @@
 <template>
-  <div class="trade-page bg-black rounded-lg">
+  <div class="trade-page bg-black rounded-lg min-h-screen">
 
     <!-- =========================================================
          HEADER

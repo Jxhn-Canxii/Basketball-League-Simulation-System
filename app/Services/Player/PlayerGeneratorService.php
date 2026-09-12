@@ -205,7 +205,7 @@ class PlayerGeneratorService
 
         if ($overallRating >= 90) {
             $role = 'star player';
-            $potentialRating = rand(99);
+            $potentialRating = rand(96,99);
         } elseif ($overallRating >= 85 && $overallRating <= 89) {
             $role = 'all star';
             $potentialRating = rand(90, 95);

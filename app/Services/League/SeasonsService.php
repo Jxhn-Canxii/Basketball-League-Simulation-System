@@ -281,11 +281,12 @@ class SeasonsService
             return 2; //update player status update to 10
         } elseif ($lastSeasonStatus == config('timeline.player_update')) {
             return 3; //player rookie drafting update
+        }  elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
+            return 4; // coach_signings
         } elseif ($lastSeasonStatus == config('timeline.draft')) {
-            return 4; //player signing
-        } elseif ($lastSeasonStatus == config('timeline.coach_signings')) {
-            return 5; // coach_signings
-        } elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
+            return 5; //player signing
+        } 
+        elseif ($lastSeasonStatus == config('timeline.off_season_trade')) {
             return 6; // trade
         } elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 7; // new season
