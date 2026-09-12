@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW schedule_view AS
+CREATE OR REPLACE VIEW schedule_view_1 AS
             SELECT
                 s.*,
                 s.game_number as game_number_formatted,
@@ -28,3 +28,4 @@ CREATE OR REPLACE VIEW schedule_view AS
                 seasons se ON s.season_id = se.id
             JOIN
                 leagues l ON se.league_id = l.id
+            WHERE s.season_id = 1

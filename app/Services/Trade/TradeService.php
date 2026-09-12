@@ -2677,7 +2677,7 @@ class TradeService
         $createStoryLine = $this->storyLineService->generateStoryLine();
         if($createStoryLine)
         {
-            $this->archive->runArchives();
+            $this->archive->runArchives($seasonId);
         }
 
         DB::table('seasons')

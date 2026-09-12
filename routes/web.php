@@ -340,6 +340,12 @@ Route::middleware('auth')->group(function () {
         Route::delete('', [ProfileController::class, 'destroy'])->name('profile.destroy');
     });
 
+    Route::prefix('archives/')->group(function(){
+        
+        Route::get('season/{season_id}', [ArchiveController::class, 'runArchives']);
+
+    });
+
     Route::prefix('tests/')->group(function(){
 
         Route::get('waive/{team_id}', [TestController::class, 'waiveTeam']);

@@ -20,43 +20,37 @@ class ArchiveService
         $this->helper = new HelperService();
     }
 
-    public function runArchives()
+    public function runArchives(int $seasonId)
     {
-        return DB::transaction(function () {
-            $latestSeasonId = get_current_season_id();
-            
-            $this->archiveGameStats();
+        $this->archiveGameStats($seasonId);
 
-            $this->archiveQuarterGameBreakDown();
+        $this->archiveQuarterGameBreakDown($seasonId);
 
-            $this->archivePerQuarterGameStats();
+        $this->archivePerQuarterGameStats($seasonId);
 
-            $this->archivePlayerSeasonStats();
+        $this->archivePlayerSeasonStats($seasonId);
 
-            $this->archiveScheduleViewTable();
+        $this->archiveScheduleViewTable($seasonId);
 
-            $this->archiveScheduleWriteTable();
+        $this->archiveScheduleWriteTable($seasonId);
 
-            $this->archivePlayoffSeriesTable();
-            
-            return true;
-        });
+        $this->archivePlayoffSeriesTable($seasonId);
     }
 
-    public static function archivePerQuarterGameStats()
+    public static function archivePerQuarterGameStats(int $seasonId)
     {
-        $currentSeasonId = get_current_season_id();
-        $MODULO = config('archive.DECADE_MODULO');
-        $tableBatch = $currentSeasonId / $MODULO;
+    
+        $MODULO = (int) config('archive.DECADE_MODULO');
+        $tableBatch = CEIL($seasonId / $MODULO);
 
         $archiveTable = "player_per_quarter_stats_batch_" . $tableBatch;
 
         // 1) Only proceed if season is finished
-        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
-        if (!$season || $season->status < 14) return;
+        $season = DB::table('seasons')->where('id', $seasonId)->first();
+        if (!$season || ($season->status < 14 && $season->status > 15)) return;
 
         // 2) Must be a modulo season
-        if ($currentSeasonId % $MODULO !== 0) return;
+        if ($seasonId % $MODULO !== 0) return;
 
         // 3) IF ARCHIVE TABLE EXISTS → STOP (no transaction)
         if (Schema::hasTable($archiveTable)) {
@@ -67,8 +61,8 @@ class ArchiveService
         try {
 
             DB::statement("CREATE TABLE $archiveTable LIKE player_per_quarter_stats");
-            DB::statement("INSERT INTO $archiveTable SELECT * FROM player_per_quarter_stats");
-            DB::statement("DELETE FROM player_per_quarter_stats");
+            DB::statement("INSERT INTO $archiveTable SELECT * FROM player_per_quarter_stats WHERE season_id=$seasonId");
+            DB::statement("DELETE FROM player_per_quarter_stats WHERE season_id=$seasonId");
 
             DB::commit();
 
@@ -79,20 +73,20 @@ class ArchiveService
         }
     }
 
-    public static function archiveQuarterGameBreakDown()
+    public static function archiveQuarterGameBreakDown(int $seasonId)
     {
-        $currentSeasonId = get_current_season_id();
-        $MODULO = config('archive.DECADE_MODULO');
-        $tableBatch = $currentSeasonId / $MODULO;
+    
+        $MODULO = (int) config('archive.DECADE_MODULO');
+        $tableBatch = CEIL($seasonId / $MODULO);
 
         $archiveTable = "game_quarter_breakdown_batch_" . $tableBatch;
 
         // 1) Only proceed if season is finished
-        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
-        if (!$season || $season->status < 14) return;
+        $season = DB::table('seasons')->where('id', $seasonId)->first();
+        if (!$season || ($season->status < 14 && $season->status > 15)) return;
 
         // 2) Must be a modulo season
-        if ($currentSeasonId % $MODULO !== 0) return;
+        if ($seasonId % $MODULO !== 0) return;
 
         // 3) IF ARCHIVE TABLE EXISTS → STOP (no transaction)
         if (Schema::hasTable($archiveTable)) {
@@ -103,8 +97,8 @@ class ArchiveService
         try {
 
             DB::statement("CREATE TABLE $archiveTable LIKE game_quarter_breakdown");
-            DB::statement("INSERT INTO $archiveTable SELECT * FROM game_quarter_breakdown");
-            DB::statement("DELETE FROM game_quarter_breakdown");
+            DB::statement("INSERT INTO $archiveTable SELECT * FROM game_quarter_breakdown WHERE season_id=$seasonId");
+            DB::statement("DELETE FROM game_quarter_breakdown WHERE season_id=$seasonId");
 
             DB::commit();
 
@@ -115,20 +109,19 @@ class ArchiveService
         }
     }
 
-    public static function archiveGameStats()
+    public static function archiveGameStats(int $seasonId)
     {
-        $currentSeasonId = get_current_season_id();
-        $MODULO = config('archive.DECADE_MODULO');
-        $tableBatch = $currentSeasonId / $MODULO;
+        $MODULO = (int) config('archive.DECADE_MODULO');
+        $tableBatch = CEIL($seasonId / $MODULO);
 
         $archiveTable = "player_game_stats_batch_" . $tableBatch;
 
         // 1) Only proceed if season is finished
-        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
-        if (!$season || $season->status < 14) return;
+        $season = DB::table('seasons')->where('id', $seasonId)->first();
+        if (!$season || ($season->status < 14 && $season->status > 15)) return;
 
         // 2) Must be a modulo season
-        if ($currentSeasonId % $MODULO !== 0) return;
+        if ($seasonId % $MODULO !== 0) return;
 
         // 3) IF ARCHIVE TABLE EXISTS → STOP (no transaction)
         if (Schema::hasTable($archiveTable)) {
@@ -139,8 +132,8 @@ class ArchiveService
         try {
 
             DB::statement("CREATE TABLE $archiveTable LIKE player_game_stats");
-            DB::statement("INSERT INTO $archiveTable SELECT * FROM player_game_stats");
-            DB::statement("DELETE FROM player_game_stats");
+            DB::statement("INSERT INTO $archiveTable SELECT * FROM player_game_stats WHERE season_id=$seasonId");
+            DB::statement("DELETE FROM player_game_stats WHERE season_id=$seasonId");
 
             DB::commit();
 
@@ -151,18 +144,18 @@ class ArchiveService
         }
     }
 
-    public static function archivePlayerSeasonStats()
+    public static function archivePlayerSeasonStats(int $seasonId)
     {
-        $currentSeasonId = get_current_season_id();
-        $MODULO = config('archive.DECADE_MODULO');
-        // $tableBatch = $currentSeasonId / $MODULO;
+        
+        $MODULO = (int) config('archive.DECADE_MODULO');
+        $tableBatch = CEIL($seasonId / $MODULO);
 
         $archiveSeasonStatsTable = "player_season_stats_archives" ;
         $archiveSeasonPlayoffStatsTable = "player_season_playoff_stats_archives" ;
 
         // 1) Only proceed if season is finished
-        $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
-        if (!$season || $season->status < 14) return;
+        $season = DB::table('seasons')->where('id', $seasonId)->first();
+        if (!$season || ($season->status < 14 && $season->status > 15)) return;
 
         DB::beginTransaction();
         try {
@@ -176,11 +169,11 @@ class ArchiveService
                 DB::statement("CREATE TABLE $archiveSeasonPlayoffStatsTable LIKE player_season_playoff_stats");
             }
             
-            DB::statement("INSERT INTO $archiveSeasonStatsTable SELECT CONCAT('P-',player_id,'S-',season_id,'T-',team_id,'C-',id) as id, player_id, team_id, season_id, role, avg_minutes_per_game, avg_points_per_game, avg_rebounds_per_game, avg_assists_per_game, avg_steals_per_game, avg_blocks_per_game, avg_turnovers_per_game, avg_fouls_per_game, total_field_goals_made, total_field_goal_attempts, total_two_pointers_made, total_two_point_attempts, total_three_pointers_made, total_three_point_attempts, total_free_throws_made, total_free_throw_attempts, total_points, total_rebounds, total_assists, total_steals, total_blocks, total_turnovers, total_fouls, total_fouled_out, total_minutes_played, total_games_played, total_games, bpg_game_leader, points_game_leader, rebounds_game_leader, assists_game_leader, steals_game_leader, blocks_game_leader, per, ts_percent, eff, field_goal_percentage, two_point_percentage, three_point_percentage, free_throw_percentage, player_valuation, performance_points, created_at, updated_at FROM player_season_stats");
-            DB::statement("DELETE FROM player_season_stats");
+            DB::statement("INSERT INTO $archiveSeasonStatsTable SELECT CONCAT('P-',player_id,'S-',season_id,'T-',team_id,'C-',id) as id, player_id, team_id, season_id, role, avg_minutes_per_game, avg_points_per_game, avg_rebounds_per_game, avg_assists_per_game, avg_steals_per_game, avg_blocks_per_game, avg_turnovers_per_game, avg_fouls_per_game, total_field_goals_made, total_field_goal_attempts, total_two_pointers_made, total_two_point_attempts, total_three_pointers_made, total_three_point_attempts, total_free_throws_made, total_free_throw_attempts, total_points, total_rebounds, total_assists, total_steals, total_blocks, total_turnovers, total_fouls, total_fouled_out, total_minutes_played, total_games_played, total_games, bpg_game_leader, points_game_leader, rebounds_game_leader, assists_game_leader, steals_game_leader, blocks_game_leader, per, ts_percent, eff, field_goal_percentage, two_point_percentage, three_point_percentage, free_throw_percentage, player_valuation, performance_points, created_at, updated_at FROM player_season_stats WHERE season_id=$seasonId");
+            DB::statement("DELETE FROM player_season_stats WHERE season_id=$seasonId");
 
-            DB::statement("INSERT INTO $archiveSeasonPlayoffStatsTable SELECT CONCAT('P-',player_id,'S-',season_id,'T-',team_id,'C-',id) as id, player_id, team_id, season_id, role, avg_minutes_per_game, avg_points_per_game, avg_rebounds_per_game, avg_assists_per_game, avg_steals_per_game, avg_blocks_per_game, avg_turnovers_per_game, avg_fouls_per_game, total_field_goals_made, total_field_goal_attempts, total_two_pointers_made, total_two_point_attempts, total_three_pointers_made, total_three_point_attempts, total_free_throws_made, total_free_throw_attempts, total_points, total_rebounds, total_assists, total_steals, total_blocks, total_turnovers, total_fouls, total_fouled_out, total_minutes_played, total_games_played, total_games, bpg_game_leader, points_game_leader, rebounds_game_leader, assists_game_leader, steals_game_leader, blocks_game_leader, per, ts_percent, eff, field_goal_percentage, two_point_percentage, three_point_percentage, free_throw_percentage, performance_points, created_at, updated_at FROM player_season_playoff_stats");
-            DB::statement("DELETE FROM player_season_playoff_stats");
+            DB::statement("INSERT INTO $archiveSeasonPlayoffStatsTable SELECT CONCAT('P-',player_id,'S-',season_id,'T-',team_id,'C-',id) as id, player_id, team_id, season_id, role, avg_minutes_per_game, avg_points_per_game, avg_rebounds_per_game, avg_assists_per_game, avg_steals_per_game, avg_blocks_per_game, avg_turnovers_per_game, avg_fouls_per_game, total_field_goals_made, total_field_goal_attempts, total_two_pointers_made, total_two_point_attempts, total_three_pointers_made, total_three_point_attempts, total_free_throws_made, total_free_throw_attempts, total_points, total_rebounds, total_assists, total_steals, total_blocks, total_turnovers, total_fouls, total_fouled_out, total_minutes_played, total_games_played, total_games, bpg_game_leader, points_game_leader, rebounds_game_leader, assists_game_leader, steals_game_leader, blocks_game_leader, per, ts_percent, eff, field_goal_percentage, two_point_percentage, three_point_percentage, free_throw_percentage, performance_points, created_at, updated_at FROM player_season_playoff_stats WHERE season_id=$seasonId");
+            DB::statement("DELETE FROM player_season_playoff_stats WHERE season_id=$seasonId");
 
             DB::commit();
 
@@ -191,14 +184,13 @@ class ArchiveService
         }
     }
 
-    public function archiveStandingViewTable()
+    ///other group
+    public function archiveStandingViewTable(int $seasonId)
     {
         try {
             DB::beginTransaction();
 
-            $currentSeasonId = get_current_season_id();
-
-            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            $season = DB::table('seasons')->where('id', $seasonId)->first();
             if (!$season || $season->status < 2) return;
             
             $snapshots = DB::table('standings_view')
@@ -259,14 +251,12 @@ class ArchiveService
         }
     }
 
-    public function archiveScheduleViewTable()
+    public function archiveScheduleViewTable(int $seasonId)
     {
         try {
             DB::beginTransaction();
 
-            $currentSeasonId = get_current_season_id();
-
-            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            $season = DB::table('seasons')->where('id', $seasonId)->first();
             if (!$season || $season->status < 14) return;
 
             $snapshots = DB::table('schedule_view')
@@ -324,14 +314,12 @@ class ArchiveService
         }
     }
 
-    public function archiveScheduleWriteTable()
+    public function archiveScheduleWriteTable(int $seasonId)
     {
         try {
             DB::beginTransaction();
 
-            $currentSeasonId = get_current_season_id();
-
-            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            $season = DB::table('seasons')->where('id', $seasonId)->first();
             if (!$season || $season->status < 14) return;
             
             $snapshots = DB::table('schedules')
@@ -364,7 +352,7 @@ class ArchiveService
             }
 
             //schedules table must left previous season record and current record for streak tracking
-            DB::statement("DELETE FROM schedules WHERE season_id < ($currentSeasonId - 1)");
+            DB::statement("DELETE FROM schedules WHERE season_id < ($seasonId - 1)");
 
             DB::commit();
         } catch (\Exception $e) {
@@ -376,14 +364,12 @@ class ArchiveService
         }
     }
 
-    public function archivePlayoffSeriesTable()
+    public function archivePlayoffSeriesTable(int $seasonId)
     {
         try {
             DB::beginTransaction();
 
-            $currentSeasonId = get_current_season_id();
-
-            $season = DB::table('seasons')->where('id', $currentSeasonId)->first();
+            $season = DB::table('seasons')->where('id', $seasonId)->first();
             if (!$season || $season->status < 14) return;
             
             $snapshots = DB::table('playoff_series')
@@ -414,7 +400,7 @@ class ArchiveService
                 );
             }
 
-            DB::statement("DELETE FROM playoff_series");
+            DB::statement("DELETE FROM playoff_series WHERE season_id = $seasonId");
 
             DB::commit();
         } catch (\Exception $e) {
