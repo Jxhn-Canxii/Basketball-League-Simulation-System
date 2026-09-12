@@ -76,7 +76,7 @@ class TradeService
             ->orderByDesc('created_at')
             ->get();
 
-        $players = $this->attachTradePlayers($proposals);
+        $this->attachTradePlayers($proposals);
 
         return response()->json([
             'trade_proposals' => $proposals,
@@ -97,7 +97,7 @@ class TradeService
             ->orderByDesc('created_at')
             ->get();
 
-        $players = $this->attachTradePlayers($proposals);
+        $this->attachTradePlayers($proposals);
 
         return response()->json([
             'trade_proposals' => $proposals,
@@ -114,19 +114,17 @@ class TradeService
 
         $proposals = DB::table('trade_proposals')
             ->where('season_id', $seasonId)
-            ->where('status','pending')
-            ->orderBy('type')
-            ->orderBy('status')
+            ->where('status','approved')
+            ->orderByDesc('id')
             ->limit($limit)
-            ->orderByDesc('created_at')
             ->get();
 
-        $players = $this->attachTradePlayers($proposals);
+        $this->attachTradePlayers($proposals);
 
         return response()->json([
             'trade_proposals' => $proposals,
             'current_season' => $seasonId,
-            'trade_type' => 'all',
+            'trade_type' => 'pending',
         ]);
     }
 
