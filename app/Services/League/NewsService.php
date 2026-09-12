@@ -792,10 +792,8 @@ class NewsService
             */
 
             if ($biggestQuarter !== null) {
-                $quarterStoryTemplates[] = "The highest-scoring period was the fourth quarter, with both teams combining for {$biggestQuarterTotal} points.";
-
                 if ($biggestQuarter !== 4) {
-                    $quarterStoryTemplates[] = "The game opened up in the Quarter #{$biggestQuarter}, which produced {$biggestQuarterTotal} combined points.";
+                    $quarterStoryTemplates[] = "The game opened up in the {$this->quarterFormatter($biggestQuarter)} Quarter, which produced {$biggestQuarterTotal} combined points.";
                 }
             }
 
@@ -806,7 +804,7 @@ class NewsService
             */
 
             if ($bestWinnerQuarterMargin >= 8) {
-                $quarterStoryTemplates[] = "{winner} made its biggest push in the {$bestWinnerQuarter}th quarter, winning that period by {$bestWinnerQuarterMargin} points.";
+                $quarterStoryTemplates[] = "{winner} made its biggest push in the {$this->quarterFormatter($bestWinnerQuarter)} quarter, winning that period by {$bestWinnerQuarterMargin} points.";
             }
         }
 
@@ -1841,5 +1839,25 @@ class NewsService
 
             "updated_at" => now(),
         ]);
+    }
+
+    private function quarterFormatter($quarter){
+        switch ($quarter) {
+            case 1:
+                return '1st';
+                break;
+            case 2:
+                return '2nd';
+                break;
+            case 3:
+                return '3rd';
+                break;
+            case 3:
+                return '4th';
+                break;
+            default:
+                return '-';
+                break;
+        }
     }
 }
