@@ -30,7 +30,7 @@ class TradeService
 
     protected int $maxTeamsPerTrade = 6;
 
-    protected int $maxPlayersPerTeam = 3;
+    protected int $maxPlayersPerTeam = 5;
 
     protected int $maxPicksPerTeam = 2;
 
