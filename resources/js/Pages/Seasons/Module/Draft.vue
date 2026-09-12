@@ -1323,7 +1323,6 @@ const normalizePick = (pick) => {
     team_name:
       pick.team_name ??
       pick.team?.name ??
-      pick.next_pick?.team_name ??
       "Unknown Team",
   };
 };

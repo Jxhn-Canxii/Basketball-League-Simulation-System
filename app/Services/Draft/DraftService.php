@@ -843,20 +843,13 @@ class DraftService
                  * R1 P30 -> R2 P1
                  */
                 $nextPick = DB::table('drafts')
-                    ->join('teams as original','drafts.team_id','=','original.id')
-                    ->leftJoin('draft_pick_rights','draft_pick_rights.id','=','drafts.draft_pick_right_id')
-                    ->leftJoin('teams as current_owner','current_owner.id','=','draft_pick_rights.current_owner_id')
+                    ->join('teams as original','drafts.original_team_id','=','original.id')
+                    ->join('draft_pick_rights','draft_pick_rights.id','=','drafts.draft_pick_right_id')
+                    ->join('teams as current_owner','current_owner.id','=','drafts.team_id')
                     ->select(
                         'drafts.*',
                         'original.name as original_team_name',
-                        DB::raw("
-                            CASE 
-                            WHEN drafts.draft_pick_right_id = 0 THEN 
-                                original.name
-                            ELSE
-                                current_owner.name
-                            END as team_name
-                        "),
+                        'current_owner.name as team_name',
                         'current_owner.id as current_team_id'
                     )
                     ->where('drafts.season_id', $seasonId)
@@ -1041,10 +1034,10 @@ class DraftService
                             (int) $nextPick->team_id,
 
                             'team_name' =>
-                            (int) $nextPick->team_name,
+                            $nextPick->team_name,
 
-                            'next_pick_data' => 
-                            $nextPick
+                            'team_data' =>
+                            $nextPick,
                         ]
                         : null,
 
