@@ -47,7 +47,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 17)) return;
+        if (!$season || ($season->status < 14 && $season->status > 19)) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -83,7 +83,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 17)) return;
+        if (!$season || ($season->status < 14 && $season->status > 19)) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -118,7 +118,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 17)) return;
+        if (!$season || ($season->status < 14 && $season->status > 19)) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -155,7 +155,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || ($season->status < 14 && $season->status > 17)) return;
+        if (!$season || ($season->status < 14 && $season->status > 19)) return;
 
         // DB::beginTransaction();
         // try {
