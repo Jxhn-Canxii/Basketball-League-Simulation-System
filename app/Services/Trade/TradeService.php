@@ -114,7 +114,7 @@ class TradeService
 
         $proposals = DB::table('trade_proposals')
             ->where('season_id', $seasonId)
-            ->where('status','approved')
+            ->where('status','!=','rejected')
             ->orderByDesc('id')
             ->limit($limit)
             ->get();
