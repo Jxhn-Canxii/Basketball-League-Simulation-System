@@ -11,7 +11,8 @@ return new class extends Migration {
             $table->id();
 
             // Draft information
-            $table->unsignedBigInteger('team_id');
+            $table->unsignedBigInteger('original_team_id')->default(0);
+            $table->unsignedBigInteger('team_id')->default(0);
             $table->unsignedBigInteger('player_id')->default(0);
             $table->unsignedBigInteger('draft_pick_right_id')->nullable();
             $table->unsignedBigInteger('season_id');

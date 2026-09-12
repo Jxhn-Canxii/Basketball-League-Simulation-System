@@ -259,6 +259,7 @@ class DraftService
                      * Draft row now points to the permanent pick right.
                      */
                     DB::table('drafts')->insert([
+                        'original_team_id' => $originalTeamId,
                         'team_id' => $currentOwnerId,
                         'player_id' => 0,
                         'draft_pick_right_id' => $pickRight->id,
@@ -2154,6 +2155,12 @@ class DraftService
                 'teams.id'
             )
             ->join(
+                'teams as ot',
+                'd.original_team_id',
+                '=',
+                'ot.id'
+            )
+            ->join(
                 'players',
                 'd.player_id',
                 '=',
@@ -2177,6 +2184,9 @@ class DraftService
                 'players.overall_rating',
                 'players.position',
                 'd.team_id',
+                'ot.name as original_team_name',
+                'ot.acronym as original_team_acronym',
+                'teams.acronym as team_acronym',
                 'teams.name as team_name',
                 'teams.id as drafted_team_id',
                 'signed_team.name as signed_team_name',

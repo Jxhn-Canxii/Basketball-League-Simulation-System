@@ -423,13 +423,16 @@
                                     {{
                                         player.team_name ??
                                         "Undrafted"
-                                    }}
+                                    }} 
                                 </div>
 
                                 <div
                                     class="mt-1 text-[8px] font-bold uppercase tracking-wider text-gray-600"
                                 >
-                                    Original Selection
+                                    {{ player.team_acronym ==  player.original_team_acronym ? 
+                                        'Original Selection' : 
+                                        'Picked from '+player.original_team_name 
+                                    }}
                                 </div>
                             </td>
 
