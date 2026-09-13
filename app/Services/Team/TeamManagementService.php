@@ -463,8 +463,24 @@ class TeamManagementService
         |
         */
 
-        $final12 = $evaluatedPlayers
-            ->take(12)
+        $starPlayer = $evaluatedPlayers
+            ->take(1)
+            ->values();
+
+        $allStar = $evaluatedPlayers
+            ->slice(1,2)
+            ->values();
+
+        $starterPlayer = $evaluatedPlayers
+            ->slice(3,2)
+            ->values();
+
+        $rolePlayer = $evaluatedPlayers
+            ->slice(5,5)
+            ->values();
+
+        $benchPlayer = $evaluatedPlayers
+            ->slice(10,2)
             ->values();
 
         /*
@@ -483,7 +499,7 @@ class TeamManagementService
         |--------------------------------------------------------------------------
         */
 
-        foreach ($final12 as $evaluation) {
+        foreach ($starPlayer as $evaluation) {
 
             $player = $evaluation['player'];
 
@@ -492,26 +508,195 @@ class TeamManagementService
                 $player->fatigue ?? 0
             );
 
+            $currentRole = $player->role;
+            $newRole = 'star player';
+
+            if($currentRole !== $newRole) {
+                $status = 'star player change';
+                $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
+
+                DB::table('role_change_transaction')->insert([
+                    'player_id' => $playerId,
+                    'season_id' => $seasonId,
+                    'details' => "Has been moved from $currentRole to $newRole for the upcoming games. $roundName",
+                    'team_id' => $teamId,
+                    'status' => $status,
+                ]);
+            }
+
             DB::table('players')
                 ->where('id', $player->id)
                 ->update([
+                    'role' => $newRole,
                     'is_reserved' => 0,
                     'fatigue' => $newFatigue,
                 ]);
 
-            /*
-            |--------------------------------------------------------------------------
-            | Update Season Stats Role
-            |--------------------------------------------------------------------------
-            */
+            DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
+        }
+
+        foreach ($allStar as $evaluation) {
+
+            $player = $evaluation['player'];
+
+            $newFatigue = $this->teamInjury->fatigueAdjustment(
+                $player->morale ?? 50,
+                $player->fatigue ?? 0
+            );
+
+            $currentRole = $player->role;
+            $newRole = 'all star';
+
+            if($currentRole !== $newRole) {
+                $status = 'role change';
+                $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
+
+                DB::table('role_change_transaction')->insert([
+                    'player_id' => $playerId,
+                    'season_id' => $seasonId,
+                    'details' => "Has been moved from $currentRole to $newRole for the upcoming games. $roundName",
+                    'team_id' => $teamId,
+                    'status' => $status,
+                ]);
+            }
+
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'role' => $newRole,
+                    'is_reserved' => 0,
+                    'fatigue' => $newFatigue,
+                ]);
 
             DB::table('player_season_stats')
-                ->where('player_id', $player->id)
-                ->where('team_id', $teamId)
-                ->where('season_id', $seasonId)
-                ->update([
-                    'role' => $player->role,
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
+        }
+
+        foreach ($starterPlayer as $evaluation) {
+
+            $player = $evaluation['player'];
+
+            $newFatigue = $this->teamInjury->fatigueAdjustment(
+                $player->morale ?? 50,
+                $player->fatigue ?? 0
+            );
+
+            $currentRole = $player->role;
+            $newRole = 'starter';
+
+            if($currentRole !== $newRole) {
+                $status = 'role change';
+                $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
+
+                DB::table('role_change_transaction')->insert([
+                    'player_id' => $playerId,
+                    'season_id' => $seasonId,
+                    'details' => "Has been moved from $currentRole to $newRole for the upcoming games. $roundName",
+                    'team_id' => $teamId,
+                    'status' => $status,
                 ]);
+            }
+
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'role' => $newRole,
+                    'is_reserved' => 0,
+                    'fatigue' => $newFatigue,
+                ]);
+
+            DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
+        }
+
+        foreach ($rolePlayer as $evaluation) {
+
+            $player = $evaluation['player'];
+
+            $newFatigue = $this->teamInjury->fatigueAdjustment(
+                $player->morale ?? 50,
+                $player->fatigue ?? 0
+            );
+
+            $currentRole = $player->role;
+            $newRole = 'role player';
+
+            if($currentRole !== $newRole) {
+                $status = 'role change';
+                $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
+
+                DB::table('role_change_transaction')->insert([
+                    'player_id' => $playerId,
+                    'season_id' => $seasonId,
+                    'details' => "Has been moved from $currentRole to $newRole for the upcoming games. $roundName",
+                    'team_id' => $teamId,
+                    'status' => $status,
+                ]);
+            }
+
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'role' => $newRole,
+                    'is_reserved' => 0,
+                    'fatigue' => $newFatigue,
+                ]);
+
+            DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
+        }
+
+        foreach ($rolePlayer as $evaluation) {
+
+            $player = $evaluation['player'];
+
+            $newFatigue = $this->teamInjury->fatigueAdjustment(
+                $player->morale ?? 50,
+                $player->fatigue ?? 0
+            );
+
+            $currentRole = $player->role;
+            $newRole = 'bench';
+
+            if($currentRole !== $newRole) {
+                $status = 'role change';
+                $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
+
+                DB::table('role_change_transaction')->insert([
+                    'player_id' => $playerId,
+                    'season_id' => $seasonId,
+                    'details' => "Has been moved from $currentRole to $newRole for the upcoming games. $roundName",
+                    'team_id' => $teamId,
+                    'status' => $status,
+                ]);
+            }
+
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'role' => $newRole,
+                    'is_reserved' => 0,
+                    'fatigue' => $newFatigue,
+                ]);
+
+            DB::table('player_season_stats')
+                    ->where('player_id', $playerId)
+                    ->where('season_id', $seasonId)
+                    ->where('team_id', $teamId)
+                    ->update(['role' => $newRole]);
         }
 
         /*
@@ -532,13 +717,26 @@ class TeamManagementService
 
             if ((int) ($player->is_injured ?? 0) === 1) {
 
-                $newFatigue = max(
-                    0,
-                    ($player->fatigue ?? 0) - 5
-                );
+                $newFatigue = max(0,($player->fatigue ?? 0) - 5);
             } else {
 
                 $newFatigue = 0;
+            }
+
+            $currentRole = $player->role;
+            $newRole = 'reserved';
+
+            if($currentRole !== $newRole) {
+                $status = 'role change';
+                $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
+
+                DB::table('role_change_transaction')->insert([
+                    'player_id' => $playerId,
+                    'season_id' => $seasonId,
+                    'details' => "Has been moved from $currentRole to $newRole for the upcoming games. $roundName",
+                    'team_id' => $teamId,
+                    'status' => $status,
+                ]);
             }
 
             DB::table('players')
@@ -548,12 +746,6 @@ class TeamManagementService
                     'fatigue' => $newFatigue,
                     'role' => 'bench',
                 ]);
-
-            /*
-            |--------------------------------------------------------------------------
-            | Correct player_season_stats row
-            |--------------------------------------------------------------------------
-            */
 
             DB::table('player_season_stats')
                 ->where('player_id', $player->id)
@@ -574,18 +766,6 @@ class TeamManagementService
             'success' => true,
             'team_id' => $teamId,
             'season_id' => $seasonId,
-            'final_12' => $final12->map(function ($evaluation) {
-                return [
-                    'player_id' => $evaluation['player_id'],
-                    'name' => $evaluation['player']->name,
-                    'score' => $evaluation['score'],
-                    'overall' => $evaluation['overall'],
-                    'efficiency' => $evaluation['efficiency'],
-                    'role_fit' => $evaluation['role_fit'],
-                    'position_fit' => $evaluation['position_fit'],
-                ];
-            })->values(),
-
             'reserved_3' => $reserved3->map(function ($evaluation) {
                 return [
                     'player_id' => $evaluation['player_id'],

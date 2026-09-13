@@ -18,14 +18,12 @@ use App\Services\Stats\PlayoffStatsService;
 use App\Services\Stats\PlayerStatsService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Team\TeamManagementService;
-use App\Services\Team\TeamRoleService;
 use App\Services\Team\TeamStreakService;
 use Illuminate\Support\Facades\DB;
 class GameEngineService
 {
     protected $storeStats;
     protected $contract;
-    protected $teamRole;
     protected $teamManagement;
     protected $playerStats;
     protected $teamStreak;
@@ -42,7 +40,6 @@ class GameEngineService
         // instantiate once so other methods can use it via $this->storeStats
         // $this->storeStats = new AwardsController();
         $this->contract = new ContractService();
-        $this->teamRole = new TeamRoleService();
         $this->teamChemistry = new TeamChemistryService();
         $this->teamManagement = new TeamManagementService();
         $this->playOffStats = new PlayoffStatsService();
@@ -84,9 +81,6 @@ class GameEngineService
         $this->playerStats->updateSeasonStats($formattedPlayerGameStats, false);
         $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
 
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
-
         return [
             'game_info' => $gameData,
         ];
@@ -117,9 +111,6 @@ class GameEngineService
         $this->playerStats->updateSeasonStats($formattedPlayerGameStats, true);
         $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
 
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
-        
         return [
             'game_info' => $gameData
         ];
@@ -178,9 +169,6 @@ class GameEngineService
 
         $this->playerStats->updateSeasonStats($formattedPlayerGameStats, true);
         $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
-
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->home_team_id, $gameData->round);
-        $this->teamRole->updateTeamRolesBasedOnStats($gameData->away_team_id, $gameData->round);
 
         return [
             'game_info' => $gameData

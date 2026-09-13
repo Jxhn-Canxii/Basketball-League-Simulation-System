@@ -427,7 +427,8 @@
                                 </div>
 
                                 <div
-                                    class="mt-1 text-[8px] font-bold uppercase tracking-wider text-gray-600"
+                                    :class="player.team_acronym ==  player.original_team_acronym ? 'text-gray-600' : 'text-red-500'"
+                                    class="mt-1 text-[8px] font-bold uppercase tracking-wider"
                                 >
                                     {{ player.team_acronym ==  player.original_team_acronym ? 
                                         'Original Selection' : 
