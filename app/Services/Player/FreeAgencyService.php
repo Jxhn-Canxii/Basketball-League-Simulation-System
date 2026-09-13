@@ -339,6 +339,8 @@ class FreeAgencyService
         }
 
         DB::transaction(function () use ($player, $teamId, $offer, $seasonId) {
+            $teamName = $this->helper->getTeamName($teamId);
+
             DB::table('players')
                 ->where('id', $player->id)
                 ->update([
@@ -354,7 +356,7 @@ class FreeAgencyService
             DB::table('transactions')->insert([
                 'player_id' => $player->id,
                 'season_id' => $seasonId,
-                'details' => $player->name . ' signed with team ' . $teamId . ' for ₱' . number_format((float) $offer['salary'], 2) . ' on a ' . $offer['contract_type'] . ' contract.',
+                'details' => $player->name . ' signed with team ' . $teamName .' for ₱' . number_format((float) $offer['salary'], 2) . ' on a ' . $offer['contract_type'] . ' contract. For '.$offer['years']. ' years.',
                 'from_team_id' => 0,
                 'to_team_id' => $teamId,
                 'status' => 'signed',
