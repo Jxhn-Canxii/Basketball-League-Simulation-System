@@ -27,7 +27,7 @@ class InjuryService
         }
 
         $injuryHistory = DB::table('injured_players_view as ipv')
-            ->join('schedules_archives as s', 'ipv.game_id', '=', 's.id')
+            ->join('schedules_archives as s', 'ipv.game_id', '=', 's.game_id')
             ->join('teams as th', 's.home_id', '=', 'th.id')   // home team
             ->join('teams as ta', 's.away_id', '=', 'ta.id')   // away team
             ->join('teams as ti', 'ti.id', '=', 'ipv.team_id')   // team when injured
@@ -54,7 +54,7 @@ class InjuryService
             ->get();
 
         $injuryLatestHistory = DB::table('injured_players_view as ipv')
-            ->join('schedules as s', 'ipv.game_id', '=', 's.id')
+            ->join('schedules as s', 'ipv.game_id', '=', 's.game_id')
             ->join('teams as th', 's.home_id', '=', 'th.id')   // home team
             ->join('teams as ta', 's.away_id', '=', 'ta.id')   // away team
             ->join('teams as ti', 'ti.id', '=', 'ipv.team_id')   // team when injured

@@ -22,19 +22,30 @@ class ArchiveService
 
     public function runArchives(int $seasonId)
     {
-        $this->archiveGameStats($seasonId);
+        try{
+            DB::beginTransaction();
 
-        $this->archiveQuarterGameBreakDown($seasonId);
+            $this->archiveGameStats($seasonId);
 
-        $this->archivePerQuarterGameStats($seasonId);
+            $this->archiveQuarterGameBreakDown($seasonId);
 
-        $this->archivePlayerSeasonStats($seasonId);
+            $this->archivePerQuarterGameStats($seasonId);
 
-        $this->archiveScheduleViewTable($seasonId);
+            $this->archivePlayerSeasonStats($seasonId);
 
-        $this->archiveScheduleWriteTable($seasonId);
+            $this->archiveScheduleViewTable($seasonId);
 
-        $this->archivePlayoffSeriesTable($seasonId);
+            $this->archiveScheduleWriteTable($seasonId);
+
+            $this->archivePlayoffSeriesTable($seasonId);
+
+            DB::commit();
+
+            return true;
+        }
+        catch(\Exception $e){
+            return false;
+        }
     }
 
     public static function archivePerQuarterGameStats(int $seasonId)

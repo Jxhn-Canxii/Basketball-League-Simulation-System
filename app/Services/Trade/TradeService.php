@@ -2672,11 +2672,8 @@ class TradeService
         | orchestration service.
         |--------------------------------------------------------------------------
         */
-        $createStoryLine = $this->storyLineService->generateStoryLine();
-        if($createStoryLine)
-        {
-            $this->archive->runArchives($seasonId);
-        }
+        $this->storyLineService->generateStoryLine();
+        
 
         DB::table('seasons')
             ->where('id',$seasonId)

@@ -76,13 +76,15 @@ class GameEngineService
         $this->freeAgent->auditTeamRosterSpot($gameData->home_team_id);
         $this->freeAgent->auditTeamRosterSpot($gameData->away_team_id);
 
-        $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
+        $gameResults = $this->runGame($scheduleId, $gameData,$totalMinutes);
     
-        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, false);
-        $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
+        $this->playerStats->updateSeasonStats($gameResults['game_stats'], false);
+        $this->career->recordPlayerCareerHigh($gameResults['game_stats'],$gameData);
 
         return [
             'game_info' => $gameData,
+            'home_team_report' => $gameResults['home_team_roster'],
+            'away_team_report' => $gameResults['home_team_roster'],
         ];
 
     }
@@ -106,13 +108,15 @@ class GameEngineService
             ], 400);
         }
 
-        $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
+        $gameResults = $this->runGame($scheduleId, $gameData,$totalMinutes);
 
-        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, true);
-        $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
+        $this->playerStats->updateSeasonStats($gameResults['game_stats'], true);
+        $this->career->recordPlayerCareerHigh($gameResults['game_stats'],$gameData);
 
         return [
-            'game_info' => $gameData
+            'game_info' => $gameData,
+            'home_team_report' => $gameResults['home_team_roster'],
+            'away_team_report' => $gameResults['home_team_roster'],
         ];
 
     }
@@ -165,13 +169,15 @@ class GameEngineService
         }
 
         //core of the game
-        $formattedPlayerGameStats = $this->runGame($scheduleId, $gameData,$totalMinutes);
+        $gameResults = $this->runGame($scheduleId, $gameData,$totalMinutes);
 
-        $this->playerStats->updateSeasonStats($formattedPlayerGameStats, true);
-        $this->career->recordPlayerCareerHigh($formattedPlayerGameStats,$gameData);
+        $this->playerStats->updateSeasonStats($gameResults['game_stats'], true);
+        $this->career->recordPlayerCareerHigh($gameResults['game_stats'],$gameData);
 
         return [
-            'game_info' => $gameData
+            'game_info' => $gameData,
+            'home_team_report' => $gameResults['home_team_roster'],
+            'away_team_report' => $gameResults['home_team_roster'],
         ];
 
     }
@@ -182,8 +188,8 @@ class GameEngineService
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->home_team_id,$gameData->season_id);
         $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->away_team_id,$gameData->season_id);
 
-        $this->teamManagement->prepareFinalRoster($gameData->home_team_id,$gameData->round);
-        $this->teamManagement->prepareFinalRoster($gameData->away_team_id,$gameData->round);
+        $homeTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->home_team_id,$gameData->round);
+        $awayTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->away_team_id,$gameData->round);
 
          //core of the game
         $quarterMinutes = $totalMinutes / 4;
@@ -193,7 +199,7 @@ class GameEngineService
 
             $quarter = 'Q'.$quarterNumber;
 
-            $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$quarter,$quarterMinutes);
+            $playerQuarterStats = $this->gameEngine($gameData,$quarter,$quarterMinutes);
 
             $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter);
             
@@ -212,7 +218,7 @@ class GameEngineService
 
                 $overtimeQuarter = 'OT' . $OTNumber;
 
-                $playerQuarterStats = $this->gameEngine($scheduleId,$gameData,$overtimeQuarter,$otMinutes);
+                $playerQuarterStats = $this->gameEngine($gameData,$overtimeQuarter,$otMinutes);
 
                 $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
 
@@ -279,10 +285,14 @@ class GameEngineService
             ];
         }
 
-        return $formattedGameStats;
+        return [
+            'game_stats' => $formattedGameStats,
+            'home_team_roster' => $homeTeamRosterReport,
+            'away_team_roster' => $awayTeamRosterReport
+        ];
     }
 
-    private function gameEngine($scheduleId,$gameData,$quarter,$totalMinutes)
+    private function gameEngine($gameData,$quarter,$totalMinutes)
     {
 
         $currentSeasonId = get_current_season_id();
@@ -305,8 +315,8 @@ class GameEngineService
 
 
         $playerGameStats = [];
-        $homeMinutes = $this->playerStats->distributeMinutes($homeTeamPlayers, $totalMinutes, $scheduleId);
-        $awayMinutes = $this->playerStats->distributeMinutes($awayTeamPlayers, $totalMinutes, $scheduleId);
+        $homeMinutes = $this->playerStats->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id);
+        $awayMinutes = $this->playerStats->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id);
 
         
         $homeChemistry = $gameData->home_team_chemistry ?? 75;
@@ -456,6 +466,8 @@ class GameEngineService
                 'free_throws_made' => $freeThrowMade,
             ];
         }
+
+        $this->teamManagement->fatigueRate($player, $minutes, $gameData->game_id);
 
         return $playerGameStats;
 

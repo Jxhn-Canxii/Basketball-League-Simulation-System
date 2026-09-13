@@ -445,27 +445,7 @@ class FreeAgencyService
             ];
         }
 
-         // Get the total number of rounds in the season
-        $totalRounds = $this->helper->totalRounds($seasonId);
-
-        $latestSeasonStatus = $this->helper->seasonStatus($seasonId);
-
         // Get the number of rounds that are already simulated (status != 2)
-        $simulatedRounds = $this->helper->simulatedRounds($seasonId);
-
-        $tradeDeadlineThreshold = ceil($totalRounds / 2) + 2;
-
-        $isTradeDeadlineEnd = $simulatedRounds >= $tradeDeadlineThreshold  && $latestSeasonStatus == 2;
-
-        if(!$isTradeDeadlineEnd){
-            return [
-                'success' => false,
-                'team_id' => $teamId,
-                'signed' => [],
-                'message' => 'Trade deadline not ended cant fill roster spot!.',
-            ];
-        }
-
         $signed = [];
         $skipped = [];
 
@@ -1456,15 +1436,14 @@ class FreeAgencyService
                     'updated_at' => now(),
                 ]);
 
-                DB::table('transactions')
+            DB::table('transactions')
                 ->insert([
                     'player_id' => $player->player_id,
                     'season_id' => $player->season_id,
                     'from_team_id' => $player->team_id,
                     'to_team_id' => 0,
                     'status' => 'waived',
-                    'details' =>
-                    "Waived by {$player->team_name} to make roster space",
+                    'details' => "Waived by {$player->team_name} to make roster space",
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

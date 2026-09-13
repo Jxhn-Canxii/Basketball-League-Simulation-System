@@ -78,6 +78,8 @@ class SimulateService
             $data = collect($this->engine->startRegularGame($request->schedule_id,240));
 
             $gameData = $data['game_info'];
+            $homeRosterReport = $data['home_team_report'];
+            $awayRosterReport = $data['away_team_report'];
 
             // Calculate scores based on player stats
             $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
@@ -159,6 +161,8 @@ class SimulateService
             return response()->json([
                 'message' => 'Game simulated successfully',
                 'game_id' => $gameData->game_id,
+                'home_roster_report' => $homeRosterReport,
+                'away_roster_report' => $awayRosterReport,
                 'season_status' => $season->status,
                 'round' => $gameData->round,
                 'transaction_count' => $transactionCount,
@@ -191,7 +195,9 @@ class SimulateService
 
             $data = collect($this->engine->startPlayoffSeriesGame($request->schedule_id,240));
 
-            $gameData = $data ? $data['game_info'] : [];
+            $gameData = $data['game_info'];
+            $homeRosterReport = $data['home_team_report'];
+            $awayRosterReport = $data['away_team_report'];
 
             $series = DB::table('playoff_series')
                 ->where('series_id', $gameData->series_id)
@@ -383,6 +389,8 @@ class SimulateService
                     'overall_rank' => $standingsData[$series->home_team_id]->overall_rank ?? null,
                     'primary_color' => $standingsData[$series->home_team_id]->primary_color ?? '00000',
                     'secondary_color' => $standingsData[$series->home_team_id]->secondary_color ?? '00000',
+                    'home_roster_report' => $homeRosterReport,
+
                 ],
                 'away_team' => [
                     'id' => $series->away_team_id,
@@ -393,6 +401,7 @@ class SimulateService
                     'overall_rank' => $standingsData[$series->away_team_id]->overall_rank ?? null,
                     'primary_color' => $standingsData[$series->away_team_id]->primary_color ?? '00000',
                     'secondary_color' => $standingsData[$series->away_team_id]->secondary_color ?? '00000',
+                    'away_roster_report' => $awayRosterReport,
                 ],
                 'series_lead' => $seriesLead,
                 'completed' => $series->completed,
@@ -445,6 +454,8 @@ class SimulateService
         // dd($data);
 
         $gameData = $data['game_info'];
+        $homeRosterReport = $data['home_team_report'];
+        $awayRosterReport = $data['away_team_report'];
     
         // Calculate scores based on player stats
         $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
@@ -544,6 +555,7 @@ class SimulateService
                 'overall_rank' => $gameData->home_overall_rank,
                 'primary_color' => $gameData->home_primary_rank,
                 'secondary_color' => $gameData->home_secondary_rank,
+                'home_roster_report' => $homeRosterReport,
 
             ],
             'away_team' => [
@@ -553,6 +565,7 @@ class SimulateService
                 'conference' => $gameData->away_conference_name,
                 'conference_rank' => $gameData->away_conference_rank,
                 'overall_rank' => $gameData->away_overall_rank,
+                'away_roster_report' => $awayRosterReport,
             ],
             'winner' => $winnerId,
             'round' => $gameData->round,
