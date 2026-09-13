@@ -511,6 +511,18 @@ class TeamManagementService
             $currentRole = $player->role;
             $newRole = 'star player';
 
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'role' => $newRole,
+                    'is_reserved' => 0,
+                    'fatigue' => $newFatigue,
+                ]);
+
+            if ($currentRole == $newRole) {
+                continue;
+            }
+
             if($currentRole !== $newRole) {
                 $status = 'star player change';
                 $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
@@ -523,14 +535,6 @@ class TeamManagementService
                     'status' => $status,
                 ]);
             }
-
-            DB::table('players')
-                ->where('id', $player->id)
-                ->update([
-                    'role' => $newRole,
-                    'is_reserved' => 0,
-                    'fatigue' => $newFatigue,
-                ]);
 
             DB::table('player_season_stats')
                     ->where('player_id', $playerId)
@@ -551,6 +555,17 @@ class TeamManagementService
             $currentRole = $player->role;
             $newRole = 'all star';
 
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'role' => $newRole,
+                    'is_reserved' => 0,
+                    'fatigue' => $newFatigue,
+                ]);
+
+            if ($currentRole == $newRole) {
+                continue;
+            }
             if($currentRole !== $newRole) {
                 $status = 'role change';
                 $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
@@ -563,14 +578,6 @@ class TeamManagementService
                     'status' => $status,
                 ]);
             }
-
-            DB::table('players')
-                ->where('id', $player->id)
-                ->update([
-                    'role' => $newRole,
-                    'is_reserved' => 0,
-                    'fatigue' => $newFatigue,
-                ]);
 
             DB::table('player_season_stats')
                     ->where('player_id', $playerId)
@@ -659,7 +666,7 @@ class TeamManagementService
                     ->update(['role' => $newRole]);
         }
 
-        foreach ($rolePlayer as $evaluation) {
+        foreach ($benchPlayer as $evaluation) {
 
             $player = $evaluation['player'];
 
@@ -671,6 +678,17 @@ class TeamManagementService
             $currentRole = $player->role;
             $newRole = 'bench';
 
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'role' => $newRole,
+                    'is_reserved' => 0,
+                    'fatigue' => $newFatigue,
+                ]);
+
+            if ($currentRole == $newRole) {
+                continue;
+            }
             if($currentRole !== $newRole) {
                 $status = 'role change';
                 $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
@@ -683,14 +701,6 @@ class TeamManagementService
                     'status' => $status,
                 ]);
             }
-
-            DB::table('players')
-                ->where('id', $player->id)
-                ->update([
-                    'role' => $newRole,
-                    'is_reserved' => 0,
-                    'fatigue' => $newFatigue,
-                ]);
 
             DB::table('player_season_stats')
                     ->where('player_id', $playerId)
@@ -726,6 +736,17 @@ class TeamManagementService
             $currentRole = $player->role;
             $newRole = 'reserved';
 
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'is_reserved' => 1,
+                    'fatigue' => $newFatigue,
+                    'role' => 'bench',
+                ]);
+
+            if ($currentRole == $newRole) {
+                continue;
+            }
             if($currentRole !== $newRole) {
                 $status = 'role change';
                 $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
@@ -738,14 +759,6 @@ class TeamManagementService
                     'status' => $status,
                 ]);
             }
-
-            DB::table('players')
-                ->where('id', $player->id)
-                ->update([
-                    'is_reserved' => 1,
-                    'fatigue' => $newFatigue,
-                    'role' => 'bench',
-                ]);
 
             DB::table('player_season_stats')
                 ->where('player_id', $player->id)
