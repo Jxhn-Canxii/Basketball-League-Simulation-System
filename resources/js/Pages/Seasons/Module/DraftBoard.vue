@@ -115,7 +115,7 @@
         <!-- ========================================================= -->
 
         <div
-            v-if="draftResults.length > 0"
+            v-if="draftResults.length > 0 && !isLoading"
             class="mb-4 flex overflow-hidden rounded-xl border border-white/10 bg-[#0b0b0b]"
         >
             <button
@@ -172,7 +172,7 @@
         <!-- ========================================================= -->
 
         <div
-            v-if="draftResults.length === 0"
+            v-if="draftResults.length === 0 && !isLoading"
             class="flex min-h-[400px] items-center justify-center rounded-2xl border border-white/10 bg-[#0b0b0b]"
         >
             <div class="text-center">
@@ -200,7 +200,7 @@
         <!-- ========================================================= -->
 
         <div
-            v-else
+            v-if="draftResults.length > 0 && !isLoading"
             class="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0b]"
         >
             <!-- Table Header -->
@@ -524,6 +524,29 @@
                 </div>
             </div>
         </div>
+        <div
+            v-if="isLoading"
+            class="flex min-h-[400px] items-center justify-center rounded-2xl border border-white/10 bg-[#0b0b0b]"
+        >
+            <div class="text-center">
+                <div
+                    class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"
+                >
+                    <i
+                        class="fa fa-loader fa-spin text-2xl text-gray-600"
+                    ></i>
+                </div>
+
+                <h2 class="text-xl font-black">
+                    PREPARING DRAFT RECORDS
+                </h2>
+
+                <p class="mt-2 text-xs text-gray-600">
+                    Loading for Season
+                    {{ props.season_id }}.
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- ============================================================= -->
@@ -566,6 +589,7 @@ const props = defineProps({
 
 const draftResults = ref([]);
 const selectedRound = ref(1);
+const isLoading = ref(true);
 const showPlayerProfileModal = ref(false);
 
 /*
@@ -642,7 +666,7 @@ const fetchDraftResults = async () => {
                 season_id: props.season_id,
             }
         );
-
+        isLoading.value = true;
         draftResults.value =
             response.data?.draft_results ?? [];
 
@@ -661,8 +685,10 @@ const fetchDraftResults = async () => {
             "Error fetching draft history:",
             error
         );
-
+        isLoading.value = false;
         draftResults.value = [];
+    }finally{
+        isLoading.value = false;
     }
 };
 

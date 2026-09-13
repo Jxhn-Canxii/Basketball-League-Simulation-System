@@ -8,7 +8,7 @@ SELECT
   GROUP_CONCAT(DISTINCT t.name ORDER BY t.name ASC) AS teams_played,
   COUNT(DISTINCT pss.team_id) AS total_teams
 FROM
-  player_season_stats pss
+  player_season_stats_archives pss
 JOIN
   players p ON pss.player_id = p.id
 LEFT JOIN

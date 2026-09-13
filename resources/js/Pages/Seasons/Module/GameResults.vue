@@ -348,8 +348,8 @@
                             <th class="px-2 py-3 text-xs text-right" title="Blocks Made">Blk</th>
                             <th class="px-2 py-3 text-xs text-right" title="Turnover Made">TO</th>
                             <th class="px-2 py-3 text-xs text-right" title="Fouls Made">Fouls</th>
-                            <!-- <th class="px-2 py-3 text-xs" title="Field Goals Made / Attempted">Field Goals</th>
-                            <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
+                            <th class="px-2 py-3 text-xs text-center" title="Field Goals Made / Attempted">FG</th>
+                            <!-- <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
                             <th class="px-2 py-3 text-xs" title="3PT Made / Attempted">3PT</th>
                             <th class="px-2 py-3 text-xs" title="Free Throws Made / Attempted">Free Throws</th> -->
                             <th class="px-2 py-3 text-xs text-right" title="Player Efficiency Rating">PER</th>
@@ -392,9 +392,9 @@
                             <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
                             <!-- Field Goal Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.field_goals_made }} / {{ player.field_goal_attempts }} ({{ player.field_goal_percentage.toFixed(1) }}%)
-                            </td> -->
+                            <td class="px-2 py-1 whitespace-nowrap border text-center" >
+                                {{ player.field_goals_made }} / {{ player.field_goal_attempts }}
+                            </td>
                             <!-- 3PT Stats -->
                             <!-- <td class="px-2 py-1 whitespace-nowrap border">
                                 {{ player.two_pointers_made }} / {{ player.two_point_attempts }} ({{ player.two_point_percentage.toFixed(1) }}%)
@@ -416,7 +416,7 @@
                         </tr>
                         <tr v-if="sortedHomePlayers.length === 0">
                             <td
-                                colspan="13"
+                                colspan="14"
                                 class="py-1 px-3 text-center text-xs"
                             >
                                 No player statistics available.
@@ -509,8 +509,8 @@
                             <th class="px-2 py-3 text-xs text-right" title="Blocks Made">Blk</th>
                             <th class="px-2 py-3 text-xs text-right" title="Turnover Made">TO</th>
                             <th class="px-2 py-3 text-xs text-right" title="Fouls Made">Fouls</th>
-                            <!-- <th class="px-2 py-3 text-xs" title="Field Goals Made / Attempted">Field Goals</th>
-                            <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
+                            <th class="px-2 py-3 text-xs text-center" title="Field Goals Made / Attempted">FG</th>
+                            <!-- <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
                             <th class="px-2 py-3 text-xs" title="3PT Made / Attempted">3PT</th>
                             <th class="px-2 py-3 text-xs" title="Free Throws Made / Attempted">Free Throws</th> -->
                             <th class="px-2 py-3 text-xs text-right" title="Player Efficiency Rating">PER</th>
@@ -553,9 +553,9 @@
                             <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
                             <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
                             <!-- Field Goal Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.field_goals_made }} / {{ player.field_goal_attempts }} ({{ player.field_goal_percentage.toFixed(1) }}%)
-                            </td> -->
+                            <td class="px-2 py-1 whitespace-nowrap border text-center" >
+                                {{ player.field_goals_made }} / {{ player.field_goal_attempts }}
+                            </td>
                             <!-- 3PT Stats -->
                             <!-- <td class="px-2 py-1 whitespace-nowrap border">
                                 {{ player.two_pointers_made }} / {{ player.two_point_attempts }} ({{ player.two_point_percentage.toFixed(1) }}%)
@@ -577,7 +577,7 @@
                         </tr>
                         <tr v-if="sortedHomePlayers.length === 0">
                             <td
-                                colspan="13"
+                                colspan="14"
                                 class="py-1 px-3 text-center text-xs"
                             >
                                 No player statistics available.
