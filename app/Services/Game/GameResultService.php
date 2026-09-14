@@ -415,7 +415,7 @@ class GameResultService
         $awayTeamRatings = $this->getTeamRatingsPerSeason($game->season_id, $game->away_id);
 
 
-        $injury = $this->getIngameInjury($game->id);
+        $injury = $this->getIngameInjury($game->game_id);
 
         $homePlayersFatigue = false;
         $awayPlayersFatigue = false;
