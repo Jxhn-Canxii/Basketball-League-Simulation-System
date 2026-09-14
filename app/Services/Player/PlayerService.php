@@ -1489,7 +1489,7 @@ class PlayerService
         // Apply sorting
         switch ($sortColumn) {
             case 'playoff_appearances':
-                $query->orderBy('ppa.total_playoff_appearances', $sortOrder);
+                $query->orderBy('ppa.total_playoff_series_appearances', $sortOrder);
                 break;
             case 'big_four':
                 $query->orderBy('ppa.interconference_semi_finals_appearances', $sortOrder);

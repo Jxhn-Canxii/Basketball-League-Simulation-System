@@ -75,7 +75,7 @@
                             {{ player.teams_played_for_in_playoffs ?? "-" }}
                         </p>
                     </td> -->
-                    <td class="text-right">{{ player.total_playoff_appearances }}</td>
+                    <td class="text-right" :title="player.total_playoff_games+' games'">{{ player.total_playoff_series_appearances }}</td>
                     <td class="text-right">{{ player.play_ins_elims_round_1_appearances }}</td>
                     <td class="text-right">{{ player.play_ins_elims_round_2_appearances }}</td>
                     <td class="text-right">{{ player.play_ins_finals_appearances }}</td>
