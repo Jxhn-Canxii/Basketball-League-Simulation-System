@@ -1285,7 +1285,7 @@ const toggleShowTransferred = () => {
 
 const filteredPlayers = computed(() => {
     return team_roster.value.players?.filter(player => 
-        showTransferred.value || player.status !== 2
+        player.status !== 2
     );
 });
 
