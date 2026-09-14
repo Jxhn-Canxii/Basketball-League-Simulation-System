@@ -849,6 +849,7 @@ class DraftService
                     ->select(
                         'drafts.*',
                         'original.name as original_team_name',
+                        'original.acronym as original_team_acronym',
                         'current_owner.name as team_name',
                         'current_owner.id as current_team_id'
                     )
@@ -1034,7 +1035,9 @@ class DraftService
                             (int) $nextPick->team_id,
 
                             'team_name' =>
-                            $nextPick->team_name,
+                            $nextPick->original_team_id == $nextPick->team_id ? 
+                                $nextPick->team_name : 
+                                $nextPick->team_name.' via ('.$nextPick->original_team_acronym.')',
 
                             'team_data' =>
                             $nextPick,
