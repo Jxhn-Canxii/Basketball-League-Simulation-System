@@ -242,7 +242,7 @@ class GameEngineService
         }
 
         $players =  DB::table('players')
-                ->select('id')
+                ->select('id','is_reserved')
                 ->whereIn('team_id', [$gameData->home_team_id,$gameData->away_team_id])
                 ->where('is_active',1)
                 ->get();
