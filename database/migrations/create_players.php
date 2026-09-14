@@ -17,20 +17,27 @@ return new class extends Migration
             $table->string('country', 100)->nullable();
             $table->string('address', 255)->nullable();
             $table->unsignedBigInteger('team_id')->nullable();
+            $table->string('role', 100)->nullable();
+            $table->string('position', 10)->nullable();
             $table->integer('contract_years')->default(0);
-            $table->integer('hardship_contract')->default(0);
-            $table->date('contract_expires_at')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->boolean('is_rookie')->default(false);
             $table->integer('age');
             $table->integer('retirement_age')->default(35);
-
-            // Position
-            $table->string('position', 10)->nullable();
+            $table->boolean('is_injured')->default(false);
             $table->boolean('is_reserved')->default(false);
-
-            // Role
-            $table->string('role', 100)->nullable();
+            $table->boolean('is_rookie')->default(false);
+            $table->boolean('is_active')->default(true);
+            $table->integer('morale')->default(75);
+    
+            //contract details
+            $table->decimal('salary',12,2)->default(0);
+            $table->string('contract_type',50)->nullable();
+            $table->boolean('no_trade_clause')->default(0);
+            $table->boolean('player_option')->default(0);
+            $table->boolean('team_option')->default(0);
+            $table->boolean('is_restricted_fa')->default(0);
+            $table->boolean('can_be_extended')->default(0);
+            $table->integer('hardship_contract')->default(0);
+            $table->date('contract_expires_at')->nullable();
 
             // Ratings
             $table->decimal('shooting_rating', 5, 2)->default(0);
@@ -103,14 +110,12 @@ return new class extends Migration
 
             // Injury & Fatigue
             $table->decimal('injury_prone_percentage', 5, 2)->default(0);
-            $table->boolean('is_injured')->default(false);
             $table->string('injury_type', 255)->nullable();
             $table->decimal('fatigue', 5, 2)->default(0);
             $table->text('injury_history')->nullable();
             $table->decimal('injury_recovery_games', 5, 2)->default(0);
 
-            // Morale & Experience
-            $table->integer('morale')->default(75);
+            //Experience
             $table->integer('years_pro')->default(0);
 
             // Timestamps

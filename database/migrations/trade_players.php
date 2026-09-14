@@ -14,6 +14,7 @@ return new class extends Migration
             $table->unsignedBigInteger('trade_proposal_id');
 
             $table->unsignedBigInteger('player_id');
+            $table->unsignedBigInteger('draft_pick_right_id');
 
             $table->unsignedBigInteger('from_team_id');
             $table->unsignedBigInteger('to_team_id');
@@ -42,6 +43,12 @@ return new class extends Migration
                 'to_team_id',
                 'idx_trade_players_to_team'
             );
+
+            $table->index(
+                'draft_pick_right_id', 
+                'idx_trade_players_draft_pick_right'
+            );
+
 
         });
     }

@@ -16,7 +16,6 @@ return new class extends Migration
             $table->string('game_id');
             $table->foreignId('player_id')->default(0);
             $table->foreignId('team_id')->default(0);
-            $table->boolean('is_injured')->default(0);
             $table->float('minutes')->default(0);
             $table->integer('points')->default(0);
             $table->integer('rebounds')->default(0);
@@ -34,6 +33,8 @@ return new class extends Migration
             $table->integer('two_point_attempts')->default(0);
             $table->integer('two_pointers_made')->default(0);
             $table->boolean('is_fouled_out')->default(0);
+            $table->boolean('is_injured')->default(0);
+            $table->boolean('is_reserved')->default(0);
             $table->timestamps();
         });
 
@@ -43,18 +44,21 @@ return new class extends Migration
                 (points + rebounds + assists + steals + blocks - (field_goal_attempts - field_goals_made) - turnovers) 
                 / NULLIF(minutes, 0)
             ) STORED
+            AFTER two_pointers_made
         ');
 
         DB::statement('
             ALTER TABLE player_game_stats ADD ts_percent FLOAT GENERATED ALWAYS AS (
                 points / NULLIF(2 * (field_goal_attempts + (0.44 * free_throw_attempts)), 0)
             ) STORED
+            AFTER per
         ');
 
         DB::statement('
             ALTER TABLE player_game_stats ADD eff FLOAT GENERATED ALWAYS AS (
                 (points + rebounds + assists + steals + blocks - (field_goal_attempts + free_throw_attempts + turnovers))
             ) STORED
+            AFTER ts_percent
         ');
 
         DB::statement('
@@ -64,6 +68,7 @@ return new class extends Migration
                     ELSE (field_goals_made / field_goal_attempts) * 100
                 END
             ) STORED
+            AFTER eff
         ');
 
         DB::statement('
@@ -73,6 +78,7 @@ return new class extends Migration
                     ELSE (three_pointers_made / three_point_attempts) * 100
                 END
             ) STORED
+            AFTER field_goal_percentage
         ');
 
         DB::statement('
@@ -82,6 +88,7 @@ return new class extends Migration
                     ELSE (free_throws_made / free_throw_attempts) * 100
                 END
             ) STORED
+            AFTER three_point_percentage            
         ');
 
         DB::statement('
@@ -91,6 +98,7 @@ return new class extends Migration
                     ELSE (two_pointers_made / two_point_attempts) * 100
                 END
             ) STORED
+            AFTER free_throw_percentage            
         ');
 
         DB::statement('
@@ -102,6 +110,7 @@ return new class extends Migration
                     ELSE 0
                 END
             ) STORED
+            AFTER two_point_percentage            
         ');
     }
 

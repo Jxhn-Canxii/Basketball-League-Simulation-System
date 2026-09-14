@@ -248,7 +248,7 @@ class GameEngineService
                 ->get();
 
         foreach ($players as $player) {
-            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id);
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved);
         }
 
         $playerGameStats =  DB::table('player_game_stats')
