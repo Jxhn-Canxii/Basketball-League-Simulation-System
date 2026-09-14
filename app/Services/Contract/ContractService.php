@@ -186,7 +186,7 @@ class ContractService
     |--------------------------------------------------------------------------
     */
 
-        $baseMLE = 5_000_000;
+        $baseMLE = 5000000;
 
         /*
     |--------------------------------------------------------------------------
@@ -213,7 +213,7 @@ class ContractService
     public function getContractYearsBasedOnRole($role): int
     {
         return match (strtolower(trim((string) $role))) {
-            'star player', 'star' => mt_rand(3, 5),
+            'star player', 'all star' => mt_rand(3, 5),
             'starter' => mt_rand(2, 4),
             'role player' => mt_rand(1, 3),
             default => mt_rand(1, 2),
@@ -234,7 +234,7 @@ class ContractService
             return 'mle';
         }
 
-        if (in_array($role, ['star player', 'star'], true)) {
+        if (in_array($role, ['star player', 'all star'], true)) {
             return 'max';
         }
 
