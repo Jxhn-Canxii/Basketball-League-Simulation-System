@@ -1686,9 +1686,12 @@ class PlayerService
             ->where('contracts.player_id', $player_id)
             ->select(
                 'contracts.*',
-                'teams.name as team_name',
                 'players.name as player_name',
-                'players.contract_years as years_remaining'
+                'teams.name as team_name',
+                'players.contract_years as years_remaining',
+                'teams.primary_color as team_primary_colors',
+                'teams.secondary_color as team_secondary_colors',
+                'teams.acronym as team_acronym',
             )
             ->orderByDesc('contracts.id')
             ->get();

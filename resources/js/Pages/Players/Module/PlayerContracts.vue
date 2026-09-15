@@ -12,7 +12,7 @@
                             Season
                         </th>
                         <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Player Name
+                            Name
                         </th>
                         <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
                             Type
@@ -20,14 +20,14 @@
                         <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">
                             Salary
                         </th>
-                        <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">
-                            Contract Years
+                        <th class="px-2 py-1 text-right text-wrap font-medium text-gray-500 uppercase tracking-wider">
+                            Contract Yrs.
                         </th>
-                        <th class="px-2 py-1 text-right font-medium text-gray-500 uppercase tracking-wider">
-                            Years Remaining
+                        <th class="px-2 py-1 text-right text-wrap font-medium text-gray-500 uppercase tracking-wider">
+                            Yrs Remaining
                         </th>
                         <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
-                            Team Name
+                            Team
                         </th>
                         <th class="px-2 py-1 text-left font-medium text-gray-500 uppercase tracking-wider">
                             Player Option
@@ -43,19 +43,37 @@
                         </th>
                     </tr>
                 </thead>
-                <tbody class="bg-white divide-y divide-gray-200 text-nowrap">
-                    <tr v-for="(transaction, index) in transactions" v-if="transactions?.length > 0 && !loading" :key="transaction.id" @click.prevent="isViewModalOpen = transaction.season_id" class="hover:bg-gray-100">
-                        <td class="px-2 py-1 text-gray-700">Season {{ transaction.season_id }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.player_name }}</td>
-                        <td class="px-2 py-1 text-gray-700 uppercase">{{ transaction.contract_type }}</td>
-                        <td class="px-2 py-1 text-gray-700 text-wrap text-right">{{ moneyFormatter(transaction.salary ?? 0) }}</td>
-                        <td class="px-2 py-1 text-gray-700 text-right">{{ transaction.contract_years ?? 0 }} yrs.</td>
-                        <td class="px-2 py-1 text-gray-700 text-right">{{ (transaction.status == 'signed') ? transaction.years_remaining : 0 }} yrs.</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.team_name ?? 'Free Agent' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.player_option == 0 ? 'No' : 'Yes' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.team_option  == 0 ? 'No' : 'Yes' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.no_trade_clause  == 0 ? 'No' : 'Yes' }}</td>
-                        <td class="px-2 py-1 text-gray-700">{{ transaction.status }}</td>
+                <tbody class="bg-white divide-y divide-gray-200 text-nowrap text-md">
+                    <tr v-for="(transaction, index) in transactions" 
+                    v-if="transactions?.length > 0 && !loading" 
+                    :key="transaction.id" 
+                    @click.prevent="isViewModalOpen = transaction.season_id"
+                    :style="{
+                    background:
+                        transaction.team_primary_colors || transaction.team_secondary_colors
+                        ? `linear-gradient(90deg, ${transaction.team_primary_colors
+                            .split(',')
+                            .map((c, i) => {
+                                const sec = transaction.team_secondary_colors?.split(',')[i];
+                                return [`#${c.trim()}`, sec ? `#${sec.trim()}` : null];
+                            })
+                            .flat()
+                            .filter(Boolean)
+                            .join(', ')})`
+                        : '#f9fafb',
+                    }"
+                    class="hover:bg-gray-100">
+                        <td class="px-2 py-1 text-white">Season {{ transaction.season_id }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.player_name }}</td>
+                        <td class="px-2 py-1 text-white uppercase">{{ transaction.contract_type }}</td>
+                        <td class="px-2 py-1 text-white text-wrap text-right">{{ moneyFormatter(transaction.salary ?? 0) }}</td>
+                        <td class="px-2 py-1 text-white text-right">{{ transaction.contract_years ?? 0 }} yrs.</td>
+                        <td class="px-2 py-1 text-white text-right">{{ (transaction.status == 'signed') ? transaction.years_remaining : 0 }} yrs.</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.team_name ?? 'Free Agent' }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.player_option == 0 ? 'No' : 'Yes' }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.team_option  == 0 ? 'No' : 'Yes' }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.no_trade_clause  == 0 ? 'No' : 'Yes' }}</td>
+                        <td class="px-2 py-1 text-white">{{ transaction.status }}</td>
                     </tr>
                     <tr class="hover:bg-gray-100" v-if="!transactions?.length && !loading">
                         <td class="px-2 py-1 text-red-500 text-center font-semibold" colspan="11">No data available</td>

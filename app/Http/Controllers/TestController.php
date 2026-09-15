@@ -468,7 +468,7 @@ class TestController extends Controller
         return response()->json($players,200);
     }
 
-    public function updateRookieContract(){
+    public function updateContract(){
         
         $activeTeams = DB::table('teams')
             ->select('teams.id', 'teams.name')
@@ -479,7 +479,7 @@ class TestController extends Controller
         $players = [];
 
         foreach($activeTeams as $team){
-            $players[$team->name]['players'] = $this->playerRatingService->updateRookieContract($team->id);
+            $players[$team->name]['players'] = $this->playerRatingService->updateContract($team->id);
         }
 
         return response()->json($players,200);

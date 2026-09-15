@@ -250,6 +250,10 @@ class TeamManagementService
                 }
             }
 
+            if ($player->draft_status == 'Special Draft' && $player->overall_rating >= 85) {
+                $draftBonus += 15;
+            }
+
             /*
             |--------------------------------------------------------------------------
             | Player Overall
@@ -293,8 +297,7 @@ class TeamManagementService
              * A development-oriented coach values rookies more.
              */
 
-                $developmentBonus =
-                    (($coachDevelopment - 50) / 10);
+                $developmentBonus = (($coachDevelopment - 50) / 10);
             } else {
 
                 /*
@@ -303,8 +306,7 @@ class TeamManagementService
              */
 
                 if ($yearsPro >= 5) {
-                    $developmentBonus =
-                        ((50 - $coachDevelopment) / 20);
+                    $developmentBonus = ((50 - $coachDevelopment) / 20);
                 }
             }
 
@@ -314,10 +316,7 @@ class TeamManagementService
             |--------------------------------------------------------------------------
             */
 
-            $efficiencyScore = min(
-                25,
-                max(0, $efficiency * 1.5)
-            );
+            $efficiencyScore = min(25,max(0, $efficiency * 1.5));
 
             /*
             |--------------------------------------------------------------------------
@@ -357,10 +356,7 @@ class TeamManagementService
             |--------------------------------------------------------------------------
             */
 
-            $experienceScore = min(
-                10,
-                $yearsPro * 1.5
-            );
+            $experienceScore = min(10,$yearsPro * 1.5);
 
             $experienceScore *= 0.05;
 
@@ -372,10 +368,7 @@ class TeamManagementService
 
             $morale = (float) ($player->morale ?? 50);
 
-            $moraleScore = max(
-                -5,
-                min(5, ($morale - 50) / 10)
-            );
+            $moraleScore = max(-5,min(5, ($morale - 50) / 10));
 
             /*
             |--------------------------------------------------------------------------
@@ -397,10 +390,7 @@ class TeamManagementService
 
             $fatigue = (float) ($player->fatigue ?? 0);
 
-            $fatiguePenalty = min(
-                10,
-                $fatigue / 10
-            );
+            $fatiguePenalty = min(10,$fatigue / 10);
 
             /*
             |--------------------------------------------------------------------------

@@ -1368,7 +1368,6 @@ class FreeAgencyService
     private function storeNextSeasonStatsPerTeam()
     {
         $teams = DB::table('teams')->pluck('id');
-
         foreach ($teams as $teamId) {
             DB::beginTransaction(); // Keep transaction but check rollback issues
 
@@ -1383,7 +1382,10 @@ class FreeAgencyService
 
                 foreach ($allPlayersStats as $playerStat) {
                     // use shared PlayerSeasonStatsController instance
+                    $this->updateContractExtensionData($playerStat->id);
                     $this->storeStats->storePlayerNextSeasonStats($teamId, $playerStat->id);
+
+
                 }
 
                 DB::commit();
@@ -1395,6 +1397,39 @@ class FreeAgencyService
         }
 
         return true;
+    }
+
+    private function updateContractExtensionData(int $playerId)
+    {
+        $seasonId = get_current_season_id();
+        $nextSeasonId = get_current_season_id() + 1;
+
+        $contractOffer = DB::table('player_contracts')
+            ->where('player_id', $playerId)
+            ->where('season_id', $seasonId)
+            ->where('status','signed')
+            ->first();
+
+        if(!$contractOffer) return;
+
+        DB::table('player_contracts')
+        ->where('player_id', $playerId)
+        ->where('contract_end', $nextSeasonId)
+        ->update([
+            'status' => 'ended',
+        ]);
+
+        DB::table('players')
+        ->where('player_id', $playerId)
+        ->update([
+            'salary' =>  $contractOffer->salary,
+            'contract_years' =>  $contractOffer->years,
+            'contract_type' =>  $contractOffer->contract_type,
+            'player_option' =>  $contractOffer->player_option ?? false,
+            'team_option' =>  $contractOffer->team_option ?? false,
+            'no_trade_clause' =>  $contractOffer->no_trade_clause ?? false,
+        ]);
+
     }
     
     private function clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive): void 

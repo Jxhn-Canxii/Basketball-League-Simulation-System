@@ -14,16 +14,18 @@ return new class extends Migration
         Schema::create('player_contracts', function (Blueprint $table) {
             $table->id();
             $table->integer('player_id');
-            $table->integer('season_id');
             $table->integer('team_id');
-            $table->decimal('salary',10,2)->nullable(0);
+            $table->integer('season_id');
             $table->integer('contract_years');
+            $table->integer('contract_end')->storedAs("season_id + contract_years");
+            $table->decimal('salary',10,2)->nullable(0);
             $table->string('contract_type');
             $table->boolean('player_option');
             $table->boolean('team_option');
             $table->boolean('no_trade_clause');
             $table->string('status');
             $table->timestamps();
+
         });
     }
 

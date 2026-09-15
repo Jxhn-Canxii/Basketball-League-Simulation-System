@@ -46,12 +46,12 @@ class PlayerRatingsService
         $this->valuationService = new PlayerValuationService();
     }
 
-    public function updateRookieContract($teamId){
-         $contracts = DB::table('player_contracts as pc')
+    public function updateContract($teamId){
+        $contracts = DB::table('player_contracts as pc')
                     ->select('pc.*','p.name as player_name','p.is_rookie')
                     ->join('players as p','p.id','=','pc.player_id')
                     ->where('pc.team_id',$teamId)
-                    ->where('p.is_rookie',1)
+                    ->where('pc.status','signed')
                     ->get();
 
         // dd($contracts);
@@ -295,7 +295,6 @@ class PlayerRatingsService
 
                     DB::table('player_contracts')
                         ->where('player_id', $player->id)
-                        ->where('season_id',$seasonId)
                         ->where('status','signed')
                         ->update(['status' => 'terminated']);
 
@@ -784,6 +783,8 @@ class PlayerRatingsService
         $coach = $this->coachDecisionService
                 ->getTeamCoach($teamId);
 
+        $nextSeasonId = $seasonId + 1;
+
         /*
         |--------------------------------------------------------------------------
         | Get normal contract offer
@@ -882,12 +883,14 @@ class PlayerRatingsService
                 );
 
                 $updatedYears = ($player->contract_years == 0) ? $years : $player->contract_years + $years;
-
+                $updatedSalary = $offer['salary'];
+                
                 DB::table('players')
                     ->where('id', $player->id)
                     ->update([
                         'team_id' => $teamId,
                         'contract_years' => $updatedYears,
+                        'salary' => $updatedSalary,
                         'updated_at' => now(),
                     ]);
 
@@ -901,6 +904,8 @@ class PlayerRatingsService
                 ];
 
                 $transactionMessage = ($player->contract_years == 0) ? ' has signed for '.$teamName.' for ' : ', The team decided to sign via team-option for ';
+                $contractSeason = ($player->contract_years == 0) ? $seasonId : $seasonId + 1;
+                
                 // Insert the transaction record into the transactions table
                 DB::table('transactions')->insert([
                     'player_id' => $player->id,
@@ -913,7 +918,7 @@ class PlayerRatingsService
 
                 DB::table('player_contracts')->insert([
                     'player_id' => $player->id,
-                    'season_id' => $seasonId,
+                    'season_id' => $contractSeason,
                     'team_id' => $teamId,
                     'salary' => $offer['salary'],
                     'contract_years' => $offer['years'],
@@ -944,7 +949,7 @@ class PlayerRatingsService
                         DB::table('player_contracts')
                         ->where('player_id', $player->id)
                         ->where('status', 'signed')
-                        ->where('season_id',$seasonId - 1)
+                        ->where('contract_end','<=',$nextSeasonId)
                         ->update(['status' => 'ended']);
                 }
                 
@@ -1037,6 +1042,8 @@ class PlayerRatingsService
                     ?? 1
                 );
 
+                $contractSeason = ($player->contract_years == 0) ? $seasonId : $seasonId + 1;
+
                 DB::table('players')
                     ->where('id', $player->id)
                     ->update([
@@ -1066,7 +1073,7 @@ class PlayerRatingsService
 
                 DB::table('player_contracts')->insert([
                     'player_id' => $player->id,
-                    'season_id' => $seasonId,
+                    'season_id' => $contractSeason,
                     'team_id' => $teamId,
                     'salary' => $offer['salary'],
                     'contract_years' => $offer['years'],
@@ -1141,7 +1148,7 @@ class PlayerRatingsService
         // Terminate the current signed contract for this season.
         DB::table('player_contracts')
             ->where('player_id', $player->id)
-            ->where('season_id', $seasonId)
+            ->where('contract_end','<=', $seasonId + 1)
             ->where('status', 'signed')
             ->update([
                 'status' => 'terminated',
