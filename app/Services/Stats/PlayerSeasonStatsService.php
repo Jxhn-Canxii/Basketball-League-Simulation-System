@@ -289,6 +289,7 @@ class PlayerSeasonStatsService
                 // Set default stats if no game stats exist
                 $playerStats = (object) [
                     'player_id' => $player->id,
+                    'role' => $player->role,
                     'total_games' => $totalSeasonGames,
                     'total_games_played' => 0,
                     'total_minutes_played' => 0,

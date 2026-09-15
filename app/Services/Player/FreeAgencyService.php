@@ -1412,23 +1412,23 @@ class FreeAgencyService
 
         if(!$contractOffer) return;
 
-        DB::table('player_contracts')
-        ->where('player_id', $playerId)
-        ->where('contract_end', $nextSeasonId)
-        ->update([
-            'status' => 'ended',
-        ]);
-
         DB::table('players')
-        ->where('player_id', $playerId)
-        ->update([
-            'salary' =>  $contractOffer->salary,
-            'contract_years' =>  $contractOffer->years,
-            'contract_type' =>  $contractOffer->contract_type,
-            'player_option' =>  $contractOffer->player_option ?? false,
-            'team_option' =>  $contractOffer->team_option ?? false,
-            'no_trade_clause' =>  $contractOffer->no_trade_clause ?? false,
-        ]);
+            ->where('player_id', $playerId)
+            ->update([
+                'salary' =>  $contractOffer->salary,
+                'contract_years' =>  $contractOffer->years,
+                'contract_type' =>  $contractOffer->contract_type,
+                'player_option' =>  $contractOffer->player_option ?? false,
+                'team_option' =>  $contractOffer->team_option ?? false,
+                'no_trade_clause' =>  $contractOffer->no_trade_clause ?? false,
+            ]);
+
+        DB::table('player_contracts')
+            ->where('player_id', $playerId)
+            ->where('contract_end','<', $nextSeasonId)
+            ->update([
+                'status' => 'ended',
+            ]);
 
     }
     

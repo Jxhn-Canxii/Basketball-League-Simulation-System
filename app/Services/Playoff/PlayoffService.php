@@ -294,7 +294,7 @@ class PlayoffService
                 $homeTeamName = $standingsData[$series->home_team_id]->name ?? DB::table('teams')->where('id', $series->home_team_id)->value('name');
                 $awayTeamName = $standingsData[$series->away_team_id]->name ?? DB::table('teams')->where('id', $series->away_team_id)->value('name');
 
-                $seriesCount = DB::table($seriesTable)
+                $seriesCount = DB::table('playoff_series_archives')
                     ->where(function ($q) use ($series) {
                         $q->where('home_team_id', $series->away_team_id)
                         ->where('away_team_id',$series->home_team_id);
