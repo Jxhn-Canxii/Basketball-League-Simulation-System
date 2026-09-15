@@ -456,7 +456,7 @@ class CoachService
                 DB::raw("
                 EXISTS (
                     SELECT 1
-                    FROM playoff_series ps
+                    FROM playoff_series_archives ps
                     WHERE ps.season_id = team_season_info.season_id
                     AND ps.round = 'semi_finals'
                     AND ps.winner_team_id = team_season_info.team_id
@@ -467,7 +467,7 @@ class CoachService
                 DB::raw("
                 EXISTS (
                     SELECT 1
-                    FROM playoff_series ps
+                    FROM playoff_series_archives ps
                     WHERE ps.season_id = team_season_info.season_id
                     AND ps.round = 'finals'
                     AND ps.winner_team_id = team_season_info.team_id
