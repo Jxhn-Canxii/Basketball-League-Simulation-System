@@ -566,7 +566,7 @@ class PlayerRatingsService
         
             DB::table('coaches')->insert([
                 'name' => $player->name,
-                'nationality' => $player->nationality,
+                'nationality' => $player->country,
                 'coach_iq' => $player->basketball_iq_rating,
                 'coaching_style' => $coachingStyle ?? 'balanced',
                 'retirement_age' => $retirementAge,
@@ -995,7 +995,7 @@ class PlayerRatingsService
                     'player_id' => $player->id,
                     'season_id' => $seasonId,
                     'details' => $player->name . ' has decided to sign for ' . $teamName . ' on his player option for ' . $years . ' years on a ' . $offer['contract_type'] . ' contract worth ₱' . number_format((float) $offer['salary'], 2) . '.',
-                    'from_team_id' => 0, // Assuming the player is a free agent and has no previous team
+                    'from_team_id' => $teamId, // Assuming the player is a free agent and has no previous team
                     'to_team_id' => $teamId,
                     'status' => 'signed',
                 ]);
@@ -1020,8 +1020,8 @@ class PlayerRatingsService
                     'player_id' => $player->id,
                     'season_id' => $seasonId,
                     'details' => $player->name . ' has declined his player option for' . $teamName .'.',
-                    'from_team_id' => 0,
-                    'to_team_id' => $teamId,
+                    'from_team_id' => $teamId,
+                    'to_team_id' => 0,
                     'status' => 'declined',
                 ]);
             }

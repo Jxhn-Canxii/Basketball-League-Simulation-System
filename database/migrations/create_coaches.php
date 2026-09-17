@@ -17,6 +17,7 @@ return new class extends Migration
             $table->integer('age');
             $table->integer('retirement_age');
             $table->string('nationality', 100)->nullable();
+            $table->integer('player_id')->default(0);
             $table->integer('team_id')->default(0);
             $table->enum('coaching_style', ['defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo']);
             $table->integer('coach_iq');
