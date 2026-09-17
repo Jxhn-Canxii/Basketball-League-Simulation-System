@@ -4,16 +4,19 @@ namespace App\Http\Controllers;
 
 ini_set('max_execution_time', 0);
 
+use App\Services\Trade\TradeDecisionService;
 use Illuminate\Http\Request;
 use App\Services\Trade\TradeService;
 
 class TradeController extends Controller
 {
     protected $tradeService;
+    protected $tradeDecision;
 
     public function __construct()
     {
         $this->tradeService = new TradeService();
+        $this->tradeDecision = new TradeDecisionService();
     }
 
     /*
@@ -66,7 +69,7 @@ class TradeController extends Controller
             'is_off_season' => 'required|boolean',
         ]);
 
-        return $this->tradeService->generateTradeProposals($request->is_off_season);
+        return $this->tradeDecision->generateTradeProposals($request->is_off_season);
     }
 
 
@@ -76,26 +79,7 @@ class TradeController extends Controller
             'is_off_season' => 'required|boolean',
         ]);
 
-        return $this->tradeService->automatedTradeDecision($request->is_off_season);
-    }
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOG TRADE
-    |--------------------------------------------------------------------------
-    */
-
-    public static function logTrade(
-        $teamFromId,
-        $teamToId,
-        $playerId,
-        $tradePlayerId = null,
-        $message = 'Trade completed.',
-        $isOffSeason = false,
-        $tradeProposalId = null
-    ) {
-
-       return $this->tradeService->logTrade($teamFromId,$teamToId,$playerId,$tradePlayerId,$message,$isOffSeason,$tradeProposalId = null); 
+        return $this->tradeDecision->automatedTradeDecision($request->is_off_season);
     }
 
     /*
@@ -114,4 +98,3 @@ class TradeController extends Controller
     }
 
 }    
-   

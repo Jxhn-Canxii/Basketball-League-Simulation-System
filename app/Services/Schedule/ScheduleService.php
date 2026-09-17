@@ -13,7 +13,7 @@ use App\Services\Archive\ArchiveService;
 use App\Services\Helper\HelperService;
 use App\Services\Team\TeamsService;
 use App\Services\Team\TeamStreakService;
-use App\Services\Trade\TradeService;
+use App\Services\Trade\TradeDecisionService;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleService
@@ -21,7 +21,7 @@ class ScheduleService
     protected $archive;
     protected $helper;
     protected $streak;
-    protected $tradeService;
+    protected $tradeDecision;
     protected $teamService;
 
     public function __construct()
@@ -31,7 +31,7 @@ class ScheduleService
         $this->helper = new HelperService();
         $this->streak = new TeamStreakService();
         $this->teamService = new TeamsService();
-        $this->tradeService = new TradeService();
+        $this->tradeDecision = new TradeDecisionService();
     }
     //
     public function index()
@@ -85,10 +85,10 @@ class ScheduleService
 
         if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
             if($simulatedRounds % 2 == 0){
-                $this->tradeService->generateTradeProposals(false);
+                $this->tradeDecision->generateTradeProposals(false);
             }
             if($simulatedRounds % 2 != 0){
-                $this->tradeService->automatedTradeDecision(false);
+                $this->tradeDecision->automatedTradeDecision(false);
             }
         }
         if($isEndTradeDeadline) {
