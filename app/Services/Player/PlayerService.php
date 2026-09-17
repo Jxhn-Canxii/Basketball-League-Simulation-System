@@ -120,14 +120,15 @@ class PlayerService
                     $playerStatus = $player->team_id == $teamId ? ($player->is_active ? 1 : 0) : 2;
                     $playerCUtfromFinalRoster = ($player->team_id != $teamId && $player->is_active && $stats->total_games_played == 0) ? 1 : 0;
                     // Add player stats to the array
-                    if ($playerCUtfromFinalRoster) continue;
+                    //if ($playerCUtfromFinalRoster) continue;
+                    $playerRole = $stats->role == '' ? 'reserved' : $stats->role;
 
                     $playerStats[] = [
                         'player_id' => $player->id,
                         'name' => $player->name,
                         'position' => $player->position,
                         'age' => $player->age,
-                        'role' => $stats->role,
+                        'role' => $playerRole,
                         'is_active' => $player->is_active,
                         'morale' => $player->morale,
                         'hardship_contract' => $player->hardship_contract,
@@ -284,7 +285,7 @@ class PlayerService
                         'name' => $player->name,
                         'position' => $player->position,
                         'age' => $player->age,
-                        'role' => $player->role,
+                        'role' => $player->role ?? 'reserved',
                         'is_active' => $player->is_active,
                         'morale' => $player->morale,
                         'is_rookie' => $player->is_rookie,

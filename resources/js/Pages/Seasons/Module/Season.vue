@@ -52,7 +52,7 @@
                 <small class="text-white mt-3">Transaction ID:{{ updateKey }} || Conference ID: {{ currentConference }} || Round {{ currentRound ?? 0 }}</small>   
                 <hr>
                 <br>
-                <RecentTradeProposal :key="updateKey" :isOffSeason="false" :seasonId="props.season_id" />
+                <RecentTradeProposal v-if="seasonStatus == 1" :key="updateKey" :isOffSeason="false" :seasonId="props.season_id" />
                 <!-- <Top15MVPCandidate v-if="activeConferenceTab" :key="updateKey" /> -->
                 <!-- <RecentTransactions v-if="!boostMode && seasonStatus < 3" :key="transactionUpdate"/> -->
                 <!-- <Top15MVPCandidate v-if="seasonStatus == 2 && (currentRound % 2 != 0)" :key="currentRound" :current_round="currentRound"/> -->

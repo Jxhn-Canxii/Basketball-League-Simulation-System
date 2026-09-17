@@ -90,12 +90,13 @@ class PlayerRatingsService
 
             // Fetch all active players, filtered by team_id if provided
             $query = Player::where('is_active', 1)
-                ->where('age', '<=', 65);
+                ->where('age', '<=', 45);
 
             if ($teamId) {
                 $query->where('team_id', $teamId);
             }
             $players = $query->get();
+
 
             $seasonId = get_current_season_id();
             $nextSeasonId = get_current_season_id() + 1;
@@ -179,78 +180,6 @@ class PlayerRatingsService
                 Player::where('id', $playerStat->player_id)->update(['role' => 'bench','is_reserved' => true]);
             }
 
-            // foreach ($rankedPlayers as $player) {
-    
-            //     $totalGames = $player->total_games ?? 0;
-            //     $rolePctMap = [
-            //         'star player' => 0.80,
-            //         'all star'    => 0.70,
-            //         'starter'     => 0.60,
-            //         'role player' => 0.50,
-            //         'bench'       => 0.40,
-            //     ];
-
-            //     $defaultPct = 0.30;
-            //     $pct = $rolePctMap[strtolower($player->role)] ?? $defaultPct;
-
-            //     // Base total games across contract
-            //     $totalContractGames = $totalGames * max($player->contract_years, 1);
-
-            //     // Cap to avoid excessive tolerance (realism)
-            //     $baseRecoveryGames = ceil($totalContractGames * $pct);
-            //     $maxRecoveryGames = 30;
-            //     $requiredRecoveryGames = min($baseRecoveryGames, $maxRecoveryGames);
-
-            //     // 🔥 ADJUST BASED ON TALENT
-            //     if ($player->overall_rating >= 90) {
-            //         $requiredRecoveryGames += 5; // elite talent, more forgiveness
-            //     } elseif ($player->overall_rating >= 80) {
-            //         $requiredRecoveryGames += 2;
-            //     } elseif ($player->overall_rating <= 70) {
-            //         $requiredRecoveryGames -= 2; // low-rated, less tolerance
-            //     } elseif ($player->overall_rating <= 60) {
-            //         $requiredRecoveryGames -= 4; // waiver bait
-            //     }
-
-            //     // Clamp within logical bounds
-            //     $requiredRecoveryGames = max(2, min($requiredRecoveryGames, $totalContractGames));
-
-            //     // Check if the player has recovered from injury for over 30 games and contract years is less than 4, may be waived 
-            //     if ($player->injury_recovery_games > $requiredRecoveryGames) {
-            //         $waiveChance = rand(1, 100); // Random chance for waiving the player
-            //         if ($waiveChance <= 60) { // 50% chance to waive
-            //             DB::table('transactions')->insert([
-            //                 'player_id' => $player->id,
-            //                 'season_id' => $seasonId,
-            //                 'details' => 'Waived by (' . $teamName . ') due to extended injury recovery period',
-            //                 'from_team_id' => $teamId,
-            //                 'to_team_id' => 0,
-            //                 'status' => 'waived',
-            //             ]);
-
-            //             DB::table('player_contracts')
-            //                 ->where('player_id', $player->id)
-            //                 ->update(['status' => 'terminated']);
-                        
-            //             DB::table('players')
-            //                 ->where('id', $player->id)
-            //                 ->update([
-            //                     'team_id' => 0,
-            //                     'contract_years' => 0,
-            //                     'salary' => 0,
-            //                     'contract_type' => 0,
-            //                     'player_option' => 0,
-            //                     'team_option' => 0,
-            //                     'no_trade_clause' => 0
-            //                 ]);
-                
-            //             $player->team_id = 0; // Set team_id to 0 (free agent)
-                        
-            //             $player->contract_years = 0; // Remove contract
-            //         }
-            //     }
-
-            // }
             // Fetch updated players
             $players = $query->get();
 
@@ -436,6 +365,7 @@ class PlayerRatingsService
             return response()->json([
                 'error' => true,
                 'message' => 'Failed to update player statuses.',
+                'e' => $e,
                 'error_message' => $e->getMessage(), // Display the exception message
             ], 500);
         }
@@ -634,7 +564,6 @@ class PlayerRatingsService
             $coachingStyle = array_rand(['defensive', 'offensive', 'balanced', 'fast-paced', 'slow-tempo'],1);
             $preferredTeamComposition = array_rand(['balanced','offensive','defensive','any','contenders','rebuilding'],1);
         
-           
             DB::table('coaches')->insert([
                 'name' => $player->name,
                 'nationality' => $player->nationality,

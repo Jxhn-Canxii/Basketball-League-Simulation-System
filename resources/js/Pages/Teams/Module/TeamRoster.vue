@@ -321,10 +321,9 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         <span
-                                            :class="roleBadgeClass(player.role)"
-                                           
+                                            :class="roleBadgeClass(player.role ?? 'reserved')"
                                         >
-                                            {{ player.role }}
+                                            {{ player.role ?? 'reserved' }}
                                         </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
@@ -625,10 +624,9 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         <span
-                                            :class="roleBadgeClass(player.role)"
-                                           
+                                            :class="roleBadgeClass(player.role ?? 'reserved')"
                                         >
-                                            {{ player.role }}
+                                            {{ player.role ?? 'reserved' }}
                                         </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
@@ -929,10 +927,9 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         <span
-                                            :class="roleBadgeClass(player.role)"
-                                           
+                                            :class="roleBadgeClass(player.role ?? 'reserved')"
                                         >
-                                            {{ player.role }}
+                                            {{ player.role ?? 'reserved' }}
                                         </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
@@ -1140,10 +1137,9 @@
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">
                                         <span
-                                            :class="roleBadgeClass(player.role)"
-                                           
+                                            :class="roleBadgeClass(player.role ?? 'reserved')"   
                                         >
-                                            {{ player.role }}
+                                            {{ player.role ?? 'reserved' }}
                                         </span>
                                     </td>
                                     <td class="px-2 py-1 whitespace-nowrap border">

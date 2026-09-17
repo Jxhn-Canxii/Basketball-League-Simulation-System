@@ -751,7 +751,7 @@ class FreeAgencyService
         ]);
     }
 
-     public function assignPlayerToRandomTeam($request)
+    public function assignPlayerToRandomTeam($request)
     {
 
         // Fetch teams with fewer than 15 players
@@ -1004,7 +1004,7 @@ class FreeAgencyService
             $usedPlayerIds = []; // Keep track of already-assigned players
 
             foreach ($teamsWithFewMembers as $team) {
- 
+
                 $teamPosCounts = $this->getTeamPositionCounts($team->id);
                 $currentPlayerCount = $team->player_count;
 
@@ -1039,8 +1039,6 @@ class FreeAgencyService
                 }
 
             }
-
-           
 
             // Final check for incomplete teams
             $incompleteTeams = DB::table('teams')
