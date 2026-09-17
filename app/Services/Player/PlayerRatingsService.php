@@ -47,29 +47,49 @@ class PlayerRatingsService
     }
 
     public function updateContract($teamId){
-        $contracts = DB::table('player_contracts as pc')
-                    ->select('pc.*','p.name as player_name','p.is_rookie')
-                    ->join('players as p','p.id','=','pc.player_id')
-                    ->where('pc.team_id',$teamId)
-                    ->where('pc.status','signed')
-                    ->get();
 
-        // dd($contracts);
+        $teams = DB::table('teams')
+                ->select('players.team_id as team_id','players.id as player_id','players.name as player_name')
+                ->join('players','players.team_id','=','teams.id')
+                ->get();
 
         $players = [];
 
-        foreach ($contracts as $contract) {
-                DB::table('players')
-                    ->where('id', $contract->player_id)
-                    ->update([
-                        'salary' => $contract->salary,
-                        'contract_type' => $contract->contract_type,
-                        'player_option' => $contract->player_option,
-                        'team_option' => $contract->team_option,
-                        'no_trade_clause' => $contract->no_trade_clause,
-                    ]);
-                
-                $players[] = $contract->player_name;
+        foreach ($teams as $team) {
+
+                $contract = DB::table('player_contracts as pc')
+                    ->select('pc.*','p.name as player_name','p.is_rookie')
+                    ->join('players as p','p.id','=','pc.player_id')
+                    ->where('pc.player_id',$team->player_id)
+                    ->where('pc.status','signed')
+                    ->orderBy('id','desc')
+                    ->first();
+
+                // dd($contract->player_id);
+                if($contract){
+
+                    DB::table('players')
+                        ->where('id', $contract->player_id)
+                        ->update([
+                            'salary' => $contract->salary,
+                            'contract_type' => $contract->contract_type,
+                            'player_option' => $contract->player_option,
+                            'team_option' => $contract->team_option,
+                            'no_trade_clause' => $contract->no_trade_clause,
+                        ]);
+
+                    $previousSeasonId = get_current_season_id() - 1;
+
+                    DB::table('player_contracts')
+                        ->where('id', $contract->player_id)
+                        ->where('contract_end', $previousSeasonId)
+                        ->update([
+                            'status' => 'ended',
+                        ]);
+                    
+                    $players[] = $team->player_name;
+    
+                }
         }
 
         return $players;

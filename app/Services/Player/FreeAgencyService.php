@@ -965,7 +965,9 @@ class FreeAgencyService
 
         $teamsCount = $teamsWithFewMembers->count();
         if ($teamsCount === 0) {
-            $update = ($currentSeasonId == 1) ? $this->updateTeamRolesBasedOnStatsByRating() : $this->storeNextSeasonStatsPerTeam();
+            $update = ($currentSeasonId == 1) ? 
+                $this->updateTeamRolesBasedOnStatsByRating() : 
+                $this->storeNextSeasonStatsPerTeam();
 
             if ($update) {
                 if ($seasonId == 0) {
@@ -980,6 +982,13 @@ class FreeAgencyService
                             'is_rookie' => 1,
                         ]);
                 } else {
+
+                    DB::table('player_contracts')
+                        ->where('contract_end','<=', $currentSeasonId)
+                        ->update([
+                            'status' => 'ended',
+                        ]);
+
                     DB::table('seasons')
                         ->where('id',  $seasonId)
                         ->update(['status' => config('timeline.player_signings')]);
@@ -1380,10 +1389,8 @@ class FreeAgencyService
 
                 foreach ($allPlayersStats as $playerStat) {
                     // use shared PlayerSeasonStatsController instance
-                    $this->updateContractExtensionData($playerStat->id);
                     $this->storeStats->storePlayerNextSeasonStats($teamId, $playerStat->id);
-
-
+                    $this->updateContractExtensionData($playerStat->id);
                 }
 
                 DB::commit();
@@ -1400,12 +1407,11 @@ class FreeAgencyService
     private function updateContractExtensionData(int $playerId)
     {
         $seasonId = get_current_season_id();
-        $nextSeasonId = get_current_season_id() + 1;
 
         $contractOffer = DB::table('player_contracts')
             ->where('player_id', $playerId)
-            ->where('season_id', $seasonId)
             ->where('status','signed')
+            ->orderBy('id','desc')
             ->first();
 
         if(!$contractOffer) return;
@@ -1420,14 +1426,6 @@ class FreeAgencyService
                 'team_option' =>  $contractOffer->team_option ?? false,
                 'no_trade_clause' =>  $contractOffer->no_trade_clause ?? false,
             ]);
-
-        DB::table('player_contracts')
-            ->where('player_id', $playerId)
-            ->where('contract_end','<', $nextSeasonId)
-            ->update([
-                'status' => 'ended',
-            ]);
-
     }
     
     private function clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive): void 
