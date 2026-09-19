@@ -182,9 +182,9 @@ class LeaguesController extends Controller
 
         DB::statement('UPDATE `teams` SET `coach_id`=0');
 
-            /*
+        /*
         |--------------------------------------------------------------------------
-        | Drop all dynamic player_game_stats_batch_N tables
+        | Drop all dynamic _batch_N tables
         |--------------------------------------------------------------------------
         */
 

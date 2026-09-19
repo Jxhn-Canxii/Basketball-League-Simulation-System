@@ -6,9 +6,11 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
 use App\Models\Teams;
+use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Trade\TradeService;
+use BcMath\Number;
 
 class TeamsService
 {
@@ -16,6 +18,7 @@ class TeamsService
     protected $helper;
     protected $tradeService;
     protected $streak;
+    protected $contract;
 
     public function __construct(){
 
@@ -23,6 +26,7 @@ class TeamsService
         $this->helper = new HelperService();
         $this->tradeService = new TradeService();
         $this->streak = new TeamStreakService();
+        $this->contract = new ContractService();
     }
     // Display a listing of the resource.
     public function index()
@@ -289,6 +293,7 @@ class TeamsService
         $playoffStats = self::getPlayoffStats($teamId);
         $gameStreaks = self::getTeamStreaks($teamId);
         $chemistry =  $this->chemistry->getChemistryCalculation($teamId,$seasonId,$previousSeasonId);
+        $remainingCapSpace = $this->contract->getRemainingCapSpace($teamId);
 
         return response()->json([
             'teams' => $teamInfo,
@@ -299,6 +304,7 @@ class TeamsService
             'streaks' => $gameStreaks,
             'chemistry' => $chemistry,
             'current_season_id' => $seasonId,
+            'remaining_cap_space' => $remainingCapSpace
         ]);
     }
     public function teamSeasonFinals(Request $request)

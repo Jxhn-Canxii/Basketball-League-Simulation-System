@@ -3,13 +3,9 @@
 namespace App\Services\Player;
 
 use Illuminate\Http\Request;
-use Faker\Factory as Faker;
-use Behat\Transliterator\Transliterator;
-use Illuminate\Support\Str;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Inertia\Inertia;
 use App\Models\Player;
+use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\Team\ScoutingService;
 use App\Services\League\RoundService;
@@ -23,6 +19,7 @@ class PlayerService
     protected $roundService;
     protected $scheduleService;
     protected $playerGeneratorService;
+    protected $contract;
 
     public function __construct()
     {
@@ -30,6 +27,7 @@ class PlayerService
         $this->scout = new ScoutingService();
         $this->roundService = new RoundService();
         $this->scheduleService = new ScheduleService();
+        $this->contract = new ContractService();
         $this->playerGeneratorService = new PlayerGeneratorService();
     }
 
@@ -38,11 +36,14 @@ class PlayerService
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',
-            'season_id' => 'nullable|integer',
+            'season_id' => 'nullable||exists:seasons,id',
         ]);
 
         $teamId = $request->team_id;
         $seasonId = $request->season_id;
+
+
+        $remainingCapSpace = $this->contract->getRemainingCapSpace($teamId);
 
         // Initialize an array to hold player stats
         $playerStats = [];
@@ -96,7 +97,7 @@ class PlayerService
                         ->where('season_id', $seasonId - 2)
                         ->value('overall_rating') ?? 75;
 
-                    $latestRatings = ($seasonId < 3) ? $player->overall_rating : $latestRatings;
+                    $latestRatings = ($seasonId < 3 || $isLatestSeason) ? $player->overall_rating : $latestRatings;
 
 
                     $prevRatings = ($seasonId == 1) ? $player->overall_rating : $prevRatings;
@@ -364,7 +365,8 @@ class PlayerService
             'season_id' => $seasonId,
             'team_id' => $teamId,
             'stats_count' => count($playerStatsData),
-            'table' => $seasonStatsDBName
+            'table' => $seasonStatsDBName,
+            'remaining_cap_space' => $remainingCapSpace,
         ]);
     }
 

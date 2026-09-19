@@ -44,17 +44,23 @@ class ArchiveService
             return true;
         }
         catch(\Exception $e){
+            // DB::rollBack();
+
             return false;
         }
     }
 
-    public static function archivePerQuarterGameStats(int $seasonId)
+    //segment per season
+
+    public function archivePerQuarterGameStats(int $seasonId)
     {
     
         $MODULO = (int) config('archive.DECADE_MODULO');
         $tableBatch = CEIL($seasonId / $MODULO);
+        $archiveDB = $this->helper->archiveDB();
 
-        $archiveTable = "player_per_quarter_stats_batch_" . $tableBatch;
+
+        $archiveTable = $archiveDB.".player_per_quarter_stats_batch_" . $tableBatch;
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
@@ -84,13 +90,15 @@ class ArchiveService
         // }
     }
 
-    public static function archiveQuarterGameBreakDown(int $seasonId)
+    public function archiveQuarterGameBreakDown(int $seasonId)
     {
     
         $MODULO = (int) config('archive.DECADE_MODULO');
         $tableBatch = CEIL($seasonId / $MODULO);
+        $archiveDB = $this->helper->archiveDB();
 
-        $archiveTable = "game_quarter_breakdown_batch_" . $tableBatch;
+
+        $archiveTable = $archiveDB.".game_quarter_breakdown_batch_" . $tableBatch;
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
@@ -120,12 +128,13 @@ class ArchiveService
         // }
     }
 
-    public static function archiveGameStats(int $seasonId)
+    public function archiveGameStats(int $seasonId)
     {
         $MODULO = (int) config('archive.DECADE_MODULO');
         $tableBatch = CEIL($seasonId / $MODULO);
+        $archiveDB = $this->helper->archiveDB();
 
-        $archiveTable = "player_game_stats_batch_" . $tableBatch;
+        $archiveTable = $archiveDB.".player_game_stats_batch_" . $tableBatch;
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
@@ -155,7 +164,10 @@ class ArchiveService
         // }
     }
 
-    public static function archivePlayerSeasonStats(int $seasonId)
+
+    //one segment
+
+    public function archivePlayerSeasonStats(int $seasonId)
     {
         
         $MODULO = (int) config('archive.DECADE_MODULO');

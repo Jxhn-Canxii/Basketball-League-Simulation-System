@@ -48,9 +48,12 @@ class PlayerRatingsService
 
     public function updateContract($teamId){
 
+        $latestSeasonId  = get_current_season_id();
+
         $teams = DB::table('teams')
                 ->select('players.team_id as team_id','players.id as player_id','players.name as player_name')
                 ->join('players','players.team_id','=','teams.id')
+                ->where('players.team_id',$teamId)
                 ->get();
 
         $players = [];
@@ -61,6 +64,7 @@ class PlayerRatingsService
                     ->select('pc.*','p.name as player_name','p.is_rookie')
                     ->join('players as p','p.id','=','pc.player_id')
                     ->where('pc.player_id',$team->player_id)
+                    ->where('pc.contract_end','>',$latestSeasonId)
                     ->where('pc.status','signed')
                     ->orderBy('id','desc')
                     ->first();
@@ -78,17 +82,29 @@ class PlayerRatingsService
                             'no_trade_clause' => $contract->no_trade_clause,
                         ]);
 
-                    $previousSeasonId = get_current_season_id() - 1;
+                    $previousSeasonId = get_current_season_id();
 
                     DB::table('player_contracts')
                         ->where('id', $contract->player_id)
-                        ->where('contract_end', $previousSeasonId)
+                        ->where('contract_end','<=', $previousSeasonId)
                         ->update([
                             'status' => 'ended',
                         ]);
                     
                     $players[] = $team->player_name;
     
+                }
+                else{
+                    DB::table('players')
+                    ->where('id', $team->player_id)
+                    ->update([
+                        'team_id' => 0,
+                        'salary' => 0,
+                        'contract_type' => 0,
+                        'player_option' => 0,
+                        'team_option' => 0,
+                        'no_trade_clause' => 0,
+                    ]);
                 }
         }
 
@@ -98,7 +114,7 @@ class PlayerRatingsService
     //
     public function updateActivePlayers($request)
     {
-        DB::beginTransaction(); // Start transaction
+        // DB::beginTransaction(); // Start transaction
 
         try {
 
@@ -342,6 +358,9 @@ class PlayerRatingsService
                 if($player->contract_years == 1 && $player->player_option == 1){
                     $this->playerDecision($player,$teamId, $teamName,$nextSeasonId);
                 }
+
+                //last step
+                $this->updateContract($teamId);
             }
 
             // Show alert if this is the last update
@@ -357,7 +376,7 @@ class PlayerRatingsService
                     $season->save();
                 }
 
-                DB::commit(); // Commit transaction
+                // DB::commit(); // Commit transaction
 
                 return response()->json([
                     'error' => false,
@@ -369,7 +388,7 @@ class PlayerRatingsService
                 ]);
             }
 
-            DB::commit(); // Commit transaction
+            // DB::commit(); // Commit transaction
 
             return response()->json([
                 'error' => false,
@@ -380,7 +399,7 @@ class PlayerRatingsService
                 're_signed_players' => $reSignedPlayers, // Include re-signed players in response
             ]);
         } catch (\Exception $e) {
-            DB::rollBack(); // Rollback transaction on error
+            // DB::rollBack(); // Rollback transaction on error
 
             return response()->json([
                 'error' => true,

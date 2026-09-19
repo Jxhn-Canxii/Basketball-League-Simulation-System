@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+ini_set('max_execution_time', 0); // Unlimited execution time
+
 use Illuminate\Http\Request;
 use App\Models\Teams;
 use App\Models\Player; // <-- Add this if not yet imported
 use App\Services\Archive\ArchiveService;
+use App\Services\Archive\ArchiveToOtherDBService;
 use App\Services\Draft\DraftPickRightsService;
 use App\Services\Helper\HelperService;
 use App\Services\Player\PlayerRatingsService;
@@ -30,11 +33,13 @@ class TestController extends Controller
     protected $teamRole;
     protected $playerRatingService;
     protected $draftRights;
+    protected $archivesToDB;
 
     public function __construct(){
 
         $this->draftRights = new DraftPickRightsService();
         $this->teamRole = new TeamRoleService();
+        $this->archivesToDB = new ArchiveToOtherDBService();
         $this->chemistry = new TeamChemistryService();
         $this->streak = new TeamStreakService();
         $this->helper = new HelperService();
@@ -526,7 +531,7 @@ class TestController extends Controller
     public function TestArchiving(){
 
         // $archive =  $this->archive->archivePlayerSeasonStats();
-        $archive =  $this->archive->archivePlayerSeasonStats();
+        $archive =  $this->archive->archiveQuarterGameBreakDown(1);
 
         return response()->json([
             'message' => $archive,

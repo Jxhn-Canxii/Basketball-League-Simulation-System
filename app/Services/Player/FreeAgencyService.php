@@ -1390,8 +1390,12 @@ class FreeAgencyService
                 foreach ($allPlayersStats as $playerStat) {
                     // use shared PlayerSeasonStatsController instance
                     $this->storeStats->storePlayerNextSeasonStats($teamId, $playerStat->id);
-                    $this->updateContractExtensionData($playerStat->id);
                 }
+
+                // foreach ($allPlayersStats as $playerStat) {
+                //     // 
+                //     $this->updateContractExtensionData($playerStat->id);
+                // }
 
                 DB::commit();
             } catch (\Exception $e) {
@@ -1402,30 +1406,6 @@ class FreeAgencyService
         }
 
         return true;
-    }
-
-    private function updateContractExtensionData(int $playerId)
-    {
-        $seasonId = get_current_season_id();
-
-        $contractOffer = DB::table('player_contracts')
-            ->where('player_id', $playerId)
-            ->where('status','signed')
-            ->orderBy('id','desc')
-            ->first();
-
-        if(!$contractOffer) return;
-
-        DB::table('players')
-            ->where('player_id', $playerId)
-            ->update([
-                'salary' =>  $contractOffer->salary,
-                'contract_years' =>  $contractOffer->years,
-                'contract_type' =>  $contractOffer->contract_type,
-                'player_option' =>  $contractOffer->player_option ?? false,
-                'team_option' =>  $contractOffer->team_option ?? false,
-                'no_trade_clause' =>  $contractOffer->no_trade_clause ?? false,
-            ]);
     }
     
     private function clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive): void 

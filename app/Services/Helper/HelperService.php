@@ -15,6 +15,12 @@ class HelperService
         $this->excludedRounds = config('playoffs');
     }
 
+    public function archiveDB(){
+
+        return config('database.connections.archive.database') ?? 'liga2_archive';
+
+    }
+
     public function simulatedRounds($seasonId){
 
         return DB::table('schedules')
@@ -109,8 +115,9 @@ class HelperService
 
         $MODULO = config('archive.DECADE_MODULO');
         $tableBatch = ceil($seasonId / $MODULO);
+        $archiveDB = $this->archiveDB();
 
-        $archiveTable = "player_game_stats_batch_" . $tableBatch;
+        $archiveTable = $archiveDB.".player_game_stats_batch_" . $tableBatch;
         if (!Schema::hasTable($archiveTable)) {
             $archiveTable = "player_game_stats";
         }
@@ -123,8 +130,9 @@ class HelperService
 
         $MODULO = config('archive.DECADE_MODULO');
         $tableBatch = ceil($seasonId / $MODULO);
+        $archiveDB = $this->archiveDB();
 
-        $archiveTable = "game_quarter_breakdown_batch_" . $tableBatch;
+        $archiveTable = $archiveDB.".game_quarter_breakdown_batch_" . $tableBatch;
         if (!Schema::hasTable($archiveTable)) {
             $archiveTable = "game_quarter_breakdown";
         }
@@ -137,8 +145,9 @@ class HelperService
 
         $MODULO = config('archive.DECADE_MODULO');
         $tableBatch = ceil($seasonId / $MODULO);
+        $archiveDB = $this->archiveDB();
 
-        $archiveTable = "player_per_quarter_stats_batch_" . $tableBatch;
+        $archiveTable = $archiveDB.".player_per_quarter_stats_batch_" . $tableBatch;
         if (!Schema::hasTable($archiveTable)) {
             $archiveTable = "player_per_quarter_stats";
         }

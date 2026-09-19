@@ -36,6 +36,8 @@ class SimulateService
     protected $engine;
     protected $gameResultService;
 
+    private $gameMinutes = 240;
+
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
@@ -75,7 +77,7 @@ class SimulateService
                 ], 400); // 400 - Bad Request is more appropriate for this scenario
             }
 
-            $data = collect($this->engine->startRegularGame($request->schedule_id,240));
+            $data = collect($this->engine->startRegularGame($request->schedule_id,$this->gameMinutes));
 
             $gameData = $data['game_info'];
             $homeRosterReport = $data['home_team_report'];
@@ -193,7 +195,7 @@ class SimulateService
             // $season = Seasons::find($currentSeasonId);
             $this->seriesAudit($request->schedule_id);
 
-            $data = collect($this->engine->startPlayoffSeriesGame($request->schedule_id,240));
+            $data = collect($this->engine->startPlayoffSeriesGame($request->schedule_id,$this->gameMinutes));
 
             $gameData = $data['game_info'];
             $homeRosterReport = $data['home_team_report'];
@@ -449,7 +451,7 @@ class SimulateService
             ], 400); // 400 - Bad Request is more appropriate for this scenario
         }
 
-        $data = collect($this->engine->startPlayoffNonSeriesGame($request->schedule_id,240));
+        $data = collect($this->engine->startPlayoffNonSeriesGame($request->schedule_id,$this->gameMinutes));
 
         // dd($data);
 

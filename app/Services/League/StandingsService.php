@@ -94,16 +94,17 @@ class StandingsService
 
             $reservedPlayers = DB::table('players as p')
                 ->join($playerSeasonStatsDBName.' as ps', 'p.id', '=', 'ps.player_id')
-                ->where('ps.team_id', $team->team_id)
+                ->where('p.team_id', $team->team_id)
                 ->where('p.is_reserved', 1) // Only rookies drafted in this season
                 ->where('ps.season_id', $seasonId)
                 ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
                 ->orderByDesc('ps.eff')
+                ->distinct('p.player_id')
                 ->get();
 
             $topPlayers = DB::table('players as p')
                 ->join($playerSeasonStatsDBName.' as ps', 'p.id', '=', 'ps.player_id')
-                ->where('ps.team_id', $team->team_id)
+                ->where('p.team_id', $team->team_id)
                 ->where('ps.season_id', $seasonId)
                 ->where('ps.avg_points_per_game','>=',10)
                 ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')

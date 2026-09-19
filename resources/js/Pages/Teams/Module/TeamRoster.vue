@@ -9,11 +9,18 @@
         >
             {{ team_info.teams.conference_name ?? "-" }}
         </span>
+        <span
+            v-if="team_info.remaining_cap_space > 0"
+            class="inline-flex items-center ml-2 px-2.5 py-0.5 bg-purple-300 text-purple-600 rounded text-xs font-medium"
+        >
+            Cap Space: {{ moneyFormatter(team_info.remaining_cap_space ?? 0) }}
+        </span>
+
         <!-- Divider -->
         <hr class="my-4 border-t border-gray-200" />
         <!-- Modify the tabs section -->
         <div class="flex justify-between mt-5 border-b border-gray-200 p-2" 
-             :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }">
+            :style="{ backgroundColor: '#'+team_info.teams.primary_color, color: '#'+team_info.teams.secondary_color }">
             <div class="flex space-x-4">
                 <!-- View Type Tabs -->
                 <div class="border-r border-gray-300 pr-4 flex space-x-2">
@@ -331,10 +338,10 @@
                                         <!-- If the player has played more than one season -->
                                         {{ player.seasons_played_with_team }} yrs.
                                     </td>
-                                    <td class="px-2 py-1 whitespace-nowrap border uppercase" :title="player.contract_years+' Years Remaining'">
+                                    <td class="px-2 py-1 whitespace-nowrap border uppercase" :title="player.contract_type+' | '+player.contract_years + ' Years Contract'">
                                         <!-- {{ player.contract_years ?? '-' }} yrs. -->
                                         {{ player.salary ?? '-' }}
-                                        <sup>
+                                        <sup hidden>
                                             {{ player.contract_type ?? '-' }} 
                                             <sup>{{ player.contract_years ?? '-' }} yrs</sup>
                                         </sup>
@@ -1238,7 +1245,7 @@ import { ref, onMounted, watch, computed } from "vue";
 import Modal from "@/Components/Modal.vue";
 import Swal from "sweetalert2";
 import axios from "axios";
-import { roleBadgeClass } from "@/Utility/Formatter";
+import { roleBadgeClass, moneyFormatter } from "@/Utility/Formatter";
 
 import PlayerPerformance from "../../Players/Module/PlayerPerformance.vue";
 import DepthChartRow from "./DepthChartRow.vue";
