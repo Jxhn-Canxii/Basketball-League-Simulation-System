@@ -1096,11 +1096,11 @@ class PlayerRatingsService
 
                 break;
 
-            case 'SHOP':
+            // case 'SHOP':
 
-                // Do not automatically waive.
-                // This can later feed your trade system.
-                break;
+            //     // Do not automatically waive.
+            //     // This can later feed your trade system.
+            //     break;
         }
     }
 

@@ -8,7 +8,6 @@ use Illuminate\Http\Request;
 use App\Models\Teams;
 use App\Models\Player; // <-- Add this if not yet imported
 use App\Services\Archive\ArchiveService;
-use App\Services\Archive\ArchiveToOtherDBService;
 use App\Services\Draft\DraftPickRightsService;
 use App\Services\Helper\HelperService;
 use App\Services\Player\PlayerRatingsService;
@@ -33,13 +32,11 @@ class TestController extends Controller
     protected $teamRole;
     protected $playerRatingService;
     protected $draftRights;
-    protected $archivesToDB;
 
     public function __construct(){
 
         $this->draftRights = new DraftPickRightsService();
         $this->teamRole = new TeamRoleService();
-        $this->archivesToDB = new ArchiveToOtherDBService();
         $this->chemistry = new TeamChemistryService();
         $this->streak = new TeamStreakService();
         $this->helper = new HelperService();

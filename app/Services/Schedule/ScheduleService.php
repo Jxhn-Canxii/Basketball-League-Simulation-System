@@ -157,14 +157,6 @@ class ScheduleService
             $prevSeasonid = get_current_season_id() ?? 0;
             $nextSeasonid = $prevSeasonid + 1;
 
-            $archives = $this->archive->runArchives($prevSeasonid);
-
-            if(!$archives){
-                return response()->json([
-                    'message' => 'Archive error!',
-                    'error' => $archives,
-                ],400);
-            }
             // Create schedule based on type
             switch ((int)$request->type) {
                 case 2:

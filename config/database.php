@@ -70,7 +70,7 @@ return [
             'database' => env('ARCHIVE_DB_DATABASE', 'liga2_archive'),
             'username' => env('ARCHIVE_DB_USERNAME', 'root'),
             'password' => env('ARCHIVE_DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
+            'unix_socket' => env('ARCHIVE_DB_SOCKET', ''),
             'charset' => 'utf8mb4',
             'collation' => 'utf8mb4_unicode_ci',
             'prefix' => '',

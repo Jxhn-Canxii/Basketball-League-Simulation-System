@@ -3,6 +3,7 @@
 namespace App\Services\Player;
 
 use App\Models\Player;
+use App\Services\Archive\ArchiveService;
 use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\Player\PlayerValuationService;
@@ -15,6 +16,7 @@ class FreeAgencyService
     protected $helper;
     protected $contractService;
     protected $valuationService;
+    protected $archive;
 
     public function __construct()
     {
@@ -23,6 +25,7 @@ class FreeAgencyService
         $this->helper = new HelperService();
         $this->contractService = new ContractService();
         $this->valuationService = new PlayerValuationService();
+        $this->archive = new ArchiveService();
     }
 
     public function updateInjuryFreeAgents()
@@ -983,11 +986,14 @@ class FreeAgencyService
                         ]);
                 } else {
 
-                    DB::table('player_contracts')
-                        ->where('contract_end','<=', $currentSeasonId)
-                        ->update([
-                            'status' => 'ended',
-                        ]);
+                    $archives = $this->archive->runArchives($currentSeasonId);
+
+                    if(!$archives){
+                        return response()->json([
+                            'message' => 'Archive error!',
+                            'error' => $archives,
+                        ],400);
+                    }
 
                     DB::table('seasons')
                         ->where('id',  $seasonId)
