@@ -59,8 +59,8 @@ class SimulateService
 
     public function simulateRegular(Request $request)
     {
-        // try{
-        //     DB::beginTransaction(); // Start transaction
+        try{
+            DB::beginTransaction(); // Start transaction
     
             $currentSeasonId = get_current_season_id();
 
@@ -157,7 +157,7 @@ class SimulateService
             }
 
             // Commit the transaction
-            // DB::commit();
+            DB::commit();
 
             // Return the simulation result
             return response()->json([
@@ -172,16 +172,16 @@ class SimulateService
                 // 'data' => $gameResult,
                 // 'playerGameStats' => $playerGameStats,
             ]);
-        // }
-        // catch(\Exception $e){
-        //     DB::rollBack();
+        }
+        catch(\Exception $e){
+            DB::rollBack();
 
-        //     return response()->json([
-        //         'message' => 'An error occurred while storing the season awards.',
-        //         'error' => $e->getMessage(),
-        //     ], 500);
+            return response()->json([
+                'message' => 'An error occurred while storing the season awards.',
+                'error' => $e->getMessage(),
+            ], 500);
 
-        // }
+        }
 
     }
 
