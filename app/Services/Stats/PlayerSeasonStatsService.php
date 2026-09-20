@@ -243,7 +243,7 @@ class PlayerSeasonStatsService
                 ->where('season_id', $latestSeasonId)
                 ->exists();
 
-            // $valuation = $this->valuationService->calculatePlayerValue($player);
+            $valuation = $this->valuationService->calculatePlayerValue($player);
 
             if ($hasStats) {
                 // Calculate the player's aggregated stats for the latest season
@@ -317,7 +317,7 @@ class PlayerSeasonStatsService
                     'avg_blocks_per_game' => 0,
                     'avg_turnovers_per_game' => 0,
                     'avg_fouls_per_game' => 0,
-                    // 'player_valuation' => $valuation,
+                    'player_valuation' => $valuation,
                 ];
             }
 
@@ -364,7 +364,7 @@ class PlayerSeasonStatsService
                     'total_three_point_attempts' => $playerStats->total_three_point_attempts,
                     'total_free_throws_made' => $playerStats->total_free_throws_made,
                     'total_free_throw_attempts' => $playerStats->total_free_throw_attempts,
-                    // 'player_valuation' => $valuation,
+                    'player_valuation' => $valuation,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]

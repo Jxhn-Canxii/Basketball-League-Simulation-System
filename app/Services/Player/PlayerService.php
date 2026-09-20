@@ -1392,6 +1392,7 @@ class PlayerService
             'total_records' => $totalRecords,
             'game_logs' => $formattedGameLogs,
             'player_name' => $playerName,
+            'source' => $playerDatabase,
         ]);
     }
 

@@ -454,6 +454,7 @@ class DraftService
                     ->where('team_id', 0)
                     ->where('draft_id', $seasonId)
                     ->where('is_drafted', 0)
+                    ->orderByDesc('potential_rating')
                     ->orderByDesc('overall_rating')
                     ->orderBy('age')
                     ->get();

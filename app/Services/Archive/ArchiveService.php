@@ -362,7 +362,7 @@ class ArchiveService
                     'status',
                     'is_overtime',
                 )
-                ->where('season_id', $currentSeasonId)
+                ->where('season_id', $seasonId)
                 ->where('status',2)
                 ->get();
 

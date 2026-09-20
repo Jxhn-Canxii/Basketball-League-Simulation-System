@@ -1483,20 +1483,11 @@ class TradeDecisionService
             if (!empty($tradePlayer->player_id)) {
 
                 $updated = DB::table('players')
-                    ->where(
-                        'id',
-                        $tradePlayer->player_id
-                    )
-                    ->where(
-                        'team_id',
-                        $tradePlayer->from_team_id
-                    )
+                    ->where('id',$tradePlayer->player_id)
+                    ->where('team_id',$tradePlayer->from_team_id)
                     ->update([
-                        'team_id' =>
-                            $tradePlayer->to_team_id,
-
-                        'updated_at' =>
-                            now(),
+                        'team_id' => $tradePlayer->to_team_id,
+                        'updated_at' => now(),
                     ]);
 
 
