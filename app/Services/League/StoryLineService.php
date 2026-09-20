@@ -29,6 +29,7 @@ class StoryLineService
 
             $storylineData =
                 DB::table('current_season_storyline')
+                ->orderBy('season_id','desc')
                 ->first();
 
             if (!$storylineData) {

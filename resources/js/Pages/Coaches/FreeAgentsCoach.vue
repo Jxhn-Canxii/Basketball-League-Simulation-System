@@ -361,9 +361,9 @@ const assignTeamsAuto = async () => {
 const endCoachSigning = async () => {
     try {
 
-        await archiveSeason();
-
         await generateSeasonStoryLine();
+
+        await archiveSeason();
         
         const response = await axios.get(route('end.coach.signings'));
         if (response) {

@@ -435,10 +435,11 @@ class TeamManagementService
         $evaluatedPlayers = collect($evaluatedPlayers)
             ->sort(function ($a, $b) {
 
-                return $b['score'] <=> $a['score']
-                    ?: $b['overall'] <=> $a['overall']
+                return $a['is_injured'] <=> $b['is_injured']
+                    ?: $b['score'] <=> $a['score']
+                    ?: $a['fatigue'] <=> $b['fatigue']
                     ?: $b['efficiency'] <=> $a['efficiency']
-                    ?: $a['fatigue'] <=> $b['fatigue'];
+                    ?: $b['overall'] <=> $a['overall'];
             })
             ->values();
 
