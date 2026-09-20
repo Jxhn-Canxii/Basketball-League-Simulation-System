@@ -48,7 +48,7 @@
                         </button>
                         <button
                             @click.prevent="isDraftModalOpen = true"
-                            v-if="seasons.is_new_season == 4"
+                            v-if="seasons.is_new_season == 4 || seasons.is_new_season == 8"
                             v-bind:class="{
                                 'opacity-25': isDraftModalOpen,
                             }"
@@ -70,7 +70,7 @@
                         </button>
                         <button
                             @click.prevent="isPlayerSigningModalOpen = true"
-                            v-if="seasons.is_new_season == 6 || seasons.is_new_season == 8"
+                            v-if="seasons.is_new_season == 6 || seasons.is_new_season == 8 && seasons.is_draft_finished"
                             v-bind:class="{
                                 'opacity-25': isPlayerSigningModalOpen,
                             }"
@@ -333,7 +333,7 @@
             </Modal>
             <Modal :show="isDraftModalOpen" :maxWidth="'6xl'" title="Draft Rookie Players" @close="isDraftModalOpen = false">
                 <div class="p-0 block bg-black">
-                    <Draft @newSeason="handleNewSeason" />
+                    <Draft @newSeason="handleNewSeason" :key="seasons.current_season" :season_id="seasons.current_season" />
                 </div>
             </Modal>
             <Modal :show="isPlayerAwardsModalOpen" :maxWidth="'6xl'" title="Season Awards" @close="closeAwardsModal()">

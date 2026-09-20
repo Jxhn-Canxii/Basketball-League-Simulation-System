@@ -8,7 +8,7 @@ SELECT
     
     -- Player playoff data
     ppa.championships_won AS player_championships_won,
-    ppa.total_playoff_appearances AS player_total_playoff_appearances,
+    ppa.total_playoff_series_appearances AS player_total_playoff_appearances,
     ppa.seasons_played_in_playoffs,
 
     ppa.interconference_semi_finals_appearances as big_4_appearances,

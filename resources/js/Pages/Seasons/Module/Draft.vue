@@ -1191,9 +1191,9 @@ onBeforeUnmount(() => {
 
 const fetchDraftOrder = async () => {
   try {
-    const response = await axios.get(
-      route("draft.orders")
-    );
+    const draftOrderLink = props.season_id == 0 ? "pioneer.draft.orders" : "draft.orders";
+    
+    const response = await axios.get(route(draftOrderLink));
 
     draftOrder.value =
       response.data.draft_order ?? [];
@@ -1404,9 +1404,11 @@ const runNextPick = async () => {
   clearNextPickTimer();
 
   try {
+    let seasonId = props.season_id == 0 ? 1 : props.season_id;
+
     const response = await axios.post(
       route("draft.decision", {
-        seasonId: props.season_id,
+        seasonId: seasonId,
         round: pick.round,
         pickNumber: pick.pick_number,
       })

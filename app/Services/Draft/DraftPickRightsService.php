@@ -44,11 +44,13 @@ class DraftPickRightsService
             return;
         }
 
+        $draftRounds  = $currentSeasonId > 0 ? [1,2] : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+
         foreach ($futureSeasons as $seasonId) {
 
             foreach ($teams as $team) {
 
-                foreach ([1, 2] as $round) {
+                foreach ($draftRounds as $round) {
 
                     DB::table('draft_pick_rights')
                         ->insertOrIgnore([

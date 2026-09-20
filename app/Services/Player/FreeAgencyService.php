@@ -820,37 +820,18 @@ class FreeAgencyService
                 throw new \RuntimeException('Team cannot afford this signing under current cap rules.');
             }
 
-            // Update the player's team_id and contract_years using DB
-            if ($seasonId == 0) {
-                DB::table('players')
-                    ->where('id', $player->id)
-                    ->update([
-                        'team_id' => $teamId,
-                        'drafted_team_id' => $teamId,
-                        'is_drafted' => true,
-                        'contract_years' => $contractYears,
-                        'salary' => $offer['salary'],
-                        'contract_type' => $offer['contract_type'],
-                        'player_option' => $offer['player_option'],
-                        'team_option' => $offer['team_option'],
-                        'no_trade_clause' => $offer['no_trade_clause'],
-                        'draft_status' => 'Special Draft'
-                    ]);
-            } else {
-                DB::table('players')
-                    ->where('id', $player->id)
-                    ->update([
-                        'team_id' => $teamId,
-                        'contract_years' => $contractYears,
-                        'salary' => $offer['salary'],
-                        'contract_type' => $offer['contract_type'],
-                        'player_option' => $offer['player_option'],
-                        'team_option' => $offer['team_option'],
-                        'no_trade_clause' => $offer['no_trade_clause']
-                    ]);
-            }
-
-
+            DB::table('players')
+                ->where('id', $player->id)
+                ->update([
+                    'team_id' => $teamId,
+                    'contract_years' => $contractYears,
+                    'salary' => $offer['salary'],
+                    'contract_type' => $offer['contract_type'],
+                    'player_option' => $offer['player_option'],
+                    'team_option' => $offer['team_option'],
+                    'no_trade_clause' => $offer['no_trade_clause']
+                ]);
+            
             // Insert the transaction record into the transactions table
             DB::table('transactions')->insert([
                 'player_id' => $player->id,

@@ -73,9 +73,17 @@ class SeasonsService
 
         $teamIds = DB::table('teams')->pluck('id')->toArray();
 
+        $currentSeason = get_current_season_id() ?? 0;
+        $prevSeason = get_previous_season_id() ?? 0;
+        $nextSeason = $currentSeason + 1;
         // If you need the result as a Collection again, you can convert it back
         $teamIdsCollection = collect($teamIds);
         // Create the response array
+
+        $isDraftFinished = !DB::table('drafts')
+                            ->where('season_id', $nextSeason)
+                            ->where('player_id', 0)
+                            ->exists();
 
         $response = [
             'seasons' => $seasons,
@@ -84,8 +92,9 @@ class SeasonsService
             'total_count' => $totalCount,
             'is_new_season' => $isNewSeason,
             'team_ids' => $teamIdsCollection, // Include team count in the response
-            'current_season' =>  get_current_season_id(),
-            'previous_season' =>  get_previous_season_id(),
+            'current_season' =>  $currentSeason,
+            'previous_season' => $prevSeason,
+            'is_draft_finished' => $isDraftFinished,
         ];
 
         // Return the seasons data along with pagination information as a JSON response

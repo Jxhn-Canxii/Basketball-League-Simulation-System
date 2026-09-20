@@ -32,14 +32,14 @@ class DraftController extends Controller
         return $this->draftService->draftDecision($seasonId,$round,$pickNumber);
     }
 
+    public function draftOrderPioneer()
+    {
+        return $this->draftService->draftOrderPioneer();
+    }
+
     public function draftOrder()
     {
         return $this->draftService->draftOrder();
-    }
-
-    public function draftPlayers()
-    {
-        return $this->draftService->draftPlayers();
     }
 
     public function rookieDraftees(Request $request)

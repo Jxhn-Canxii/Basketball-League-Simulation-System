@@ -44,6 +44,275 @@ class DraftService
      * Team A can generate Pick #3,
      * but Team B can actually make the selection.
      */
+    public function draftOrderPioneer()
+    {
+        DB::beginTransaction();
+
+        try {
+            $currentSeasonId = 1;
+            $latestSeasonId = 0;
+
+            /*
+             * Don't regenerate an existing draft.
+             */
+            $existingDraft = DB::table('drafts')
+                ->join(
+                    'teams',
+                    'drafts.team_id',
+                    '=',
+                    'teams.id'
+                )
+                ->where(
+                    'drafts.season_id',
+                    $currentSeasonId
+                )
+                ->select(
+                    'drafts.id',
+                    'drafts.draft_pick_right_id',
+                    'drafts.round',
+                    'drafts.pick_number as pick',
+                    'teams.name as team_name',
+                    'drafts.team_id',
+                    'drafts.draft_status',
+                    'drafts.player_id'
+                )
+                ->orderBy('drafts.round')
+                ->orderBy('drafts.pick_number')
+                ->get();
+
+            if ($existingDraft->isNotEmpty()) {
+
+                DB::commit();
+
+                return response()->json([
+                    'season_id' => $currentSeasonId,
+                    'draft_order' => $existingDraft,
+                    'message' => 'Draft already exists for this season.',
+                ]);
+            }
+
+            /*
+             * Make sure every franchise has a draft-right row.
+             */
+            $this->draftPickRightsService
+                ->ensureFutureDraftRights($latestSeasonId);
+
+            /*
+             * ====================================================
+             * STANDINGS
+             * ====================================================
+             */
+
+            $allTeams = DB::table('teams')
+                ->select(
+                    'teams.id as team_id',
+                    'teams.name as team_name',
+                )
+                ->orderBy(
+                    'market_size',
+                    'desc'
+                )
+                ->get();
+
+            if ($allTeams->isEmpty()) {
+                throw new \RuntimeException(
+                    'No standings found for the previous season.'
+                );
+            }
+
+            /*
+             * ====================================================
+             * LOTTERY
+             * ====================================================
+             */
+
+            $lotteryTeams = $allTeams->take(14);
+
+            $nonLotteryTeams = $allTeams->slice(14);
+
+            $lotteryOdds = [
+                140,
+                140,
+                140,
+                125,
+                105,
+                90,
+                75,
+                60,
+                45,
+                30,
+                20,
+                15,
+                10,
+                5,
+            ];
+
+            $weightedPool = [];
+
+            foreach ($lotteryTeams as $i => $team) {
+                $weightedPool[] = [
+                    'team' => $team,
+                    'weight' => $lotteryOdds[$i] ?? 1,
+                ];
+            }
+
+            $topPicks = [];
+            $selectedTeamIds = [];
+
+            while (count($topPicks) < min(4, count($weightedPool))) {
+
+                $winner = $this->weightedRandom($weightedPool);
+
+                $teamId = (int) $winner['team']->team_id;
+
+                if (!in_array($teamId, $selectedTeamIds, true)) {
+
+                    $topPicks[] = $winner['team'];
+
+                    $selectedTeamIds[] = $teamId;
+                }
+            }
+
+            $remainingLotteryTeams = $lotteryTeams
+                ->filter(function ($team) use ($selectedTeamIds) {
+                    return !in_array(
+                        (int) $team->team_id,
+                        $selectedTeamIds,
+                        true
+                    );
+                })
+                ->values()
+                ->all();
+
+            $firstRoundOrder = array_merge(
+                $topPicks,
+                $remainingLotteryTeams,
+                $nonLotteryTeams->values()->all()
+            );
+
+            /*
+             * ====================================================
+             * CREATE ACTUAL DRAFT
+             * ====================================================
+             */
+
+            $draftOutput = [];
+            $draftRounds  = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
+
+            foreach ($draftRounds as $round) {
+
+                foreach ($firstRoundOrder as $pickIndex => $originalTeam) {
+
+                    $pickNumber = $pickIndex + 1;
+
+                    $originalTeamId = (int) $originalTeam->team_id;
+
+                    /*
+                     * Find the permanent draft-right identity.
+                     */
+                    $pickRight =
+                        $this->draftPickRightsService
+                        ->getOriginalPickRight(
+                            $currentSeasonId,
+                            $round,
+                            $originalTeamId
+                        );
+
+                    if (!$pickRight) {
+                        throw new \RuntimeException(
+                            "Missing draft pick right for team {$originalTeamId}, round {$round}."
+                        );
+                    }
+
+                    /*
+                     * Protection is resolved using the slot generated
+                     * by the ORIGINAL team's standings.
+                     */
+                    $currentOwnerId =
+                        $this->draftPickRightsService
+                        ->resolvePickOwner(
+                            $pickRight,
+                            $pickNumber
+                        );
+
+                    $currentOwner =
+                        DB::table('teams')
+                        ->where('id', $currentOwnerId)
+                        ->first();
+
+                    if (!$currentOwner) {
+                        throw new \RuntimeException(
+                            "Current owner {$currentOwnerId} does not exist."
+                        );
+                    }
+
+                    $draftStatus =
+                        "S{$currentSeasonId} R{$round} P{$pickNumber}";
+
+                    /*
+                     * Draft row now points to the permanent pick right.
+                     */
+                    DB::table('drafts')->insert([
+                        'original_team_id' => $originalTeamId,
+                        'team_id' => $currentOwnerId,
+                        'player_id' => 0,
+                        'draft_pick_right_id' => $pickRight->id,
+                        'season_id' => $currentSeasonId,
+                        'round' => $round,
+                        'pick_number' => $pickNumber,
+                        'draft_status' => $draftStatus,
+                    ]);
+
+                    $draftOutput[] = [
+                        'round' => $round,
+                        'pick' => $pickNumber,
+
+                        /*
+                         * Original team is useful for explaining
+                         * where the pick came from.
+                         */
+                        'original_team_id' => $originalTeamId,
+                        'original_team_name' => $originalTeam->team_name,
+
+                        /*
+                         * Current owner is the team actually making
+                         * the selection.
+                         */
+                        'team_id' => $currentOwnerId,
+                        'team_name' => $currentOwner->name,
+
+                        'draft_pick_right_id' => $pickRight->id,
+                        'draft_status' => $draftStatus,
+                    ];
+                }
+            }
+
+            DB::commit();
+
+            return response()->json([
+                'season_id' => $currentSeasonId,
+                'draft_order' => $draftOutput,
+                'message' => 'Draft successfully generated.',
+            ]);
+        } catch (\Throwable $e) {
+
+            DB::rollBack();
+
+            Log::error(
+                'Draft order generation failed',
+                [
+                    'exception' => $e,
+                ]
+            );
+
+            return response()->json([
+                'error' => true,
+                'message' => 'Draft order generation failed.',
+                'error_message' => $e->getMessage(),
+            ], 500);
+        }
+    }
+
     public function draftOrder()
     {
         DB::beginTransaction();
@@ -318,7 +587,6 @@ class DraftService
             ], 500);
         }
     }
-
     /**
      * ============================================================
      * DRAFT ONE PICK
@@ -574,7 +842,7 @@ class DraftService
 
                 $decisionMakerName = $decision['decision_maker_name'];
 
-                $decisionReason = $decision['decision_reason'];
+                $decisionReason = $decision['decision_maker_reason'];
 
                 $decisionFactors = $decision['decision_factors'];
 
@@ -810,7 +1078,7 @@ class DraftService
                         'decision_maker_name' =>
                         $decisionMakerName,
 
-                        'decision_reason' =>
+                        'decision_maker_reason' =>
                         $decisionReason,
 
                         'decision_factors' =>
@@ -1408,7 +1676,7 @@ class DraftService
             'decision_maker_name' =>
             $decisionMakerName,
 
-            'decision_reason' =>
+            'decision_maker_reason' =>
             $reasonData['reason'],
 
             'decision_factors' =>
@@ -1513,7 +1781,7 @@ class DraftService
                 $pick->decision_maker_name,
 
                 'reason' =>
-                $pick->decision_reason,
+                $pick->decision_maker_reason,
 
                 'factors' =>
                 $pick->decision_factors
@@ -2196,7 +2464,7 @@ class DraftService
                 'd.draft_pick_right_id',
                 'd.decision_maker_type',
                 'd.decision_maker_name',
-                'd.decision_reason',
+                'd.decision_maker_reason',
             )
             ->where(
                 'players.draft_id',
