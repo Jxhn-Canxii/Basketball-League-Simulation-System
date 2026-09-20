@@ -99,10 +99,7 @@ class TeamInjuryService
 
                 // If player fully recovered
                 if ($updatedRecoveryGames <= 0) {
-                    DB::table('players')->where('id', $player->id)->update([
-                        'is_injured' => false,
-                        'injury_type' => null,
-                    ]);
+                    DB::table('players')->where('id', $player->id)->update(['injury_type' => null]);
 
                     // Update injury history recovery date
                     DB::table('injury_histories')

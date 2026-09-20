@@ -22,7 +22,7 @@ return new class extends Migration
             $table->integer('contract_years')->default(0);
             $table->integer('age');
             $table->integer('retirement_age')->default(35);
-            $table->boolean('is_injured')->default(false);
+            $table->boolean('is_injured')->storedAs('CASE WHEN injury_recovery_games > 0 THEN true ELSE false');
             $table->boolean('is_reserved')->default(false);
             $table->boolean('is_rookie')->default(false);
             $table->boolean('is_active')->default(true);

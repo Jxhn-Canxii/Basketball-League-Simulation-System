@@ -31,32 +31,16 @@ class FreeAgencyService
     public function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0
-        $deductionPerGame = 1; // Deduct 1 of a game
+        $deductionPerGame = 0.2; // Deduct 1 of a game
 
 
-        $deductInjuryGames = DB::table('players')
+        DB::table('players')
             ->where('is_active', 1)
             ->where('is_injured', 1)
+            ->where('team_id', 0)
             ->where('injury_recovery_games', '>', 0)
-            ->update([
-                'injury_recovery_games' => DB::raw("GREATEST(injury_recovery_games - $deductionPerGame, 0)")
-            ]);
+            ->decrement('injury_recovery_games', $deductionPerGame);
 
-
-        // Check if any rows were actually updated
-        $affectedRows = DB::table('players')
-            ->where('is_active', 1)
-            ->where('is_injured', 1)
-            ->where('injury_recovery_games', 0)
-            ->count(); // Count players whose recovery reached 0
-
-        if ($affectedRows > 0) {
-            DB::table('players')
-                ->where('is_active', 1)
-                ->where('is_injured', 1)
-                ->where('injury_recovery_games', '<=', 0)
-                ->update(['is_injured' => 0]);
-        }
     }
 
     public function getBestFreeAgentAvailable($position)

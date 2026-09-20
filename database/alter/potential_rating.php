@@ -7,3 +7,14 @@ UPDATE `players` SET `overall_rating`=(`shooting_rating`+`defense_rating`+`passi
         WHEN overall_rating >= 60 THEN 80
         ELSE 70
     END
+
+
+ALTER TABLE players
+ADD is_injured boolean
+            GENERATED ALWAYS AS (
+                CASE 
+                    WHEN injury_recovery_games > 0 
+                    THEN true
+                    ELSE false
+                END
+            ) STORED
