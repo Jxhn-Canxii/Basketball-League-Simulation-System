@@ -205,19 +205,19 @@ class PlayerGeneratorService
 
         if ($overallRating >= 90) {
             $role = 'star player';
-            $potentialRating = rand(96,99);
+            $potentialRating = rand(CEIL($overallRating),99);
         } elseif ($overallRating >= 85 && $overallRating <= 89) {
             $role = 'all star';
-            $potentialRating = rand(90, 95);
+            $potentialRating = rand(CEIL($overallRating), 95);
         } elseif ($overallRating >= 75 && $overallRating <= 84) {
             $role = 'starter';
-            $potentialRating = rand(85, 95);
+            $potentialRating = rand(CEIL($overallRating), 95);
         } elseif ($overallRating >= 60 && $overallRating <= 74) {
             $role = 'role player';
-            $potentialRating = rand(75, 90);
+            $potentialRating = rand(CEIL($overallRating), 90);
         } else {
             $role = 'bench';
-            $potentialRating = rand(75,85);
+            $potentialRating = rand(CEIL($overallRating),85);
         }
 
         $contractExpiresAt = Carbon::now()->addYears($contractYears);

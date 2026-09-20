@@ -52,19 +52,24 @@ class TestController extends Controller
 
         foreach ($players as $player) {
 
-            $overallRating = $player->overall_rating ?? 70;
+            $overallRating = CEIL($player->overall_rating ?? 70);
             $potentialRating = 70;
 
             if ($overallRating >= 90) {
-                $potentialRating = 99;
+                $role = 'star player';
+                $potentialRating = rand($overallRating,99);
             } elseif ($overallRating >= 85 && $overallRating <= 89) {
-                $potentialRating = rand(90,95);
+                $role = 'all star';
+                $potentialRating = rand($overallRating, 95);
             } elseif ($overallRating >= 75 && $overallRating <= 84) {
-                $potentialRating = rand(85,90);
+                $role = 'starter';
+                $potentialRating = rand($overallRating, 95);
             } elseif ($overallRating >= 60 && $overallRating <= 74) {
-                $potentialRating = rand(75,85);
+                $role = 'role player';
+                $potentialRating = rand($overallRating, 90);
             } else {
-                $potentialRating = 74;
+                $role = 'bench';
+                $potentialRating = rand($overallRating,85);
             }
 
             Player::where('id', $player->id)->update(['potential_rating' => $potentialRating]);

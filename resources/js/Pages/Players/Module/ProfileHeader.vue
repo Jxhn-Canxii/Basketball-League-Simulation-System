@@ -95,14 +95,14 @@
           <strong>Position:</strong>
           {{ main_performance.player_details.position ?? "-" }}
         </p>
-        <p>
+        <!-- <p>
           <strong>Archetype:</strong>
           <a class="uppercase"
             >&nbsp;{{
               main_performance.player_details.archetype.replaceAll("_", " ") ?? "-"
             }}</a
           >
-        </p>
+        </p> -->
         <p>
           <strong>Potential:</strong>
           {{ main_performance.player_details.potential_rating ?? "-" }}
