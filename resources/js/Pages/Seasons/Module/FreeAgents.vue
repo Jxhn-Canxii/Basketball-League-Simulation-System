@@ -450,10 +450,12 @@ const fetchFreeAgent = async (page = 1) => {
         console.error("Error fetching free agents:", error);
     }
 };
+
 const handlePagination = (page_num) => {
     search.value.page_num = page_num ?? 1;
     fetchFreeAgent();
 };
+
 const assignTeams = async (player_id) => {
     try {
         // Show confirmation dialog
@@ -601,7 +603,6 @@ const assignTeamsAuto = async () => {
         emits("newSeason", true);
     }
 };
-
 
 onMounted(() => {
     fetchFreeAgent();

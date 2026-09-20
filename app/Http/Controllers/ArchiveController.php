@@ -13,19 +13,11 @@ class ArchiveController extends Controller
     public function __construct(){
         $this->archiveService = new ArchiveService();
     }
-    public function archiveGameStats()
-    {
-        return $this->archiveService->archiveGameStats();
-    }
 
-    public function archivePlayerSeasonStats()
+    public function runArchives()
     {
-        return $this->archiveService->archivePlayerSeasonStats();
-    }
-
-    public function runArchives(Request $request)
-    {
-        $seasonId = $request->season_id;
+        $seasonId = get_current_season_id();
+        
         $disabled = false;
         if($disabled){
             return response()->json([
@@ -36,20 +28,4 @@ class ArchiveController extends Controller
 
         return $this->archiveService->runArchives($seasonId);
     }
-
-    public function archiveStandingViewTable()
-    {
-        return $this->archiveService->archiveStandingViewTable();
-    }
-
-    public function archiveScheduleViewTable()
-    {
-        return $this->archiveService->archiveScheduleViewTable();
-    }
-
-    public function archiveScheduleWriteTable()
-    {
-        return $this->archiveService->archiveScheduleWriteTable();
-    }
-
 }

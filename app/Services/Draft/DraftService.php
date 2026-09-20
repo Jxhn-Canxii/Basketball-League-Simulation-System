@@ -909,8 +909,7 @@ class DraftService
                             'is_rookie' => 1,
                         ]);
 
-                    $latestSeasonId =
-                        get_current_season_id();
+                    $latestSeasonId = get_current_season_id();
 
                     DB::table('seasons')
                         ->where('id', $latestSeasonId)

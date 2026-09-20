@@ -342,7 +342,7 @@ Route::middleware('auth')->group(function () {
 
     Route::prefix('archives/')->group(function(){
         
-        Route::get('season/{season_id}', [ArchiveController::class, 'runArchives']);
+        Route::get('season', [ArchiveController::class, 'runArchives'])->name('archive.season');
 
     });
 

@@ -64,7 +64,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || $season->status < 14) return;
+        if (!$season || $season->status < 12) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -102,7 +102,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || $season->status < 14) return;
+        if (!$season || $season->status < 12) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -138,7 +138,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || $season->status < 14) return;
+        if (!$season || $season->status < 12) return;
 
         // 2) Must be a modulo season
         if ($seasonId % $MODULO !== 0) return;
@@ -178,7 +178,7 @@ class ArchiveService
 
         // 1) Only proceed if season is finished
         $season = DB::table('seasons')->where('id', $seasonId)->first();
-        if (!$season || $season->status < 14) return;
+        if (!$season || $season->status < 12) return;
 
         // DB::beginTransaction();
         // try {
@@ -281,7 +281,7 @@ class ArchiveService
             DB::beginTransaction();
 
             $season = DB::table('seasons')->where('id', $seasonId)->first();
-            if (!$season || $season->status < 14) return;
+            if (!$season || $season->status < 12) return;
 
             $snapshots = DB::table('schedule_view')
                 ->select( 
@@ -344,7 +344,7 @@ class ArchiveService
             DB::beginTransaction();
 
             $season = DB::table('seasons')->where('id', $seasonId)->first();
-            if (!$season || $season->status < 14) return;
+            if (!$season || $season->status < 12) return;
             
             $snapshots = DB::table('schedules')
                 ->select(
@@ -394,7 +394,7 @@ class ArchiveService
             DB::beginTransaction();
 
             $season = DB::table('seasons')->where('id', $seasonId)->first();
-            if (!$season || $season->status < 14) return;
+            if (!$season || $season->status < 12) return;
             
             $snapshots = DB::table('playoff_series')
                 ->select(

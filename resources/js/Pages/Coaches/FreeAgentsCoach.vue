@@ -361,6 +361,8 @@ const assignTeamsAuto = async () => {
 const endCoachSigning = async () => {
     try {
 
+        await archiveSeason();
+
         const response = await axios.get(route('end.coach.signings'));
         if (response) {
             await Swal.fire({
@@ -381,6 +383,42 @@ const endCoachSigning = async () => {
         });
     }
 };
+
+const archiveSeason = async () => {
+    try {
+
+        const loadingSwal = Swal.fire({
+            title: "Archiving...",
+            text: "Archiving past results....please wait!!!",
+            icon: "info",
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();  // Show the loading animation
+            }
+        });
+
+        const response = await axios.get(route("archive.season"));
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: response.data.message, // Assuming the response contains a 'message' field
+        });
+    } catch (error) {
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "warning",
+            title: "Warning!",
+            text: error.response.data.message,
+        });
+        
+    }
+}
+
 onMounted(() => {
     fetchFreeAgent();
 });

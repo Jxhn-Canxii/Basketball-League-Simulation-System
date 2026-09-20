@@ -986,15 +986,6 @@ class FreeAgencyService
                         ]);
                 } else {
 
-                    $archives = $this->archive->runArchives($currentSeasonId);
-
-                    if(!$archives){
-                        return response()->json([
-                            'message' => 'Archive error!',
-                            'error' => $archives,
-                        ],400);
-                    }
-
                     DB::table('seasons')
                         ->where('id',  $seasonId)
                         ->update(['status' => config('timeline.player_signings')]);
