@@ -350,8 +350,6 @@ class TradeService
         | orchestration service.
         |--------------------------------------------------------------------------
         */
-        $this->storyLineService->generateStoryLine();
-        
 
         DB::table('seasons')
             ->where('id',$seasonId)
