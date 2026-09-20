@@ -113,12 +113,14 @@ class HelperService
     public function getPlayerStatsDatabaseName($seasonId)
     {
 
+        $currentSeasonId = get_current_season_id();
+
         $MODULO = config('archive.DECADE_MODULO');
         $tableBatch = ceil($seasonId / $MODULO);
         $archiveDB = $this->archiveDB();
 
         $archiveTable = $archiveDB.".player_game_stats_batch_" . $tableBatch;
-        if (!Schema::hasTable($archiveTable)) {
+        if($currentSeasonId == $seasonId) {
             $archiveTable = "player_game_stats";
         }
 
@@ -128,12 +130,14 @@ class HelperService
     public function getGameBreakDownDBName($seasonId)
     {
 
+        $currentSeasonId = get_current_season_id();
+
         $MODULO = config('archive.DECADE_MODULO');
         $tableBatch = ceil($seasonId / $MODULO);
         $archiveDB = $this->archiveDB();
 
         $archiveTable = $archiveDB.".game_quarter_breakdown_batch_" . $tableBatch;
-        if (!Schema::hasTable($archiveTable)) {
+        if ($currentSeasonId == $seasonId) {
             $archiveTable = "game_quarter_breakdown";
         }
 
@@ -142,13 +146,14 @@ class HelperService
 
     public function getPlayerQuarterStatsDatabaseName($seasonId)
     {
+        $currentSeasonId = get_current_season_id();
 
         $MODULO = config('archive.DECADE_MODULO');
         $tableBatch = ceil($seasonId / $MODULO);
         $archiveDB = $this->archiveDB();
 
         $archiveTable = $archiveDB.".player_per_quarter_stats_batch_" . $tableBatch;
-        if (!Schema::hasTable($archiveTable)) {
+        if ($currentSeasonId == $seasonId) {
             $archiveTable = "player_per_quarter_stats";
         }
 

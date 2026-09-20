@@ -18,13 +18,12 @@ class StoryLineService
         $this->archive = new ArchiveService();
     }
 
-    public function generateStoryLine()
+    public function generateStoryLine($seasonId)
     {
-        $latestSeasonId = get_current_season_id();
-        $this->upsertCurrentSeasonStoryline();
+        return $this->upsertCurrentSeasonStoryline();
     }
 
-    public function upsertCurrentSeasonStoryline()
+    private function upsertCurrentSeasonStoryline()
     {
         try {
 

@@ -363,6 +363,8 @@ const endCoachSigning = async () => {
 
         await archiveSeason();
 
+        await generateSeasonStoryLine();
+        
         const response = await axios.get(route('end.coach.signings'));
         if (response) {
             await Swal.fire({
@@ -398,6 +400,41 @@ const archiveSeason = async () => {
         });
 
         const response = await axios.get(route("archive.season"));
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: response.data.message, // Assuming the response contains a 'message' field
+        });
+    } catch (error) {
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "warning",
+            title: "Warning!",
+            text: error.response.data.message,
+        });
+        
+    }
+}
+
+const generateSeasonStoryLine = async () => {
+    try {
+
+        const loadingSwal = Swal.fire({
+            title: "Summarizing...",
+            text: "Generating storyline for this season!!!",
+            icon: "info",
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();  // Show the loading animation
+            }
+        });
+
+        const response = await axios.get(route("storyline.season"));
 
         Swal.close();
 

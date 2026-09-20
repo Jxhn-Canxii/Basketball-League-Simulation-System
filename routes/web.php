@@ -26,6 +26,7 @@ use App\Http\Controllers\StandingsController;
 use App\Http\Controllers\PlayoffController;
 use App\Http\Controllers\RoundController;
 use App\Http\Controllers\PlayoffResetController;
+use App\Http\Controllers\StorylineController;
 use App\Http\Controllers\TestController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
@@ -343,6 +344,12 @@ Route::middleware('auth')->group(function () {
     Route::prefix('archives/')->group(function(){
         
         Route::get('season', [ArchiveController::class, 'runArchives'])->name('archive.season');
+
+    });
+
+    Route::prefix('storylines/')->group(function(){
+        
+        Route::get('season', [StorylineController::class, 'generateStoryLine'])->name('storyline.season');
 
     });
 
