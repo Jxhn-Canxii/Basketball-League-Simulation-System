@@ -81,7 +81,7 @@ class ScheduleService
 
         $tradeProposalDeadline = CEIL($totalRounds / 2);
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
-        $allStarBreak = $simulatedRounds >= CEIL($totalRounds / 2) + 4;
+        $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) - 2);
 
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
@@ -1172,11 +1172,26 @@ class ScheduleService
 
     public function selectAllStars()
     {
+        $seasonId = get_current_season_id();
+        
         $northAllStars = [1,2];
         $southAllStars = [3,4];
+        
+        $allStarRound = $seasonId > 0 ? ['all-star','all-rookie'] : ['all-star'];
+
+        $isScheduleCreated = DB::table('schedules')
+                ->where('season_id',$seasonId)
+                ->whereIn('round',$allStarRound)
+                ->exists();
+        
+        if($isScheduleCreated){
+            return true;
+        }
 
         $this->awards->selectAllStarsForConference('north',$northAllStars);
         $this->awards->selectAllStarsForConference('south',$southAllStars);
+
+        return true;
     }
     private function updateAllStarCoach($seasonId)
     {
