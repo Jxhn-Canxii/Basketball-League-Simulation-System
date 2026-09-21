@@ -96,7 +96,18 @@ class ScheduleService
         }
         if($allStarBreak){
             $this->awards->selectAllStars();
+
+            $allStarRounds = ['all-star','all-rookie'];
+
+            $schedules = Schedules::where('season_id', $seasonId)
+                ->whereIn('round', $allStarRounds)
+                ->where('status', 1)
+                ->orderBy('id')
+                ->orderBy('game_number')
+                ->select('id', 'conference_id')
+                ->get();
         }
+        
         if($isEndTradeDeadline) {
 
             DB::table('seasons')
