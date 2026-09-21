@@ -2,12 +2,19 @@
 
 namespace App\Services\League;
 
+use App\Services\Schedule\ScheduleService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class AwardsService
 {
   
+    protected $schedule;
+
+    public function __construct()
+    {
+        $this->schedule = new ScheduleService();
+    }
     public function getSeasonAwards($request)
     {
 
@@ -108,6 +115,108 @@ class AwardsService
         return response()->json([
             'message' => 'Team IDs in season awards updated successfully for season ' . $seasonId,
             'awards' => $awards
+        ]);
+    }
+
+    public function selectAllStars()
+    {
+        $northAllStars = [1,2];
+        $southAllStars = [3,4];
+
+        $this->selectAllStarsForConference('north',$northAllStars);
+        $this->selectAllStarsForConference('south',$southAllStars);
+    }
+
+    public function selectAllStarsForConference($allStarGroup,$conferenceGroup)
+    {
+        // Get the latest season ID
+        $latestSeasonId = get_current_season_id() ?? 0;
+
+        // Get player stats from player_season_stats for the latest season
+        $playerStats = DB::table('player_season_stats as pss')
+            ->join('teams','teams.id','=','pss.team_id')
+            ->join('conferences','conferences.id','=','teams.conference_id')
+            ->where('pss.season_id', $latestSeasonId)
+            ->whereIn('conferences.id',$conferenceGroup)
+            ->get();
+
+        // Filter eligible players (must have played at least 75% of the total games)
+        $eligiblePlayerStats = $playerStats->filter(function ($stats) {
+            return (int)$stats->total_games_played >= 0.75 * (int)$stats->total_games;
+        });
+
+        // Calculate MVP by sorting the players based on the weighted stats and returning the top player
+        $allStars = $eligiblePlayerStats->sort(function ($a, $b) {
+            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
+                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
+                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+
+            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
+                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
+                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+
+            return $bStats <=> $aStats;
+        })->limit(15)->get();
+
+        // Filter out rookies and determine the Rookie of the Year award
+        $rookies = $eligiblePlayerStats->filter(function ($stats) {
+            return DB::table('players')
+                ->where('id', $stats->player_id)
+                ->where('draft_id', $stats->season_id)
+                ->exists();
+        });
+
+        // Filter rookies who have played at least 75% of games for Rookie of the Year
+        $topRookies = $rookies->filter(function ($stats) {
+            return $stats->total_games_played >= 0.75 * $stats->total_games;
+        })->sort(function ($a, $b) {
+            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
+                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
+                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+
+            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
+                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
+                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+
+            return $bStats <=> $aStats;
+        })->limit(15)->get();
+
+        // Only insert these awards if it's not season 1
+        if ($latestSeasonId > 1) {
+        
+            // Rookie of the Year (not applicable in season 1)
+            if ($topRookies) {
+                $rookieRankings = 0;
+                foreach ($topRookies as $rookieStats) {
+                    $rank = $rookieRankings++;
+                    $role = $rank <= 5 ? 'starter' : 'reserve';
+
+                    $this->insertAward($rookieStats, 
+                    $allStarGroup.'-all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!', 
+                    $latestSeasonId);
+                }
+
+                $this->schedule->insertAllStarSchedule('all-rookie');
+            }
+        }
+
+        if ($allStars) {
+            $allStarRankings = 0;
+            foreach ($allStars as $allStarStats) {
+                $rank = $allStarRankings++;
+                $role = $rank <= 5 ? 'starter' : 'reserve';
+
+                $this->insertAward($allStarStats, 
+                $allStarGroup.'-all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.', 
+                $latestSeasonId);
+            }
+
+            $this->schedule->insertAllStarSchedule('all-star');
+
+        }
+
+        return response()->json([
+            'message' => 'All Star stored successfully.',
         ]);
     }
 

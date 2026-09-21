@@ -11,6 +11,7 @@ use App\Models\Teams;
 use App\Models\Schedules;
 use App\Services\Archive\ArchiveService;
 use App\Services\Helper\HelperService;
+use App\Services\League\AwardsService;
 use App\Services\Team\TeamsService;
 use App\Services\Team\TeamStreakService;
 use App\Services\Trade\TradeDecisionService;
@@ -23,10 +24,11 @@ class ScheduleService
     protected $streak;
     protected $tradeDecision;
     protected $teamService;
+    protected $awards;
 
     public function __construct()
     {
-
+        $this->awards = new AwardsService();
         $this->archive = new ArchiveService();
         $this->helper = new HelperService();
         $this->streak = new TeamStreakService();
@@ -79,6 +81,7 @@ class ScheduleService
 
         $tradeProposalDeadline = CEIL($totalRounds / 2);
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
+        $allStarBreak = CEIL($totalRounds / 2) - 2;
 
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
@@ -90,6 +93,9 @@ class ScheduleService
             if($simulatedRounds % 2 != 0){
                 $this->tradeDecision->automatedTradeDecision(false);
             }
+        }
+        if($allStarBreak){
+            $this->awards->selectAllStars();
         }
         if($isEndTradeDeadline) {
 
@@ -230,7 +236,8 @@ class ScheduleService
         DB::beginTransaction(); // Start transaction
         try {
             // Retrieve teams based on league_id
-            $teams = Teams::where('league_id', $leagueId)->get();
+            $teams = Teams::where('league_id', $leagueId)->where('conference_id','>',0)->get();
+
 
             // Generate matches for each conference
             foreach ($teams as $allTeams) {
@@ -293,7 +300,8 @@ class ScheduleService
         DB::beginTransaction(); // Start transaction
         try {
             // Retrieve teams based on league_id
-            $teams = Teams::where('league_id', $leagueId)->get();
+
+            $teams = Teams::where('league_id', $leagueId)->where('conference_id','>',0)->get();
 
             // Group teams by conference_id and shuffle each conference's teams
             $teamsByConference = $teams->groupBy('conference_id')->map(function ($conferenceTeams) {
@@ -395,7 +403,8 @@ class ScheduleService
         DB::beginTransaction(); // Start transaction
         try {
             // Retrieve teams based on league_id
-            $teams = Teams::where('league_id', $leagueId)->get();
+            $teams = Teams::where('league_id', $leagueId)->where('conference_id','>',0)->get();
+
 
             // Group teams by conference_id and shuffle each conference's teams
             $teamsByConference = $teams->groupBy('conference_id')->map(function ($conferenceTeams) {
@@ -462,7 +471,8 @@ class ScheduleService
         DB::beginTransaction(); // Start transaction
         try {
             // Retrieve teams based on league_id
-            $teams = Teams::where('league_id', $leagueId)->get();
+            $teams = Teams::where('league_id', $leagueId)->where('conference_id','>',0)->get();
+            
 
             // Group teams by conference_id and shuffle each conference's teams
             $teamsByConference = $teams->groupBy('conference_id')->map(function ($conferenceTeams) {
@@ -523,7 +533,8 @@ class ScheduleService
     {
         DB::beginTransaction();
         try {
-            $teams = Teams::where('league_id', $leagueId)->get();
+            $teams = Teams::where('league_id', $leagueId)->where('conference_id','>',0)->get();
+        
             if ($teams->isEmpty()) {
                 throw new \Exception("No teams found");
             }
@@ -1139,5 +1150,110 @@ class ScheduleService
             ->count();
 
         return $count;
+    }
+
+    public function insertAllStarSchedule($round)
+    {
+        $seasonId = get_current_season_id();
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+        $game_id = 'S'.$seasonId.'-'.$round;
+        $pair = $round == 'all-star' ? [1,2] : [3,4];
+
+        $homeTeamAssigned = $seasonId % 2 == 0 ? $pair[0] : $pair[1];
+        $awayTeamAssigned = $seasonId % 2 == 0 ? $pair[1] : $pair[0];
+                
+        $schedule[] = [
+            'home_id' => $homeTeamAssigned,
+            'conference_id' => $round,
+            'game_id' => $game_id,
+            'away_id' =>$awayTeamAssigned,
+            'season_id' => $seasonId,
+            'round' => $round,
+            'home_score' => 0,
+            'away_score' => 0,
+            'winner_id' => 0,
+            // Add more fields as needed, such as date and time
+        ];
+
+        // Start a database transaction
+        DB::transaction(function () use ($scheduleTable, $seasonId, $round, $schedule) {
+            // Filter out any matches with duplicate game_id values that already exist in the database
+            $existingGameIds = DB::table($scheduleTable)
+                ->whereIn('game_id', array_column($schedule, 'game_id'))
+                ->pluck('game_id')
+                ->toArray();
+
+            // If any game_ids already exist, throw an exception or return an error response
+            if (!empty($existingGameIds)) {
+                $existingGameIdsStr = implode(', ', $existingGameIds);
+                return response()->json([
+                    'success' => false,
+                    'message' => "Duplicate game_id(s) found: {$existingGameIdsStr}. No schedules were inserted.",
+                ], 500);
+                // throw new \Exception("Duplicate game_id(s) found: {$existingGameIdsStr}. No schedules were inserted.");
+            }
+
+            // Insert schedule entries into the database
+            DB::table('schedules')->insert($schedule);
+
+            // Prepare player game stats entries
+            $playerGameStats = [];
+            $allStars = $round == 'all-star' ? ['north-all-star','south-all-star'] :  ['north-all-rookie','south-all-rookie'];
+
+            foreach ($schedule as $match) {
+                // Fetch players for home and away teams
+                $homeTeam = $seasonId % 2 == 0 ? $allStars[0] : $allStars[1];
+                $awayTeam = $seasonId % 2 == 0 ? $allStars[1] : $allStars[0];
+                
+                $homeTeamPlayers = DB::table('season_awards')
+                    ->where('award_name',$homeTeam)
+                    ->where('season_id',$seasonId)
+                    ->get();
+
+                $awayTeamPlayers = DB::table('season_awards')
+                    ->where('award_name',$awayTeam)
+                    ->where('season_id',$seasonId)
+                    ->get();
+
+                // Create player game stats entries for home team players
+                foreach ($homeTeamPlayers as $player) {
+                    $playerGameStats[] = [
+                        'player_id' => $player->player_id,
+                        'season_id' => $seasonId,
+                        'game_id' => $match['game_id'],
+                        'team_id' => $match['home_id'],
+                        'points' => 0,
+                        'rebounds' => 0,
+                        'assists' => 0,
+                        'steals' => 0,
+                        'blocks' => 0,
+                        'turnovers' => 0,
+                        'fouls' => 0,
+                    ];
+                }
+
+                // Create player game stats entries for away team players
+                foreach ($awayTeamPlayers as $player) {
+                    $playerGameStats[] = [
+                        'player_id' => $player->player_id,
+                        'season_id' => $seasonId,
+                        'game_id' => $match['game_id'],
+                        'team_id' => $match['away_id'],
+                        'points' => 0,
+                        'rebounds' => 0,
+                        'assists' => 0,
+                        'steals' => 0,
+                        'blocks' => 0,
+                        'turnovers' => 0,
+                        'fouls' => 0,
+                    ];
+                }
+            }
+
+            // Insert player game stats entries into the database
+            if (!empty($playerGameStats)) {
+                DB::table('player_game_stats')->insert($playerGameStats);
+            }
+        });
     }
 }

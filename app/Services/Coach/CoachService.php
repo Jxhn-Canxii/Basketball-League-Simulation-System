@@ -50,7 +50,7 @@ class CoachService
 
         $latestSeason = get_current_season_id();
 
-        $teamsWithoutCoach = DB::table('teams')->select('name')->where('coach_id', 0)->get();
+        $teamsWithoutCoach = DB::table('teams')->select('name')->where('coach_id', 0)->where('conference_id','>','0')->get();
         $teamsWithoutCoachCount =  $teamsWithoutCoach->count();
 
         return response()->json([
@@ -135,7 +135,7 @@ class CoachService
     {
         $currentSeasonId = get_current_season_id() ?? 1;
 
-        $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->get();
+        $teamsWithoutCoach = DB::table('teams')->where('coach_id', 0)->where('conference_id','>','0')->get();
         $teamCount = $teamsWithoutCoach->count();
         $maxCoachesToQuery = $teamCount + 10;
 

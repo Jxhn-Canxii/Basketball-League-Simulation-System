@@ -66,6 +66,7 @@ class DraftService
                     'drafts.season_id',
                     $currentSeasonId
                 )
+                ->where('teams.conference_id','>',0)
                 ->select(
                     'drafts.id',
                     'drafts.draft_pick_right_id',
@@ -108,6 +109,7 @@ class DraftService
                     'teams.id as team_id',
                     'teams.name as team_name',
                 )
+                ->where('conference_id','>',0)
                 ->orderBy(
                     'market_size',
                     'desc'
@@ -335,6 +337,7 @@ class DraftService
                     'drafts.season_id',
                     $currentSeasonId
                 )
+                ->where('teams.conference_id','>',0)
                 ->select(
                     'drafts.id',
                     'drafts.draft_pick_right_id',
@@ -384,6 +387,7 @@ class DraftService
                     'season_id',
                     $latestSeasonId
                 )
+                ->where('conference_id','>',0)
                 ->orderBy(
                     'overall_rank',
                     'desc'

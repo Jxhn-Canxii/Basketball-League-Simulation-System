@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW schedule_view_1 AS
+CREATE OR REPLACE VIEW schedule_view AS
             SELECT
                 s.*,
                 s.game_number as game_number_formatted,

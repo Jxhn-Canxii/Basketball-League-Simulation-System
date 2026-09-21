@@ -37,6 +37,7 @@ class DraftPickRightsService
         ];
 
         $teams = DB::table('teams')
+            ->where('conference_id','>',0)
             ->select('id')
             ->get();
 
@@ -46,6 +47,7 @@ class DraftPickRightsService
 
         foreach ($futureSeasons as $seasonId) {
 
+            // dd($seasonId);
             $draftRounds = $seasonId > 1 ? [1,2] : [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15];
 
             foreach ($teams as $team) {
