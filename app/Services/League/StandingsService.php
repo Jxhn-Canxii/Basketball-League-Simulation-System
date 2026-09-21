@@ -99,7 +99,7 @@ class StandingsService
                 ->where('ps.season_id', $seasonId)
                 ->select('p.is_injured','p.name', 'ps.avg_points_per_game', 'ps.avg_assists_per_game', 'ps.avg_rebounds_per_game')
                 ->orderByDesc('ps.eff')
-                ->distinct('ps.player_id')
+                ->distinct('p.player_id')
                 ->get();
 
             $topPlayers = DB::table('players as p')
