@@ -665,13 +665,15 @@ class NewsService
         |--------------------------------------------------------------------------
         */
 
-        $injuredPlayers = DB::table("players as p")
+        $injuredPlayers = DB::table("injury_histories as ih")
+            ->join("players as p", "ih.player_id", "=", "p.id")
             ->select(
                 "p.name as player_name",
                 "p.injury_type",
-                "p.injury_recovery_games",
-                "p.team_id"
+                "p.recovery_games as injury_recovery_games",
+                "ih.team_id"
             )
+            ->where("ih.game_id", $game->game_id)
             ->where("p.is_injured", true)
             ->get();
 
