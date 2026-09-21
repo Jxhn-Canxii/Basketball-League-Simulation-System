@@ -140,13 +140,8 @@ class AwardsService
             ->whereIn('conferences.id',$conferenceGroup)
             ->get();
 
-        // Filter eligible players (must have played at least 75% of the total games)
-        $eligiblePlayerStats = $playerStats->filter(function ($stats) {
-            return (int)$stats->total_games_played >= 0.75 * (int)$stats->total_games;
-        });
-
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player
-        $allStars = $eligiblePlayerStats->sort(function ($a, $b) {
+        $allStars = $playerStats->sort(function ($a, $b) {
             $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
                 $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
                 $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
@@ -159,7 +154,7 @@ class AwardsService
         })->limit(15)->get();
 
         // Filter out rookies and determine the Rookie of the Year award
-        $rookies = $eligiblePlayerStats->filter(function ($stats) {
+        $rookies = $playerStats->filter(function ($stats) {
             return DB::table('players')
                 ->where('id', $stats->player_id)
                 ->where('draft_id', $stats->season_id)
@@ -167,9 +162,7 @@ class AwardsService
         });
 
         // Filter rookies who have played at least 75% of games for Rookie of the Year
-        $topRookies = $rookies->filter(function ($stats) {
-            return $stats->total_games_played >= 0.75 * $stats->total_games;
-        })->sort(function ($a, $b) {
+        $topRookies = $rookies->sort(function ($a, $b) {
             $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
                 $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
                 $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
@@ -194,6 +187,17 @@ class AwardsService
                     $this->insertAward($rookieStats, 
                     $allStarGroup.'-all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!', 
                     $latestSeasonId);
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $rookieStats->player_id,
+                        'season_id' => $latestSeasonId,
+                        'details' => 'has been selected All-Rookie '.$role.' of the '.$allStarGroup.' All-rookie Selection.',
+                        'from_team_id' => $rookieStats->team_id,
+                        'to_team_id' => $rookieStats->team_id,
+                        'status' => 'selected',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
                 }
 
                 $this->schedule->insertAllStarSchedule('all-rookie');
@@ -209,6 +213,17 @@ class AwardsService
                 $this->insertAward($allStarStats, 
                 $allStarGroup.'-all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.', 
                 $latestSeasonId);
+
+                DB::table('transactions')->insert([
+                    'player_id' => $allStarStats->player_id,
+                    'season_id' => $latestSeasonId,
+                    'details' => 'has been selected All-star '.$role.' of the '.$allStarGroup.' All-stars.',
+                    'from_team_id' => $allStarStats->team_id,
+                    'to_team_id' => $allStarStats->team_id,
+                    'status' => 'selected',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
             }
 
             $this->schedule->insertAllStarSchedule('all-star');
