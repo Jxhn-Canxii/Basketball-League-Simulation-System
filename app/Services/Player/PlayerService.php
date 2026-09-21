@@ -619,6 +619,7 @@ class PlayerService
                 DB::raw('SUM(player_season_stats.total_free_throws_made) as total_free_throws_made'),
                 DB::raw('SUM(player_season_stats.total_free_throw_attempts) as total_free_throw_attempts')
             )
+            ->where('teams.conference_id','>',0)
             ->where('player_season_stats.player_id', $playerId)
             ->groupBy(
                 'players.id',
