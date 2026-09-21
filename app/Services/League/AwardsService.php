@@ -133,8 +133,12 @@ class AwardsService
             ->whereIn('conferences.id',$conferenceGroup)
             ->get();
 
+        $eligiblePlayerStats = $playerStats->filter(function ($stats) {
+            return (int)$stats->total_games_played >= 0.50 * (int)$stats->total_games;
+        });
+
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player
-        $allStars = $playerStats->sort(function ($a, $b) {
+        $allStars = $eligiblePlayerStats->sort(function ($a, $b) {
             $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
                 $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
                 $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
@@ -147,7 +151,7 @@ class AwardsService
         })->limit(15)->get();
 
         // Filter out rookies and determine the Rookie of the Year award
-        $rookies = $playerStats->filter(function ($stats) {
+        $rookies = $eligiblePlayerStats->filter(function ($stats) {
             return DB::table('players')
                 ->where('id', $stats->player_id)
                 ->where('draft_id', $stats->season_id)

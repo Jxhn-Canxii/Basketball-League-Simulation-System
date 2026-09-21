@@ -81,7 +81,7 @@ class ScheduleService
 
         $tradeProposalDeadline = CEIL($totalRounds / 2);
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
-        $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) - 2);
+        $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) + 4);
 
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
