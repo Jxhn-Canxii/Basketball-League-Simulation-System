@@ -182,7 +182,7 @@ class AwardsService
                     $role = $rank <= 5 ? 'starter' : 'reserve';
 
                     $this->insertAward($rookieStats, 
-                    $allStarGroup.'-all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!', 
+                    'all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!', 
                     $latestSeasonId);
 
                     DB::table('transactions')->insert([
@@ -208,7 +208,7 @@ class AwardsService
                 $role = $rank <= 5 ? 'starter' : 'reserve';
 
                 $this->insertAward($allStarStats, 
-                $allStarGroup.'-all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.', 
+                'all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.', 
                 $latestSeasonId);
 
                 DB::table('transactions')->insert([
@@ -874,11 +874,14 @@ class AwardsService
             try {
                 DB::beginTransaction();
 
+                $conferenceId = $this->helper->getTeamConferenceId($playerStats->team_id);
+
                 // Insert award
                 DB::table('season_awards')->updateOrInsert(
                     [
                         'player_id' => $playerStats->player_id,
                         'team_id' => $playerStats->team_id,
+                        'conference_id' => $conferenceId,
                         'season_id' => $seasonId,
                         'award_name' => $awardName,
                     ],
@@ -905,7 +908,7 @@ class AwardsService
         $seasonId = get_current_season_id();
         $scheduleTable = $this->helper->getScheduleDBName($seasonId);
         $game_id = 'S'.$seasonId.'-'.$round;
-        $pair = $round == 'all-star' ? [1,2] : [3,4];
+        $pair = ($round == 'all-star') ? [1,2] : [3,4];
 
         $homeTeamAssigned = $seasonId % 2 == 0 ? $pair[0] : $pair[1];
         $awayTeamAssigned = $seasonId % 2 == 0 ? $pair[1] : $pair[0];
@@ -947,20 +950,23 @@ class AwardsService
             
             // Prepare player game stats entries
             $playerGameStats = [];
-            $allStars = $round == 'all-star' ? ['north-all-star','south-all-star'] :  ['north-all-rookie','south-all-rookie'];
+            $northAllStarsConference = [1,2];
+            $southAllStarsConference = [2,3];
 
             foreach ($schedule as $match) {
                 // Fetch players for home and away teams
-                $homeTeam = $seasonId % 2 == 0 ? $allStars[0] : $allStars[1];
-                $awayTeam = $seasonId % 2 == 0 ? $allStars[1] : $allStars[0];
+                $homeTeam = $seasonId % 2 == 0 ? $northAllStarsConference : $southAllStarsConference;
+                $awayTeam = $seasonId % 2 == 0 ? $southAllStarsConference : $southAllStarsConference;
                 
                 $homeTeamPlayers = DB::table('season_awards')
-                    ->where('award_name',$homeTeam)
+                    ->where('award_name',$round)
+                    ->whereIn('conference_id',$homeTeam)
                     ->where('season_id',$seasonId)
                     ->get();
 
                 $awayTeamPlayers = DB::table('season_awards')
-                    ->where('award_name',$awayTeam)
+                    ->where('award_name',$round)
+                    ->whereIn('conference_id',$awayTeam)
                     ->where('season_id',$seasonId)
                     ->get();
 
@@ -1004,6 +1010,57 @@ class AwardsService
                 DB::table('player_game_stats')->insert($playerGameStats);
             }
         });
+    }
+
+    public function updateAllStarCoach($seasonId)
+    {
+
+        $bestCoach = DB::table('standings_view as sv')
+            ->select('teams.coach_id','coaches.name as coach_name','teams.name as team_name','teams.city as team_city')
+            ->join('teams','teams.id','=','sv.team_id')
+            ->join('conferences','conferences.id','=','teams.conference_id')
+            ->join('coaches','coaches.id','=','teams.coach_id')
+            ->where('sv.season_id', $seasonId)
+            ->orderBy('overall_rank','asc')
+            ->limit(4)
+            ->get();
+
+        if($bestCoach){
+            $teamId = 0;
+            foreach ($bestCoach as $coach) {
+                # code...
+                $teamId++;
+
+                DB::table('teams')
+                    ->where('id',$teamId)
+                    ->update([
+                        'coach_id' => $coach->coach_id
+                    ]);
+
+                $teamInfo = DB::table('teams')
+                                ->select('name','city')
+                                ->where('team_id',$teamId)
+                                ->first();
+
+                //log tansactions
+                DB::table('transactions')->insert([
+                    'player_id' => 0,
+                    'season_id' => $seasonId,
+                    'details' => $coach->coach_name . ' has been appointed to coach the ' . $teamInfo->city.' '.$teamInfo->name,
+                    'from_team_id' => 0,
+                    'to_team_id' => $teamId,
+                    'status' => 'appointed',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                if($teamId > 4){
+                    break;
+                }
+                
+            }
+        }
+       
     }
     
 }

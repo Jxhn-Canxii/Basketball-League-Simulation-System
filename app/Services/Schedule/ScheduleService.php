@@ -97,7 +97,7 @@ class ScheduleService
 
         if($allStarBreak){
             $this->selectAllStars();
-            $this->updateAllStarCoach($seasonId);
+            $this->awards->updateAllStarCoach($seasonId);
 
             $allStarRound = ['all-rookie','all-star'];
 
@@ -1193,54 +1193,5 @@ class ScheduleService
 
         return true;
     }
-    private function updateAllStarCoach($seasonId)
-    {
 
-        $bestCoach = DB::table('standings_view as sv')
-            ->select('teams.coach_id','coaches.name as coach_name','teams.name as team_name','teams.city as team_city')
-            ->join('teams','teams.id','=','sv.team_id')
-            ->join('conferences','conferences.id','=','teams.conference_id')
-            ->join('coaches','coaches.id','=','teams.coach_id')
-            ->where('sv.season_id', $seasonId)
-            ->orderBy('overall_rank','asc')
-            ->limit(4)
-            ->get();
-
-        if($bestCoach){
-            $teamId = 0;
-            foreach ($bestCoach as $coach) {
-                # code...
-                $teamId++;
-
-                DB::table('teams')
-                    ->where('id',$teamId)
-                    ->update([
-                        'coach_id' => $coach->coach_id
-                    ]);
-
-                $teamInfo = DB::table('teams')
-                                ->select('name','city')
-                                ->where('team_id',$teamId)
-                                ->first();
-
-                //log tansactions
-                DB::table('transactions')->insert([
-                    'player_id' => 0,
-                    'season_id' => $seasonId,
-                    'details' => $coach->coach_name . ' has been appointed to coach the ' . $teamInfo->city.' '.$teamInfo->name,
-                    'from_team_id' => 0,
-                    'to_team_id' => $teamId,
-                    'status' => 'appointed',
-                    'created_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-                if($teamId > 4){
-                    break;
-                }
-                
-            }
-        }
-       
-    }
 }

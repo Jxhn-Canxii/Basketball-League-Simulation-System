@@ -17,6 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('player_id');
             $table->unsignedBigInteger('season_id');
             $table->unsignedBigInteger('team_id');
+            $table->unsignedBigInteger('conference_id');
             $table->string('award_name');
             $table->text('award_description')->nullable();
             $table->timestamps();
