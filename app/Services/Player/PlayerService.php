@@ -2,6 +2,8 @@
 
 namespace App\Services\Player;
 
+ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Models\Player;
@@ -370,13 +372,14 @@ class PlayerService
         ]);
     }
 
-    public function getFreeAgents(Request $request)
+    public function getFreeAgents($request)
     {
         // Get pagination parameters from the request
-        $perPage = $request->input('itemsperpage', 10); // Number of items per page
-        $currentPage = $request->input('page_num', 1); // Current page number
-        $search = $request->input('search', ''); // Search term
+        $perPage = $request->itemsperpage ?? 10; // Number of items per page
+        $currentPage = $request->page_num ?? 1; // Current page number
+        $search = $request->search; // Search term
 
+        
         // Build the query with optional search filter
         $query = Player::select(
             'players.*',

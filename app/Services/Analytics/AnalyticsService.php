@@ -118,6 +118,7 @@ class AnalyticsService
 
         // Count total teams (assuming teams have players, based on team_id > 0)
         $totalTeams = DB::table('teams')
+            ->where('conference_id', '>', 0)
             ->count();
 
         // Define max roster size

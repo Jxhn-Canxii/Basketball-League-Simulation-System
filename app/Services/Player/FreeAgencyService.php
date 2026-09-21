@@ -2,6 +2,8 @@
 
 namespace App\Services\Player;
 
+ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
+
 use App\Models\Player;
 use App\Services\Archive\ArchiveService;
 use App\Services\Contract\ContractService;
@@ -744,6 +746,7 @@ class FreeAgencyService
         // Fetch teams with fewer than 15 players
         $teamIds = DB::table('teams')
             ->leftJoin('players', 'teams.id', '=', 'players.team_id')
+            ->where('conference_id','>',0)
             ->select('teams.id')
             ->groupBy('teams.id')
             ->havingRaw('SUM(CASE WHEN players.is_active = 1 THEN 1 ELSE 0 END) < 15')
@@ -919,6 +922,7 @@ class FreeAgencyService
         // Proceed with assigning players to teams
         $teamsWithFewMembers = DB::table('teams')
             ->leftJoin('players', 'teams.id', '=', 'players.team_id')
+            ->where('teams.conference_id','>',0)
             ->select('teams.id', 'teams.name', DB::raw('COUNT(players.id) as player_count'))
             ->groupBy('teams.id', 'teams.name')
             ->havingRaw('COUNT(players.id) < 15')
@@ -933,28 +937,12 @@ class FreeAgencyService
 
         $teamsCount = $teamsWithFewMembers->count();
         if ($teamsCount === 0) {
-            $update = ($currentSeasonId == 1) ? 
-                $this->updateTeamRolesBasedOnStatsByRating() : 
-                $this->storeNextSeasonStatsPerTeam();
+            $update = $this->storeNextSeasonStatsPerTeam();
 
             if ($update) {
-                if ($seasonId == 0) {
-                    DB::table('players')
-                        ->where('draft_id', 1)
-                        ->where('is_drafted', 0)
-                        ->update([
-                            'draft_id' => 1,
-                            'team_id' => 0,
-                            'contract_years' => 0,
-                            'draft_status' => 'Undrafted',
-                            'is_rookie' => 1,
-                        ]);
-                } else {
-
-                    DB::table('seasons')
-                        ->where('id',  $seasonId)
-                        ->update(['status' => config('timeline.player_signings')]);
-                }
+                DB::table('seasons')
+                    ->where('id',  $seasonId)
+                    ->update(['status' => config('timeline.player_signings')]);
 
                 return response()->json([
                     'error' => true,
@@ -1015,6 +1003,7 @@ class FreeAgencyService
             $incompleteTeams = DB::table('teams')
                 ->leftJoin('players', 'teams.id', '=', 'players.team_id')
                 ->select('teams.name', DB::raw('COUNT(players.id) as player_count'))
+                ->where('teams.conference_id','>',0)
                 ->groupBy('teams.name')
                 ->havingRaw('COUNT(players.id) < 15')
                 ->get()

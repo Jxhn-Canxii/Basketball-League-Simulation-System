@@ -71,7 +71,7 @@ class SeasonsService
 
         $isNewSeason = $this->isNewSeason();
 
-        $teamIds = DB::table('teams')->pluck('id')->toArray();
+        $teamIds = DB::table('teams')->where('conference_id','>',0)->pluck('id')->toArray();
 
         $currentSeason = get_current_season_id() ?? 0;
         $prevSeason = get_previous_season_id() ?? 0;

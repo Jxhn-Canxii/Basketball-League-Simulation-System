@@ -73,7 +73,7 @@ class TeamsService
             ->limit($perPage)
             ->get();
 
-        $latestSeason = get_current_season_id();
+        $latestSeason = get_current_season_id() ?? 0;
         return response()->json([
             'teams' => $teams,
             'total_pages' => $totalPages,
@@ -303,7 +303,7 @@ class TeamsService
             'playoffStats' => $playoffStats,
             'streaks' => $gameStreaks,
             'chemistry' => $chemistry,
-            'current_season_id' => $seasonId,
+            'current_season_id' => $seasonId ?? 0,
             'remaining_cap_space' => $remainingCapSpace
         ]);
     }

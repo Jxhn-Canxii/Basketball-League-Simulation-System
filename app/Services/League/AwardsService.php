@@ -2,19 +2,21 @@
 
 namespace App\Services\League;
 
-use App\Services\Schedule\ScheduleService;
-use Illuminate\Http\Request;
+ini_set('max_execution_time', 0); // 300 seconds = 5 minutes
+
+use App\Services\Helper\HelperService;
 use Illuminate\Support\Facades\DB;
 
 class AwardsService
 {
-  
-    protected $schedule;
 
-    public function __construct()
-    {
-        $this->schedule = new ScheduleService();
+    protected $scheduleService;
+    protected $helper;
+
+    public function __construct(){
+        $this->helper = new HelperService();
     }
+
     public function getSeasonAwards($request)
     {
 
@@ -118,15 +120,6 @@ class AwardsService
         ]);
     }
 
-    public function selectAllStars()
-    {
-        $northAllStars = [1,2];
-        $southAllStars = [3,4];
-
-        $this->selectAllStarsForConference('north',$northAllStars);
-        $this->selectAllStarsForConference('south',$southAllStars);
-    }
-
     public function selectAllStarsForConference($allStarGroup,$conferenceGroup)
     {
         // Get the latest season ID
@@ -200,7 +193,7 @@ class AwardsService
                     ]);
                 }
 
-                $this->schedule->insertAllStarSchedule('all-rookie');
+                $this->insertAllStarSchedule('all-rookie');
             }
         }
 
@@ -226,7 +219,7 @@ class AwardsService
                 ]);
             }
 
-            $this->schedule->insertAllStarSchedule('all-star');
+            $this->insertAllStarSchedule('all-star');
 
         }
 
@@ -871,7 +864,7 @@ class AwardsService
         return response()->json($mvpList);
     }
 
-        private function insertAward($playerStats, $awardName, $awardDescription, $seasonId)
+    private function insertAward($playerStats, $awardName, $awardDescription, $seasonId)
     {
         if ($playerStats) {
             try {
@@ -903,74 +896,110 @@ class AwardsService
         }
     }
 
-    private function processAwardContractExtension($playerStats, $awardName, $seasonId)
+    public function insertAllStarSchedule($round)
     {
-        // Step 1: Check if the award is eligible
-        $eligibleAwards = [
-            'Best Overall Player',
-            'Best Defensive Player',
-            'Rookie of the Season',
-            'Double-Double Machine',
-            'Triple-Double Machine',
-            'Most Improved Player',
-            'Sixth Man of the Year',
+        $seasonId = get_current_season_id();
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+        $game_id = 'S'.$seasonId.'-'.$round;
+        $pair = $round == 'all-star' ? [1,2] : [3,4];
+
+        $homeTeamAssigned = $seasonId % 2 == 0 ? $pair[0] : $pair[1];
+        $awayTeamAssigned = $seasonId % 2 == 0 ? $pair[1] : $pair[0];
+                
+        $schedule[] = [
+            'home_id' => $homeTeamAssigned,
+            'conference_id' => $round,
+            'game_id' => $game_id,
+            'away_id' =>$awayTeamAssigned,
+            'season_id' => $seasonId,
+            'round' => $round,
+            'home_score' => 0,
+            'away_score' => 0,
+            'winner_id' => 0,
+            // Add more fields as needed, such as date and time
         ];
 
-        if (!in_array($awardName, $eligibleAwards)) {
-            return;
-        }
+        // Start a database transaction
+        DB::transaction(function () use ($scheduleTable, $seasonId, $round, $schedule) {
+            // Filter out any matches with duplicate game_id values that already exist in the database
+            $existingGameIds = DB::table($scheduleTable)
+                ->whereIn('game_id', array_column($schedule, 'game_id'))
+                ->pluck('game_id')
+                ->toArray();
 
-        // Step 2: Get player info
-        $player = DB::table('players')->where('id', $playerStats->player_id)->first();
-        if (!$player || $player->team_id == 0 || $player->contract_years > 3) {
-            return;
-        }
+            // If any game_ids already exist, throw an exception or return an error response
+            if (!empty($existingGameIds)) {
+                $existingGameIdsStr = implode(', ', $existingGameIds);
+                return response()->json([
+                    'success' => false,
+                    'message' => "Duplicate game_id(s) found: {$existingGameIdsStr}. No schedules were inserted.",
+                ], 500);
+                // throw new \Exception("Duplicate game_id(s) found: {$existingGameIdsStr}. No schedules were inserted.");
+            }
 
-        // Step 3: Check existing extensions this season
-        $existingExtensions = DB::table('transactions')
-            ->where('player_id', $playerStats->player_id)
-            ->where('season_id', $seasonId)
-            ->where('status', 'contract extension')
-            ->count();
-        if ($existingExtensions >= 2) return;
+            // Insert schedule entries into the database
+            DB::table('schedules')->insert($schedule);
 
-        // Step 4: Determine chance to sign extension (0-100)
-        $chanceToSign = (
-            0.4 * $player->loyalty_rating +
-            0.3 * $player->satisfaction_rating +
-            0.2 * $player->ambition_rating +
-            0.1 * $player->negotiation_skill_rating
-        );
+            
+            // Prepare player game stats entries
+            $playerGameStats = [];
+            $allStars = $round == 'all-star' ? ['north-all-star','south-all-star'] :  ['north-all-rookie','south-all-rookie'];
 
-        if (rand(1, 100) > $chanceToSign) return; // Player refused
+            foreach ($schedule as $match) {
+                // Fetch players for home and away teams
+                $homeTeam = $seasonId % 2 == 0 ? $allStars[0] : $allStars[1];
+                $awayTeam = $seasonId % 2 == 0 ? $allStars[1] : $allStars[0];
+                
+                $homeTeamPlayers = DB::table('season_awards')
+                    ->where('award_name',$homeTeam)
+                    ->where('season_id',$seasonId)
+                    ->get();
 
-        // Step 5: Determine extension years based on award type
-        $defensiveAwards = ['Best Defensive Player'];
-        if (in_array($awardName, $defensiveAwards)) {
-            $extensionYears = rand(3, 5);
-        } else {
-            $extensionYears = 3; // Overall / other awards max 3 years
-        }
+                $awayTeamPlayers = DB::table('season_awards')
+                    ->where('award_name',$awayTeam)
+                    ->where('season_id',$seasonId)
+                    ->get();
 
-        // Step 6: Apply extension
-        DB::table('players')
-            ->where('id', $playerStats->player_id)
-            ->update([
-                'contract_years' => DB::raw("contract_years + $extensionYears"),
-                'updated_at' => now()
-            ]);
+                // Create player game stats entries for home team players
+                foreach ($homeTeamPlayers as $player) {
+                    $playerGameStats[] = [
+                        'player_id' => $player->player_id,
+                        'season_id' => $seasonId,
+                        'game_id' => $match['game_id'],
+                        'team_id' => $match['home_id'],
+                        'points' => 0,
+                        'rebounds' => 0,
+                        'assists' => 0,
+                        'steals' => 0,
+                        'blocks' => 0,
+                        'turnovers' => 0,
+                        'fouls' => 0,
+                    ];
+                }
 
-        // Step 7: Log transaction
-        DB::table('transactions')->insert([
-            'player_id' => $playerStats->player_id,
-            'season_id' => $seasonId,
-            'details' => "Contract extended by {$extensionYears} year(s) for winning {$awardName}",
-            'from_team_id' => $playerStats->team_id,
-            'to_team_id' => $playerStats->team_id,
-            'status' => 'contract extension',
-            'created_at' => now(),
-            'updated_at' => now()
-        ]);
+                // Create player game stats entries for away team players
+                foreach ($awayTeamPlayers as $player) {
+                    $playerGameStats[] = [
+                        'player_id' => $player->player_id,
+                        'season_id' => $seasonId,
+                        'game_id' => $match['game_id'],
+                        'team_id' => $match['away_id'],
+                        'points' => 0,
+                        'rebounds' => 0,
+                        'assists' => 0,
+                        'steals' => 0,
+                        'blocks' => 0,
+                        'turnovers' => 0,
+                        'fouls' => 0,
+                    ];
+                }
+            }
+
+            // Insert player game stats entries into the database
+            if (!empty($playerGameStats)) {
+                DB::table('player_game_stats')->insert($playerGameStats);
+            }
+        });
     }
     
 }

@@ -1623,7 +1623,7 @@ const scheduleNextPick = (delay = 3500) => {
       ) {
         runNextPick();
       }
-    }, 500);
+    }, 10);
 
   }, delay);
 };
