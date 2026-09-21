@@ -545,6 +545,398 @@ class TeamManagementService
         ];
     }
 
+    public function prepareAllStarFinalRoster($teamId, $round = null)
+    {
+        $seasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id();
+
+
+        $coach = DB::table('coaches')
+            ->where('team_id', $teamId)
+            ->where('is_active', 1)
+            ->first();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Get Team Players
+        |--------------------------------------------------------------------------
+        */
+
+        $players = DB::table('player_game_stats as pgs')
+            ->select(
+                'players.*',
+            )
+            ->join('players','players.id','=','pgs.player_id')
+            ->where('pgs.season_id', $seasonId)
+            ->where('pgs.team_id', $teamId)
+            ->where('players.is_active', 1)
+            ->get();
+
+        if ($players->isEmpty()) {
+            return [
+                'success' => false,
+                'message' => 'No active players found.',
+            ];
+        }
+
+            /*
+        |--------------------------------------------------------------------------
+        | Coach Preferences
+        |--------------------------------------------------------------------------
+        |
+        | These should match your coach table.
+        |
+        */
+
+        $coachDevelopment = (int) ($coach->development_rating ?? 50);
+
+            /*
+        |--------------------------------------------------------------------------
+        | Position Needs
+        |--------------------------------------------------------------------------
+        |
+        | We don't want the coach to simply take the 12 highest-efficiency
+        | players if that creates an unbalanced roster.
+        |
+        */
+
+        $positionNeeds = $this->getTeamPositionNeeds($teamId);
+
+            /*
+        |--------------------------------------------------------------------------
+        | Evaluate Every Player
+        |--------------------------------------------------------------------------
+        */
+
+        $evaluatedPlayers = [];
+
+        foreach ($players as $player) {
+
+            $playerId = $player->id;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Current Season Stats
+            |--------------------------------------------------------------------------
+            */
+
+            $stats = DB::table('player_season_stats')
+                ->where('player_id', $playerId)
+                ->where('season_id', $seasonId)
+                ->first();
+
+            $efficiency = (float) ($stats->eff ?? 0);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Years Pro
+            |--------------------------------------------------------------------------
+            */
+
+            $yearsPro = DB::table('player_season_stats_archives')
+                ->where('player_id', $playerId)
+                ->distinct()
+                ->count('season_id');
+
+            $yearsPro++;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Rookie Detection
+            |--------------------------------------------------------------------------
+            */
+
+            $isRookie = (int) ($player->is_rookie ?? 0) === 1;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Player Overall
+            |--------------------------------------------------------------------------
+            */
+
+            $overall = (float) ($player->overall_rating ?? 50);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Coach Role Fit
+            |--------------------------------------------------------------------------
+            */
+
+            $roleFit = $this->getCoachRoleFit(
+                $player,
+                $coach
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Position Fit
+            |--------------------------------------------------------------------------
+            */
+            $positionFit = $this->getPositionNeedScore(
+                $player->position ?? null,
+                $positionNeeds
+            );
+
+            /*
+            |--------------------------------------------------------------------------
+            | Development Bonus
+            |--------------------------------------------------------------------------
+            */
+
+            $developmentBonus = 0;
+
+            if ($isRookie) {
+
+                /*
+             * A development-oriented coach values rookies more.
+             */
+
+                $developmentBonus = (($coachDevelopment - 50) / 10);
+            } else {
+
+                /*
+             * Veteran players receive a small bonus when
+             * the coach is less development focused.
+             */
+
+                if ($yearsPro >= 5) {
+                    $developmentBonus = ((50 - $coachDevelopment) / 20);
+                }
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Efficiency Score
+            |--------------------------------------------------------------------------
+            */
+
+            $efficiencyScore = min(25,max(0, $efficiency * 1.5));
+
+            /*
+            |--------------------------------------------------------------------------
+            | Overall Score
+            |--------------------------------------------------------------------------
+            */
+
+            $overallScore = $overall * 0.30;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Coach System Score
+            |--------------------------------------------------------------------------
+            */
+
+            $coachScore = $roleFit * 0.15;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Position Score
+            |--------------------------------------------------------------------------
+            */
+
+            $positionScore = $positionFit * 0.10;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Performance Score
+            |--------------------------------------------------------------------------
+            */
+
+            $performanceScore = $efficiencyScore * 0.20;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Experience
+            |--------------------------------------------------------------------------
+            */
+
+            $experienceScore = min(10,$yearsPro * 1.5);
+
+            $experienceScore *= 0.05;
+
+            /*
+            |--------------------------------------------------------------------------
+            | Morale
+            |--------------------------------------------------------------------------
+            */
+
+            $morale = (float) ($player->morale ?? 50);
+
+            $moraleScore = max(-5,min(5, ($morale - 50) / 10));
+
+            /*
+            |--------------------------------------------------------------------------
+            | Injury Penalty
+            |--------------------------------------------------------------------------
+            */
+
+            $injuryPenalty = 0;
+
+            if ((int) ($player->is_injured ?? 0) === 1) {
+                $injuryPenalty = 20;
+            }
+
+            /*
+            |--------------------------------------------------------------------------
+            | Fatigue Penalty
+            |--------------------------------------------------------------------------
+            */
+
+            $fatigue = (float) ($player->fatigue ?? 0);
+
+            $fatiguePenalty = min(10,$fatigue / 10);
+
+            /*
+            |--------------------------------------------------------------------------
+            | Final Coach Evaluation
+            |--------------------------------------------------------------------------
+            */
+
+            $coachEvaluation =
+                $overallScore
+                + $coachScore
+                + $positionScore
+                + $performanceScore
+                + $experienceScore
+                + $developmentBonus
+                + $moraleScore
+                - $injuryPenalty
+                - $fatiguePenalty;
+
+            $evaluatedPlayers[] = [
+                'player' => $player,
+                'player_id' => $playerId,
+                'score' => round($coachEvaluation, 3),
+                'efficiency' => $efficiency,
+                'overall' => $overall,
+                'years_pro' => $yearsPro,
+                'role_fit' => $roleFit,
+                'position_fit' => $positionFit,
+                'is_rookie' => $isRookie,
+                'is_injured' => (int) ($player->is_injured ?? 0),
+                'fatigue' => $fatigue,
+            ];
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Sort By Coach Evaluation
+        |--------------------------------------------------------------------------
+        */
+
+        $evaluatedPlayers = collect($evaluatedPlayers)
+            ->sort(function ($a, $b) {
+
+                return $a['is_injured'] <=> $b['is_injured']
+                    ?: $b['score'] <=> $a['score']
+                    ?: $a['fatigue'] <=> $b['fatigue']
+                    ?: $b['efficiency'] <=> $a['efficiency']
+                    ?: $b['overall'] <=> $a['overall'];
+            })
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Select Final 12
+        |--------------------------------------------------------------------------
+        |
+        | IMPORTANT:
+        |
+        | We use slice(0, 12), NOT slice(1, 12).
+        |
+        */
+
+        $starPlayer = $evaluatedPlayers
+            ->take(1)
+            ->values();
+
+        $allStar = $evaluatedPlayers
+            ->slice(1,2)
+            ->values();
+
+        $starterPlayer = $evaluatedPlayers
+            ->slice(3,2)
+            ->values();
+
+        $rolePlayer = $evaluatedPlayers
+            ->slice(5,5)
+            ->values();
+
+        $benchPlayer = $evaluatedPlayers
+            ->slice(10,2)
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Reserved 3
+        |--------------------------------------------------------------------------
+        */
+
+        $reserved3 = $evaluatedPlayers
+            ->slice(12, 3)
+            ->values();
+
+        /*
+        |--------------------------------------------------------------------------
+        | Apply Final 12
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($starPlayer as $evaluation) {
+            $this->roleChange($seasonId,$round,$evaluation['player'],'star player',false);
+        }
+
+        foreach ($allStar as $evaluation) {
+            $this->roleChange($seasonId,$round,$evaluation['player'],'all star',false);
+        }  
+
+        foreach ($starterPlayer as $evaluation) {
+            $this->roleChange($seasonId,$round,$evaluation['player'],'starter',false);
+        }
+
+        foreach ($rolePlayer as $evaluation) {
+            $this->roleChange($seasonId,$round,$evaluation['player'],'role player',false);
+        }
+
+        foreach ($benchPlayer as $evaluation) {
+            $this->roleChange($seasonId,$round,$evaluation['player'],'bench',false);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Apply Reserved 3
+        |--------------------------------------------------------------------------
+        */
+
+        foreach ($reserved3 as $evaluation) {
+            $this->roleChange($seasonId,$round,$evaluation['player'],'bench',true);
+        }
+
+        /*
+        |--------------------------------------------------------------------------
+        | Return Decision Information
+        |--------------------------------------------------------------------------
+        */
+
+        return [
+            'success' => true,
+            'team_id' => $teamId,
+            'season_id' => $seasonId,
+            'position_needs' => $positionNeeds,
+            'reserved_3' => $reserved3->map(function ($evaluation) {
+                return [
+                    'player_id' => $evaluation['player_id'],
+                    'name' => $evaluation['player']->name,
+                    'score' => $evaluation['score'],
+                    'overall' => $evaluation['overall'],
+                    'efficiency' => $evaluation['efficiency'],
+                    'role_fit' => $evaluation['role_fit'],
+                    'position_fit' => $evaluation['position_fit'],
+                ];
+            })->values(),
+        ];
+    }
+
     public function fatigueRate($player, $minutes, $gameId){
 
         $this->teamInjury->fatigueRate($player, $minutes, $gameId);

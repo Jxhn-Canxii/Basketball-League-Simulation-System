@@ -73,44 +73,18 @@ class GameEngineService
             ], 400);
         }
 
+        if(!is_numeric($gameData->round)){
+            return response()->json([
+                'message' => 'Game round not valid!',
+            ], 400);
+        }
+
         $this->freeAgent->auditTeamRosterSpot($gameData->home_team_id);
         $this->freeAgent->auditTeamRosterSpot($gameData->away_team_id);
-
+        
         $gameResults = $this->runGame($scheduleId, $gameData,$totalMinutes);
     
         $this->playerStats->updateSeasonStats($gameResults['game_stats'], false);
-        $this->career->recordPlayerCareerHigh($gameResults['game_stats'],$gameData);
-
-        return [
-            'game_info' => $gameData,
-            'home_team_report' => $gameResults['home_team_roster'],
-            'away_team_report' => $gameResults['home_team_roster'],
-        ];
-
-    }
-
-    public function startPlayoffNonSeriesGame(string $scheduleId, $totalMinutes = 240)
-    {
-
-        $currentSeasonId = get_current_season_id();
-        
-        $gameData = $this->gameDataInfo($scheduleId);
-
-        if (!$gameData) {
-            return response()->json([
-                'message' => 'Error Fetching game data',
-            ], 400);
-        }
-
-        if ($gameData->status == 2) {
-            return response()->json([
-                'message' => 'Game has already been simulated.',
-            ], 400);
-        }
-
-        $gameResults = $this->runGame($scheduleId, $gameData,$totalMinutes);
-
-        $this->playerStats->updateSeasonStats($gameResults['game_stats'], true);
         $this->career->recordPlayerCareerHigh($gameResults['game_stats'],$gameData);
 
         return [
@@ -182,6 +156,77 @@ class GameEngineService
 
     }
 
+    public function startAllStarGame(string $scheduleId, $totalMinutes = 240)
+    {
+
+        $currentSeasonId = get_current_season_id();
+        
+        $gameData = $this->gameDataInfo($scheduleId);
+
+        //dd($gameData);
+        
+        if (!$gameData) {
+            return response()->json([
+                'message' => 'Error Fetching game data',
+            ], 400);
+        }
+
+        if ($gameData->status == 2) {
+            return response()->json([
+                'message' => 'Game has already been simulated.',
+            ], 400);
+        }
+
+        if($gameData->round != 'all-star' || $gameData->round != 'all-rookie'){
+            return response()->json([
+                'message' => 'Game round not valid!',
+            ], 400);
+        }
+
+        $gameResults = $this->runAllStarGame($scheduleId, $gameData,$totalMinutes);
+    
+        $this->playerStats->updateSeasonStats($gameResults['game_stats'], false);
+        $this->career->recordPlayerCareerHigh($gameResults['game_stats'],$gameData);
+
+        return [
+            'game_info' => $gameData,
+            'home_team_report' => $gameResults['home_team_roster'],
+            'away_team_report' => $gameResults['home_team_roster'],
+        ];
+
+    }
+
+    public function startPlayoffNonSeriesGame(string $scheduleId, $totalMinutes = 240)
+    {
+
+        $currentSeasonId = get_current_season_id();
+        
+        $gameData = $this->gameDataInfo($scheduleId);
+
+        if (!$gameData) {
+            return response()->json([
+                'message' => 'Error Fetching game data',
+            ], 400);
+        }
+
+        if ($gameData->status == 2) {
+            return response()->json([
+                'message' => 'Game has already been simulated.',
+            ], 400);
+        }
+
+        $gameResults = $this->runGame($scheduleId, $gameData,$totalMinutes);
+
+        $this->playerStats->updateSeasonStats($gameResults['game_stats'], true);
+        $this->career->recordPlayerCareerHigh($gameResults['game_stats'],$gameData);
+
+        return [
+            'game_info' => $gameData,
+            'home_team_report' => $gameResults['home_team_roster'],
+            'away_team_report' => $gameResults['home_team_roster'],
+        ];
+
+    }
 
     private function runGame($scheduleId, $gameData, $totalMinutes = 240){
 
@@ -190,6 +235,115 @@ class GameEngineService
 
         $homeTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->home_team_id,$gameData->round);
         $awayTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->away_team_id,$gameData->round);
+
+         //core of the game
+        $quarterMinutes = $totalMinutes / 4;
+
+
+        for ($quarterNumber=1; $quarterNumber <= 4; $quarterNumber++) { 
+
+            $quarter = 'Q'.$quarterNumber;
+
+            $playerQuarterStats = $this->gameEngine($gameData,$quarter,$quarterMinutes);
+
+            $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter);
+            
+            $this->updateGameScore($gameData,$quarter);
+        }
+
+        $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
+        
+        if ($isTied) {
+
+            $otMinutes = $totalMinutes / 8;
+
+            $maxOvertimes = 3;
+
+            for ($OTNumber = 1; $OTNumber <= $maxOvertimes; $OTNumber++) {
+
+                $overtimeQuarter = 'OT' . $OTNumber;
+
+                $playerQuarterStats = $this->gameEngine($gameData,$overtimeQuarter,$otMinutes);
+
+                $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
+
+                $this->updateGameScore($gameData,$overtimeQuarter);
+
+                // Check score after this overtime
+                $isTied = $this->isGameTied($gameData->game_id,$gameData->home_team_id,$gameData->away_team_id);
+
+                // Game has a winner, stop overtime
+                if (!$isTied) {
+
+                    DB::table('schedules')
+                        ->where('game_id', $gameData->game_id)
+                        ->update([
+                            'is_overtime' => $OTNumber
+                        ]);
+
+                    break;
+                }
+            }
+        }
+
+        $players =  DB::table('players')
+                ->select('id','is_reserved')
+                ->whereIn('team_id', [$gameData->home_team_id,$gameData->away_team_id])
+                ->where('is_active',1)
+                ->get();
+
+        foreach ($players as $player) {
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved);
+        }
+
+        $playerGameStats =  DB::table('player_game_stats')
+                ->where('game_id', $gameData->game_id)
+                ->get();
+
+        $this->playerStats->removeQuarterStats();
+        
+        $formattedGameStats = [];
+        foreach ($playerGameStats as $playerStats) {
+    
+            $formattedGameStats[] = [
+                'game_id' => $playerStats->game_id,
+                'team_id' => $playerStats->team_id,
+                'player_id' => $playerStats->player_id,
+                'season_id' => $playerStats->season_id,
+                'role' => $playerStats->role,
+                'minutes' => $playerStats->minutes,
+                'points' => $playerStats->points,
+                'rebounds' => $playerStats->rebounds,
+                'assists' => max(0,$playerStats->assists),
+                'steals' => $playerStats->steals,
+                'blocks' => $playerStats->blocks,
+                'turnovers' => $playerStats->turnovers,
+                'fouls' => $playerStats->fouls,
+                'field_goals_made' => $playerStats->field_goals_made,
+                'field_goal_attempts' => $playerStats->field_goal_attempts,
+                'two_pointers_made' => $playerStats->two_pointers_made,
+                'two_point_attempts' => $playerStats->two_point_attempts,
+                'three_pointers_made' => $playerStats->three_pointers_made,
+                'three_point_attempts' => $playerStats->three_point_attempts,
+                'free_throws_made' => $playerStats->free_throws_made,
+                'free_throw_attempts' => $playerStats->free_throw_attempts,
+            ];
+        }
+
+        return [
+            'game_stats' => $formattedGameStats,
+            'home_team_roster' => $homeTeamRosterReport,
+            'away_team_roster' => $awayTeamRosterReport
+        ];
+    }
+
+    private function runAllStarGame($scheduleId, $gameData, $totalMinutes = 240){
+
+        $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->home_team_id,$gameData->season_id);
+        $this->insertGameQuarterBreakDown($gameData->game_id,$gameData->away_team_id,$gameData->season_id);
+
+        $homeTeamRosterReport = $this->teamManagement->prepareAllStarFinalRoster($gameData->home_team_id,$gameData->round);
+        $awayTeamRosterReport = $this->teamManagement->prepareAllStarFinalRoster($gameData->away_team_id,$gameData->round);
 
          //core of the game
         $quarterMinutes = $totalMinutes / 4;

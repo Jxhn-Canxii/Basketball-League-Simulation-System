@@ -55,4 +55,17 @@ class SimulateController extends Controller
         return $this->simulateService->simulateRegular($request);
     }
 
+    public function simulateAllStar(Request $request)
+    {
+        // DB::beginTransaction(); // Start transaction
+
+        // try {
+        // Validate the request data
+        $request->validate([
+            'schedule_id' => 'required|exists:schedules,id',
+        ]);
+
+        return $this->simulateService->simulateAllStar($request);
+    }
+
 }

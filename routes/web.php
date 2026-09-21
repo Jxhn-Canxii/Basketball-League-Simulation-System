@@ -96,6 +96,7 @@ Route::middleware('auth')->group(function () {
 
         Route::post('game-playoff', [SimulateController::class, 'simulatePlayoff'])->name('game.simulate.playoff');
         Route::post('game-regular', [SimulateController::class, 'simulateRegular'])->name('game.simulate.regular');
+        Route::post('game-allstar', [SimulateController::class, 'simulateAllStar'])->name('game.simulate.allstar');
         Route::post('game-per-round', [SimulateController::class, 'simulatePerRound'])->name('game.simulate.round');
         Route::post('game-playoff-series', [SimulateController::class, 'simulatePlayoffSeries'])->name('game.simulate.playoff.series');
         

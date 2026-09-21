@@ -393,7 +393,8 @@
             for (const gameId of [...failedGames]) {
                 try {
                     console.log(`Retrying Game ID: ${gameId}`);
-                    await simulateGameWithResults(gameId);
+                    await simulateGameWithResults(gameId.id,gameId.conference_id);
+
                     await new Promise((resolve) => setTimeout(resolve, 2000));
                     failedGames.delete(gameId); // Remove from failed list on success
                 } catch (error) {
@@ -417,7 +418,9 @@
         try {
 
             isHide.value = true;
-            const response = await axios.post(route("game.simulate.regular"), {
+            let simulateGameUrl = (conference_id > 0) ? "game.simulate.regular" : "game.simulate.allstar";
+            
+            const response = await axios.post(route(simulateGameUrl), {
                 schedule_id: schedule_id,
             });
             

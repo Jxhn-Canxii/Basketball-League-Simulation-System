@@ -57,7 +57,7 @@ class SimulateService
         $this->helper = new HelperService();
     }
 
-    public function simulateRegular(Request $request)
+    public function simulateAllStar(Request $request)
     {
         try{
             DB::beginTransaction(); // Start transaction
@@ -70,6 +70,118 @@ class SimulateService
                 ->where('id', $request->schedule_id)
                 ->where('status', 2)  // Fetch previous round and current round in one query
                 ->exists(); // Use exists() for a boolean result
+
+            if ($isGameFinished) {
+                return response()->json([
+                    'message' => 'Game already simulated!',
+                ], 400); // 400 - Bad Request is more appropriate for this scenario
+            }
+
+            $data = collect($this->engine->startAllStarGame($request->schedule_id,$this->gameMinutes));
+
+            $gameData = $data['game_info'];
+            $homeRosterReport = $data['home_team_report'];
+            $awayRosterReport = $data['away_team_report'];
+
+            // Calculate scores based on player stats
+            $homeScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->home_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->value('total');
+
+            $awayScore = DB::table('game_quarter_breakdown')->where('team_id', $gameData->away_team_id)
+                ->where('game_id', $gameData->game_id)
+                ->value('total');
+
+            // Check if the game is tied
+            $reasons = [
+                'due to bad weather',
+                'because of unforeseen technical issues',
+                'due to a power failure at the stadium',
+                'because of security concerns',
+                'due to a transportation issue for the teams',
+                'because of an equipment malfunction',
+            ];
+
+            $randomReason = $reasons[array_rand($reasons)];
+
+            if ($homeScore === $awayScore) {
+                DB::rollBack();
+                return response()->json([
+                    'message' => 'The game is postponed ' . $randomReason . '!',
+                ], 200);
+            }
+
+            $gameData->home_score = $homeScore;
+            $gameData->away_score = $awayScore;
+
+            $gameData->winner_id = $homeScore > $awayScore
+                ? $gameData->home_team_id
+                : $gameData->away_team_id;
+
+            $gameData->status = 2;
+            $gameData->save();
+
+            // Check if all rounds have been simulated for the season
+            $allRoundsSimulatedForSeason =  $this->helper->allRoundsSimulatedForSeason($currentSeasonId);
+
+            // check if round games is simulated
+            $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId,  $gameData->round);
+
+            $transactionCount = $this->helper->getTransferTransactionCount();
+
+            $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
+            $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
+
+            $this->teamStats->updateHeadToHeadResults($gameData->id);
+
+            $this->news->createGameNewsFromGame($gameData->id);
+
+            if ($isRoundsSimulatedForSeason) {
+                $this->freeAgent->updateInjuryFreeAgents();
+            }
+
+            // Commit the transaction
+            DB::commit();
+
+            // Return the simulation result
+            return response()->json([
+                'message' => 'Game simulated successfully',
+                'game_id' => $gameData->game_id,
+                'home_roster_report' => $homeRosterReport,
+                'away_roster_report' => $awayRosterReport,
+                'season_status' => $season->status,
+                'round' => $gameData->round,
+                'transaction_count' => $transactionCount,
+                'conference_id' => $gameData->conference_id,
+                // 'data' => $gameResult,
+                // 'playerGameStats' => $playerGameStats,
+            ]);
+        }
+        catch(\Exception $e){
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'An error occurred while simulating all-star game.',
+                'error' => $e->getMessage(),
+            ], 500);
+
+        }
+
+    }
+
+    public function simulateRegular(Request $request)
+    {
+        try{
+            DB::beginTransaction(); // Start transaction
+    
+            $currentSeasonId = get_current_season_id();
+
+            $season = Seasons::find($currentSeasonId);
+
+            $isGameFinished = DB::table('schedules')
+                ->where('id', $request->schedule_id)
+                ->where('status', 2)  // Fetch previous round and current round in one query
+                ->first(); // Use exists() for a boolean result
 
             if ($isGameFinished) {
                 return response()->json([
@@ -177,7 +289,7 @@ class SimulateService
             DB::rollBack();
 
             return response()->json([
-                'message' => 'An error occurred while storing the season awards.',
+                'message' => 'An error occurred while simulating regular season.',
                 'error' => $e->getMessage(),
             ], 500);
 
@@ -427,7 +539,7 @@ class SimulateService
             DB::rollBack();
 
             return response()->json([
-                'message' => 'An error occurred while storing the season awards.',
+                'message' => 'An error occurred while simulating play-off series.',
                 'error' => $e->getMessage(),
             ], 500);
         }
