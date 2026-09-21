@@ -670,7 +670,7 @@ class NewsService
             ->select(
                 "p.name as player_name",
                 "p.injury_type",
-                "p.recovery_games as injury_recovery_games",
+                "ih.recovery_games as injury_recovery_games",
                 "ih.team_id"
             )
             ->where("ih.game_id", $game->game_id)
