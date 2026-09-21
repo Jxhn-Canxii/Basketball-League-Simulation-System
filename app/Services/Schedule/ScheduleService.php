@@ -97,6 +97,16 @@ class ScheduleService
         if($allStarBreak){
             $this->awards->selectAllStars();
             $this->updateAllStarCoach($seasonId);
+
+            $allStarRound = ['all-rookie','all-star'];
+
+            $allStarSchedule = Schedules::where('season_id', $seasonId)
+                ->whereIn('round', $allStarRound)
+                ->where('status', 1)
+                ->orderBy('id')
+                ->orderBy('game_number')
+                ->select('id', 'conference_id')
+                ->get();
         }
         
         if($isEndTradeDeadline) {
@@ -117,6 +127,8 @@ class ScheduleService
 
         while ($hasData) {
             $hasData = false;
+
+            $interleaved[] = $allStarSchedule;
 
             foreach ($groupedByConference as $conferenceId => $games) {
                 if (!$games->isEmpty()) {
@@ -1279,10 +1291,10 @@ class ScheduleService
                 $teamId++;
 
                 DB::table('teams')
-                ->where('id',$teamId)
-                ->update([
-                    'coach_id' => $coach->coach_id
-                ]);
+                    ->where('id',$teamId)
+                    ->update([
+                        'coach_id' => $coach->coach_id
+                    ]);
 
                 $teamInfo = DB::table('teams')
                                 ->select('name','city')
