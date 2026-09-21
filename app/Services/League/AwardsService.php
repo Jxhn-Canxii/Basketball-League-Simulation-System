@@ -130,11 +130,11 @@ class AwardsService
             ->join('teams','teams.id','=','pss.team_id')
             ->join('conferences','conferences.id','=','teams.conference_id')
             ->where('pss.season_id', $latestSeasonId)
-            ->whereIn('conferences.id',$conferenceGroup)
+            ->whereIn('teams.conference_id',$conferenceGroup)
             ->get();
 
         $eligiblePlayerStats = $playerStats->filter(function ($stats) {
-            return (int)$stats->total_games_played >= 0.50 * (int)$stats->total_games;
+            return (int)$stats->total_games_played >= (CEIL((int)$stats->total_games / 2) - 2);
         });
 
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player
@@ -148,7 +148,7 @@ class AwardsService
                 $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
 
             return $bStats <=> $aStats;
-        })->limit(15)->get();
+        })->take(15)->values();
 
         // Filter out rookies and determine the Rookie of the Year award
         $rookies = $eligiblePlayerStats->filter(function ($stats) {
@@ -169,7 +169,7 @@ class AwardsService
                 $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
 
             return $bStats <=> $aStats;
-        })->limit(15)->get();
+        })->take(15)->values();
 
         // Only insert these awards if it's not season 1
         if ($latestSeasonId > 1) {
@@ -956,7 +956,7 @@ class AwardsService
             foreach ($schedule as $match) {
                 // Fetch players for home and away teams
                 $homeTeam = $seasonId % 2 == 0 ? $northAllStarsConference : $southAllStarsConference;
-                $awayTeam = $seasonId % 2 == 0 ? $southAllStarsConference : $southAllStarsConference;
+                $awayTeam = $seasonId % 2 == 0 ? $southAllStarsConference : $northAllStarsConference;
                 
                 $homeTeamPlayers = DB::table('season_awards')
                     ->where('award_name',$round)
@@ -1038,9 +1038,9 @@ class AwardsService
                     ]);
 
                 $teamInfo = DB::table('teams')
-                                ->select('name','city')
-                                ->where('team_id',$teamId)
-                                ->first();
+                            ->select('name','city')
+                            ->where('id',$teamId)
+                            ->first();
 
                 //log tansactions
                 DB::table('transactions')->insert([

@@ -43,8 +43,9 @@ class TeamsService
         // Query builder for teams with join on leagues and conferences tables
         $query = Teams::query()
             ->join('leagues', 'teams.league_id', '=', 'leagues.id')
-            ->join('conferences', 'teams.conference_id', '=', 'conferences.id')
-            ->select('teams.*', 'leagues.name as league_name', 'conferences.name as conference_name');
+            ->join('conferences', 'teams.conference_id', '=', 'conferences.id','left')
+            ->select('teams.*', 'leagues.name as league_name', 'conferences.name as conference_name')
+            ->orderBy('teams.conference_id','desc');
 
         // Apply search filter if search query is provided
         if ($searchQuery) {

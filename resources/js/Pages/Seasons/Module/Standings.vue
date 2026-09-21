@@ -445,7 +445,7 @@ let reservedBlock = '';
   }
 
 let injuryBlock = '';
-  if (team.rookies) {
+  if (team.injured_players) {
     const injuryArr = team.injured_players.split('%%').map(r => r.trim()).filter(r => r);
     if (injuryArr.length > 0) {
       injuryBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>

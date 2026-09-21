@@ -163,8 +163,6 @@ class GameEngineService
         
         $gameData = $this->gameDataInfo($scheduleId);
 
-        //dd($gameData);
-        
         if (!$gameData) {
             return response()->json([
                 'message' => 'Error Fetching game data',
@@ -174,12 +172,6 @@ class GameEngineService
         if ($gameData->status == 2) {
             return response()->json([
                 'message' => 'Game has already been simulated.',
-            ], 400);
-        }
-
-        if($gameData->round != 'all-star' || $gameData->round != 'all-rookie'){
-            return response()->json([
-                'message' => 'Game round not valid!',
             ], 400);
         }
 
@@ -353,7 +345,9 @@ class GameEngineService
 
             $quarter = 'Q'.$quarterNumber;
 
-            $playerQuarterStats = $this->gameEngine($gameData,$quarter,$quarterMinutes);
+            $playerQuarterStats = $this->allstarGameEngine($gameData,$quarter,$quarterMinutes);
+
+            // dd($playerQuarterStats);
 
             $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter);
             
@@ -550,6 +544,112 @@ class GameEngineService
         // Distribute assists for the away team
         $this->playerStats->distributeAssists($playerGameStats, $gameData->away_team_id, $maxAwayAssists, $awayAssistsAssigned);
         
+        return $playerGameStats ?? [];
+
+    }
+
+    private function allstarGameEngine($gameData,$quarter,$totalMinutes)
+    {
+
+        $currentSeasonId = get_current_season_id();
+        
+        $rolePriority = [
+            'star player' => 1,
+            'all star' => 2,
+            'starter' => 2,
+            'role player' => 5,
+            'bench' => 5,
+        ];
+
+        // Fetching sorted active players for both teams
+        $homeTeamPlayers = $this->teamManagement->getActiveAllstarPlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+        $awayTeamPlayers = $this->teamManagement->getActiveAllstarPlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+
+        // dd($awayTeamPlayers);
+
+        $playerGameStats = [];
+        $homeMinutes = $this->playerStats->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id);
+        $awayMinutes = $this->playerStats->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id);
+
+        $homeChemistry = $gameData->home_team_chemistry ?? 75;
+        $awayChemistry = $gameData->away_team_chemistry ?? 75;
+        // Simulate home team player stats with detailed shooting metrics
+
+        // Repeat similar simulation for away team players...
+        foreach ($homeTeamPlayers as $player) {
+            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $homeMinutes, $homeChemistry);
+        }
+
+        foreach ($awayTeamPlayers as $player) {
+            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $awayMinutes,  $awayChemistry);
+        }
+        
+        // Assist distribution logic remains similar but ensures 15-player roster
+        // Convert to arrays
+        $homeTeamPlayers = $homeTeamPlayers->toArray();
+        $awayTeamPlayers = $awayTeamPlayers->toArray();
+
+         // Calculate total points for each team
+        $totalHomePoints = array_sum(array_map(function ($stat) use ($gameData) {
+            return $stat['team_id'] === $gameData->home_team_id ? $stat['points'] : 0;
+        }, $playerGameStats));
+
+        $totalAwayPoints = array_sum(array_map(function ($stat) use ($gameData) {
+            return $stat['team_id'] === $gameData->away_team_id ? $stat['points'] : 0;
+        }, $playerGameStats));
+
+         // Assuming $homeTeamPlayers and $awayTeamPlayers are arrays of player stats with player ids
+        // Retrieve passing ratings for home and away team players from the player table
+        $homePassingTotal = 0;
+        $homePassingAverage = 0;
+        $awayPassingTotal = 0;
+        $awayPassingAverage = 0;
+
+        // Sum up passing ratings for home team players
+        foreach ($homeTeamPlayers as $player) {
+            $passingRating = $player['passing_rating'] ?? 0;  // Default to 0 if passing_rating is missing
+            $homePassingTotal += $passingRating;
+        }
+
+        // Sum up passing ratings for away team players
+        foreach ($awayTeamPlayers as $player) {
+            $passingRating = $player['passing_rating'] ?? 0;  // Default to 0 if passing_rating is missing
+            $awayPassingTotal += $passingRating;
+        }
+
+        // Calculate passing averages
+        $homePassingAverage = count($homeTeamPlayers) > 0 ? $homePassingTotal / count($homeTeamPlayers) : 0;
+        $awayPassingAverage = count($awayTeamPlayers) > 0 ? $awayPassingTotal / count($awayTeamPlayers) : 0;
+
+         // Define maximum assists based on total points and completion rate
+        $maxHomeAssists = round(($totalHomePoints / 2) * ($homePassingAverage / 100));
+        $maxAwayAssists = round(($totalAwayPoints / 2) * ($awayPassingAverage / 100));
+
+        // Track assists assigned to each team
+        $homeAssistsAssigned = 0;
+        $awayAssistsAssigned = 0;
+
+         // Check if passing_rating exists in player stats before sorting
+        foreach ($playerGameStats as &$stats) {
+            // Ensure passing_rating exists, default to 0 if not
+            if (!isset($stats['passing_rating'])) {
+                $stats['passing_rating'] = 0;  // Default passing rating to 0 if it's missing
+            }
+        }
+
+        // Sort players by passing rating in descending order
+        usort($playerGameStats, function ($a, $b) {
+            return $b['passing_rating'] <=> $a['passing_rating'];
+        });
+
+         // Distribute assists for the home team
+        $this->playerStats->distributeAssists($playerGameStats, $gameData->home_team_id, $maxHomeAssists, $homeAssistsAssigned);
+
+        // Distribute assists for the away team
+        $this->playerStats->distributeAssists($playerGameStats, $gameData->away_team_id, $maxAwayAssists, $awayAssistsAssigned);
+        
+        // dd($playerGameStats);
+
         return $playerGameStats ?? [];
 
     }

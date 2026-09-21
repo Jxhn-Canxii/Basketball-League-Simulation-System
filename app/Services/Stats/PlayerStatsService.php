@@ -152,6 +152,7 @@ class PlayerStatsService
 
     public function distributeMinutes($playersArray, $totalMinutes, $gameId)
     {
+
         $rolePriority = [
             'star player' => 1,
             'all star'    => 2,
@@ -1007,7 +1008,7 @@ class PlayerStatsService
                     $stats['is_fouled_out'] = 0;
                     $stats['assists'] = max(0,$stats['assists']);
                 }
-                // dd($stats['points']);
+                
                 // Update Player Game Stats
                 DB::table('player_per_quarter_stats')->updateOrInsert(
                     [

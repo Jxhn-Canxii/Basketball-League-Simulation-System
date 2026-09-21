@@ -81,7 +81,7 @@ class ScheduleService
 
         $tradeProposalDeadline = CEIL($totalRounds / 2);
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
-        $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) + 4);
+        $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) + 2);
 
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
@@ -98,17 +98,6 @@ class ScheduleService
         if($allStarBreak){
             $this->selectAllStars();
             $this->awards->updateAllStarCoach($seasonId);
-
-            $allStarRound = ['all-rookie','all-star'];
-
-            $allStarSchedule = Schedules::where('season_id', $seasonId)
-                ->select('id', 'conference_id')
-                ->whereIn('round', $allStarRound)
-                ->where('status', 1)
-                ->orderBy('id')
-                ->orderBy('game_number')
-                ->select('id', 'conference_id')
-                ->get();
         }
         
         if($isEndTradeDeadline) {
@@ -130,8 +119,11 @@ class ScheduleService
         while ($hasData) {
             $hasData = false;
 
-            if($allStarBreak){
+            $allStarSchedule = $this->allStarSchedule($seasonId);
+            
+            if(count($allStarSchedule) > 0){
                 $interleaved[] = $allStarSchedule;
+                $hasData = true;
             }
 
             foreach ($groupedByConference as $conferenceId => $games) {
@@ -152,6 +144,7 @@ class ScheduleService
             'simulated_rounds' => $simulatedRounds,
             'total_rounds' => $totalRounds,
             'status' => $latestSeasonStatus,
+            'allstar-break' => $allStarBreak,
         ]);
     }
 
@@ -1170,7 +1163,7 @@ class ScheduleService
         return $count;
     }
 
-    public function selectAllStars()
+    private function selectAllStars()
     {
         $seasonId = get_current_season_id();
         
@@ -1191,7 +1184,39 @@ class ScheduleService
         $this->awards->selectAllStarsForConference('north',$northAllStars);
         $this->awards->selectAllStarsForConference('south',$southAllStars);
 
-        return true;
+        $schedules = DB::table('schedules')
+                ->where('season_id',$seasonId)
+                ->whereIn('round',$allStarRound)
+                ->get();
+
+        $awards = DB::table('season_awards as sa')
+                ->select('players.name','sa.award_description')
+                ->join('players','players.id','=','sa.player_id')
+                ->where('sa.season_id',$seasonId)
+                ->whereIn('sa.award_name',$allStarRound)
+                ->get();
+
+        $data = [
+            'schedules' => $schedules,
+            'awards' => $awards,
+        ];
+
+        return $data;
     }
 
+    private function allStarSchedule($seasonId){
+
+            $allStarRound = ['all-rookie','all-star'];
+
+            $allStarSchedule = Schedules::where('season_id', $seasonId)
+                ->select('id', 'conference_id')
+                ->whereIn('round', $allStarRound)
+                ->where('status', 1)
+                ->orderBy('id')
+                ->orderBy('game_number')
+                ->select('id', 'conference_id')
+                ->get();
+            
+            return $allStarSchedule ?? [];
+    }
 }

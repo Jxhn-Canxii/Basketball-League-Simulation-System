@@ -422,6 +422,7 @@
             
             const response = await axios.post(route(simulateGameUrl), {
                 schedule_id: schedule_id,
+                conference_id: conference_id
             });
             
              // Show a toast notification

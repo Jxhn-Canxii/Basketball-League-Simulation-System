@@ -545,6 +545,115 @@ class TeamManagementService
         ];
     }
 
+    private function getAllStarTeamConferenceRange($teamId){
+        switch ($teamId) {
+            case 1 || 3:
+                return [1,2]; // north conference
+                break;
+            case 2 || 4:
+                return [3,4]; //south conference
+                break;
+            default:
+                return [];
+                break;
+        }
+    }
+    public function getActiveAllstarPlayersSorted($teamId, $gameId, $rolePriority, $round)
+    {
+
+        $conferenceRange = $this->getAllStarTeamConferenceRange($teamId);
+
+        $seasonId = get_current_season_id();
+        $previousSeasonId = get_previous_season_id(); // You must implement this
+
+        $players = 
+            Player::join('season_awards as sa','players.id','=','sa.player_id')
+            ->select(
+                'players.*',
+                'drafts.round as draft_round',
+                'drafts.pick_number as draft_pick'
+            )
+            ->leftJoin('drafts', function ($join) use ($seasonId) {
+                $join->on('drafts.player_id', '=', 'players.id')
+                    ->where('drafts.season_id', '=', $seasonId);
+            })
+            ->whereIn('sa.conference_id', $conferenceRange)
+            ->where('sa.season_id', $seasonId)
+            ->get();
+
+        $playerEfficiencies = [];
+
+        foreach ($players as $player) {
+            $playerId = $player->id;
+            $role = $player->role;
+
+            // Years pro = distinct seasons
+            $yearsPro = DB::table('player_season_stats_archives')
+                ->where('player_id', $playerId)
+                ->distinct('season_id')
+                ->count('season_id') + 1;
+
+            // Current season efficiency sum
+            $currentEff = DB::table('player_season_stats')
+                ->where('season_id', $seasonId)
+                ->where('player_id', $playerId)
+                ->sum('eff') ?? 0;
+
+            // Last 5 games from previous season (only if early season)
+            $lastFiveGamesEff = DB::table('player_game_stats')
+                ->where('season_id', $previousSeasonId)
+                ->where('player_id', $playerId)
+                ->orderByDesc('id')
+                ->limit(5)
+                ->sum('eff') ?? 0;
+
+            $totalEff = $currentEff + $lastFiveGamesEff;
+
+            // Draft info
+            $draft = DB::table('drafts')
+                ->where('player_id', $playerId)
+                ->where('season_id', $seasonId)
+                ->first();
+
+            $playerFouls = DB::table('player_per_quarter_stats')
+                ->where('player_id', $playerId)
+                ->where('game_id', $gameId)
+                ->sum('fouls');
+
+            $isFouledOut = ($playerFouls >= 5) ? 1 : 0;
+
+            $player->is_fouled_out = $isFouledOut;
+            $player->last_quarter_fouls = $playerFouls;
+
+            $player->team_id = $teamId;
+
+            $playerEfficiencies[] = [
+                'player' => $player,
+                'role' => $player->role,
+                'total_eff' => $totalEff,
+                'years_pro' => $yearsPro,
+                'is_rookie' => $draft ? true : false,
+                'draft_round' => $draft->round ?? null,
+                'draft_pick' => $draft->pick_number ?? null,
+                'is_fouled_out' =>  $isFouledOut,
+                'fatigue' =>  $player->fatigue,
+                'role_rank' => array_search($player->role, $rolePriority) !== false
+                    ? array_search($player->role, $rolePriority)
+                    : PHP_INT_MAX,
+            ];
+        }
+
+        // Sort by: total_eff DESC, role_priority ASC,fatigue ASC,years_pro DESC,
+        $sortedPlayers = collect($playerEfficiencies)->sort(function ($a, $b) {
+            return $b['total_eff'] <=> $a['total_eff']
+                ?: $a['role_rank'] <=> $b['role_rank']
+                ?: $a['fatigue'] <=> $b['fatigue']
+                ?: $b['years_pro'] <=> $a['years_pro'];
+        })->pluck('player')->values();
+
+        return $sortedPlayers;
+    }
+
     public function prepareAllStarFinalRoster($teamId, $round = null)
     {
         $seasonId = get_current_season_id();

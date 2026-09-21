@@ -755,6 +755,12 @@
                             >
                                 <i class="fa fa-trophy text-yellow-500 text-lg"></i>
                             </sup>
+                            <sup v-if="bestPlayer?.all_star_count > 0" 
+                            v-for="star in bestPlayer?.all_star_count" 
+                            :key="star"
+                            :title="bestPlayer?.all_star_count+'x All-star'" >
+                                <i class="fa fa-star fa-md text-yellow-500"></i>
+                            </sup>
                             <sup v-if="bestPlayer?.is_season_mvp" title="Season MVP">
                                 <i class="fa fa-star text-yellow-500 text-lg"></i>
                             </sup>
@@ -763,6 +769,9 @@
                             </sup>
                             <sup v-if="bestPlayer?.is_rookie_poy" title="Rookie of the Season">
                                 <b class="text-green-500 text-lg text-bold bg-green-200 rounded-full p-1 text-center">R</b>
+                            </sup>
+                            <sup v-if="bestPlayer?.is_all_rookie" title="All-Rookie Selection">
+                                <b class="text-green-500 text-lg text-bold bg-green-300 rounded-full p-1 text-center">R</b>
                             </sup>
                             <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
                                 <i class="fa fa-chart-line text-purple-500 text-lg"></i>
