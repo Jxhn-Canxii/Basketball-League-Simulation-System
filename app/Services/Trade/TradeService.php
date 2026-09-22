@@ -90,7 +90,7 @@ class TradeService
 
         $proposalCount = DB::table('trade_proposals')
             ->where('season_id', $seasonId)
-            ->where('status','!=','rejected')
+            ->where('status','approved')
             ->count();
 
         $this->attachTradePlayers($proposals);

@@ -28,7 +28,7 @@
         class="trade-count"
       >
         {{ proposal_count }}
-        {{ proposal_count > 1 ? "Proposals" : "Proposal" }}
+        Approved {{ proposal_count > 1 ? "Proposals" : "Proposal" }}
       </div>
     </div>
     <!-- =========================================================
