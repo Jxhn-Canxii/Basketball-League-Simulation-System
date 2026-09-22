@@ -780,17 +780,17 @@
                             </sup>
                             <sup v-if="bestPlayer?.is_all_rookie" title="All-Rookie Selection">
                                 <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-600 text-white text-center">
-                                    <i class="fa fa-user-briefcase text-green-500"></i> Season {{ bestPlayer?.draft_id ?? 0 }} All-rookie Selection
+                                    <i class="fa fa-user-briefcase text-yellow-500"></i> Season {{ bestPlayer?.draft_id ?? 0 }} All-rookie Selection
                                 </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
                                 <label for="playoff_appearance" class="p-1 rounded text-xs bg-purple-300 text-white text-center">
-                                    <i class="fa fa-md fa-chart-line text-purple-500"></i> MIP of the Season
+                                    <i class="fa fa-md fa-chart-line text-yellow-500"></i> MIP of the Season
                                 </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_sixth_man" title="Sixth Man of the Season">
                                 <label for="playoff_appearance" class="p-1 rounded text-xs bg-gray-300 text-white text-center">
-                                    <i class="fa fa-user-secret text-gray-500"></i> 6th Man of the Season
+                                    <i class="fa fa-user-secret text-yellow-500"></i> 6th Man of the Season
                                 </label>
                             </sup>
                             <sup v-if="bestPlayer?.playoff_appearance > 0" :title="bestPlayer?.playoff_appearance+'x Play-off Appearance'">
