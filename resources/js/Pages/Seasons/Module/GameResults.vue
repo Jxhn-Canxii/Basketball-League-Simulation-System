@@ -775,12 +775,12 @@
                             </sup>
                             <sup v-if="bestPlayer?.is_rookie_poy" title="Rookie of the Season">
                                 <label for="playoff_appearance" class="p-1 rounded text-xs bg-yellow-800 text-white text-center">
-                                    <i class="fa fa-md fa-medal text-yellow-500"></i> Season {{ bestPlayer?.draft_id ?? 0 }} Rookie of the Season
+                                    <i class="fa fa-md fa-medal text-yellow-500"></i> S{{ bestPlayer?.draft_id ?? 0 }} Rookie of the Season
                                 </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_all_rookie" title="All-Rookie Selection">
                                 <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-600 text-white text-center">
-                                    <i class="fa fa-user-briefcase text-yellow-500"></i> Season {{ bestPlayer?.draft_id ?? 0 }} All-rookie Selection
+                                    <i class="fa fa-medal text-yellow-500"></i> S{{ bestPlayer?.draft_id ?? 0 }} All-rookie Selection
                                 </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
