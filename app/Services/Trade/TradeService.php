@@ -88,11 +88,17 @@ class TradeService
             ->limit($limit)
             ->get();
 
+        $proposalCount = DB::table('trade_proposals')
+            ->where('season_id', $seasonId)
+            ->where('status','!=','rejected')
+            ->count();
+
         $this->attachTradePlayers($proposals);
 
         return response()->json([
             'trade_proposals' => $proposals,
             'current_season' => $seasonId,
+            'proposal_count' => $proposalCount,
             'trade_type' => 'pending',
         ]);
     }

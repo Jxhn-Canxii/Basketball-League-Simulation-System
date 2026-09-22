@@ -24,11 +24,11 @@
       </div>
 
       <div
-        v-if="proposals.length > 0"
+        v-if="proposal_count > 0"
         class="trade-count"
       >
-        {{ proposals.length }}
-        {{ proposals.length === 1 ? "Proposal" : "Proposals" }}
+        {{ proposal_count }}
+        {{ proposal_count > 1 ? "Proposals" : "Proposal" }}
       </div>
     </div>
     <!-- =========================================================
@@ -431,6 +431,7 @@ const showPlayerProfileModal = ref(false);
 const selectedPlayer = ref(null);
 
 const proposals = ref([]);
+const proposal_count = ref([]);
 const current_season = ref(null);
 const trade_season_end = ref(false);
 const isTradeDone = ref(false);
@@ -498,6 +499,7 @@ const fetchTradeProposals = async () => {
     );
 
     proposals.value = response.data.trade_proposals || [];
+    proposal_count.value = response.data.proposal_count || 0;
 
     isTradeDone.value = proposals.value.length;
 
