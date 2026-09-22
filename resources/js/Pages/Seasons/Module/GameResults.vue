@@ -750,12 +750,19 @@
                                     <i class="fa fa-md fa-medal text-yellow-500"></i> Finals MVP
                                 </label>
                             </sup>
-                            <sup v-if="bestPlayer?.is_finals_mvp"
+                            <sup v-if="bestPlayer?.championships_won > 0"
                             v-for="champ in bestPlayer?.championships_won" 
                             :key="champ"
                             :title="bestPlayer?.championships_won+'x Champion/s'" 
                             >
                                 <i class="fa fa-trophy text-yellow-500 text-lg"></i>
+                            </sup>
+                            <sup v-if="bestPlayer?.conference_championship_won > 0"
+                            v-for="champ in bestPlayer?.conference_championship_won" 
+                            :key="champ"
+                            :title="bestPlayer?.conference_championship_won+'x Conference Champion/s'" 
+                            >
+                                <i class="fa fa-trophy text-gray-500 text-lg"></i>
                             </sup>
                             <sup v-if="bestPlayer?.all_star_count > 0" 
                             :title="bestPlayer?.all_star_count+'x All-star Selection'" >

@@ -114,6 +114,7 @@ class GameResultService
                 'player_game_stats.is_fouled_out',
                 'player_game_stats.eff',
                 'ppa.championships_won',
+                'ppa.interconference_semi_finals_appearances as conference_championship_won',
                 'ppa.round_of_16_appearances as playoff_appearance',
                 'pgh.all_star_count as all_star_count',
 
@@ -263,6 +264,7 @@ class GameResultService
             'awards' => $bestWinningTeamPlayer->awards ?? null,
             'finals_mvp' => $bestWinningTeamPlayer->finals_mvp ?? null,
             'championships_won' => $bestWinningTeamPlayer->championships_won ?? null,
+            'conference_championship_won' => $bestWinningTeamPlayer->conference_championship_won ?? null,
             'playoff_appearance' => $bestWinningTeamPlayer->playoff_appearance ?? null,
             'is_finals_mvp' => $bestWinningTeamPlayer->is_finals_mvp,
             'is_season_mvp' => $bestWinningTeamPlayer->is_season_mvp,
