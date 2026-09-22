@@ -221,6 +221,9 @@ class AwardsService
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
+
+                DB::table('player_game_highs')->where('player_id', $allStarStats->player_id)->increment('all_star_count', 1);
+
             }
 
             $this->insertAllStarSchedule('all-star');

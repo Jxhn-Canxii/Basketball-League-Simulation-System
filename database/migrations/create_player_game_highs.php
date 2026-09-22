@@ -28,6 +28,7 @@ return new class extends Migration
             $table->integer('free_throws_made')->default(0);
             $table->integer('two_point_attempts')->default(0);
             $table->integer('two_pointers_made')->default(0);
+            $table->integer('all_star_count')->default(0);
             $table->timestamps();
         });
     }

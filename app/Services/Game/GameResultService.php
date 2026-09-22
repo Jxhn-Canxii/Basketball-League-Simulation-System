@@ -72,6 +72,7 @@ class GameResultService
             })
             ->leftJoin('season_awards as sa', 'sa.player_id', '=', 'p.id')
             ->leftJoin('player_playoff_appearances as ppa', 'ppa.player_id', '=', 'p.id')
+            ->leftJoin('player_game_highs as pgh', 'pgh.player_id', '=', 'p.id')
             ->select(
                 'player_game_stats.player_id',
                 'p.name as player_name',
@@ -114,10 +115,10 @@ class GameResultService
                 'player_game_stats.eff',
                 'ppa.championships_won',
                 'ppa.round_of_16_appearances as playoff_appearance',
+                'pgh.all_star_count as all_star_count',
 
                 // Determine if the player is the Finals MVP for this season
                 DB::raw("CASE WHEN p.id = (SELECT finals_mvp_id FROM seasons WHERE seasons.finals_mvp_id = p.id LIMIT 1) THEN 1 ELSE 0 END as is_finals_mvp"),
-                DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'all-star') THEN (SELECT COUNT(DISTINCT(sa.season_id)) FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'all-star') ELSE 0 END) AS all_star_count"),
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'all-rookie') THEN 1 ELSE 0 END) AS is_all_rookie"),
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Best Defensive Player') THEN 1 ELSE 0 END) AS is_defensive_poy"),
                 DB::raw("(SELECT CASE WHEN EXISTS (SELECT 1 FROM season_awards sa WHERE sa.player_id = p.id AND sa.award_name = 'Sixth Man of the Year') THEN 1 ELSE 0 END) AS is_sixth_man"),
