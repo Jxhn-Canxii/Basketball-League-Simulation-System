@@ -744,9 +744,11 @@
                         </sup>
                     </div>
                     <div class="block text-nowrap mt-2 items-center">
-                        <div class="flex justify-left space-x-3 items-center">
+                        <div class="flex justify-left flex-wrap space-x-3 items-center">
                             <sup v-if="bestPlayer?.is_finals_mvp" title="Finals MVP">
-                                <i class="fa fa-medal text-yellow-500 text-lg"></i>
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-yellow-900 text-white text-center">
+                                    <i class="fa fa-md fa-medal text-yellow-500"></i> Finals MVP
+                                </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_finals_mvp"
                             v-for="champ in bestPlayer?.championships_won" 
@@ -756,28 +758,40 @@
                                 <i class="fa fa-trophy text-yellow-500 text-lg"></i>
                             </sup>
                             <sup v-if="bestPlayer?.all_star_count > 0" 
-                            v-for="star in bestPlayer?.all_star_count" 
-                            :key="star"
-                            :title="bestPlayer?.all_star_count+'x All-star'" >
-                                <i class="fa fa-medal fa-lg text-red-500"></i>
+                            :title="bestPlayer?.all_star_count+'x All-star Selection'" >
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-indigo-900 text-white text-center">
+                                    <i class="fa fa-md fa-medal text-yellow-500"></i> {{ bestPlayer?.all_star_count }}x All-star
+                                </label>
                             </sup>
-                            <sup v-if="bestPlayer?.is_season_mvp" title="Season MVP">
-                                <i class="fa fa-star text-yellow-500 text-lg"></i>
+                            <sup v-if="bestPlayer?.is_season_mvp" title="Season Most Valuable Player">
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-300 text-white text-center">
+                                    <i class="fa fa-md fa-star text-yellow-500"></i> Season MVP
+                                </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_defensive_poy" title="Defensive Player of the Season">
-                                <i class="fa fa-shield-alt text-blue-500 text-lg"></i>
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-blue-300 text-white text-center">
+                                    <i class="fa fa-md fa-shield-alt text-yellow-500"></i> Defensive Player of the Season
+                                </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_rookie_poy" title="Rookie of the Season">
-                                <b class="text-yellow-500 text-lg text-bold bg-yellow-200 rounded-full p-1 text-center">R</b>
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-yellow-300 text-white text-center">
+                                    <i class="fa fa-md fa-medal text-yellow-500"></i> Season {{ bestPlayer?.draft_id ?? 0 }} Rookie of the Season
+                                </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_all_rookie" title="All-Rookie Selection">
-                                <b class="text-green-300 text-md text-bold bg-green-300 rounded-full p-1 text-center">r</b>
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-300 text-white text-center">
+                                    <i class="fa fa-user-briefcase text-green-500"></i> Season {{ bestPlayer?.draft_id ?? 0 }} All-rookie Selection
+                                </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
-                                <i class="fa fa-chart-line text-purple-500 text-lg"></i>
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-purple-300 text-white text-center">
+                                    <i class="fa fa-md fa-chart-line text-purple-500"></i> MIP of the Season
+                                </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_sixth_man" title="Sixth Man of the Season">
-                                <b class="text-gray-500 text-lg text-bold bg-gray-200 rounded-full p-1 text-center">6</b>
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-gray-300 text-white text-center">
+                                    <i class="fa fa-user-secret text-gray-500"></i> 6th Man of the Season
+                                </label>
                             </sup>
                             <sup v-if="bestPlayer?.playoff_appearance > 0" :title="bestPlayer?.playoff_appearance+'x Play-off Appearance'">
                                 <!-- <i class="fa fa-medal text-yellow-500 text-lg"></i> -->
