@@ -771,12 +771,12 @@
                                 </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_season_mvp" title="Season Most Valuable Player">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-300 text-white text-center">
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-700 text-white text-center">
                                     <i class="fa fa-md fa-star text-yellow-500"></i> Season MVP
                                 </label>
                             </sup>
                             <sup v-if="bestPlayer?.is_defensive_poy" title="Defensive Player of the Season">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-blue-300 text-white text-center">
+                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-gray-800 text-white text-center">
                                     <i class="fa fa-md fa-shield-alt text-yellow-500"></i> Defensive Player of the Season
                                 </label>
                             </sup>
