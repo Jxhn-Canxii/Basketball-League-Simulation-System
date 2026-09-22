@@ -545,19 +545,6 @@ class TeamManagementService
         ];
     }
 
-    private function getAllStarTeamConferenceRange($teamId){
-        switch ($teamId) {
-            case 1 || 3:
-                return [1,2]; // north conference
-                break;
-            case 2 || 4:
-                return [3,4]; //south conference
-                break;
-            default:
-                return [];
-                break;
-        }
-    }
     public function getActiveAllstarPlayersSorted($teamId, $gameId, $rolePriority, $round)
     {
 
@@ -670,14 +657,14 @@ class TeamManagementService
         | Get Team Players
         |--------------------------------------------------------------------------
         */
+        $conferenceGroup = $this->getAllStarTeamConferenceRange($teamId);
 
-        $players = DB::table('player_game_stats as pgs')
-            ->select(
-                'players.*',
-            )
-            ->join('players','players.id','=','pgs.player_id')
-            ->where('pgs.season_id', $seasonId)
-            ->where('pgs.team_id', $teamId)
+        $players = DB::table('season_awards as sa')
+            ->select('players.*')
+            ->join('players','players.id','=','sa.player_id')
+            ->where('sa.season_id', $seasonId)
+            ->where('sa.award_name', $round)
+            ->whereIn('sa.conference_id', $conferenceGroup)
             ->where('players.is_active', 1)
             ->get();
 
@@ -1787,4 +1774,17 @@ class TeamManagementService
 
     }
 
+    private function getAllStarTeamConferenceRange($teamId){
+        switch ($teamId) {
+            case 1 || 3:
+                return [1,2]; // north conference
+                break;
+            case 2 || 4:
+                return [3,4]; //south conference
+                break;
+            default:
+                return [];
+                break;
+        }
+    }
 }

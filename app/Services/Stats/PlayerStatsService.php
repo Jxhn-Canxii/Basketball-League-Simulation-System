@@ -1124,7 +1124,9 @@ class PlayerStatsService
         } catch (\Exception $e) {
             // Log error for debugging
             // Log::error("Error updating season stats: " . $e->getMessage());
-
+            return response()->json([
+                'message' => $e->getMessage(),
+            ],500);
             // Optionally, throw the error again to stop execution
             throw new \Exception("Failed to update season stats. Please check logs." . $e->getMessage());
         }

@@ -13,6 +13,7 @@ use App\Services\Helper\HelperService;
 use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Schedule\ScheduleService;
+use App\Services\Stats\PlayerStatsService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Team\TeamRoleService;
 use App\Services\Team\TeamStreakService;
@@ -32,6 +33,7 @@ class TestController extends Controller
     protected $teamRole;
     protected $playerRatingService;
     protected $draftRights;
+    protected $playerStats;
 
     public function __construct(){
 
@@ -44,6 +46,7 @@ class TestController extends Controller
         $this->archive = new ArchiveService();
         $this->playoff = new PlayoffStatsService();
         $this->tradeService = new TradeService();
+        $this->playerStats = new PlayerStatsService();
         $this->playerRatingService = new PlayerRatingsService();
         
     }
@@ -408,16 +411,24 @@ class TestController extends Controller
 
     public function testGenerateTradeProposals()
     {
-        // return $this->tradeService->testGenerateTradeProposals();
-        $awards = DB::table('season_awards')
-                    ->select('player_id')
-                    ->where('award_name','all-star')
+        $seasonId = 2;
+
+        $players =  DB::table('season_awards')
+                    ->select('season_awards.conference_id','players.name as player_name','players.id as player_id','players.is_reserved')
+                    ->join('players','players.id','=','season_awards.player_id')
+                    ->where('season_awards.award_name','all-star')
+                    ->where('season_awards.season_id', $seasonId)
                     ->get();
-        
-        foreach ($awards as $player) {
-            # code...
-            DB::table('player_game_highs')->where('player_id', $player->player_id)->increment('all_star_count', 1);
+
+        $playerAllStar = [];
+        foreach ($players as $player) {
+            $playerAllStar[$player->player_id.'|'.$player->player_name.'-'.$player->conference_id] = $this->playerStats->updateGameStats($player->player_id,'S2-all-star', $seasonId,$player->is_reserved);
         }
+
+        return response()->json([
+            'message' => 'success',
+            'data' => $playerAllStar,
+        ],200);
     }
 
     public function testGameStreak(Request $request){
