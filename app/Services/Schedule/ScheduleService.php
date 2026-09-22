@@ -98,7 +98,7 @@ class ScheduleService
         $allStarSchedule = [];
 
         if($allStarBreak){
-            $allStarSchedule = $this->allStarSchedule($seasonId);
+            $allStarSchedule = $this->getAllStarSchedule($seasonId);
             
             if(count($allStarSchedule) == 0){
                 $this->selectAllStars();
@@ -153,11 +153,28 @@ class ScheduleService
 
     public function list(Request $request)
     {
+        $scheduleTable = $this->helper->getScheduleViewDBName($request->season_id);
         // Fetch schedules with teams' data for the specified league
-        $seasons = Seasons::where('league_id', $request->league_id)
-            ->paginate(10); // Adjust per your pagination needs
+        $schedules = DB::table($scheduleTable)
+            ->where('league_id', $request->league_id)
+            ->where('season_id', $request->season_id)
+            ->where('is_exhibition', 0)
+            ->get(); // Adjust per your pagination needs
 
-        return response()->json($seasons);
+        return response()->json($schedules);
+    }
+
+    public function listExhibition(Request $request)
+    {
+        $scheduleTable = $this->helper->getScheduleViewDBName($request->season_id);
+        // Fetch schedules with teams' data for the specified league
+        $schedules = DB::table($scheduleTable)
+            ->where('is_exhibition', 1)
+            ->orderBy('id','desc')
+            ->limit(10)
+            ->get(); // Adjust per your pagination needs
+
+        return response()->json($schedules);
     }
 
     public function createSeasonandSchedule(Request $request)
@@ -950,6 +967,7 @@ class ScheduleService
         $totalSchedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
+            ->where('is_exhibition', 0)
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
                     $q->where('home_id', $teamId)
@@ -971,6 +989,7 @@ class ScheduleService
         $schedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
             ->where('conference_id', $conferenceId)
+            ->where('is_exhibition', 0)
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
                     $q->where('home_id', $teamId)
@@ -1207,7 +1226,71 @@ class ScheduleService
         return $data;
     }
 
-    private function allStarSchedule($seasonId){
+    public function insertExhibitionSchedule($request)
+    {
+        if($request->home_team_id == $request->away_team_id){
+            return response()->json([
+                'success' => false,
+                'message' => "Cant simulate the same teams!",
+            ], 500);
+        }
+
+        try {
+            //code...
+            DB::beginTransaction();
+
+            $seasonId = get_current_season_id();
+
+            $exhibitionCount = DB::table('schedules')
+                                ->where('season_id',$seasonId)
+                                ->where('is_exhibition',1)
+                                ->count() + 1;
+        
+            $round = 'exhibition';
+            $gameId = 'S'.$seasonId.'-'.$round.'-'.$exhibitionCount;
+        
+            $homeTeamAssigned = $request->home_team_id;
+            $awayTeamAssigned = $request->away_team_id;
+                    
+            $schedule[] = [
+                'home_id' => $homeTeamAssigned,
+                'conference_id' => $round,
+                'game_id' => $gameId,
+                'away_id' =>$awayTeamAssigned,
+                'season_id' => $seasonId,
+                'round' => $round,
+                'home_score' => 0,
+                'away_score' => 0,
+                'winner_id' => 0,
+                'is_exhibition' => 1,
+                // Add more fields as needed, such as date and time
+            ];
+
+            $existingGameId = DB::table('schedules')
+                    ->where('game_id', $gameId)
+                    ->exists();
+
+            if($existingGameId){
+                return response()->json([
+                    'success' => false,
+                    'message' => "Duplicate game ID. Please check if schedule is already created.",
+                ], 500);
+            }
+
+            // Insert schedule entries into the database
+            DB::table('schedules')->insert($schedule);
+
+            DB::commit();
+        } catch (\Exception $e) {
+           DB::rollBack();
+           return response()->json([
+                'success' => false,
+                'message' => 'Error creating schedule!',
+            ], 500);
+        }
+    }
+
+    private function getAllStarSchedule($seasonId){
 
             $allStarRound = ['all-rookie','all-star'];
 

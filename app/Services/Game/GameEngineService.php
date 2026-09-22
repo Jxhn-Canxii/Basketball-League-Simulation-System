@@ -15,7 +15,8 @@ use App\Services\League\NewsService;
 use App\Services\Player\FreeAgencyService;
 use App\Services\Stats\PlayerCareerStatsService;
 use App\Services\Stats\PlayoffStatsService;
-use App\Services\Stats\PlayerStatsService;
+use App\Services\Game\PlayerStatsService;
+use App\Services\Game\PlayerByPlayService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Team\TeamManagementService;
 use App\Services\Team\TeamStreakService;
@@ -34,12 +35,14 @@ class GameEngineService
     protected $archive;
     protected $career;
     protected $teamChemistry;
+    protected $playByPlay;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
         // $this->storeStats = new AwardsController();
         $this->contract = new ContractService();
+        $this->playByPlay = new PlayByPlayService();
         $this->teamChemistry = new TeamChemistryService();
         $this->teamManagement = new TeamManagementService();
         $this->playOffStats = new PlayoffStatsService();
@@ -152,6 +155,38 @@ class GameEngineService
             'game_info' => $gameData,
             'home_team_report' => $gameResults['home_team_roster'],
             'away_team_report' => $gameResults['home_team_roster'],
+        ];
+
+    }
+
+    public function startExhibitionGame(string $scheduleId, $totalMinutes = 240)
+    {
+
+        $currentSeasonId = get_current_season_id();
+        
+        $gameData = $this->gameDataInfo($scheduleId);
+
+        //dd($gameData);
+        
+        if (!$gameData) {
+            return response()->json([
+                'message' => 'Error Fetching game data',
+            ], 400);
+        }
+
+        if ($gameData->status == 2) {
+            return response()->json([
+                'message' => 'Game has already been simulated.',
+            ], 400);
+        }
+
+        $this->freeAgent->auditTeamRosterSpot($gameData->home_team_id);
+        $this->freeAgent->auditTeamRosterSpot($gameData->away_team_id);
+        
+        $this->runGame($scheduleId, $gameData,$totalMinutes);
+    
+        return [
+            'game_info' => $gameData
         ];
 
     }
@@ -471,83 +506,38 @@ class GameEngineService
         
         $homeChemistry = $gameData->home_team_chemistry ?? 75;
         $awayChemistry = $gameData->away_team_chemistry ?? 75;
-        // Simulate home team player stats with detailed shooting metrics
-
-        // Repeat similar simulation for away team players...
-        foreach ($homeTeamPlayers as $player) {
-            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $homeMinutes, $homeChemistry);
-        }
-
-        foreach ($awayTeamPlayers as $player) {
-            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $awayMinutes,  $awayChemistry);
-        }
         
-        // Assist distribution logic remains similar but ensures 15-player roster
-        // Convert to arrays
-        $homeTeamPlayers = $homeTeamPlayers->toArray();
-        $awayTeamPlayers = $awayTeamPlayers->toArray();
+        /*
+        * NEW POSSESSION ENGINE
+        * Returns:
+        *
+        * [
+        *     'stats' => [...],
+        *     'events' => [...],
+        *     'home_points' => 0,
+        *     'away_points' => 0,
+        * ]
+        */
+        $quarterResult = $this->playByPlay->simulateQuarterPossessions(
+                $currentSeasonId,
+                $gameData,
+                $homeTeamPlayers,
+                $awayTeamPlayers,
+                $homeMinutes,
+                $awayMinutes,
+                $quarter,
+                $homeChemistry,
+                $awayChemistry,
+                115
+            );
 
-         // Calculate total points for each team
-        $totalHomePoints = array_sum(array_map(function ($stat) use ($gameData) {
-            return $stat['team_id'] === $gameData->home_team_id ? $stat['points'] : 0;
-        }, $playerGameStats));
-
-        $totalAwayPoints = array_sum(array_map(function ($stat) use ($gameData) {
-            return $stat['team_id'] === $gameData->away_team_id ? $stat['points'] : 0;
-        }, $playerGameStats));
-
-         // Assuming $homeTeamPlayers and $awayTeamPlayers are arrays of player stats with player ids
-        // Retrieve passing ratings for home and away team players from the player table
-        $homePassingTotal = 0;
-        $homePassingAverage = 0;
-        $awayPassingTotal = 0;
-        $awayPassingAverage = 0;
-
-        // Sum up passing ratings for home team players
-        foreach ($homeTeamPlayers as $player) {
-            $passingRating = $player['passing_rating'] ?? 0;  // Default to 0 if passing_rating is missing
-            $homePassingTotal += $passingRating;
+        if (!empty($quarterResult['events'])) {
+            DB::table('game_play_by_play')->insert(
+                $quarterResult['stats']
+            );
         }
 
-        // Sum up passing ratings for away team players
-        foreach ($awayTeamPlayers as $player) {
-            $passingRating = $player['passing_rating'] ?? 0;  // Default to 0 if passing_rating is missing
-            $awayPassingTotal += $passingRating;
-        }
-
-        // Calculate passing averages
-        $homePassingAverage = count($homeTeamPlayers) > 0 ? $homePassingTotal / count($homeTeamPlayers) : 0;
-        $awayPassingAverage = count($awayTeamPlayers) > 0 ? $awayPassingTotal / count($awayTeamPlayers) : 0;
-
-         // Define maximum assists based on total points and completion rate
-        $maxHomeAssists = round(($totalHomePoints / 2) * ($homePassingAverage / 100));
-        $maxAwayAssists = round(($totalAwayPoints / 2) * ($awayPassingAverage / 100));
-
-        // Track assists assigned to each team
-        $homeAssistsAssigned = 0;
-        $awayAssistsAssigned = 0;
-
-         // Check if passing_rating exists in player stats before sorting
-        foreach ($playerGameStats as &$stats) {
-            // Ensure passing_rating exists, default to 0 if not
-            if (!isset($stats['passing_rating'])) {
-                $stats['passing_rating'] = 0;  // Default passing rating to 0 if it's missing
-            }
-        }
-
-        // Sort players by passing rating in descending order
-        usort($playerGameStats, function ($a, $b) {
-            return $b['passing_rating'] <=> $a['passing_rating'];
-        });
-
-         // Distribute assists for the home team
-        $this->playerStats->distributeAssists($playerGameStats, $gameData->home_team_id, $maxHomeAssists, $homeAssistsAssigned);
-
-        // Distribute assists for the away team
-        $this->playerStats->distributeAssists($playerGameStats, $gameData->away_team_id, $maxAwayAssists, $awayAssistsAssigned);
-        
-        return $playerGameStats ?? [];
-
+        return $quarterResult['stats'];
     }
 
     private function allstarGameEngine($gameData,$quarter,$totalMinutes)
@@ -579,11 +569,11 @@ class GameEngineService
 
         // Repeat similar simulation for away team players...
         foreach ($homeTeamPlayers as $player) {
-            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $homeMinutes, $homeChemistry);
+            $playerGameStats[] = $this->playByPlay->statsEngine($currentSeasonId, $gameData, $player, $homeMinutes, $homeChemistry);
         }
 
         foreach ($awayTeamPlayers as $player) {
-            $playerGameStats[] = $this->statsEngine($currentSeasonId, $gameData, $player, $awayMinutes,  $awayChemistry);
+            $playerGameStats[] = $this->playByPlay->statsEngine($currentSeasonId, $gameData, $player, $awayMinutes,  $awayChemistry);
         }
         
         // Assist distribution logic remains similar but ensures 15-player roster
@@ -653,79 +643,6 @@ class GameEngineService
         // dd($playerGameStats);
 
         return $playerGameStats ?? [];
-
-    }
-
-    private function statsEngine($currentSeasonId, $gameData, $player, $playerMinutes, $chemistry)
-    {
-        $minutes = (int) $playerMinutes[$player->id];
-
-        $performanceFactor = $this->playerStats->calculatePerformanceFactor($player);
-        $defensiveImpact =  $this->playerStats->calculateDefensiveImpact($gameData->away_team_id);
-
-        $turnovers =  $this->playerStats->calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact);
-        $fouls =  $this->playerStats->calculateFoul($player, $minutes, $performanceFactor, $defensiveImpact);
-
-        $totalFouls = $player->last_quarter_fouls + $fouls;
-        $isPlayerOut = $totalFouls > 5 ? 1 : 0;
-
-        //set is foul out to true
-        $player->is_fouled_out = $isPlayerOut;
-
-        if ($isPlayerOut == 1 || $minutes == 0 || $player->is_injured == 1 || $player->is_fouled_out == 1 || $player->is_reserved == 1) {
-            $playerGameStats = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
-        }
-        else{
-            $shotStats =  $this->playerStats->calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry, true, false);
-
-            // Assign returned values to variables
-            $twoPointAttempts = $shotStats['two_point_attempts'];
-            $twoPointMade = $shotStats['two_point_made'];
-
-            $threePointAttempts = $shotStats['three_point_attempts'];
-            $threePointMade = $shotStats['three_point_made'];
-
-            $freeThrowAttempts = $shotStats['free_throw_attempts'];
-            $freeThrowMade = $shotStats['free_throw_made'];
-
-
-            $points =  $this->playerStats->calculatePoints($player, $twoPointMade, $threePointMade, $freeThrowMade, $fouls);
-
-            // Simulate other stats
-            $rebounds =  $this->playerStats->calculateRebounds($player, $minutes, $performanceFactor, $fouls);
-            $blocks =  $this->playerStats->calculateBlocks($player, $minutes, $performanceFactor, $fouls);
-            $steals =  $this->playerStats->calculateSteals($player, $minutes, $performanceFactor, $fouls);
-
-        
-            $playerGameStats = [
-                'player_id' => $player->id,
-                'game_id' => $gameData->game_id,
-                'season_id' => $currentSeasonId,
-                'team_id' => $player->team_id,
-                'is_injured' => $player->is_injured,
-                'role' => $player->role,
-                'points' => $points,
-                'rebounds' => $rebounds,
-                'assists' => 0, // Temporary value
-                'steals' => $steals,
-                'blocks' => $blocks,
-                'turnovers' => $turnovers,
-                'fouls' => $fouls,
-                'minutes' => $minutes,
-                'field_goal_attempts' => $twoPointAttempts + $threePointAttempts,
-                'field_goals_made' => $twoPointMade + $threePointMade,
-                'three_point_attempts' => $threePointAttempts,
-                'three_pointers_made' => $threePointMade,
-                'two_pointers_made' => $twoPointMade,
-                'two_point_attempts' => $twoPointAttempts,
-                'free_throw_attempts' => $freeThrowAttempts,
-                'free_throws_made' => $freeThrowMade,
-            ];
-        }
-
-        $this->teamManagement->fatigueRate($player, $minutes, $gameData->game_id);
-
-        return $playerGameStats;
 
     }
 

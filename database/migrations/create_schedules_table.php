@@ -33,6 +33,10 @@ return new class extends Migration
 
             $table->boolean('is_overtime')->default(0);
 
+            $table->boolean('is_exhibition')->default(false);
+            $table->string('exhibition_name')->nullable();
+            $table->index(['is_exhibition', 'status']);
+            
             $table->timestamps();
         });
 

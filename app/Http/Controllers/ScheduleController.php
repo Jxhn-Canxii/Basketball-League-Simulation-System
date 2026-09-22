@@ -36,6 +36,20 @@ class ScheduleController extends Controller
 
     }
 
+    public function insertExhibitionSchedule(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'home_team_id' => 'required|exists:teams,id',
+            'away_team_id' => 'required|exists:teams,id',
+        ]);
+
+        return $this->scheduleService->insertExhibitionSchedule($request);
+
+    }
+
+   
+
     public function list(Request $request)
     {
         // Validate the request data
@@ -45,6 +59,17 @@ class ScheduleController extends Controller
         ]);
 
         return $this->scheduleService->list($request);
+
+    }
+
+    public function listExhibition(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'season_id' => 'required|exists:seasons,id',
+        ]);
+
+        return $this->scheduleService->listExhibition($request);
 
     }
 

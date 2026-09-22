@@ -17,6 +17,7 @@ use App\Http\Controllers\RatingsController;
 use App\Http\Controllers\AwardsController;
 use App\Http\Controllers\DraftController;
 use App\Http\Controllers\AnalyticsController;
+use App\Http\Controllers\ExhibitionGameController;
 use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\SimulateController;
 use App\Http\Controllers\GameController;
@@ -96,6 +97,7 @@ Route::middleware('auth')->group(function () {
 
         Route::post('game-playoff', [SimulateController::class, 'simulatePlayoff'])->name('game.simulate.playoff');
         Route::post('game-regular', [SimulateController::class, 'simulateRegular'])->name('game.simulate.regular');
+        Route::post('game-exhibition', [SimulateController::class, 'simulateExhibitionGame'])->name('game.simulate.exhibition');
         Route::post('game-allstar', [SimulateController::class, 'simulateAllStar'])->name('game.simulate.allstar');
         Route::post('game-per-round', [SimulateController::class, 'simulatePerRound'])->name('game.simulate.round');
         Route::post('game-playoff-series', [SimulateController::class, 'simulatePlayoffSeries'])->name('game.simulate.playoff.series');
@@ -106,6 +108,7 @@ Route::middleware('auth')->group(function () {
 
         Route::get('', [ScheduleController::class, 'index'])->name('schedule.index');
         Route::post('list-schedules', [ScheduleController::class, 'list'])->name('schedule.list');
+        Route::post('list-schedules-exhibition', [ScheduleController::class, 'listExhibition'])->name('schedule.list.exhibition');
         Route::post('list-playoff-series', [ScheduleController::class, 'playOffSeriesResults'])->name('seasons.playoff.series.info');
         
         Route::post('conference-schedules', [ScheduleController::class, 'seasonSchedules'])->name('conferences.schedules');
@@ -113,6 +116,7 @@ Route::middleware('auth')->group(function () {
         
         Route::post('get-round-schedule-ids', [ScheduleController::class, 'getScheduleIds'])->name('game.per.round');
         //simulation and scheduling
+        Route::post('create-schedule-exhibition', [ScheduleController::class, 'insertExhibitionSchedule'])->name('create.schedule.exhibtion');
         Route::post('create-schedule-regular', [ScheduleController::class, 'createSeasonandSchedule'])->name('create.schedule.regular');
     });
 

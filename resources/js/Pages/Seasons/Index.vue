@@ -18,6 +18,16 @@
                     />
                     <div class="flex space-x-2 items-center text-nowrap">
                         <button
+                            @click.prevent="isExhibitionModalOpen = true"
+                            v-bind:class="{
+                                'opacity-25': isExhibitionModalOpen,
+                            }"
+                            v-bind:disabled="isExhibitionModalOpen"
+                            class="px-2 py-2 bg-orange-800 rounded font-bold text-md float-end text-white shadow"
+                        >
+                            <i class="fa fa-basketball"></i> Exhibition
+                        </button>
+                        <button
                             @click.prevent="isPlayerAwardsModalOpen = true"
                             v-if="seasons.is_new_season == 1"
                             v-bind:class="{
@@ -336,6 +346,11 @@
                     <Draft @newSeason="handleNewSeason" :key="seasons.current_season" :season_id="seasons.current_season" />
                 </div>
             </Modal>
+            <Modal :show="isExhibitionModalOpen" :maxWidth="'6xl'" title="Exhibition Game" @close="isExhibitionModalOpen = false">
+                <div class="p-0 block bg-black">
+                    <ExhibitionGame :key="seasons.current_season" :season_id="seasons.current_season" />
+                </div>
+            </Modal>
             <Modal :show="isPlayerAwardsModalOpen" :maxWidth="'6xl'" title="Season Awards" @close="closeAwardsModal()">
                 <div class="p-3 block">
                     <Awards
@@ -396,7 +411,9 @@ import Draft from "@/Pages/Seasons/Module/Draft.vue";
 import DraftBoard from "@/Pages/Seasons/Module/DraftBoard.vue"
 import Add from "@/Pages/Seasons/Module/Add.vue";
 import StoryLine from "@/Pages/Seasons/Module/Storyline.vue";
+import ExhibitionGame from "@/Pages/Seasons/Module/ExhibitionGame.vue";
 
+const isExhibitionModalOpen = ref(false);
 const isAddModalOpen = ref(false);
 const isTradeModalOpen = ref(false);
 const isPlayerSigningModalOpen = ref(false);

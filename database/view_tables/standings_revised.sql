@@ -29,6 +29,7 @@ next_games AS (
             OR s.away_id = t.id
         )
         AND s.status = 1
+        AND s.is_exhibition = 0
         AND s.season_id = (
             SELECT season_id
             FROM latest_season
@@ -78,6 +79,7 @@ team_games AS (
             OR schedules.away_id = teams.id
         )
         AND schedules.status = 2
+        AND schedules.is_exhibition = 0
         AND schedules.season_id = (
             SELECT season_id
             FROM latest_season
@@ -415,7 +417,7 @@ team_rankings AS (
             schedules.home_id = teams.id
             OR schedules.away_id = teams.id
         )
-
+        AND schedules.is_exhibition = 0
         AND schedules.season_id = (
             SELECT season_id
             FROM latest_season

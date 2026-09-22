@@ -1,22 +1,25 @@
 <?php
 
-namespace App\Services\Stats;
+namespace App\Services\Game;
 
 use App\Services\Stats\PlayerSeasonStatsService;
 use App\Models\PlayerGameStats;
 use App\Models\Player;
 use App\Services\Helper\HelperService;
+use App\Services\Team\TeamInjuryService;
 use Hamcrest\Type\IsArray;
 use Illuminate\Support\Facades\DB;
 
 class PlayerStatsService
 {
     protected $storeStats;
+    protected $teamInjury;
     protected $helper;
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
         $this->storeStats = new PlayerSeasonStatsService();
+        $this->teamInjury = new TeamInjuryService();
         $this->helper = new HelperService();
     }
 
@@ -64,13 +67,13 @@ class PlayerStatsService
             ->where('season_id', $seasonId)
             ->value('chemistry') ?? 75;
 
-        
+
         $currentConferenceRank = DB::table('standings_view')
             ->where('team_id', $teamId)
             ->where('season_id', $seasonId)
             ->value('conference_rank') ?? 0;
 
-        $resetMoral = ($round == $tradeDeadlineThreshold) && ( $currentConferenceRank > 6);
+        $resetMoral = ($round == $tradeDeadlineThreshold) && ($currentConferenceRank > 6);
 
         foreach ($players as $player) {
             // Fetch the most recent game stats for the player
@@ -119,15 +122,15 @@ class PlayerStatsService
                 $morale += 1;
             }
 
-            if($resetMoral && $currentConferenceRank > 6 && $currentConferenceRank <= 10){
+            if ($resetMoral && $currentConferenceRank > 6 && $currentConferenceRank <= 10) {
                 $morale += 50;
             }
 
-            if($resetMoral && $currentConferenceRank > 10 && $currentConferenceRank <= 14){
+            if ($resetMoral && $currentConferenceRank > 10 && $currentConferenceRank <= 14) {
                 $morale += 40;
             }
 
-            if($resetMoral && $currentConferenceRank > 14){
+            if ($resetMoral && $currentConferenceRank > 14) {
                 $morale += 30;
             }
 
@@ -182,12 +185,12 @@ class PlayerStatsService
             ->values();
 
 
-       // Step 1: Sit injured players
+        // Step 1: Sit injured players
         $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
 
         $maxDNPs = 0;
 
-       // Step 2: Fill remaining DNP slots, but protect star players and all-stars
+        // Step 2: Fill remaining DNP slots, but protect star players and all-stars
         if ($dnpPlayers->count() < $maxDNPs) {
             $remainingSlots = $maxDNPs - $dnpPlayers->count();
 
@@ -209,7 +212,7 @@ class PlayerStatsService
 
             $dnpPlayers = $dnpPlayers->merge($additionalDNP);
         }
-        
+
         // Ensure minimum of 8 players with minutes
         $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
 
@@ -294,7 +297,7 @@ class PlayerStatsService
                 }
             }
 
-            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+            $this->teamInjury->fatigueRate($player, $minutes[$player['id']], $gameId);
         }
 
         // Step 4: Normalize to total minutes (usually 240)
@@ -333,115 +336,6 @@ class PlayerStatsService
 
         return $minutes;
     }
-
-    private function fatigueRate($player, $minutes, $gameId)
-    {
-        try {
-            if (is_array($player)) {
-                $player = (object) $player;
-            }
-
-            $seasonId = get_current_season_id() ?? 1;
-            $staminaFactor  = $this->rating($player, 'stamina_rating', 70) / 100;
-            $strengthFactor = $this->rating($player, 'strength_rating', 70) / 100;
-            $currentFatigue = $this->rating($player, 'fatigue', 0);
-            $retirementAge = $player->retirement_age ?? 36;
-            $age = $player->age;
-
-            // STEP 1: Calculate recovery rate
-            $baseRecoveryRate = ($staminaFactor + $strengthFactor) * 0.1;
-
-            // Age-based slowdown
-            $ageGap = $retirementAge - $age;
-            if ($ageGap <= 0) {
-                $recoverySlowdown = 0.5;
-            } elseif ($ageGap <= 5) {
-                $recoverySlowdown = 1 - (0.1 * (5 - $ageGap));
-            } else {
-                $recoverySlowdown = 1;
-            }
-
-            $recoveryRate = $baseRecoveryRate * $recoverySlowdown;
-
-            // STEP 2: Apply Recovery
-            if (!$player->is_injured && $currentFatigue > 0) {
-                $currentFatigue = max(0, $currentFatigue - $recoveryRate);
-            }
-
-            // STEP 3: Add fatigue from this game
-            if ($minutes == 0) {
-                $newFatigue = max(0, $currentFatigue - 20); // Auto-recovery for DNP
-            } else {
-                $fatigueIncrease = $minutes * (1.0 - $staminaFactor * 0.55);
-                $newFatigue = min(100, $currentFatigue + round($fatigueIncrease));
-            }
-
-            // STEP 4: Injury chance check using injury_prone_percentage
-            if ($newFatigue >= 85) {
-                $triggerInjuryChance = rand(1, 100);
-
-                if ($triggerInjuryChance <= 30) { // 30% chance to trigger injury logic
-                    $injuryRoll = rand(1, 100);
-                    if ($injuryRoll <= $player->injury_prone_percentage) {
-                        $this->causeInjury($player, $gameId, $seasonId);
-                        return;
-                    }
-                }
-
-                // Heavy fatigue is reduced after the injury check instead of being
-                // reset to zero, preserving the player's accumulated fatigue.
-                $newFatigue = 35;
-            }
-
-
-            // STEP 5: Save fatigue
-            DB::table('players')->where('id', $player->id)->update([
-                'fatigue' => $newFatigue,
-            ]);
-
-            return true;
-        } catch (\Exception $e) {
-            // \Log::error("Error updating fatigue for player {$player->id}: " . $e->getMessage());
-        }
-    }
-
-    private function causeInjury($player, $gameId, $seasonId)
-    {
-        // **Injury Logic**
-        $injuryTypes = config('injuries');
-        if (!empty($injuryTypes)) {
-            $injuryTypeName = array_rand($injuryTypes);
-            $recoveryGames = $injuryTypes[$injuryTypeName]['recovery_games'];
-
-            // **Update Injury in Database**
-            DB::table('players')->where('id', $player->id)->update([
-                'fatigue' => 100,
-                'is_injured' => true,
-                'injury_type' => $injuryTypeName,
-                'injury_recovery_games' => $recoveryGames,
-            ]);
-
-            DB::table('players')->where('id', $player->id)->increment('injury_history', 1);
-
-            // Insert injury history
-            DB::table('injury_histories')->insert([
-                'player_id' => $player->id,
-                'game_id' => $gameId,
-                'team_id' => $player->team_id,
-                'season_id' => $seasonId,
-                'injury_type' => $injuryTypeName,
-                'recovery_games' => $recoveryGames,
-                'performance_impact' => $injuryTypes[$injuryTypeName]['performance_impact'],
-                'injury_date' => now(),
-                'recovery_date' => null,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-        } else {
-            // \Log::error("Injury types configuration is missing.");
-        }
-    }
-
 
     public function calculatePerformanceFactor($player, bool $isClutchTime = false)
     {
@@ -607,7 +501,7 @@ class PlayerStatsService
             foreach ($playmakers as &$playmaker) {
                 // Randomly assign assists to each playmaker in the range of 0 to remaining assists
                 $maxForThisPlayer = min($remainingAssists, rand(0, floor($remainingAssists / 2)));
-                $playmaker['assists'] = max(0,$maxForThisPlayer);  // Assign assists
+                $playmaker['assists'] = max(0, $maxForThisPlayer);  // Assign assists
 
                 // Deduct from remaining assists
                 $remainingAssists -= $maxForThisPlayer;
@@ -987,8 +881,641 @@ class PlayerStatsService
             'free_throw_made'      => min($ftMade, $freeThrowAttempts),
         ];
     }
+    
+    ////
+    /**
+     * Lightweight possession-level turnover probability.
+     *
+     * IMPORTANT:
+     * This does NOT use DB queries.
+     */
+    public function possessionTurnoverProbability(
+        $offensivePlayer,
+        $defensivePlayer,
+        float $defensiveImpact,
+        float $performanceFactor
+    ): float {
+        $position = strtoupper(trim(explode('/', $offensivePlayer->position ?? 'PG')[0]));
 
-    public function removeQuarterStats(){
+        $positionRate = [
+            'PG' => 0.095,
+            'SG' => 0.075,
+            'SF' => 0.060,
+            'PF' => 0.055,
+            'C'  => 0.060,
+        ][$position] ?? 0.065;
+
+        $passing = $this->rating($offensivePlayer, 'passing_rating', 60);
+        $iq = $this->rating($offensivePlayer, 'basketball_iq_rating', 60);
+        $usage = $this->usageMultiplier($offensivePlayer);
+
+        $defense = $this->rating($defensivePlayer, 'defense_rating', 60);
+        $defenseIq = $this->rating(
+            $defensivePlayer,
+            'basketball_iq_rating',
+            60
+        );
+
+        /*
+     * Better passing + IQ = fewer turnovers.
+     */
+        $ballHandlingSkill =
+            ($passing * 0.55) +
+            ($iq * 0.45);
+
+        $skillFactor = 1.18 - (($ballHandlingSkill / 100) * 0.30);
+
+        /*
+     * Strong individual defender creates more pressure.
+     */
+        $defenderFactor =
+            0.90 +
+            (($defense * 0.65 + $defenseIq * 0.35) / 100) * 0.22;
+
+        $usageFactor = 0.90 + (($usage - 0.65) * 0.65);
+
+        $fatigue = $this->rating(
+            $offensivePlayer,
+            'fatigue',
+            0
+        );
+
+        $fatigueFactor = 1.0 + ($fatigue / 450);
+
+        $probability =
+            $positionRate *
+            $skillFactor *
+            $defenderFactor *
+            $usageFactor *
+            $fatigueFactor;
+
+        $probability *= (0.94 + ($performanceFactor * 0.06));
+
+        /*
+     * Team defensive impact is deliberately a small modifier.
+     */
+        $probability *= 1.0 + ($defensiveImpact * 1.35);
+
+        return $this->clamp(
+            $probability,
+            0.025,
+            0.145
+        );
+    }
+
+
+    /**
+     * Lightweight possession foul probability.
+     *
+     * This is for a defensive player committing a foul on the possession.
+     */
+    public function possessionFoulProbability(
+        $defensivePlayer,
+        $offensivePlayer,
+        float $defensiveImpact,
+        float $performanceFactor
+    ): float {
+        $position = strtoupper(trim(explode('/', $defensivePlayer->position ?? 'SF')[0]));
+
+        $positionRate = [
+            'PG' => 0.040,
+            'SG' => 0.045,
+            'SF' => 0.052,
+            'PF' => 0.062,
+            'C'  => 0.072,
+        ][$position] ?? 0.050;
+
+        $iq = $this->rating(
+            $defensivePlayer,
+            'basketball_iq_rating',
+            60
+        );
+
+        $workEthic = $this->rating(
+            $defensivePlayer,
+            'work_ethic_rating',
+            60
+        );
+
+        $stamina = $this->rating(
+            $defensivePlayer,
+            'stamina_rating',
+            70
+        );
+
+        $bashing = $this->rating(
+            $defensivePlayer,
+            'bashing_factor',
+            50
+        );
+
+        $defense = $this->rating(
+            $defensivePlayer,
+            'defense_rating',
+            60
+        );
+
+        $offenseTwo = $this->rating(
+            $offensivePlayer,
+            'two_point_rating',
+            60
+        );
+
+        $athleticism = $this->rating(
+            $offensivePlayer,
+            'athleticism_rating',
+            60
+        );
+
+        $strength = $this->rating(
+            $offensivePlayer,
+            'strength_rating',
+            60
+        );
+
+        /*
+     * Rim pressure determines how likely this possession
+     * is to create contact.
+     */
+        $rimPressure =
+            ($offenseTwo * 0.40) +
+            ($athleticism * 0.30) +
+            ($strength * 0.20) +
+            ($this->rating($offensivePlayer, 'basketball_iq_rating', 60) * 0.10);
+
+        $rimPressure /= 100;
+
+        /*
+     * Defensive discipline.
+     */
+        $discipline =
+            1.12 -
+            (
+                (
+                    $iq * 0.45 +
+                    $workEthic * 0.35 +
+                    $stamina * 0.20
+                ) / 100
+            ) * 0.20;
+
+        $aggression =
+            0.95 +
+            ($bashing / 100) * 0.18 +
+            ($defense / 100) * 0.06;
+
+        $fatigue =
+            $this->rating($defensivePlayer, 'fatigue', 0);
+
+        $fatigueFactor = 1.0 + ($fatigue / 300);
+
+        $probability =
+            $positionRate *
+            $discipline *
+            $aggression *
+            (0.90 + ($rimPressure * 0.35)) *
+            $fatigueFactor;
+
+        $probability *=
+            1.0 + ($defensiveImpact * 0.55);
+
+        $probability *=
+            0.95 + ($performanceFactor * 0.05);
+
+        return $this->clamp(
+            $probability,
+            0.025,
+            0.135
+        );
+    }
+
+
+    /**
+     * Probability that a field goal attempt is blocked.
+     */
+    public function possessionBlockProbability(
+        $defensivePlayer,
+        $offensivePlayer,
+        float $defensiveImpact
+    ): float {
+        $defense = $this->rating(
+            $defensivePlayer,
+            'defense_rating',
+            60
+        );
+
+        $athleticism = $this->rating(
+            $defensivePlayer,
+            'athleticism_rating',
+            60
+        );
+
+        $strength = $this->rating(
+            $defensivePlayer,
+            'strength_rating',
+            60
+        );
+
+        $iq = $this->rating(
+            $defensivePlayer,
+            'basketball_iq_rating',
+            60
+        );
+
+        $rimAttack =
+            $this->rating(
+                $offensivePlayer,
+                'two_point_rating',
+                60
+            ) * 0.45;
+
+        $rimAttack +=
+            $this->rating(
+                $offensivePlayer,
+                'athleticism_rating',
+                60
+            ) * 0.30;
+
+        $rimAttack +=
+            $this->rating(
+                $offensivePlayer,
+                'strength_rating',
+                60
+            ) * 0.25;
+
+        $defensiveSkill =
+            $defense * 0.45 +
+            $athleticism * 0.25 +
+            $strength * 0.15 +
+            $iq * 0.15;
+
+        /*
+     * Centers/PFs naturally get more block opportunities.
+     */
+        $position = strtoupper(
+            trim(explode('/', $defensivePlayer->position ?? 'SF')[0])
+        );
+
+        $positionMultiplier = [
+            'PG' => 0.35,
+            'SG' => 0.50,
+            'SF' => 0.75,
+            'PF' => 1.15,
+            'C'  => 1.40,
+        ][$position] ?? 0.75;
+
+        $probability =
+            0.012 +
+            (($defensiveSkill - 50) / 1000);
+
+        $probability *= $positionMultiplier;
+
+        /*
+     * Better rim attackers are harder to block.
+     */
+        $probability *=
+            1.10 - (($rimAttack - 60) / 500);
+
+        $probability *=
+            1.0 + ($defensiveImpact * 0.60);
+
+        return $this->clamp(
+            $probability,
+            0.003,
+            0.085
+        );
+    }
+
+
+    /**
+     * Determines whether the player attempts a 3PT shot.
+     */
+    public function possessionThreePointProbability(
+        $player,
+        float $defensiveImpact,
+        float $performanceFactor,
+        float $chemistry,
+        bool $isHomeAdvantage = false
+    ): float {
+        $position = strtoupper(
+            trim(explode('/', $player->position ?? 'SF')[0])
+        );
+
+        $positionShare = [
+            'PG' => 0.48,
+            'SG' => 0.52,
+            'SF' => 0.40,
+            'PF' => 0.30,
+            'C'  => 0.16,
+        ][$position] ?? 0.35;
+
+        $threePoint = $this->rating(
+            $player,
+            'three_point_rating',
+            60
+        );
+
+        $shooting = $this->rating(
+            $player,
+            'shooting_rating',
+            60
+        );
+
+        $iq = $this->rating(
+            $player,
+            'basketball_iq_rating',
+            60
+        );
+
+        $morale = $this->rating(
+            $player,
+            'morale',
+            75
+        );
+
+        $fatigue = $this->rating(
+            $player,
+            'fatigue',
+            0
+        );
+
+        $role = strtolower(
+            trim($player->role ?? 'starter')
+        );
+
+        $roleFactor = [
+            'star player' => 1.05,
+            'all star'    => 1.04,
+            'starter'     => 1.00,
+            'role player' => 0.98,
+            'bench'       => 0.92,
+        ][$role] ?? 1.00;
+
+        $skillFactor =
+            0.82 +
+            ($threePoint - 60) / 300;
+
+        $shootingFactor =
+            0.95 +
+            ($shooting - 60) / 700;
+
+        $iqFactor =
+            0.97 +
+            ($iq - 60) / 1500;
+
+        $chemistryFactor =
+            0.97 +
+            ($chemistry / 3000);
+
+        $moraleFactor =
+            0.97 +
+            ($morale / 3000);
+
+        $fatigueFactor =
+            max(0.88, 1.0 - ($fatigue / 500));
+
+        $defenseFactor =
+            max(0.90, 1.0 - ($defensiveImpact * 0.35));
+
+        $probability =
+            $positionShare *
+            $skillFactor *
+            $shootingFactor *
+            $iqFactor *
+            $chemistryFactor *
+            $moraleFactor *
+            $fatigueFactor *
+            $defenseFactor *
+            $roleFactor *
+            $performanceFactor;
+
+        if ($isHomeAdvantage) {
+            $probability *= 1.015;
+        }
+
+        return $this->clamp(
+            $probability,
+            0.08,
+            0.65
+        );
+    }
+
+
+    /**
+     * Field-goal percentage for a single possession.
+     */
+    public function possessionShotPercentage(
+        $player,
+        bool $isThree,
+        float $defensiveImpact,
+        float $performanceFactor,
+        bool $isHomeAdvantage = false
+    ): float {
+        $shooting = $this->rating(
+            $player,
+            'shooting_rating',
+            60
+        );
+
+        $specificRating = $this->rating(
+            $player,
+            $isThree
+                ? 'three_point_rating'
+                : 'two_point_rating',
+            60
+        );
+
+        $iq = $this->rating(
+            $player,
+            'basketball_iq_rating',
+            60
+        );
+
+        $morale = $this->rating(
+            $player,
+            'morale',
+            75
+        );
+
+        $fatigue = $this->rating(
+            $player,
+            'fatigue',
+            0
+        );
+
+        if ($isThree) {
+            $percentage =
+                0.25 +
+                ($specificRating / 100) * 0.22 +
+                ($shooting / 100) * 0.04;
+
+            $percentage +=
+                ($iq - 70) / 1500;
+
+            $percentage *= $performanceFactor;
+
+            $percentage *=
+                max(0.90, 1.0 - ($defensiveImpact * 0.50));
+
+            $percentage *=
+                max(0.90, 1.0 - ($fatigue / 700));
+
+            if ($isHomeAdvantage) {
+                $percentage *= 1.01;
+            }
+
+            return $this->clamp(
+                $percentage,
+                0.20,
+                0.48
+            );
+        }
+
+        $percentage =
+            0.38 +
+            ($specificRating / 100) * 0.22 +
+            ($shooting / 100) * 0.05;
+
+        $percentage +=
+            ($iq - 70) / 1000;
+
+        $percentage +=
+            ($morale - 75) / 1500;
+
+        $percentage *= $performanceFactor;
+
+        $percentage *=
+            max(0.88, 1.0 - ($defensiveImpact * 0.70));
+
+        $percentage *=
+            max(0.88, 1.0 - ($fatigue / 600));
+
+        if ($isHomeAdvantage) {
+            $percentage *= 1.01;
+        }
+
+        return $this->clamp(
+            $percentage,
+            0.30,
+            0.70
+        );
+    }
+
+
+    /**
+     * Free throw percentage.
+     */
+    public function possessionFreeThrowPercentage(
+        $player,
+        float $performanceFactor
+    ): float {
+        $ft = $this->rating(
+            $player,
+            'free_throw_rating',
+            60
+        );
+
+        $percentage =
+            0.68 +
+            ($ft / 100) * 0.25;
+
+        $percentage *= $performanceFactor;
+
+        return $this->clamp(
+            $percentage,
+            0.55,
+            0.97
+        );
+    }
+
+
+    /**
+     * Select a weighted player without using Collection operations
+     * inside the possession loop.
+     */
+    public function weightedPossessionPlayer(
+        array $players,
+        array $weights
+    ) {
+        $total = 0.0;
+
+        foreach ($players as $player) {
+            $id = $player->id;
+
+            if (($weights[$id] ?? 0) <= 0) {
+                continue;
+            }
+
+            $total += $weights[$id];
+        }
+
+        if ($total <= 0) {
+            return null;
+        }
+
+        $random = (mt_rand() / mt_getrandmax()) * $total;
+
+        foreach ($players as $player) {
+            $id = $player->id;
+            $weight = $weights[$id] ?? 0;
+
+            if ($weight <= 0) {
+                continue;
+            }
+
+            $random -= $weight;
+
+            if ($random <= 0) {
+                return $player;
+            }
+        }
+
+        return end($players) ?: null;
+    }
+
+
+    /**
+     * Fast probability check.
+     */
+    public function possessionChance(float $probability): bool
+    {
+        return (mt_rand() / mt_getrandmax()) < $probability;
+    }
+
+
+    /**
+     * Fast binomial approximation for small possession events.
+     *
+     * Used primarily for free throws.
+     */
+    public function possessionBinomial(
+        int $attempts,
+        float $probability
+    ): int {
+        if ($attempts <= 0 || $probability <= 0) {
+            return 0;
+        }
+
+        if ($probability >= 1) {
+            return $attempts;
+        }
+
+        $made = 0;
+
+        for ($i = 0; $i < $attempts; $i++) {
+            if (
+                (mt_rand() / mt_getrandmax()) <
+                $probability
+            ) {
+                $made++;
+            }
+        }
+
+        return $made;
+    }
+    ////
+
+    public function removeQuarterStats()
+    {
 
         DB::table('player_per_quarter_stats_temp')->delete();
     }
@@ -1006,9 +1533,9 @@ class PlayerStatsService
                 }
                 if (!isset($stats['is_fouled_out'])) {
                     $stats['is_fouled_out'] = 0;
-                    $stats['assists'] = max(0,$stats['assists']);
+                    $stats['assists'] = max(0, $stats['assists']);
                 }
-                
+
                 // Update Player Game Stats
                 DB::table('player_per_quarter_stats')->updateOrInsert(
                     [
@@ -1032,7 +1559,7 @@ class PlayerStatsService
                     $stats
                 );
             }
-            
+
             return true;
         } catch (\Exception $e) {
 
@@ -1076,7 +1603,7 @@ class PlayerStatsService
                     DB::raw('SUM(free_throws_made) as total_free_throws_made'),
                     DB::raw('SUM(free_throw_attempts) as total_free_throw_attempts')
                 )
-                ->groupBy('player_id','team_id')
+                ->groupBy('player_id', 'team_id')
                 ->first();
 
             // Insert or update the player's season stats in the player_season_stats table
@@ -1096,7 +1623,7 @@ class PlayerStatsService
                         'minutes' => $playerStats->total_minutes,
                         'points' => $playerStats->total_points,
                         'rebounds' => $playerStats->total_rebounds,
-                        'assists' => max(0,$playerStats->total_assists),
+                        'assists' => max(0, $playerStats->total_assists),
                         'steals' => $playerStats->total_steals,
                         'blocks' => $playerStats->total_blocks,
                         'turnovers' => $playerStats->total_turnovers,
@@ -1126,7 +1653,7 @@ class PlayerStatsService
             // Log::error("Error updating season stats: " . $e->getMessage());
             return response()->json([
                 'message' => $e->getMessage(),
-            ],500);
+            ], 500);
             // Optionally, throw the error again to stop execution
             throw new \Exception("Failed to update season stats. Please check logs." . $e->getMessage());
         }
@@ -1201,6 +1728,4 @@ class PlayerStatsService
             throw new \Exception("Failed to update season stats. Please check logs." . $e->getMessage());
         }
     }
-
-    
 }
