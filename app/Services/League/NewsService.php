@@ -135,6 +135,7 @@ class NewsService
             ->select(
                 "sv.game_id",
                 "sv.season_id",
+                "sv.conference_id",
                 "sv.is_overtime",
                 "sv.round",
                 "sv.home_team_name as home_team",
@@ -154,6 +155,9 @@ class NewsService
             return;
         }
 
+        $conferenceTeamCount = DB::table("teams")
+            ->where("conference_id", $game->conference_id)
+            ->count();
         
         $quarterBreakdown = DB::table("game_quarter_breakdown")
             ->where("game_id", $game->game_id)
@@ -690,17 +694,11 @@ class NewsService
         $winnerOnStreak = 0;
         $winnerWasOnSkid = 0;
 
-        if (
-            $winnerStats &&
-            preg_match("/W(\d+)/", $winnerStats->streak_status, $wm)
-        ) {
+        if ($winnerStats &&preg_match("/W(\d+)/", $winnerStats->streak_status, $wm)) {
             $winnerOnStreak = (int) $wm[1];
         }
 
-        if (
-            $winnerStats &&
-            preg_match("/L(\d+)/", $winnerStats->streak_status, $lm)
-        ) {
+        if ($winnerStats &&preg_match("/L(\d+)/", $winnerStats->streak_status, $lm)) {
             $winnerWasOnSkid = (int) $lm[1];
         }
 
@@ -1440,7 +1438,18 @@ class NewsService
                 $contentEnders[] =
                     "The result keeps {winner} in strong playoff position and gives the team another opportunity to climb.";
             }
-
+            elseif ($winnerStats && $winnerStats->conference_rank == 7) {
+                $contentEnders[] =
+                    "{winner} needs to rack up some wins they just one rank away to be in the play-off safe zone.";
+            }
+            elseif ($winnerStats && $winnerStats->conference_rank >= 8 && $winnerStats->conference_rank <= 10) {
+                $contentEnders[] =
+                    "The result keeps {winner} in play-in position and is endangered to miss the playoffs.";
+            }
+            elseif ($winnerStats && $winnerStats->conference_rank == $conferenceTeamCount) {
+                $contentEnders[] =
+                    "The win is not enough to leave the bottom of the team standings.{winner} needs to re-calibrate and re-focus";
+            }
             if ($winnerStats && $winnerStats->playoff_appearances > 5) {
                 $contentEnders[] =
                     "The franchise's postseason experience showed in the way {winner} managed the game.";
