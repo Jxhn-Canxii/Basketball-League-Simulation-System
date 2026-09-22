@@ -134,7 +134,7 @@ class AwardsService
             ->get();
 
         $eligiblePlayerStats = $playerStats->filter(function ($stats) {
-            return (int)$stats->total_games_played >= (CEIL((int)$stats->total_games / 2) - 2);
+            return (int)$stats->total_games_played > 5;
         });
 
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player

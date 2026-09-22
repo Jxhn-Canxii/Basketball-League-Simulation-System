@@ -409,6 +409,15 @@ class TestController extends Controller
     public function testGenerateTradeProposals()
     {
         // return $this->tradeService->testGenerateTradeProposals();
+        $awards = DB::table('season_awards')
+                    ->select('player_id')
+                    ->where('award_name','all-star')
+                    ->get();
+        
+        foreach ($awards as $player) {
+            # code...
+            DB::table('player_game_highs')->where('player_id', $player->player_id)->increment('all_star_count', 1);
+        }
     }
 
     public function testGameStreak(Request $request){

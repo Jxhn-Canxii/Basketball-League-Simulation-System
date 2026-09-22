@@ -350,7 +350,7 @@ class GameEngineService
             // dd($playerQuarterStats);
 
             $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter);
-            
+
             $this->updateGameScore($gameData,$quarter);
         }
 
@@ -366,7 +366,7 @@ class GameEngineService
 
                 $overtimeQuarter = 'OT' . $OTNumber;
 
-                $playerQuarterStats = $this->gameEngine($gameData,$overtimeQuarter,$otMinutes);
+                $playerQuarterStats = $this->allstarGameEngine($gameData,$overtimeQuarter,$otMinutes);
 
                 $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
 
@@ -389,11 +389,13 @@ class GameEngineService
             }
         }
 
-        $players =  DB::table('players')
-                ->select('id','is_reserved')
-                ->whereIn('team_id', [$gameData->home_team_id,$gameData->away_team_id])
-                ->where('is_active',1)
-                ->get();
+        $players =  DB::table('season_awards')
+                    ->select('players.id','players.is_reserved')
+                    ->join('players','players.id','=','season_awards.player_id')
+                    ->where('season_awards.award_name',$gameData->round)
+                    ->where('season_awards.season_id',$gameData->season_id)
+                    ->where('players.is_active',1)
+                    ->get();
 
         foreach ($players as $player) {
             $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved);

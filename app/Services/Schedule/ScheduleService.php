@@ -94,10 +94,16 @@ class ScheduleService
                 $this->tradeDecision->automatedTradeDecision(false);
             }
         }
+        
+        $allStarSchedule = [];
 
         if($allStarBreak){
-            $this->selectAllStars();
-            $this->awards->updateAllStarCoach($seasonId);
+            $allStarSchedule = $this->allStarSchedule($seasonId);
+            
+            if(count($allStarSchedule) == 0){
+                $this->selectAllStars();
+                $this->awards->updateAllStarCoach($seasonId);
+            }
         }
         
         if($isEndTradeDeadline) {
@@ -119,11 +125,8 @@ class ScheduleService
         while ($hasData) {
             $hasData = false;
 
-            $allStarSchedule = $this->allStarSchedule($seasonId);
-            
             if(count($allStarSchedule) > 0){
                 $interleaved[] = $allStarSchedule;
-                $hasData = true;
             }
 
             foreach ($groupedByConference as $conferenceId => $games) {
