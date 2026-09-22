@@ -759,7 +759,7 @@
                             v-for="star in bestPlayer?.all_star_count" 
                             :key="star"
                             :title="bestPlayer?.all_star_count+'x All-star'" >
-                                <i class="fa fa-star fa-md text-yellow-500"></i>
+                                <i class="fa fa-user fa-xl text-red-500"></i>
                             </sup>
                             <sup v-if="bestPlayer?.is_season_mvp" title="Season MVP">
                                 <i class="fa fa-star text-yellow-500 text-lg"></i>
