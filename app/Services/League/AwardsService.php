@@ -949,69 +949,7 @@ class AwardsService
 
             // Insert schedule entries into the database
             DB::table('schedules')->insert($schedule);
-
             
-            // Prepare player game stats entries
-            $playerGameStats = [];
-            $northAllStarsConference = [1,2];
-            $southAllStarsConference = [2,3];
-
-            foreach ($schedule as $match) {
-                // Fetch players for home and away teams
-                $homeTeam = $seasonId % 2 == 0 ? $northAllStarsConference : $southAllStarsConference;
-                $awayTeam = $seasonId % 2 == 0 ? $southAllStarsConference : $northAllStarsConference;
-                
-                $homeTeamPlayers = DB::table('season_awards')
-                    ->where('award_name',$round)
-                    ->whereIn('conference_id',$homeTeam)
-                    ->where('season_id',$seasonId)
-                    ->get();
-
-                $awayTeamPlayers = DB::table('season_awards')
-                    ->where('award_name',$round)
-                    ->whereIn('conference_id',$awayTeam)
-                    ->where('season_id',$seasonId)
-                    ->get();
-
-                // Create player game stats entries for home team players
-                foreach ($homeTeamPlayers as $player) {
-                    $playerGameStats[] = [
-                        'player_id' => $player->player_id,
-                        'season_id' => $seasonId,
-                        'game_id' => $match['game_id'],
-                        'team_id' => $match['home_id'],
-                        'points' => 0,
-                        'rebounds' => 0,
-                        'assists' => 0,
-                        'steals' => 0,
-                        'blocks' => 0,
-                        'turnovers' => 0,
-                        'fouls' => 0,
-                    ];
-                }
-
-                // Create player game stats entries for away team players
-                foreach ($awayTeamPlayers as $player) {
-                    $playerGameStats[] = [
-                        'player_id' => $player->player_id,
-                        'season_id' => $seasonId,
-                        'game_id' => $match['game_id'],
-                        'team_id' => $match['away_id'],
-                        'points' => 0,
-                        'rebounds' => 0,
-                        'assists' => 0,
-                        'steals' => 0,
-                        'blocks' => 0,
-                        'turnovers' => 0,
-                        'fouls' => 0,
-                    ];
-                }
-            }
-
-            // Insert player game stats entries into the database
-            if (!empty($playerGameStats)) {
-                DB::table('player_game_stats')->insert($playerGameStats);
-            }
         });
     }
 
