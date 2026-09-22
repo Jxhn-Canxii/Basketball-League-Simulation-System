@@ -1301,11 +1301,13 @@ class PlayoffService
         // Retrieve the top and bottom teams from standings view
         $topTeam = DB::table('standings_view')
             ->where('season_id', $seasonId)
+            ->where('conference_id','>',0)
             ->orderBy('overall_rank') // Ascending order for the top team
             ->first();
 
         $bottomTeam = DB::table('standings_view')
             ->where('season_id', $seasonId)
+            ->where('conference_id','>',0)
             ->orderBy('overall_rank', 'desc') // Descending order for the bottom team
             ->first();
 

@@ -517,6 +517,8 @@ const assignTeamsAuto = async () => {
         });
 
         if (result.isConfirmed) {
+
+            await archiveSeason();
             // Show loading/swipe dialog
             const loadingSwal = Swal.fire({
                 title: "Processing...",
@@ -603,6 +605,41 @@ const assignTeamsAuto = async () => {
         emits("newSeason", true);
     }
 };
+
+const archiveSeason = async () => {
+    try {
+
+        const loadingSwal = Swal.fire({
+            title: "Archiving...",
+            text: "Archiving past results....please wait!!!",
+            icon: "info",
+            showConfirmButton: false,
+            willOpen: () => {
+                Swal.showLoading();  // Show the loading animation
+            }
+        });
+
+        const response = await axios.get(route("archive.season"));
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "success",
+            title: "Success!",
+            text: response.data.message, // Assuming the response contains a 'message' field
+        });
+    } catch (error) {
+
+        Swal.close();
+
+        Swal.fire({
+            icon: "warning",
+            title: "Warning!",
+            text: error.response.data.message,
+        });
+        
+    }
+}
 
 onMounted(() => {
     fetchFreeAgent();

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Services\League\StoryLineService;
 use Inertia\Inertia;
+use Illuminate\Support\Facades\DB;
 
 class StorylineController extends Controller
 {
@@ -26,6 +27,6 @@ class StorylineController extends Controller
             ],404);
         }
 
-        return $this->storyline->generateStoryLine($seasonId);
+        return $this->storyline->generateStoryLine();
     }
 }

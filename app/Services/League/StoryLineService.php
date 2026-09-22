@@ -18,7 +18,7 @@ class StoryLineService
         $this->archive = new ArchiveService();
     }
 
-    public function generateStoryLine($seasonId)
+    public function generateStoryLine()
     {
         return $this->upsertCurrentSeasonStoryline();
     }
@@ -27,10 +27,7 @@ class StoryLineService
     {
         try {
 
-            $storylineData =
-                DB::table('current_season_storyline')
-                ->orderBy('season_id','desc')
-                ->first();
+            $storylineData = DB::table('current_season_storyline')->first();
 
             if (!$storylineData) {
 
@@ -40,8 +37,7 @@ class StoryLineService
             DB::table('storylines')
                 ->updateOrInsert(
                     [
-                        'season_id' =>
-                        $storylineData->season_id,
+                        'season_id' => $storylineData->season_id,
                     ],
                     [
                         'storyline' =>

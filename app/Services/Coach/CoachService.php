@@ -123,6 +123,17 @@ class CoachService
             ], 400); // 400 = Bad Request
         }
 
+        $storyLine = DB::table('storylines')->where('season_id',$latestSeasonId)->value('storyline');
+        $storyLineTextCount = count(count_chars($storyLine,1));
+
+        if($storyLineTextCount == 0){
+
+            return response()->json([
+                'message' => 'Warning: Cannot proceed to next event, Storyline not generated!'
+            ], 400); // 400 = Bad Request
+            
+        }
+
         // Start by updating the season status to indicate coach signings have ended
         DB::table('seasons')
             ->where('id', $latestSeasonId)
