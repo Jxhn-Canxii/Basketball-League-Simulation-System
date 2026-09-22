@@ -124,15 +124,15 @@ class ScheduleService
 
         if(count($allStarSchedule) > 0){
             $interleaved[] = $allStarSchedule;
-        }
-        
-        while ($hasData) {
-            $hasData = false;
+        }else{
+            while ($hasData) {
+                $hasData = false;
 
-            foreach ($groupedByConference as $conferenceId => $games) {
-                if (!$games->isEmpty()) {
-                    $interleaved[] = $games->shift(); // Take the first available game
-                    $hasData = true;
+                foreach ($groupedByConference as $conferenceId => $games) {
+                    if (!$games->isEmpty()) {
+                        $interleaved[] = $games->shift(); // Take the first available game
+                        $hasData = true;
+                    }
                 }
             }
         }
