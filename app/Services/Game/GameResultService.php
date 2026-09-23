@@ -42,11 +42,13 @@ class GameResultService
                 'away_team.primary_color as away_primary_color',
                 'away_team.secondary_color as away_secondary_color',
                 'away_team.city as away_city',
+                'away_team.acronym as away_team_acronym',
                 'home_team.description as home_description',
                 'home_team.sponsor as home_sponsor',
                 'home_team.primary_color as home_primary_color',
                 'home_team.secondary_color as home_secondary_color',
                 'home_team.city as home_city',
+                'home_team.acronym as home_team_acronym',
             )
             ->first();
 
@@ -457,6 +459,7 @@ class GameResultService
                 'team_id' => $game->home_id, // Use the correct field from your query
                 'name' => $game->home_team_name,
                 'city' => $game->home_city,
+                'acronym' => $game->home_team_acronym,
                 'score' => $game->home_score,
                 'primary_color' => $game->home_primary_color, // Add primary color
                 'secondary_color' => $game->home_secondary_color, // Add secondary color
@@ -471,6 +474,7 @@ class GameResultService
                 'team_id' => $game->away_id, // Use the correct field from your query
                 'name' => $game->away_team_name,
                 'city' => $game->away_city,
+                'acronym' => $game->away_team_acronym,
                 'score' => $game->away_score,
                 'primary_color' => $game->away_primary_color, // Add primary color
                 'secondary_color' => $game->away_secondary_color, // Add secondary color

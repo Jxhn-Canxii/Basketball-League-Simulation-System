@@ -68,7 +68,7 @@
           <col class="stat-column" />
           <col class="stat-column" />
           <col class="stat-column" />
-          <col class="last-five-column" />
+          <!-- <col class="last-five-column" /> -->
           <col class="stat-column" />
           <col class="next-column" />
         </colgroup>
@@ -113,7 +113,7 @@
 
             <th
               scope="col"
-              class="px-1 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
+              class="px-1 py-2 hidden text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
             >
               LAST 5 GAMES
             </th>
@@ -242,7 +242,7 @@
             </td>
 
             <!-- Last 5 -->
-            <td class="px-1 py-2">
+            <td class="px-1 py-2 hidden">
               <div
                 class="flex justify-center items-center gap-0.5"
               >
@@ -1143,7 +1143,7 @@ const teamAchievements = (team) => {
 
   border-radius: 4px;
 
-  font-size: 10px;
+  font-size: 6px;
   font-weight: 700;
 
   border:

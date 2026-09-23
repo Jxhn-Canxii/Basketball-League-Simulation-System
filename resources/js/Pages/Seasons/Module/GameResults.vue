@@ -92,7 +92,7 @@
                         class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        {{ gameDetails.home_team.name ?? 'NO NAME' }}
+                        {{ gameDetails.home_team.acronym ?? 'NO NAME' }}
                     </div>
                     <span class="location-label">HOME</span>
 
@@ -200,7 +200,7 @@
                         class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        {{ gameDetails.away_team.name ?? 'NO NAME' }}
+                        {{ gameDetails.away_team.acronym ?? 'NO NAME' }}
                     </div>
 
                     <span class="location-label">AWAY</span>
@@ -1063,27 +1063,6 @@
                             </p>
                         </div>
                     </div>
-
-                    <!-- SEASON LEADER -->
-                    <div
-                        v-if="!props.showBoxScore && seasonLeaders"
-                        class="season-leader mt-2"
-                    >
-                        <span>
-                            {{ seasonLeaders.message }}
-                        </span>
-
-                        <strong>
-                            {{ seasonLeaders.player_name }}
-                        </strong>
-
-                        <small>
-                            {{ seasonLeaders.stat_value }}
-                            {{ seasonLeaders.stat_type }}
-                            ·
-                            {{ seasonLeaders.team_acronym }}
-                        </small>
-                    </div>
                 </div>
             </div>
 
@@ -1289,6 +1268,26 @@
                             {{ statLeaders.blocks.blocks }}
                         </b>
                     </div>
+                </div>
+                <!-- SEASON LEADER -->
+                <div
+                    v-if="!props.showBoxScore && seasonLeaders"
+                    class="season-leader"
+                >
+                    <span>
+                        {{ seasonLeaders.message }}
+                    </span>
+
+                    <strong>
+                        {{ seasonLeaders.player_name }}
+                    </strong>
+
+                    <small>
+                        {{ seasonLeaders.stat_value }}
+                        {{ seasonLeaders.stat_type }}
+                        ·
+                        {{ seasonLeaders.team_acronym }}
+                    </small>
                 </div>
             </div>
         </section>
@@ -1836,8 +1835,8 @@ onUnmounted(() => {
     background:
         linear-gradient(
             180deg,
-            rgba(255,255,255,.025),
-            rgba(255,255,255,.005)
+            rgba(241, 238, 7, 0.54),
+            rgba(56, 235, 20, 0.01)
         );
 }
 
@@ -2704,7 +2703,7 @@ onUnmounted(() => {
 ========================================================= */
 
 .season-leader {
-    margin: 2px;
+    margin: 9px;
     padding: 10px;
     border-radius: 8px;
     background: #17191f;
