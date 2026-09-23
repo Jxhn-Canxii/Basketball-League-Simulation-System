@@ -517,7 +517,7 @@ class TradeDecisionService
 
                 if (
                     $differencePercentage >
-                    $this->maxSalaryDifferencePercentage
+                    $this->maxPackageDifferencePercentage
                 ) {
 
                     $balanced = false;

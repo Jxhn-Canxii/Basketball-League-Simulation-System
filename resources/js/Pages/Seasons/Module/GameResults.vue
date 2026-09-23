@@ -87,6 +87,13 @@
                             '#' + gameDetails.home_team.secondary_color
                     }"
                 >
+                    <div
+                        :style="{ color:  '#' + gameDetails.home_team.primary_color, opacity: '50%' }"
+                        class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
+                    >
+                        <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
+                        {{ gameDetails.home_team.name ?? 'NO NAME' }}
+                    </div>
                     <span class="location-label">HOME</span>
 
                     <div class="team-number">
@@ -188,6 +195,14 @@
                             '#' + gameDetails.away_team.secondary_color
                     }"
                 >
+                    <div
+                        :style="{ color:  '#' + gameDetails.away_team.primary_color, opacity: '50%' }"
+                        class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
+                    >
+                        <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
+                        {{ gameDetails.away_team.name ?? 'NO NAME' }}
+                    </div>
+
                     <span class="location-label">AWAY</span>
 
                     <div class="team-number">
@@ -1015,14 +1030,59 @@
                             {{
                                 bestPlayer.draft_status == "Undrafted"
                                     ? `S${bestPlayer.draft_id} ${bestPlayer.draft_status}`
-                                    : bestPlayer.draft_status +
-                                      (
-                                          bestPlayer.drafted_team_acro
-                                              ? ` (${bestPlayer.drafted_team_acro})`
-                                              : ""
-                                      )
+                                    : bestPlayer.draft_status + (bestPlayer.drafted_team_acro ? ` (${bestPlayer.drafted_team_acro})` : "")
                             }}
                         </span>
+                    </div>
+                    <br>
+                    <!-- BREAKING NEWS -->
+                    <div class="breaking">
+
+                        <div class="breaking-head">
+                            <span>
+                                <i class="fas fa-bolt"></i>
+                                BREAKING
+                            </span>
+                        </div>
+
+                        <div class="breaking-content">
+                            <div
+                                v-if="injuredPlayers?.length"
+                                class="breaking-marquee"
+                            >
+                                <span
+                                    v-for="injury in injuredPlayers"
+                                    :key="injury.id"
+                                >
+                                    {{ formatInjuredPlayers(injury) }}
+                                </span>
+                            </div>
+
+                            <p v-else>
+                                {{ gameNews?.title ?? "No breaking news." }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- SEASON LEADER -->
+                    <div
+                        v-if="!props.showBoxScore && seasonLeaders"
+                        class="season-leader mt-2"
+                    >
+                        <span>
+                            {{ seasonLeaders.message }}
+                        </span>
+
+                        <strong>
+                            {{ seasonLeaders.player_name }}
+                        </strong>
+
+                        <small>
+                            {{ seasonLeaders.stat_value }}
+                            {{ seasonLeaders.stat_type }}
+                            ·
+                            {{ seasonLeaders.team_acronym }}
+                        </small>
                     </div>
                 </div>
             </div>
@@ -1229,57 +1289,6 @@
                             {{ statLeaders.blocks.blocks }}
                         </b>
                     </div>
-                </div>
-
-                <!-- BREAKING NEWS -->
-                <div class="breaking">
-
-                    <div class="breaking-head">
-                        <span>
-                            <i class="fas fa-bolt"></i>
-                            BREAKING
-                        </span>
-                    </div>
-
-                    <div class="breaking-content">
-
-                        <div
-                            v-if="injuredPlayers?.length"
-                            class="breaking-marquee"
-                        >
-                            <span
-                                v-for="injury in injuredPlayers"
-                                :key="injury.id"
-                            >
-                                {{ formatInjuredPlayers(injury) }}
-                            </span>
-                        </div>
-
-                        <p v-else>
-                            {{ gameNews?.title ?? "No breaking news." }}
-                        </p>
-                    </div>
-                </div>
-
-                <!-- SEASON LEADER -->
-                <div
-                    v-if="!props.showBoxScore && seasonLeaders"
-                    class="season-leader"
-                >
-                    <span>
-                        {{ seasonLeaders.message }}
-                    </span>
-
-                    <strong>
-                        {{ seasonLeaders.player_name }}
-                    </strong>
-
-                    <small>
-                        {{ seasonLeaders.stat_value }}
-                        {{ seasonLeaders.stat_type }}
-                        ·
-                        {{ seasonLeaders.team_acronym }}
-                    </small>
                 </div>
             </div>
         </section>
@@ -2489,7 +2498,7 @@ onUnmounted(() => {
 
 .award-stat-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 5px;
     margin-top: 16px;
 }
@@ -2638,7 +2647,7 @@ onUnmounted(() => {
 ========================================================= */
 
 .breaking {
-    margin: 10px;
+    margin: 2px;
     border: 1px solid rgba(239,68,68,.16);
     border-radius: 8px;
     overflow: hidden;
@@ -2695,7 +2704,7 @@ onUnmounted(() => {
 ========================================================= */
 
 .season-leader {
-    margin: 10px;
+    margin: 2px;
     padding: 10px;
     border-radius: 8px;
     background: #17191f;
