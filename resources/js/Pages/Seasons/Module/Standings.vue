@@ -1,99 +1,263 @@
+```vue
 <template>
-  <div class="rounded-lg shadow-sm overflow-hidden shadow-lg shadow-red-400">
-    <!-- Loading State -->
-    <div v-if="loadingStandings" class="p-8 text-center">
-      <div class="animate-pulse flex flex-col items-center">
-        <div class="w-12 h-12 rounded-full bg-gray-200 mb-4"></div>
-        <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+  <div
+    class="standings-shell rounded-lg overflow-hidden border border-gray-800 bg-gray-950 shadow-2xl shadow-black/40"
+  >
+    <!-- Header -->
+    <div
+      class="flex items-center hidden justify-between p-0 border-b border-gray-800 bg-gray-950"
+    >
+      <div class="flex  items-center gap-2 min-w-0">
+        <div
+          class="w-7 h-7 rounded-md bg-gray-900 border border-gray-800 flex items-center justify-center shrink-0"
+        >
+          <i class="fas fa-chart-line text-gray-300 text-xs"></i>
+        </div>
+
+        <div class="min-w-0">
+          <h2 class="text-sm font-semibold text-gray-100 truncate">
+            Conference Standings
+          </h2>
+          <p class="text-xs text-gray-500">
+            Current season
+          </p>
+        </div>
+      </div>
+
+      <div
+        v-if="season_standings?.standings?.length"
+        class="text-xs text-gray-500 shrink-0"
+      >
+        {{ season_standings.standings.length }} Teams
       </div>
     </div>
 
-    <!-- Empty State -->
-    <div v-else-if="!season_standings?.standings?.length" class="p-8 text-center text-gray-500">
-      <i class="fas fa-chart-bar text-3xl mb-2"></i>
-      <p>No standings available</p>
+    <!-- Loading -->
+    <div v-if="loadingStandings" class="p-6 bg-gray-950">
+      <div class="space-y-2 animate-pulse">
+        <div
+          v-for="n in 10"
+          :key="n"
+          class="h-8 rounded bg-gray-900 border border-gray-800"
+        ></div>
+      </div>
     </div>
 
-    <!-- Standings Table -->
-    <div v-else class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200 text-nowrap">
-        <thead class="bg-gray-900">
+    <!-- Empty -->
+    <div
+      v-else-if="!season_standings?.standings?.length"
+      class="p-8 text-center bg-gray-950 text-gray-500"
+    >
+      <div
+        class="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-900 border border-gray-800 flex items-center justify-center"
+      >
+        <i class="fas fa-chart-bar text-gray-600 text-lg"></i>
+      </div>
+
+      <p class="text-sm">No standings available</p>
+    </div>
+
+    <!-- Standings -->
+    <div v-else class="standings-container">
+      <table class="w-full table-fixed border-collapse text-nowrap">
+        <colgroup>
+          <col class="team-column" />
+          <col class="stat-column" />
+          <col class="stat-column" />
+          <col class="stat-column" />
+          <col class="stat-column" />
+          <col class="last-five-column" />
+          <col class="stat-column" />
+          <col class="next-column" />
+        </colgroup>
+
+        <!-- Table Header -->
+        <thead class="bg-gray-900 border-b border-gray-800">
           <tr>
-            <th scope="col" class="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Team</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs text-blue-500 font-medium uppercase tracking-wider">W</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs text-red-500 font-medium uppercase tracking-wider">L</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">OVR</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">STRK</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">LAST 5 GAMES</th>
-            <th scope="col" class="px-1 py-2 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">DIFF</th>
-            <th scope="col" class="px-1 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">NEXT</th>
+            <th
+              scope="col"
+              class="px-2 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+            >
+              Team
+            </th>
+
+            <th
+              scope="col"
+              class="px-1 py-2 text-center text-xs text-blue-400 font-medium uppercase tracking-wider"
+            >
+              W
+            </th>
+
+            <th
+              scope="col"
+              class="px-1 py-2 text-center text-xs text-red-400 font-medium uppercase tracking-wider"
+            >
+              L
+            </th>
+
+            <th
+              scope="col"
+              class="px-1 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
+            >
+              OVR
+            </th>
+
+            <th
+              scope="col"
+              class="px-1 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
+            >
+              STRK
+            </th>
+
+            <th
+              scope="col"
+              class="px-1 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
+            >
+              LAST 5 GAMES
+            </th>
+
+            <th
+              scope="col"
+              class="px-1 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
+            >
+              DIFF
+            </th>
+
+            <th
+              scope="col"
+              class="px-2 py-2 text-left text-xs font-medium text-gray-400 uppercase tracking-wider"
+            >
+              NEXT
+            </th>
           </tr>
         </thead>
-        <transition-group 
+
+        <transition-group
           tag="tbody"
           name="rank-change"
-          class="relative"
-          @before-enter="beforeEnter"
-          @enter="enter"
-          @leave="leave"
         >
-          <tr 
-            v-for="(team, index) in season_standings.standings" 
+          <tr
+            v-for="(team, index) in season_standings.standings"
             :key="team.team_id"
-            :class="[getTeamRowClass(index), getMovementClass(team.team_id)]"
+            :class="[
+              getTeamRowClass(index),
+              getMovementClass(team.team_id)
+            ]"
             :data-prev-rank="getPreviousRank(team.team_id)"
-            class="transition-all duration-500 ease-in-out"
+            class="standings-row"
           >
-            <td class="px-2 py-2 whitespace-nowrap">
-              <div class="flex items-center">
-                <span class="text-xs flex items-center">
+            <!-- Team -->
+            <td class="px-2 py-2">
+              <div class="flex items-center min-w-0">
+                <!-- Chemistry -->
+                <span
+                  class="w-4 shrink-0 flex items-center justify-center"
+                  :title="`${getChemistryTitle(team.chemistry)} ${team.chemistry}%`"
+                >
                   <i
                     :class="getChemistryIcon(team.chemistry)"
-                    :title="`${getChemistryTitle(team.chemistry)} ${team.chemistry}%`"
-                    style="font-size: 1em;"
+                    class="text-xs"
                   ></i>
                 </span>
-                <Tooltip :content="teamAchievements(team)" class="bg-white ml-2 rounded-tl">
+
+                <!-- Team -->
+                <Tooltip
+                  :content="teamAchievements(team)"
+                  class="ml-2 min-w-0"
+                >
                   <TeamDetails
                     :team_id="team.team_id"
                     :showInfo="props.showLegend"
                     :current_conference_rank="team.conference_rank"
                     :season_id="team.season_id"
-                    class="text-sm text-black"
+                    class="team-name"
                     :hexPrimaryColor="team.primary_color"
                     :hexSecondaryColor="team.secondary_color"
                     :showButton="0"
                     :text="`${team.team_city} ${team.team_name}`"
                   />
                 </Tooltip>
-                <span v-if="team.is_defending_champion == 1">
-                  <i class="fa fa-trophy text-yellow-600"></i>
+
+                <!-- Champion -->
+                <span
+                  v-if="team.is_defending_champion == 1"
+                  class="ml-1.5 shrink-0"
+                  title="Defending Champion"
+                >
+                  <i class="fa fa-trophy text-yellow-500 text-xs"></i>
                 </span>
-                <span 
+
+                <!-- Rank Movement -->
+                <span
                   v-if="showRankChange(team.team_id)"
-                  class="ml-2 text-sm font-medium"
+                  class="ml-1.5 text-sm font-semibold shrink-0"
                   :class="getChangeColor(team.team_id)"
                 >
                   {{ getChangeSymbol(team.team_id) }}
                 </span>
               </div>
             </td>
-            <td class="px-2 py-2 whitespace-nowrap text-sm text-blue-500">{{ team.wins }}</td>
-            <td class="px-2 py-2 whitespace-nowrap text-sm text-red-500">{{ team.losses }}</td>
-            <td class="px-2 py-2 whitespace-nowrap text-center text-gray-500 text-xs">{{ team.overall_rank }}</td>
-            <td class="px-2 py-2 whitespace-nowrap text-center text-sm">
-              <span :class="team.streak_status && team.streak_status.toLowerCase().startsWith('w') ? 'text-green-700 font-bold' : 'text-red-700 font-bold'">
+
+            <!-- Wins -->
+            <td
+              class="px-1 py-2 text-center text-sm font-semibold text-blue-400"
+            >
+              {{ team.wins }}
+            </td>
+
+            <!-- Losses -->
+            <td
+              class="px-1 py-2 text-center text-sm font-semibold text-red-400"
+            >
+              {{ team.losses }}
+            </td>
+
+            <!-- Overall -->
+            <td
+              class="px-1 py-2 text-center text-gray-400 text-xs font-medium"
+            >
+              {{ team.overall_rank }}
+            </td>
+
+            <!-- Streak -->
+            <td class="px-1 py-2 text-center text-sm">
+              <span
+                class="font-bold"
+                :class="
+                  team.streak_status &&
+                  team.streak_status.toLowerCase().startsWith('w')
+                    ? 'text-green-400'
+                    : 'text-red-400'
+                "
+              >
                 {{ team.streak_status }}
               </span>
             </td>
-            <td class="px-2 py-2 whitespace-nowrap text-center text-xs">
-              <div class="flex justify-center space-x-1">
-                <template v-for="(result, index) in team.last_5_games?.split('').reverse()" :key="index">
-                  <span :class="{
-                    'bg-black text-green-800 px-1 rounded-full text-xs font-semibold': result === 'W',
-                    'bg-black text-red-800 px-1 rounded-full': result === 'L',
-                    'bg-gray-100 text-gray-500 px-1 rounded': !['W', 'L'].includes(result)
-                  }">
+
+            <!-- Last 5 -->
+            <td class="px-1 py-2">
+              <div class="flex justify-center items-center gap-0.5">
+                <template
+                  v-for="(result, resultIndex) in team.last_5_games
+                    ?.split('')
+                    .reverse()"
+                  :key="resultIndex"
+                >
+                  <span
+                    class="last-five-result"
+                    :class="{
+                      'result-win': result === 'W',
+                      'result-loss': result === 'L',
+                      'result-empty': !['W', 'L'].includes(result)
+                    }"
+                    :title="
+                      result === 'W'
+                        ? 'Win'
+                        : result === 'L'
+                        ? 'Loss'
+                        : 'No result'
+                    "
+                  >
                     <span v-if="result === 'W'">✓</span>
                     <span v-else-if="result === 'L'">✕</span>
                     <span v-else>-</span>
@@ -101,69 +265,99 @@
                 </template>
               </div>
             </td>
-            <td class="px-2 py-2 whitespace-nowrap text-center text-xs" :class="team.score_difference < 0 ? 'text-red-300' : 'text-green-300'">{{ team.score_difference }}</td>
-            <td class="px-2 py-2 whitespace-nowrap text-left text-pink-500 text-xs">
-              {{ team.next_opponent_acronym }}
+
+            <!-- Difference -->
+            <td
+              class="px-1 py-2 text-center text-xs font-semibold"
+              :class="
+                team.score_difference < 0
+                  ? 'text-red-400'
+                  : 'text-green-400'
+              "
+            >
+              {{ team.score_difference }}
             </td>
-            <!-- <td class="px-2 py-2 whitespace-nowrap">
-              <div class="grid grid-cols-3 gap-1 place-items-center w-fit mx-auto text-xs">
-                <Achievement v-if="team.championships > 0" 
-                           type="championship" 
-                           :count="team.championships" />
-                <Achievement v-if="team.conference_championships > 0" 
-                           type="conference" 
-                           :count="team.conference_championships" />
-                <Achievement v-if="team.overall_1_rank > 0" 
-                           type="overall" 
-                           :count="team.overall_1_rank" />
-                <Achievement v-if="team.conference_1_rank > 0" 
-                           type="conference_best" 
-                           :count="team.conference_1_rank" />
-                <Achievement v-if="team.is_grandslam > 0" 
-                           type="grandslam" 
-                           :count="team.is_grandslam" />
-              </div>
-            </td> -->
+
+            <!-- Next -->
+            <td
+              class="px-2 py-2 text-left text-pink-400 text-xs font-semibold truncate"
+            >
+              {{ team.next_opponent_acronym || "-" }}
+            </td>
           </tr>
         </transition-group>
       </table>
     </div>
-    <div v-if="season_standings.latest_news && season_info[0].status < 2" class="bg-gray-50 p-4 space-y-3 flex hidden justify-center rounded shadow-md absolute top-0 left-0 z-1000">
+
+    <!-- Latest News -->
+    <div
+      v-if="
+        season_standings.latest_news &&
+        season_info?.[0]?.status < 2
+      "
+      class="hidden"
+    >
       <GameNews :data="season_standings.latest_news" />
     </div>
+
     <!-- Season Summary -->
-    <div v-if="season_info.seasons" class="bg-gray-50 p-4 space-y-3">
-      <h3 class="font-semibold text-gray-700 mb-2">Season Highlights</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div class="space-y-2">
-          <SummaryItem icon="trophy" label="Finals Champion" 
-                      :teamId="season_info.seasons[0].finals_winner_id"
-                      :teamName="season_info.seasons[0].finals_winner_name" />
-          <SummaryItem icon="medal" label="Finals Runner Up"
-                      :teamId="season_info.seasons[0].finals_loser_id"
-                      :teamName="season_info.seasons[0].finals_loser_name" />
+    <div
+      v-if="season_info?.seasons"
+      class="border-t border-gray-800 bg-gray-950 p-3"
+    >
+      <div class="flex items-center gap-2 mb-3">
+        <div
+          class="w-6 h-6 rounded bg-gray-900 border border-gray-800 flex items-center justify-center"
+        >
+          <i class="fas fa-star text-yellow-500 text-xs"></i>
         </div>
-        <div class="space-y-2">
-          <SummaryItem icon="crown" label="Regular Season Champion"
-                      :teamId="season_info.seasons[0].champion_id"
-                      :teamName="season_info.seasons[0].champion_name" />
-          <SummaryItem icon="exclamation-circle" label="Lowest Ranked"
-                      :teamId="season_info.seasons[0].weakest_id"
-                      :teamName="season_info.seasons[0].weakest_name" />
-        </div>
+
+        <h3 class="text-sm font-semibold text-gray-200">
+          Season Highlights
+        </h3>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <SummaryItem
+          icon="trophy"
+          label="Finals Champion"
+          :teamId="season_info.seasons[0].finals_winner_id"
+          :teamName="season_info.seasons[0].finals_winner_name"
+        />
+
+        <SummaryItem
+          icon="medal"
+          label="Finals Runner Up"
+          :teamId="season_info.seasons[0].finals_loser_id"
+          :teamName="season_info.seasons[0].finals_loser_name"
+        />
+
+        <SummaryItem
+          icon="crown"
+          label="Regular Season Champion"
+          :teamId="season_info.seasons[0].champion_id"
+          :teamName="season_info.seasons[0].champion_name"
+        />
+
+        <SummaryItem
+          icon="exclamation-circle"
+          label="Lowest Ranked"
+          :teamId="season_info.seasons[0].weakest_id"
+          :teamName="season_info.seasons[0].weakest_name"
+        />
       </div>
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, onMounted } from "vue";
-import Swal from "sweetalert2";
 import axios from "axios";
-import Modal from "@/Components/Modal.vue";
+
 import { numberFormatter, formatHex } from "@/Utility/Formatter.js";
+
 import Tooltip from "@/Components/Tooltip.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
-import Achievement from "@/Pages/Seasons/Module/Achievement.vue";
 import SummaryItem from "@/Pages/Seasons/Module/SummaryItem.vue";
 import GameNews from "@/Pages/Seasons/Module/GameNews.vue";
 
@@ -171,19 +365,23 @@ const season_standings = ref(false);
 const loadingStandings = ref(false);
 const season_info = ref([]);
 const previousStandings = ref([]);
+
 const props = defineProps({
   showLegend: {
     type: Boolean,
     default: false,
   },
+
   season_id: {
     type: [Number, String],
     required: true,
   },
+
   conference_id: {
     type: [Number, String],
     required: true,
   },
+
   season_data: Object,
 });
 
@@ -200,26 +398,33 @@ const fetchConferenceStandings = async () => {
   try {
     const standingsKey = `previousStandings_${props.conference_id}`;
     const historyKey = `rankHistory_${props.conference_id}`;
+
     const saved = localStorage.getItem(standingsKey);
     const savedHistory = localStorage.getItem(historyKey);
 
-    if (saved) previousStandings.value = JSON.parse(saved);
+    if (saved) {
+      previousStandings.value = JSON.parse(saved);
+    }
 
-    let rankHistory = savedHistory ? JSON.parse(savedHistory) : {};
+    let rankHistory = savedHistory
+      ? JSON.parse(savedHistory)
+      : {};
 
     loadingStandings.value = true;
     season_standings.value = [];
 
-    const response = await axios.post(route("conferences.standings"), {
-      season_id: props.season_id,
-      conference_id: props.conference_id,
-    });
+    const response = await axios.post(
+      route("conferences.standings"),
+      {
+        season_id: props.season_id,
+        conference_id: props.conference_id,
+      }
+    );
 
     season_standings.value = response.data;
 
-    // Save current standings and update rank history
     if (response.data?.standings) {
-      response.data.standings.forEach(team => {
+      response.data.standings.forEach((team) => {
         const teamId = team.team_id;
         const currentRank = team.conference_rank;
 
@@ -233,244 +438,434 @@ const fetchConferenceStandings = async () => {
         if (lastRank !== currentRank) {
           history.push(currentRank);
 
-          // Limit to last 10 entries
-          if (history.length > 10) history.shift();
+          if (history.length > 10) {
+            history.shift();
+          }
         }
       });
 
-      localStorage.setItem(standingsKey, JSON.stringify(response.data.standings));
-      localStorage.setItem(historyKey, JSON.stringify(rankHistory));
+      localStorage.setItem(
+        standingsKey,
+        JSON.stringify(response.data.standings)
+      );
+
+      localStorage.setItem(
+        historyKey,
+        JSON.stringify(rankHistory)
+      );
     }
 
     loadingStandings.value = false;
   } catch (error) {
-    console.error("Error fetching season standings:", error);
+    console.error(
+      "Error fetching season standings:",
+      error
+    );
+
+    loadingStandings.value = false;
   }
 };
 
-// GSAP animations
-const beforeEnter = (el) => {
-  el.style.opacity = 0;
-  el.style.transform = "translateY(20px)";
-};
-const enter = (el, done) => {
-  gsap.to(el, {
-    duration: 0.5,
-    y: 0,
-    opacity: 1,
-    ease: "power2.out",
-    onComplete: done,
-  });
-};
-const leave = (el, done) => {
-  gsap.to(el, {
-    duration: 0.3,
-    y: -20,
-    opacity: 0,
-    ease: "power2.in",
-    onComplete: done,
-  });
+/*
+|--------------------------------------------------------------------------
+| Rank Helpers
+|--------------------------------------------------------------------------
+*/
+
+const getPreviousRank = (teamId) => {
+  const prevTeam = previousStandings.value?.find(
+    (team) => team.team_id === teamId
+  );
+
+  return prevTeam
+    ? prevTeam.conference_rank
+    : null;
 };
 
-// Helpers using previous standings (optional if still needed)
-const getPreviousRank = (teamId) => {
-  const prevTeam = previousStandings.value?.find(t => t.team_id === teamId);
-  return prevTeam ? prevTeam.conference_rank : null;
+const getRankTrend = (teamId) => {
+  const historyKey = `rankHistory_${props.conference_id}`;
+
+  const history = JSON.parse(
+    localStorage.getItem(historyKey) || "{}"
+  );
+
+  const ranks = history[teamId] || [];
+
+  if (ranks.length < 2) {
+    return null;
+  }
+
+  const prev = ranks[ranks.length - 2];
+  const current = ranks[ranks.length - 1];
+
+  const diff = prev - current;
+
+  return {
+    symbol:
+      diff > 0
+        ? `↑${diff}`
+        : diff < 0
+        ? `↓${Math.abs(diff)}`
+        : "-",
+
+    color:
+      diff > 0
+        ? "text-green-400"
+        : diff < 0
+        ? "text-red-400"
+        : "text-gray-500",
+  };
 };
 
 const showRankChange = (teamId) => {
   const trend = getRankTrend(teamId);
+
   return trend && trend.symbol !== "-";
 };
 
-// 🚀 New helpers using rankHistory
-const getRankTrend = (teamId) => {
-  const historyKey = `rankHistory_${props.conference_id}`;
-  const history = JSON.parse(localStorage.getItem(historyKey) || "{}");
-  const ranks = history[teamId] || [];
+const getChangeSymbol = (teamId) =>
+  getRankTrend(teamId)?.symbol || "";
 
-  if (ranks.length < 2) return null;
-
-  const prev = ranks[ranks.length - 2];
-  const current = ranks[ranks.length - 1];
-  const diff = prev - current;
-
-  return {
-    symbol: diff > 0 ? `↑${diff}` : diff < 0 ? `↓${Math.abs(diff)}` : "-",
-    color: diff > 0 ? "text-green-600" : diff < 0 ? "text-red-600" : "text-gray-500"
-  };
-};
-
-const getChangeSymbol = (teamId) => getRankTrend(teamId)?.symbol || "";
-const getChangeColor = (teamId) => getRankTrend(teamId)?.color || "";
+const getChangeColor = (teamId) =>
+  getRankTrend(teamId)?.color || "";
 
 const getMovementClass = (teamId) => {
   const trend = getRankTrend(teamId);
-  if (!trend || trend.symbol === "-") return "";
-  return trend.symbol.startsWith("↑") ? "animate-rise" : "animate-fall";
+
+  if (!trend || trend.symbol === "-") {
+    return "";
+  }
+
+  return trend.symbol.startsWith("↑")
+    ? "rank-rise"
+    : "rank-fall";
 };
+
+/*
+|--------------------------------------------------------------------------
+| Row Styling
+|--------------------------------------------------------------------------
+*/
 
 const getTeamRowClass = (index) => {
-  const baseClass =
-    index <= 5
-      ? 'bg-gray hover:bg-orange-800'
-      : index <= 9
-      ? 'bg-gray hover:bg-blue-800'
-      : 'bg-gray hover:bg-red-800';
+  let zoneClass = "";
+  let borderClass = "";
 
-  const baseBorder =
-    index <= 5
-      ? 'border-l-4 border-orange-500'
-      : index <= 9
-      ? 'border-l-4 border-blue-500'
-      : 'border-l-4 border-red-500';
+  if (index <= 5) {
+    zoneClass =
+      "standings-playoff hover:bg-gray-800/80";
+    borderClass = "border-l-orange-500";
+  } else if (index <= 9) {
+    zoneClass =
+      "standings-playin hover:bg-gray-800/80";
+    borderClass = "border-l-blue-500";
+  } else {
+    zoneClass =
+      "standings-outside hover:bg-gray-800/80";
+    borderClass = "border-l-red-500";
+  }
 
-  const topBorder =
-    index === 6
-      ? 'border-t-2 border-t-orange-500 border-dashed'
-      : index === 10
-      ? 'border-t-2 border-t-blue-500 border-dashed'
-      : '';
+  let separatorClass = "";
 
-  const borderStyleFix = (index === 6 || index === 10) ? 'border-l-solid' : '';
+  if (index === 6) {
+    separatorClass =
+      "conference-separator separator-orange";
+  }
 
-  return `${baseClass} ${baseBorder} ${topBorder} ${borderStyleFix}`.trim();
+  if (index === 10) {
+    separatorClass =
+      "conference-separator separator-blue";
+  }
+
+  return [
+    zoneClass,
+    `border-l-2 ${borderClass}`,
+    separatorClass,
+  ].join(" ");
 };
 
+/*
+|--------------------------------------------------------------------------
+| Chemistry
+|--------------------------------------------------------------------------
+*/
+
 const getChemistryIcon = (chemistry) => {
-  if (chemistry >= 80) return 'fa-solid fa-face-laugh-beam text-yellow-500';
-  if (chemistry >= 60) return 'fa-solid fa-face-smile text-green-500';
-  if (chemistry >= 40) return 'fa-solid fa-face-meh text-gray-500';
-  if (chemistry >= 20) return 'fa-solid fa-face-frown text-orange-500';
-  return 'fa-solid fa-face-angry text-red-600';
-}
+  if (chemistry >= 80) {
+    return "fa-solid fa-face-laugh-beam text-yellow-400";
+  }
+
+  if (chemistry >= 60) {
+    return "fa-solid fa-face-smile text-green-400";
+  }
+
+  if (chemistry >= 40) {
+    return "fa-solid fa-face-meh text-gray-400";
+  }
+
+  if (chemistry >= 20) {
+    return "fa-solid fa-face-frown text-orange-400";
+  }
+
+  return "fa-solid fa-face-angry text-red-500";
+};
+
 const getChemistryTitle = (chemistry) => {
-  if (chemistry >= 80) return 'Excellent Chemistry';
-  if (chemistry >= 60) return 'Good Chemistry';
-  if (chemistry >= 40) return 'Average Chemistry';
-  if (chemistry >= 20) return 'Poor Chemistry';
-  return 'Very Poor Chemistry';
-}
+  if (chemistry >= 80) return "Excellent Chemistry";
+  if (chemistry >= 60) return "Good Chemistry";
+  if (chemistry >= 40) return "Average Chemistry";
+  if (chemistry >= 20) return "Poor Chemistry";
+
+  return "Very Poor Chemistry";
+};
+
+/*
+|--------------------------------------------------------------------------
+| Team Tooltip
+|--------------------------------------------------------------------------
+*/
 
 const teamAchievements = (team) => {
-  if (!team) return '';
-  // Card UI blocks
-  let achievementsRows = '';
-  if (team.playoff_appearances > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-trophy text-yellow-300'></span><span class='font-semibold text-indigo-100'>${team.playoff_appearances}x Playoff Appearances</span></div>`;
-  if (team.last_playoff_season_name)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-history text-indigo-200'></span><span class='font-semibold text-indigo-100'>Last Playoff:</span> <span class='text-indigo-100'>${team.last_playoff_season_name}</span></div>`;
-  if (team.conference_finals_appearances > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-flag-checkered text-indigo-200'></span><span class='font-semibold text-indigo-100'>${team.conference_finals_appearances}x Conference Finals Appearances</span></div>`;
-  if (team.conference_championships > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-trophy text-yellow-300'></span><span class='font-semibold text-indigo-100'>${team.conference_championships}x Conference Championships</span></div>`;
-  if (team.finals_appearances > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-medal text-indigo-200'></span><span class='font-semibold text-indigo-100'>${team.finals_appearances}x National Finals Appearances</span></div>`;
-  if (team.championships > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-trophy text-yellow-300'></span><span class='font-semibold text-indigo-100'>${team.championships}x National Championships</span></div>`;
-  if (team.overall_rank_count > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-star text-yellow-200'></span><span class='font-semibold text-indigo-100'>${team.overall_rank_count}x National Ranked #1</span></div>`;
-  if (team.conference_rank_count > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-star text-yellow-200'></span><span class='font-semibold text-indigo-100'>${team.conference_rank_count}x Conference Ranked #1</span></div>`;
-  if (team.conference_top_3_count > 0)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-medal text-indigo-200'></span><span class='font-semibold text-indigo-100'>${team.conference_top_3_count}x Conference Ranked Top 3</span></div>`;
-  if (team.estimated_fans)
-    achievementsRows += `<div class='flex items-center gap-2 mb-1'><span class='fa fa-users text-yellow-200'></span><span class='font-semibold text-indigo-100'>Estimated Fans:</span> <span class='text-indigo-100'>${numberFormatter(team.estimated_fans)} Fans</span></div>`;
-
-  // Best player block
-  // let bestPlayerBlock = '';
-  // if (team.best_player) {
-  //   bestPlayerBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
-  //     <span class='fa fa-user text-yellow-200'></span>
-  //     <span class='font-semibold text-indigo-100'>Best Player:</span>
-  //     <span class='text-indigo-100'>${team.best_player}</span>
-  //   </div>`;
-  // }
-
-  // Rookies block
-  let rookiesBlock = '';
-  if (team.rookies) {
-    const rookiesArr = team.rookies.split('%%').map(r => r.trim()).filter(r => r);
-    if (rookiesArr.length > 0) {
-      rookiesBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
-        <span class='fa fa-user-plus text-yellow-200'></span>
-        <span class='font-semibold text-indigo-100'>Rookies:</span>
-      </div>
-      <div class='ml-7 flex flex-col gap-1'>
-        ${rookiesArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
-      </div>`;
-    }
+  if (!team) {
+    return "";
   }
 
-  let newPlayersBlock = '';
-  if (team.new_players) {
-    const newPlayersArr = team.new_players.split('%%').map(r => r.trim()).filter(r => r);
-    if (newPlayersArr.length > 0) {
-      newPlayersBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
-        <span class='fa fa-user-plus text-green-200'></span>
-        <span class='font-semibold text-indigo-100'>New Players:</span>
+  let achievementsRows = "";
+
+  if (team.playoff_appearances > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-trophy text-yellow-300"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.playoff_appearances}x Playoff Appearances
+        </span>
       </div>
-      <div class='ml-7 flex flex-col gap-1'>
-        ${newPlayersArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
-      </div>`;
-    }
+    `;
   }
 
-  let topPlayersBlock = '';
-  if(team.top_players) {
-    const topPlayersArr = team.top_players.split('%%').map(r => r.trim()).filter(r => r);
-    if (topPlayersArr.length > 0) {
-      topPlayersBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
-        <span class='fa fa-user-secret text-yellow-200'></span>
-        <span class='font-semibold text-indigo-100'>Top 3 Players:</span>
+  if (team.last_playoff_season_name) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-history text-indigo-200"></span>
+        <span class="font-semibold text-indigo-100">
+          Last Playoff:
+        </span>
+        <span class="text-indigo-100">
+          ${team.last_playoff_season_name}
+        </span>
       </div>
-      <div class='ml-7 flex flex-col gap-1'>
-        ${topPlayersArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
-      </div>`;
-    }
+    `;
   }
 
-let reservedBlock = '';
-  if (team.reserved) {
-    const reservedArr = team.reserved.split('%%').map(r => r.trim()).filter(r => r);
-    if (reservedArr.length > 0) {
-      reservedBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
-        <span class='fa fa-user-plus text-yellow-200'></span>
-        <span class='font-semibold text-indigo-100'>Reserved Players:</span>
+  if (team.conference_finals_appearances > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-flag-checkered text-indigo-200"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.conference_finals_appearances}x Conference Finals Appearances
+        </span>
       </div>
-      <div class='ml-7 flex flex-col gap-1'>
-        ${reservedArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
-      </div>`;
-    }
+    `;
   }
 
-let injuryBlock = '';
-  if (team.injured_players) {
-    const injuryArr = team.injured_players.split('%%').map(r => r.trim()).filter(r => r);
-    if (injuryArr.length > 0) {
-      injuryBlock = `<div class='flex items-center gap-2 mt-2 mb-1'>
-        <span class='fa fa-ambulance text-red-500'></span>
-        <span class='font-semibold text-indigo-100'>Injury Report:</span>
+  if (team.conference_championships > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-trophy text-yellow-300"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.conference_championships}x Conference Championships
+        </span>
       </div>
-      <div class='ml-7 flex flex-col gap-1'>
-        ${injuryArr.map(r => `<span class='text-indigo-100 whitespace-normal text-nowrap'>${r}</span>`).join('')}
-      </div>`;
-    }
+    `;
   }
 
-  if (!achievementsRows && !rookiesBlock  && !newPlayersBlock && !topPlayersBlock && !injuryBlock && !reservedBlock) return '';
+  if (team.finals_appearances > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-medal text-indigo-200"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.finals_appearances}x National Finals Appearances
+        </span>
+      </div>
+    `;
+  }
 
-  // Use team colors for gradient bg
-  const primary = team.primary_color ? formatHex(team.primary_color) : '#312e81';
-  const secondary = team.secondary_color ? formatHex(team.secondary_color) : '#6366f1';
-  const cardBg = `background: linear-gradient(135deg, ${primary} 60%, ${secondary} 100%)`;
-  // ${bestPlayerBlock}
+  if (team.championships > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-trophy text-yellow-300"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.championships}x National Championships
+        </span>
+      </div>
+    `;
+  }
+
+  if (team.overall_rank_count > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-star text-yellow-200"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.overall_rank_count}x National Ranked #1
+        </span>
+      </div>
+    `;
+  }
+
+  if (team.conference_rank_count > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-star text-yellow-200"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.conference_rank_count}x Conference Ranked #1
+        </span>
+      </div>
+    `;
+  }
+
+  if (team.conference_top_3_count > 0) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-medal text-indigo-200"></span>
+        <span class="font-semibold text-indigo-100">
+          ${team.conference_top_3_count}x Conference Ranked Top 3
+        </span>
+      </div>
+    `;
+  }
+
+  if (team.estimated_fans) {
+    achievementsRows += `
+      <div class="flex items-center gap-2 mb-1">
+        <span class="fa fa-users text-yellow-200"></span>
+        <span class="font-semibold text-indigo-100">
+          Estimated Fans:
+        </span>
+        <span class="text-indigo-100">
+          ${numberFormatter(team.estimated_fans)} Fans
+        </span>
+      </div>
+    `;
+  }
+
+  const buildPlayersBlock = (
+    data,
+    icon,
+    iconColor,
+    title
+  ) => {
+    if (!data) {
+      return "";
+    }
+
+    const players = data
+      .split("%%")
+      .map((player) => player.trim())
+      .filter(Boolean);
+
+    if (!players.length) {
+      return "";
+    }
+
+    return `
+      <div class="flex items-center gap-2 mt-2 mb-1">
+        <span class="fa ${icon} ${iconColor}"></span>
+        <span class="font-semibold text-indigo-100">
+          ${title}:
+        </span>
+      </div>
+
+      <div class="ml-7 flex flex-col gap-1">
+        ${players
+          .map(
+            (player) => `
+              <span class="text-indigo-100 whitespace-normal">
+                ${player}
+              </span>
+            `
+          )
+          .join("")}
+      </div>
+    `;
+  };
+
+  const topPlayersBlock = buildPlayersBlock(
+    team.top_players,
+    "fa-user-secret",
+    "text-yellow-200",
+    "Top 3 Players"
+  );
+
+  const newPlayersBlock = buildPlayersBlock(
+    team.new_players,
+    "fa-user-plus",
+    "text-green-200",
+    "New Players"
+  );
+
+  const rookiesBlock = buildPlayersBlock(
+    team.rookies,
+    "fa-user-plus",
+    "text-yellow-200",
+    "Rookies"
+  );
+
+  const reservedBlock = buildPlayersBlock(
+    team.reserved,
+    "fa-user-plus",
+    "text-yellow-200",
+    "Reserved Players"
+  );
+
+  const injuryBlock = buildPlayersBlock(
+    team.injured_players,
+    "fa-ambulance",
+    "text-red-400",
+    "Injury Report"
+  );
+
+  if (
+    !achievementsRows &&
+    !topPlayersBlock &&
+    !newPlayersBlock &&
+    !rookiesBlock &&
+    !reservedBlock &&
+    !injuryBlock
+  ) {
+    return "";
+  }
+
+  const primary = team.primary_color
+    ? formatHex(team.primary_color)
+    : "#111827";
+
+  const secondary = team.secondary_color
+    ? formatHex(team.secondary_color)
+    : "#312e81";
+
+  const cardBg = `
+    background:
+      linear-gradient(
+        135deg,
+        ${primary} 0%,
+        #111827 65%,
+        ${secondary} 100%
+      );
+  `;
+
   return `
-    <div class="p-3 text-sm rounded-lg shadow-lg border border-indigo-700 inline-block w-auto max-w-[100vw]" style="${cardBg}">
+    <div
+      class="p-3 text-sm rounded-lg shadow-xl border border-white/10 inline-block w-auto max-w-[100vw]"
+      style="${cardBg}"
+    >
       <h3 class="text-lg font-bold mb-2 flex items-center gap-2 text-yellow-200">
-        <span class='fa fa-basketball-ball text-yellow-200'></span>
-        <span class='text-indigo-100'>#${team.team_id} | ${team.team_city} ${team.team_name}</span>
+        <span class="fa fa-basketball-ball"></span>
+
+        <span class="text-indigo-100">
+          #${team.team_id} | ${team.team_city} ${team.team_name}
+        </span>
       </h3>
+
       <div class="grid grid-cols-1 gap-1">
         ${achievementsRows}
         ${topPlayersBlock}
@@ -482,45 +877,299 @@ let injuryBlock = '';
     </div>
   `;
 };
-
 </script>
 
 <style>
-  .rank-change-move {
-    transition: all 0.5s ease-in-out;
+/*
+|--------------------------------------------------------------------------
+| Main Table
+|--------------------------------------------------------------------------
+*/
+
+.standings-shell {
+  width: 100%;
+  max-width: 100%;
+}
+
+.standings-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.standings-container table {
+  width: 100%;
+  table-layout: fixed;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Column Sizing
+|--------------------------------------------------------------------------
+|
+| The team column gets most of the available width.
+| This allows the entire table to remain visible even
+| when the component is inside a narrow layout.
+|
+*/
+
+.team-column {
+  width: 34%;
+}
+
+.stat-column {
+  width: 7%;
+}
+
+.last-five-column {
+  width: 14%;
+}
+
+.next-column {
+  width: 10%;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Rows
+|--------------------------------------------------------------------------
+*/
+
+.standings-row {
+  height: 38px;
+  border-bottom: 1px solid rgba(55, 65, 81, 0.55);
+  background: rgba(17, 24, 39, 0.92);
+  transition:
+    background-color 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.standings-row:hover {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Standings Zones
+|--------------------------------------------------------------------------
+*/
+
+.standings-playoff {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(245, 158, 11, 0.055),
+      rgba(17, 24, 39, 0.96) 35%
+    );
+}
+
+.standings-playin {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(59, 130, 246, 0.045),
+      rgba(17, 24, 39, 0.96) 35%
+    );
+}
+
+.standings-outside {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(239, 68, 68, 0.04),
+      rgba(17, 24, 39, 0.96) 35%
+    );
+}
+
+/*
+|--------------------------------------------------------------------------
+| Zone Separators
+|--------------------------------------------------------------------------
+*/
+
+.conference-separator {
+  position: relative;
+}
+
+.separator-orange {
+  border-top: 1px dashed rgba(245, 158, 11, 0.65);
+}
+
+.separator-blue {
+  border-top: 1px dashed rgba(59, 130, 246, 0.65);
+}
+
+/*
+|--------------------------------------------------------------------------
+| Team Name
+|--------------------------------------------------------------------------
+*/
+
+.team-name {
+  color: #e5e7eb !important;
+  font-weight: 500;
+  min-width: 0;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Last 5 Games
+|--------------------------------------------------------------------------
+*/
+
+.last-five-result {
+  width: 17px;
+  height: 17px;
+  min-width: 17px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 4px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.result-win {
+  background: rgba(22, 101, 52, 0.35);
+  color: #4ade80;
+}
+
+.result-loss {
+  background: rgba(127, 29, 29, 0.35);
+  color: #f87171;
+}
+
+.result-empty {
+  background: rgba(55, 65, 81, 0.35);
+  color: #6b7280;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Rank Movement
+|--------------------------------------------------------------------------
+*/
+
+.rank-change-enter-active,
+.rank-change-leave-active {
+  transition:
+    opacity 0.35s ease,
+    transform 0.35s ease;
+}
+
+.rank-change-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.rank-change-leave-to {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+.rank-rise {
+  animation: rankRise 0.55s ease-out;
+}
+
+.rank-fall {
+  animation: rankFall 0.55s ease-out;
+}
+
+@keyframes rankRise {
+  0% {
+    transform: translateY(8px);
+    box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.2);
   }
 
-  @keyframes rise {
-    from {
-      transform: translateY(20px);
-      opacity: 0;
-      background-color: rgba(72, 187, 120, 0.1);
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-      background-color: transparent;
-    }
+  100% {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+@keyframes rankFall {
+  0% {
+    transform: translateY(-8px);
+    box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.2);
   }
 
-  @keyframes fall {
-    from {
-      transform: translateY(-20px);
-      opacity: 0;
-      background-color: rgba(248, 113, 113, 0.1);
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-      background-color: transparent;
-    }
+  100% {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Narrow Layout
+|--------------------------------------------------------------------------
+|
+| Do NOT reduce font sizes.
+| Instead, reclaim horizontal space.
+|
+*/
+
+@media (max-width: 700px) {
+  .team-column {
+    width: 31%;
   }
 
-  .animate-rise {
-    animation: rise 0.5s ease-out;
+  .stat-column {
+    width: 7%;
   }
 
-  .animate-fall {
-    animation: fall 0.5s ease-out;
+  .last-five-column {
+    width: 16%;
   }
+
+  .next-column {
+    width: 11%;
+  }
+
+  .standings-row {
+    height: 36px;
+  }
+
+  .last-five-result {
+    width: 15px;
+    min-width: 15px;
+    height: 15px;
+  }
+}
+
+/*
+|--------------------------------------------------------------------------
+| Very Narrow Component
+|--------------------------------------------------------------------------
+*/
+
+@media (max-width: 480px) {
+  .team-column {
+    width: 30%;
+  }
+
+  .stat-column {
+    width: 7%;
+  }
+
+  .last-five-column {
+    width: 17%;
+  }
+
+  .next-column {
+    width: 11%;
+  }
+
+  .standings-row {
+    height: 35px;
+  }
+}
 </style>
+```
