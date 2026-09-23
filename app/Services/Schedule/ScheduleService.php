@@ -123,7 +123,7 @@ class ScheduleService
         $hasData = true;
 
         if(count($allStarSchedule) > 0){
-            $interleaved[] = $allStarSchedule;
+            $interleaved = $allStarSchedule;
         }else{
             while ($hasData) {
                 $hasData = false;

@@ -88,10 +88,11 @@
                     }"
                 >
                     <div
-                        :style="{ color:  '#' + gameDetails.home_team.primary_color, opacity: '50%' }"
+                        :style="{ color:  '#' + gameDetails.home_team.primary_color, opacity: '20%' }"
                         class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
+                        {{ gameDetails.home_team.acronym ?? 'NO NAME' }}
                         {{ gameDetails.home_team.acronym ?? 'NO NAME' }}
                     </div>
                     <span class="location-label">HOME</span>
@@ -196,10 +197,11 @@
                     }"
                 >
                     <div
-                        :style="{ color:  '#' + gameDetails.away_team.primary_color, opacity: '50%' }"
+                        :style="{ color:  '#' + gameDetails.away_team.primary_color, opacity: '20%' }"
                         class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
+                        {{ gameDetails.away_team.acronym ?? 'NO NAME' }}
                         {{ gameDetails.away_team.acronym ?? 'NO NAME' }}
                     </div>
 

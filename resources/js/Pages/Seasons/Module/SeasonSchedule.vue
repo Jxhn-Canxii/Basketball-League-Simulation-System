@@ -721,8 +721,7 @@ const simulateAll = async () => {
 
             while (gameIds.length > 0) {
                 for (const game of gameIds) {
-                    const gameId =
-                        game.id;
+                    const gameId = game.id;
 
                     console.log(
                         `Simulating Game ID: ${gameId}`

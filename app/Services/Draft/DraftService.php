@@ -1371,8 +1371,7 @@ class DraftService
          *
          * $previousSeasonId = $currentSeasonId;
          */
-        $previousSeasonId =
-            $seasonId - 1;
+        $previousSeasonId = $seasonId;
 
         /*
          * First attempt:
@@ -1396,15 +1395,10 @@ class DraftService
                     );
                 }
             )
-            ->where(
-                'p.team_id',
-                $teamId
-            )
-            ->where(
-                'p.id',
-                '!=',
-                $selectedPlayer->id
-            )
+            ->where('p.team_id',$teamId)
+            ->where('p.no_trade_clause',0)
+            ->whereNotIn('p.role',['all star','star player'])
+            ->where('p.id','!=',$selectedPlayer->id)
             ->where(function ($q) use ($selectedPlayer) {
 
                 $q->where(
@@ -1439,7 +1433,7 @@ class DraftService
                     WHEN p.contract_years <= 0 THEN 0
                     WHEN stats.eff IS NULL THEN 1
                     ELSE 2
-                 END'
+                END'
             )
             ->orderBy('stats.eff', 'asc')
             ->first();
@@ -1474,15 +1468,10 @@ class DraftService
                         );
                     }
                 )
-                ->where(
-                    'p.team_id',
-                    $teamId
-                )
-                ->where(
-                    'p.id',
-                    '!=',
-                    $selectedPlayer->id
-                )
+                ->where('p.team_id',$teamId)
+                ->where('p.no_trade_clause',0)
+                ->whereNotIn('p.role',['all star','star player'])
+                ->where('p.id','!=',$selectedPlayer->id)
                 ->select(
                     'p.id',
                     'p.name',
@@ -1536,7 +1525,6 @@ class DraftService
          */
         DB::table('player_contracts')
             ->where('player_id', $player->id)
-            ->where('season_id', $seasonId - 1)
             ->where('status', 'signed')
             ->update([
                 'status' => 'terminated',

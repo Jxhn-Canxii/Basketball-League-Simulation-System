@@ -68,7 +68,7 @@
           <col class="stat-column" />
           <col class="stat-column" />
           <col class="stat-column" />
-          <!-- <col class="last-five-column" /> -->
+          <col class="last-five-column" /> -->
           <col class="stat-column" />
           <col class="next-column" />
         </colgroup>
@@ -113,9 +113,9 @@
 
             <th
               scope="col"
-              class="px-1 py-2 hidden text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
+              class="px-1 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
             >
-              LAST 5 GAMES
+              LAST 5
             </th>
 
             <th
@@ -173,11 +173,10 @@
                     :current_conference_rank="team.conference_rank"
                     :season_id="team.season_id"
                     class="team-name"
-                    :textColor="'ffffff'"
-                    :hexPrimaryColor="'team.primary_color'"
-                    :hexSecondaryColor="team.secondary_color"
+                    :hexPrimaryColor="'ffffff'"
+                    :hexSecondaryColor="team.primary_color"
                     :showButton="0"
-                    :text="`${team.team_city} ${team.team_name}`"
+                    :text="`${team.team_name} (${team.team_acronym})`"
                   />
                 </Tooltip>
 
@@ -242,7 +241,7 @@
             </td>
 
             <!-- Last 5 -->
-            <td class="px-1 py-2 hidden">
+            <td class="px-1 py-2">
               <div
                 class="flex justify-center items-center gap-0.5"
               >

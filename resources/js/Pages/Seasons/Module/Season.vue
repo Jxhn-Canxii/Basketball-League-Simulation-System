@@ -231,17 +231,18 @@
                     </div>
 
                     <div class="min-w-0 overflow-x-auto">
-                        <RecentTradeProposal
+                        <!-- <RecentTradeProposal
                             :key="updateKey"
                             :isOffSeason="false"
                             :seasonId="props.season_id"
-                        />
+                        /> -->
+                        <RecentTransactions :showTitle="false" :key="selectedConference" />
                     </div>
                 </div>
             </section>
 
             <!-- ============================================================
-                 RIGHT PANEL
+                RIGHT PANEL
             ============================================================= -->
             <section
                 class="min-w-0 overflow-hidden rounded-xl border border-gray-800 bg-gray-900 shadow-lg lg:col-span-7"
@@ -308,6 +309,14 @@
                         :simulate_next="isAutoSimulate"
                         :season_data="season_info"
                     />
+                    <br>
+                    <!-- <RecentTransactions :showTitle="false" :key="selectedConference" /> -->
+                    <RecentTradeProposal
+                        v-if="seasonStatus == 1"
+                        :key="updateKey"
+                        :isOffSeason="false"
+                        :seasonId="props.season_id"
+                    />
                 </div>
             </section>
         </div>
@@ -346,6 +355,7 @@ import Standings from "./Standings.vue";
 import SeasonSchedule from "./SeasonSchedule.vue";
 import Top15MVPCandidate from "@/Pages/Seasons/Module/Top15MVPCandidate.vue";
 import RecentTradeProposal from "@/Pages/Seasons/Module/RecentTradeProposal.vue";
+import RecentTransactions from "@/Pages/Seasons/Module/RecentTransactions.vue";
 
 const props = defineProps({
     season_id: {

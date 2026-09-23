@@ -537,22 +537,18 @@ const fetchFilteredPlayers = async () => {
 
 const seasonsDropdown = async () => {
     try {
-        const storedSeasons =
-            localStorage.getItem("seasons");
-
-        const parsedSeasons = storedSeasons
-            ? JSON.parse(storedSeasons)
-            : [];
-
-        seasons.value = Array.isArray(parsedSeasons)
-            ? parsedSeasons
-            : [];
-    } catch (error) {
-        console.error(
-            "Error fetching seasons dropdown:",
-            error
+        const response = await axios.post(
+            route("seasons.dropdown"),
+            {
+                season_id: 0,
+            }
         );
 
+        seasons.value = Array.isArray(response.data)
+            ? response.data
+            : [];
+    } catch (error) {
+        console.error("Error fetching seasons:", error);
         seasons.value = [];
     }
 };
