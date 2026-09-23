@@ -639,14 +639,15 @@
                                 class="mt-3 border-t border-white/10 pt-2 text-[9px] text-white/50"
                             >
                                 <span class="font-bold text-yellow-400">
-                                    G{{ ps.game_number }}
+                                    G{{ ps.game_number }} | <i class="text-white">@{{ ps.home_team_name }}</i> 
                                 </span>
 
                                 <span class="mx-1">•</span>
 
                                 {{ ps.home_team_name }}
                                 vs
-                                {{ ps.away_team_name }}
+                                {{ ps.away_team_name }}   
+                                
                             </div>
                         </div>
                     </div>

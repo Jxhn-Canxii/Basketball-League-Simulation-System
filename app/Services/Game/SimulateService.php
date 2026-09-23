@@ -470,7 +470,7 @@ class SimulateService
             $pastResults = DB::table('schedules')
                 ->join('teams as w','w.id','=','schedules.winner_id')
                 ->join('teams as h','h.id','=','schedules.home_id')
-                ->join('teams as a','a.id','=','schedules.home_id')
+                ->join('teams as a','a.id','=','schedules.away_id')
                 ->select('schedules.game_number','schedules.id','w.primary_color','w.acronym as winner_team_name','h.acronym as home_team_name','a.acronym as away_team_name','schedules.home_score','schedules.away_score','schedules.winner_id','schedules.game_number')
                 ->where('schedules.series_id', $gameData->series_id)
                 ->where('schedules.status',2)
