@@ -59,7 +59,7 @@
                 @click.prevent="showTeamDetails"
                 class="min-w-0 truncate text-left text-xs font-black transition hover:opacity-80"
                 :style="{
-                    color: color(props.hexPrimaryColor),
+                    color: color(props.textColor),
                 }"
             >
                 <span>
@@ -502,6 +502,11 @@ const props = defineProps({
     hexSecondaryColor: {
         type: [String, Boolean],
         default: false,
+    },
+
+    textColor: {
+        type: [String, Boolean],
+        default: '#ffffff',
     },
 
     showInfo: {
