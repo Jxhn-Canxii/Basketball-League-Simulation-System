@@ -553,13 +553,27 @@ class TestController extends Controller
         // $archive =  $this->archive->archiveQuarterGameBreakDown(1);
 
 
-        $archive = $this->schedule->selectAllStarsManual(1);
+        // $archive = $this->schedule->selectAllStarsManual(1);
         // $archive = $this->schedule->selectAllStarsManual(2);
         // $archive = $this->schedule->selectAllStarsManual(3);
-       
+    
+        $north = $this->getAllStarTeamConferenceRange(3);
+        $south = $this->getAllStarTeamConferenceRange(4);
+
         return response()->json([
-            'message' => $archive,
+            'north' => $north,
+            'south' => $south,
         ]);
+    }
+
+    private function getAllStarTeamConferenceRange($teamId){
+        if(in_array($teamId,[1,3])){
+           return [1,2]; // north conference 
+        }
+        
+        if(in_array($teamId,[2,4])){
+           return [3,4]; // south conference 
+        }
     }
 
     public function testSnapShot(){

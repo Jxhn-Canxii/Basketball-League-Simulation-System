@@ -1775,16 +1775,12 @@ class TeamManagementService
     }
 
     private function getAllStarTeamConferenceRange($teamId){
-        switch ($teamId) {
-            case 1 || 3:
-                return [1,2]; // north conference
-                break;
-            case 2 || 4:
-                return [3,4]; //south conference
-                break;
-            default:
-                return [];
-                break;
+        if(in_array($teamId,[1,3])){
+           return [1,2]; // north conference 
+        }
+        
+        if(in_array($teamId,[2,4])){
+           return [3,4]; // south conference 
         }
     }
 }

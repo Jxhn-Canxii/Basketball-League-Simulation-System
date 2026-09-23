@@ -1076,7 +1076,7 @@ class PlayerStatsService
                     DB::raw('SUM(free_throws_made) as total_free_throws_made'),
                     DB::raw('SUM(free_throw_attempts) as total_free_throw_attempts')
                 )
-                ->groupBy('player_id','team_id')
+                ->groupBy('player_id')
                 ->first();
 
             // Insert or update the player's season stats in the player_season_stats table

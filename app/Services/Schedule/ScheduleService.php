@@ -932,6 +932,7 @@ class ScheduleService
         $itemsPerPage = $request->itemsperpage ?: 6;
         $currentPage = $request->page_num ?: 1;
         $currentSeasonId = get_current_season_id();
+        $specialConference = ($seasonId > 4) ? 0 : $conferenceId;
 
         // Calculate offset for pagination based on current page
         $offset = ($currentPage - 1) * $itemsPerPage;
@@ -941,7 +942,7 @@ class ScheduleService
         // Get total count first
         $totalSchedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
+            ->whereIn('conference_id', [$specialConference,$conferenceId])
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
                     $q->where('home_id', $teamId)
@@ -962,7 +963,7 @@ class ScheduleService
         // Fetch the actual schedule data
         $schedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId)
+            ->whereIn('conference_id', [$specialConference,$conferenceId])
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
                     $q->where('home_id', $teamId)
@@ -972,6 +973,7 @@ class ScheduleService
             ->whereNotIn('round', $excludedRounds)
             ->orderBy('status', 'desc')  // Sort status 2 first
             ->orderBy('id', 'desc')  // Within status 2, order by updated_at
+            ->orderBy('conference_id', 'asc')  // Within status 2, order by updated_at
             ->skip($offset)
             ->take($itemsPerPage)
             ->get()
@@ -1000,7 +1002,7 @@ class ScheduleService
                     'id' => $game->home_id,
                     'name' => $homeTeamName,
                     'home_score' => $game->home_score,
-                    'conference' => $standingsData[$game->home_id]->conference_name ?? null,
+                    'conference' => $standingsData[$game->home_id]->conference_name ?? 'Special',
                     'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
                     'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
                     'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
@@ -1010,7 +1012,7 @@ class ScheduleService
                     'id' => $game->away_id,
                     'name' => $awayTeamName,
                     'away_score' => $game->away_score,
-                    'conference' => $standingsData[$game->away_id]->conference_name ?? null,
+                    'conference' => $standingsData[$game->away_id]->conference_name ?? 'Special',
                     'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
                     'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
                     'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
@@ -1181,7 +1183,7 @@ class ScheduleService
         $northAllStarsConference = [1,2];
         $southAllStarsConference = [3,4];
         
-        $allStarRound = $seasonId > 0 ? ['all-star','all-rookie'] : ['all-star'];
+        $allStarRound = $seasonId > 4 ? ['all-star','all-rookie'] : ['all-star'];
 
         $isScheduleCreated = DB::table('schedules')
                 ->where('season_id',$seasonId)
