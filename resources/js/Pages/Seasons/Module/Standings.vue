@@ -1,4 +1,3 @@
-```vue
 <template>
   <div
     class="standings-shell rounded-lg overflow-hidden border border-gray-800 bg-gray-950 shadow-2xl shadow-black/40"
@@ -7,7 +6,7 @@
     <div
       class="flex items-center hidden justify-between p-0 border-b border-gray-800 bg-gray-950"
     >
-      <div class="flex  items-center gap-2 min-w-0">
+      <div class="flex items-center gap-2 min-w-0">
         <div
           class="w-7 h-7 rounded-md bg-gray-900 border border-gray-800 flex items-center justify-center shrink-0"
         >
@@ -18,6 +17,7 @@
           <h2 class="text-sm font-semibold text-gray-100 truncate">
             Conference Standings
           </h2>
+
           <p class="text-xs text-gray-500">
             Current season
           </p>
@@ -54,7 +54,9 @@
         <i class="fas fa-chart-bar text-gray-600 text-lg"></i>
       </div>
 
-      <p class="text-sm">No standings available</p>
+      <p class="text-sm">
+        No standings available
+      </p>
     </div>
 
     <!-- Standings -->
@@ -140,7 +142,7 @@
             v-for="(team, index) in season_standings.standings"
             :key="team.team_id"
             :class="[
-              getTeamRowClass(index),
+              getTeamRowClass(team),
               getMovementClass(team.team_id)
             ]"
             :data-prev-rank="getPreviousRank(team.team_id)"
@@ -184,7 +186,9 @@
                   class="ml-1.5 shrink-0"
                   title="Defending Champion"
                 >
-                  <i class="fa fa-trophy text-yellow-500 text-xs"></i>
+                  <i
+                    class="fa fa-trophy text-yellow-500 text-xs"
+                  ></i>
                 </span>
 
                 <!-- Rank Movement -->
@@ -225,7 +229,9 @@
                 class="font-bold"
                 :class="
                   team.streak_status &&
-                  team.streak_status.toLowerCase().startsWith('w')
+                  team.streak_status
+                    .toLowerCase()
+                    .startsWith('w')
                     ? 'text-green-400'
                     : 'text-red-400'
                 "
@@ -236,7 +242,9 @@
 
             <!-- Last 5 -->
             <td class="px-1 py-2">
-              <div class="flex justify-center items-center gap-0.5">
+              <div
+                class="flex justify-center items-center gap-0.5"
+              >
                 <template
                   v-for="(result, resultIndex) in team.last_5_games
                     ?.split('')
@@ -248,7 +256,8 @@
                     :class="{
                       'result-win': result === 'W',
                       'result-loss': result === 'L',
-                      'result-empty': !['W', 'L'].includes(result)
+                      'result-empty':
+                        !['W', 'L'].includes(result),
                     }"
                     :title="
                       result === 'W'
@@ -258,9 +267,17 @@
                         : 'No result'
                     "
                   >
-                    <span v-if="result === 'W'">✓</span>
-                    <span v-else-if="result === 'L'">✕</span>
-                    <span v-else>-</span>
+                    <span v-if="result === 'W'">
+                      ✓
+                    </span>
+
+                    <span v-else-if="result === 'L'">
+                      ✕
+                    </span>
+
+                    <span v-else>
+                      -
+                    </span>
                   </span>
                 </template>
               </div>
@@ -309,7 +326,9 @@
         <div
           class="w-6 h-6 rounded bg-gray-900 border border-gray-800 flex items-center justify-center"
         >
-          <i class="fas fa-star text-yellow-500 text-xs"></i>
+          <i
+            class="fas fa-star text-yellow-500 text-xs"
+          ></i>
         </div>
 
         <h3 class="text-sm font-semibold text-gray-200">
@@ -354,7 +373,10 @@
 import { ref, onMounted } from "vue";
 import axios from "axios";
 
-import { numberFormatter, formatHex } from "@/Utility/Formatter.js";
+import {
+  numberFormatter,
+  formatHex,
+} from "@/Utility/Formatter.js";
 
 import Tooltip from "@/Components/Tooltip.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
@@ -396,14 +418,21 @@ const getStandingsInfo = () => {
 
 const fetchConferenceStandings = async () => {
   try {
-    const standingsKey = `previousStandings_${props.conference_id}`;
-    const historyKey = `rankHistory_${props.conference_id}`;
+    const standingsKey =
+      `previousStandings_${props.conference_id}`;
 
-    const saved = localStorage.getItem(standingsKey);
-    const savedHistory = localStorage.getItem(historyKey);
+    const historyKey =
+      `rankHistory_${props.conference_id}`;
+
+    const saved =
+      localStorage.getItem(standingsKey);
+
+    const savedHistory =
+      localStorage.getItem(historyKey);
 
     if (saved) {
-      previousStandings.value = JSON.parse(saved);
+      previousStandings.value =
+        JSON.parse(saved);
     }
 
     let rankHistory = savedHistory
@@ -421,19 +450,24 @@ const fetchConferenceStandings = async () => {
       }
     );
 
-    season_standings.value = response.data;
+    season_standings.value =
+      response.data;
 
     if (response.data?.standings) {
       response.data.standings.forEach((team) => {
         const teamId = team.team_id;
-        const currentRank = team.conference_rank;
+        const currentRank =
+          team.conference_rank;
 
         if (!rankHistory[teamId]) {
           rankHistory[teamId] = [];
         }
 
-        const history = rankHistory[teamId];
-        const lastRank = history[history.length - 1];
+        const history =
+          rankHistory[teamId];
+
+        const lastRank =
+          history[history.length - 1];
 
         if (lastRank !== currentRank) {
           history.push(currentRank);
@@ -446,7 +480,9 @@ const fetchConferenceStandings = async () => {
 
       localStorage.setItem(
         standingsKey,
-        JSON.stringify(response.data.standings)
+        JSON.stringify(
+          response.data.standings
+        )
       );
 
       localStorage.setItem(
@@ -473,9 +509,11 @@ const fetchConferenceStandings = async () => {
 */
 
 const getPreviousRank = (teamId) => {
-  const prevTeam = previousStandings.value?.find(
-    (team) => team.team_id === teamId
-  );
+  const prevTeam =
+    previousStandings.value?.find(
+      (team) =>
+        team.team_id === teamId
+    );
 
   return prevTeam
     ? prevTeam.conference_rank
@@ -483,22 +521,29 @@ const getPreviousRank = (teamId) => {
 };
 
 const getRankTrend = (teamId) => {
-  const historyKey = `rankHistory_${props.conference_id}`;
+  const historyKey =
+    `rankHistory_${props.conference_id}`;
 
   const history = JSON.parse(
-    localStorage.getItem(historyKey) || "{}"
+    localStorage.getItem(historyKey) ||
+      "{}"
   );
 
-  const ranks = history[teamId] || [];
+  const ranks =
+    history[teamId] || [];
 
   if (ranks.length < 2) {
     return null;
   }
 
-  const prev = ranks[ranks.length - 2];
-  const current = ranks[ranks.length - 1];
+  const prev =
+    ranks[ranks.length - 2];
 
-  const diff = prev - current;
+  const current =
+    ranks[ranks.length - 1];
+
+  const diff =
+    prev - current;
 
   return {
     symbol:
@@ -518,9 +563,13 @@ const getRankTrend = (teamId) => {
 };
 
 const showRankChange = (teamId) => {
-  const trend = getRankTrend(teamId);
+  const trend =
+    getRankTrend(teamId);
 
-  return trend && trend.symbol !== "-";
+  return (
+    trend &&
+    trend.symbol !== "-"
+  );
 };
 
 const getChangeSymbol = (teamId) =>
@@ -530,9 +579,13 @@ const getChangeColor = (teamId) =>
   getRankTrend(teamId)?.color || "";
 
 const getMovementClass = (teamId) => {
-  const trend = getRankTrend(teamId);
+  const trend =
+    getRankTrend(teamId);
 
-  if (!trend || trend.symbol === "-") {
+  if (
+    !trend ||
+    trend.symbol === "-"
+  ) {
     return "";
   }
 
@@ -543,45 +596,58 @@ const getMovementClass = (teamId) => {
 
 /*
 |--------------------------------------------------------------------------
-| Row Styling
+| Playoff / Play-In / Eliminated Zone
 |--------------------------------------------------------------------------
+|
+| Rank 1 - 6  = Direct Playoffs
+| Rank 7 - 10 = Play-In
+| Rank 11+    = Eliminated
+|
 */
 
-const getTeamRowClass = (index) => {
-  let zoneClass = "";
-  let borderClass = "";
+const getTeamRowClass = (team) => {
+  const rank =
+    Number(team?.conference_rank);
 
-  if (index <= 5) {
+  let zoneClass = "";
+
+  if (rank >= 1 && rank <= 6) {
     zoneClass =
-      "standings-playoff hover:bg-gray-800/80";
-    borderClass = "border-l-orange-500";
-  } else if (index <= 9) {
+      "standings-playoff";
+  } else if (rank >= 7 && rank <= 10) {
     zoneClass =
-      "standings-playin hover:bg-gray-800/80";
-    borderClass = "border-l-blue-500";
-  } else {
+      "standings-playin";
+  } else if (rank >= 11) {
     zoneClass =
-      "standings-outside hover:bg-gray-800/80";
-    borderClass = "border-l-red-500";
+      "standings-eliminated";
   }
 
   let separatorClass = "";
 
-  if (index === 6) {
+  /*
+   * Separator immediately before rank 7.
+   * This separates Playoffs from Play-In.
+   */
+  if (rank === 7) {
     separatorClass =
       "conference-separator separator-orange";
   }
 
-  if (index === 10) {
+  /*
+   * Separator immediately before rank 11.
+   * This separates Play-In from Eliminated.
+   */
+  if (rank === 11) {
     separatorClass =
       "conference-separator separator-blue";
   }
 
   return [
     zoneClass,
-    `border-l-2 ${borderClass}`,
     separatorClass,
-  ].join(" ");
+  ]
+    .filter(Boolean)
+    .join(" ");
 };
 
 /*
@@ -611,10 +677,17 @@ const getChemistryIcon = (chemistry) => {
 };
 
 const getChemistryTitle = (chemistry) => {
-  if (chemistry >= 80) return "Excellent Chemistry";
-  if (chemistry >= 60) return "Good Chemistry";
-  if (chemistry >= 40) return "Average Chemistry";
-  if (chemistry >= 20) return "Poor Chemistry";
+  if (chemistry >= 80)
+    return "Excellent Chemistry";
+
+  if (chemistry >= 60)
+    return "Good Chemistry";
+
+  if (chemistry >= 40)
+    return "Average Chemistry";
+
+  if (chemistry >= 20)
+    return "Poor Chemistry";
 
   return "Very Poor Chemistry";
 };
@@ -770,6 +843,7 @@ const teamAchievements = (team) => {
     return `
       <div class="flex items-center gap-2 mt-2 mb-1">
         <span class="fa ${icon} ${iconColor}"></span>
+
         <span class="font-semibold text-indigo-100">
           ${title}:
         </span>
@@ -789,40 +863,45 @@ const teamAchievements = (team) => {
     `;
   };
 
-  const topPlayersBlock = buildPlayersBlock(
-    team.top_players,
-    "fa-user-secret",
-    "text-yellow-200",
-    "Top 3 Players"
-  );
+  const topPlayersBlock =
+    buildPlayersBlock(
+      team.top_players,
+      "fa-user-secret",
+      "text-yellow-200",
+      "Top 3 Players"
+    );
 
-  const newPlayersBlock = buildPlayersBlock(
-    team.new_players,
-    "fa-user-plus",
-    "text-green-200",
-    "New Players"
-  );
+  const newPlayersBlock =
+    buildPlayersBlock(
+      team.new_players,
+      "fa-user-plus",
+      "text-green-200",
+      "New Players"
+    );
 
-  const rookiesBlock = buildPlayersBlock(
-    team.rookies,
-    "fa-user-plus",
-    "text-yellow-200",
-    "Rookies"
-  );
+  const rookiesBlock =
+    buildPlayersBlock(
+      team.rookies,
+      "fa-user-plus",
+      "text-yellow-200",
+      "Rookies"
+    );
 
-  const reservedBlock = buildPlayersBlock(
-    team.reserved,
-    "fa-user-plus",
-    "text-yellow-200",
-    "Reserved Players"
-  );
+  const reservedBlock =
+    buildPlayersBlock(
+      team.reserved,
+      "fa-user-plus",
+      "text-yellow-200",
+      "Reserved Players"
+    );
 
-  const injuryBlock = buildPlayersBlock(
-    team.injured_players,
-    "fa-ambulance",
-    "text-red-400",
-    "Injury Report"
-  );
+  const injuryBlock =
+    buildPlayersBlock(
+      team.injured_players,
+      "fa-ambulance",
+      "text-red-400",
+      "Injury Report"
+    );
 
   if (
     !achievementsRows &&
@@ -835,13 +914,15 @@ const teamAchievements = (team) => {
     return "";
   }
 
-  const primary = team.primary_color
-    ? formatHex(team.primary_color)
-    : "#111827";
+  const primary =
+    team.primary_color
+      ? formatHex(team.primary_color)
+      : "#111827";
 
-  const secondary = team.secondary_color
-    ? formatHex(team.secondary_color)
-    : "#312e81";
+  const secondary =
+    team.secondary_color
+      ? formatHex(team.secondary_color)
+      : "#312e81";
 
   const cardBg = `
     background:
@@ -858,11 +939,14 @@ const teamAchievements = (team) => {
       class="p-3 text-sm rounded-lg shadow-xl border border-white/10 inline-block w-auto max-w-[100vw]"
       style="${cardBg}"
     >
-      <h3 class="text-lg font-bold mb-2 flex items-center gap-2 text-yellow-200">
+      <h3
+        class="text-lg font-bold mb-2 flex items-center gap-2 text-yellow-200"
+      >
         <span class="fa fa-basketball-ball"></span>
 
         <span class="text-indigo-100">
-          #${team.team_id} | ${team.team_city} ${team.team_name}
+          #${team.team_id} |
+          ${team.team_city} ${team.team_name}
         </span>
       </h3>
 
@@ -905,11 +989,6 @@ const teamAchievements = (team) => {
 |--------------------------------------------------------------------------
 | Column Sizing
 |--------------------------------------------------------------------------
-|
-| The team column gets most of the available width.
-| This allows the entire table to remain visible even
-| when the component is inside a narrow layout.
-|
 */
 
 .team-column {
@@ -936,8 +1015,13 @@ const teamAchievements = (team) => {
 
 .standings-row {
   height: 38px;
-  border-bottom: 1px solid rgba(55, 65, 81, 0.55);
-  background: rgba(17, 24, 39, 0.92);
+
+  border-bottom:
+    1px solid rgba(55, 65, 81, 0.55);
+
+  background:
+    rgba(17, 24, 39, 0.92);
+
   transition:
     background-color 180ms ease,
     box-shadow 180ms ease,
@@ -946,39 +1030,62 @@ const teamAchievements = (team) => {
 
 .standings-row:hover {
   box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-    0 2px 8px rgba(0, 0, 0, 0.25);
+    inset 0 0 0 1px
+      rgba(255, 255, 255, 0.04),
+    0 2px 8px
+      rgba(0, 0, 0, 0.25);
 }
 
 /*
 |--------------------------------------------------------------------------
-| Standings Zones
+| PLAYOFFS — Ranks 1-6
 |--------------------------------------------------------------------------
 */
 
 .standings-playoff {
+  border-left:
+    3px solid rgb(245 158 11);
+
   background:
     linear-gradient(
       90deg,
-      rgba(245, 158, 11, 0.055),
+      rgba(245, 158, 11, 0.075),
       rgba(17, 24, 39, 0.96) 35%
     );
 }
+
+/*
+|--------------------------------------------------------------------------
+| PLAY-IN — Ranks 7-10
+|--------------------------------------------------------------------------
+*/
 
 .standings-playin {
+  border-left:
+    3px solid rgb(59 130 246);
+
   background:
     linear-gradient(
       90deg,
-      rgba(59, 130, 246, 0.045),
+      rgba(59, 130, 246, 0.065),
       rgba(17, 24, 39, 0.96) 35%
     );
 }
 
-.standings-outside {
+/*
+|--------------------------------------------------------------------------
+| ELIMINATED — Ranks 11+
+|--------------------------------------------------------------------------
+*/
+
+.standings-eliminated {
+  border-left:
+    3px solid rgb(239 68 68);
+
   background:
     linear-gradient(
       90deg,
-      rgba(239, 68, 68, 0.04),
+      rgba(239, 68, 68, 0.045),
       rgba(17, 24, 39, 0.96) 35%
     );
 }
@@ -994,11 +1101,15 @@ const teamAchievements = (team) => {
 }
 
 .separator-orange {
-  border-top: 1px dashed rgba(245, 158, 11, 0.65);
+  border-top:
+    1px dashed
+    rgba(245, 158, 11, 0.65);
 }
 
 .separator-blue {
-  border-top: 1px dashed rgba(59, 130, 246, 0.65);
+  border-top:
+    1px dashed
+    rgba(59, 130, 246, 0.65);
 }
 
 /*
@@ -1025,6 +1136,7 @@ const teamAchievements = (team) => {
   min-width: 17px;
 
   display: inline-flex;
+
   align-items: center;
   justify-content: center;
 
@@ -1033,21 +1145,29 @@ const teamAchievements = (team) => {
   font-size: 10px;
   font-weight: 700;
 
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border:
+    1px solid
+    rgba(255, 255, 255, 0.06);
 }
 
 .result-win {
-  background: rgba(22, 101, 52, 0.35);
+  background:
+    rgba(22, 101, 52, 0.35);
+
   color: #4ade80;
 }
 
 .result-loss {
-  background: rgba(127, 29, 29, 0.35);
+  background:
+    rgba(127, 29, 29, 0.35);
+
   color: #f87171;
 }
 
 .result-empty {
-  background: rgba(55, 65, 81, 0.35);
+  background:
+    rgba(55, 65, 81, 0.35);
+
   color: #6b7280;
 }
 
@@ -1075,17 +1195,22 @@ const teamAchievements = (team) => {
 }
 
 .rank-rise {
-  animation: rankRise 0.55s ease-out;
+  animation:
+    rankRise 0.55s ease-out;
 }
 
 .rank-fall {
-  animation: rankFall 0.55s ease-out;
+  animation:
+    rankFall 0.55s ease-out;
 }
 
 @keyframes rankRise {
   0% {
     transform: translateY(8px);
-    box-shadow: inset 0 0 0 1px rgba(74, 222, 128, 0.2);
+
+    box-shadow:
+      inset 0 0 0 1px
+      rgba(74, 222, 128, 0.2);
   }
 
   100% {
@@ -1097,7 +1222,10 @@ const teamAchievements = (team) => {
 @keyframes rankFall {
   0% {
     transform: translateY(-8px);
-    box-shadow: inset 0 0 0 1px rgba(248, 113, 113, 0.2);
+
+    box-shadow:
+      inset 0 0 0 1px
+      rgba(248, 113, 113, 0.2);
   }
 
   100% {
@@ -1110,10 +1238,6 @@ const teamAchievements = (team) => {
 |--------------------------------------------------------------------------
 | Narrow Layout
 |--------------------------------------------------------------------------
-|
-| Do NOT reduce font sizes.
-| Instead, reclaim horizontal space.
-|
 */
 
 @media (max-width: 700px) {
@@ -1172,4 +1296,3 @@ const teamAchievements = (team) => {
   }
 }
 </style>
-```

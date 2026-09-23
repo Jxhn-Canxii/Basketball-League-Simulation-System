@@ -349,10 +349,6 @@
             </div>
 
             <div class="rating-team away">
-                <span>
-                    {{ gameDetails.away_team.name }}
-                </span>
-
                 <div class="rating-items">
                     <div class="rating-item">
                         <b>{{ gameDetails.away_team.ratings.offense_rating }}</b>
@@ -374,6 +370,9 @@
                         <small>REB</small>
                     </div>
                 </div>
+                <span>
+                    {{ gameDetails.away_team.name }}
+                </span>
             </div>
         </section>
 
