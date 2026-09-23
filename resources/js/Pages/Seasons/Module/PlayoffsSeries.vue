@@ -408,14 +408,14 @@
                         class="mb-5 overflow-x-auto rounded-xl border border-gray-800"
                     >
                         <table
-                            class="min-w-[800px] w-full overflow-hidden text-sm"
+                            class="min-w-full w-full overflow-hidden text-sm"
                         >
                             <thead>
                                 <tr
                                     class="border-b border-gray-800 bg-black text-gray-500"
                                 >
                                     <th
-                                        class="px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider"
+                                        class="px-3 py-3 text-left text-[9px] font-black uppercase"
                                     >
                                         Team
                                     </th>
@@ -561,7 +561,7 @@
                             <div class="h-px flex-1 bg-gray-800"></div>
                         </div>
 
-                        <div class="overflow-hidden rounded-xl border border-gray-800 bg-gray-900">
+                        <div class="overflow-hidden flex justify-center rounded-xl border border-gray-800 bg-gray-900">
                             <GameNews
                                 :key="series?.news?.id"
                                 :data="series?.news"
