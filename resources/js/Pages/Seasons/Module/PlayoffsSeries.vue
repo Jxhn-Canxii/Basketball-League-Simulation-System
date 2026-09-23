@@ -561,7 +561,7 @@
                             <div class="h-px flex-1 bg-gray-800"></div>
                         </div>
 
-                        <div class="overflow-hidden flex justify-center rounded-xl border border-gray-800 bg-gray-900">
+                        <div class="overflow-hidden flex justify-center rounded-xl">
                             <GameNews
                                 :key="series?.news?.id"
                                 :data="series?.news"
