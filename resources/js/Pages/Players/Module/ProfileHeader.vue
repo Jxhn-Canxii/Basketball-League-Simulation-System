@@ -26,6 +26,12 @@
         ></div>
 
         <div class="absolute inset-0 bg-black/40"></div>
+        <div
+            :style="{ color: primaryColor ?? '#ca1414', opacity: '50%' }"
+            class="pointer-events-none absolute -right-4 -top-8 select-none text-[140px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
+        >
+            {{ player.team_name ?? "Free Agent" }}
+        </div>
       </div>
 
       <div class="relative grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_auto]">

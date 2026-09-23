@@ -12,7 +12,7 @@
         >
             <!-- Decorative glow -->
             <div
-                class="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full blur-3xl"
+                class="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full blur-3xl"
                 :style="{
                     backgroundColor: `#${normalizeColor(
                         main_performance.coach_details.primary_color
@@ -21,13 +21,20 @@
             ></div>
 
             <div
-                class="pointer-events-none absolute -bottom-16 left-1/3 h-40 w-72 rounded-full blur-3xl"
+                class="pointer-events-none absolute -bottom-16 left-1/3 h-64 w-64 rounded-full blur-3xl"
                 :style="{
                     backgroundColor: `#${normalizeColor(
                         main_performance.coach_details.secondary_color
                     )}20`,
                 }"
             ></div>
+            <div class="absolute inset-0 bg-black/40"></div>
+            <div
+                :style="{ color: `#${normalizeColor(main_performance.coach_details.secondary_color)}20` }"
+                class="pointer-events-none absolute -right-4 -top-8 select-none text-[140px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
+            >
+                {{ main_performance.coach_details.team_name ?? "Free Agent" }}
+            </div>
 
             <div class="relative p-4 sm:p-5">
                 <div class="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center">
