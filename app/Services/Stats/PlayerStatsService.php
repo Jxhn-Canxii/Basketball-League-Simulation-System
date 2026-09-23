@@ -488,7 +488,7 @@ class PlayerStatsService
             }
 
             if (!empty($player->is_rookie)) {
-                $factor -= 0.05; //--deduct 5 % on performance
+                $factor -= 0.30; //--deduct 5 % on performance
             }
 
             if ($isClutchTime) {
