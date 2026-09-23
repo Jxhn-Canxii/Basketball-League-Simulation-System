@@ -1,228 +1,262 @@
 <template>
-    <div class="min-h-screen bg-black p-2 text-white">
+    <div class="min-h-screen w-full min-w-0 bg-black p-2 text-white md:p-3">
         <!-- ========================================================= -->
         <!-- HEADER                                                    -->
         <!-- ========================================================= -->
 
-        <div
-            class="mb-4 overflow-hidden rounded-2xl border border-white/10 bg-gradient-to-br from-[#111] via-[#090909] to-black"
+        <section
+            class="relative mb-3 overflow-hidden rounded-2xl border border-white/[0.08] bg-gradient-to-br from-[#151515] via-[#0b0b0b] to-black shadow-2xl"
         >
-            <div class="relative px-5 py-6 md:px-8">
-                <!-- Background decoration -->
-                <div
-                    class="pointer-events-none absolute -right-10 -top-20 text-[180px] font-black leading-none text-white/[0.025]"
-                >
-                    {{ props.season_id }}
-                </div>
+            <!-- Decorative glow -->
+            <div
+                class="pointer-events-none absolute -right-24 -top-32 h-72 w-72 rounded-full bg-yellow-500/[0.04] blur-3xl"
+            ></div>
 
-                <div
-                    class="relative z-10 flex flex-wrap items-center justify-between gap-5"
-                >
-                    <div>
-                        <div
-                            class="mb-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-yellow-500"
-                        >
-                            <span
-                                class="h-2 w-2 rounded-full bg-yellow-500"
-                            ></span>
+            <div
+                class="pointer-events-none absolute -bottom-32 left-1/3 h-64 w-64 rounded-full bg-white/[0.02] blur-3xl"
+            ></div>
 
-                            Draft History
-                        </div>
+            <!-- Season watermark -->
+            <div
+                class="pointer-events-none absolute -right-4 -top-8 select-none text-[140px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
+            >
+                {{ props.season_id }}
+            </div>
 
-                        <h1
-                            class="text-3xl font-black tracking-tight md:text-5xl"
-                        >
-                            Season {{ props.season_id }}
-                        </h1>
+            <div
+                class="relative z-10 flex flex-col gap-5 px-4 py-5 sm:px-5 md:px-7 md:py-6 lg:flex-row lg:items-center lg:justify-between"
+            >
+                <!-- Title -->
+                <div class="min-w-0">
+                    <div
+                        class="mb-2 flex items-center gap-2 text-[9px] font-black uppercase tracking-[0.3em] text-yellow-500 sm:text-[10px]"
+                    >
+                        <span
+                            class="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-500 shadow-[0_0_10px_rgba(234,179,8,0.7)]"
+                        ></span>
 
-                        <p
-                            class="mt-2 text-xs font-medium uppercase tracking-[0.18em] text-gray-600"
-                        >
-                            Rookie Draft Results
-                        </p>
+                        Draft History
                     </div>
 
-                    <!-- Summary -->
-                    <div class="flex flex-wrap gap-2">
-                        <div
-                            class="min-w-[110px] rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3"
-                        >
-                            <div
-                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
-                            >
-                                Total Picks
-                            </div>
+                    <h1
+                        class="truncate text-2xl font-black tracking-tight text-white sm:text-3xl md:text-4xl lg:text-5xl"
+                    >
+                        Season {{ props.season_id }}
+                    </h1>
 
-                            <div class="mt-1 text-2xl font-black">
-                                {{ draftResults.length }}
-                            </div>
+                    <p
+                        class="mt-1.5 text-[9px] font-bold uppercase tracking-[0.18em] text-gray-600 sm:text-[10px]"
+                    >
+                        Rookie Draft Results
+                    </p>
+                </div>
+
+                <!-- Summary -->
+                <div
+                    class="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap lg:justify-end"
+                >
+                    <!-- Total -->
+                    <div
+                        class="min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2.5 transition hover:border-white/[0.14] hover:bg-white/[0.04] sm:min-w-[105px] sm:px-4 sm:py-3"
+                    >
+                        <div
+                            class="text-[8px] font-black uppercase tracking-[0.18em] text-gray-600"
+                        >
+                            Total Picks
                         </div>
 
                         <div
-                            class="min-w-[110px] rounded-xl border border-green-500/10 bg-green-500/[0.04] px-4 py-3"
+                            class="mt-1 text-xl font-black text-white sm:text-2xl"
                         >
-                            <div
-                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
-                            >
-                                Stayed
-                            </div>
+                            {{ draftResults.length }}
+                        </div>
+                    </div>
 
-                            <div
-                                class="mt-1 text-2xl font-black text-green-400"
-                            >
-                                {{ stayedWithDraftedTeam }}
-                            </div>
+                    <!-- Stayed -->
+                    <div
+                        class="min-w-0 rounded-xl border border-green-500/[0.12] bg-green-500/[0.035] px-3 py-2.5 transition hover:border-green-500/[0.2] hover:bg-green-500/[0.05] sm:min-w-[105px] sm:px-4 sm:py-3"
+                    >
+                        <div
+                            class="text-[8px] font-black uppercase tracking-[0.18em] text-gray-600"
+                        >
+                            Stayed
                         </div>
 
                         <div
-                            class="min-w-[110px] rounded-xl border border-red-500/10 bg-red-500/[0.04] px-4 py-3"
+                            class="mt-1 text-xl font-black text-green-400 sm:text-2xl"
                         >
-                            <div
-                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
-                            >
-                                Changed
-                            </div>
+                            {{ stayedWithDraftedTeam }}
+                        </div>
+                    </div>
 
-                            <div
-                                class="mt-1 text-2xl font-black text-red-400"
-                            >
-                                {{ changedTeam }}
-                            </div>
+                    <!-- Changed -->
+                    <div
+                        class="min-w-0 rounded-xl border border-red-500/[0.12] bg-red-500/[0.035] px-3 py-2.5 transition hover:border-red-500/[0.2] hover:bg-red-500/[0.05] sm:min-w-[105px] sm:px-4 sm:py-3"
+                    >
+                        <div
+                            class="text-[8px] font-black uppercase tracking-[0.18em] text-gray-600"
+                        >
+                            Changed
                         </div>
 
                         <div
-                            class="min-w-[110px] rounded-xl border border-gray-500/10 bg-gray-500/[0.04] px-4 py-3"
+                            class="mt-1 text-xl font-black text-red-400 sm:text-2xl"
                         >
-                            <div
-                                class="text-[9px] font-black uppercase tracking-widest text-gray-600"
-                            >
-                                Unsigned
-                            </div>
+                            {{ changedTeam }}
+                        </div>
+                    </div>
 
-                            <div
-                                class="mt-1 text-2xl font-black text-gray-400"
-                            >
-                                {{ unsignedPlayers }}
-                            </div>
+                    <!-- Unsigned -->
+                    <div
+                        class="min-w-0 rounded-xl border border-white/[0.08] bg-white/[0.025] px-3 py-2.5 transition hover:border-white/[0.14] hover:bg-white/[0.04] sm:min-w-[105px] sm:px-4 sm:py-3"
+                    >
+                        <div
+                            class="text-[8px] font-black uppercase tracking-[0.18em] text-gray-600"
+                        >
+                            Unsigned
+                        </div>
+
+                        <div
+                            class="mt-1 text-xl font-black text-gray-400 sm:text-2xl"
+                        >
+                            {{ unsignedPlayers }}
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- ========================================================= -->
         <!-- ROUND TABS                                                -->
         <!-- ========================================================= -->
 
-        <div
+        <section
             v-if="draftResults.length > 0 && !isLoading"
-            class="mb-4 flex overflow-hidden rounded-xl border border-white/10 bg-[#0b0b0b]"
+            class="mb-3 overflow-hidden rounded-xl border border-white/[0.08] bg-[#0a0a0a]"
         >
-            <button
-                type="button"
-                class="flex-1 px-5 py-4 text-xs font-black uppercase tracking-widest transition"
-                :class="
-                    selectedRound === 1
-                        ? 'bg-yellow-500 text-black'
-                        : 'text-gray-500 hover:bg-white/5 hover:text-white'
-                "
-                @click="selectedRound = 1"
-            >
-                <span>Round 1</span>
-
-                <span
-                    class="ml-2 rounded-md px-2 py-1 text-[9px]"
+            <div class="grid grid-cols-2">
+                <!-- Round 1 -->
+                <button
+                    type="button"
+                    class="relative flex min-w-0 items-center justify-center gap-2 px-3 py-3.5 text-[10px] font-black uppercase tracking-[0.15em] transition sm:px-5 sm:py-4 sm:text-xs sm:tracking-widest"
                     :class="
                         selectedRound === 1
-                            ? 'bg-black/20'
-                            : 'bg-white/5'
+                            ? 'bg-yellow-500 text-black'
+                            : 'text-gray-500 hover:bg-white/[0.04] hover:text-white'
                     "
+                    @click="selectedRound = 1"
                 >
-                    {{ round1Results.length }}
-                </span>
-            </button>
+                    <span>Round 1</span>
 
-            <button
-                type="button"
-                class="flex-1 px-5 py-4 text-xs font-black uppercase tracking-widest transition"
-                :class="
-                    selectedRound === 2
-                        ? 'bg-yellow-500 text-black'
-                        : 'text-gray-500 hover:bg-white/5 hover:text-white'
-                "
-                @click="selectedRound = 2"
-            >
-                <span>Round 2</span>
+                    <span
+                        class="rounded-md px-1.5 py-0.5 text-[8px]"
+                        :class="
+                            selectedRound === 1
+                                ? 'bg-black/15 text-black'
+                                : 'bg-white/5 text-gray-500'
+                        "
+                    >
+                        {{ round1Results.length }}
+                    </span>
+                </button>
 
-                <span
-                    class="ml-2 rounded-md px-2 py-1 text-[9px]"
+                <!-- Round 2 -->
+                <button
+                    type="button"
+                    class="relative flex min-w-0 items-center justify-center gap-2 border-l border-white/[0.08] px-3 py-3.5 text-[10px] font-black uppercase tracking-[0.15em] transition sm:px-5 sm:py-4 sm:text-xs sm:tracking-widest"
                     :class="
                         selectedRound === 2
-                            ? 'bg-black/20'
-                            : 'bg-white/5'
+                            ? 'bg-yellow-500 text-black'
+                            : 'text-gray-500 hover:bg-white/[0.04] hover:text-white'
                     "
+                    @click="selectedRound = 2"
                 >
-                    {{ round2Results.length }}
-                </span>
-            </button>
-        </div>
+                    <span>Round 2</span>
+
+                    <span
+                        class="rounded-md px-1.5 py-0.5 text-[8px]"
+                        :class="
+                            selectedRound === 2
+                                ? 'bg-black/15 text-black'
+                                : 'bg-white/5 text-gray-500'
+                        "
+                    >
+                        {{ round2Results.length }}
+                    </span>
+                </button>
+            </div>
+        </section>
 
         <!-- ========================================================= -->
         <!-- EMPTY STATE                                               -->
         <!-- ========================================================= -->
 
-        <div
+        <section
             v-if="draftResults.length === 0 && !isLoading"
-            class="flex min-h-[400px] items-center justify-center rounded-2xl border border-white/10 bg-[#0b0b0b]"
+            class="flex min-h-[400px] items-center justify-center rounded-2xl border border-white/[0.08] bg-[#0a0a0a] px-5"
         >
             <div class="text-center">
                 <div
-                    class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"
+                    class="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.025]"
                 >
                     <i
-                        class="fa fa-basketball-ball text-2xl text-gray-600"
+                        class="fa fa-basketball-ball text-xl text-gray-700"
                     ></i>
                 </div>
 
-                <h2 class="text-xl font-black">
+                <h2
+                    class="text-lg font-black tracking-tight text-white sm:text-xl"
+                >
                     NO DRAFT RECORDS
                 </h2>
 
-                <p class="mt-2 text-xs text-gray-600">
+                <p
+                    class="mx-auto mt-2 max-w-md text-[10px] font-medium leading-relaxed text-gray-600 sm:text-xs"
+                >
                     No draft history is available for Season
                     {{ props.season_id }}.
                 </p>
             </div>
-        </div>
+        </section>
 
         <!-- ========================================================= -->
-        <!-- DRAFT TABLE                                               -->
+        <!-- DRAFT RESULTS                                             -->
         <!-- ========================================================= -->
 
-        <div
+        <section
             v-if="draftResults.length > 0 && !isLoading"
-            class="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0b0b]"
+            class="overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0a0a0a] shadow-xl"
         >
             <!-- Table Header -->
             <div
-                class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-4 py-4 md:px-5"
+                class="flex flex-col gap-3 border-b border-white/[0.08] bg-gradient-to-r from-white/[0.025] to-transparent px-4 py-4 sm:flex-row sm:items-center sm:justify-between md:px-5"
             >
-                <div>
-                    <h2 class="text-sm font-black uppercase">
-                        Round {{ selectedRound }} Results
-                    </h2>
+                <div class="min-w-0">
+                    <div class="flex items-center gap-2">
+                        <span
+                            class="h-1.5 w-1.5 rounded-full bg-yellow-500"
+                        ></span>
+
+                        <h2
+                            class="text-xs font-black uppercase tracking-wide text-white sm:text-sm"
+                        >
+                            Round {{ selectedRound }} Results
+                        </h2>
+                    </div>
 
                     <p
-                        class="mt-1 text-[9px] font-bold uppercase tracking-[0.2em] text-gray-600"
+                        class="mt-1 text-[8px] font-bold uppercase tracking-[0.2em] text-gray-600 sm:text-[9px]"
                     >
                         Complete draft recap
                     </p>
                 </div>
 
                 <div
-                    class="rounded-lg border border-white/10 bg-white/[0.03] px-3 py-2 text-[10px] font-black uppercase tracking-wider text-gray-500"
+                    class="w-fit rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[9px] font-black uppercase tracking-wider text-gray-500"
                 >
-                    {{ selectedRoundResults.length }}
+                    <span class="text-white">
+                        {{ selectedRoundResults.length }}
+                    </span>
                     Selections
                 </div>
             </div>
@@ -231,68 +265,68 @@
             <!-- TABLE                                                  -->
             <!-- ===================================================== -->
 
-            <div class="overflow-x-auto">
-                <table class="min-w-[1200px] w-full text-xs">
+            <div class="min-w-0 overflow-x-auto">
+                <table class="w-full min-w-[1250px] border-collapse text-xs">
                     <thead>
                         <tr
-                            class="border-b border-white/10 bg-white/[0.025]"
+                            class="border-b border-white/[0.08] bg-white/[0.02]"
                         >
                             <th
-                                class="w-[70px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[70px] px-3 py-3 text-center text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Pick
                             </th>
 
                             <th
-                                class="w-[80px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[80px] px-3 py-3 text-center text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Draft #
                             </th>
 
                             <th
-                                class="w-[70px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[70px] px-3 py-3 text-center text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Rank
                             </th>
 
                             <th
-                                class="px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="min-w-[220px] px-3 py-3 text-left text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Player
                             </th>
 
                             <th
-                                class="w-[90px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[90px] px-3 py-3 text-left text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Position
                             </th>
 
                             <th
-                                class="w-[90px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[90px] px-3 py-3 text-center text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Overall
                             </th>
 
                             <th
-                                class="w-[180px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[180px] px-3 py-3 text-left text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Archetype
                             </th>
 
                             <th
-                                class="w-[190px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[200px] px-3 py-3 text-left text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Drafted By
                             </th>
 
                             <th
-                                class="w-[190px] px-3 py-3 text-left text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[200px] px-3 py-3 text-left text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Signed By
                             </th>
 
                             <th
-                                class="w-[100px] px-3 py-3 text-center text-[9px] font-black uppercase tracking-wider text-gray-600"
+                                class="w-[110px] px-3 py-3 text-center text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
                                 Status
                             </th>
@@ -303,59 +337,57 @@
                         <tr
                             v-for="player in selectedRoundResults"
                             :key="`${player.round}-${player.pick_number}-${player.player_id}`"
-                            class="group cursor-pointer border-b border-white/5 transition hover:bg-white/[0.035]"
+                            class="group cursor-pointer border-b border-white/[0.045] transition duration-150 hover:bg-white/[0.035]"
                             @click.prevent="
                                 showPlayerProfileModal =
                                     player.player_id
                             "
                         >
                             <!-- PICK -->
-                            <td class="px-3 py-4 text-center">
+                            <td class="px-3 py-3.5 text-center">
                                 <div
-                                    class="mx-auto flex h-9 w-9 items-center justify-center rounded-lg bg-white/5 text-sm font-black transition group-hover:bg-yellow-500 group-hover:text-black"
+                                    class="mx-auto flex h-9 w-9 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.035] text-sm font-black transition duration-150 group-hover:border-yellow-500/30 group-hover:bg-yellow-500 group-hover:text-black"
                                 >
-                                    {{ player.pick_number }}
+                                    {{ player.pick_number ?? "-" }}
                                 </div>
                             </td>
 
                             <!-- DRAFT # -->
-                            <td class="px-3 py-4 text-center">
+                            <td class="px-3 py-3.5 text-center">
                                 <span
-                                    class="inline-flex min-w-[42px] justify-center rounded-md px-2 py-1 font-black"
-                                    :class="
-                                        draftValueClass(player)
-                                    "
+                                    class="inline-flex min-w-[42px] justify-center rounded-md border border-transparent px-2 py-1 font-black"
+                                    :class="draftValueClass(player)"
                                 >
                                     {{ getOverallDraftNumber(player) }}
                                 </span>
                             </td>
 
                             <!-- RANK -->
-                            <td class="px-3 py-4 text-center">
-                                <span
-                                    class="font-black text-gray-300"
-                                >
+                            <td class="px-3 py-3.5 text-center">
+                                <span class="font-black text-gray-300">
                                     {{ player.rank ?? "-" }}
                                 </span>
                             </td>
 
                             <!-- PLAYER -->
-                            <td class="px-3 py-4">
+                            <td class="px-3 py-3.5">
                                 <div class="flex items-center gap-3">
                                     <div
-                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5"
+                                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-white/[0.06] bg-gradient-to-br from-white/[0.06] to-white/[0.02]"
                                     >
                                         <i
                                             class="fa fa-user text-sm text-gray-600"
                                         ></i>
                                     </div>
 
-                                    <div>
+                                    <div class="min-w-0">
                                         <div
-                                            class="font-black text-white group-hover:text-yellow-400"
+                                            class="truncate font-black text-white transition group-hover:text-yellow-400"
                                         >
-                                            {{ player.player_name }}
+                                            {{ player.player_name ?? "Unknown Player" }}
+
                                             <sup
+                                                v-if="player.age != null"
                                                 class="ml-1 text-[9px] font-bold text-gray-600"
                                             >
                                                 {{ player.age }}
@@ -363,25 +395,25 @@
                                         </div>
 
                                         <div
-                                            class="mt-1 text-[9px] font-bold uppercase tracking-wider text-gray-600"
+                                            class="mt-1 text-[8px] font-bold uppercase tracking-wider text-gray-600"
                                         >
-                                            Player #{{ player.player_id }}
+                                            Player #{{ player.player_id ?? "-" }}
                                         </div>
                                     </div>
                                 </div>
                             </td>
 
                             <!-- POSITION -->
-                            <td class="px-3 py-4">
+                            <td class="px-3 py-3.5">
                                 <span
-                                    class="rounded-md bg-white/5 px-2 py-1 text-[10px] font-black uppercase"
+                                    class="inline-flex rounded-md border border-white/[0.06] bg-white/[0.035] px-2 py-1 text-[9px] font-black uppercase text-gray-400"
                                 >
                                     {{ player.position ?? "-" }}
                                 </span>
                             </td>
 
                             <!-- OVERALL -->
-                            <td class="px-3 py-4 text-center">
+                            <td class="px-3 py-3.5 text-center">
                                 <div
                                     class="text-lg font-black"
                                     :class="
@@ -390,20 +422,18 @@
                                         )
                                     "
                                 >
-                                    {{
-                                        player.overall_rating ?? 0
-                                    }}
+                                    {{ player.overall_rating ?? 0 }}
                                 </div>
 
                                 <div
-                                    class="text-[8px] font-bold uppercase tracking-wider text-gray-700"
+                                    class="text-[7px] font-bold uppercase tracking-wider text-gray-700"
                                 >
                                     Overall
                                 </div>
                             </td>
 
                             <!-- ARCHETYPE -->
-                            <td class="px-3 py-4">
+                            <td class="px-3 py-3.5">
                                 <span
                                     class="font-bold capitalize text-gray-300"
                                 >
@@ -416,29 +446,38 @@
                             </td>
 
                             <!-- DRAFTED TEAM -->
-                            <td class="px-3 py-4">
+                            <td class="px-3 py-3.5">
                                 <div
                                     class="font-black text-gray-200"
                                 >
                                     {{
                                         player.team_name ??
                                         "Undrafted"
-                                    }} 
+                                    }}
                                 </div>
 
                                 <div
-                                    :class="player.team_acronym ==  player.original_team_acronym ? 'text-gray-600' : 'text-red-500'"
                                     class="mt-1 text-[8px] font-bold uppercase tracking-wider"
+                                    :class="
+                                        Number(player.team_id) ===
+                                        Number(player.original_team_id)
+                                            ? 'text-gray-600'
+                                            : 'text-red-500'
+                                    "
                                 >
-                                    {{ player.team_acronym ==  player.original_team_acronym ? 
-                                        'Original Selection' : 
-                                        'Picked from '+player.original_team_name 
+                                    {{
+                                        Number(player.team_id) ===
+                                        Number(player.original_team_id)
+                                            ? "Original Selection"
+                                            : "Picked from " +
+                                              (player.original_team_name ??
+                                                  "Unknown Team")
                                     }}
                                 </div>
                             </td>
 
                             <!-- SIGNED TEAM -->
-                            <td class="px-3 py-4">
+                            <td class="px-3 py-3.5">
                                 <div
                                     class="font-black"
                                     :class="
@@ -462,9 +501,9 @@
                             </td>
 
                             <!-- STATUS -->
-                            <td class="px-3 py-4 text-center">
+                            <td class="px-3 py-3.5 text-center">
                                 <span
-                                    class="inline-flex rounded-full px-3 py-1 text-[8px] font-black uppercase tracking-wider"
+                                    class="inline-flex whitespace-nowrap rounded-full border px-3 py-1 text-[8px] font-black uppercase tracking-wider"
                                     :class="
                                         signingStatusBadge(
                                             player.drafted_team_id,
@@ -490,63 +529,81 @@
             <!-- ===================================================== -->
 
             <div
-                class="border-t border-white/10 bg-white/[0.015] px-4 py-3"
+                class="border-t border-white/[0.08] bg-white/[0.012] px-4 py-3 md:px-5"
             >
                 <div
-                    class="flex flex-wrap items-center justify-between gap-3 text-[9px] font-bold uppercase tracking-wider text-gray-600"
+                    class="flex flex-col gap-3 text-[8px] font-bold uppercase tracking-wider text-gray-600 sm:flex-row sm:items-center sm:justify-between sm:text-[9px]"
                 >
-                    <div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa fa-mouse-pointer text-gray-700"></i>
+
                         Click any player to view their profile
                     </div>
 
-                    <div class="flex items-center gap-4">
-                        <span class="flex items-center gap-1">
+                    <div
+                        class="flex flex-wrap items-center gap-x-4 gap-y-2"
+                    >
+                        <span class="flex items-center gap-1.5">
                             <span
-                                class="h-2 w-2 rounded-full bg-green-500"
+                                class="h-1.5 w-1.5 rounded-full bg-green-500"
                             ></span>
+
                             Stayed
                         </span>
 
-                        <span class="flex items-center gap-1">
+                        <span class="flex items-center gap-1.5">
                             <span
-                                class="h-2 w-2 rounded-full bg-red-500"
+                                class="h-1.5 w-1.5 rounded-full bg-red-500"
                             ></span>
+
                             Changed
                         </span>
 
-                        <span class="flex items-center gap-1">
+                        <span class="flex items-center gap-1.5">
                             <span
-                                class="h-2 w-2 rounded-full bg-gray-500"
+                                class="h-1.5 w-1.5 rounded-full bg-gray-500"
                             ></span>
+
                             Unsigned
                         </span>
                     </div>
                 </div>
             </div>
-        </div>
-        <div
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- LOADING                                                   -->
+        <!-- ========================================================= -->
+
+        <section
             v-if="isLoading"
-            class="flex min-h-[400px] items-center justify-center rounded-2xl border border-white/10 bg-[#0b0b0b]"
+            class="flex min-h-[400px] items-center justify-center rounded-2xl border border-white/[0.08] bg-[#0a0a0a]"
         >
             <div class="text-center">
                 <div
-                    class="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white/5"
+                    class="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl border border-yellow-500/10 bg-yellow-500/[0.03]"
                 >
+                    <div
+                        class="absolute inset-0 animate-ping rounded-2xl border border-yellow-500/10"
+                    ></div>
+
                     <i
-                        class="fa fa-loader fa-spin text-2xl text-gray-600"
+                        class="fa fa-spinner fa-spin text-xl text-yellow-500/70"
                     ></i>
                 </div>
 
-                <h2 class="text-xl font-black">
+                <h2 class="text-lg font-black sm:text-xl">
                     PREPARING DRAFT RECORDS
                 </h2>
 
-                <p class="mt-2 text-xs text-gray-600">
+                <p
+                    class="mt-2 text-[10px] font-medium text-gray-600 sm:text-xs"
+                >
                     Loading for Season
                     {{ props.season_id }}.
                 </p>
             </div>
-        </div>
+        </section>
     </div>
 
     <!-- ============================================================= -->
@@ -559,7 +616,7 @@
         title="Player Profile"
         @close="showPlayerProfileModal = false"
     >
-        <div class="bg-black p-6">
+        <div class="bg-black p-3 sm:p-4 md:p-6">
             <PlayerPerformance
                 :key="showPlayerProfileModal"
                 :player_id="showPlayerProfileModal"
@@ -657,37 +714,42 @@ onMounted(async () => {
 });
 
 const fetchDraftResults = async () => {
-    try {
-        draftResults.value = [];
+    isLoading.value = true;
+    draftResults.value = [];
 
+    try {
         const response = await axios.post(
             route("draft.season.results"),
             {
                 season_id: props.season_id,
             }
         );
-        isLoading.value = true;
+
         draftResults.value =
             response.data?.draft_results ?? [];
 
         /*
-         * If this season has no Round 1 but has Round 2,
-         * automatically show the available round.
+         * If Round 1 has no results but Round 2 does,
+         * automatically select Round 2.
          */
         if (
             round1Results.value.length === 0 &&
             round2Results.value.length > 0
         ) {
             selectedRound.value = 2;
+        } else if (
+            round1Results.value.length > 0
+        ) {
+            selectedRound.value = 1;
         }
     } catch (error) {
         console.error(
             "Error fetching draft history:",
             error
         );
-        isLoading.value = false;
+
         draftResults.value = [];
-    }finally{
+    } finally {
         isLoading.value = false;
     }
 };
@@ -706,8 +768,12 @@ const fetchDraftResults = async () => {
 */
 
 const getOverallDraftNumber = (player) => {
-    const round = Number(player.round);
-    const pick = Number(player.pick_number);
+    const round = Number(player?.round);
+    const pick = Number(player?.pick_number);
+
+    if (!pick) {
+        return "-";
+    }
 
     if (round === 1) {
         return pick;
@@ -722,27 +788,30 @@ const getOverallDraftNumber = (player) => {
 |--------------------------------------------------------------------------
 |
 | Better than expected:
-|   pick >= rank
+|   Draft # > Rank
 |
 | Worse than expected:
-|   pick < rank
+|   Draft # < Rank
 |
 */
 
 const draftValueClass = (player) => {
-    const pick = getOverallDraftNumber(player);
-    const rank = Number(player.rank);
+    const pick = Number(
+        getOverallDraftNumber(player)
+    );
 
-    if (!rank) {
+    const rank = Number(player?.rank);
+
+    if (!rank || !pick) {
         return "bg-white/5 text-gray-400";
     }
 
     if (pick > rank) {
-        return "bg-green-500/15 text-green-400";
+        return "bg-green-500/10 text-green-400 border-green-500/10";
     }
 
     if (pick < rank) {
-        return "bg-red-500/15 text-red-400";
+        return "bg-red-500/10 text-red-400 border-red-500/10";
     }
 
     return "bg-white/5 text-gray-400";
@@ -783,7 +852,7 @@ const formatArchetype = (archetype) => {
         return "-";
     }
 
-    return archetype
+    return String(archetype)
         .replaceAll("_", " ")
         .replace(/\b\w/g, (letter) =>
             letter.toUpperCase()
@@ -819,17 +888,17 @@ const signingStatusBadge = (
     signedTeam
 ) => {
     if (signedTeam == null) {
-        return "bg-gray-500/10 text-gray-400";
+        return "border-gray-500/10 bg-gray-500/10 text-gray-400";
     }
 
     if (
         Number(draftedTeam) !==
         Number(signedTeam)
     ) {
-        return "bg-red-500/10 text-red-400";
+        return "border-red-500/10 bg-red-500/10 text-red-400";
     }
 
-    return "bg-green-500/10 text-green-400";
+    return "border-green-500/10 bg-green-500/10 text-green-400";
 };
 
 const signingTextClass = (
@@ -868,12 +937,12 @@ const signingTextClass = (
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #333;
+    background: #2f2f2f;
     border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #4a4a4a;
 }
 
 /*
@@ -885,5 +954,26 @@ const signingTextClass = (
 table {
     border-collapse: collapse;
 }
-</style>
 
+/*
+|--------------------------------------------------------------------------
+| Mobile horizontal scrolling
+|--------------------------------------------------------------------------
+*/
+
+.overflow-x-auto {
+    scrollbar-width: thin;
+    scrollbar-color: #2f2f2f #050505;
+}
+
+/*
+|--------------------------------------------------------------------------
+| Selection
+|--------------------------------------------------------------------------
+*/
+
+::selection {
+    background: rgba(234, 179, 8, 0.25);
+    color: white;
+}
+</style>

@@ -48,14 +48,14 @@
                     </template>
                 </Suspense>
             </div>
-            <Suspense>
+            <!-- <Suspense>
                 <template #default>
                     <AllTimeGameRecords />
                 </template>
                 <template #fallback>
                     <div class="text-center py-10 text-gray-500">Loading All Time Game Records...</div>
                 </template>
-            </Suspense>
+            </Suspense> -->
 
             <Suspense>
                 <template #default>

@@ -1,6 +1,6 @@
 <template>
     <div class="draft-board">
-        <div class="overflow-x-auto mb-8" v-if="data">
+        <div class="overflow-x-auto mb-8 text-white" v-if="data">
             <p v-for="(paragraph, index) in storylineParagraphs" :key="index" :class="index === 0 ? 'storyline-title' : 'storyline-paragraph'">
                 {{ paragraph }}
             </p>

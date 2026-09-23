@@ -1,170 +1,414 @@
 <template>
-    <div class="flex flex-col items-center w-full">
-      <nav
-        aria-label="Page navigation example"
-        class="flex flex-wrap justify-center mt-5"
-      >
-        <ul class="flex items-center space-x-1 text-base">
-          <li>
-            <button
-              title="First page"
-              @click.prevent="paginateToPage(1)"
-              class="flex items-center justify-center px-2 h-10 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
+    <div class="flex w-full flex-col items-center gap-3">
+        <!-- Pagination -->
+        <nav
+            v-if="totalPages > 0"
+            aria-label="Page navigation"
+            class="w-full overflow-x-auto"
+        >
+            <ul
+                class="mx-auto flex w-max items-center gap-1 rounded-xl border border-gray-800 bg-gray-950 p-1.5 shadow-lg"
             >
-              <span class="sr-only">First</span>
-              <i class="fa fa-angle-double-left"></i>
-            </button>
-          </li>
-          <li>
-            <button
-              title="Previous page"
-              :disabled="props.page_number <= 1"
-              :class="{ 'opacity-25': props.page_number <= 1 }"
-              @click.prevent="paginate(false)"
-              class="flex items-center justify-center px-2 h-10 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-            >
-              <span class="sr-only">Previous</span>
-              <i class="fa fa-angle-left"></i>
-            </button>
-          </li>
-          <li
-            v-for="pn in visiblePageNumbers"
-            :key="pn"
-            :disabled="props.page_number === pn"
-            @click.prevent="paginateToPage(pn)"
-            :aria-label="`Page ${pn}`"
-          >
-            <button
-              :class="
-                props.page_number === pn
-                  ? 'text-white bg-yellow-500 hover:bg-yellow-300'
-                  : ''
-              "
-              class="flex items-center justify-center px-3 h-10 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-            >
-              {{ pn }}
-            </button>
-          </li>
-          <li>
-            <button
-              title="Next page"
-              :disabled="props.page_number >= totalPages"
-              @click.prevent="paginate(true)"
-              aria-label="Next Page"
-              class="flex items-center justify-center px-2 h-10 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-            >
-              <span class="sr-only">Next</span>
-              <i class="fa fa-angle-right"></i>
-            </button>
-          </li>
-          <li>
-            <button
-              title="Last page"
-              @click.prevent="paginateToPage(totalPages)"
-              aria-label="Page {{ totalPages }}"
-              class="flex items-center justify-center px-2 h-10 text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 hover:text-gray-700 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-gray-700 dark:hover:text-white"
-            >
-              <span class="sr-only">Last</span>
-              <i class="fa fa-angle-double-right"></i>
-            </button>
-          </li>
-        </ul>
-      </nav>
-      <p v-if="props.total_rows > 0" class="text-bold text-center mt-5">
-        {{
-          pageInfo(
-          props.page_number,
-          props.total_rows,
-          props.itemsperpage
-          )
-        }}
-      </p>
-    </div>
-  </template>
+                <!-- First -->
+                <li>
+                    <button
+                        type="button"
+                        title="First page"
+                        aria-label="First page"
+                        :disabled="props.page_number <= 1"
+                        :class="buttonClass(props.page_number <= 1)"
+                        @click.prevent="paginateToPage(1)"
+                    >
+                        <i class="fa fa-angle-double-left"></i>
+                    </button>
+                </li>
 
-  <script setup>
-import { ref, computed, defineProps, defineEmits, watch, onMounted } from 'vue';
-import { pageInfo, page_number, generate_page_number } from '@/Utility/Pagination';
-// Define emits and props
-const emits = defineEmits(['page_num']);
+                <!-- Previous -->
+                <li>
+                    <button
+                        type="button"
+                        title="Previous page"
+                        aria-label="Previous page"
+                        :disabled="props.page_number <= 1"
+                        :class="buttonClass(props.page_number <= 1)"
+                        @click.prevent="paginate(false)"
+                    >
+                        <i class="fa fa-angle-left"></i>
+                    </button>
+                </li>
+
+                <!-- Page Numbers -->
+                <template
+                    v-for="(pn, index) in visiblePageNumbers"
+                    :key="`${pn}-${index}`"
+                >
+                    <!-- Ellipsis -->
+                    <li v-if="pn === '...'">
+                        <span
+                            class="flex h-9 min-w-9 items-center justify-center px-1 text-xs font-semibold text-gray-600"
+                        >
+                            ...
+                        </span>
+                    </li>
+
+                    <!-- Page -->
+                    <li v-else>
+                        <button
+                            type="button"
+                            :aria-label="`Page ${pn}`"
+                            :aria-current="
+                                props.page_number === pn
+                                    ? 'page'
+                                    : undefined
+                            "
+                            :disabled="props.page_number === pn"
+                            :class="
+                                pageButtonClass(
+                                    props.page_number === pn
+                                )
+                            "
+                            @click.prevent="paginateToPage(pn)"
+                        >
+                            {{ pn }}
+                        </button>
+                    </li>
+                </template>
+
+                <!-- Next -->
+                <li>
+                    <button
+                        type="button"
+                        title="Next page"
+                        aria-label="Next page"
+                        :disabled="
+                            props.page_number >= totalPages
+                        "
+                        :class="
+                            buttonClass(
+                                props.page_number >= totalPages
+                            )
+                        "
+                        @click.prevent="paginate(true)"
+                    >
+                        <i class="fa fa-angle-right"></i>
+                    </button>
+                </li>
+
+                <!-- Last -->
+                <li>
+                    <button
+                        type="button"
+                        title="Last page"
+                        :aria-label="`Last page, page ${totalPages}`"
+                        :disabled="
+                            props.page_number >= totalPages
+                        "
+                        :class="
+                            buttonClass(
+                                props.page_number >= totalPages
+                            )
+                        "
+                        @click.prevent="
+                            paginateToPage(totalPages)
+                        "
+                    >
+                        <i class="fa fa-angle-double-right"></i>
+                    </button>
+                </li>
+            </ul>
+        </nav>
+
+        <!-- Pagination Information -->
+        <div
+            v-if="props.total_rows > 0"
+            class="flex flex-col items-center gap-1 text-center"
+        >
+            <p class="text-xs font-medium text-gray-500">
+                {{
+                    pageInfo(
+                        props.page_number,
+                        props.total_rows,
+                        props.itemsperpage
+                    )
+                }}
+            </p>
+
+            <p
+                v-if="totalPages > 1"
+                class="text-[10px] font-semibold uppercase tracking-wider text-gray-700"
+            >
+                Page
+                <span class="text-gray-400">
+                    {{ props.page_number }}
+                </span>
+                of
+                <span class="text-gray-400">
+                    {{ totalPages }}
+                </span>
+            </p>
+        </div>
+
+        <!-- Empty -->
+        <div
+            v-else
+            class="py-2 text-center text-xs text-gray-600"
+        >
+            No records
+        </div>
+    </div>
+</template>
+
+<script setup>
+import {
+    ref,
+    computed,
+    watch,
+    onMounted,
+} from "vue";
+
+import {
+    pageInfo,
+    page_number,
+    generate_page_number,
+} from "@/Utility/Pagination";
+
+const emits = defineEmits(["page_num"]);
+
 const props = defineProps({
-  page_number: {
-    type: Number,
-    default: 1, // Default value for page_number
-  },
-  total_rows: {
-    type: Number,
-    default: 0, // Default value for total_rows
-  },
-  itemsperpage: {
-    type: Number,
-    default: 10, // Default value for itemsperpage
-  },
+    page_number: {
+        type: Number,
+        default: 1,
+    },
+
+    total_rows: {
+        type: Number,
+        default: 0,
+    },
+
+    itemsperpage: {
+        type: Number,
+        default: 10,
+    },
 });
 
-// Define reactive state
+/* =========================================================
+   STATE
+========================================================= */
+
 const totalPages = ref(0);
 
-// Function to calculate and set total pages
+/* =========================================================
+   TOTAL PAGES
+========================================================= */
+
 const getTotalPageNumber = () => {
-  totalPages.value = generate_page_number(props.total_rows, props.itemsperpage);
+    const totalRows = Number(props.total_rows) || 0;
+    const itemsPerPage =
+        Number(props.itemsperpage) || 10;
+
+    totalPages.value = Math.max(
+        0,
+        generate_page_number(
+            totalRows,
+            itemsPerPage
+        )
+    );
 };
 
-// Function to handle pagination
+/* =========================================================
+   PAGINATION
+========================================================= */
+
 const paginate = (isIncrement) => {
-  let increment = isIncrement ? props.page_number + 1 : props.page_number - 1;
-  emits('page_num', increment);
+    const currentPage =
+        Number(props.page_number) || 1;
+
+    const nextPage = isIncrement
+        ? currentPage + 1
+        : currentPage - 1;
+
+    if (
+        nextPage < 1 ||
+        nextPage > totalPages.value ||
+        nextPage === currentPage
+    ) {
+        return;
+    }
+
+    emits("page_num", nextPage);
 };
 
-// Function to handle direct page number selection
 const paginateToPage = (pageNum) => {
-  emits('page_num', pageNum);
+    const page = Number(pageNum);
+
+    if (
+        !Number.isInteger(page) ||
+        page < 1 ||
+        page > totalPages.value ||
+        page === props.page_number
+    ) {
+        return;
+    }
+
+    emits("page_num", page);
 };
 
-// Compute visible page numbers
+/* =========================================================
+   VISIBLE PAGE NUMBERS
+========================================================= */
+
 const visiblePageNumbers = computed(() => {
-  const currentPage = props.page_number;
-  const page = page_number(totalPages.value, currentPage);
-  return page;
+    const currentPage =
+        Number(props.page_number) || 1;
+
+    if (totalPages.value <= 1) {
+        return totalPages.value === 1
+            ? [1]
+            : [];
+    }
+
+    /*
+     * Small number of pages:
+     * Show everything.
+     */
+    if (totalPages.value <= 7) {
+        return Array.from(
+            { length: totalPages.value },
+            (_, index) => index + 1
+        );
+    }
+
+    /*
+     * Near beginning.
+     */
+    if (currentPage <= 4) {
+        return [
+            1,
+            2,
+            3,
+            4,
+            5,
+            "...",
+            totalPages.value,
+        ];
+    }
+
+    /*
+     * Near end.
+     */
+    if (currentPage >= totalPages.value - 3) {
+        return [
+            1,
+            "...",
+            totalPages.value - 4,
+            totalPages.value - 3,
+            totalPages.value - 2,
+            totalPages.value - 1,
+            totalPages.value,
+        ];
+    }
+
+    /*
+     * Middle.
+     */
+    return [
+        1,
+        "...",
+        currentPage - 1,
+        currentPage,
+        currentPage + 1,
+        "...",
+        totalPages.value,
+    ];
 });
 
-// Watch for changes in total_rows and re-calculate totalPages
-watch(() => props.total_rows, (newVal) => {
-  getTotalPageNumber();
-});
+/* =========================================================
+   BUTTON STYLES
+========================================================= */
 
-// Watch for changes in itemsperpage if needed
-watch(() => props.itemsperpage, () => {
-  getTotalPageNumber();
-}, { immediate: true });
+const buttonClass = (disabled = false) => {
+    return [
+        "flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition-all duration-150",
 
-// Initialize total pages on mount
+        disabled
+            ? "cursor-not-allowed border-gray-900 bg-gray-950 text-gray-700"
+            : [
+                  "border-gray-800",
+                  "bg-gray-900",
+                  "text-gray-500",
+                  "hover:border-gray-700",
+                  "hover:bg-gray-800",
+                  "hover:text-gray-200",
+                  "active:bg-gray-700",
+              ],
+    ];
+};
+
+const pageButtonClass = (active = false) => {
+    return [
+        "flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition-all duration-150",
+
+        active
+            ? [
+                  "cursor-default",
+                  "border-rose-500/30",
+                  "bg-rose-500/15",
+                  "text-rose-300",
+                  "shadow-sm",
+              ]
+            : [
+                  "border-transparent",
+                  "bg-transparent",
+                  "text-gray-500",
+                  "hover:border-gray-800",
+                  "hover:bg-gray-800",
+                  "hover:text-gray-200",
+              ],
+    ];
+};
+
+/* =========================================================
+   WATCHERS
+========================================================= */
+
+watch(
+    () => props.total_rows,
+    () => {
+        getTotalPageNumber();
+    }
+);
+
+watch(
+    () => props.itemsperpage,
+    () => {
+        getTotalPageNumber();
+    }
+);
+
+watch(
+    () => props.page_number,
+    (newPage) => {
+        /*
+         * Protect the paginator if the parent sends
+         * a page greater than the newly calculated total.
+         */
+        if (
+            totalPages.value > 0 &&
+            newPage > totalPages.value
+        ) {
+            emits(
+                "page_num",
+                totalPages.value
+            );
+        }
+    }
+);
+
+/* =========================================================
+   INIT
+========================================================= */
+
 onMounted(() => {
-  getTotalPageNumber();
+    getTotalPageNumber();
 });
 </script>
-
-  <style scoped>
-  @media (max-width: 640px) {
-    .pagination-container {
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .pagination-controls {
-      font-size: 0.875rem; /* Smaller font size for mobile */
-    }
-
-    .pagination-controls li {
-      margin: 0.25rem; /* Adjust spacing for smaller screens */
-    }
-
-    .pagination-controls button {
-      padding: 0.5rem;
-    }
-
-    .pagination-info {
-      font-size: 0.75rem; /* Smaller font size for mobile */
-    }
-  }
-  </style>

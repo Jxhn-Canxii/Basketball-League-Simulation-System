@@ -25,6 +25,8 @@ class ArchiveService
         try{
             DB::beginTransaction();
 
+            $this->archiveStandingViewTable($seasonId);
+
             $this->archiveGameStats($seasonId);
 
             $this->archiveQuarterGameBreakDown($seasonId);
@@ -251,6 +253,7 @@ class ArchiveService
                     'streak_status',
                     'last_5_games'
                 )
+                ->where('conference_id','>',0)
                 ->get();
 
             foreach ($snapshots as $snapshot) {

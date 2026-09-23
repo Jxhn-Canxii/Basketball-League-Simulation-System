@@ -36,18 +36,6 @@ class ScheduleController extends Controller
 
     }
 
-    public function list(Request $request)
-    {
-        // Validate the request data
-        $request->validate([
-            'season_id' => 'required|exists:seasons,id',
-            'round' => 'required',
-        ]);
-
-        return $this->scheduleService->list($request);
-
-    }
-
     public function createSeasonandSchedule(Request $request)
     {
         // Validate the request data

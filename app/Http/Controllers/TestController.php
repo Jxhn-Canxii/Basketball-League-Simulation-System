@@ -552,7 +552,7 @@ class TestController extends Controller
         // $archive =  $this->archive->archivePlayerSeasonStats();
         // $archive =  $this->archive->archiveQuarterGameBreakDown(1);
 
-        $archive = $this->archive->archiveScheduleWriteTable(1);
+        $archive = $this->archive->archiveStandingViewTable(1);
         return response()->json([
             'message' => $archive,
         ]);

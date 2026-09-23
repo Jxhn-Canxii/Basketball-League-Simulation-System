@@ -1,137 +1,202 @@
 <template>
-  <div v-if="match" class="w-full max-w-md">
-    <!-- Existing card content -->
+  <div v-if="match" class="w-full max-w-md mx-auto">
+    <!-- GAME CARD -->
     <div
-      :style="{
-          background: `
-              linear-gradient(45deg, 
-                  ${
-                  (match.winner !== match.home_team?.id && match.winner !== null)
-                      ? '#b0b0b0 0%, #888888 50%, #666666 50%, #444444 100%'
-                      : `#${match.home_team?.secondary_color} 0%, #${match.home_team?.secondary_color} 50%, #${match.home_team?.primary_color} 50%, #${match.home_team?.primary_color} 100%`
-                  }
-              ),
-              linear-gradient(-45deg, 
-                  ${
-                  (match.winner !== match.away_team?.id && match.winner !== null)
-                      ? '#b0b0b0 0%, #888888 50%, #666666 50%, #444444 100%'
-                      : `#${match.away_team?.primary_color} 0%, #${match.away_team?.primary_color} 50%, #${match.away_team?.secondary_color} 50%, #${match.away_team?.secondary_color} 100%`
-                  }
-              )`,
-          backgroundSize: '50% 100%',
-          backgroundPosition: 'left, right',
-          backgroundRepeat: 'no-repeat'
-      }"
-      class="shadow-md rounded-md overflow-hidden"
+      class="group relative overflow-hidden rounded-2xl border border-white/10 bg-slate-900 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl"
     >
+      <!-- Team Color Header -->
       <div
-        class="px-5 text-6xl font-bold text-white py-0 flex justify-between items-center"
+        class="relative overflow-hidden"
+        :style="gameHeaderStyle"
       >
-        <div>
-          <h3>
-            {{ match.home_team.home_score }}
-          </h3>
+        <!-- Dark overlay -->
+        <div class="absolute inset-0 bg-black/20"></div>
+
+        <!-- Score Area -->
+        <div
+          class="relative grid grid-cols-[1fr_auto_1fr] items-center px-4 py-5 sm:px-5"
+        >
+          <!-- Home Score -->
+          <div class="text-center">
+            <div
+              class="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/70"
+            >
+              Home
+            </div>
+
+            <div
+              class="text-5xl font-black leading-none tracking-tight text-white drop-shadow-lg sm:text-6xl"
+            >
+              {{ match.home_team?.home_score ?? 0 }}
+            </div>
+          </div>
+
+          <!-- VS -->
+          <div class="px-3 text-center">
+            <div
+              class="flex h-9 w-9 items-center justify-center rounded-full border border-white/20 bg-black/30 text-[10px] font-black text-white/80 backdrop-blur-sm"
+            >
+              VS
+            </div>
+          </div>
+
+          <!-- Away Score -->
+          <div class="text-center">
+            <div
+              class="mb-1 text-[10px] font-bold uppercase tracking-[0.2em] text-white/70"
+            >
+              Away
+            </div>
+
+            <div
+              class="text-5xl font-black leading-none tracking-tight text-white drop-shadow-lg sm:text-6xl"
+            >
+              {{ match.away_team?.away_score ?? 0 }}
+            </div>
+          </div>
         </div>
-        <div>
-          <h3>
-            {{ match.away_team.away_score }}
-          </h3>
+
+        <!-- Team Names -->
+        <div
+          class="relative grid grid-cols-2 gap-2 border-t border-white/10 bg-black/20 px-3 py-3 backdrop-blur-sm"
+        >
+          <!-- Home Team -->
+          <div class="min-w-0 text-left">
+            <TeamDetails
+              :team_id="match.home_team?.id"
+              :key="`home-${match.home_team?.id}`"
+              :showButton="0"
+              :showInfo="false"
+              class="!text-white"
+              :current_conference_rank="match.home_team?.conference_rank"
+              :text="`#${match.home_team?.overall_rank ?? 'TBD'} ${
+                match.home_team?.name ?? 'TBD'
+              }`"
+            />
+          </div>
+
+          <!-- Away Team -->
+          <div class="min-w-0 text-right">
+            <TeamDetails
+              :team_id="match.away_team?.id"
+              :key="`away-${match.away_team?.id}`"
+              :showButton="0"
+              :showInfo="false"
+              class="!text-white"
+              :current_conference_rank="match.away_team?.conference_rank"
+              :text="`#${match.away_team?.overall_rank ?? 'TBD'} ${
+                match.away_team?.name ?? 'TBD'
+              }`"
+            />
+          </div>
         </div>
       </div>
-      <div class="px-1 py-1 flex justify-between items-center">
-        <h3>
-          <TeamDetails
-            :team_id="match.home_team.id"
-            :key="match.home_team.id"
-            :showButton="0"
-            :showInfo="false"
-            class="text-white text-md uppercase text-wrap text-left"
-            :current_conference_rank="match.home_team.conference_rank"
-            :text="`#${match.home_team.overall_rank ?? 'TBD'} ${
-              match.home_team.name ?? 'TBD'
-            }`"
-          />
-        </h3>
-        <h3>
-          <TeamDetails
-            :team_id="match.away_team.id"
-            :key="match.away_team.id"
-            :showButton="0"
-            :showInfo="false"
-            class="text-white text-md uppercase text-wrap text-right"
-            :current_conference_rank="match.away_team.conference_rank"
-            :text="`#${match.away_team.overall_rank ?? 'TBD'} ${
-              match.away_team.name ?? 'TBD'
-            }`"
-          />
-        </h3>
-      </div>
-      <div class="px-4 text-nowrap text-xs py-0 flex justify-center">
-        <span class="px-2 text-xs text-white py-1 rounded"> </span>
-      </div>
-      <div class="border-gray-200 flex justify-between mt-4 mb-4 bg-white">
-        <div class="px-2 text-nowrap text-xs py-3">
+
+      <!-- GAME META -->
+      <div class="bg-white px-3 py-3 dark:bg-slate-950">
+        <div class="flex items-center justify-between gap-2">
+          <!-- Conference -->
           <span
-            :class="
-              getConferenceClass(match.home_team.conference, match.away_team.conference)
-            "
-            class="px-2 shadow py-1 rounded"
+            :class="getConferenceClass(
+              match.home_team?.conference,
+              match.away_team?.conference
+            )"
+            class="inline-flex min-w-0 items-center gap-1 rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide shadow-sm"
           >
-            {{ match.home_team.conference }} #{{ match.home_team.conference_rank }} vs
-            {{ match.away_team.conference }} #{{ match.away_team.conference_rank }}
+            <span class="truncate">
+              {{ match.home_team?.conference ?? "N/A" }}
+            </span>
+
+            <span class="opacity-50">#</span>
+
+            <span>
+              {{ match.home_team?.conference_rank ?? "TBD" }}
+            </span>
+
+            <span class="mx-0.5 opacity-40">vs</span>
+
+            <span class="truncate">
+              {{ match.away_team?.conference ?? "N/A" }}
+            </span>
+
+            <span class="opacity-50">#</span>
+
+            <span>
+              {{ match.away_team?.conference_rank ?? "TBD" }}
+            </span>
           </span>
-        </div>
-        <div class="px-2 text-nowrap text-red-600 text-xs py-2 flex items-center">
-          <span v-if="match.is_overtime > 0" title="Overtime Game" class="text-white bg-yellow-500 rounded-full px-2 py-1 mr-2">
-            <i class="fa fa-stopwatch"></i>
-          </span>
-          <button
-            class="text-white bg-orange-500 rounded-full px-2 py-1"
-            @click.prevent="compareTeams(match.home_team.id, match.away_team.id)"
-          >
-            Compare
-            <i class="fa fa-exchange-alt ml-1"></i>
-          </button>
+
+          <!-- Actions -->
+          <div class="flex shrink-0 items-center gap-1.5">
+            <!-- Overtime -->
+            <span
+              v-if="Number(match.is_overtime) > 0"
+              title="Overtime Game"
+              class="inline-flex h-7 w-7 items-center justify-center rounded-full bg-amber-100 text-amber-600"
+            >
+              <i class="fa fa-stopwatch text-xs"></i>
+            </span>
+
+            <!-- Compare -->
+            <button
+              type="button"
+              class="inline-flex items-center gap-1.5 rounded-full bg-orange-500 px-3 py-1.5 text-[11px] font-bold text-white shadow-sm transition hover:bg-orange-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-orange-400 focus:ring-offset-2 focus:ring-offset-white"
+              @click="compareTeams(match.home_team?.id, match.away_team?.id)"
+            >
+              <span>Compare</span>
+              <i class="fa fa-exchange-alt text-[10px]"></i>
+            </button>
+          </div>
         </div>
       </div>
-      <div class="border-gray-200 flex justify-center">
-        <a
-          href="#"
-          class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-          @click.prevent="isGameResultModalOpen = [match.game_id,match.season_id]"
-          :title="'Game ID:'+match.game_id"
+
+      <!-- VIEW RESULT -->
+      <div
+        class="border-t border-slate-200 bg-slate-950 px-3 py-2.5 dark:border-white/5"
+      >
+        <button
+          type="button"
+          class="flex w-full items-center justify-center gap-2 rounded-lg px-3 py-2 text-xs font-bold uppercase tracking-wider text-blue-400 transition hover:bg-white/5 hover:text-blue-300 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+          :title="`Game ID: ${match.game_id}`"
+          @click="openGameResult"
         >
-          View Result
-        </a>
-        <!-- <a
-          href="#"
-          v-if="match.status = 1"
-          class="bg-slate-900 rounded-t text-blue-500 underlined px-2 hover:bg-slate-300 text-sm font-bold"
-          @click.prevent="simulateGame(match.game_id)"
-        >
-          Simulate Game {{ match }}
-        </a> -->
+          <i class="fa fa-chart-bar text-[10px]"></i>
+
+          <span>View Result</span>
+
+          <i
+            class="fa fa-arrow-right text-[9px] transition-transform duration-200 group-hover:translate-x-1"
+          ></i>
+        </button>
       </div>
     </div>
   </div>
-  <!-- Game Result Modal -->
+
+  <!-- GAME RESULT MODAL -->
   <Modal
     :show="isGameResultModalOpen"
-    :maxWidth="'fullscreen'"
+    maxWidth="fullscreen"
     title="Game Results"
-    @close="isGameResultModalOpen = false"
+    @close="closeGameResult"
   >
-    <div class="mt-4">
-      <GameResults :key="isGameResultModalOpen" :game_id="isGameResultModalOpen[0]" :season_id="isGameResultModalOpen[1]" />
+    <div class="mt-2 sm:mt-4">
+      <GameResults
+        v-if="selectedGame"
+        :key="`${selectedGame.game_id}-${selectedGame.season_id}`"
+        :game_id="selectedGame.game_id"
+        :season_id="selectedGame.season_id"
+      />
     </div>
   </Modal>
+
+  <!-- TEAM COMPARISON MODAL -->
   <Modal
     :show="isTeamComparisonModalOpen"
-    :maxWidth="'6xl'"
+    maxWidth="6xl"
     title="Team Comparison"
     @close="isTeamComparisonModalOpen = false"
   >
-    <div class="mt-4">
+    <div class="mt-2 sm:mt-4">
       <TeamComparison
         :home_id="comparison.home_id"
         :away_id="comparison.away_id"
@@ -142,102 +207,182 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from "vue";
-import { Head, useForm, Link } from "@inertiajs/vue3";
-import axios from "axios";
-import Swal from "sweetalert2";
-import Modal from "@/Components/Modal.vue";
+import { computed, ref } from "vue";
+import { useForm } from "@inertiajs/vue3";
 
+import Modal from "@/Components/Modal.vue";
 import TeamComparison from "@/Pages/Teams/Module/TeamComparison.vue";
 import TeamDetails from "@/Pages/Teams/Module/TeamDetails.vue";
 import GameResults from "@/Pages/Seasons/Module/GameResults.vue";
+
 const props = defineProps({
   match: {
     type: Object,
     required: true,
   },
+
   isSimulating: {
     type: Boolean,
     default: false,
   },
 });
+
 const isGameResultModalOpen = ref(false);
 const isTeamComparisonModalOpen = ref(false);
+
+const selectedGame = ref(null);
+
 const comparison = useForm({
   season_id: 0,
   home_id: 0,
   away_id: 0,
 });
 
-const compareTeams = (home_id, away_id) => {
-  comparison.season_id = props.match?.season_id;
-  comparison.home_id = home_id;
-  comparison.away_id = away_id;
+/*
+|--------------------------------------------------------------------------
+| Helpers
+|--------------------------------------------------------------------------
+*/
+
+const normalizeColor = (color, fallback = "334155") => {
+  if (!color) {
+    return fallback;
+  }
+
+  return String(color).replace("#", "");
+};
+
+const homePrimary = computed(() =>
+  normalizeColor(props.match?.home_team?.primary_color, "1e293b")
+);
+
+const homeSecondary = computed(() =>
+  normalizeColor(props.match?.home_team?.secondary_color, "475569")
+);
+
+const awayPrimary = computed(() =>
+  normalizeColor(props.match?.away_team?.primary_color, "1e293b")
+);
+
+const awaySecondary = computed(() =>
+  normalizeColor(props.match?.away_team?.secondary_color, "475569")
+);
+
+/*
+|--------------------------------------------------------------------------
+| Winner / Loser
+|--------------------------------------------------------------------------
+*/
+
+const homeWon = computed(() => {
+  if (props.match?.winner == null) {
+    return false;
+  }
+
+  return Number(props.match.winner) === Number(props.match?.home_team?.id);
+});
+
+const awayWon = computed(() => {
+  if (props.match?.winner == null) {
+    return false;
+  }
+
+  return Number(props.match.winner) === Number(props.match?.away_team?.id);
+});
+
+const isCompleted = computed(() => props.match?.winner != null);
+
+/*
+|--------------------------------------------------------------------------
+| Header Background
+|--------------------------------------------------------------------------
+*/
+
+const gameHeaderStyle = computed(() => {
+  const homeGradient = homeWon.value || !isCompleted.value
+    ? `#${homeSecondary.value} 0%, #${homeSecondary.value} 48%, #${homePrimary.value} 52%, #${homePrimary.value} 100%`
+    : "#52525b 0%, #3f3f46 48%, #27272a 52%, #18181b 100%";
+
+  const awayGradient = awayWon.value || !isCompleted.value
+    ? `#${awayPrimary.value} 0%, #${awayPrimary.value} 48%, #${awaySecondary.value} 52%, #${awaySecondary.value} 100%`
+    : "#52525b 0%, #3f3f46 48%, #27272a 52%, #18181b 100%";
+
+  return {
+    background: `
+      linear-gradient(
+        45deg,
+        ${homeGradient}
+      ),
+      linear-gradient(
+        -45deg,
+        ${awayGradient}
+      )
+    `,
+    backgroundSize: "50% 100%",
+    backgroundPosition: "left, right",
+    backgroundRepeat: "no-repeat",
+  };
+});
+
+/*
+|--------------------------------------------------------------------------
+| Game Result
+|--------------------------------------------------------------------------
+*/
+
+const openGameResult = () => {
+  selectedGame.value = {
+    game_id: props.match?.game_id,
+    season_id: props.match?.season_id,
+  };
+
+  isGameResultModalOpen.value = true;
+};
+
+const closeGameResult = () => {
+  isGameResultModalOpen.value = false;
+  selectedGame.value = null;
+};
+
+/*
+|--------------------------------------------------------------------------
+| Team Comparison
+|--------------------------------------------------------------------------
+*/
+
+const compareTeams = (homeId, awayId) => {
+  comparison.season_id = props.match?.season_id ?? 0;
+  comparison.home_id = homeId ?? 0;
+  comparison.away_id = awayId ?? 0;
+
   isTeamComparisonModalOpen.value = true;
 };
 
-const simulateGame = async (id) => {
-    try {
-        isHide.value = true;
-        activeIndex.value = index;
+/*
+|--------------------------------------------------------------------------
+| Conference Styling
+|--------------------------------------------------------------------------
+*/
 
-        Swal.fire({
-            title: 'Simulating...',
-            text: 'Please wait while the game is being simulated.',
-            icon: 'info',
-            toast: true,
-            position: 'top',
-            showConfirmButton: false,
-            allowOutsideClick: true,
-            allowEscapeKey: true,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                Swal.showLoading();
-            }
-        });
-
-
-        const response = await axios.post(route("game.simulate.regular"), {
-            schedule_id: id,
-        });
-
-        Swal.close();
-        Swal.fire({
-            icon: "success",
-            title: "Success!",
-            text: response.data.message,
-            timer: 2000, // Auto-close after 2 seconds (2000ms)
-            showConfirmButton: false,
-            timerProgressBar: true
-        });
-
-
-        isGameResultModalOpen.value = game_id;
-        isHide.value = false;
-    } catch (error) {
-        console.error("Error simulating the game:", error);
-        Swal.close();
-        isHide.value = false;
-        Swal.fire({
-            icon: "error",
-            title: "Error!",
-            text: error.response?.data?.message || "Failed to simulate game.",
-        });
-        throw error; // Rethrow to allow caller to handle
-    }
-};
-const getConferenceClass = (home_conference, away_conference) => {
+const getConferenceClass = (homeConference, awayConference) => {
   const conferenceClasses = {
-    NCR: "bg-blue-100 text-blue-500",
-    Luzon: "bg-green-100 text-green-500",
-    Visayas: "bg-yellow-100 text-yellow-500",
-    Mindanao: "bg-red-100 text-red-500",
+    NCR: "bg-blue-100 text-blue-600",
+    Luzon: "bg-green-100 text-green-600",
+    Visayas: "bg-yellow-100 text-yellow-700",
+    Mindanao: "bg-red-100 text-red-600",
   };
 
-  if (home_conference !== away_conference) {
-    return "bg-orange-100 text-orange-500";
+  if (
+    homeConference &&
+    awayConference &&
+    homeConference !== awayConference
+  ) {
+    return "bg-orange-100 text-orange-600";
   }
 
-  return conferenceClasses[home_conference] || "bg-gray-100 text-gray-500";
+  return (
+    conferenceClasses[homeConference] ||
+    "bg-gray-100 text-gray-600"
+  );
 };
 </script>

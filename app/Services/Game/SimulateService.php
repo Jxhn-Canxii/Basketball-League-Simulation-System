@@ -257,7 +257,6 @@ class SimulateService
                     $season->status = 2;
                     $season->save();
 
-                    $this->archive->archiveStandingViewTable($currentSeasonId);
                     $this->playOffStats->updatePlayoffQualifiedFlags();
                 }
             }

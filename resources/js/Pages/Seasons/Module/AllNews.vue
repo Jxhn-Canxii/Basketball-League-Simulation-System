@@ -1,193 +1,320 @@
 <template>
-  <div class="bg-black shadow-sm rounded-lg mt-2 overflow-hidden shadow-lg p-2">
-    <div class="p-2 border-b border-gray-200 bg-gray-900">
-      <div class="flex items-center justify-between" @click.prevent="getNewsList()">
-        <h2 class="text-lg font-bold text-yellow-500 flex items-center">
-          <i class="fas fa-newspaper text-red-500 mr-2"></i>
-          Latest News
-        </h2>
-        <span class="bg-red-100 text-red-600 px-2 py-0 rounded-full text-sm">
-          {{ data.total_pages ?? 0 }} transactions
-        </span>
-      </div>
-    </div>
+    <section
+        class="mt-2 w-full min-w-0 overflow-hidden rounded-2xl border border-white/[0.07] bg-black text-white shadow-2xl"
+    >
+        <!-- Header -->
+        <div
+            class="relative border-b border-white/[0.07] bg-gradient-to-r from-[#111111] via-[#0b0b0b] to-black px-4 py-4"
+        >
+            <!-- Accent -->
+            <div
+                class="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-yellow-400 via-yellow-500 to-transparent"
+            ></div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="p-4">
-      <div v-for="n in 3" :key="n" class="animate-pulse mb-4">
-        <div class="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
-        <div class="h-3 bg-gray-100 rounded w-1/2"></div>
-      </div>
-    </div>
+            <div class="flex min-w-0 items-center justify-between gap-3">
+                <div class="flex min-w-0 items-center gap-3">
+                    <div
+                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-yellow-500/20 bg-yellow-500/[0.08]"
+                    >
+                        <i class="fas fa-newspaper text-sm text-yellow-500"></i>
+                    </div>
 
-    <!-- Transactions List -->
-    <div v-else class="divide-y divide-gray-100 grid grid-cols-3">
-      <div v-for="news in data?.data" 
-           :key="news.id"
-           class="p-4 transition-colors">
-        <div class="flex items-start space-x-1">
-            <GameNews :key="news.id" :data="news" />
+                    <div class="min-w-0">
+                        <div
+                            class="text-[8px] font-black uppercase tracking-[0.25em] text-yellow-500/70"
+                        >
+                            League Updates
+                        </div>
+
+                        <h2
+                            class="truncate text-base font-black tracking-tight text-white sm:text-lg"
+                        >
+                            Latest News
+                        </h2>
+                    </div>
+                </div>
+
+                <!-- News Count -->
+                <div
+                    class="flex shrink-0 items-center gap-2 rounded-lg border border-white/[0.07] bg-white/[0.03] px-2.5 py-1.5"
+                >
+                    <span
+                        class="h-1.5 w-1.5 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.6)]"
+                    ></span>
+
+                    <span
+                        class="text-[9px] font-black uppercase tracking-wider text-gray-400"
+                    >
+                        {{ data?.total_pages ?? 0 }}
+                        <span class="hidden sm:inline">Stories</span>
+                    </span>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <!-- Pagination Controls -->
-    <div class="flex w-full overflow-auto">
-        <Paginator
-            v-if="data.total_pages"
-            :page_number="search.page_num"
-            :total_rows="data.total_pages ?? 0"
-            :itemsperpage="search.itemsperpage"
-            @page_num="handlePagination"
-        />
-    </div>
-  </div>
+        <!-- Loading -->
+        <div v-if="loading" class="p-4 sm:p-5">
+            <div
+                class="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+            >
+                <div
+                    v-for="n in 3"
+                    :key="n"
+                    class="overflow-hidden rounded-2xl border border-white/[0.06] bg-[#0d0d0d] p-4"
+                >
+                    <div class="animate-pulse space-y-4">
+                        <div class="flex items-center gap-3">
+                            <div
+                                class="h-8 w-8 shrink-0 rounded-lg bg-white/[0.06]"
+                            ></div>
+
+                            <div class="flex-1 space-y-2">
+                                <div
+                                    class="h-2.5 w-1/3 rounded bg-white/[0.07]"
+                                ></div>
+
+                                <div
+                                    class="h-4 w-3/4 rounded bg-white/[0.07]"
+                                ></div>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div
+                                class="h-2.5 w-full rounded bg-white/[0.05]"
+                            ></div>
+
+                            <div
+                                class="h-2.5 w-5/6 rounded bg-white/[0.05]"
+                            ></div>
+
+                            <div
+                                class="h-2.5 w-2/3 rounded bg-white/[0.05]"
+                            ></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- News -->
+        <div
+            v-else-if="newsItems.length"
+            class="p-3 sm:p-4"
+        >
+            <!--
+                Responsive grid:
+                mobile  = 1 column
+                md      = 2 columns
+                xl      = 3 columns
+
+                min-w-0 prevents the cards from forcing the parent wider.
+            -->
+            <div
+                class="grid min-w-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3"
+            >
+                <article
+                    v-for="news in newsItems"
+                    :key="news.id"
+                    class="min-w-0 overflow-hidden rounded-2xl bg-[#080808] transition duration-200 hover:border-white/[0.11] hover:bg-[#0b0b0b]"
+                >
+                    <GameNews
+                        :key="news.id"
+                        :data="news"
+                        :showNews="true"
+                        class="!mt-0 !max-w-none"
+                    />
+                </article>
+            </div>
+        </div>
+
+        <!-- Empty -->
+        <div
+            v-else
+            class="flex min-h-[220px] flex-col items-center justify-center px-6 py-12 text-center"
+        >
+            <div
+                class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.03]"
+            >
+                <i class="fas fa-newspaper text-xl text-gray-600"></i>
+            </div>
+
+            <h3 class="text-sm font-black uppercase tracking-wider text-gray-400">
+                No News Available
+            </h3>
+
+            <p class="mt-2 max-w-sm text-xs leading-relaxed text-gray-600">
+                There are no league news stories available for this season yet.
+            </p>
+        </div>
+
+        <!-- Pagination -->
+        <div
+            v-if="data?.total_pages && data.total_pages > 1"
+            class="border-t border-white/[0.07] bg-[#080808] px-3 py-3 sm:px-4"
+        >
+            <div class="flex min-w-0 justify-center overflow-x-auto">
+                <Paginator
+                    :page_number="search.page_num"
+                    :total_rows="data.total_pages ?? 0"
+                    :itemsperpage="search.itemsperpage"
+                    @page_num="handlePagination"
+                />
+            </div>
+        </div>
+    </section>
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue';
-import axios from 'axios';
-import Swal from 'sweetalert2';
+import { ref, computed, onMounted, watch } from "vue";
+import axios from "axios";
+import Swal from "sweetalert2";
+
 import Paginator from "@/Components/Paginator.vue";
 import GameNews from "@/Pages/Seasons/Module/GameNews.vue";
 
-import {
-    roleBadgeClass,
-    getTransactionIcon,
-    getStatusBadgeClass,
-    statusBadgeClass,
-    getAwardBadgeClass,
-    getAwardIcon,
-    formatStatus,
-    formatAwardText 
-} from "@/Utility/Formatter";
-
 const props = defineProps({
     season_id: {
-        type: Number,
-        default: true,
-    }
+        type: [Number, String],
+        default: 1,
+    },
 });
 
-const data = ref([]);
+const data = ref({});
 const loading = ref(true);
-const flippedCards = ref({});
+
 const search = ref({
     page_num: 1,
     search: "",
     itemsperpage: 9,
-    season_id: props.season_id ?? 1,
+    season_id: Number(props.season_id) || 1,
 });
-;
 
+/*
+|--------------------------------------------------------------------------
+| News Items
+|--------------------------------------------------------------------------
+|
+| Keeps the component safe whether the API returns:
+|
+| {
+|   data: [...]
+| }
+|
+| or no data / null.
+|
+*/
+const newsItems = computed(() => {
+    return Array.isArray(data.value?.data)
+        ? data.value.data
+        : [];
+});
+
+/*
+|--------------------------------------------------------------------------
+| Fetch News
+|--------------------------------------------------------------------------
+*/
 const getNewsList = async () => {
-  try {
-    loading.value = true;
-    const response = await axios.post(route('game.news.list'),search.value);
-    data.value = response.data;
-  } catch (error) {
-    console.error(error);
-    Swal.fire({
-      icon: 'error',
-      title: 'Error!',
-      text: 'Failed to fetch season transactions. Please try again later.',
-    });
-  } finally {
-    loading.value = false;
-  }
+    try {
+        loading.value = true;
+
+        const response = await axios.post(
+            route("game.news.list"),
+            search.value
+        );
+
+        data.value = response.data ?? {};
+    } catch (error) {
+        console.error("Failed to fetch game news:", error);
+
+        Swal.fire({
+            icon: "error",
+            title: "Unable to Load News",
+            text: "Failed to fetch the latest news. Please try again later.",
+            background: "#0b0b0b",
+            color: "#ffffff",
+            confirmButtonColor: "#eab308",
+        });
+    } finally {
+        loading.value = false;
+    }
 };
 
+/*
+|--------------------------------------------------------------------------
+| Pagination
+|--------------------------------------------------------------------------
+*/
 const handlePagination = (page_num) => {
     search.value.page_num = page_num ?? 1;
+
     getNewsList();
-}
-
-const getSourceTeam = (transaction) => {
-  const playerSlug = transaction.player_name.replace(/\s+/g, '-').toLowerCase();
-
-  const teamCity = transaction.to_team_city === 'None' ? 'free-agent' : transaction.to_team_city;
-  const teamName = transaction.to_team_name === 'Free Agent' ? '' : transaction.to_team_name;
-
-  const teamSlug = `${teamCity} ${teamName}`.trim().replace(/\s+/g, '-').toLowerCase();
-  const statusSlug = transaction.status.replace(/\s+/g, '-').toLowerCase();
-
-  const domain = `${teamSlug}.com`; // e.g. valenzuela-dolphins.com
-
-  return `https://${domain}/news/${transaction.season_id ?? 0}/${playerSlug}-${teamSlug}-${statusSlug}`;
 };
 
+/*
+|--------------------------------------------------------------------------
+| Refresh when season changes
+|--------------------------------------------------------------------------
+*/
+watch(
+    () => props.season_id,
+    (newSeasonId) => {
+        const seasonId = Number(newSeasonId) || 1;
 
+        if (search.value.season_id !== seasonId) {
+            search.value.season_id = seasonId;
+            search.value.page_num = 1;
 
-const togglePlayerCard = (id) => {
-  flippedCards.value[id] = !flippedCards.value[id];
-};
-
-const parseAwards = (awardsInfo) => {
-  return awardsInfo.split(',');
-};
+            getNewsList();
+        }
+    }
+);
 
 onMounted(() => {
-  getNewsList();
+    getNewsList();
 });
 </script>
 
 <style scoped>
-@keyframes marquee {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
+/* Smooth dark scrollbar */
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
 }
 
-.animate-marquee {
-  display: inline-block;
-  animation: marquee 80s linear infinite;
+::-webkit-scrollbar-track {
+    background: #050505;
 }
 
-/* Add these new styles for skeleton animation */
+::-webkit-scrollbar-thumb {
+    background: #292929;
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #444;
+}
+
+/* Skeleton animation */
 .animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 @keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: .5;
-  }
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.45;
+    }
 }
 
-/* Add styles for flip card */
-.flip-card {
-  perspective: 1000px;
-}
-
-.flip-card-front, .flip-card-back {
-  backface-visibility: hidden;
-  transition: transform 0.6s;
-}
-
-.flip-card-front {
-  transform: rotateY(0deg);
-}
-
-.flip-card-back {
-  transform: rotateY(180deg);
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-}
-
-.is-flipped .flip-card-front {
-  transform: rotateY(-180deg);
-}
-
-.is-flipped .flip-card-back {
-  transform: rotateY(0deg);
+/* Selection */
+::selection {
+    background: rgba(234, 179, 8, 0.25);
+    color: white;
 }
 </style>

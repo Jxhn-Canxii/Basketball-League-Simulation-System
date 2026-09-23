@@ -1,7 +1,7 @@
-CREATE OR REPLACE VIEW standings_view AS
+CREATE OR REPLACE VIEW standings_view_1 AS
 
 WITH latest_season AS (
-    SELECT MAX(id) AS season_id
+    SELECT MIN(id) AS season_id
     FROM seasons
 ),
 
@@ -23,7 +23,7 @@ next_games AS (
 
     FROM teams t
 
-    JOIN schedules s
+    JOIN schedules_archives s
         ON (
             s.home_id = t.id
             OR s.away_id = t.id
@@ -72,7 +72,7 @@ team_games AS (
 
     FROM teams
 
-    LEFT JOIN schedules
+    LEFT JOIN schedules_archives as schedules
         ON (
             schedules.home_id = teams.id
             OR schedules.away_id = teams.id
@@ -411,11 +411,12 @@ team_rankings AS (
 
     FROM teams
 
-    LEFT JOIN schedules
+    LEFT JOIN schedules_archives as schedules
         ON (
             schedules.home_id = teams.id
             OR schedules.away_id = teams.id
         )
+
         AND schedules.conference_id > 0
         AND schedules.season_id = (
             SELECT season_id

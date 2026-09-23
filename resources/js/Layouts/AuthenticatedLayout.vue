@@ -1,16 +1,20 @@
 <template>
-    <div class="flex overflow-hidden bg-gray-200 font-roboto">
+    <div class="flex min-h-screen bg-gray-950 font-roboto">
+        <!-- Sidebar -->
         <Navigation />
 
-        <div class="flex flex-1 flex-col overflow-hidden">
+        <!-- Main Application Area -->
+        <div class="flex min-w-0 flex-1 flex-col overflow-hidden">
+            <!-- Header -->
             <Header />
 
-            <main class="flex justify-center overflow-y-auto min-h-screen min-w-screen bg-gray-900">
-                <div class="container m-0 mt-4 flex w-screen overflow-hidden px-2 py-0">
-                    <!-- <h3 class="mb-4 text-3xl font-medium text-gray-700">
-                        <slot name="header" />
-                    </h3> -->
-
+            <!-- Page Content -->
+            <main
+                class="min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-gray-950"
+            >
+                <div
+                    class="mx-auto w-full max-w-[2200px] min-w-0 px-2 py-3 sm:px-3 lg:px-4"
+                >
                     <slot />
                 </div>
             </main>
@@ -19,7 +23,6 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
-import Header from '@/Layouts/Header.vue';
-import Navigation from '@/Layouts/Navigation.vue';
+import Header from "@/Layouts/Header.vue";
+import Navigation from "@/Layouts/Navigation.vue";
 </script>

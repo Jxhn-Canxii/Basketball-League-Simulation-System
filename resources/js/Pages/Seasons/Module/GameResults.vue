@@ -1,125 +1,159 @@
 <template>
-    <div class="p-4 bg-gray-900 shadow-md min-h-screen flex justify-center items-center rounded-lg min-w-screen mx-auto" v-if="!gameDetails">
-        <!-- Skeleton Loader -->
-        <div class="flex justify-center items-center h-full">
-            <!-- Centered Loader with Timer -->
-            <div class="flex flex-col items-center space-y-6">
-                <!-- Timer Display -->
-                <div class="text-white text-xl text-center font-mono mb-4">
-                    <h2>Liga Pilipinas</h2>
-                    <small>#{{ props.game_id }}</small>
-                </div> 
+    <!-- =========================================================
+        LOADING SCREEN
+    ========================================================== -->
+    <div
+        v-if="!gameDetails"
+        class="game-shell min-h-screen flex items-center justify-center"
+    >
+        <div class="loading-card">
+            <div class="loading-brand">
+                <div class="loading-ball">
+                    <i class="fas fa-basketball-ball"></i>
+                </div>
 
-                <!-- Existing skeleton loader content -->
-                <div class="w-48 h-6 bg-purple-600 rounded-md animate-pulse mt-4"></div>
-                <div class="w-32 h-6 bg-red-500 rounded-md animate-pulse mt-4"></div>
-                <div class="w-32 h-6 bg-orange-600 rounded-md animate-pulse"></div>
-                <div class="w-24 h-8 bg-gray-700 rounded-md animate-pulse"></div>
-                <div class="text-white text-md flex flex-col font-semibold">
-                    <span class="animate-spin">
-                            <i class="fa fa-basketball text-4xl text-orange-800"></i>
-                    </span>
+                <div>
+                    <div class="loading-league">
+                        LIGA PILIPINAS
+                    </div>
+                    <div class="loading-game">
+                        GAME #{{ props.game_id }}
+                    </div>
                 </div>
-                <div class="w-24 h-8 bg-blue-600 flex justify-center items-center rounded-md animate-pulse">
-                    <!-- <sup class="mb-4 text-nowrap">Preparing {{ formatTime(time) }}s...</sup> -->
-                </div>
-                <div class="w-32 h-6 bg-gray-700 rounded-md animate-pulse"></div>
-                <div class="w-48 h-6 bg-purple-600 rounded-md animate-pulse mt-4"></div>
-                <div class="w-32 h-6 bg-red-500 rounded-md animate-pulse mt-4"></div>
+            </div>
+
+            <div class="loading-score">
+                <div class="skeleton skeleton-team"></div>
+                <div class="skeleton skeleton-score"></div>
+                <div class="skeleton skeleton-team"></div>
+            </div>
+
+            <div class="loading-status">
+                <span class="loading-dot"></span>
+                Preparing game center
+            </div>
+
+            <div class="loading-timer">
+                <i class="fas fa-clock mr-2"></i>
+                {{ formatTime(time) }}
             </div>
         </div>
     </div>
-    <div class="p-6 bg-gray-900 shadow-md rounded-lg min-w-screen mx-auto" v-else>
-        <!-- Game Summary -->
-        <div
-            class="flex flex-col lg:flex-row justify-between mb-4 -2 border-gray-700 pb-4"
-        >
-            <div
-                class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative order-1 md:order-1"
-                :style="{
-                    backgroundColor: '#' + gameDetails?.home_team.primary_color,
-                }"
-            >
-                <!-- Home team primary color -->
-                <h2 class="text-5xl font-bold text-white">
-                    {{ gameDetails?.home_team.score }}
-                </h2>
-                <p
-                    class="text-xl font-semibold text-white text-nowrap text-center"
-                    :style="{
-                        backgroundColor:
-                            '#' + gameDetails?.home_team.secondary_color,
-                    }"
-                >
-                    <TeamDetails :team_id="gameDetails?.home_team.team_id" :key="gameDetails?.home_team.team_id" :showButton="0" :text="`${gameDetails?.home_team.city} ${gameDetails?.home_team.name} (${ gameDetails?.home_team.streak })`" />
-                </p>
-                <div class="flex justify-center" v-if="!props.showBoxScore">
-                    <ul class="flex space-x-2 mt-2">
-                        <li class="flex flex-col items-center">
-                            <span
-                                class="flex-shrink-0 w-7 h-7 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.offense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">OFF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-7 h-7 p-2 bg-red-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.defense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">DEF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-7 h-7 p-2 bg-violet-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.passing_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">PASS</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-7 h-7 p-2 bg-yellow-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.rebounding_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">REB</p>
-                        </li>
-                    </ul>
+
+    <!-- =========================================================
+        GAME CENTER
+    ========================================================== -->
+    <div v-else class="game-shell min-h-screen">
+
+        <!-- =====================================================
+            SCOREBOARD
+        ====================================================== -->
+        <section class="scoreboard-card">
+
+            <!-- League / Game Meta -->
+            <div class="scoreboard-top">
+                <div>
+                    <div class="league-label">
+                        {{ gameDetails?.league_name }}
+                    </div>
+
+                    <div class="season-label">
+                        {{ gameDetails?.season_name }}
+                    </div>
                 </div>
-                <h2 class="text-sm absolute bottom-2 left-2 font-bold text-gray-200">
-                    {{ gameDetails?.home_team.sponsor }}
-                </h2>
-                <h2 class="text-xs absolute bottom-2 right-2 font-bold text-yellow-200" :title="gameDetails?.home_team.coach">
-                    <i class="fa fa-user-secret"></i> {{ playerFormatter(gameDetails?.home_team.coach) }}
-                </h2>
-                <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.home_team.team_id }}</small>
+
+                <div class="game-meta">
+                    <span class="status-pill">
+                        <span class="status-dot"></span>
+                        FINAL
+                    </span>
+
+                    <span>
+                        GAME #{{ gameDetails?.game_id }}
+                    </span>
+                </div>
             </div>
 
-            <div class="flex-1 text-center mb-2 lg:mb-0 text-white order-3 md:order-2">
-                <div class="bg-gray-800 p-2 rounded-lg m-1">
-                    <p class="text-md text-wrap font-semibold text-yellow-500">
-                        {{ gameDetails?.league_name }} - {{ gameDetails?.season_name }}
-                    </p>
-                    <p class="text-xs font-semibold text-gray-600">
+            <!-- Teams -->
+            <div class="scoreboard-main">
+
+                <!-- HOME -->
+                <div
+                    class="team-score-card"
+                    :class="{
+                        winner:
+                            gameDetails.home_team.score >
+                            gameDetails.away_team.score
+                    }"
+                    :style="{
+                        '--team-primary':
+                            '#' + gameDetails?.home_team.primary_color,
+                        '--team-secondary':
+                            '#' + gameDetails?.home_team.secondary_color
+                    }"
+                >
+                    <div class="team-side-label">HOME</div>
+
+                    <small class="team-id">
+                        #{{ gameDetails?.home_team.team_id }}
+                    </small>
+
+                    <div class="team-score">
+                        {{ gameDetails?.home_team.score }}
+                    </div>
+
+                    <div class="team-name">
+                        <TeamDetails
+                            :team_id="gameDetails?.home_team.team_id"
+                            :key="gameDetails?.home_team.team_id"
+                            :showButton="0"
+                            :text="`${gameDetails?.home_team.city} ${gameDetails?.home_team.name}`"
+                        />
+                    </div>
+
+                    <div class="team-streak">
+                        {{ gameDetails?.home_team.streak }}
+                    </div>
+
+                    <div class="team-footer">
+                        <span>
+                            <i class="fas fa-user-tie"></i>
+                            {{ playerFormatter(gameDetails?.home_team.coach) }}
+                        </span>
+
+                        <span>
+                            {{ gameDetails?.home_team.sponsor }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="
+                            gameDetails.home_team.score >
+                            gameDetails.away_team.score
+                        "
+                        class="winner-badge"
+                    >
+                        <i class="fas fa-crown"></i>
+                        WINNER
+                    </div>
+                </div>
+
+                <!-- CENTER -->
+                <div class="scoreboard-center">
+
+                    <div class="vs-badge">
+                        VS
+                    </div>
+
+                    <div class="game-type">
                         {{
                             isNaN(gameDetails?.round)
-                                ? "Playoffs"
-                                : "Regular Season"
+                                ? "PLAYOFFS"
+                                : "REGULAR SEASON"
                         }}
-                    </p>
-                    <p class="text-xs font-semibold">
-                        Round:
+                    </div>
+
+                    <div class="round-name">
                         {{
                             roundNameFormatter(
                                 isNaN(gameDetails?.round)
@@ -127,925 +161,1116 @@
                                     : parseFloat(gameDetails?.round)
                             )
                         }}
-                    </p>
-                    <p class="text-xs font-semibold">
-                        Game ID: {{ gameDetails?.game_id }}
-                    </p>
-                    <p class="text-xs font-semibold">
-                        Matchup Record:
-                        {{
-                            gameDetails?.head_to_head_record.home_team_wins ?? 0
-                        }}
-                        -
-                        {{
-                            gameDetails?.head_to_head_record.away_team_wins ?? 0
-                        }}
-                    </p>
-                    <!-- <div class="timer">
-                        <p class="text-xs text-gray-300">{{ formatTime(time) }} seconds</p>
-                    </div> -->
-                </div>
-                <div class="flex flex-col p-2 m-1 bg-slate-800 rounded text-white"  v-if="breakDown">
-                    <table class="table-xs text-xs">
-                        <thead>
-                            <tr class="text-bold bg-gray-600">
-                                <th>Team</th>
-                                <th>Q1</th>
-                                <th>Q2</th>
-                                <th>Q3</th>
-                                <th>Q4</th>
-                                <th v-for="ot in isOvertime" :key="ot">OT{{ ot }}</th>
-                                <th>TOTAL</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr v-for="b in breakDown" :key="b.id">
-                                <td>{{ b.team_name }}</td>
-                                <td>{{ b.Q1 }}</td>
-                                <td>{{ b.Q2 }}</td>
-                                <td>{{ b.Q3 }}</td>
-                                <td>{{ b.Q4 }}</td>
-                                <td v-if="isOvertime > 0">{{ b.OT1 }}</td>
-                                <td v-if="isOvertime > 1">{{ b.OT2 }}</td>
-                                <td v-if="isOvertime > 2">{{ b.OT3 }}</td>
-                                <td class="text-bold text-red-500">{{ b.total }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+                    </div>
 
-            <div
-                class="flex-1 text-center mb-2 lg:mb-0 team-card rounded relative order-2 md:order-3"
-                :style="{
-                    backgroundColor: '#' + gameDetails?.away_team.primary_color,
-                }"
-            >
-                <!-- Away team primary color -->
-                <h2 class="text-5xl font-bold text-white">
-                    {{ gameDetails?.away_team.score }}
-                </h2>
-                <p
-                    class="text-xl font-semibold text-white text-center text-nowrap"
+                    <div class="head-to-head">
+                        <span>HEAD-TO-HEAD</span>
+
+                        <strong>
+                            {{
+                                gameDetails?.head_to_head_record
+                                    ?.home_team_wins ?? 0
+                            }}
+                            -
+                            {{
+                                gameDetails?.head_to_head_record
+                                    ?.away_team_wins ?? 0
+                            }}
+                        </strong>
+                    </div>
+
+                    <!-- Quarter Breakdown -->
+                    <div
+                        v-if="breakDown?.length"
+                        class="quarter-card"
+                    >
+                        <div class="quarter-header">
+                            <span>GAME FLOW</span>
+
+                            <span v-if="isOvertime > 0" class="ot-label">
+                                {{ isOvertime }} OT
+                            </span>
+                        </div>
+
+                        <div class="quarter-table-wrapper">
+                            <table class="quarter-table">
+                                <thead>
+                                    <tr>
+                                        <th>TEAM</th>
+                                        <th>Q1</th>
+                                        <th>Q2</th>
+                                        <th>Q3</th>
+                                        <th>Q4</th>
+
+                                        <th
+                                            v-for="ot in isOvertime"
+                                            :key="ot"
+                                        >
+                                            OT{{ ot }}
+                                        </th>
+
+                                        <th>T</th>
+                                    </tr>
+                                </thead>
+
+                                <tbody>
+                                    <tr
+                                        v-for="b in breakDown"
+                                        :key="b.id"
+                                    >
+                                        <td>{{ b.team_name }}</td>
+                                        <td>{{ b.Q1 }}</td>
+                                        <td>{{ b.Q2 }}</td>
+                                        <td>{{ b.Q3 }}</td>
+                                        <td>{{ b.Q4 }}</td>
+
+                                        <td v-if="isOvertime > 0">
+                                            {{ b.OT1 }}
+                                        </td>
+
+                                        <td v-if="isOvertime > 1">
+                                            {{ b.OT2 }}
+                                        </td>
+
+                                        <td v-if="isOvertime > 2">
+                                            {{ b.OT3 }}
+                                        </td>
+
+                                        <td class="total-score">
+                                            {{ b.total }}
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AWAY -->
+                <div
+                    class="team-score-card"
+                    :class="{
+                        winner:
+                            gameDetails.away_team.score >
+                            gameDetails.home_team.score
+                    }"
                     :style="{
-                        backgroundColor:
-                            '#' + gameDetails?.away_team.secondary_color,
+                        '--team-primary':
+                            '#' + gameDetails?.away_team.primary_color,
+                        '--team-secondary':
+                            '#' + gameDetails?.away_team.secondary_color
                     }"
                 >
-                    <TeamDetails :team_id="gameDetails?.away_team.team_id" :key="gameDetails?.away_team.team_id" :showButton="0" :text="`${gameDetails?.away_team.city} ${gameDetails?.away_team.name} (${ gameDetails?.away_team.streak })`" />
-                </p>
-                <div class="flex justify-center" v-if="!props.showBoxScore">
-                    <ul class="flex space-x-2 mt-2">
-                        <li class="flex flex-col items-center">
-                            <span
-                                class="flex-shrink-0 w-7 h-7 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.offense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">OFF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-7 h-7 p-2 bg-red-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.defense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">DEF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-7 h-7 p-2 bg-violet-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.passing_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">PASS</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-7 h-7 p-2 bg-yellow-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.rebounding_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">REB</p>
-                        </li>
-                    </ul>
-                </div>
-                <h2 class="text-sm absolute bottom-2 right-2 font-bold text-gray-200">
-                    {{ gameDetails?.away_team.sponsor }}
-                </h2>
-                <h2 class="text-xs absolute bottom-2 left-2 font-bold text-yellow-200" :title="gameDetails?.away_team.coach">
-                    <i class="fa fa-user-secret"></i> {{ playerFormatter(gameDetails?.away_team.coach) }}
-                </h2>
-                <small class="absolute top-0 right-0 font-bold text-gray-200"># {{ gameDetails?.away_team.team_id }}</small>
-            </div>
-        </div>
+                    <div class="team-side-label">AWAY</div>
 
-        <!-- Player Statistics Tables -->
-        <div class="flex justify-between"  v-if="props.showBoxScore">
-            <div>
-                <h3 class="text-xl font-semibold mb-2 text-white">Player Statistics</h3>  
-            </div>
-            <div class="flex flex-row">
-                <div class="space-x-3">
-                    <span @click.prevent="switchQuarter(0)" :class="quarter == 0 ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
-                        All
-                    </span>
-                    <span v-for="i in 4" :key="i"  @click.prevent="switchQuarter('Q'+i)" :class="quarter == 'Q'+i ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
-                        Quarter {{ i }}
-                    </span>
-                    <span v-if="isOvertime > 0" v-for="i in isOvertime" :key="i"  @click.prevent="switchQuarter('OT'+i)" :class="quarter == 'OT'+i ? 'bg-green-500' : 'bg-gray-800'" class="shadow-lg px-2 py-1 rounded-full text-nowrap text-md uppercase font-semibold text-white">
-                        Overtime {{ i }}
-                    </span>
+                    <small class="team-id">
+                        #{{ gameDetails?.away_team.team_id }}
+                    </small>
 
+                    <div class="team-score">
+                        {{ gameDetails?.away_team.score }}
+                    </div>
+
+                    <div class="team-name">
+                        <TeamDetails
+                            :team_id="gameDetails?.away_team.team_id"
+                            :key="gameDetails?.away_team.team_id"
+                            :showButton="0"
+                            :text="`${gameDetails?.away_team.city} ${gameDetails?.away_team.name}`"
+                        />
+                    </div>
+
+                    <div class="team-streak">
+                        {{ gameDetails?.away_team.streak }}
+                    </div>
+
+                    <div class="team-footer">
+                        <span>
+                            <i class="fas fa-user-tie"></i>
+                            {{ playerFormatter(gameDetails?.away_team.coach) }}
+                        </span>
+
+                        <span>
+                            {{ gameDetails?.away_team.sponsor }}
+                        </span>
+                    </div>
+
+                    <div
+                        v-if="
+                            gameDetails.away_team.score >
+                            gameDetails.home_team.score
+                        "
+                        class="winner-badge"
+                    >
+                        <i class="fas fa-crown"></i>
+                        WINNER
+                    </div>
                 </div>
-            </div>  
-        </div>
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4 text-white" v-if="props.showBoxScore">
-            <!-- Home Team Player Stats -->
-            <div
-                class="mb-2 p-2 rounded shadow-md shadow-red-500"
-                :style="{
-                    backgroundColor: '#' + gameDetails?.home_team.primary_color,
-                }"
-            >
-                <div class="flex justify-between">
-                    <h4 class="text-lg font-semibold flex items-center mb-1">
-                        {{ gameDetails?.home_team.name }} Player Stats &nbsp;
-                        <i class="fas fa-chart-bar text-white" @click.prevent="showHomeDepthChart = !showHomeDepthChart"></i>
-                    </h4>
-                    <ul class="flex space-x-2">
-                        <li class="flex flex-col items-center">
-                            <span
-                                class="flex-shrink-0 w-10 h-10 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.offense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">OFF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-10 h-10 p-2 bg-red-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.defense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">DEF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-10 h-10 p-2 bg-violet-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.passing_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">PASS</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-10 h-10 p-2 bg-yellow-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.home_team.ratings.rebounding_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">REB</p>
-                        </li>
-                    </ul>
+            </div>
+        </section>
+
+        <!-- =====================================================
+            TEAM RATINGS
+        ====================================================== -->
+        <section
+            v-if="!props.showBoxScore"
+            class="rating-comparison"
+        >
+            <div class="rating-team">
+                <span>
+                    {{ gameDetails.home_team.name }}
+                </span>
+
+                <div class="rating-items">
+                    <div class="rating-item">
+                        <b>{{ gameDetails.home_team.ratings.offense_rating }}</b>
+                        <small>OFF</small>
+                    </div>
+
+                    <div class="rating-item">
+                        <b>{{ gameDetails.home_team.ratings.defense_rating }}</b>
+                        <small>DEF</small>
+                    </div>
+
+                    <div class="rating-item">
+                        <b>{{ gameDetails.home_team.ratings.passing_rating }}</b>
+                        <small>PASS</small>
+                    </div>
+
+                    <div class="rating-item">
+                        <b>{{ gameDetails.home_team.ratings.rebounding_rating }}</b>
+                        <small>REB</small>
+                    </div>
                 </div>
-                <table
-                    v-if="!showHomeDepthChart"
-                    class="min-w-full bg-gray-800 rounded-lg overflow-hidden text-sm"
+            </div>
+
+            <div class="rating-divider">
+                TEAM RATINGS
+            </div>
+
+            <div class="rating-team away">
+                <span>
+                    {{ gameDetails.away_team.name }}
+                </span>
+
+                <div class="rating-items">
+                    <div class="rating-item">
+                        <b>{{ gameDetails.away_team.ratings.offense_rating }}</b>
+                        <small>OFF</small>
+                    </div>
+
+                    <div class="rating-item">
+                        <b>{{ gameDetails.away_team.ratings.defense_rating }}</b>
+                        <small>DEF</small>
+                    </div>
+
+                    <div class="rating-item">
+                        <b>{{ gameDetails.away_team.ratings.passing_rating }}</b>
+                        <small>PASS</small>
+                    </div>
+
+                    <div class="rating-item">
+                        <b>{{ gameDetails.away_team.ratings.rebounding_rating }}</b>
+                        <small>REB</small>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================
+            BOX SCORE
+        ====================================================== -->
+        <section v-if="props.showBoxScore" class="boxscore-section">
+
+            <!-- Header -->
+            <div class="section-header">
+                <div>
+                    <span class="section-kicker">GAME CENTER</span>
+                    <h2>Player Statistics</h2>
+                </div>
+
+                <div class="quarter-selector">
+
+                    <button
+                        @click.prevent="switchQuarter(0)"
+                        :class="{ active: quarter == 0 }"
+                    >
+                        ALL
+                    </button>
+
+                    <button
+                        v-for="i in 4"
+                        :key="i"
+                        @click.prevent="switchQuarter('Q' + i)"
+                        :class="{ active: quarter == 'Q' + i }"
+                    >
+                        Q{{ i }}
+                    </button>
+
+                    <button
+                        v-for="i in isOvertime"
+                        :key="'ot' + i"
+                        @click.prevent="switchQuarter('OT' + i)"
+                        :class="{ active: quarter == 'OT' + i }"
+                    >
+                        OT{{ i }}
+                    </button>
+                </div>
+            </div>
+
+            <!-- Team Box Scores -->
+            <div class="boxscore-grid">
+
+                <!-- HOME -->
+                <div
+                    class="boxscore-card"
+                    :style="{
+                        '--team-primary':
+                            '#' + gameDetails.home_team.primary_color,
+                        '--team-secondary':
+                            '#' + gameDetails.home_team.secondary_color
+                    }"
                 >
-                    <thead>
-                        <tr
-                            class="bg-gray-700 text-left"
-                            :style="{
-                                backgroundColor:
-                                    '#' +
-                                    gameDetails?.home_team.secondary_color,
-                            }"
-                        >
-                            <th class="py-2 px-3 text-xs">Name</th>
-                            <th class="py-2 px-3 text-xs">Pos</th>
-                            <th class="py-2 px-3 text-xs" hidden>Role</th>
-                            <th class="px-2 py-3 text-xs text-right">Min</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Points Made">Pts</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Rebounds Made">Reb</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Assist Made">Ast</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Steals Made">Stl</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Blocks Made">Blk</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Turnover Made">TO</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Fouls Made">Fouls</th>
-                            <th class="px-2 py-3 text-xs text-center" title="Field Goals Made / Attempted">FG</th>
-                            <!-- <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
-                            <th class="px-2 py-3 text-xs" title="3PT Made / Attempted">3PT</th>
-                            <th class="px-2 py-3 text-xs" title="Free Throws Made / Attempted">Free Throws</th> -->
-                            <th class="px-2 py-3 text-xs text-right" title="Player Efficiency Rating">PER</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Efficiency">EFF</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="player in sortedHomePlayers"
-                            :key="player.name"
-                            @click.prevent="showPlayerProfileModal = player"
-                            :class="{
-                                'bg-yellow-100 text-black':
-                                    top5HomePlayers.includes(player.name),
-                            }"
-                            class=" hover:bg-gray-600 text-xs"
-                        >
-                            <td class="py-1 px-3" :class="boxScoreRoleBadgeClass(player.role, player.minutes)">
-                                {{ player.name }}
-                                <sup>
-                                    {{ player.is_rookie ? "R" : "V" }} 
-                                    <i v-if="player.is_injured" class="fa fa-plus-square text-red-500"></i>
-                                    <i v-if="player.fouled_out" class="fa fa-square text-red-500"></i>
-                                </sup>
-                            </td>
-                            <td class="py-1 px-3">
-                                {{ player.position }}
-                            </td>
-                            <td class="py-1 px-3 text-nowrap" hidden>
-                                <span :class="roleBadgeClass(player.role)">{{
-                                    player.role
-                                }}</span>
-                            </td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.points.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.rebounds.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.assists.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.steals.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.blocks.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
-                            <!-- Field Goal Stats -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-center" >
-                                {{ player.field_goals_made }} / {{ player.field_goal_attempts }}
-                            </td>
-                            <!-- 3PT Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.two_pointers_made }} / {{ player.two_point_attempts }} ({{ player.two_point_percentage.toFixed(1) }}%)
-                            </td> -->
-                            <!-- 3PT Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.three_pointers_made }} / {{ player.three_point_attempts }} ({{ player.three_point_percentage.toFixed(1) }}%)
-                            </td> -->
-                            <!-- Free Throw Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.free_throws_made }} / {{ player.free_throw_attempts }} ({{ player.free_throw_percentage.toFixed(1) }}%)
-                            </td> -->
-                            <!-- PER -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">
-                                {{ isNaN(parseFloat(player.per)) ? 0 : parseFloat(player.per).toFixed(2) }}
-                            </td>
-                            <!-- EFF -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-right"><b :class="player.efficiency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.efficiency }}</b></td>
-                        </tr>
-                        <tr v-if="sortedHomePlayers.length === 0">
-                            <td
-                                colspan="14"
-                                class="py-1 px-3 text-center text-xs"
-                            >
-                                No player statistics available.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="text-wrap text-sm pt-3" v-if="gameDetails?.home_team.team_id && showHomeDepthChart">
-                    <DepthChartRow :key="gameDetails?.home_team.team_id" :players="sortedHomePlayers" :season_id="gameDetails?.current_season"/>
-                </div>
-            </div>
+                    <div class="boxscore-heading">
+                        <div>
+                            <span class="team-mini-label">HOME</span>
+                            <h3>
+                                {{ gameDetails.home_team.name }}
+                            </h3>
+                        </div>
 
-            <!-- Away Team Player Stats -->
-            <div
-                class="mb-2 p-2 rounded shadow-md shadow-red-500"
-                :style="{
-                    backgroundColor: '#' + gameDetails?.away_team.primary_color,
-                }"
-            >
-                <div class="flex justify-between">
-                    <h4 class="text-lg font-semibold flex items-center mb-1">
-                        {{ gameDetails?.away_team.name }} Player Stats &nbsp;
-                        <i class="fas fa-chart-bar text-white" @click.prevent="showAwayDepthChart = !showAwayDepthChart"></i>
-                    </h4>
-                    <ul class="flex space-x-2">
-                        <li class="flex flex-col items-center">
-                            <span
-                                class="flex-shrink-0 w-10 h-10 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.offense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">OFF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-10 h-10 p-2 bg-red-600 rounded-full flex items-center justify-center"
+                        <div class="boxscore-heading-score">
+                            {{ gameDetails.home_team.score }}
+                        </div>
+
+                        <button
+                            class="depth-toggle"
+                            @click.prevent="
+                                showHomeDepthChart =
+                                    !showHomeDepthChart
+                            "
+                            title="Depth Chart"
                         >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.defense_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">DEF</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-10 h-10 p-2 bg-violet-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.passing_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">PASS</p>
-                        </li>
-                        <li class="flex flex-col items-center">
-                            <span
-                            class="flex-shrink-0 w-10 h-10 p-2 bg-yellow-600 rounded-full flex items-center justify-center"
-                        >
-                            <span class="text-sm font-bold text-white">{{
-                                    gameDetails?.away_team.ratings.rebounding_rating
-                                }}</span>
-                            </span>
-                            <p class="text-xs text-gray-900 font-bold">REB</p>
-                        </li>
-                    </ul>
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+
+                    <div
+                        v-if="!showHomeDepthChart"
+                        class="table-scroll"
+                    >
+                        <table class="modern-boxscore">
+                            <thead>
+                                <tr>
+                                    <th>PLAYER</th>
+                                    <th>POS</th>
+                                    <th>MIN</th>
+                                    <th>PTS</th>
+                                    <th>REB</th>
+                                    <th>AST</th>
+                                    <th>STL</th>
+                                    <th>BLK</th>
+                                    <th>TO</th>
+                                    <th>FG</th>
+                                    <th>PER</th>
+                                    <th>EFF</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr
+                                    v-for="player in sortedHomePlayers"
+                                    :key="player.name"
+                                    @click.prevent="
+                                        showPlayerProfileModal = player
+                                    "
+                                    :class="{
+                                        'top-player':
+                                            top5HomePlayers.includes(
+                                                player.name
+                                            )
+                                    }"
+                                >
+                                    <td
+                                        class="player-cell"
+                                        :class="
+                                            boxScoreRoleBadgeClass(
+                                                player.role,
+                                                player.minutes
+                                            )
+                                        "
+                                    >
+                                        <span>
+                                            {{ player.name }}
+                                        </span>
+
+                                        <small>
+                                            {{ player.is_rookie ? "R" : "V" }}
+
+                                            <i
+                                                v-if="player.is_injured"
+                                                class="fas fa-plus-square injury-icon"
+                                            ></i>
+
+                                            <i
+                                                v-if="player.fouled_out"
+                                                class="fas fa-square fouled-icon"
+                                            ></i>
+                                        </small>
+                                    </td>
+
+                                    <td>{{ player.position }}</td>
+
+                                    <td class="numeric">
+                                        {{
+                                            player.minutes === 0
+                                                ? "DNP"
+                                                : player.minutes.toFixed(1)
+                                        }}
+                                    </td>
+
+                                    <td class="numeric stat-highlight">
+                                        {{ player.points.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.rebounds.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.assists.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.steals.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.blocks.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{
+                                            player.minutes === 0
+                                                ? "0.0"
+                                                : player.turnovers.toFixed(1)
+                                        }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.field_goals_made }}
+                                        /
+                                        {{ player.field_goal_attempts }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{
+                                            isNaN(parseFloat(player.per))
+                                                ? "0.00"
+                                                : parseFloat(player.per).toFixed(2)
+                                        }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        <strong
+                                            :class="
+                                                player.efficiency <= 0
+                                                    ? 'negative-stat'
+                                                    : 'positive-stat'
+                                            "
+                                        >
+                                            {{ player.efficiency ?? 0 }}
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                                <tr
+                                    v-if="
+                                        sortedHomePlayers.length === 0
+                                    "
+                                >
+                                    <td
+                                        colspan="12"
+                                        class="empty-row"
+                                    >
+                                        No player statistics available.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <DepthChartRow
+                        v-if="
+                            gameDetails?.home_team.team_id &&
+                            showHomeDepthChart
+                        "
+                        :key="gameDetails?.home_team.team_id"
+                        :players="sortedHomePlayers"
+                        :season_id="gameDetails?.current_season"
+                    />
                 </div>
 
-                <table
-                    v-if="!showAwayDepthChart"
-                    class="min-w-full text-nowrap bg-gray-800 rounded-lg overflow-hidden text-sm"
+                <!-- AWAY -->
+                <div
+                    class="boxscore-card"
+                    :style="{
+                        '--team-primary':
+                            '#' + gameDetails.away_team.primary_color,
+                        '--team-secondary':
+                            '#' + gameDetails.away_team.secondary_color
+                    }"
                 >
-                    <thead>
-                        <tr
-                            class="bg-gray-700 text-left"
-                            :style="{
-                                backgroundColor:
-                                    '#' +
-                                    gameDetails?.away_team.secondary_color,
-                            }"
+                    <div class="boxscore-heading">
+                        <div>
+                            <span class="team-mini-label">AWAY</span>
+                            <h3>
+                                {{ gameDetails.away_team.name }}
+                            </h3>
+                        </div>
+
+                        <div class="boxscore-heading-score">
+                            {{ gameDetails.away_team.score }}
+                        </div>
+
+                        <button
+                            class="depth-toggle"
+                            @click.prevent="
+                                showAwayDepthChart =
+                                    !showAwayDepthChart
+                            "
+                            title="Depth Chart"
                         >
-                            <th class="py-2 px-3 text-xs">Name</th>
-                            <th class="py-2 px-3 text-xs">Pos</th>
-                            <th class="py-2 px-3 text-xs" hidden>Role</th>
-                            <th class="px-2 py-3 text-xs text-right">Min</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Points Made">Pts</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Rebounds Made">Reb</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Assist Made">Ast</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Steals Made">Stl</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Blocks Made">Blk</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Turnover Made">TO</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Fouls Made">Fouls</th>
-                            <th class="px-2 py-3 text-xs text-center" title="Field Goals Made / Attempted">FG</th>
-                            <!-- <th class="px-2 py-3 text-xs" title="2PT Made / Attempted">2PT</th>
-                            <th class="px-2 py-3 text-xs" title="3PT Made / Attempted">3PT</th>
-                            <th class="px-2 py-3 text-xs" title="Free Throws Made / Attempted">Free Throws</th> -->
-                            <th class="px-2 py-3 text-xs text-right" title="Player Efficiency Rating">PER</th>
-                            <th class="px-2 py-3 text-xs text-right" title="Efficiency">EFF</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr
-                            v-for="player in sortedAwayPlayers"
-                            :key="player.name"
-                            @click.prevent="showPlayerProfileModal = player"
-                            :class="{
-                                'bg-yellow-100 text-black':
-                                    top5AwayPlayers.includes(player.name),
-                                
-                            }"
-                            class=" hover:bg-gray-600 text-xs"
-                        >
-                            <td class="py-1 px-3 text-wrap" :class="boxScoreRoleBadgeClass(player.role, player.minutes)">
-                                {{ player.name }}
-                                <sup>
-                                    {{ player.is_rookie ? "R" : "V" }} 
-                                    <i v-if="player.is_injured" class="fa fa-plus-square text-red-500"></i>
-                                </sup>
-                            </td>
-                            <td class="py-1 px-3">
-                                {{ player.position }}
-                            </td>
-                            <td class="py-1 px-3" hidden>
-                                <span :class="roleBadgeClass(player.role)">{{
-                                    player.role
-                                }}</span>
-                            </td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? 'DNP' : player.minutes.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.points.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.rebounds.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.assists.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.steals.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.blocks.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.turnovers.toFixed(1) }}</td>
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">{{ player.minutes === 0 ? (0).toFixed(1) : player.fouls.toFixed(1) }}</td>
-                            <!-- Field Goal Stats -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-center" >
-                                {{ player.field_goals_made }} / {{ player.field_goal_attempts }}
-                            </td>
-                            <!-- 3PT Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.two_pointers_made }} / {{ player.two_point_attempts }} ({{ player.two_point_percentage.toFixed(1) }}%)
-                            </td> -->
-                            <!-- 3PT Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.three_pointers_made }} / {{ player.three_point_attempts }} ({{ player.three_point_percentage.toFixed(1) }}%)
-                            </td> -->
-                            <!-- Free Throw Stats -->
-                            <!-- <td class="px-2 py-1 whitespace-nowrap border">
-                                {{ player.free_throws_made }} / {{ player.free_throw_attempts }} ({{ player.free_throw_percentage.toFixed(1) }}%)
-                            </td> -->
-                            <!-- PER -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-right">
-                                {{ isNaN(parseFloat(player.per)) ? 0 : parseFloat(player.per).toFixed(2) }}
-                            </td>
-                            <!-- EFF -->
-                            <td class="px-2 py-1 whitespace-nowrap border text-right"><b :class="player.efficiency <= 0 ? 'text-red-500' : 'text-lime-500'">{{ player.efficiency ?? 0 }}</b></td>
-                        </tr>
-                        <tr v-if="sortedHomePlayers.length === 0">
-                            <td
-                                colspan="14"
-                                class="py-1 px-3 text-center text-xs"
-                            >
-                                No player statistics available.
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-                <div class="text-wrap text-sm pt-3" v-if="gameDetails?.away_team.team_id && showAwayDepthChart" >
-                    <DepthChartRow :key="gameDetails?.away_team.team_id" :players="sortedAwayPlayers" :season_id="gameDetails?.current_season"/>
+                            <i class="fas fa-chart-bar"></i>
+                        </button>
+                    </div>
+
+                    <div
+                        v-if="!showAwayDepthChart"
+                        class="table-scroll"
+                    >
+                        <table class="modern-boxscore">
+                            <thead>
+                                <tr>
+                                    <th>PLAYER</th>
+                                    <th>POS</th>
+                                    <th>MIN</th>
+                                    <th>PTS</th>
+                                    <th>REB</th>
+                                    <th>AST</th>
+                                    <th>STL</th>
+                                    <th>BLK</th>
+                                    <th>TO</th>
+                                    <th>FG</th>
+                                    <th>PER</th>
+                                    <th>EFF</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr
+                                    v-for="player in sortedAwayPlayers"
+                                    :key="player.name"
+                                    @click.prevent="
+                                        showPlayerProfileModal = player
+                                    "
+                                    :class="{
+                                        'top-player':
+                                            top5AwayPlayers.includes(
+                                                player.name
+                                            )
+                                    }"
+                                >
+                                    <td
+                                        class="player-cell"
+                                        :class="
+                                            boxScoreRoleBadgeClass(
+                                                player.role,
+                                                player.minutes
+                                            )
+                                        "
+                                    >
+                                        <span>
+                                            {{ player.name }}
+                                        </span>
+
+                                        <small>
+                                            {{ player.is_rookie ? "R" : "V" }}
+
+                                            <i
+                                                v-if="player.is_injured"
+                                                class="fas fa-plus-square injury-icon"
+                                            ></i>
+
+                                            <i
+                                                v-if="player.fouled_out"
+                                                class="fas fa-square fouled-icon"
+                                            ></i>
+                                        </small>
+                                    </td>
+
+                                    <td>{{ player.position }}</td>
+
+                                    <td class="numeric">
+                                        {{
+                                            player.minutes === 0
+                                                ? "DNP"
+                                                : player.minutes.toFixed(1)
+                                        }}
+                                    </td>
+
+                                    <td class="numeric stat-highlight">
+                                        {{ player.points.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.rebounds.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.assists.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.steals.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.blocks.toFixed(1) }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{
+                                            player.minutes === 0
+                                                ? "0.0"
+                                                : player.turnovers.toFixed(1)
+                                        }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{ player.field_goals_made }}
+                                        /
+                                        {{ player.field_goal_attempts }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        {{
+                                            isNaN(parseFloat(player.per))
+                                                ? "0.00"
+                                                : parseFloat(player.per).toFixed(2)
+                                        }}
+                                    </td>
+
+                                    <td class="numeric">
+                                        <strong
+                                            :class="
+                                                player.efficiency <= 0
+                                                    ? 'negative-stat'
+                                                    : 'positive-stat'
+                                            "
+                                        >
+                                            {{ player.efficiency ?? 0 }}
+                                        </strong>
+                                    </td>
+                                </tr>
+
+                                <tr
+                                    v-if="
+                                        sortedAwayPlayers.length === 0
+                                    "
+                                >
+                                    <td
+                                        colspan="12"
+                                        class="empty-row"
+                                    >
+                                        No player statistics available.
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <DepthChartRow
+                        v-if="
+                            gameDetails?.away_team.team_id &&
+                            showAwayDepthChart
+                        "
+                        :key="gameDetails?.away_team.team_id"
+                        :players="sortedAwayPlayers"
+                        :season_id="gameDetails?.current_season"
+                    />
                 </div>
             </div>
-        </div>
-        <!-- Best Player of the Game -->
-        <div 
-        :style="{
-            backgroundColor:
-                '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.secondary_color : gameDetails?.away_team.secondary_color),
-        }"
-        class="block md:flex rounded">
-            <!-- Best Player Section: 1/4 Width -->
-            <div class="w-full md:w-3/4 sm:w-full p-2 shadow-md">
-                <h3 class="text-lg text-white font-semibold mb-1">Player of the Game</h3>
+        </section>
+
+        <!-- =====================================================
+            BOTTOM CONTENT
+        ====================================================== -->
+        <section class="bottom-grid">
+
+            <!-- PLAYER OF THE GAME -->
+            <div class="featured-card">
+
+                <div class="section-header compact">
+                    <div>
+                        <span class="section-kicker">GAME AWARD</span>
+                        <h2>Player of the Game</h2>
+                    </div>
+
+                    <i class="fas fa-star section-icon"></i>
+                </div>
+
                 <div
                     v-if="bestPlayer"
-                    class="bg-white shadow-lg p-4 rounded-lg text-black team-card"
+                    class="player-of-game"
                 >
-                    <div class="flex flex-col items-center text-white mx-0 p-0 rounded"
-                    :style="{
-                        backgroundColor:
-                            '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color : gameDetails?.away_team.primary_color),
-                    }"
+                    <div class="pog-header">
+
+                        <div class="pog-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+
+                        <div class="pog-name">
+                            <h3>
+                                {{ playerFormatter(bestPlayer.name) }}
+                            </h3>
+
+                            <span>
+                                {{ bestPlayer.team }}
+                                ·
+                                {{ bestPlayer.position }}
+                                ·
+                                Age {{ bestPlayer.age }}
+                            </span>
+                        </div>
+
+                        <span
+                            :class="roleBadgeClass(bestPlayer.role)"
+                            class="pog-role"
+                        >
+                            {{ bestPlayer.role }}
+                        </span>
+                    </div>
+
+                    <div class="pog-stats">
+
+                        <div
+                            v-if="bestPlayer.points > 0"
+                            class="pog-stat primary"
+                        >
+                            <strong>{{ bestPlayer.points }}</strong>
+                            <span>PTS</span>
+                        </div>
+
+                        <div
+                            v-if="bestPlayer.rebounds > 0"
+                            class="pog-stat"
+                        >
+                            <strong>{{ bestPlayer.rebounds }}</strong>
+                            <span>REB</span>
+                        </div>
+
+                        <div
+                            v-if="bestPlayer.assists > 0"
+                            class="pog-stat"
+                        >
+                            <strong>{{ bestPlayer.assists }}</strong>
+                            <span>AST</span>
+                        </div>
+
+                        <div
+                            v-if="bestPlayer.steals > 3"
+                            class="pog-stat"
+                        >
+                            <strong>{{ bestPlayer.steals }}</strong>
+                            <span>STL</span>
+                        </div>
+
+                        <div
+                            v-if="bestPlayer.blocks > 3"
+                            class="pog-stat"
+                        >
+                            <strong>{{ bestPlayer.blocks }}</strong>
+                            <span>BLK</span>
+                        </div>
+
+                        <div
+                            v-if="bestPlayer.eff > 5"
+                            class="pog-stat"
+                        >
+                            <strong>{{ bestPlayer.eff }}</strong>
+                            <span>EFF</span>
+                        </div>
+                    </div>
+
+                    <div class="pog-awards">
+
+                        <span
+                            v-if="bestPlayer.is_finals_mvp"
+                            class="award gold"
+                        >
+                            <i class="fas fa-medal"></i>
+                            Finals MVP
+                        </span>
+
+                        <span
+                            v-if="bestPlayer.is_season_mvp"
+                            class="award green"
+                        >
+                            <i class="fas fa-star"></i>
+                            Season MVP
+                        </span>
+
+                        <span
+                            v-if="bestPlayer.is_defensive_poy"
+                            class="award gray"
+                        >
+                            <i class="fas fa-shield-alt"></i>
+                            Defensive Player
+                        </span>
+
+                        <span
+                            v-if="bestPlayer.is_rookie_poy"
+                            class="award gold"
+                        >
+                            <i class="fas fa-medal"></i>
+                            Rookie of the Season
+                        </span>
+
+                        <span
+                            v-if="bestPlayer.is_all_rookie"
+                            class="award blue"
+                        >
+                            <i class="fas fa-medal"></i>
+                            All-Rookie
+                        </span>
+
+                        <span
+                            v-if="bestPlayer.is_most_improved"
+                            class="award purple"
+                        >
+                            <i class="fas fa-chart-line"></i>
+                            MIP
+                        </span>
+
+                        <span
+                            v-if="bestPlayer.is_sixth_man"
+                            class="award gray"
+                        >
+                            <i class="fas fa-user"></i>
+                            Sixth Man
+                        </span>
+                    </div>
+
+                    <div class="draft-info">
+                        <i class="fas fa-drafting-compass"></i>
+
+                        <span>
+                            Draft:
+                            {{
+                                bestPlayer.draft_status == "Undrafted"
+                                    ? `S${bestPlayer.draft_id} ${bestPlayer.draft_status}`
+                                    : bestPlayer.draft_status +
+                                      (
+                                          bestPlayer.drafted_team_acro
+                                              ? ` (${bestPlayer.drafted_team_acro})`
+                                              : ""
+                                      )
+                            }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT PANEL -->
+            <div class="side-content">
+
+                <!-- Toggle -->
+                <div class="side-header">
+                    <div>
+                        <span class="section-kicker">
+                            GAME INSIGHTS
+                        </span>
+
+                        <h2>
+                            {{ showGameNews ? "Game News" : "Stat Leaders" }}
+                        </h2>
+                    </div>
+
+                    <button
+                        class="panel-toggle"
+                        @click.prevent="
+                            showGameNews = !showGameNews
+                        "
                     >
-                        <p class="text-4xl font-extrabold mb-1 relative text-nowrap" :title="bestPlayer?.name">
-                            {{ playerFormatter(bestPlayer?.name) }}
-                            <sup class="text-xs text-right absolute top-0 ml-2 mt-2 text-nowrap" v-if="bestPlayer?.age">
-                                {{ bestPlayer?.age }} | {{ bestPlayer?.position }}
-                            </sup>
+                        <i
+                            :class="
+                                showGameNews
+                                    ? 'fas fa-chart-bar'
+                                    : 'fas fa-newspaper'
+                            "
+                        ></i>
+                    </button>
+                </div>
+
+                <!-- GAME NEWS -->
+                <div
+                    v-if="showGameNews"
+                    class="news-panel"
+                >
+                    <GameNews
+                        :key="gameNews.id"
+                        :data="gameNews"
+                        :showNews="true"
+                    />
+                </div>
+
+                <!-- STAT LEADERS -->
+                <div v-else class="leaders-list">
+
+                    <div
+                        v-if="statLeaders.points"
+                        class="leader-card"
+                    >
+                        <div class="leader-icon">
+                            <i class="fas fa-basketball-ball"></i>
+                        </div>
+
+                        <div class="leader-info">
+                            <span class="leader-category">
+                                POINTS
+                            </span>
+
+                            <strong>
+                                {{
+                                    playerFormatter(
+                                        statLeaders.points.player_name
+                                    )
+                                }}
+                            </strong>
+
+                            <small>
+                                {{ statLeaders.points.team_name }}
+                            </small>
+                        </div>
+
+                        <div class="leader-value">
+                            {{ statLeaders.points.points }}
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="statLeaders.assists"
+                        class="leader-card"
+                    >
+                        <div class="leader-icon">
+                            <i class="fas fa-hands"></i>
+                        </div>
+
+                        <div class="leader-info">
+                            <span class="leader-category">
+                                ASSISTS
+                            </span>
+
+                            <strong>
+                                {{
+                                    playerFormatter(
+                                        statLeaders.assists.player_name
+                                    )
+                                }}
+                            </strong>
+
+                            <small>
+                                {{ statLeaders.assists.team_name }}
+                            </small>
+                        </div>
+
+                        <div class="leader-value">
+                            {{ statLeaders.assists.assists }}
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="statLeaders.rebounds"
+                        class="leader-card"
+                    >
+                        <div class="leader-icon">
+                            <i class="fas fa-arrow-up"></i>
+                        </div>
+
+                        <div class="leader-info">
+                            <span class="leader-category">
+                                REBOUNDS
+                            </span>
+
+                            <strong>
+                                {{
+                                    playerFormatter(
+                                        statLeaders.rebounds.player_name
+                                    )
+                                }}
+                            </strong>
+
+                            <small>
+                                {{ statLeaders.rebounds.team_name }}
+                            </small>
+                        </div>
+
+                        <div class="leader-value">
+                            {{ statLeaders.rebounds.rebounds }}
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="
+                            statLeaders.steals &&
+                            statLeaders.steals.steals > 0
+                        "
+                        class="leader-card"
+                    >
+                        <div class="leader-icon">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+
+                        <div class="leader-info">
+                            <span class="leader-category">
+                                STEALS
+                            </span>
+
+                            <strong>
+                                {{
+                                    playerFormatter(
+                                        statLeaders.steals.player_name
+                                    )
+                                }}
+                            </strong>
+
+                            <small>
+                                {{ statLeaders.steals.team_name }}
+                            </small>
+                        </div>
+
+                        <div class="leader-value">
+                            {{ statLeaders.steals.steals }}
+                        </div>
+                    </div>
+
+                    <div
+                        v-if="
+                            statLeaders.blocks &&
+                            statLeaders.blocks.blocks > 0
+                        "
+                        class="leader-card"
+                    >
+                        <div class="leader-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+
+                        <div class="leader-info">
+                            <span class="leader-category">
+                                BLOCKS
+                            </span>
+
+                            <strong>
+                                {{
+                                    playerFormatter(
+                                        statLeaders.blocks.player_name
+                                    )
+                                }}
+                            </strong>
+
+                            <small>
+                                {{ statLeaders.blocks.team_name }}
+                            </small>
+                        </div>
+
+                        <div class="leader-value">
+                            {{ statLeaders.blocks.blocks }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INJURY NEWS -->
+                <div class="breaking-news">
+
+                    <div class="breaking-title">
+                        <span>
+                            <i class="fas fa-exclamation-circle"></i>
+                            BREAKING NEWS
+                        </span>
+                    </div>
+
+                    <div class="breaking-body">
+
+                        <div
+                            v-if="injuredPlayers?.length"
+                            class="breaking-marquee"
+                        >
+                            <span
+                                v-for="injury in injuredPlayers"
+                                :key="injury.id"
+                            >
+                                {{ formatInjuredPlayers(injury) }}
+                            </span>
+                        </div>
+
+                        <p v-else>
+                            {{ gameNews?.title ?? "No breaking news." }}
                         </p>
-                        <div class="flex justify-center p-2">
-                            <span
-                                :class="roleBadgeClass(bestPlayer.role)"
-                            >
-                                {{ bestPlayer.role }}
-                            </span>
-                        </div>
-                        <div class="flex w-full justify-center px-0 mx-0"
-                        :style="{
-                            backgroundColor:
-                                '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.secondary_color : gameDetails?.away_team.secondary_color),
-                        }"
-                        >
-                            <p class="text-xl">
-                                {{ bestPlayer?.team }}
-                            </p>
-                        </div>
                     </div>
-                    <ul class="grid grid-cols-3 gap-4 p-4" v-if="bestPlayer">
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.points > 0">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.points
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">PTS</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.rebounds > 0">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.rebounds
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">REB</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.assists > 0">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.assists
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">AST</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.steals > 3">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.steals
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">STL</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.blocks > 3">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.blocks
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">BLK</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.fg_percent > 30 && bestPlayer?.fg_made > 5">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.fg_percent
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">FG %</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.three_point_percentage > 30 && bestPlayer?.three_points_made > 5">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.three_point_percentage
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">3PT %</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.ft_percent > 80 && bestPlayer?.ft_made > 10">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.ft_percent
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">FT %</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.eff > 5">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-blue-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.eff
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">EFF</p>
-                        </li>
-                        <li class="flex flex-col items-center" v-if="bestPlayer?.turnovers > 5">
-                            <span
-                                class="flex-shrink-0 w-25 h-25 p-2 bg-red-600 rounded-full flex items-center justify-center"
-                            >
-                                <span class="text-6xl font-bold text-white">{{
-                                    bestPlayer?.turnovers
-                                }}</span>
-                            </span>
-                            <p class="text-xl text-gray-900 font-bold">TO</p>
-                        </li>
-                    </ul>
+                </div>
 
-                    <!-- Marquee for awards -->
-                    <div class="mt-4 block justify-start text-wrap">
-                        <sup class="float-center font-bold mt-0 text-red-500">
-                            <b class="text-gray-400">Draft:</b> {{ bestPlayer.draft_status == 'Undrafted' ? 'S'+bestPlayer.draft_id+' '+bestPlayer.draft_status : bestPlayer.draft_status + (bestPlayer.drafted_team_acro ? ' ('+bestPlayer.drafted_team_acro+ ')' : '')}}
-                        </sup>
-                    </div>
-                    <div class="block text-nowrap mt-2 items-center">
-                        <div class="flex justify-left flex-wrap space-x-3 items-center">
-                            <sup v-if="bestPlayer?.is_finals_mvp" title="Finals MVP">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-yellow-900 text-white text-center">
-                                    <i class="fa fa-md fa-medal text-yellow-500"></i> Finals MVP
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.championships_won > 0"
-                            v-for="champ in bestPlayer?.championships_won" 
-                            :key="champ"
-                            :title="bestPlayer?.championships_won+'x Champion/s'" 
-                            >
-                                <i class="fa fa-trophy text-yellow-500 text-lg"></i>
-                            </sup>
-                            <sup v-if="bestPlayer?.conference_championship_won > 0"
-                            v-for="champ in bestPlayer?.conference_championship_won" 
-                            :key="champ"
-                            :title="bestPlayer?.conference_championship_won+'x Conference Champion/s'" 
-                            >
-                                <i class="fa fa-trophy text-gray-500 text-lg"></i>
-                            </sup>
-                            <sup v-if="bestPlayer?.all_star_count > 0" 
-                            :title="bestPlayer?.all_star_count+'x All-star Selection'" >
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-indigo-900 text-white text-center">
-                                    <i class="fa fa-md fa-medal text-yellow-500"></i> {{ bestPlayer?.all_star_count }}x All-star
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_season_mvp" title="Season Most Valuable Player">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-700 text-white text-center">
-                                    <i class="fa fa-md fa-star text-yellow-500"></i> Season MVP
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_defensive_poy" title="Defensive Player of the Season">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-gray-800 text-white text-center">
-                                    <i class="fa fa-md fa-shield-alt text-yellow-500"></i> Defensive Player of the Season
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_rookie_poy" title="Rookie of the Season">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-yellow-800 text-white text-center">
-                                    <i class="fa fa-md fa-medal text-yellow-500"></i> S{{ bestPlayer?.draft_id ?? 0 }} Rookie of the Season
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_all_rookie" title="All-Rookie Selection">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-green-600 text-white text-center">
-                                    <i class="fa fa-medal text-yellow-500"></i> S{{ bestPlayer?.draft_id ?? 0 }} All-rookie Selection
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_most_improved" title="Most Improved Player of the Season">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-purple-300 text-white text-center">
-                                    <i class="fa fa-md fa-chart-line text-yellow-500"></i> MIP of the Season
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.is_sixth_man" title="Sixth Man of the Season">
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-gray-300 text-white text-center">
-                                    <i class="fa fa-user-secret text-yellow-500"></i> 6th Man of the Season
-                                </label>
-                            </sup>
-                            <sup v-if="bestPlayer?.playoff_appearance > 0" :title="bestPlayer?.playoff_appearance+'x Play-off Appearance'">
-                                <!-- <i class="fa fa-medal text-yellow-500 text-lg"></i> -->
-                                <label for="playoff_appearance" class="p-1 rounded text-xs bg-blue-900 text-white text-center">
-                                    {{ bestPlayer?.playoff_appearance }}x <i class="fa fa-md fa-diagram-project text-red-500"></i>
-                                </label>
-                            </sup>
-                        </div>
-                    </div>
-                    <div class="text-wrap text-red-500 text-xs">
-                        <!-- <small>{{ gameDetails?.home_team.exhausted_players?.join(',') }}</small>
-                        <small>{{ gameDetails?.away_team.exhausted_players?.join(',') }}</small> -->
-                    </div>
-                </div>
-            </div>
-            <!-- Stat Leaders Section: 3/4 Width -->
-            <div v-if="showGameNews" 
-                :style="{
-                    backgroundColor:
-                        '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.secondary_color : gameDetails?.away_team.secondary_color),
-                }"
-                class="w-full md:w-1/2 p-2 relative">
-                <a @click.prevent="showGameNews = false" class="top-2 right-2 absolute">
-                    <i class="fa fa-2x fa-list-check"></i>
-                </a>
-                <h3 class="text-lg font-semibold mb-2 text-white">Game News</h3>
-                <div class="min-w-full">
-                    <GameNews :key="gameNews.id" :data="gameNews" :showNews="true" />
-                </div>
-            </div>
-            <div v-else class="w-full md:w-1/2 p-2 relative">
-                <a @click.prevent="showGameNews = true" class="top-2 right-2 absolute">
-                    <i class="fa fa-2x fa-newspaper"></i>
-                </a>
-                <h3 class="text-lg font-semibold mb-2 text-white">Stat Leaders</h3>
-                <div class="min-w-full">
-                    <ul class="space-y-2">
-                        <li
-                            v-if="statLeaders.points"
-                            class="team-card flex items-center bg-white text-black p-2 rounded  border-gray-300 pb-2"
-                        >
-                            <span
-                                class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
-                            >
-                                <i
-                                    class="fas fa-basketball-ball text-gray-600"
-                                ></i>
-                            </span>
-                            <div class="ml-3 flex-grow">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <span :title="statLeaders.points.player_name" class="font-bold">{{
-                                            playerFormatter(statLeaders.points.player_name)
-                                        }}</span>
-                                        <small class="text-gray-400 block">{{
-                                            statLeaders.points.team_name
-                                        }}</small>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-2xl">
-                                            {{ statLeaders.points.points }} pts
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
+                <!-- SEASON LEADER -->
+                <div
+                    v-if="!props.showBoxScore && seasonLeaders"
+                    class="season-leader"
+                >
+                    <span>
+                        {{ seasonLeaders.message }}
+                    </span>
 
-                        <li
-                            v-if="statLeaders.assists"
-                            :style="{
-                                backgroundColor:
-                                    '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color  : gameDetails?.away_team.primary_color ),
-                            }"
-                            class="team-card flex items-center  p-2 border-gray-300 pb-2"
-                        >
-                            <span
-                                class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
-                            >
-                                <i class="fas fa-hand-point-right text-gray-600" title="Assist"></i>
-                            </span>
-                            <div class="ml-3 flex-grow">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <span :title="statLeaders.assists.player_name" class="font-semibold">{{
-                                            playerFormatter(statLeaders.assists.player_name)
-                                        }}</span>
-                                        <small class="text-gray-400 block">{{
-                                            statLeaders.assists.team_name
-                                        }}</small>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-2xl">
-                                            {{
-                                                statLeaders.assists.assists
-                                            }}
-                                            ast
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li
-                            v-if="statLeaders.rebounds"
-                            class="team-card flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
-                        >
-                            <span
-                                class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
-                            >
-                                <i class="fas fa-arrow-alt-circle-up text-gray-600" title="Rebounds"></i>
-                            </span>
-                            <div class="ml-3 flex-grow">
-                                <div class="flex justify-between items-start">
-                                    <div>
-                                        <span :title="statLeaders.rebounds.player_name" class="font-semibold">{{
-                                            playerFormatter(statLeaders.rebounds.player_name)
-                                        }}</span>
-                                        <small class="text-gray-400 block">{{
-                                            statLeaders.rebounds.team_name
-                                        }}</small>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-2xl">
-                                            {{
-                                                statLeaders.rebounds.rebounds
-                                            }}
-                                            reb
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li
-                            v-if="statLeaders.steals"
-                            :style="{
-                                backgroundColor:
-                                    '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color  : gameDetails?.away_team.primary_color ),
-                            }"
-                            class="team-card flex items-center  p-2 border-gray-300 pb-2"
-                        >
-                            <span
-                                class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
-                            >
-                            <i class="fas fa-user-shield text-gray-600" title="Steals"></i>
-                            </span>
-                            <div class="ml-3 flex-grow">
-                                <div v-if="statLeaders.steals.steals > 0" class="flex justify-between items-start">
-                                    <div>
-                                        <span :title="statLeaders.steals.player_name" class="font-semibold">{{
-                                            playerFormatter(statLeaders.steals.player_name)
-                                        }}</span>
-                                        <small class="text-gray-400 block">{{
-                                            statLeaders.steals.team_name
-                                        }}</small>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-2xl">
-                                            {{ statLeaders.steals.steals }} stl
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                        <li
-                            v-if="statLeaders.blocks"
-                            class="team-card flex items-center  bg-white text-black p-2 rounded border-gray-300 pb-2"
-                        >
-                            <span
-                                class="flex-shrink-0 w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center"
-                            >
-                                <i class="fas fa-stop-circle text-gray-600" title="Blocks"></i>
-                            </span>
-                            <div class="ml-3 flex-grow">
-                                <div v-if="statLeaders.blocks.blocks > 0" class="flex justify-between items-start">
-                                    <div>
-                                        <span :title="statLeaders.blocks.player_name" class="font-semibold">{{
-                                            playerFormatter(statLeaders.blocks.player_name)
-                                        }}</span>
-                                        <small class="text-gray-400 block">{{
-                                            statLeaders.blocks.team_name
-                                        }}</small>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="font-bold text-2xl">
-                                            {{ statLeaders.blocks.blocks }} blk
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                        </li>
-                    </ul>
-                    <div 
-                    :style="{
-                        backgroundColor:
-                            '#' + (gameDetails?.home_team.score > gameDetails?.away_team.score ? gameDetails?.home_team.primary_color : gameDetails?.away_team.primary_color),
-                    }"
-                    class="team-card p-2 flex-grow mt-3 text-white">
-                        <div class="border-l-4 border-red-500 h-full overflow-hidden">
-                            <div class="flex items-center h-6 px-2">
-                                <span class="animate-pulse flex items-center">
-                                    <i class="fas fa-exclamation-circle text-red-500 mr-2"></i>
-                                    <span class="font-bold text-red-500 text-sm">BREAKING NEWS:</span>
-                                </span>
-                            </div>
-                            <div class="h-10 overflow-hidden px-2">
-                                <div v-if="injuredPlayers?.length > 0" class="whitespace-nowrap animate-marquee flex text-sm text-gray-800">
-                                    <div class="flex items-center">
-                                        <div
-                                            v-for="injury in injuredPlayers"
-                                            :key="injury.id"
-                                            class="flex-shrink-0 inline-block text-white"
-                                        >
-                                            {{ formatInjuredPlayers(injury) }}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div v-else class="text-white text-sm text-wrap">
-                                    <p>{{ gameNews?.title ?? '-' }}</p>   
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div 
-                    class="team-card p-2 flex flex-wrap flex-col mt-1 text-white bg-gray-100"  v-if="!props.showBoxScore && seasonLeaders">
-                        <small class="text-xs text-nowrap text-gray-500">{{ seasonLeaders.message }}</small>
-                        <small class="text-xs text-nowrap text-red-500 font-bold" :title="seasonLeaders.draft_status"><b class="text-sm text-blue-500">{{ seasonLeaders.player_name }}</b> ({{ seasonLeaders.stat_value }} {{ seasonLeaders.stat_type }}) | <i class="text-gray-700">{{ seasonLeaders.team_acronym }}</i></small>
-                        <small class="text-xs text-nowrap text-gray-900 hidden">{{ seasonLeaders.team_name }}</small>
-                    </div>
+                    <strong>
+                        {{ seasonLeaders.player_name }}
+                    </strong>
+
+                    <small>
+                        {{ seasonLeaders.stat_value }}
+                        {{ seasonLeaders.stat_type }}
+                        ·
+                        {{ seasonLeaders.team_acronym }}
+                    </small>
                 </div>
             </div>
-        </div>
-        <div class="fixed bottom-0 right-0 bg-transparent text-white p-2 rounded-l shadow-lg z-50" v-if="!showBoxScore">
-            <div class="flex items-center space-x-2 rounded">
-                <i class="fas fa-clock"></i>
-                
-                <span class="font-mono">{{ formatTime(time) }}</span>
-            </div>
+        </section>
+
+        <!-- =====================================================
+            TIMER
+        ====================================================== -->
+        <div
+            v-if="!showBoxScore"
+            class="game-timer"
+        >
+            <i class="fas fa-clock"></i>
+            {{ formatTime(time) }}
         </div>
     </div>
-    <Modal :show="showPlayerProfileModal" :maxWidth="'6xl'" title="Player Profile" @close="showPlayerProfileModal = false">
-        <div class="p-6 block">
+
+    <!-- =========================================================
+        PLAYER MODAL
+    ========================================================== -->
+    <Modal
+        :show="showPlayerProfileModal"
+        :maxWidth="'6xl'"
+        title="Player Profile"
+        @close="showPlayerProfileModal = false"
+    >
+        <div class="p-6">
             <PlayerPerformance
                 :key="showPlayerProfileModal.player_id"
                 :player_id="showPlayerProfileModal.player_id"
             />
         </div>
     </Modal>
-   
 </template>
 
 <script setup>
@@ -1202,71 +1427,3 @@ onMounted(() => {
     showGameNews.value = props.showGameNews;
 });
 </script>
-
-<style scoped>
-.team-card {
-    transition: transform 0.2s;
-}
-
-.team-card:hover {
-    transform: scale(1.05); /* Scale effect on hover */
-}
-
-/* Use darker backgrounds for table headers */
-table {
-    border-collapse: collapse;
-}
-
-th,
-td {
-    border: 1px solid #2d3748; /* Subtle borders */
-}
-
-tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.1); /* Light hover effect */
-}
-
-.fixed {
-    transition: opacity 0.3s ease-in-out;
-}
-
-.fixed:hover {
-    opacity: 0.8;
-}
-
-@keyframes marquee {
-  0% {
-    transform: translateX(100%);
-  }
-  100% {
-    transform: translateX(-100%);
-  }
-}
-
-.animate-marquee {
-  display: inline-block;
-  animation: marquee 10s linear infinite;
-}
-
-/* Add these new styles for skeleton animation */
-.animate-pulse {
-  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-@keyframes pulse {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: .5;
-  }
-}
-
-/* Add these new styles */
-.truncate {
-    max-width: 100%;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-</style>

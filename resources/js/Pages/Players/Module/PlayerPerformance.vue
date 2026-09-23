@@ -1,96 +1,131 @@
+```vue
 <template>
-    <div class="team-roster p-3">
-        <!-- Tab Navigation -->
-        <div class="flex space-x-4">
-            <button
-                 class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'profile' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('profile')"
+    <div class="team-roster w-full min-w-0 text-gray-200">
+        <!-- Main Container -->
+        <div
+            class="overflow-hidden rounded-2xl border border-gray-800 bg-gray-950 shadow-2xl"
+        >
+            <!-- Tab Navigation -->
+            <div
+                class="border-b border-gray-800 bg-gray-900/70"
             >
-                <i class="fas fa-user"></i> Player Profile
-            </button>
-            <button
-                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'stats' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('stats')"
-            >
-                <i class="fas fa-chart-bar"></i> Season Stats
-            </button>
-            <button
-                 class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'transactions' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('transactions')"
-            >
-                <i class="fas fa-exchange-alt"></i> Player Transactions
-            </button>
-            <button
-                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'contracts' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('contracts')"
-            >
-                <i class="fas fa-file-contract"></i> Contract History
-            </button>
-            <button
-                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'career_highs' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('career_highs')"
-            >
-                <i class="fas fa-star"></i> Career Highs
-            </button>
-            <button
-                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'injury' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('injury')"
-            >
-                <i class="fas fa-medkit"></i> Injury History
-            </button>
-            <button
-                class="text-sm font-medium text-gray-600 border-b-2 hover:border-blue-600"
-                :class="activeTab === 'role_history' ? 'border-blue-600 text-blue-600' : 'border-transparent'"
-                @click="setActiveTab('role_history')"
-            >
-                <i class="fas fa-list-check"></i> Role History
-            </button>
-        </div>
-        <!-- Divider -->
-        <hr class="my-4 border-t border-gray-200" />
+                <div
+                    class="scrollbar-thin flex min-w-0 overflow-x-auto px-2 sm:px-3"
+                >
+                    <button
+                        v-for="tab in tabs"
+                        :key="tab.id"
+                        type="button"
+                        class="group relative flex shrink-0 items-center gap-2 px-3 py-3 text-xs font-medium transition-all duration-200 sm:px-4"
+                        :class="
+                            activeTab === tab.id
+                                ? 'text-white'
+                                : 'text-gray-500 hover:text-gray-200'
+                        "
+                        @click="setActiveTab(tab.id)"
+                    >
+                        <!-- Icon -->
+                        <i
+                            :class="[
+                                tab.icon,
+                                activeTab === tab.id
+                                    ? 'text-blue-400'
+                                    : 'text-gray-600 group-hover:text-gray-400',
+                            ]"
+                            class="text-xs transition-colors duration-200"
+                        ></i>
 
-        <!-- Tab Content -->
-        <div v-if="activeTab === 'profile'">
-            <ProfileHeader v-if="props.player_id" :key="player_id" :player_id="player_id" />
-        </div>
-        <div v-if="activeTab === 'stats'">
-            <PlayerSeasonStats :key="props.player_id" :player_id="props.player_id" />
-        </div>
-        <div v-if="activeTab === 'transactions'">
-            <PlayerTransactions :key="props.player_id" :player_id="props.player_id" />
-        </div>
-        <div v-if="activeTab === 'role_history'">
-            <PlayerRoleHistory :key="props.player_id" :player_id="props.player_id" />
-        </div>
-        <div v-if="activeTab === 'injury'">
-            <PlayerInjury :key="props.player_id" :player_id="props.player_id" />
-        </div>
-        <div v-if="activeTab === 'career_highs'">
-            <PlayerCareerHighs :key="props.player_id" :player_id="props.player_id" />
-        </div>
-        <div v-if="activeTab === 'contracts'">
-            <PlayerContracts :key="props.player_id" :player_id="props.player_id" />
+                        <!-- Label -->
+                        <span class="whitespace-nowrap">
+                            {{ tab.label }}
+                        </span>
+
+                        <!-- Active Indicator -->
+                        <span
+                            v-if="activeTab === tab.id"
+                            class="absolute inset-x-2 bottom-0 h-0.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.7)]"
+                        ></span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div
+                class="min-w-0 bg-gray-950 p-3 sm:p-4 lg:p-5"
+            >
+                <!-- Profile -->
+                <ProfileHeader
+                    v-if="activeTab === 'profile' && props.player_id"
+                    :key="`profile-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+
+                <!-- Season Stats -->
+                <PlayerSeasonStats
+                    v-else-if="activeTab === 'stats'"
+                    :key="`stats-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+
+                <!-- Transactions -->
+                <PlayerTransactions
+                    v-else-if="activeTab === 'transactions'"
+                    :key="`transactions-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+
+                <!-- Contracts -->
+                <PlayerContracts
+                    v-else-if="activeTab === 'contracts'"
+                    :key="`contracts-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+
+                <!-- Career Highs -->
+                <PlayerCareerHighs
+                    v-else-if="activeTab === 'career_highs'"
+                    :key="`career-highs-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+
+                <!-- Injury -->
+                <PlayerInjury
+                    v-else-if="activeTab === 'injury'"
+                    :key="`injury-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+
+                <!-- Role History -->
+                <PlayerRoleHistory
+                    v-else-if="activeTab === 'role_history'"
+                    :key="`role-history-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+            </div>
         </div>
     </div>
-    <Modal :show="isGameLogsModalOpen" :maxWidth="'fullscreen'" title="Player Game Logs" @close="isGameLogsModalOpen = false">
-        <div class="mt-4 p-3 block">
+
+    <!-- Game Logs Modal -->
+    <Modal
+        :show="isGameLogsModalOpen"
+        maxWidth="fullscreen"
+        title="Player Game Logs"
+        @close="isGameLogsModalOpen = false"
+    >
+        <div class="min-w-0 bg-gray-950 p-3 sm:p-4">
             <PlayerGameLogs
-                :key="props.player_id"
+                v-if="isGameLogsModalOpen"
+                :key="`game-logs-${props.player_id}-${isGameLogsModalOpen}`"
                 :player_id="props.player_id"
                 :season_id="isGameLogsModalOpen"
             />
         </div>
     </Modal>
 </template>
+
 <script setup>
-import { ref, onMounted, watch } from "vue";
-import axios from "axios";
+import { computed, ref } from "vue";
+
 import Modal from "@/Components/Modal.vue";
 
 import ProfileHeader from "./ProfileHeader.vue";
@@ -101,6 +136,7 @@ import PlayerRoleHistory from "./PlayerRoleHistory.vue";
 import PlayerGameLogs from "./PlayerGameLogs.vue";
 import PlayerContracts from "./PlayerContracts.vue";
 import PlayerCareerHighs from "./PlayerCareerHighs.vue";
+
 const props = defineProps({
     player_id: {
         type: Number,
@@ -108,23 +144,96 @@ const props = defineProps({
     },
 });
 
+const activeTab = ref("profile");
 const isGameLogsModalOpen = ref(false);
-const activeTab = ref('profile');
-const player_id = ref(props.player_id);
+
+const tabs = [
+    {
+        id: "profile",
+        label: "Profile",
+        icon: "fas fa-user",
+    },
+    {
+        id: "stats",
+        label: "Season Stats",
+        icon: "fas fa-chart-bar",
+    },
+    {
+        id: "transactions",
+        label: "Transactions",
+        icon: "fas fa-right-left",
+    },
+    {
+        id: "contracts",
+        label: "Contracts",
+        icon: "fas fa-file-contract",
+    },
+    {
+        id: "career_highs",
+        label: "Career Highs",
+        icon: "fas fa-star",
+    },
+    {
+        id: "injury",
+        label: "Injury",
+        icon: "fas fa-kit-medical",
+    },
+    {
+        id: "role_history",
+        label: "Role History",
+        icon: "fas fa-list-check",
+    },
+];
+
+const currentTabLabel = computed(() => {
+    return (
+        tabs.find((tab) => tab.id === activeTab.value)?.label ||
+        "Player Information"
+    );
+});
 
 const setActiveTab = (tab) => {
-    activeTab.value = tab;
-}
+    if (activeTab.value === tab) {
+        return;
+    }
 
+    activeTab.value = tab;
+};
 </script>
 
 <style scoped>
-.table {
-    font-size: 0.75rem; /* Smaller text size */
+/* Prevent horizontal layout explosions inside nested player components */
+.team-roster {
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
-.table th,
-.table td {
-    padding: 0.5rem; /* Smaller padding */
+/* Horizontal tab scrollbar */
+.scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: #374151 transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+    height: 4px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb {
+    background: #374151;
+    border-radius: 999px;
+}
+
+.scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: #4b5563;
+}
+
+/* Better touch scrolling on mobile */
+.scrollbar-thin {
+    -webkit-overflow-scrolling: touch;
 }
 </style>
+```

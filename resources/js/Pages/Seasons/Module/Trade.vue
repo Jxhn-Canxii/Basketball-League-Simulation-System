@@ -1,462 +1,586 @@
 <template>
-  <div class="trade-page bg-black rounded-lg min-h-screen">
-
-    <!-- =========================================================
-         HEADER
-    ========================================================== -->
-    <div class="trade-header">
-      <div>
-        <div class="flex items-center gap-3">
-          <div class="trade-header-icon">
-            ⇄
-          </div>
-
-          <div>
-            <h2 class="text-2xl font-bold text-gray-900">
-              {{ props.isOffSeason ? "Off-Season" : "In-Season" }} Trades
-            </h2>
-
-            <p class="text-sm text-gray-500">
-              AI-generated trade proposals and transactions
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div
-        v-if="proposals.length > 0"
-        class="trade-count"
-      >
-        {{ proposals.length }}
-        {{ proposals.length === 1 ? "Proposal" : "Proposals" }}
-      </div>
-    </div>
-
-
-    <!-- =========================================================
-         ACTION BAR
-    ========================================================== -->
     <div
-      v-if="!trade_season_end"
-      class="trade-actions"
+        class="trade-page w-full min-w-0 overflow-hidden rounded-xl border border-white/[0.06] bg-black text-white"
     >
-      <button
-        @click="generateTradeProposal"
-        class="trade-btn trade-btn-primary"
-      >
-        <span class="text-lg">＋</span>
-        Generate Proposal
-      </button>
-
-      <button
-        v-if="isTradeDone > 0"
-        @click="autoTrade"
-        class="trade-btn trade-btn-ai"
-      >
-        <span class="text-lg">✦</span>
-        Let AI Decide
-      </button>
-
-      <button
-        @click="endTrade"
-        class="trade-btn trade-btn-danger"
-      >
-        End Trade Season
-      </button>
-    </div>
-
-
-    <!-- =========================================================
-         NO PROPOSALS
-    ========================================================== -->
-    <div
-      v-if="proposals.length === 0"
-      class="empty-trades"
-    >
-      <div class="empty-trades-icon">
-        ⇄
-      </div>
-
-      <h3>No Trade Proposals</h3>
-
-      <p>
-        There are currently no trade proposals available for this season.
-      </p>
-
-      <button
-        v-if="!trade_season_end"
-        @click="generateTradeProposal"
-        class="trade-btn trade-btn-primary mt-5"
-      >
-        Generate Trade Proposal
-      </button>
-    </div>
-
-
-    <!-- =========================================================
-         TRADE PROPOSALS
-    ========================================================== -->
-    <div
-      v-else
-      class="trade-list"
-    >
-
-      <div
-        v-for="proposal in proposals"
-        :key="proposal.id"
-        class="trade-card"
-      >
-
-        <!-- =====================================================
-             TRADE CARD HEADER
-        ====================================================== -->
-        <div class="trade-card-header">
-
-          <div>
-            <div class="flex items-center gap-2 mb-1">
-              <span class="trade-number">
-                TRADE #{{ proposal.id }}
-              </span>
-
-              <span
-                class="trade-status"
-                :class="statusClass(proposal.status)"
-              >
-                {{ proposal.status }}
-              </span>
-            </div>
-
-            <h3 class="trade-title">
-              {{ proposal.team_count }}-Team Trade
-            </h3>
-
-            <p class="trade-subtitle">
-              {{ proposal.team_name_involved?.join(" • ") }}
-            </p>
-          </div>
-
-          <div class="trade-date">
-            {{ formatTradeDate(proposal.created_at) }}
-          </div>
-
-        </div>
-
-
-        <!-- =====================================================
-             TRADE FLOW
-        ====================================================== -->
-        <div class="trade-flow">
-
-          <!-- TEAM COLUMNS -->
-          <div
-            v-for="team in getTradeTeams(proposal)"
-            :key="team.id"
-            class="team-trade-column"
-          >
-
-            <!-- TEAM HEADER -->
+        <!-- =========================================================
+             HEADER
+        ========================================================== -->
+        <header
+            class="relative border-b border-white/[0.06] bg-gradient-to-r from-[#111111] via-[#0b0b0b] to-black px-4 py-4 sm:px-5"
+        >
             <div
-              class="team-column-header"
-              :style="teamHeaderStyle(team)"
+                class="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-blue-500 via-indigo-500 to-transparent"
+            ></div>
+
+            <div
+                class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              <div
-                class="team-logo-placeholder"
-                :style="{
-                  background: '#' + team.primary
-                }"
-              >
-                {{ team.name.substring(0, 2).toUpperCase() }}
-              </div>
+                <div class="flex min-w-0 items-center gap-3">
+                    <div
+                        class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-blue-500/20 bg-blue-500/10"
+                    >
+                        <span
+                            class="text-xl font-black text-blue-400"
+                        >
+                            ⇄
+                        </span>
+                    </div>
 
-              <div class="min-w-0">
+                    <div class="min-w-0">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <h2
+                                class="text-base font-black uppercase tracking-[0.12em] text-white sm:text-lg"
+                            >
+                                {{ props.isOffSeason ? "Off-Season" : "In-Season" }}
+                                Trades
+                            </h2>
+
+                            <span
+                                class="rounded-full border border-blue-500/15 bg-blue-500/10 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider text-blue-400"
+                            >
+                                {{ props.isOffSeason ? "OFF-SEASON" : "IN-SEASON" }}
+                            </span>
+                        </div>
+
+                        <p
+                            class="mt-1 text-[10px] font-semibold text-gray-600 sm:text-xs"
+                        >
+                            AI-generated trade proposals and transactions
+                        </p>
+                    </div>
+                </div>
+
                 <div
-                  class="team-name"
-                  :style="{ color: '#' + team.primary }"
+                    v-if="proposals.length > 0"
+                    class="flex w-fit shrink-0 items-center gap-2 rounded-full border border-white/[0.07] bg-white/[0.03] px-3 py-1.5"
                 >
-                  {{ team.name }}
-                </div>
+                    <span
+                        class="h-1.5 w-1.5 rounded-full bg-blue-500"
+                    ></span>
 
-                <div class="team-trade-label">
-                  Sends
+                    <span
+                        class="text-[9px] font-black uppercase tracking-wider text-gray-400"
+                    >
+                        {{ proposals.length }}
+                        {{ proposals.length === 1 ? "Proposal" : "Proposals" }}
+                    </span>
                 </div>
-              </div>
+            </div>
+        </header>
+
+        <!-- =========================================================
+             ACTION BAR
+        ========================================================== -->
+        <div
+            v-if="!trade_season_end"
+            class="border-b border-white/[0.05] bg-[#080808] p-3"
+        >
+            <div
+                class="flex flex-col gap-2 sm:flex-row sm:justify-end"
+            >
+                <button
+                    type="button"
+                    class="trade-btn trade-btn-primary"
+                    @click="generateTradeProposal"
+                >
+                    <span class="text-base leading-none">＋</span>
+                    Generate Proposal
+                </button>
+
+                <button
+                    v-if="isTradeDone > 0"
+                    type="button"
+                    class="trade-btn trade-btn-ai"
+                    @click="autoTrade"
+                >
+                    <span class="text-base leading-none">✦</span>
+                    Let AI Decide
+                </button>
+
+                <button
+                    type="button"
+                    class="trade-btn trade-btn-danger"
+                    @click="endTrade"
+                >
+                    <i class="fas fa-stop-circle text-[11px]"></i>
+                    End Trade Season
+                </button>
+            </div>
+        </div>
+
+        <!-- =========================================================
+             NO PROPOSALS
+        ========================================================== -->
+        <div
+            v-if="proposals.length === 0"
+            class="empty-trades"
+        >
+            <div class="empty-trades-icon">
+                ⇄
             </div>
 
+            <div
+                class="mb-2 text-[9px] font-black uppercase tracking-[0.2em] text-blue-500/70"
+            >
+                Trade Office
+            </div>
 
-            <!-- ASSETS SENT BY TEAM -->
-            <div class="assets-container">
+            <h3>No Trade Proposals</h3>
 
-              <template
-                v-for="asset in assetsSentByTeam(proposal, team.id)"
-                :key="asset.id"
-              >
+            <p>
+                There are currently no trade proposals available for this
+                season.
+            </p>
 
-                <!-- PLAYER -->
-                <div
-                  v-if="asset.asset_type === 'player'"
-                  class="asset-card player-asset"
-                  @click="showProfile(asset.player_id)"
-                >
-                  <div class="asset-icon player-icon">
-                    ●
-                  </div>
+            <button
+                v-if="!trade_season_end"
+                type="button"
+                class="trade-btn trade-btn-primary mt-5"
+                @click="generateTradeProposal"
+            >
+                <span class="text-base">＋</span>
+                Generate Trade Proposal
+            </button>
+        </div>
 
-                  <div class="asset-info">
-                    <div class="asset-name">
-                      {{ asset.player_name }}
-                    </div>
+        <!-- =========================================================
+             TRADE PROPOSALS
+        ========================================================== -->
+        <div
+            v-else
+            class="trade-list"
+        >
+            <article
+                v-for="proposal in proposals"
+                :key="proposal.id"
+                class="trade-card"
+            >
+                <!-- =================================================
+                     TRADE CARD HEADER
+                ================================================== -->
+                <div class="trade-card-header">
+                    <div class="min-w-0">
+                        <div class="mb-1.5 flex flex-wrap items-center gap-2">
+                            <span class="trade-number">
+                                TRADE #{{ proposal.id }}
+                            </span>
 
-                    <div class="asset-meta">
-                      {{ asset.role }}
-                    </div>
-                  </div>
+                            <span
+                                class="trade-status"
+                                :class="statusClass(proposal.status)"
+                            >
+                                <span
+                                    class="mr-1.5 inline-block h-1.5 w-1.5 rounded-full"
+                                ></span>
 
-                  <div class="asset-arrow">
-                    →
-                  </div>
-                </div>
+                                {{ proposal.status }}
+                            </span>
+                        </div>
 
+                        <h3 class="trade-title">
+                            {{ proposal.team_count }}-Team Trade
+                        </h3>
 
-                <!-- DRAFT PICK -->
-                <div
-                  v-else
-                  class="asset-card pick-asset"
-                >
-                  <div class="asset-icon pick-icon">
-                    #
-                  </div>
-
-                  <div class="asset-info">
-
-                    <div class="asset-name">
-                      {{ formatPick(asset) }}
-                    </div>
-
-                    <div class="asset-meta">
-                      Round {{ asset.pick_round }}
-                      · Season {{ asset.pick_season_id }}
+                        <p
+                            v-if="proposal.team_name_involved?.length"
+                            class="trade-subtitle"
+                        >
+                            {{ proposal.team_name_involved.join(" • ") }}
+                        </p>
                     </div>
 
                     <div
-                      v-if="asset.pick_protections"
-                      class="asset-protection"
+                        v-if="proposal.created_at"
+                        class="trade-date"
                     >
-                      {{ asset.pick_protections }}
+                        <i class="far fa-clock mr-1"></i>
+                        {{ formatTradeDate(proposal.created_at) }}
                     </div>
-
-                  </div>
-
-                  <div class="asset-arrow">
-                    →
-                  </div>
                 </div>
 
-              </template>
+                <!-- =================================================
+                     TRADE FLOW
+                ================================================== -->
+                <div class="trade-flow">
+                    <div
+                        v-for="team in getTradeTeams(proposal)"
+                        :key="team.id"
+                        class="team-trade-column"
+                    >
+                        <!-- TEAM HEADER -->
+                        <div
+                            class="team-column-header"
+                            :style="teamHeaderStyle(team)"
+                        >
+                            <div
+                                class="team-logo-placeholder"
+                                :style="{
+                                    background: team.primary
+                                        ? '#' + team.primary
+                                        : '#374151',
+                                }"
+                            >
+                                {{ getTeamInitials(team.name) }}
+                            </div>
 
+                            <div class="min-w-0 flex-1">
+                                <div
+                                    class="team-name"
+                                    :style="{
+                                        color: team.primary
+                                            ? '#' + team.primary
+                                            : '#d1d5db',
+                                    }"
+                                >
+                                    {{ team.name }}
+                                </div>
 
-              <!-- NOTHING SENT -->
-              <div
-                v-if="assetsSentByTeam(proposal, team.id).length === 0"
-                class="no-assets"
-              >
-                No assets
-              </div>
+                                <div class="team-trade-label">
+                                    <span
+                                        class="inline-block h-1 w-1 rounded-full bg-red-500"
+                                    ></span>
 
-            </div>
+                                    Sends
+                                </div>
+                            </div>
+                        </div>
 
+                        <!-- SENDS -->
+                        <div class="section-label sends-label">
+                            <span>Outgoing Assets</span>
+                            <span class="section-count">
+                                {{ assetsSentByTeam(proposal, team.id).length }}
+                            </span>
+                        </div>
 
-            <!-- RECEIVES SECTION -->
-            <div class="receives-divider">
-              <span>RECEIVES</span>
-            </div>
+                        <div class="assets-container">
+                            <template
+                                v-for="asset in assetsSentByTeam(
+                                    proposal,
+                                    team.id
+                                )"
+                                :key="asset.id"
+                            >
+                                <!-- PLAYER -->
+                                <button
+                                    v-if="asset.asset_type === 'player'"
+                                    type="button"
+                                    class="asset-card player-asset"
+                                    @click="showProfile(asset.player_id)"
+                                >
+                                    <div
+                                        class="asset-icon player-icon"
+                                    >
+                                        <i class="fas fa-user text-[11px]"></i>
+                                    </div>
 
+                                    <div class="asset-info text-left">
+                                        <div class="asset-name">
+                                            {{ asset.player_name }}
+                                        </div>
 
-            <div class="assets-container receives">
+                                        <div class="asset-meta">
+                                            {{ asset.role || "Player" }}
+                                        </div>
+                                    </div>
 
-              <template
-                v-for="asset in assetsReceivedByTeam(proposal, team.id)"
-                :key="'receive-' + asset.id"
-              >
+                                    <div class="asset-arrow">
+                                        →
+                                    </div>
+                                </button>
 
-                <!-- PLAYER -->
+                                <!-- DRAFT PICK -->
+                                <div
+                                    v-else
+                                    class="asset-card pick-asset"
+                                >
+                                    <div class="asset-icon pick-icon">
+                                        <i
+                                            class="fas fa-ticket-alt text-[10px]"
+                                        ></i>
+                                    </div>
+
+                                    <div class="asset-info">
+                                        <div class="asset-name">
+                                            {{ formatPick(asset) }}
+                                        </div>
+
+                                        <div class="asset-meta">
+                                            Round {{ asset.pick_round }}
+                                            <span class="mx-1 text-gray-700">
+                                                ·
+                                            </span>
+                                            Season {{ asset.pick_season_id }}
+                                        </div>
+
+                                        <div
+                                            v-if="asset.pick_protections"
+                                            class="asset-protection"
+                                        >
+                                            <i
+                                                class="fas fa-shield-alt mr-1 text-[8px]"
+                                            ></i>
+
+                                            {{ asset.pick_protections }}
+                                        </div>
+                                    </div>
+
+                                    <div class="asset-arrow">
+                                        →
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div
+                                v-if="
+                                    assetsSentByTeam(
+                                        proposal,
+                                        team.id
+                                    ).length === 0
+                                "
+                                class="no-assets"
+                            >
+                                <i
+                                    class="fas fa-minus-circle mr-1 text-[9px]"
+                                ></i>
+                                No outgoing assets
+                            </div>
+                        </div>
+
+                        <!-- RECEIVES DIVIDER -->
+                        <div class="receives-divider">
+                            <span>
+                                <i
+                                    class="fas fa-arrow-down mr-1 text-[8px]"
+                                ></i>
+                                RECEIVES
+                            </span>
+                        </div>
+
+                        <!-- RECEIVES -->
+                        <div class="section-label receives-label">
+                            <span>Incoming Assets</span>
+                            <span class="section-count">
+                                {{
+                                    assetsReceivedByTeam(
+                                        proposal,
+                                        team.id
+                                    ).length
+                                }}
+                            </span>
+                        </div>
+
+                        <div class="assets-container receives">
+                            <template
+                                v-for="asset in assetsReceivedByTeam(
+                                    proposal,
+                                    team.id
+                                )"
+                                :key="'receive-' + asset.id"
+                            >
+                                <!-- PLAYER -->
+                                <button
+                                    v-if="asset.asset_type === 'player'"
+                                    type="button"
+                                    class="asset-card received-player"
+                                    @click="showProfile(asset.player_id)"
+                                >
+                                    <div
+                                        class="asset-arrow receive-arrow"
+                                    >
+                                        ←
+                                    </div>
+
+                                    <div
+                                        class="asset-icon player-icon received-icon"
+                                    >
+                                        <i
+                                            class="fas fa-user text-[11px]"
+                                        ></i>
+                                    </div>
+
+                                    <div class="asset-info text-left">
+                                        <div class="asset-name">
+                                            {{ asset.player_name }}
+                                        </div>
+
+                                        <div class="asset-meta">
+                                            {{ asset.role || "Player" }}
+                                        </div>
+
+                                        <div
+                                            v-if="asset.from_team"
+                                            class="asset-from"
+                                        >
+                                            From {{ asset.from_team }}
+                                        </div>
+                                    </div>
+                                </button>
+
+                                <!-- PICK -->
+                                <div
+                                    v-else
+                                    class="asset-card received-pick"
+                                >
+                                    <div
+                                        class="asset-arrow receive-arrow"
+                                    >
+                                        ←
+                                    </div>
+
+                                    <div class="asset-icon pick-icon">
+                                        <i
+                                            class="fas fa-ticket-alt text-[10px]"
+                                        ></i>
+                                    </div>
+
+                                    <div class="asset-info">
+                                        <div class="asset-name">
+                                            {{ formatPick(asset) }}
+                                        </div>
+
+                                        <div class="asset-meta">
+                                            Round {{ asset.pick_round }}
+                                            <span class="mx-1 text-gray-700">
+                                                ·
+                                            </span>
+                                            Season {{ asset.pick_season_id }}
+                                        </div>
+
+                                        <div
+                                            v-if="asset.from_team"
+                                            class="asset-from"
+                                        >
+                                            From {{ asset.from_team }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </template>
+
+                            <div
+                                v-if="
+                                    assetsReceivedByTeam(
+                                        proposal,
+                                        team.id
+                                    ).length === 0
+                                "
+                                class="no-assets"
+                            >
+                                <i
+                                    class="fas fa-minus-circle mr-1 text-[9px]"
+                                ></i>
+                                Nothing received
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- =================================================
+                     TRADE SUMMARY
+                ================================================== -->
+                <div class="trade-summary">
+                    <div class="summary-left">
+                        <div class="summary-icon">
+                            ⇄
+                        </div>
+
+                        <div class="min-w-0">
+                            <div class="summary-title">
+                                {{ proposal.team_count }} teams involved
+                            </div>
+
+                            <div class="summary-text">
+                                {{ totalPlayers(proposal) }} players
+                                <span class="mx-1 text-gray-700">·</span>
+                                {{ totalPicks(proposal) }} draft picks
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="summary-teams">
+                        <div
+                            v-for="team in getTradeTeams(proposal)"
+                            :key="'summary-' + team.id"
+                            class="summary-team"
+                        >
+                            <span
+                                class="summary-dot"
+                                :style="{
+                                    background: team.primary
+                                        ? '#' + team.primary
+                                        : '#6b7280',
+                                }"
+                            ></span>
+
+                            <span class="truncate">
+                                {{ team.name }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- =================================================
+                     STATUS MESSAGE
+                ================================================== -->
                 <div
-                  v-if="asset.asset_type === 'player'"
-                  class="asset-card received-player"
-                  @click="showProfile(asset.player_id)"
+                    v-if="proposal.status === 'pending'"
+                    class="trade-pending-message"
                 >
-                  <div class="asset-arrow receive-arrow">
-                    ←
-                  </div>
-
-                  <div class="asset-icon player-icon">
-                    ●
-                  </div>
-
-                  <div class="asset-info">
-                    <div class="asset-name">
-                      {{ asset.player_name }}
+                    <div class="status-message-icon">
+                        <i class="fas fa-hourglass-half"></i>
                     </div>
 
-                    <div class="asset-meta">
-                      {{ asset.role }}
-                    </div>
+                    <div>
+                        <div class="status-message-title">
+                            Awaiting Decision
+                        </div>
 
-                    <div class="asset-from">
-                      From {{ asset.from_team }}
+                        <div class="status-message-text">
+                            Waiting for AI decision
+                        </div>
                     </div>
-                  </div>
                 </div>
 
-
-                <!-- PICK -->
                 <div
-                  v-else
-                  class="asset-card received-pick"
+                    v-if="proposal.status === 'approved'"
+                    class="trade-approved-message"
                 >
-                  <div class="asset-arrow receive-arrow">
-                    ←
-                  </div>
-
-                  <div class="asset-icon pick-icon">
-                    #
-                  </div>
-
-                  <div class="asset-info">
-
-                    <div class="asset-name">
-                      {{ formatPick(asset) }}
+                    <div class="status-message-icon">
+                        <i class="fas fa-check"></i>
                     </div>
 
-                    <div class="asset-meta">
-                      Round {{ asset.pick_round }}
-                      · Season {{ asset.pick_season_id }}
-                    </div>
+                    <div>
+                        <div class="status-message-title">
+                            Trade Completed
+                        </div>
 
-                    <div class="asset-from">
-                      From {{ asset.from_team }}
+                        <div class="status-message-text">
+                            Trade approved and completed
+                        </div>
                     </div>
-
-                  </div>
                 </div>
-
-              </template>
-
-
-              <div
-                v-if="assetsReceivedByTeam(proposal, team.id).length === 0"
-                class="no-assets"
-              >
-                Nothing received
-              </div>
-
-            </div>
-
-          </div>
-
+            </article>
         </div>
 
-
-        <!-- =====================================================
-             TRADE SUMMARY
-        ====================================================== -->
-        <div class="trade-summary">
-
-          <div class="summary-left">
-
-            <span class="summary-icon">
-              ⇄
-            </span>
-
-            <div>
-              <div class="summary-title">
-                {{ proposal.team_count }} teams involved
-              </div>
-
-              <div class="summary-text">
-                {{ totalPlayers(proposal) }} players
-                ·
-                {{ totalPicks(proposal) }} draft picks
-              </div>
-            </div>
-
-          </div>
-
-
-          <!-- ORIGINAL TEAMS -->
-          <div class="summary-teams">
-
-            <div
-              v-for="team in getTradeTeams(proposal)"
-              :key="'summary-' + team.id"
-              class="summary-team"
-            >
-              <span
-                class="summary-dot"
-                :style="{ background: '#' + team.primary }"
-              ></span>
-
-              {{ team.name }}
-
-            </div>
-
-          </div>
-
-        </div>
-
-
-        <!-- =====================================================
-             PENDING / APPROVED MESSAGE
-        ====================================================== -->
-        <div
-          v-if="proposal.status === 'pending'"
-          class="trade-pending-message"
+        <!-- =========================================================
+             PLAYER PROFILE MODAL
+        ========================================================== -->
+        <Modal
+            :show="showPlayerProfileModal"
+            :maxWidth="'6xl'"
+            title="Player Profile"
+            @close="showPlayerProfileModal = false"
         >
-          <span>⏳</span>
-
-          <span>
-            Waiting for AI decision
-          </span>
-        </div>
-
-        <div
-          v-if="proposal.status === 'approved'"
-          class="trade-approved-message"
-        >
-          <span>✓</span>
-
-          <span>
-            Trade approved and completed
-          </span>
-        </div>
-
-      </div>
-
+            <div class="block bg-black p-3 sm:p-5">
+                <PlayerPerformance
+                    v-if="selectedPlayer"
+                    :key="selectedPlayer"
+                    :player_id="selectedPlayer"
+                />
+            </div>
+        </Modal>
     </div>
-
-
-    <!-- =========================================================
-         PLAYER PROFILE MODAL
-    ========================================================== -->
-    <Modal
-      :show="showPlayerProfileModal"
-      :maxWidth="'6xl'"
-      title="Player Profile"
-      @close="showPlayerProfileModal = false"
-    >
-      <div class="p-6 block">
-
-        <PlayerPerformance
-          v-if="selectedPlayer"
-          :key="selectedPlayer"
-          :player_id="selectedPlayer"
-        />
-
-      </div>
-    </Modal>
-
-  </div>
 </template>
-
 
 <script setup>
 import { ref, onMounted } from "vue";
@@ -469,12 +593,11 @@ import PlayerPerformance from "@/Pages/Players/Module/PlayerPerformance.vue";
 const emits = defineEmits(["newSeason"]);
 
 const props = defineProps({
-  isOffSeason: {
-    type: Boolean,
-    default: true,
-  },
+    isOffSeason: {
+        type: Boolean,
+        default: true,
+    },
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -490,7 +613,6 @@ const current_season = ref(null);
 const trade_season_end = ref(false);
 const isTradeDone = ref(false);
 
-
 /*
 |--------------------------------------------------------------------------
 | LIFECYCLE
@@ -498,9 +620,8 @@ const isTradeDone = ref(false);
 */
 
 onMounted(async () => {
-  await loadData();
+    await loadData();
 });
-
 
 /*
 |--------------------------------------------------------------------------
@@ -509,15 +630,12 @@ onMounted(async () => {
 */
 
 const loadData = async () => {
+    await fetchPendingTradeProposals();
 
-  await fetchPendingTradeProposals();
-
-  if (isTradeDone.value == 0) {
-    await fetchApprovedTradeProposals();
-  }
-
+    if (isTradeDone.value == 0) {
+        await fetchApprovedTradeProposals();
+    }
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -526,16 +644,13 @@ const loadData = async () => {
 */
 
 const showProfile = (playerId) => {
+    if (!playerId || playerId === 0) {
+        return;
+    }
 
-  if (!playerId || playerId === 0) {
-    return;
-  }
-
-  selectedPlayer.value = playerId;
-  showPlayerProfileModal.value = true;
-
+    selectedPlayer.value = playerId;
+    showPlayerProfileModal.value = true;
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -544,33 +659,26 @@ const showProfile = (playerId) => {
 */
 
 const fetchPendingTradeProposals = async () => {
+    try {
+        const response = await axios.post(
+            route("trade.list.pending"),
+            {
+                is_off_season: props.isOffSeason,
+            }
+        );
 
-  try {
+        proposals.value = response.data.trade_proposals || [];
 
-    const response = await axios.post(
-      route("trade.list.pending"),
-      {
-        is_off_season: props.isOffSeason,
-      }
-    );
+        isTradeDone.value = proposals.value.length;
 
-    proposals.value = response.data.trade_proposals || [];
-
-    isTradeDone.value = proposals.value.length;
-
-    current_season.value = response.data.current_season;
-
-  } catch (error) {
-
-    console.error(
-      "Error fetching pending trade proposals:",
-      error
-    );
-
-  }
-
+        current_season.value = response.data.current_season;
+    } catch (error) {
+        console.error(
+            "Error fetching pending trade proposals:",
+            error
+        );
+    }
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -579,207 +687,201 @@ const fetchPendingTradeProposals = async () => {
 */
 
 const fetchApprovedTradeProposals = async () => {
+    try {
+        const response = await axios.post(
+            route("trade.list.approved"),
+            {
+                is_off_season: props.isOffSeason,
+            }
+        );
 
-  try {
+        proposals.value = response.data.trade_proposals || [];
 
-    const response = await axios.post(
-      route("trade.list.approved"),
-      {
-        is_off_season: props.isOffSeason,
-      }
-    );
+        current_season.value = response.data.current_season;
 
-    proposals.value = response.data.trade_proposals || [];
-
-    current_season.value = response.data.current_season;
-
-    trade_season_end.value =
-      response.data.trade_season_end;
-
-  } catch (error) {
-
-    console.error(
-      "Error fetching approved trade proposals:",
-      error
-    );
-
-  }
-
+        trade_season_end.value =
+            response.data.trade_season_end;
+    } catch (error) {
+        console.error(
+            "Error fetching approved trade proposals:",
+            error
+        );
+    }
 };
-
 
 /*
 |--------------------------------------------------------------------------
 | GET ALL TEAMS INVOLVED
 |--------------------------------------------------------------------------
-|
-| We derive the team information directly from the trade assets.
-|
 */
 
 const getTradeTeams = (proposal) => {
+    const teams = new Map();
 
-  const teams = new Map();
+    const assets =
+        proposal.tradePlayers ||
+        proposal.players ||
+        [];
 
-  const assets =
-    proposal.tradePlayers ||
-    proposal.players ||
-    [];
-
-  assets.forEach((asset) => {
-
-    if (!teams.has(asset.from_team_id)) {
-
-      teams.set(
-        asset.from_team_id,
-        {
-          id: asset.from_team_id,
-          name: asset.from_team,
-          primary: asset.from_team_primary_color,
-          secondary: asset.from_team_secondary_color,
+    assets.forEach((asset) => {
+        if (
+            asset.from_team_id &&
+            !teams.has(asset.from_team_id)
+        ) {
+            teams.set(
+                asset.from_team_id,
+                {
+                    id: asset.from_team_id,
+                    name: asset.from_team,
+                    primary: asset.from_team_primary_color,
+                    secondary: asset.from_team_secondary_color,
+                }
+            );
         }
-      );
 
-    }
-
-    if (!teams.has(asset.to_team_id)) {
-
-      teams.set(
-        asset.to_team_id,
-        {
-          id: asset.to_team_id,
-          name: asset.to_team,
-          primary: asset.to_team_primary_color,
-          secondary: asset.to_team_secondary_color,
+        if (
+            asset.to_team_id &&
+            !teams.has(asset.to_team_id)
+        ) {
+            teams.set(
+                asset.to_team_id,
+                {
+                    id: asset.to_team_id,
+                    name: asset.to_team,
+                    primary: asset.to_team_primary_color,
+                    secondary: asset.to_team_secondary_color,
+                }
+            );
         }
-      );
+    });
 
-    }
-
-  });
-
-  return Array.from(teams.values());
-
+    return Array.from(teams.values());
 };
-
 
 /*
 |--------------------------------------------------------------------------
-| ASSETS SENT BY TEAM
+| TEAM INITIALS
+|--------------------------------------------------------------------------
+*/
+
+const getTeamInitials = (name) => {
+    if (!name) {
+        return "??";
+    }
+
+    const words = name.trim().split(/\s+/);
+
+    if (words.length === 1) {
+        return words[0].substring(0, 2).toUpperCase();
+    }
+
+    return (
+        words[0].charAt(0) +
+        words[words.length - 1].charAt(0)
+    ).toUpperCase();
+};
+
+/*
+|--------------------------------------------------------------------------
+| ASSETS SENT
 |--------------------------------------------------------------------------
 */
 
 const assetsSentByTeam = (proposal, teamId) => {
+    const assets =
+        proposal.tradePlayers ||
+        proposal.players ||
+        [];
 
-  const assets =
-    proposal.tradePlayers ||
-    proposal.players ||
-    [];
-
-  return assets.filter(
-    (asset) =>
-      Number(asset.from_team_id) === Number(teamId)
-  );
-
+    return assets.filter(
+        (asset) =>
+            Number(asset.from_team_id) === Number(teamId)
+    );
 };
-
 
 /*
 |--------------------------------------------------------------------------
-| ASSETS RECEIVED BY TEAM
+| ASSETS RECEIVED
 |--------------------------------------------------------------------------
 */
 
 const assetsReceivedByTeam = (proposal, teamId) => {
+    const assets =
+        proposal.tradePlayers ||
+        proposal.players ||
+        [];
 
-  const assets =
-    proposal.tradePlayers ||
-    proposal.players ||
-    [];
-
-  return assets.filter(
-    (asset) =>
-      Number(asset.to_team_id) === Number(teamId)
-  );
-
+    return assets.filter(
+        (asset) =>
+            Number(asset.to_team_id) === Number(teamId)
+    );
 };
-
 
 /*
 |--------------------------------------------------------------------------
-| PLAYER / PICK COUNTS
+| COUNTS
 |--------------------------------------------------------------------------
 */
 
 const totalPlayers = (proposal) => {
+    const assets =
+        proposal.tradePlayers ||
+        proposal.players ||
+        [];
 
-  const assets =
-    proposal.tradePlayers ||
-    proposal.players ||
-    [];
-
-  return assets.filter(
-    (asset) => asset.asset_type === "player"
-  ).length;
-
+    return assets.filter(
+        (asset) => asset.asset_type === "player"
+    ).length;
 };
-
 
 const totalPicks = (proposal) => {
+    const assets =
+        proposal.tradePlayers ||
+        proposal.players ||
+        [];
 
-  const assets =
-    proposal.tradePlayers ||
-    proposal.players ||
-    [];
-
-  return assets.filter(
-    (asset) => asset.asset_type === "draft_pick"
-  ).length;
-
+    return assets.filter(
+        (asset) => asset.asset_type === "draft_pick"
+    ).length;
 };
-
 
 /*
 |--------------------------------------------------------------------------
-| FORMAT DRAFT PICK
+| FORMAT PICK
 |--------------------------------------------------------------------------
 */
 
 const formatPick = (asset) => {
+    if (asset.asset_type !== "draft_pick") {
+        return asset.player_name;
+    }
 
-  if (asset.asset_type !== "draft_pick") {
-    return asset.player_name;
-  }
+    const season =
+        asset.pick_season_id
+            ? `S${asset.pick_season_id}`
+            : "";
 
-  const season =
-    asset.pick_season_id
-      ? `S${asset.pick_season_id}`
-      : "";
+    const round =
+        asset.pick_round
+            ? `Round ${asset.pick_round}`
+            : "";
 
-  const round =
-    asset.pick_round
-      ? `Round ${asset.pick_round}`
-      : "";
-
-  return `${season} ${round}`.trim();
-
+    return `${season} ${round}`.trim() || "Draft Pick";
 };
-
 
 /*
 |--------------------------------------------------------------------------
-| TEAM HEADER STYLE
+| TEAM HEADER
 |--------------------------------------------------------------------------
 */
 
 const teamHeaderStyle = (team) => {
-
-  return {
-    borderTopColor: `#${team.primary}`,
-  };
-
+    return {
+        borderTopColor: team.primary
+            ? `#${team.primary}`
+            : "#374151",
+    };
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -788,23 +890,18 @@ const teamHeaderStyle = (team) => {
 */
 
 const statusClass = (status) => {
+    switch (String(status).toLowerCase()) {
+        case "approved":
+            return "status-approved";
 
-  switch (String(status).toLowerCase()) {
+        case "rejected":
+            return "status-rejected";
 
-    case "approved":
-      return "status-approved";
-
-    case "rejected":
-      return "status-rejected";
-
-    case "pending":
-    default:
-      return "status-pending";
-
-  }
-
+        case "pending":
+        default:
+            return "status-pending";
+    }
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -813,29 +910,23 @@ const statusClass = (status) => {
 */
 
 const formatTradeDate = (date) => {
+    if (!date) {
+        return "";
+    }
 
-  if (!date) {
-    return "";
-  }
-
-  try {
-
-    return new Date(date.replace(" ", "T"))
-      .toLocaleString([], {
-        month: "short",
-        day: "numeric",
-        hour: "numeric",
-        minute: "2-digit",
-      });
-
-  } catch {
-
-    return date;
-
-  }
-
+    try {
+        return new Date(
+            String(date).replace(" ", "T")
+        ).toLocaleString([], {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+        });
+    } catch {
+        return date;
+    }
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -844,65 +935,66 @@ const formatTradeDate = (date) => {
 */
 
 const endTrade = async () => {
+    try {
+        Swal.fire({
+            title: "Processing...",
+            text: "Ending trade season...",
+            icon: "info",
+            allowOutsideClick: false,
+            allowEscapeKey: false,
+            showConfirmButton: false,
+            background: "#0b0b0b",
+            color: "#fff",
+            didOpen: () => {
+                Swal.showLoading();
+            },
+        });
 
-  try {
+        await axios.post(
+            route(
+                props.isOffSeason
+                    ? "trade.end.offseason"
+                    : "trade.end.inseason"
+            )
+        );
 
-    Swal.fire({
-      title: "Processing...",
-      text: "Ending trade season...",
-      icon: "info",
-      allowOutsideClick: false,
-      allowEscapeKey: false,
-      showConfirmButton: false,
-      didOpen: () => {
-        Swal.showLoading();
-      },
-    });
+        Swal.close();
 
-    await axios.post(
-      route(
-        props.isOffSeason
-          ? "trade.end.offseason"
-          : "trade.end.inseason"
-      )
-    );
+        await Swal.fire({
+            title: "Trade Season Complete",
+            text:
+                "Trades were completed and the season storyline was created.",
+            icon: "success",
+            confirmButtonText: "OK",
+            background: "#0b0b0b",
+            color: "#fff",
+            confirmButtonColor: "#2563eb",
+        });
 
-    Swal.close();
+        await fetchApprovedTradeProposals();
 
-    await Swal.fire({
-      title: "Trade Season Complete",
-      text:
-        "Trades were completed and the season storyline was created.",
-      icon: "success",
-      confirmButtonText: "OK",
-    });
+        emits("newSeason", Math.random());
+    } catch (error) {
+        Swal.close();
 
-    await fetchApprovedTradeProposals();
+        await Swal.fire({
+            title: "Error",
+            text:
+                error.response?.data?.message ||
+                "Failed to end trade season.",
+            icon: "error",
+            confirmButtonText: "OK",
+            background: "#0b0b0b",
+            color: "#fff",
+            confirmButtonColor: "#dc2626",
+        });
 
-    emits("newSeason", Math.random());
-
-  } catch (error) {
-
-    Swal.close();
-
-    await Swal.fire({
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        "Failed to end trade season.",
-      icon: "error",
-      confirmButtonText: "OK",
-    });
-
-    console.error(
-      "Error in endTrade:",
-      error
-    );
-
-  }
-
+        console.error(
+            "Error in endTrade:",
+            error
+        );
+    }
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -911,68 +1003,63 @@ const endTrade = async () => {
 */
 
 const autoTrade = async () => {
-
-  Swal.fire({
-    title: "AI Trade Office",
-    text:
-      "The AI is evaluating every proposal...",
-    icon: "info",
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-
-  try {
-
-    const response = await axios.post(
-      route("trade.decision.automated"),
-      {
-        is_off_season: props.isOffSeason,
-      }
-    );
-
-    if (
-      response &&
-      response.data &&
-      response.data.decisions
-    ) {
-
-      proposals.value = [];
-
-      await fetchApprovedTradeProposals();
-
-      emits(
-        "newSeason",
-        Math.random()
-      );
-
-    }
-
-    Swal.close();
-
-  } catch (error) {
-
-    Swal.close();
-
-    console.error(
-      "Error deciding trade:",
-      error
-    );
-
-    await Swal.fire({
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while deciding trades.",
-      icon: "error",
+    Swal.fire({
+        title: "AI Trade Office",
+        text: "The AI is evaluating every proposal...",
+        icon: "info",
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        background: "#0b0b0b",
+        color: "#fff",
+        didOpen: () => {
+            Swal.showLoading();
+        },
     });
 
-  }
+    try {
+        const response = await axios.post(
+            route("trade.decision.automated"),
+            {
+                is_off_season: props.isOffSeason,
+            }
+        );
 
+        if (
+            response &&
+            response.data &&
+            response.data.decisions
+        ) {
+            proposals.value = [];
+
+            await fetchApprovedTradeProposals();
+
+            emits(
+                "newSeason",
+                Math.random()
+            );
+        }
+
+        Swal.close();
+    } catch (error) {
+        Swal.close();
+
+        console.error(
+            "Error deciding trade:",
+            error
+        );
+
+        await Swal.fire({
+            title: "Error",
+            text:
+                error.response?.data?.message ||
+                "An error occurred while deciding trades.",
+            icon: "error",
+            background: "#0b0b0b",
+            color: "#fff",
+            confirmButtonColor: "#dc2626",
+        });
+    }
 };
-
 
 /*
 |--------------------------------------------------------------------------
@@ -981,64 +1068,65 @@ const autoTrade = async () => {
 */
 
 const generateTradeProposal = async () => {
-
-  Swal.fire({
-    title: "Trade Machine",
-    text:
-      "Finding teams, players and draft picks that make sense together...",
-    icon: "info",
-    showConfirmButton: false,
-    allowOutsideClick: false,
-    didOpen: () => {
-      Swal.showLoading();
-    },
-  });
-
-  try {
-
-    await axios.post(
-      route("trade.generate"),
-      {
-        is_off_season: props.isOffSeason,
-      }
-    );
-
-    Swal.close();
-
-    await Swal.fire({
-      title: "Proposal Generated",
-      text:
-        "A new trade proposal has been generated.",
-      icon: "success",
-      confirmButtonText: "View Trade",
+    Swal.fire({
+        title: "Trade Machine",
+        text:
+            "Finding teams, players and draft picks that make sense together...",
+        icon: "info",
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        background: "#0b0b0b",
+        color: "#fff",
+        didOpen: () => {
+            Swal.showLoading();
+        },
     });
 
-    await fetchPendingTradeProposals();
+    try {
+        await axios.post(
+            route("trade.generate"),
+            {
+                is_off_season: props.isOffSeason,
+            }
+        );
 
-  } catch (error) {
+        Swal.close();
 
-    Swal.close();
+        await Swal.fire({
+            title: "Proposal Generated",
+            text:
+                "A new trade proposal has been generated.",
+            icon: "success",
+            confirmButtonText: "View Trade",
+            background: "#0b0b0b",
+            color: "#fff",
+            confirmButtonColor: "#2563eb",
+        });
 
-    console.error(
-      "Error generating trade proposal:",
-      error
-    );
+        await fetchPendingTradeProposals();
+    } catch (error) {
+        Swal.close();
 
-    await Swal.fire({
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while generating the trade proposal.",
-      icon: "error",
-    });
+        console.error(
+            "Error generating trade proposal:",
+            error
+        );
 
-  }
-
+        await Swal.fire({
+            title: "Error",
+            text:
+                error.response?.data?.message ||
+                "An error occurred while generating the trade proposal.",
+            icon: "error",
+            background: "#0b0b0b",
+            color: "#fff",
+            confirmButtonColor: "#dc2626",
+        });
+    }
 };
 </script>
 
 <style scoped>
-
 /*
 |--------------------------------------------------------------------------
 | PAGE
@@ -1046,163 +1134,94 @@ const generateTradeProposal = async () => {
 */
 
 .trade-page {
-  width: 100%;
-  max-width: 1500px;
-  margin: 0 auto;
-  padding: 20px;
-
-  color: #18181a;
+    max-width: 1600px;
+    margin: 0 auto;
 }
-
 
 /*
 |--------------------------------------------------------------------------
-| HEADER
+| BUTTONS
 |--------------------------------------------------------------------------
 */
-
-.trade-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-
-  margin-bottom: 22px;
-}
-
-.trade-header-icon {
-  width: 48px;
-  height: 48px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border-radius: 14px;
-
-  background: linear-gradient(
-    135deg,
-    #1f2937,
-    #111827
-  );
-
-  color: #60a5fa;
-
-  font-size: 27px;
-  font-weight: 800;
-
-  border: 1px solid #374151;
-
-  box-shadow:
-    0 4px 15px rgba(0, 0, 0, .35);
-}
-
-.trade-header h2 {
-  color: #f9fafb;
-}
-
-.trade-count {
-  padding: 8px 14px;
-
-  border-radius: 999px;
-
-  background: #1f2937;
-
-  color: #d1d5db;
-
-  font-size: 13px;
-  font-weight: 700;
-
-  border: 1px solid #374151;
-}
-
-
-/*
-|--------------------------------------------------------------------------
-| ACTION BAR
-|--------------------------------------------------------------------------
-*/
-
-.trade-actions {
-  display: flex;
-  justify-content: flex-end;
-
-  gap: 10px;
-
-  padding: 14px;
-
-  margin-bottom: 22px;
-
-  border: 1px solid #374151;
-
-  border-radius: 14px;
-
-  background:
-    linear-gradient(
-      135deg,
-      #161b22,
-      #111827
-    );
-
-  box-shadow:
-    0 5px 20px rgba(0, 0, 0, .25);
-}
 
 .trade-btn {
-  border: 1px solid transparent;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
 
-  border-radius: 9px;
+    min-height: 38px;
+    padding: 8px 14px;
 
-  padding: 10px 16px;
+    border-radius: 9px;
+    border: 1px solid transparent;
 
-  color: white;
+    color: white;
 
-  font-size: 14px;
-  font-weight: 700;
+    font-size: 10px;
+    font-weight: 900;
 
-  cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
 
-  transition:
-    transform .15s ease,
-    opacity .15s ease,
-    box-shadow .15s ease;
+    cursor: pointer;
+
+    transition:
+        transform 0.15s ease,
+        background 0.15s ease,
+        border-color 0.15s ease,
+        box-shadow 0.15s ease;
 }
 
 .trade-btn:hover {
-  transform: translateY(-1px);
-  opacity: .95;
+    transform: translateY(-1px);
+}
+
+.trade-btn:active {
+    transform: translateY(0);
 }
 
 .trade-btn-primary {
-  background: #2563eb;
+    background: #2563eb;
+    border-color: #3b82f6;
 
-  box-shadow:
-    0 3px 12px rgba(37, 99, 235, .25);
+    box-shadow:
+        0 4px 14px rgba(37, 99, 235, 0.2);
 }
 
 .trade-btn-primary:hover {
-  box-shadow:
-    0 5px 18px rgba(37, 99, 235, .4);
+    background: #1d4ed8;
+
+    box-shadow:
+        0 6px 20px rgba(37, 99, 235, 0.3);
 }
 
 .trade-btn-ai {
-  background: #059669;
+    background: #047857;
+    border-color: #059669;
 
-  box-shadow:
-    0 3px 12px rgba(5, 150, 105, .25);
+    box-shadow:
+        0 4px 14px rgba(5, 150, 105, 0.18);
 }
 
 .trade-btn-ai:hover {
-  box-shadow:
-    0 5px 18px rgba(5, 150, 105, .4);
+    background: #065f46;
+
+    box-shadow:
+        0 6px 20px rgba(5, 150, 105, 0.25);
 }
 
 .trade-btn-danger {
-  background: #dc2626;
+    background: #991b1b;
+    border-color: #b91c1c;
 
-  box-shadow:
-    0 3px 12px rgba(220, 38, 38, .2);
+    box-shadow:
+        0 4px 14px rgba(220, 38, 38, 0.15);
 }
 
+.trade-btn-danger:hover {
+    background: #7f1d1d;
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -1211,56 +1230,65 @@ const generateTradeProposal = async () => {
 */
 
 .empty-trades {
-  text-align: center;
+    display: flex;
+    min-height: 280px;
 
-  padding: 80px 20px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 
-  border: 1px dashed #374151;
+    padding: 40px 20px;
 
-  border-radius: 18px;
+    text-align: center;
 
-  background:
-    radial-gradient(
-      circle at center,
-      #1f2937 0%,
-      #111827 65%
-    );
+    background:
+        radial-gradient(
+            circle at center,
+            rgba(30, 64, 175, 0.08),
+            transparent 55%
+        );
 }
 
 .empty-trades-icon {
-  width: 64px;
-  height: 64px;
+    display: flex;
 
-  margin: 0 auto 16px;
+    width: 58px;
+    height: 58px;
 
-  border-radius: 18px;
+    align-items: center;
+    justify-content: center;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+    margin-bottom: 12px;
 
-  background: #1f2937;
+    border-radius: 16px;
 
-  color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.12);
 
-  font-size: 32px;
+    background: rgba(59, 130, 246, 0.06);
 
-  border: 1px solid #374151;
+    color: #3b82f6;
+
+    font-size: 28px;
+    font-weight: 900;
 }
 
 .empty-trades h3 {
-  font-size: 20px;
-  font-weight: 800;
+    color: #f3f4f6;
 
-  color: #f9fafb;
+    font-size: 15px;
+    font-weight: 900;
 }
 
 .empty-trades p {
-  margin-top: 5px;
+    max-width: 420px;
 
-  color: #9ca3af;
+    margin-top: 5px;
+
+    color: #4b5563;
+
+    font-size: 11px;
+    line-height: 1.6;
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -1269,12 +1297,12 @@ const generateTradeProposal = async () => {
 */
 
 .trade-list {
-  display: flex;
-  flex-direction: column;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
 
-  gap: 24px;
+    padding: 12px;
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -1283,77 +1311,87 @@ const generateTradeProposal = async () => {
 */
 
 .trade-card {
-  overflow: hidden;
+    min-width: 0;
 
-  background: #111827;
+    overflow: hidden;
 
-  border: 1px solid #374151;
+    border-radius: 13px;
 
-  border-radius: 18px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
 
-  box-shadow:
-    0 8px 30px rgba(0, 0, 0, .3);
+    background: #0a0a0a;
+
+    box-shadow:
+        0 8px 30px rgba(0, 0, 0, 0.3);
 }
-
 
 /*
 |--------------------------------------------------------------------------
-| TRADE CARD HEADER
+| CARD HEADER
 |--------------------------------------------------------------------------
 */
 
 .trade-card-header {
-  display: flex;
+    display: flex;
 
-  justify-content: space-between;
-  align-items: center;
+    align-items: center;
+    justify-content: space-between;
 
-  padding: 20px 22px;
+    gap: 15px;
 
-  border-bottom: 1px solid #374151;
+    padding: 14px 16px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #1b2230,
-      #111827
-    );
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+
+    background:
+        linear-gradient(
+            135deg,
+            #111111,
+            #090909
+        );
 }
 
 .trade-number {
-  font-size: 11px;
+    color: #4b5563;
 
-  font-weight: 800;
+    font-size: 8px;
+    font-weight: 900;
 
-  letter-spacing: .08em;
-
-  color: #6b7280;
+    letter-spacing: 0.16em;
 }
 
 .trade-title {
-  margin-top: 3px;
+    color: #f3f4f6;
 
-  font-size: 20px;
+    font-size: 14px;
+    font-weight: 900;
 
-  font-weight: 800;
-
-  color: #f9fafb;
+    line-height: 1.2;
 }
 
 .trade-subtitle {
-  margin-top: 3px;
+    max-width: 700px;
 
-  font-size: 13px;
+    overflow: hidden;
 
-  color: #9ca3af;
+    margin-top: 3px;
+
+    color: #52525b;
+
+    font-size: 9px;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .trade-date {
-  font-size: 12px;
+    flex-shrink: 0;
 
-  color: #6b7280;
+    color: #52525b;
+
+    font-size: 9px;
+    font-weight: 700;
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -1362,43 +1400,55 @@ const generateTradeProposal = async () => {
 */
 
 .trade-status {
-  padding: 4px 9px;
+    display: inline-flex;
+    align-items: center;
 
-  border-radius: 999px;
+    padding: 3px 7px;
 
-  font-size: 10px;
+    border-radius: 999px;
 
-  font-weight: 900;
+    font-size: 7px;
+    font-weight: 900;
 
-  text-transform: uppercase;
-
-  letter-spacing: .04em;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
 }
 
 .status-pending {
-  color: #fbbf24;
+    color: #fbbf24;
 
-  background: rgba(245, 158, 11, .12);
+    background: rgba(245, 158, 11, 0.08);
 
-  border: 1px solid rgba(245, 158, 11, .25);
+    border: 1px solid rgba(245, 158, 11, 0.16);
+}
+
+.status-pending > span {
+    background: #f59e0b;
 }
 
 .status-approved {
-  color: #34d399;
+    color: #34d399;
 
-  background: rgba(16, 185, 129, .12);
+    background: rgba(16, 185, 129, 0.08);
 
-  border: 1px solid rgba(16, 185, 129, .25);
+    border: 1px solid rgba(16, 185, 129, 0.16);
+}
+
+.status-approved > span {
+    background: #10b981;
 }
 
 .status-rejected {
-  color: #f87171;
+    color: #f87171;
 
-  background: rgba(239, 68, 68, .12);
+    background: rgba(239, 68, 68, 0.08);
 
-  border: 1px solid rgba(239, 68, 68, .25);
+    border: 1px solid rgba(239, 68, 68, 0.16);
 }
 
+.status-rejected > span {
+    background: #ef4444;
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -1407,17 +1457,18 @@ const generateTradeProposal = async () => {
 */
 
 .trade-flow {
-  display: grid;
+    display: grid;
 
-  grid-template-columns:
-    repeat(
-      auto-fit,
-      minmax(280px, 1fr)
-    );
+    grid-template-columns:
+        repeat(
+            auto-fit,
+            minmax(250px, 1fr)
+        );
 
-  background: #0d1117;
+    min-width: 0;
+
+    background: #050505;
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -1426,17 +1477,16 @@ const generateTradeProposal = async () => {
 */
 
 .team-trade-column {
-  min-width: 0;
+    min-width: 0;
 
-  padding: 18px;
+    padding: 12px;
 
-  border-right: 1px solid #252b35;
+    border-right: 1px solid rgba(255, 255, 255, 0.04);
 }
 
 .team-trade-column:last-child {
-  border-right: 0;
+    border-right: 0;
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -1445,78 +1495,134 @@ const generateTradeProposal = async () => {
 */
 
 .team-column-header {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    min-width: 0;
 
-  gap: 10px;
+    align-items: center;
 
-  padding: 13px;
+    gap: 9px;
 
-  margin-bottom: 14px;
+    margin-bottom: 11px;
 
-  border-top: 4px solid;
+    padding: 9px;
 
-  border-radius: 10px;
+    border-top: 3px solid;
 
-  background:
-    linear-gradient(
-      135deg,
-      #1a202c,
-      #151a23
-    );
+    border-right: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-left: 1px solid rgba(255, 255, 255, 0.05);
 
-  border-left: 1px solid #303744;
-  border-right: 1px solid #303744;
-  border-bottom: 1px solid #303744;
+    border-radius: 9px;
 
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, .25);
+    background:
+        linear-gradient(
+            135deg,
+            #111111,
+            #0b0b0b
+        );
 }
 
 .team-logo-placeholder {
-  width: 42px;
-  height: 42px;
+    display: flex;
 
-  flex-shrink: 0;
+    width: 36px;
+    height: 36px;
 
-  display: flex;
+    flex-shrink: 0;
 
-  align-items: center;
-  justify-content: center;
+    align-items: center;
+    justify-content: center;
 
-  border-radius: 10px;
+    border-radius: 9px;
 
-  color: white;
+    color: white;
 
-  font-size: 13px;
+    font-size: 10px;
+    font-weight: 900;
 
-  font-weight: 900;
-
-  box-shadow:
-    0 3px 10px rgba(0, 0, 0, .35);
+    box-shadow:
+        0 3px 10px rgba(0, 0, 0, 0.4);
 }
 
 .team-name {
-  font-size: 16px;
+    overflow: hidden;
 
-  font-weight: 900;
+    font-size: 12px;
+    font-weight: 900;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .team-trade-label {
-  margin-top: 1px;
+    display: flex;
 
-  font-size: 10px;
+    align-items: center;
 
-  color: #6b7280;
+    gap: 5px;
 
-  text-transform: uppercase;
+    margin-top: 2px;
 
-  letter-spacing: .06em;
+    color: #4b5563;
 
-  font-weight: 800;
+    font-size: 7px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
 }
 
+/*
+|--------------------------------------------------------------------------
+| SECTION LABEL
+|--------------------------------------------------------------------------
+*/
+
+.section-label {
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin: 8px 2px 6px;
+
+    color: #3f3f46;
+
+    font-size: 7px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 0.13em;
+}
+
+.sends-label {
+    color: #52525b;
+}
+
+.receives-label {
+    color: #10b981;
+}
+
+.section-count {
+    display: inline-flex;
+
+    min-width: 17px;
+    height: 17px;
+
+    align-items: center;
+    justify-content: center;
+
+    padding: 0 5px;
+
+    border-radius: 999px;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    color: #71717a;
+
+    font-size: 7px;
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -1525,97 +1631,119 @@ const generateTradeProposal = async () => {
 */
 
 .assets-container {
-  display: flex;
+    display: flex;
 
-  flex-direction: column;
+    min-width: 0;
 
-  gap: 8px;
+    flex-direction: column;
+
+    gap: 5px;
 }
 
 .asset-card {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 49px;
 
-  gap: 10px;
+    align-items: center;
 
-  min-height: 58px;
+    gap: 8px;
 
-  padding: 9px 10px;
+    padding: 7px 8px;
 
-  border-radius: 10px;
+    border-radius: 8px;
 
-  background:
-    linear-gradient(
-      135deg,
-      #1b2230,
-      #151a23
-    );
+    border: 1px solid rgba(255, 255, 255, 0.05);
 
-  border: 1px solid #303744;
+    background:
+        linear-gradient(
+            135deg,
+            #101010,
+            #0b0b0b
+        );
 
-  transition:
-    transform .15s ease,
-    border-color .15s ease,
-    box-shadow .15s ease;
+    transition:
+        transform 0.15s ease,
+        border-color 0.15s ease,
+        background 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+button.asset-card {
+    font-family: inherit;
+
+    text-align: left;
+}
+
+.player-asset,
+.received-player {
+    cursor: pointer;
 }
 
 .asset-card:hover {
-  transform: translateY(-2px);
+    transform: translateY(-1px);
 
-  border-color: #4b5563;
+    border-color: rgba(255, 255, 255, 0.1);
 
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, .3);
+    background: #121212;
+
+    box-shadow:
+        0 5px 14px rgba(0, 0, 0, 0.25);
 }
 
-.player-asset {
-  cursor: pointer;
+.player-asset:hover {
+    border-color: rgba(96, 165, 250, 0.2);
 }
 
-.received-player {
-  cursor: pointer;
+.received-player:hover {
+    border-color: rgba(52, 211, 153, 0.2);
 }
-
 
 /*
 |--------------------------------------------------------------------------
-| PLAYER / PICK ICON
+| ASSET ICON
 |--------------------------------------------------------------------------
 */
 
 .asset-icon {
-  width: 34px;
-  height: 34px;
+    display: flex;
 
-  flex-shrink: 0;
+    width: 30px;
+    height: 30px;
 
-  display: flex;
+    flex-shrink: 0;
 
-  align-items: center;
-  justify-content: center;
+    align-items: center;
+    justify-content: center;
 
-  border-radius: 9px;
-
-  font-weight: 900;
+    border-radius: 7px;
 }
 
 .player-icon {
-  background: rgba(37, 99, 235, .15);
+    background: rgba(59, 130, 246, 0.08);
 
-  color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.12);
 
-  border: 1px solid rgba(96, 165, 250, .2);
+    color: #60a5fa;
 }
 
 .pick-icon {
-  background: rgba(245, 158, 11, .12);
+    background: rgba(245, 158, 11, 0.08);
 
-  color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.12);
 
-  border: 1px solid rgba(251, 191, 36, .2);
+    color: #fbbf24;
 }
 
+.received-icon {
+    background: rgba(16, 185, 129, 0.08);
+
+    border-color: rgba(16, 185, 129, 0.12);
+
+    color: #34d399;
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -1624,65 +1752,77 @@ const generateTradeProposal = async () => {
 */
 
 .asset-info {
-  flex: 1;
+    min-width: 0;
 
-  min-width: 0;
+    flex: 1;
 }
 
 .asset-name {
-  overflow: hidden;
+    overflow: hidden;
 
-  white-space: nowrap;
+    color: #d4d4d8;
 
-  text-overflow: ellipsis;
+    font-size: 10px;
+    font-weight: 900;
 
-  font-size: 13px;
-
-  font-weight: 800;
-
-  color: #f3f4f6;
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .asset-meta {
-  margin-top: 2px;
+    overflow: hidden;
 
-  font-size: 10px;
+    margin-top: 2px;
 
-  color: #9ca3af;
+    color: #52525b;
 
-  text-transform: capitalize;
+    font-size: 8px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .asset-from {
-  margin-top: 2px;
+    overflow: hidden;
 
-  font-size: 10px;
+    margin-top: 2px;
 
-  color: #6b7280;
+    color: #3f3f46;
+
+    font-size: 7px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .asset-protection {
-  margin-top: 4px;
+    overflow: hidden;
 
-  font-size: 9px;
+    margin-top: 3px;
 
-  color: #fbbf24;
+    color: #a16207;
 
-  font-weight: 700;
+    font-size: 7px;
+    font-weight: 800;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
 }
 
 .asset-arrow {
-  color: #6b7280;
+    flex-shrink: 0;
 
-  font-size: 18px;
+    color: #3f3f46;
 
-  font-weight: 800;
+    font-size: 14px;
+    font-weight: 900;
 }
 
 .receive-arrow {
-  color: #34d399;
+    color: #10b981;
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -1691,80 +1831,82 @@ const generateTradeProposal = async () => {
 */
 
 .receives-divider {
-  position: relative;
+    position: relative;
 
-  margin: 18px 0 10px;
+    margin: 15px 0 4px;
 
-  text-align: center;
+    text-align: center;
 }
 
 .receives-divider::before {
-  content: "";
+    content: "";
 
-  position: absolute;
+    position: absolute;
 
-  left: 0;
-  right: 0;
+    left: 0;
+    right: 0;
 
-  top: 50%;
+    top: 50%;
 
-  height: 1px;
+    height: 1px;
 
-  background: #303744;
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .receives-divider span {
-  position: relative;
+    position: relative;
 
-  padding: 0 8px;
+    padding: 0 7px;
 
-  background: #0d1117;
+    background: #050505;
 
-  font-size: 9px;
+    color: #10b981;
 
-  font-weight: 900;
+    font-size: 7px;
+    font-weight: 900;
 
-  color: #6b7280;
-
-  letter-spacing: .1em;
+    letter-spacing: 0.13em;
 }
-
-.receives .asset-card {
-  border-left: 3px solid #10b981;
-
-  background:
-    linear-gradient(
-      135deg,
-      rgba(16, 185, 129, .08),
-      #151a23
-    );
-}
-
 
 /*
 |--------------------------------------------------------------------------
-| EMPTY ASSET
+| RECEIVED ASSETS
+|--------------------------------------------------------------------------
+*/
+
+.receives .asset-card {
+    border-left: 2px solid rgba(16, 185, 129, 0.6);
+
+    background:
+        linear-gradient(
+            135deg,
+            rgba(16, 185, 129, 0.045),
+            #0b0b0b
+        );
+}
+
+/*
+|--------------------------------------------------------------------------
+| NO ASSETS
 |--------------------------------------------------------------------------
 */
 
 .no-assets {
-  padding: 12px;
+    padding: 9px;
 
-  border-radius: 9px;
+    border-radius: 7px;
 
-  text-align: center;
+    border: 1px dashed rgba(255, 255, 255, 0.06);
 
-  background: #151a23;
+    background: rgba(255, 255, 255, 0.015);
 
-  border: 1px dashed #303744;
+    color: #3f3f46;
 
-  color: #4b5563;
+    font-size: 8px;
+    font-weight: 700;
 
-  font-size: 11px;
-
-  font-weight: 600;
+    text-align: center;
 }
-
 
 /*
 |--------------------------------------------------------------------------
@@ -1773,144 +1915,212 @@ const generateTradeProposal = async () => {
 */
 
 .trade-summary {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    align-items: center;
+    justify-content: space-between;
 
-  justify-content: space-between;
+    gap: 15px;
 
-  gap: 20px;
+    padding: 11px 14px;
 
-  padding: 16px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
 
-  border-top: 1px solid #374151;
-
-  background:
-    linear-gradient(
-      135deg,
-      #151a23,
-      #111827
-    );
+    background:
+        linear-gradient(
+            135deg,
+            #0d0d0d,
+            #090909
+        );
 }
 
 .summary-left {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    min-width: 0;
 
-  gap: 10px;
+    align-items: center;
+
+    gap: 8px;
 }
 
 .summary-icon {
-  width: 36px;
-  height: 36px;
+    display: flex;
 
-  display: flex;
+    width: 30px;
+    height: 30px;
 
-  align-items: center;
-  justify-content: center;
+    flex-shrink: 0;
 
-  border-radius: 9px;
+    align-items: center;
+    justify-content: center;
 
-  background: #1f2937;
+    border-radius: 7px;
 
-  color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.12);
 
-  border: 1px solid #374151;
+    background: rgba(59, 130, 246, 0.06);
 
-  font-weight: 900;
+    color: #60a5fa;
+
+    font-size: 13px;
+    font-weight: 900;
 }
 
 .summary-title {
-  font-size: 12px;
+    color: #a1a1aa;
 
-  font-weight: 800;
+    font-size: 9px;
+    font-weight: 900;
 
-  color: #d1d5db;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .summary-text {
-  margin-top: 2px;
+    margin-top: 2px;
 
-  font-size: 11px;
+    color: #3f3f46;
 
-  color: #6b7280;
+    font-size: 8px;
+    font-weight: 700;
 }
 
 .summary-teams {
-  display: flex;
+    display: flex;
 
-  flex-wrap: wrap;
+    min-width: 0;
 
-  justify-content: flex-end;
+    flex-wrap: wrap;
 
-  gap: 10px;
+    justify-content: flex-end;
+
+    gap: 7px;
 }
 
 .summary-team {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    max-width: 160px;
 
-  gap: 5px;
+    min-width: 0;
 
-  font-size: 11px;
+    align-items: center;
 
-  font-weight: 700;
+    gap: 4px;
 
-  color: #9ca3af;
+    color: #52525b;
+
+    font-size: 8px;
+    font-weight: 800;
 }
 
 .summary-dot {
-  width: 7px;
-  height: 7px;
+    width: 5px;
+    height: 5px;
 
-  border-radius: 50%;
+    flex-shrink: 0;
 
-  box-shadow:
-    0 0 6px rgba(255, 255, 255, .15);
+    border-radius: 50%;
 }
-
 
 /*
 |--------------------------------------------------------------------------
-| PENDING / APPROVED
+| STATUS MESSAGE
 |--------------------------------------------------------------------------
 */
 
 .trade-pending-message,
 .trade-approved-message {
-  display: flex;
+    display: flex;
 
-  align-items: center;
+    align-items: center;
 
-  gap: 8px;
+    gap: 9px;
 
-  padding: 11px 20px;
-
-  font-size: 12px;
-
-  font-weight: 700;
+    padding: 9px 14px;
 }
 
 .trade-pending-message {
-  color: #fbbf24;
+    border-top: 1px solid rgba(245, 158, 11, 0.1);
 
-  background:
-    rgba(245, 158, 11, .07);
+    background: rgba(245, 158, 11, 0.025);
 
-  border-top: 1px solid rgba(245, 158, 11, .2);
+    color: #fbbf24;
 }
 
 .trade-approved-message {
-  color: #34d399;
+    border-top: 1px solid rgba(16, 185, 129, 0.1);
 
-  background:
-    rgba(16, 185, 129, .07);
+    background: rgba(16, 185, 129, 0.025);
 
-  border-top: 1px solid rgba(16, 185, 129, .2);
+    color: #34d399;
 }
 
+.status-message-icon {
+    display: flex;
+
+    width: 27px;
+    height: 27px;
+
+    flex-shrink: 0;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 7px;
+
+    background: rgba(255, 255, 255, 0.04);
+
+    font-size: 9px;
+}
+
+.status-message-title {
+    font-size: 9px;
+    font-weight: 900;
+
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.status-message-text {
+    margin-top: 1px;
+
+    color: #52525b;
+
+    font-size: 8px;
+    font-weight: 600;
+}
+
+/*
+|--------------------------------------------------------------------------
+| SCROLLBAR
+|--------------------------------------------------------------------------
+*/
+
+::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+}
+
+::-webkit-scrollbar-track {
+    background: #050505;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #292929;
+
+    border-radius: 999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #404040;
+}
+
+::selection {
+    background: rgba(59, 130, 246, 0.2);
+    color: white;
+}
 
 /*
 |--------------------------------------------------------------------------
@@ -1919,55 +2129,76 @@ const generateTradeProposal = async () => {
 */
 
 @media (max-width: 768px) {
+    .trade-card-header {
+        align-items: flex-start;
 
-  .trade-page {
-    padding: 10px;
-  }
+        flex-direction: column;
 
-  .trade-header {
-    align-items: flex-start;
-  }
+        gap: 8px;
+    }
 
-  .trade-actions {
-    flex-direction: column;
-  }
+    .trade-date {
+        align-self: flex-start;
+    }
 
-  .trade-btn {
-    width: 100%;
-  }
+    .trade-flow {
+        grid-template-columns: 1fr;
+    }
 
-  .trade-card-header {
-    align-items: flex-start;
+    .team-trade-column {
+        border-right: 0;
 
-    flex-direction: column;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    }
 
-    gap: 8px;
-  }
+    .team-trade-column:last-child {
+        border-bottom: 0;
+    }
 
-  .trade-flow {
-    grid-template-columns: 1fr;
-  }
+    .trade-summary {
+        align-items: flex-start;
 
-  .team-trade-column {
-    border-right: 0;
+        flex-direction: column;
+    }
 
-    border-bottom: 1px solid #252b35;
-  }
+    .summary-teams {
+        justify-content: flex-start;
+    }
 
-  .team-trade-column:last-child {
-    border-bottom: 0;
-  }
+    .summary-team {
+        max-width: 140px;
+    }
+}
 
-  .trade-summary {
-    flex-direction: column;
+/*
+|--------------------------------------------------------------------------
+| VERY NARROW
+|--------------------------------------------------------------------------
+*/
 
-    align-items: flex-start;
-  }
+@media (max-width: 420px) {
+    .trade-list {
+        padding: 7px;
+    }
 
-  .summary-teams {
-    justify-content: flex-start;
-  }
+    .trade-card-header {
+        padding: 12px;
+    }
 
+    .team-trade-column {
+        padding: 9px;
+    }
+
+    .trade-summary {
+        padding: 10px;
+    }
+
+    .trade-btn {
+        width: 100%;
+    }
+
+    .team-name {
+        font-size: 11px;
+    }
 }
 </style>
-

@@ -151,15 +151,6 @@ class ScheduleService
         ]);
     }
 
-    public function list(Request $request)
-    {
-        // Fetch schedules with teams' data for the specified league
-        $seasons = Seasons::where('league_id', $request->league_id)
-            ->paginate(10); // Adjust per your pagination needs
-
-        return response()->json($seasons);
-    }
-
     public function createSeasonandSchedule(Request $request)
     {
         $request->validate([
@@ -747,7 +738,8 @@ class ScheduleService
         // Fetch games in this series
         $playoffSchedule = DB::table($scheduleViewTable)
             ->where('series_id', $seriesId)
-            ->orderBy('id', 'asc')
+            ->where('status', 2)
+            ->orderBy('id', 'desc')
             ->get()
             ->toArray();
 

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('secondary_color', 7)->nullable(); // e.g., #00FF00
             $table->string('team_acronym', 10);
             $table->unsignedBigInteger('conference_id')->index();
-            $table->string('conference_name', 100);
+            $table->string('conference_name', 100)->nullable();
             $table->unsignedBigInteger('season_id')->index();
             $table->unsignedInteger('wins')->default(0);
             $table->unsignedInteger('losses')->default(0);

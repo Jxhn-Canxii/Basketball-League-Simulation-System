@@ -1286,18 +1286,20 @@ class TeamsService
         $request->validate([
             'name' => 'required',
             'acronym' => 'required',
+            'secondary_color' => 'required',
+            'primary_color' => 'required',
             'league_id' => 'required|exists:leagues,id', // Assuming there's a leagues table
             'conference_id' => 'required|exists:conferences,id', // Assuming there's a conferences table
         ]);
 
         // Generate random color hex codes for primary and secondary colors
-        $primaryColor = $this->generateRandomColor();
-        $secondaryColor = $this->generateRandomColor($primaryColor); // Ensure it’s different from primary
+        // $primaryColor = $this->generateRandomColor();
+        // $secondaryColor = $this->generateRandomColor($primaryColor); // Ensure it’s different from primary
 
         // Merge the colors with the request data
         $data = $request->all();
-        $data['primary_color'] = $primaryColor;
-        $data['secondary_color'] = $secondaryColor;
+        // $data['primary_color'] = $primaryColor;
+        // $data['secondary_color'] = $secondaryColor;
 
         // Create the new team with the randomized colors
         Teams::create($data);
@@ -1325,6 +1327,8 @@ class TeamsService
         $request->validate([
             'id' => 'required|integer',
             'name' => 'required',
+            'primary_color' => 'required',
+            'secondary_color' => 'required',
             'acronym' => 'required|max:3',
             'league_id' => 'required|exists:leagues,id',
             'conference_id' => 'required|exists:conferences,id' // Assuming there's a conferences table
