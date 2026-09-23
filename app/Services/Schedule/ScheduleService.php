@@ -1158,12 +1158,28 @@ class ScheduleService
         return $count;
     }
 
+    public function selectAllStarsManual($seasonId)
+    {
+        // $seasonId = get_current_season_id();
+        
+        $northAllStarsConference = [1,2];
+        $southAllStarsConference = [3,4];
+        
+        $this->awards->selectAllStarsForConferenceArchive('north',$northAllStarsConference,$seasonId);
+        $this->awards->selectAllStarsForConferenceArchive('south',$southAllStarsConference,$seasonId);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Archive success!'
+        ],200);
+    }
+
     private function selectAllStars()
     {
         $seasonId = get_current_season_id();
         
-        $northAllStars = [1,2];
-        $southAllStars = [3,4];
+        $northAllStarsConference = [1,2];
+        $southAllStarsConference = [3,4];
         
         $allStarRound = $seasonId > 0 ? ['all-star','all-rookie'] : ['all-star'];
 
@@ -1176,8 +1192,8 @@ class ScheduleService
             return true;
         }
 
-        $this->awards->selectAllStarsForConference('north',$northAllStars);
-        $this->awards->selectAllStarsForConference('south',$southAllStars);
+        $this->awards->selectAllStarsForConference('north',$northAllStarsConference);
+        $this->awards->selectAllStarsForConference('south',$southAllStarsConference);
 
         $schedules = DB::table('schedules')
                 ->where('season_id',$seasonId)

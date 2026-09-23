@@ -1670,6 +1670,7 @@ class PlayerService
                 'players.name',
                 'latest_stats.role'
             )
+            ->orderByDesc('transactions.season_id')
             ->orderByDesc('transactions.id')
             ->get();
 

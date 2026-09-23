@@ -194,7 +194,7 @@
                             <div
                                 class="text-3xl font-black leading-none tabular-nums text-white"
                             >
-                                {{ team.playoff_appearances ?? 0 }}
+                                {{ team.total_games ?? 0 }}
                             </div>
                         </div>
 

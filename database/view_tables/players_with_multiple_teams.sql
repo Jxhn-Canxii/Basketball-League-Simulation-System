@@ -13,6 +13,8 @@ JOIN
   players p ON pss.player_id = p.id
 LEFT JOIN
   teams t ON pss.team_id = t.id
+WHERE 
+  t.conference_id > 0
 GROUP BY
   pss.player_id, pss.season_id
 HAVING

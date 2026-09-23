@@ -92,7 +92,7 @@ onUnmounted(() => {
         >
           <div
             v-show="show"
-            class="mb-6 bg-white rounded-lg overflow-auto transform transition-all sm:w-full sm:mx-auto"
+            class="mb-6 bg-black rounded-lg overflow-auto transform transition-all sm:w-full sm:mx-auto"
             :class="maxWidthClass"
           >
             <div class="flex justify-between px-3 py-2" :class="DEFAULT_BG">

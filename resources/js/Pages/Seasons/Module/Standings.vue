@@ -68,7 +68,7 @@
           <col class="stat-column" />
           <col class="stat-column" />
           <col class="stat-column" />
-          <col class="last-five-column" /> -->
+          <col class="last-five-column md:hidden" />
           <col class="stat-column" />
           <col class="next-column" />
         </colgroup>
@@ -113,7 +113,7 @@
 
             <th
               scope="col"
-              class="px-1 py-2 text-center text-xs font-medium text-gray-400 uppercase tracking-wider"
+              class="px-1 py-2 text-center md:hidden text-xs font-medium text-gray-400 uppercase tracking-wider"
             >
               LAST 5
             </th>
@@ -241,7 +241,7 @@
             </td>
 
             <!-- Last 5 -->
-            <td class="px-1 py-2">
+            <td class="px-1 py-2 md:hidden">
               <div
                 class="flex justify-center items-center gap-0.5"
               >
@@ -944,9 +944,8 @@ const teamAchievements = (team) => {
       >
         <span class="fa fa-basketball-ball"></span>
 
-        <span class="text-indigo-100">
-          #${team.team_id} |
-          ${team.team_city} ${team.team_name}
+        <span class="text-indigo-100 text-nowrap">
+          #${team.team_id} | ${team.team_city} ${team.team_name}
         </span>
       </h3>
 

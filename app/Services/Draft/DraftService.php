@@ -1436,6 +1436,7 @@ class DraftService
                 END'
             )
             ->orderBy('stats.eff', 'asc')
+            ->orderBy('p.overall_rating', 'asc')
             ->first();
 
         if ($candidate) {
@@ -1491,6 +1492,7 @@ class DraftService
                     'p.salary',
                     'asc'
                 )
+                ->orderBy('p.overall_rating', 'asc')
                 ->first();
         }
 
@@ -2458,10 +2460,8 @@ class DraftService
                 'd.decision_maker_name',
                 'd.decision_maker_reason',
             )
-            ->where(
-                'players.draft_id',
-                $latestSeasonId
-            )
+            ->where('players.draft_id',$latestSeasonId)
+            ->where('signed_team.conference_id','>',0)
             ->orderBy('d.round')
             ->orderBy('d.pick_number')
             ->groupBy('players.id')

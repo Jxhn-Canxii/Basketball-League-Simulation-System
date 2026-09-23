@@ -1,5 +1,5 @@
 <template>
-  <div class="trade-page bg-black rounded-lg" v-if="proposals.length > 0">
+  <div class="trade-page rounded-lg text-xs" v-if="proposals.length > 0">
 
     <!-- =========================================================
         HEADER
@@ -12,11 +12,11 @@
           </div>
 
           <div>
-            <h2 class="text-sm font-bold text-gray-900">
-              Recent {{ props.isOffSeason ? "Off-Season" : "In-Season" }} Proposed Trades
+            <h2 class="text-xs font-bold text-gray-900">
+              Recent {{ props.isOffSeason ? "Off-Season" : "In-Season" }} Proposed Tradess
             </h2>
 
-            <p class="text-sm text-gray-500">
+            <p class="text-xs text-gray-500">
               AI-generated trade proposals and transactions
             </p>
           </div>
@@ -25,7 +25,7 @@
 
       <div
         v-if="proposal_count > 0"
-        class="trade-count"
+        class="trade-count text-xs"
       >
         {{ proposal_count }}
         Approved {{ proposal_count > 1 ? "Proposals" : "Proposal" }}
@@ -36,7 +36,7 @@
     ========================================================== -->
     <div
 
-      class="trade-list"
+      class="trade-list text-xs"
     >
 
       <div
@@ -84,7 +84,7 @@
         <!-- =====================================================
             TRADE FLOW
         ====================================================== -->
-        <div class="trade-flow">
+        <div class="grid grid-cols-2">
 
           <!-- TEAM COLUMNS -->
           <div
@@ -397,6 +397,7 @@
 
   </div>
 </template>
+
 
 <script setup>
 import { ref, onMounted } from "vue";
@@ -747,887 +748,935 @@ const formatTradeDate = (date) => {
 
 <style scoped>
 
-/* =========================================================
-   COMPACT TRADE PANEL
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| PAGE
+|--------------------------------------------------------------------------
+*/
 
 .trade-page {
-    width: 100%;
-    margin: 0;
-    padding: 0;
+  width: 100%;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 2px;
 
-    color: #e5e7eb;
-    background: #08090b;
+  color: #18181a;
 }
 
 
-/* =========================================================
-   HEADER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| HEADER
+|--------------------------------------------------------------------------
+*/
 
 .trade-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 
-    gap: 10px;
-
-    margin-bottom: 8px;
-    padding: 8px 10px;
-
-    border: 1px solid #1d2026;
-    border-radius: 8px;
-
-    background: #0d0f12;
-}
-
-.trade-header > div:first-child {
-    min-width: 0;
-}
-
-.trade-header .flex {
-    gap: 8px;
+  margin-bottom: 22px;
 }
 
 .trade-header-icon {
-    width: 26px;
-    height: 26px;
+  width: 32px;
+  height: 32px;
 
-    flex: 0 0 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  border-radius: 14px;
 
-    border-radius: 7px;
+  background: linear-gradient(
+    135deg,
+    #1f2937,
+    #111827
+  );
 
-    background: #171a20;
-    border: 1px solid #292e37;
+  color: #60a5fa;
 
-    color: #60a5fa;
+  font-size: 27px;
+  font-weight: 800;
 
-    font-size: 16px;
-    font-weight: 900;
+  border: 1px solid #374151;
+
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, .35);
 }
 
 .trade-header h2 {
-    margin: 0;
-
-    color: #e5e7eb !important;
-
-    font-size: 11px !important;
-    line-height: 1.2;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.trade-header p {
-    margin-top: 2px;
-
-    color: #59606c !important;
-
-    font-size: 8px !important;
-    line-height: 1.2;
-
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+  color: #f9fafb;
 }
 
 .trade-count {
-    flex-shrink: 0;
+  padding: 8px 14px;
 
-    padding: 4px 7px;
+  border-radius: 999px;
 
-    border-radius: 5px;
+  background: #1f2937;
 
-    background: #171a20;
-    border: 1px solid #292e37;
+  color: #d1d5db;
 
-    color: #9ca3af;
+  font-size: 13px;
+  font-weight: 700;
 
-    font-size: 7px;
-    font-weight: 900;
-
-    white-space: nowrap;
+  border: 1px solid #374151;
 }
 
 
-/* =========================================================
-   TRADE LIST
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| ACTION BAR
+|--------------------------------------------------------------------------
+*/
+
+.trade-actions {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  padding: 14px;
+
+  margin-bottom: 22px;
+
+  border: 1px solid #374151;
+
+  border-radius: 14px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #161b22,
+      #111827
+    );
+
+  box-shadow:
+    0 5px 20px rgba(0, 0, 0, .25);
+}
+
+.trade-btn {
+  border: 1px solid transparent;
+
+  border-radius: 9px;
+
+  padding: 10px 16px;
+
+  color: white;
+
+  font-size: 14px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    transform .15s ease,
+    opacity .15s ease,
+    box-shadow .15s ease;
+}
+
+.trade-btn:hover {
+  transform: translateY(-1px);
+  opacity: .95;
+}
+
+.trade-btn-primary {
+  background: #2563eb;
+
+  box-shadow:
+    0 3px 12px rgba(37, 99, 235, .25);
+}
+
+.trade-btn-primary:hover {
+  box-shadow:
+    0 5px 18px rgba(37, 99, 235, .4);
+}
+
+.trade-btn-ai {
+  background: #059669;
+
+  box-shadow:
+    0 3px 12px rgba(5, 150, 105, .25);
+}
+
+.trade-btn-ai:hover {
+  box-shadow:
+    0 5px 18px rgba(5, 150, 105, .4);
+}
+
+.trade-btn-danger {
+  background: #dc2626;
+
+  box-shadow:
+    0 3px 12px rgba(220, 38, 38, .2);
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| EMPTY
+|--------------------------------------------------------------------------
+*/
+
+.empty-trades {
+  text-align: center;
+
+  padding: 80px 20px;
+
+  border: 1px dashed #374151;
+
+  border-radius: 18px;
+
+  background:
+    radial-gradient(
+      circle at center,
+      #1f2937 0%,
+      #111827 65%
+    );
+}
+
+.empty-trades-icon {
+  width: 64px;
+  height: 64px;
+
+  margin: 0 auto 16px;
+
+  border-radius: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #1f2937;
+
+  color: #60a5fa;
+
+  font-size: 32px;
+
+  border: 1px solid #374151;
+}
+
+.empty-trades h3 {
+  font-size: 20px;
+  font-weight: 800;
+
+  color: #f9fafb;
+}
+
+.empty-trades p {
+  margin-top: 5px;
+
+  color: #9ca3af;
+}
+
+
+/*
+|--------------------------------------------------------------------------
+| TRADE LIST
+|--------------------------------------------------------------------------
+*/
 
 .trade-list {
-    display: flex;
-    flex-direction: column;
+  display: flex;
+  flex-direction: column;
 
-    gap: 8px;
+  gap: 24px;
 }
 
 
-/* =========================================================
-   TRADE CARD
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| TRADE CARD
+|--------------------------------------------------------------------------
+*/
 
 .trade-card {
-    overflow: hidden;
+  overflow: hidden;
 
-    background: #0d0f12;
+  background: #111827;
 
-    border: 1px solid #20242b;
-    border-radius: 9px;
+  border: 1px solid #374151;
 
-    box-shadow: none;
+  border-radius: 18px;
+
+  box-shadow:
+    0 8px 30px rgba(0, 0, 0, .3);
 }
 
 
-/* =========================================================
-   CARD HEADER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| TRADE CARD HEADER
+|--------------------------------------------------------------------------
+*/
 
 .trade-card-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
 
-    gap: 8px;
+  justify-content: space-between;
+  align-items: center;
 
-    padding: 8px 10px;
+  padding: 20px 22px;
 
-    border-bottom: 1px solid #1d2026;
+  border-bottom: 1px solid #374151;
 
-    background: #111318;
-}
-
-.trade-card-header > div:first-child {
-    min-width: 0;
+  background:
+    linear-gradient(
+      135deg,
+      #1b2230,
+      #111827
+    );
 }
 
 .trade-number {
-    color: #555b66;
+  font-size: 11px;
 
-    font-size: 7px;
-    font-weight: 900;
+  font-weight: 800;
 
-    letter-spacing: .07em;
+  letter-spacing: .08em;
+
+  color: #6b7280;
 }
 
 .trade-title {
-    margin-top: 2px;
+  margin-top: 3px;
 
-    color: #d1d5db;
+  font-size: 20px;
 
-    font-size: 11px;
-    line-height: 1.15;
-    font-weight: 900;
+  font-weight: 800;
+
+  color: #f9fafb;
 }
 
 .trade-subtitle {
-    margin-top: 2px;
+  margin-top: 3px;
 
-    max-width: 100%;
+  font-size: 13px;
 
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    color: #555b66;
-
-    font-size: 7px;
+  color: #9ca3af;
 }
 
 .trade-date {
-    flex-shrink: 0;
+  font-size: 12px;
 
-    color: #4b515c;
-
-    font-size: 7px;
+  color: #6b7280;
 }
 
 
-/* =========================================================
-   STATUS
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| STATUS
+|--------------------------------------------------------------------------
+*/
 
 .trade-status {
-    padding: 2px 5px;
+  padding: 4px 9px;
 
-    border-radius: 4px;
+  border-radius: 999px;
 
-    font-size: 6px;
-    line-height: 1;
+  font-size: 10px;
 
-    font-weight: 900;
+  font-weight: 900;
 
-    text-transform: uppercase;
-    letter-spacing: .04em;
+  text-transform: uppercase;
+
+  letter-spacing: .04em;
 }
 
 .status-pending {
-    color: #fbbf24;
+  color: #fbbf24;
 
-    background: rgba(245, 158, 11, .08);
+  background: rgba(245, 158, 11, .12);
 
-    border: 1px solid rgba(245, 158, 11, .18);
+  border: 1px solid rgba(245, 158, 11, .25);
 }
 
 .status-approved {
-    color: #34d399;
+  color: #34d399;
 
-    background: rgba(16, 185, 129, .08);
+  background: rgba(16, 185, 129, .12);
 
-    border: 1px solid rgba(16, 185, 129, .18);
+  border: 1px solid rgba(16, 185, 129, .25);
 }
 
 .status-rejected {
-    color: #f87171;
+  color: #f87171;
 
-    background: rgba(239, 68, 68, .08);
+  background: rgba(239, 68, 68, .12);
 
-    border: 1px solid rgba(239, 68, 68, .18);
+  border: 1px solid rgba(239, 68, 68, .25);
 }
 
 
-/* =========================================================
-   TRADE FLOW
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| TRADE FLOW
+|--------------------------------------------------------------------------
+*/
 
 .trade-flow {
-    display: grid;
+  display: grid;
 
-    /*
-     * Smaller columns so the entire trade can live
-     * comfortably inside a side panel.
-     */
-    grid-template-columns:
-        repeat(
-            auto-fit,
-            minmax(150px, 1fr)
-        );
+  grid-template-columns:
+    repeat(
+      auto-fit,
+      minmax(280px, 1fr)
+    );
 
-    background: #090a0c;
+  background: #0d1117;
 }
 
 
-/* =========================================================
-   TEAM COLUMN
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| TEAM COLUMN
+|--------------------------------------------------------------------------
+*/
 
 .team-trade-column {
-    min-width: 0;
+  min-width: 0;
 
-    padding: 7px;
+  padding: 18px;
 
-    border-right: 1px solid #1d2026;
+  border-right: 1px solid #252b35;
 }
 
 .team-trade-column:last-child {
-    border-right: 0;
+  border-right: 0;
 }
 
 
-/* =========================================================
-   TEAM HEADER
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| TEAM HEADER
+|--------------------------------------------------------------------------
+*/
 
 .team-column-header {
-    display: flex;
-    align-items: center;
+  display: flex;
 
-    gap: 7px;
+  align-items: center;
 
-    padding: 7px 8px;
+  gap: 10px;
 
-    margin-bottom: 6px;
+  padding: 13px;
 
-    border-top: 2px solid;
+  margin-bottom: 14px;
 
-    border-radius: 6px;
+  border-top: 4px solid;
 
-    background: #111318;
+  border-radius: 10px;
 
-    border-left: 1px solid #20242b;
-    border-right: 1px solid #20242b;
-    border-bottom: 1px solid #20242b;
+  background:
+    linear-gradient(
+      135deg,
+      #1a202c,
+      #151a23
+    );
 
-    box-shadow: none;
+  border-left: 1px solid #303744;
+  border-right: 1px solid #303744;
+  border-bottom: 1px solid #303744;
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, .25);
 }
 
 .team-logo-placeholder {
-    width: 25px;
-    height: 25px;
+  width: 42px;
+  height: 42px;
 
-    flex: 0 0 25px;
+  flex-shrink: 0;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
 
-    border-radius: 6px;
+  align-items: center;
+  justify-content: center;
 
-    color: white;
+  border-radius: 10px;
 
-    font-size: 8px;
-    font-weight: 900;
+  color: white;
+
+  font-size: 13px;
+
+  font-weight: 900;
+
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, .35);
 }
 
 .team-name {
-    max-width: 100%;
+  font-size: 16px;
 
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    font-size: 9px;
-    line-height: 1.1;
-
-    font-weight: 900;
+  font-weight: 900;
 }
 
 .team-trade-label {
-    margin-top: 2px;
+  margin-top: 1px;
 
-    color: #4f5560;
+  font-size: 10px;
 
-    font-size: 6px;
-    line-height: 1;
+  color: #6b7280;
 
-    text-transform: uppercase;
-    letter-spacing: .08em;
+  text-transform: uppercase;
 
-    font-weight: 900;
+  letter-spacing: .06em;
+
+  font-weight: 800;
 }
 
 
-/* =========================================================
-   ASSETS
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| ASSETS
+|--------------------------------------------------------------------------
+*/
 
 .assets-container {
-    display: flex;
-    flex-direction: column;
+  display: flex;
 
-    gap: 4px;
+  flex-direction: column;
+
+  gap: 8px;
 }
 
 .asset-card {
-    display: flex;
-    align-items: center;
+  display: flex;
 
-    gap: 6px;
+  align-items: center;
 
-    min-height: 38px;
+  gap: 10px;
 
-    padding: 5px 6px;
+  min-height: 58px;
 
-    border-radius: 6px;
+  padding: 9px 10px;
 
-    background: #111318;
+  border-radius: 10px;
 
-    border: 1px solid #20242b;
+  background:
+    linear-gradient(
+      135deg,
+      #1b2230,
+      #151a23
+    );
 
-    transition:
-        border-color .12s ease,
-        background .12s ease;
+  border: 1px solid #303744;
+
+  transition:
+    transform .15s ease,
+    border-color .15s ease,
+    box-shadow .15s ease;
 }
 
 .asset-card:hover {
-    transform: none;
+  transform: translateY(-2px);
 
-    background: #15181e;
+  border-color: #4b5563;
 
-    border-color: #303641;
-
-    box-shadow: none;
+  box-shadow:
+    0 6px 16px rgba(0, 0, 0, .3);
 }
 
-.player-asset,
+.player-asset {
+  cursor: pointer;
+}
+
 .received-player {
-    cursor: pointer;
+  cursor: pointer;
 }
 
 
-/* =========================================================
-   ASSET ICON
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| PLAYER / PICK ICON
+|--------------------------------------------------------------------------
+*/
 
 .asset-icon {
-    width: 22px;
-    height: 22px;
+  width: 34px;
+  height: 34px;
 
-    flex: 0 0 22px;
+  flex-shrink: 0;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  display: flex;
 
-    border-radius: 5px;
+  align-items: center;
+  justify-content: center;
 
-    font-size: 8px;
+  border-radius: 9px;
 
-    font-weight: 900;
+  font-weight: 900;
 }
 
 .player-icon {
-    background: rgba(37, 99, 235, .08);
+  background: rgba(37, 99, 235, .15);
 
-    color: #60a5fa;
+  color: #60a5fa;
 
-    border: 1px solid rgba(96, 165, 250, .14);
+  border: 1px solid rgba(96, 165, 250, .2);
 }
 
 .pick-icon {
-    background: rgba(245, 158, 11, .07);
+  background: rgba(245, 158, 11, .12);
 
-    color: #fbbf24;
+  color: #fbbf24;
 
-    border: 1px solid rgba(251, 191, 36, .14);
+  border: 1px solid rgba(251, 191, 36, .2);
 }
 
 
-/* =========================================================
-   ASSET TEXT
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| ASSET TEXT
+|--------------------------------------------------------------------------
+*/
 
 .asset-info {
-    flex: 1;
-    min-width: 0;
+  flex: 1;
+
+  min-width: 0;
 }
 
 .asset-name {
-    overflow: hidden;
+  overflow: hidden;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  white-space: nowrap;
 
-    color: #d1d5db;
+  text-overflow: ellipsis;
 
-    font-size: 8px;
-    line-height: 1.15;
+  font-size: 13px;
 
-    font-weight: 800;
+  font-weight: 800;
+
+  color: #f3f4f6;
 }
 
 .asset-meta {
-    margin-top: 2px;
+  margin-top: 2px;
 
-    overflow: hidden;
+  font-size: 10px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  color: #9ca3af;
 
-    color: #555b66;
-
-    font-size: 6px;
-    line-height: 1.1;
-
-    text-transform: capitalize;
+  text-transform: capitalize;
 }
 
 .asset-from {
-    margin-top: 2px;
+  margin-top: 2px;
 
-    overflow: hidden;
+  font-size: 10px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
-
-    color: #4b515b;
-
-    font-size: 6px;
+  color: #6b7280;
 }
 
 .asset-protection {
-    margin-top: 2px;
+  margin-top: 4px;
 
-    overflow: hidden;
+  font-size: 9px;
 
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  color: #fbbf24;
 
-    color: #d9a72e;
-
-    font-size: 6px;
-
-    font-weight: 800;
+  font-weight: 700;
 }
 
 .asset-arrow {
-    flex: 0 0 auto;
+  color: #6b7280;
 
-    color: #454b55;
+  font-size: 18px;
 
-    font-size: 11px;
-    line-height: 1;
-
-    font-weight: 900;
+  font-weight: 800;
 }
 
 .receive-arrow {
-    color: #34a879;
+  color: #34d399;
 }
 
 
-/* =========================================================
-   RECEIVES
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| RECEIVES
+|--------------------------------------------------------------------------
+*/
 
 .receives-divider {
-    position: relative;
+  position: relative;
 
-    margin: 7px 0 5px;
+  margin: 18px 0 10px;
 
-    text-align: center;
+  text-align: center;
 }
 
 .receives-divider::before {
-    content: "";
+  content: "";
 
-    position: absolute;
+  position: absolute;
 
-    left: 0;
-    right: 0;
+  left: 0;
+  right: 0;
 
-    top: 50%;
+  top: 50%;
 
-    height: 1px;
+  height: 1px;
 
-    background: #1d2026;
+  background: #303744;
 }
 
 .receives-divider span {
-    position: relative;
+  position: relative;
 
-    padding: 0 5px;
+  padding: 0 8px;
 
-    background: #090a0c;
+  background: #0d1117;
 
-    color: #4d535e;
+  font-size: 9px;
 
-    font-size: 6px;
-    line-height: 1;
+  font-weight: 900;
 
-    font-weight: 900;
+  color: #6b7280;
 
-    letter-spacing: .1em;
+  letter-spacing: .1em;
 }
 
 .receives .asset-card {
-    border-left: 2px solid #159669;
+  border-left: 3px solid #10b981;
 
-    background: rgba(16, 185, 129, .035);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(16, 185, 129, .08),
+      #151a23
+    );
 }
 
 
-/* =========================================================
-   NO ASSETS
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| EMPTY ASSET
+|--------------------------------------------------------------------------
+*/
 
 .no-assets {
-    padding: 7px 5px;
+  padding: 12px;
 
-    border-radius: 5px;
+  border-radius: 9px;
 
-    text-align: center;
+  text-align: center;
 
-    background: #0e1014;
+  background: #151a23;
 
-    border: 1px dashed #252a32;
+  border: 1px dashed #303744;
 
-    color: #414752;
+  color: #4b5563;
 
-    font-size: 7px;
+  font-size: 11px;
 
-    font-weight: 700;
+  font-weight: 600;
 }
 
 
-/* =========================================================
-   SUMMARY
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| SUMMARY
+|--------------------------------------------------------------------------
+*/
 
 .trade-summary {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+  display: flex;
 
-    gap: 8px;
+  align-items: center;
 
-    padding: 7px 9px;
+  justify-content: space-between;
 
-    border-top: 1px solid #1d2026;
+  gap: 20px;
 
-    background: #101216;
+  padding: 16px 20px;
+
+  border-top: 1px solid #374151;
+
+  background:
+    linear-gradient(
+      135deg,
+      #151a23,
+      #111827
+    );
 }
 
 .summary-left {
-    min-width: 0;
+  display: flex;
 
-    display: flex;
-    align-items: center;
+  align-items: center;
 
-    gap: 6px;
+  gap: 10px;
 }
 
 .summary-icon {
-    width: 23px;
-    height: 23px;
+  width: 36px;
+  height: 36px;
 
-    flex: 0 0 23px;
+  display: flex;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  align-items: center;
+  justify-content: center;
 
-    border-radius: 5px;
+  border-radius: 9px;
 
-    background: #171a20;
+  background: #1f2937;
 
-    color: #60a5fa;
+  color: #60a5fa;
 
-    border: 1px solid #292e37;
+  border: 1px solid #374151;
 
-    font-size: 10px;
-
-    font-weight: 900;
+  font-weight: 900;
 }
 
 .summary-title {
-    color: #9ca3af;
+  font-size: 12px;
 
-    font-size: 7px;
-    line-height: 1.1;
+  font-weight: 800;
 
-    font-weight: 900;
+  color: #d1d5db;
 }
 
 .summary-text {
-    margin-top: 2px;
+  margin-top: 2px;
 
-    color: #4f5560;
+  font-size: 11px;
 
-    font-size: 6px;
+  color: #6b7280;
 }
 
 .summary-teams {
-    min-width: 0;
+  display: flex;
 
-    display: flex;
-    flex-wrap: wrap;
+  flex-wrap: wrap;
 
-    justify-content: flex-end;
+  justify-content: flex-end;
 
-    gap: 4px;
+  gap: 10px;
 }
 
 .summary-team {
-    display: flex;
-    align-items: center;
+  display: flex;
 
-    gap: 3px;
+  align-items: center;
 
-    max-width: 85px;
+  gap: 5px;
 
-    overflow: hidden;
+  font-size: 11px;
 
-    color: #666d78;
+  font-weight: 700;
 
-    font-size: 6px;
-    font-weight: 700;
-
-    white-space: nowrap;
-    text-overflow: ellipsis;
+  color: #9ca3af;
 }
 
 .summary-dot {
-    width: 5px;
-    height: 5px;
+  width: 7px;
+  height: 7px;
 
-    flex: 0 0 5px;
+  border-radius: 50%;
 
-    border-radius: 50%;
+  box-shadow:
+    0 0 6px rgba(255, 255, 255, .15);
 }
 
 
-/* =========================================================
-   RESULT MESSAGE
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| PENDING / APPROVED
+|--------------------------------------------------------------------------
+*/
 
 .trade-pending-message,
 .trade-approved-message {
-    display: flex;
-    align-items: center;
+  display: flex;
 
-    gap: 5px;
+  align-items: center;
 
-    padding: 6px 9px;
+  gap: 8px;
 
-    font-size: 7px;
+  padding: 11px 20px;
 
-    font-weight: 800;
+  font-size: 12px;
+
+  font-weight: 700;
 }
 
 .trade-pending-message {
-    color: #d9a72e;
+  color: #fbbf24;
 
-    background: rgba(245, 158, 11, .035);
+  background:
+    rgba(245, 158, 11, .07);
 
-    border-top: 1px solid rgba(245, 158, 11, .12);
+  border-top: 1px solid rgba(245, 158, 11, .2);
 }
 
 .trade-approved-message {
-    color: #34a879;
+  color: #34d399;
 
-    background: rgba(16, 185, 129, .035);
+  background:
+    rgba(16, 185, 129, .07);
 
-    border-top: 1px solid rgba(16, 185, 129, .12);
+  border-top: 1px solid rgba(16, 185, 129, .2);
 }
 
 
-/* =========================================================
-   PLAYER MODAL
-========================================================= */
+/*
+|--------------------------------------------------------------------------
+| MOBILE
+|--------------------------------------------------------------------------
+*/
 
-:deep(.modal-content) {
-    border-radius: 10px;
+@media (max-width: 768px) {
+
+  .trade-page {
+    padding: 10px;
+  }
+
+  .trade-header {
+    align-items: flex-start;
+  }
+
+  .trade-actions {
+    flex-direction: column;
+  }
+
+  .trade-btn {
+    width: 100%;
+  }
+
+  .trade-card-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+  .trade-flow {
+    grid-template-columns: 1fr;
+  }
+
+  .team-trade-column {
+    border-right: 0;
+
+    border-bottom: 1px solid #252b35;
+  }
+
+  .team-trade-column:last-child {
+    border-bottom: 0;
+  }
+
+  .trade-summary {
+    flex-direction: column;
+
+    align-items: flex-start;
+  }
+
+  .summary-teams {
+    justify-content: flex-start;
+  }
+
 }
-
-
-/* =========================================================
-   TABLET / NARROW SIDE PANEL
-========================================================= */
-
-@media (max-width: 900px) {
-
-    .trade-flow {
-        grid-template-columns:
-            repeat(
-                auto-fit,
-                minmax(135px, 1fr)
-            );
-    }
-
-    .team-trade-column {
-        padding: 6px;
-    }
-
-    .trade-card-header {
-        padding: 7px 8px;
-    }
-}
-
-
-/* =========================================================
-   MOBILE
-========================================================= */
-
-@media (max-width: 640px) {
-
-    .trade-header {
-        padding: 7px 8px;
-    }
-
-    .trade-header p {
-        display: none;
-    }
-
-    .trade-count {
-        font-size: 6px;
-    }
-
-    .trade-card-header {
-        align-items: flex-start;
-        flex-direction: column;
-
-        gap: 4px;
-    }
-
-    .trade-date {
-        display: none;
-    }
-
-    .trade-flow {
-        grid-template-columns: 1fr;
-    }
-
-    .team-trade-column {
-        border-right: 0;
-        border-bottom: 1px solid #1d2026;
-    }
-
-    .team-trade-column:last-child {
-        border-bottom: 0;
-    }
-
-    .trade-summary {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .summary-teams {
-        justify-content: flex-start;
-    }
-}
-
-
-/* =========================================================
-   VERY SMALL SIDE PANEL
-========================================================= */
-
-@media (max-width: 400px) {
-
-    .trade-header-icon {
-        width: 22px;
-        height: 22px;
-        flex-basis: 22px;
-
-        font-size: 13px;
-    }
-
-    .trade-header h2 {
-        font-size: 9px !important;
-    }
-
-    .trade-count {
-        padding: 3px 5px;
-    }
-
-    .team-column-header {
-        padding: 5px 6px;
-    }
-
-    .team-logo-placeholder {
-        width: 21px;
-        height: 21px;
-        flex-basis: 21px;
-    }
-
-    .team-name {
-        font-size: 8px;
-    }
-
-    .asset-card {
-        min-height: 34px;
-        padding: 4px 5px;
-    }
-
-    .asset-icon {
-        width: 20px;
-        height: 20px;
-        flex-basis: 20px;
-    }
-
-    .asset-name {
-        font-size: 7px;
-    }
-
-    .asset-meta,
-    .asset-from,
-    .asset-protection {
-        font-size: 5px;
-    }
-}
-
 </style>
+

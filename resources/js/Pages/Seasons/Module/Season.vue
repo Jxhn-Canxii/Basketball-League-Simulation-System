@@ -212,31 +212,13 @@
                     v-if="seasonStatus == 1"
                     class="border-t border-gray-800 p-2"
                 >
-                    <div
-                        class="mb-2 flex items-center gap-2 px-1"
-                    >
-                        <span
-                            class="flex h-6 w-6 items-center justify-center rounded-md bg-emerald-500/10 text-emerald-400"
-                        >
-                            <i
-                                class="fa fa-arrow-right-arrow-left text-[9px]"
-                            ></i>
-                        </span>
-
-                        <span
-                            class="text-[10px] font-bold uppercase tracking-wider text-gray-500"
-                        >
-                            Recent Trade
-                        </span>
-                    </div>
-
                     <div class="min-w-0 overflow-x-auto">
-                        <!-- <RecentTradeProposal
+                        <RecentTradeProposal
                             :key="updateKey"
                             :isOffSeason="false"
                             :seasonId="props.season_id"
-                        /> -->
-                        <RecentTransactions :showTitle="false" :key="selectedConference" />
+                        />
+                        <!-- <RecentTransactions :showTitle="false" :key="updateKey" /> -->
                     </div>
                 </div>
             </section>
@@ -311,12 +293,12 @@
                     />
                     <br>
                     <!-- <RecentTransactions :showTitle="false" :key="selectedConference" /> -->
-                    <RecentTradeProposal
+                    <!-- <RecentTradeProposal
                         v-if="seasonStatus == 1"
                         :key="updateKey"
                         :isOffSeason="false"
                         :seasonId="props.season_id"
-                    />
+                    /> -->
                 </div>
             </section>
         </div>

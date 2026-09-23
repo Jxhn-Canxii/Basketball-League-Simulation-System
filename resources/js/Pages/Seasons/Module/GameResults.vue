@@ -541,7 +541,7 @@
                                         "
                                     >
                                         <div>
-                                            <span>
+                                            <span class="text-lg">
                                                 {{ player.name }}
                                             </span>
 
@@ -744,7 +744,7 @@
                                         "
                                     >
                                         <div>
-                                            <span>
+                                            <span class="text-lg">
                                                 {{ player.name }}
                                             </span>
 
@@ -1037,33 +1037,25 @@
                         </span>
                     </div>
                     <br>
-                    <!-- BREAKING NEWS -->
-                    <div class="breaking">
+                    <!-- SEASON LEADER -->
+                    <div
+                        v-if="!props.showBoxScore && seasonLeaders"
+                        class="season-leader"
+                    >
+                        <span>
+                            {{ seasonLeaders.message }}
+                        </span>
 
-                        <div class="breaking-head">
-                            <span>
-                                <i class="fas fa-bolt"></i>
-                                BREAKING
-                            </span>
-                        </div>
+                        <strong>
+                            {{ seasonLeaders.player_name }}
+                        </strong>
 
-                        <div class="breaking-content">
-                            <div
-                                v-if="injuredPlayers?.length"
-                                class="breaking-marquee"
-                            >
-                                <span
-                                    v-for="injury in injuredPlayers"
-                                    :key="injury.id"
-                                >
-                                    {{ formatInjuredPlayers(injury) }}
-                                </span>
-                            </div>
-
-                            <p v-else>
-                                {{ gameNews?.title ?? "No breaking news." }}
-                            </p>
-                        </div>
+                        <small>
+                            {{ seasonLeaders.stat_value }}
+                            {{ seasonLeaders.stat_type }}
+                            ·
+                            {{ seasonLeaders.team_acronym }}
+                        </small>
                     </div>
                 </div>
             </div>
@@ -1271,25 +1263,33 @@
                         </b>
                     </div>
                 </div>
-                <!-- SEASON LEADER -->
-                <div
-                    v-if="!props.showBoxScore && seasonLeaders"
-                    class="season-leader"
-                >
-                    <span>
-                        {{ seasonLeaders.message }}
-                    </span>
+                <!-- BREAKING NEWS -->
+                <div class="breaking">
 
-                    <strong>
-                        {{ seasonLeaders.player_name }}
-                    </strong>
+                    <div class="breaking-head">
+                        <span>
+                            <i class="fas fa-bolt"></i>
+                            BREAKING
+                        </span>
+                    </div>
 
-                    <small>
-                        {{ seasonLeaders.stat_value }}
-                        {{ seasonLeaders.stat_type }}
-                        ·
-                        {{ seasonLeaders.team_acronym }}
-                    </small>
+                    <div class="breaking-content">
+                        <div
+                            v-if="injuredPlayers?.length"
+                            class="breaking-marquee"
+                        >
+                            <span
+                                v-for="injury in injuredPlayers"
+                                :key="injury.id"
+                            >
+                                {{ formatInjuredPlayers(injury) }}
+                            </span>
+                        </div>
+
+                        <p v-else>
+                            {{ gameNews?.title ?? "No breaking news." }}
+                        </p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -2648,7 +2648,7 @@ onUnmounted(() => {
 ========================================================= */
 
 .breaking {
-    margin: 2px;
+    margin: 10px;
     border: 1px solid rgba(239,68,68,.16);
     border-radius: 8px;
     overflow: hidden;

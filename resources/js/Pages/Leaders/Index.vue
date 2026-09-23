@@ -444,7 +444,6 @@ const LeaderCard = (props) => {
     const players = Array.isArray(props.players)
         ? props.players
         : [];
-
     return h(
         "div",
         {
@@ -568,7 +567,7 @@ const LeaderCard = (props) => {
                                                       "text-sm font-black tabular-nums text-white",
                                               },
                                               formatStat(
-                                                  player[props.statKey]
+                                                  player.stat_value
                                               )
                                           ),
                                           h(
@@ -744,7 +743,7 @@ const SingleGameCard = (props) => {
                                                               "text-lg font-black tabular-nums text-white",
                                                       },
                                                       formatStat(
-                                                          player[props.statKey]
+                                                          player.stat_value
                                                       )
                                                   ),
 
@@ -819,6 +818,7 @@ const playerFormatter = (name) => {
 };
 
 const formatStat = (value) => {
+    console.log(value)
     if (value === null || value === undefined) {
         return "0";
     }

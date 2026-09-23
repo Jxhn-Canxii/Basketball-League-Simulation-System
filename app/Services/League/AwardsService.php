@@ -36,6 +36,8 @@ class AwardsService
                 'teams.name as team_name',
                 'seasons.name as season_name' // Select the season name
             )
+            ->orderBy('season_awards.season_id','desc')
+            ->orderBy('season_awards.id','desc')
             ->get();
 
 
@@ -64,55 +66,39 @@ class AwardsService
         // Assume season_id is passed in the request
         $seasonId = $request->input('season_id');
         $awardsName = $request->input('awards_name');
-        // Fetch awards along with player and team names for the updated season
-        if ($seasonId > 0) {
-            $awards = DB::table('season_awards')
-                ->leftJoin('players', 'season_awards.player_id', '=', 'players.id')
-                ->leftJoin('teams', 'season_awards.team_id', '=', 'teams.id')
-                ->leftJoin('teams as drafted_team', 'players.drafted_team_id', '=', 'drafted_team.id') // Fixed alias usage
-                ->leftJoin('seasons', 'season_awards.season_id', '=', 'seasons.id') // Join the seasons table
-                ->where('season_awards.season_id', $seasonId)
-                ->select(
-                    'season_awards.id',
-                    'season_awards.player_id',
-                    'players.name as player_name',
-                    'players.draft_status as draft_status',
-                    'drafted_team.acronym as drafted_team', // Fetch drafted team acronym
-                    'teams.name as team_name',
-                    'season_awards.award_name',
-                    'season_awards.award_description',
-                    'season_awards.season_id',
-                    'season_awards.team_id',
-                    'season_awards.created_at',
-                    'seasons.name as season_name' // Select the season name
-                )
-                ->orderBy('season_awards.id', 'desc')  // Order by id in descending order
-                ->get();
-        } else {
-            $awards = DB::table('season_awards')
-                ->leftJoin('players', 'season_awards.player_id', '=', 'players.id')
-                ->leftJoin('teams', 'season_awards.team_id', '=', 'teams.id')
-                ->leftJoin('teams as drafted_team', 'players.drafted_team_id', '=', 'drafted_team.id') // Fixed alias usage
-                ->leftJoin('seasons', 'season_awards.season_id', '=', 'seasons.id') // Join the seasons table
-                ->where('season_awards.award_name', $awardsName)
-                ->select(
-                    'season_awards.id',
-                    'season_awards.player_id',
-                    'players.name as player_name',
-                    'players.draft_status as draft_status',
-                    'drafted_team.acronym as drafted_team', // Fetch drafted team acronym
-                    'teams.name as team_name',
-                    'season_awards.award_name',
-                    'season_awards.award_description',
-                    'season_awards.season_id',
-                    'season_awards.team_id',
-                    'season_awards.created_at',
-                    'seasons.name as season_name' // Select the season name
-                )
-                ->orderBy('season_awards.id', 'desc')  // Order by id in descending order
-                ->get();
-        }
 
+        $query = DB::table('season_awards')
+                ->leftJoin('players', 'season_awards.player_id', '=', 'players.id')
+                ->leftJoin('teams', 'season_awards.team_id', '=', 'teams.id')
+                ->leftJoin('teams as drafted_team', 'players.drafted_team_id', '=', 'drafted_team.id') // Fixed alias usage
+                ->leftJoin('seasons', 'season_awards.season_id', '=', 'seasons.id') // Join the seasons table
+                ->select(
+                    'season_awards.id',
+                    'season_awards.player_id',
+                    'players.name as player_name',
+                    'players.draft_status as draft_status',
+                    'drafted_team.acronym as drafted_team', // Fetch drafted team acronym
+                    'teams.name as team_name',
+                    'season_awards.award_name',
+                    'season_awards.award_description',
+                    'season_awards.season_id',
+                    'season_awards.team_id',
+                    'season_awards.created_at',
+                    'seasons.name as season_name' // Select the season name
+                );
+
+                // Fetch awards along with player and team names for the updated season
+                if ($seasonId > 0) {
+                    $query->where('season_awards.season_id', $seasonId);
+                }
+                if($awardsName != 0) {
+                    $query->where('season_awards.award_name', $awardsName);
+                } 
+
+            $awards = $query->orderBy('season_awards.season_id','desc')
+                            ->orderBy('teams.name','asc')
+                            ->orderBy('season_awards.id','desc')
+                            ->get();
 
         return response()->json([
             'message' => 'Team IDs in season awards updated successfully for season ' . $seasonId,
@@ -181,9 +167,7 @@ class AwardsService
                     $rank = $rookieRankings++;
                     $role = $rank <= 5 ? 'starter' : 'reserve';
 
-                    $this->insertAward($rookieStats, 
-                    'all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!', 
-                    $latestSeasonId);
+                    $this->insertAward($rookieStats,'all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!',$latestSeasonId);
 
                     DB::table('transactions')->insert([
                         'player_id' => $rookieStats->player_id,
@@ -207,9 +191,7 @@ class AwardsService
                 $rank = $allStarRankings++;
                 $role = $rank <= 5 ? 'starter' : 'reserve';
 
-                $this->insertAward($allStarStats, 
-                'all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.', 
-                $latestSeasonId);
+                $this->insertAward($allStarStats, 'all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.',$latestSeasonId);
 
                 DB::table('transactions')->insert([
                     'player_id' => $allStarStats->player_id,
@@ -227,6 +209,117 @@ class AwardsService
             }
 
             $this->insertAllStarSchedule('all-star');
+
+        }
+
+        return response()->json([
+            'message' => 'All Star stored successfully.',
+        ]);
+    }
+
+    public function selectAllStarsForConferenceArchive($allStarGroup,$conferenceGroup, $latestSeasonId)
+    {
+        // Get the latest season ID
+        // $latestSeasonId = get_current_season_id() ?? 0;
+
+        // Get player stats from player_season_stats for the latest season
+        $playerStats = DB::table('player_season_stats_archives as pss')
+            ->join('teams','teams.id','=','pss.team_id')
+            ->join('conferences','conferences.id','=','teams.conference_id')
+            ->where('pss.season_id', $latestSeasonId)
+            ->whereIn('teams.conference_id',$conferenceGroup)
+            ->get();
+
+        $eligiblePlayerStats = $playerStats->filter(function ($stats) {
+            return (int)$stats->total_games_played > 5;
+        });
+
+        // Calculate MVP by sorting the players based on the weighted stats and returning the top player
+        $allStars = $eligiblePlayerStats->sort(function ($a, $b) {
+            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
+                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
+                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+
+            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
+                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
+                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+
+            return $bStats <=> $aStats;
+        })->take(15)->values();
+
+        // Filter out rookies and determine the Rookie of the Year award
+        $rookies = $eligiblePlayerStats->filter(function ($stats) {
+            return DB::table('players')
+                ->where('id', $stats->player_id)
+                ->where('draft_id', $stats->season_id)
+                ->exists();
+        });
+
+        // Filter rookies who have played at least 75% of games for Rookie of the Year
+        $topRookies = $rookies->sort(function ($a, $b) {
+            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
+                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
+                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+
+            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
+                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
+                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+
+            return $bStats <=> $aStats;
+        })->take(15)->values();
+
+        // Only insert these awards if it's not season 1
+        if ($latestSeasonId > 1) {
+        
+            // Rookie of the Year (not applicable in season 1)
+            if ($topRookies) {
+                $rookieRankings = 0;
+                foreach ($topRookies as $rookieStats) {
+                    $rank = $rookieRankings++;
+                    $role = $rank <= 5 ? 'starter' : 'reserve';
+
+                    $this->insertAward($rookieStats,'all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!',$latestSeasonId);
+
+                    DB::table('transactions')->insert([
+                        'player_id' => $rookieStats->player_id,
+                        'season_id' => $latestSeasonId,
+                        'details' => 'has been selected All-Rookie '.$role.' of the '.$allStarGroup.' All-rookie Selection.',
+                        'from_team_id' => $rookieStats->team_id,
+                        'to_team_id' => $rookieStats->team_id,
+                        'status' => 'selected',
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ]);
+                }
+
+                // $this->insertAllStarSchedule('all-rookie');
+            }
+        }
+
+        if ($allStars) {
+            $allStarRankings = 0;
+            foreach ($allStars as $allStarStats) {
+                $rank = $allStarRankings++;
+                $role = $rank <= 5 ? 'starter' : 'reserve';
+
+                $this->insertAward($allStarStats, 'all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.',$latestSeasonId);
+
+                DB::table('transactions')->insert([
+                    'player_id' => $allStarStats->player_id,
+                    'season_id' => $latestSeasonId,
+                    'details' => 'has been selected All-star '.$role.' of the '.$allStarGroup.' All-stars.',
+                    'from_team_id' => $allStarStats->team_id,
+                    'to_team_id' => $allStarStats->team_id,
+                    'status' => 'selected',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                DB::table('player_game_highs')->where('player_id', $allStarStats->player_id)->increment('all_star_count', 1);
+
+            }
+
+            // $this->insertAllStarSchedule('all-star');
 
         }
 

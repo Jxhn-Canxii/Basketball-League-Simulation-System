@@ -219,7 +219,7 @@
               <div
                 v-for="stat in bestPlayerStats"
                 :key="stat.label"
-                class="bg-slate-900 px-2 py-3 text-center"
+                class="bg-slate-900 px-2 py-3 text-center border-l border-b"
               >
                 <p
                   class="text-lg font-black leading-none text-white"

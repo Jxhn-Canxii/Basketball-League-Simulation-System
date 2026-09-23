@@ -102,6 +102,10 @@ class PlayerCareerStatsService
             $opponentTeamName = $stats['team_id'] != $gameData->away_team_id ? $gameData->away_team_name : $gameData->home_team_name;
             $round = $this->helperService->roundFormatter($gameData->round);
 
+            if($stats['team_id'] <= 4){
+                return $oldStats;
+            }
+            
             $details = $newStats == $oldStats && $oldStats != 0 ? 
                 'Has matched his career high in ' . $type. '. ('.$newStats.')' : 
                 'Has a career high in ' . $type.'. ('.$newStats.')';
