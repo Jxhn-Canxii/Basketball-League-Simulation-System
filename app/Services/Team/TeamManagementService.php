@@ -553,18 +553,17 @@ class TeamManagementService
         $seasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // You must implement this
 
-        $players = 
-            Player::join('season_awards as sa','players.id','=','sa.player_id')
-            ->leftJoin('drafts','drafts.player_id','=','players.id')
-            ->select(
-                'players.*',
-                'drafts.round as draft_round',
-                'drafts.pick_number as draft_pick'
-            )
-            ->whereIn('sa.conference_id', $conferenceRange)
-            ->whereIn('sa.award_name', $round)
-            ->where('sa.season_id', $seasonId)
-            ->get();
+        $players = Player::join('season_awards as sa','players.id','=','sa.player_id')
+                    ->leftJoin('drafts','drafts.player_id','=','players.id')
+                    ->select(
+                        'players.*',
+                        'drafts.round as draft_round',
+                        'drafts.pick_number as draft_pick'
+                    )
+                    ->whereIn('sa.conference_id', $conferenceRange)
+                    ->where('sa.award_name', $round)
+                    ->where('sa.season_id', $seasonId)
+                    ->get();
 
         $playerEfficiencies = [];
 

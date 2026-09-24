@@ -88,11 +88,11 @@ class ScheduleService
 
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
-        $draftApplicationWindow = $simulatedRounds >= 5;
+        // $draftApplicationWindow = $simulatedRounds >= 5;
 
-        if($draftApplicationWindow){
-            $this->playerGenerator->declarePlayerForNextDraft();
-        }
+        // if($draftApplicationWindow){
+        //     $this->playerGenerator->declarePlayerForNextDraft();
+        // }
         if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
             if($simulatedRounds % 2 == 0){
                 $this->tradeDecision->generateTradeProposals(false);

@@ -260,7 +260,7 @@
                                 </th>
 
                                 <th
-                                    class="px-4 py-3 text-left text-[9px] uppercase tracking-wider font-black whitespace-nowrap"
+                                    class="px-4 py-3 text-cemter text-[9px] uppercase tracking-wider font-black whitespace-nowrap"
                                 >
                                     Conference Result
                                 </th>
@@ -272,7 +272,7 @@
                                 </th>
 
                                 <th
-                                    class="px-4 py-3 text-left text-[9px] uppercase tracking-wider font-black whitespace-nowrap"
+                                    class="px-4 py-3 text-center text-[9px] uppercase tracking-wider font-black whitespace-nowrap"
                                 >
                                     National Result
                                 </th>
@@ -412,58 +412,60 @@
                                 <td
                                     class="px-4 py-4 text-center whitespace-nowrap"
                                 >
-                                    <RankBadge
-                                        :rank="
-                                            season.conference_rank
-                                        "
-                                        :label="'CONF'"
-                                    />
+                                    {{ season.conference_rank }}
                                 </td>
 
                                 <!-- =================================================
-                                     CONFERENCE RESULT
-                                ================================================== -->
-                                <td
-                                    class="px-4 py-4 whitespace-nowrap"
-                                >
-                                    <AwardBadge
-                                        :rank="
-                                            season.conference_rank
-                                        "
-                                        type="conference"
-                                    />
-                                </td>
-
-                                <!-- =================================================
-                                     NATIONAL RANK
+                                    CONFERENCE RESULT
                                 ================================================== -->
                                 <td
                                     class="px-4 py-4 text-center whitespace-nowrap"
                                 >
-                                    <RankBadge
-                                        :rank="
-                                            season.overall_rank
-                                        "
-                                        :label="'NAT'"
-                                    />
+                                    <span v-if="season.conference_rank == 1" 
+                                    class="inline-flex items-center float-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold"
+                                    >
+                                        <i class="fa fa-medal"></i>
+                                        Conference Overall Champion 
+                                    </span>
+                                    <span
+                                        v-else
+                                        class="text-[10px] text-white/20"
+                                    >
+                                        —
+                                    </span>
                                 </td>
 
                                 <!-- =================================================
-                                     NATIONAL RESULT
+                                    NATIONAL RANK
                                 ================================================== -->
                                 <td
-                                    class="px-4 py-4 whitespace-nowrap"
+                                    class="px-4 py-4 text-center whitespace-nowrap"
                                 >
-                                    <AwardBadge
-                                        :rank="
-                                            season.overall_rank
-                                        "
-                                        type="national"
-                                    />
+                                    {{ season.overall_rank }}
                                 </td>
 
                                 <!-- =================================================
-                                     FINALS
+                                    NATIONAL RESULT
+                                ================================================== -->
+                                <td
+                                    class="px-4 py-4 whitespace-nowrap text-center"
+                                >
+                                    <span v-if="season.overall_rank == 1" 
+                                    class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-[10px] font-bold"
+                                    >
+                                        <i class="fa fa-medal"></i>
+                                        National Overall Champion 
+                                    </span>
+                                    <span
+                                        v-else
+                                        class="text-[10px] text-white/20"
+                                    >
+                                        —
+                                    </span>
+                                </td>
+
+                                <!-- =================================================
+                                    FINALS
                                 ================================================== -->
                                 <td
                                     class="px-4 py-4 whitespace-nowrap"
@@ -1081,187 +1083,6 @@ const handlePagination = (
     fetchTeamHistory();
 };
 </script>
-
-<script>
-/*
-|--------------------------------------------------------------------------
-| Presentation Components
-|--------------------------------------------------------------------------
-*/
-
-export default {
-    components: {
-        RankBadge: {
-            props: {
-                rank: [Number, String],
-                label: String,
-            },
-
-            computed: {
-                numericRank() {
-                    return Number(
-                        this.rank
-                    );
-                },
-
-                rankClass() {
-                    if (
-                        this.numericRank ===
-                        1
-                    ) {
-                        return "bg-yellow-400/10 text-yellow-400 border-yellow-400/20";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        2
-                    ) {
-                        return "bg-slate-300/10 text-slate-300 border-slate-300/20";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        3
-                    ) {
-                        return "bg-amber-700/10 text-amber-500 border-amber-700/20";
-                    }
-
-                    return "bg-white/5 text-white/60 border-white/10";
-                },
-            },
-
-            template: `
-                <div
-                    class="inline-flex flex-col items-center justify-center min-w-[50px] px-2 py-1.5 rounded-lg border"
-                    :class="rankClass"
-                >
-                    <span class="text-base font-black leading-none">
-                        {{ rank ?? '-' }}
-                    </span>
-
-                    <span class="mt-1 text-[7px] uppercase tracking-wider opacity-50">
-                        {{ label }}
-                    </span>
-                </div>
-            `,
-        },
-
-        AwardBadge: {
-            props: {
-                rank: [Number, String],
-                type: String,
-            },
-
-            computed: {
-                numericRank() {
-                    return Number(
-                        this.rank
-                    );
-                },
-
-                isConference() {
-                    return (
-                        this.type ===
-                        "conference"
-                    );
-                },
-
-                label() {
-                    if (
-                        this.numericRank ===
-                        1
-                    ) {
-                        return this.isConference
-                            ? "Conference Champion"
-                            : "National Champion";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        2
-                    ) {
-                        return this.isConference
-                            ? "Conference Runner Up"
-                            : "National Runner Up";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        3
-                    ) {
-                        return this.isConference
-                            ? "Conference 3rd Place"
-                            : "National 3rd Place";
-                    }
-
-                    return "No Award";
-                },
-
-                icon() {
-                    if (
-                        this.numericRank ===
-                        1
-                    ) {
-                        return "fas fa-trophy";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        2
-                    ) {
-                        return "fas fa-medal";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        3
-                    ) {
-                        return "fas fa-medal";
-                    }
-
-                    return "fas fa-minus";
-                },
-
-                badgeClass() {
-                    if (
-                        this.numericRank ===
-                        1
-                    ) {
-                        return "bg-yellow-400/10 text-yellow-400 border-yellow-400/20";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        2
-                    ) {
-                        return "bg-slate-300/10 text-slate-300 border-slate-300/20";
-                    }
-
-                    if (
-                        this.numericRank ===
-                        3
-                    ) {
-                        return "bg-amber-700/10 text-amber-500 border-amber-700/20";
-                    }
-
-                    return "bg-white/5 text-white/25 border-white/5";
-                },
-            },
-
-            template: `
-                <span
-                    class="inline-flex items-center gap-2 px-2.5 py-1.5 rounded-lg border text-[9px] font-bold"
-                    :class="badgeClass"
-                >
-                    <i :class="icon"></i>
-                    {{ label }}
-                </span>
-            `,
-        },
-    },
-};
-</script>
-
 <style scoped>
 /*
 |--------------------------------------------------------------------------
