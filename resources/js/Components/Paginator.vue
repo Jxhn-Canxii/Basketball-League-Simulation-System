@@ -134,17 +134,9 @@
             </p>
 
             <p
-                v-if="totalPages > 1"
-                class="text-[10px] font-semibold uppercase tracking-wider text-gray-700"
+                class="text-[6px] font-light uppercase tracking-wider text-gray-600"
             >
-                Page
-                <span class="text-gray-400">
-                    {{ props.page_number }}
-                </span>
-                of
-                <span class="text-gray-400">
-                    {{ totalPages }}
-                </span>
+                Paginator By BrainDead
             </p>
         </div>
 
