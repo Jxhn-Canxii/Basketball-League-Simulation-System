@@ -371,22 +371,16 @@
                     </h3>
                 </div>
 
-                <button
+                <<span class="text-uppercase">
+                    <i class="fa fa-chevron-right text-yellow-500"></i> {{ roundNameFormatter(series?.round) }}
+                </span>
+                <!-- <button
                     type="button"
                     @click="isGameNewsModalOpen = false"
                     class="flex h-9 w-9 items-center justify-center rounded-lg border border-gray-800 bg-gray-950 text-gray-500 transition hover:border-gray-700 hover:text-white"
                 >
-                    <svg
-                        class="h-4 w-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                    >
-                        <path d="M18 6L6 18" />
-                        <path d="M6 6l12 12" />
-                    </svg>
-                </button>
+                    <i class="fa fa-times"></i>
+                </button> -->
             </div>
 
             <!-- Modal content -->

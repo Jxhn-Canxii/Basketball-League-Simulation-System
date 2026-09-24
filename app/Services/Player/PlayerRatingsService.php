@@ -82,11 +82,9 @@ class PlayerRatingsService
                             'no_trade_clause' => $contract->no_trade_clause,
                         ]);
 
-                    $previousSeasonId = get_current_season_id();
-
                     DB::table('player_contracts')
-                        ->where('id', $contract->player_id)
-                        ->where('contract_end','<=', $previousSeasonId)
+                        ->where('player_id', $contract->player_id)
+                        ->where('contract_end','<=', $latestSeasonId)
                         ->update([
                             'status' => 'ended',
                         ]);
@@ -110,6 +108,29 @@ class PlayerRatingsService
 
         return $players;
 
+    }
+
+    public function endExpiredPlayerContract(){
+
+        $latestSeasonId  = get_current_season_id();
+
+        $contracts = DB::table('player_contracts as pc')
+                    ->select('pc.*','p.name as player_name','p.is_rookie')
+                    ->join('players as p','p.id','=','pc.player_id')
+                    ->where('pc.contract_end','<=',$latestSeasonId)
+                    ->where('pc.status','signed')
+                    ->orderBy('id','desc')
+                    ->get();
+        
+        foreach ($contracts as $contract) {
+            # code...
+            DB::table('player_contracts')
+                ->where('player_id', $contract->player_id)
+                ->where('contract_end','<=', $latestSeasonId)
+                ->update([
+                    'status' => 'ended',
+                ]);
+        }
     }
     //
     public function updateActivePlayers($request)
@@ -368,6 +389,7 @@ class PlayerRatingsService
 
                 $this->updatePlayerAndCoachAge();
                 $this->promoteRetiredPlayersToCoaches();
+                $this->endExpiredPlayerContract();
 
                 // Update season status
                 $season = Seasons::find($seasonId);
