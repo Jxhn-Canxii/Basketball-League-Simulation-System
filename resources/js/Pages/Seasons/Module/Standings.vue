@@ -856,6 +856,12 @@ const teamAchievements = (team) => {
     `;
   };
 
+  const achievementsBlock = `
+        <div class="ml-2 mb-2 flex flex-col gap-1">
+          ${achievementsRows}
+        </div>
+      `;
+
   const topPlayersBlock =
     buildPlayersBlock(
       team.top_players,
@@ -939,7 +945,7 @@ const teamAchievements = (team) => {
           </span>
       </div>
       <div class="grid grid-cols-1-2 gap-1 space-x-2 text-left">
-        ${achievementsRows}
+        ${achievementsBlock}
         ${topPlayersBlock}
         ${newPlayersBlock}
         ${rookiesBlock}
