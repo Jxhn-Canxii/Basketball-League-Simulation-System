@@ -555,16 +555,14 @@ class TeamManagementService
 
         $players = 
             Player::join('season_awards as sa','players.id','=','sa.player_id')
+            ->leftJoin('drafts','drafts.player_id','=','players.id')
             ->select(
                 'players.*',
                 'drafts.round as draft_round',
                 'drafts.pick_number as draft_pick'
             )
-            ->leftJoin('drafts', function ($join) use ($seasonId) {
-                $join->on('drafts.player_id', '=', 'players.id')
-                    ->where('drafts.season_id', '=', $seasonId);
-            })
             ->whereIn('sa.conference_id', $conferenceRange)
+            ->whereIn('sa.award_name', $round)
             ->where('sa.season_id', $seasonId)
             ->get();
 

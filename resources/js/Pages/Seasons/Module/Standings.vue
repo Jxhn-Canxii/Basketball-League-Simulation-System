@@ -933,24 +933,39 @@ const teamAchievements = (team) => {
       );
   `;
 
+  const teamText = `
+    color: ${secondary}
+  `;
+
   return `
     <div
       class="p-2 text-xs rounded-lg shadow-xl border border-white/10 inline-block w-auto max-w-[100vw]"
       style="${cardBg}"
     >
-      <div class="flex flex-col">
-          <span class="font-semibold text-nowrap text-lg text-indigo-100 whitespace-normal">
-            <i class="fa fa-basketball-ball"></i>
-            #${team.team_id} | ${team.team_city} ${team.team_name}
-          </span>
-      </div>
-      <div class="grid grid-cols-1-2 gap-1 space-x-2 text-left">
-        ${achievementsBlock}
-        ${topPlayersBlock}
-        ${newPlayersBlock}
-        ${rookiesBlock}
-        ${reservedBlock}
-        ${injuryBlock}
+      <div class="grid grid-cols-2 gap-1">
+        <div class="flex flex-col min-h-full gap-2 space-x-2 text-left">
+          <div class="flex flex-col">
+            <span 
+            style="${teamText}"
+            class="font-semibold text-nowrap text-lg whitespace-normal">
+              <i class="fa fa-basketball-ball"></i>
+              #${team.team_id} | ${team.team_city} ${team.team_name}
+            </span>
+          </div>
+          ${achievementsBlock}
+          ${topPlayersBlock}
+          ${rookiesBlock}
+        </div>
+        <div class="flex flex-col min-h-full gap-2 space-x-2 text-left">
+          <div class="flex flex-col justify-right">
+            <span class="font-medium text-nowrap text-md tracking-wide text-yellow-500 whitespace-normal">
+              <i class="fa fa-trophy"></i> ${team.championships }x Champions
+            </span>
+          </div>
+          ${newPlayersBlock}
+          ${reservedBlock}
+          ${injuryBlock}
+        </div>
       </div>
     </div>
   `;
