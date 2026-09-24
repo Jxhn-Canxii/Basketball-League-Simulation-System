@@ -707,9 +707,9 @@ const teamAchievements = (team) => {
 
   if (team.playoff_appearances > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-trophy text-yellow-300"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-trophy text-yellow-300"></i>
           ${team.playoff_appearances}x Playoff Appearances
         </span>
       </div>
@@ -718,13 +718,10 @@ const teamAchievements = (team) => {
 
   if (team.last_playoff_season_name) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-history text-indigo-200"></span>
-        <span class="font-semibold text-indigo-100">
-          Last Playoff:
-        </span>
-        <span class="text-indigo-100">
-          ${team.last_playoff_season_name}
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-history text-indigo-200"></i>
+          Last Playoff: ${team.last_playoff_season_name}
         </span>
       </div>
     `;
@@ -732,9 +729,9 @@ const teamAchievements = (team) => {
 
   if (team.conference_finals_appearances > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-flag-checkered text-indigo-200"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-flag-checkered text-indigo-200"></i>
           ${team.conference_finals_appearances}x Conference Finals Appearances
         </span>
       </div>
@@ -743,9 +740,9 @@ const teamAchievements = (team) => {
 
   if (team.conference_championships > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-trophy text-yellow-300"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-trophy text-yellow-300"></i>
           ${team.conference_championships}x Conference Championships
         </span>
       </div>
@@ -754,9 +751,9 @@ const teamAchievements = (team) => {
 
   if (team.finals_appearances > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-medal text-indigo-200"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-medal text-indigo-200"></i>
           ${team.finals_appearances}x National Finals Appearances
         </span>
       </div>
@@ -765,9 +762,9 @@ const teamAchievements = (team) => {
 
   if (team.championships > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-trophy text-yellow-300"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-trophy text-yellow-300"></i>
           ${team.championships}x National Championships
         </span>
       </div>
@@ -776,9 +773,9 @@ const teamAchievements = (team) => {
 
   if (team.overall_rank_count > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-star text-yellow-200"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-star text-yellow-200"></i>
           ${team.overall_rank_count}x National Ranked #1
         </span>
       </div>
@@ -787,9 +784,9 @@ const teamAchievements = (team) => {
 
   if (team.conference_rank_count > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-star text-yellow-200"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-star text-yellow-200"></i>
           ${team.conference_rank_count}x Conference Ranked #1
         </span>
       </div>
@@ -798,9 +795,9 @@ const teamAchievements = (team) => {
 
   if (team.conference_top_3_count > 0) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-medal text-indigo-200"></span>
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-medal text-indigo-200"></i>
           ${team.conference_top_3_count}x Conference Ranked Top 3
         </span>
       </div>
@@ -809,13 +806,10 @@ const teamAchievements = (team) => {
 
   if (team.estimated_fans) {
     achievementsRows += `
-      <div class="flex items-center gap-2 mb-1">
-        <span class="fa fa-users text-yellow-200"></span>
-        <span class="font-semibold text-indigo-100">
-          Estimated Fans:
-        </span>
-        <span class="text-indigo-100">
-          ${numberFormatter(team.estimated_fans)} Fans
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa fa-users text-indigo-200"></i>
+          Estimated Fans: ${numberFormatter(team.estimated_fans)} Fans
         </span>
       </div>
     `;
@@ -841,15 +835,14 @@ const teamAchievements = (team) => {
     }
 
     return `
-      <div class="flex items-center gap-2 mt-2 mb-1">
-        <span class="fa ${icon} ${iconColor}"></span>
-
-        <span class="font-semibold text-indigo-100">
+      <div class="flex flex-col">
+        <span class="font-semibold text-nowrap text-indigo-100 whitespace-normal">
+          <i class="fa ${icon} ${iconColor}"></i>
           ${title}:
         </span>
       </div>
 
-      <div class="ml-7 flex flex-col gap-1">
+      <div class="pl-7 flex flex-col gap-1">
         ${players
           .map(
             (player) => `
@@ -936,20 +929,16 @@ const teamAchievements = (team) => {
 
   return `
     <div
-      class="p-3 text-sm rounded-lg shadow-xl border border-white/10 inline-block w-auto max-w-[100vw]"
+      class="p-2 text-xs rounded-lg shadow-xl border border-white/10 inline-block w-auto max-w-[100vw]"
       style="${cardBg}"
     >
-      <h3
-        class="text-lg font-bold mb-2 flex items-center gap-2 text-yellow-200"
-      >
-        <span class="fa fa-basketball-ball"></span>
-
-        <span class="text-indigo-100 text-nowrap">
-          #${team.team_id} | ${team.team_city} ${team.team_name}
-        </span>
-      </h3>
-
-      <div class="grid grid-cols-1 gap-1">
+      <div class="flex flex-col">
+          <span class="font-semibold text-nowrap text-lg text-indigo-100 whitespace-normal">
+            <i class="fa fa-basketball-ball"></i>
+            #${team.team_id} | ${team.team_city} ${team.team_name}
+          </span>
+      </div>
+      <div class="grid grid-cols-1-2 gap-1 space-x-2 text-left">
         ${achievementsRows}
         ${topPlayersBlock}
         ${newPlayersBlock}
