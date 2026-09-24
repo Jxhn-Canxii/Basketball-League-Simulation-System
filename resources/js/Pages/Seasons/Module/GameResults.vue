@@ -541,7 +541,7 @@
                                         "
                                     >
                                         <div>
-                                            <span class="text-lg">
+                                            <span class="text-md">
                                                 {{ player.name }}
                                             </span>
 
@@ -744,7 +744,7 @@
                                         "
                                     >
                                         <div>
-                                            <span class="text-lg">
+                                            <span class="text-md">
                                                 {{ player.name }}
                                             </span>
 
@@ -2358,7 +2358,7 @@ onUnmounted(() => {
 }
 
 .player-name-cell {
-    min-width: 145px;
+    min-width: 100%;
     text-align: left !important;
     padding-left: 13px !important;
 }
@@ -2367,7 +2367,7 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 8px;
+    gap: 2px;
 }
 
 .player-name-cell span {
