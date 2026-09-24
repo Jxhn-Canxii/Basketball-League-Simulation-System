@@ -104,8 +104,13 @@ class PlayersController extends Controller
             'country' => 'required|string',
         ], $messages);
 
+        $player = $this->playerGeneratorService->addFreeAgentPlayer($request->name,$request->country,$request->address);
 
-        return $this->playerGeneratorService->addFreeAgentPlayer($request);
+        return response()->json([
+            'error' => false,
+            'message' => 'Player added successfully',
+            'player' => $player,
+        ]);
 
     }
 

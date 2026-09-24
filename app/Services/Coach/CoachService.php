@@ -524,6 +524,8 @@ class CoachService
                 $coach_id
             )
 
+            ->where('team_season_info.team_id','>',4)
+
             ->where(
                 'seasons.status',
                 17

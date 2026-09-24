@@ -10,6 +10,7 @@ use App\Models\Player; // <-- Add this if not yet imported
 use App\Services\Archive\ArchiveService;
 use App\Services\Draft\DraftPickRightsService;
 use App\Services\Helper\HelperService;
+use App\Services\Player\PlayerGeneratorService;
 use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Schedule\ScheduleService;
@@ -34,9 +35,11 @@ class TestController extends Controller
     protected $playerRatingService;
     protected $draftRights;
     protected $playerStats;
+    protected $playerGenerator;
 
     public function __construct(){
 
+        $this->playerGenerator = new PlayerGeneratorService();
         $this->draftRights = new DraftPickRightsService();
         $this->teamRole = new TeamRoleService();
         $this->chemistry = new TeamChemistryService();
@@ -447,11 +450,7 @@ class TestController extends Controller
     }
 
     public function gameFlow(){
-        for ($i=1; $i <= 4; $i++) { 
-            # code...
-
-            echo 'Q'.$i.'   ';
-        }
+        echo $this->playerGenerator->declarePlayerForNextDraft();
         // $OT = true;
         // $tries = 0;
         // do {

@@ -12,13 +12,14 @@ use App\Services\Helper\HelperService;
 
 class PlayerGeneratorService
 {
-   protected $helper;
+
+    protected $helper;
 
     public function __construct()
     {
         $this->helper = new HelperService();
     }
-   
+
         // Add a player to a team with random attributes
     public function addPlayer($request)
     {
@@ -33,84 +34,68 @@ class PlayerGeneratorService
                 'error' => true,
                 'message' => 'Team already has 15 players. Cannot add more.',
             ], 400);
-        }
-
-        // Check if a player with the same name already exists in any team
-        $existingPlayer = Player::where('name', $request->name)->first();
-        if ($existingPlayer) {
+        }else{
             return response()->json([
                 'error' => true,
-                'message' => 'A player with this name already exists in another team.',
+                'message' => 'Successfully added Player to a Team.',
             ], 400);
         }
+    }
 
-        // Generate random attributes
-        $age = mt_rand(18, 25);
-        $retirementAge = rand($age + 1, 45); // Retirement age should be greater than current age
-        $injuryPronePercentage = rand(0, 100); // Random injury-prone percentage between 0 and 100
-        $contractYears = rand(1, 5); // Random contract years between 1 and 5
+       /// generate player for post request -> manual generation
+    public function generateNewPlayer()
+    {
+        
+        $newPlayer = $this->playerGenerator();
 
-        // Randomize player role
-        $roles = ['starter', 'all star', 'star player', 'role player', 'bench'];
-        $role = $roles[array_rand($roles)];
+        return response()->json($newPlayer);
+    }
 
-        // Randomize player ratings
-        $shootingRating = rand(1, 100);
-        $defenseRating = rand(1, 100);
-        $passingRating = rand(1, 100);
-        $reboundingRating = rand(1, 100);
-        $overallRating = ($shootingRating + $defenseRating + $passingRating + $reboundingRating) / 4;
+    /// this function
+    public function declarePlayerForNextDraft(){
+    
+        $currentSeasonId = get_current_season_id() + 1;
+        $newPlayer = collect($this->playerGenerator());
+        
+        $name = $newPlayer['name'];
+        $country = $newPlayer['country'];
+        $address = $newPlayer['address'];
 
-        // Calculate contract expiration date
-        $contractExpiresAt = Carbon::now()->addYears($contractYears);
+        $this->addFreeAgentPlayer($name,$country,$address);
 
-        $player = Player::create([
-            'name' => $request->name,
-            'team_id' => $request->team_id,
-            'age' => $age,
-            'retirement_age' => $retirementAge,
-            'injury_prone_percentage' => $injuryPronePercentage,
-            'contract_years' => $contractYears,
-            'contract_expires_at' => $contractExpiresAt,
-            'is_active' => true,
-            'role' => $role,
-            'shooting_rating' => $shootingRating,
-            'defense_rating' => $defenseRating,
-            'passing_rating' => $passingRating,
-            'rebounding_rating' => $reboundingRating,
-            'overall_rating' => $overallRating,
+        $player = DB::table('players')->where('name',$name)->first();
+
+        if(!$player){
+            return response()->json([
+                'message' => 'Player is not eligible for the draft!',
+                'player' => $player,
+            ],400);
+        }
+
+        $details = $player->name.' has declared for the upcoming Season '.$currentSeasonId.' Liga Pilipinas Draft!';
+    
+
+        DB::table('transactions')->insert([
+            'player_id' => $player->id,
+            'season_id' => $currentSeasonId,
+            'details' => $details,
+            'from_team_id' => 0,
+            'to_team_id' => 0,
+            'status' => 'draft-application',
         ]);
 
-        return response()->json([
-            'error' => false,
-            'message' => 'Player added successfully',
-            'player' => $player,
-        ]);
+        return true;
     }
     
-    public function addFreeAgentPlayer($request)
+    ///draft
+    public function addFreeAgentPlayer($name,$country,$address)
     {
-        $messages = [
-            'name.regex' => 'The name must contain at least one vowel.',
-            'name.max' => 'The name must not exceed 30 characters.',
-        ];
-
-        $request->validate([
-            'name' => [
-                'required',
-                'string',
-                'max:30',
-                'regex:/[aeiouAEIOU]/',
-            ],
-            'address' => 'required|string|max:255',
-            'country' => 'required|string',
-        ], $messages);
-
+    
         $latestSeasonId = get_current_season_id();
         $currentSeasonId = $latestSeasonId ? (int) $latestSeasonId + 1 : 1;
 
         // Check if player already exists
-        $finalName = $this->suffixNamingFormat($request->name);
+        $finalName = $this->suffixNamingFormat($name);
         $existingPlayer = Player::where('name', $finalName)->first();
 
         if ($existingPlayer) {
@@ -229,8 +214,8 @@ class PlayerGeneratorService
         // Save the player
         $player = Player::create([
             'name' => $finalName,
-            'address' => $request->address,
-            'country' => $request->country,
+            'address' => $address,
+            'country' => $country,
             'team_id' => 0,
             'age' => $age,
             'retirement_age' => $retirementAge,
@@ -265,14 +250,11 @@ class PlayerGeneratorService
             'is_rookie' => true,
         ]);
 
-        return response()->json([
-            'error' => false,
-            'message' => 'Player added successfully',
-            'player' => $player,
-        ]);
+        return $player;
+
     }
-    
-    public function generateNewPlayer()
+
+    private function playerGenerator()
     {
         $doubleBarrelSurname = app('doubleBarrelSurname');
         $locale = $this->selectWeightedLocale();
@@ -325,14 +307,13 @@ class PlayerGeneratorService
         $country = Str::title(str_replace(['-', '_'], ' ', $countryRaw));
         $address = preg_replace('/\s+/', ' ', trim($address));
 
-        return response()->json([
+        return [
             'name' => $name,
             'address' => $address,
             'country' => $country,
             'locale' => $locale,
-        ]);
+        ];
     }
-
     /**
      * Get a random archetype and its attributes.
      *

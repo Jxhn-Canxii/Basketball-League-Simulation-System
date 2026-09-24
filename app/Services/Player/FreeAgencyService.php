@@ -66,6 +66,7 @@ class FreeAgencyService
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
+            ->where('players.draft_id','<=', $latestSeasonId)
             ->where($positionFilter)
             ->select(
                 'players.id as player_id',
@@ -87,6 +88,7 @@ class FreeAgencyService
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
+            ->where('players.draft_id','<=', $latestSeasonId)
             ->where($positionFilter)
             ->select(
                 'players.id as player_id',
@@ -119,6 +121,7 @@ class FreeAgencyService
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
+            ->where('players.draft_id','<=', $latestSeasonId)
             ->where('player_season_stats.season_id', $latestSeasonId)
             ->where($positionFilter)
             ->select(
@@ -149,6 +152,7 @@ class FreeAgencyService
             ->where('players.is_active', 1)
             ->where('players.is_injured', 0)
             ->where('players.team_id', 0)
+            ->where('players.draft_id','<=', $latestSeasonId)
             ->where($positionFilter)
             ->select(
                 'players.id as player_id',
@@ -513,7 +517,7 @@ class FreeAgencyService
             * fall back to the best available free agent.
             */
             if (!$candidate) {
-                $candidate = $this->getBestFreeAgentAvailable(null);
+                $candidate = $this->getBestFreeAgentAvailable('PG');
             }
 
             /*

@@ -460,14 +460,14 @@
                                     class="mt-1 text-[8px] font-bold uppercase tracking-wider"
                                     :class="
                                         Number(player.team_id) ===
-                                        Number(player.original_team_id)
+                                        Number(player.drafted_team_id)
                                             ? 'text-gray-600'
                                             : 'text-red-500'
                                     "
                                 >
                                     {{
                                         Number(player.team_id) ===
-                                        Number(player.original_team_id)
+                                        Number(player.drafted_team_id)
                                             ? "Original Selection"
                                             : "Picked from " +
                                               (player.original_team_name ??

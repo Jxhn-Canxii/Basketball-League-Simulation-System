@@ -1131,10 +1131,10 @@ const headerMetrics = computed(() => [
         icon: "fas fa-chart-line",
     },
     {
-        label: "Streak",
+        label: team_info.value?.teams?.streak_status ? "Active Streak" : "Best Winning Streak",
         value:
             team_info.value?.teams?.streak_status ??
-            "-",
+            "W"+team_info.value?.streaks[0]?.best_winning_streak  ?? "-",
         icon: "fas fa-fire",
     },
     {
