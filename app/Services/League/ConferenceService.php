@@ -20,7 +20,7 @@ class ConferenceService
     /**
      * Get the list of all conferences per league_id.
      */
-    public function leagueConference(Request $request)
+    public function leagueConference($request)
     {
         // Assuming 'league_id' is a parameter sent in the request
         $league_id = $request->league_id;
@@ -35,7 +35,7 @@ class ConferenceService
     /**
      * Add a new conference.
      */
-    public function add(Request $request)
+    public function add($request)
     {
         $request->validate([
             'name' => 'required|string|max:255',

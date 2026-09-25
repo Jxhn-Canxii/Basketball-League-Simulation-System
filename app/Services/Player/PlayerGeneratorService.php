@@ -23,7 +23,13 @@ class PlayerGeneratorService
         // Add a player to a team with random attributes
     public function addPlayer($request)
     {
-    
+        $disabled = true;
+        if($disabled){
+            return response()->json([
+                'error' => true,
+                'message' => 'This endpoint has been disabled!.',
+            ], 400);
+        }
         // Check if the team already has 15 players
         $playerCount = Player::where('team_id', $request->team_id)
             ->where('is_active', 1) // Ensure players are active

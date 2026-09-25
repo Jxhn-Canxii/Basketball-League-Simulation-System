@@ -33,420 +33,7 @@ class PlayerService
         $this->playerGeneratorService = new PlayerGeneratorService();
     }
 
-   
-    public function listTeamRoster(Request $request)
-    {
-        $request->validate([
-            'team_id' => 'required|exists:teams,id',
-            'season_id' => 'nullable||exists:seasons,id',
-        ]);
-
-        $teamId = $request->team_id;
-        $seasonId = $request->season_id;
-
-
-        $remainingCapSpace = $this->contract->getRemainingCapSpace($teamId);
-
-        // Initialize an array to hold player stats
-        $playerStats = [];
-        $latestSeasonId = get_current_season_id();
-
-        $isLatestSeason = ($seasonId == $latestSeasonId);
-        // Fetch the season status
-        $seasonStatus = DB::table('seasons')->where('id', $seasonId)->value('status');
-
-        $seasonStatsDBName = $this->helper->getSeasonStatsDBName($seasonId);
-
-        // Fetch player stats for the given team_id and season_id
-        $playerStatsData = DB::table($seasonStatsDBName)
-            ->where('team_id', $teamId)
-            ->where('season_id', $seasonId)
-            ->get();
-
-        if (count($playerStatsData) > 0) {
-            foreach ($playerStatsData as $stats) {
-                // Fetch the player with playoff appearances and awards
-                $player = DB::table('players')
-                    ->select(
-                        'players.*',
-                        'teams.acronym as drafted_team',
-                        'seasons.name as draft_class',
-                        DB::raw('(SELECT COALESCE(SUM(interconference_semi_finals_appearances), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as conference_championships_won'),
-                        DB::raw('(SELECT COALESCE(SUM(championships_won), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as championships_won'),
-                        DB::raw('(SELECT COUNT(*) FROM season_awards WHERE season_awards.player_id = players.id) as awards_won')
-                    )
-                    ->leftJoin('seasons', 'players.draft_id', '=', 'seasons.id')
-                    ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
-                    ->where('players.id', $stats->player_id)
-                    ->first();
-
-                if ($player) {
-                    // Count the number of games played for the player
-                    // $gamesPlayed = DB::table('player_game_stats')
-                    //     ->where('player_id', $player->id)
-                    //     ->where('team_id', $teamId)
-                    //     ->where('season_id', $seasonId)
-                    //     ->where('minutes', '>=', 0)
-                    //     ->count();
-
-                    $latestRatings = DB::table('player_ratings')
-                        ->where('player_id', $player->id)
-                        ->where('season_id', $seasonId - 1)
-                        ->value('overall_rating') ??  75;
-
-                    $prevRatings = ($seasonId == 1) ? $player->overall_rating  :  DB::table('player_ratings')
-                        ->where('player_id', $player->id)
-                        ->where('season_id', $seasonId - 2)
-                        ->value('overall_rating') ?? 75;
-
-                    $latestRatings = ($seasonId < 3 || $isLatestSeason) ? $player->overall_rating : $latestRatings;
-
-
-                    $prevRatings = ($seasonId == 1) ? $player->overall_rating : $prevRatings;
-
-                    $hasImproved = $this->helper->hasImproved($latestRatings, $prevRatings);
-                    // $hasImproved = 'Latest: '.$latestRatings.' - Prev: '.$prevRatings;                  // Count seasons played with the team
-                    $seasonsPlayedWithTeam = DB::table('player_season_stats_archives')
-                        ->select(DB::raw('DISTINCT season_id, team_id'))
-                        ->where('player_id', $player->id)
-                        ->where('team_id', $teamId)
-                        ->where('season_id', '<=', $seasonId)
-                        ->get()
-                        ->count() + 1;
-
-                    $totalSeasonsPlayed = DB::table('player_season_stats_archives')
-                        ->where('player_id', $player->id)
-                        ->where('season_id', '<=', $seasonId)
-                        ->distinct('season_id')
-                        ->count('season_id') + 1;
-
-                    $playerStatus = $player->team_id == $teamId ? ($player->is_active ? 1 : 0) : 2;
-                    $playerCUtfromFinalRoster = ($player->team_id != $teamId && $player->is_active && $stats->total_games_played == 0) ? 1 : 0;
-                    // Add player stats to the array
-                    //if ($playerCUtfromFinalRoster) continue;
-                    $playerRole = $stats->role == '' ? 'reserved' : $stats->role;
-
-                    $playerStats[] = [
-                        'player_id' => $player->id,
-                        'name' => $player->name,
-                        'position' => $player->position,
-                        'age' => $player->age,
-                        'role' => $playerRole,
-                        'is_active' => $player->is_active,
-                        'morale' => $player->morale,
-                        'hardship_contract' => $player->hardship_contract,
-                        'salary' => '₱'.number_format($player->salary,2,'.',','),
-                        'contract_type' => $player->contract_type,
-                        'injury_recovery_games' => $player->injury_recovery_games,
-                        'is_rookie' => $player->is_rookie,
-                        'is_injured' => $player->is_injured,
-                        'is_reserved' => $player->is_reserved,
-                        'injury_type' => $player->injury_type,
-                        'contract_years' => $player->contract_years,
-                        'retirement_age' => $player->retirement_age,
-                        'drafted_team' => $player->drafted_team,
-                        'draft_id' => $player->draft_id,
-                        'draft_class' => $player->draft_class,
-                        'draft_status' => $player->draft_status,
-                        'overall_rating' => $latestRatings,
-                        'potential_rating' => $player->potential_rating,
-                        'potential_status' => $player->potential_rating == $latestRatings ? 'MAX' : '-',
-                        'status' => $playerStatus,
-                        'is_cut' => $playerCUtfromFinalRoster,
-                        'has_improved' => $hasImproved,
-                        'average_minutes_per_game' => (float)$stats->avg_minutes_per_game,
-                        'average_points_per_game' => (float)$stats->avg_points_per_game,
-                        'average_rebounds_per_game' => (float)$stats->avg_rebounds_per_game,
-                        'average_assists_per_game' => (float)$stats->avg_assists_per_game,
-                        'average_steals_per_game' => (float)$stats->avg_steals_per_game,
-                        'average_blocks_per_game' => (float)$stats->avg_blocks_per_game,
-                        'average_turnovers_per_game' => (float)$stats->avg_turnovers_per_game,
-                        'average_fouls_per_game' => (float)$stats->avg_fouls_per_game,
-                        'bpg_game_leader' => (float)$stats->bpg_game_leader,
-                        'effeciency' => (float)$stats->eff,
-                        'field_goal_percentage' => (float)$stats->field_goal_percentage,
-                        'three_point_percentage' => (float)$stats->three_point_percentage,
-                        'two_point_percentage' => (float)$stats->two_point_percentage,
-                        'free_throw_percentage' => (float)$stats->free_throw_percentage,
-                        'team_total_games' => (float)$stats->total_games,
-                        'games_played' => (float)$stats->total_games_played,
-                        'per_game_score' => (float)$stats->per,
-                        'total_score' => 0,
-                        'combined_score' => 0,
-                        'seasons_played_with_team' => $seasonsPlayedWithTeam,
-                        'total_seasons_played' => $totalSeasonsPlayed,
-                        'latest_season' => $latestSeasonId,
-                        'conference_championships_won' => (int)$player->conference_championships_won,
-                        'championships_won' => (int)$player->championships_won,
-                        'awards_won' => (int)$player->awards_won,
-                        'player_valuation' => (int)$stats->player_valuation,
-                        'is_latest' => $isLatestSeason,
-                    ];
-                }
-            }
-        } else {
-            // Fetch players from the players table and set all stats to zero
-            $players = DB::table('players')
-                ->select(
-                    'players.*',
-                    'teams.acronym as drafted_team',
-                    'seasons.name as draft_class',
-                    DB::raw('(SELECT COALESCE(SUM(interconference_semi_finals_appearances), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as conference_championships_won'),
-                    DB::raw('(SELECT COALESCE(SUM(championships_won), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as championships_won'),
-                    DB::raw('(SELECT COUNT(*) FROM season_awards WHERE season_awards.player_id = players.id) as awards_won')
-                )
-                ->leftJoin('seasons', 'players.draft_id', '=', 'seasons.id')
-                ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
-                ->where('team_id', $teamId)
-                ->get();
-
-            // Fetch average statistics for players
-            $playerGameStats = DB::table('player_game_stats')
-                ->select(
-                    'player_id',
-                    DB::raw('COUNT(CASE WHEN minutes > 0 THEN 1 END) as games_played'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN minutes ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_minutes'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN points ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_points'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN rebounds ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_rebounds'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN assists ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_assists'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN steals ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_steals'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN blocks ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_blocks'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN turnovers ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_turnovers'),
-                    DB::raw('SUM(CASE WHEN minutes > 0 THEN fouls ELSE 0 END) / NULLIF(COUNT(CASE WHEN minutes > 0 THEN 1 END), 0) as avg_fouls'),
-                    DB::raw('SUM(CASE WHEN eff > 0 THEN eff ELSE 0 END) / NULLIF(COUNT(CASE WHEN eff > 0 THEN 1 END), 0) as avg_eff'),
-                    DB::raw('SUM(CASE WHEN field_goal_percentage > 0 THEN field_goal_percentage ELSE 0 END) / NULLIF(COUNT(CASE WHEN field_goal_percentage > 0 THEN 1 END), 0) as field_goal_percentage'),
-                    DB::raw('SUM(CASE WHEN per > 0 THEN per ELSE 0 END) / NULLIF(COUNT(CASE WHEN per > 0 THEN 1 END), 0) as per_game_score')
-                )
-                ->where('season_id', $seasonId)
-                ->groupBy('player_id')
-                ->get()
-                ->keyBy('player_id');
-
-            foreach ($players as $player) {
-                $playerId = $player->id;
-
-                $totalSeasonsPlayed = DB::table('player_season_stats_archives')
-                    ->where('player_id', $playerId)
-                    ->distinct('season_id')
-                    ->count();
-
-                $seasonsPlayedWithTeam = DB::table('player_season_stats_archives')
-                    ->where('player_id', $player->id)
-                    ->where('team_id', $teamId)
-                    ->count('team_id') + 1;
-
-                $totalSeasonGameSchedule = $this->scheduleService->getScheduleCount($teamId, $seasonId);
-
-                // Default values in case there are no stats
-                $stats = [
-                    'average_minutes_per_game' => (float)0,
-                    'average_points_per_game' => (float)0,
-                    'average_rebounds_per_game' => (float)0,
-                    'average_assists_per_game' => (float)0,
-                    'average_steals_per_game' => (float)0,
-                    'average_blocks_per_game' => (float)0,
-                    'average_turnovers_per_game' => (float)0,
-                    'average_fouls_per_game' => (float)0,
-                    'bpg_game_leader' => (float)0,
-                    'field_goal_percentage' => (float)0,
-                    'three_point_percentage' => (float)0,
-                    'two_point_percentage' => (float)0,
-                    'free_throw_percentage' => (float)0,
-                    'per_game_score' => (float)0,
-                    'total_score' => (float)0,
-                    'combined_score' => (float)0,
-                    'seasons_played_with_team' => $seasonsPlayedWithTeam,
-                    'team_total_games' => (float)$totalSeasonGameSchedule,
-                    'total_seasons_played' => $totalSeasonsPlayed + 1,
-                    'average_eff' => (float)0,
-                    'games_played' => (int)0,
-                ];
-
-                // If there are stats for this player, update values
-                if (isset($playerGameStats[$playerId])) {
-                    $stats = [
-                        'average_minutes_per_game' => (float)$playerGameStats[$playerId]->avg_minutes,
-                        'average_points_per_game' => (float)$playerGameStats[$playerId]->avg_points,
-                        'average_rebounds_per_game' => (float)$playerGameStats[$playerId]->avg_rebounds,
-                        'average_assists_per_game' => (float)$playerGameStats[$playerId]->avg_assists,
-                        'average_steals_per_game' => (float)$playerGameStats[$playerId]->avg_steals,
-                        'average_blocks_per_game' => (float)$playerGameStats[$playerId]->avg_blocks,
-                        'average_turnovers_per_game' => (float)$playerGameStats[$playerId]->avg_turnovers,
-                        'average_fouls_per_game' => (float)$playerGameStats[$playerId]->avg_fouls,
-                        'bpg_game_leader' => (float)0,
-                        'field_goal_percentage' => (float)$playerGameStats[$playerId]->field_goal_percentage,
-                        'per_game_score' => (float)$playerGameStats[$playerId]->per_game_score,
-                        'games_played' => (int)$playerGameStats[$playerId]->games_played,
-                        'average_eff' => (float)$playerGameStats[$playerId]->avg_eff,
-                    ];
-                }
-
-                // Only include players with games played > 0 if season status is 11
-                if ($seasonStatus != 11 || $stats['games_played'] > 0) {
-                    $playerStats[] = [
-                        'player_id' => $playerId,
-                        'name' => $player->name,
-                        'position' => $player->position,
-                        'age' => $player->age,
-                        'role' => $player->role ?? 'reserved',
-                        'is_active' => $player->is_active,
-                        'morale' => $player->morale,
-                        'is_rookie' => $player->is_rookie,
-                        'is_reserved' => $player->is_reserved,
-                        'injury_type' => $player->injury_type,
-                        'contract_years' => $player->contract_years,
-                        'retirement_age' => $player->retirement_age,
-                        'draft_id' => $player->draft_id,
-                        'drafted_team' => $player->drafted_team,
-                        'draft_status' => $player->draft_status,
-                        'draft_class' => $player->draft_class,
-                        'overall_rating' => $player->overall_rating,
-                        'status' => $player->team_id == $teamId ? ($player->is_active ? 1 : 0) : 2,
-                        'average_minutes_per_game' => $stats['average_minutes_per_game'],
-                        'average_points_per_game' => $stats['average_points_per_game'],
-                        'average_rebounds_per_game' => $stats['average_rebounds_per_game'],
-                        'average_assists_per_game' => $stats['average_assists_per_game'],
-                        'average_steals_per_game' => $stats['average_steals_per_game'],
-                        'average_blocks_per_game' => $stats['average_blocks_per_game'],
-                        'average_turnovers_per_game' => $stats['average_turnovers_per_game'],
-                        'average_fouls_per_game' => $stats['average_fouls_per_game'],
-                        'bpg_game_leader' => $stats['bpg_game_leader'],
-                        'effeciency' => number_format($stats['average_eff'], 2),
-                        'games_played' => $stats['games_played'],
-                        'field_goal_percentage' => number_format($stats['field_goal_percentage'], 2),
-                        'three_point_percentage' => number_format($stats['three_point_percentage'], 2),
-                        'two_point_percentage' => number_format($stats['two_point_percentage'], 2),
-                        'free_throw_percentage' => number_format($stats['free_throw_percentage'], 2),
-                        'per_game_score' => number_format($stats['per_game_score'], 2),
-                        'total_score' => number_format(0, 2),
-                        'combined_score' => number_format(0, 2),
-                        'seasons_played_with_team' => $seasonsPlayedWithTeam,
-                        'team_total_games' => (float)$totalSeasonGameSchedule,
-                        'total_seasons_played' => $totalSeasonsPlayed + 1,
-                        'latest_season' => $latestSeasonId,
-                        'playoff_appearances' => (int)$player->conference_championships_won,
-                        'championships_won' => (int)$player->championships_won,
-                        'awards_won' => (int)$player->awards_won,
-                        'player_valuation' =>(int) $stats['player_valuation'] ?? 0,
-                    ];
-                }
-            }
-        }
-
-        // Sort players by role and efficiency
-        if (!empty($playerStats)) {
-            $rolePriority = [
-                'star player' => 1,
-                'all star' => 2,
-                'starter' => 3,
-                'role player' => 4,
-                'bench' => 5
-            ];
-
-            usort($playerStats, function ($a, $b) use ($rolePriority) {
-                if ($a['status'] == 2 && $b['status'] != 2) {
-                    return 1;
-                }
-                if ($b['status'] == 2 && $a['status'] != 2) {
-                    return -1;
-                }
-
-                $roleA = $rolePriority[$a['role']] ?? 6;
-                $roleB = $rolePriority[$b['role']] ?? 6;
-
-                if ($roleA !== $roleB) {
-                    return $a['is_reserved'] <=> $b['is_reserved'] ?: $roleA <=> $roleB;
-                }
-
-                return $a['is_reserved'] <=> $b['is_reserved'] ?: $b['per_game_score'] <=> $a['per_game_score'];
-            });
-        }
-
-        return response()->json([
-            'players' => $playerStats,
-            'season_id' => $seasonId,
-            'team_id' => $teamId,
-            'stats_count' => count($playerStatsData),
-            'table' => $seasonStatsDBName,
-            'remaining_cap_space' => $remainingCapSpace,
-        ]);
-    }
-
-    public function getFreeAgents($request)
-    {
-        // Get pagination parameters from the request
-        $perPage = $request->itemsperpage ?? 10; // Number of items per page
-        $currentPage = $request->page_num ?? 1; // Current page number
-        $search = $request->search; // Search term
-
-        
-        // Build the query with optional search filter
-        $query = Player::select(
-            'players.*',
-            'teams.acronym as drafted_team',
-            DB::raw("(
-                SELECT GROUP_CONCAT(CONCAT(award_name, ' (Season ', season_id, ')') SEPARATOR ', ') 
-                FROM season_awards 
-                WHERE season_awards.player_id = players.id
-            ) as awards"),
-            DB::raw("(
-                SELECT CONCAT('Finals MVP (Season ', seasons.id, ')') 
-                FROM seasons 
-                WHERE seasons.finals_mvp_id = players.id 
-                ORDER BY seasons.id DESC 
-                LIMIT 1
-            ) as finals_mvp"),
-            DB::raw("CASE 
-                WHEN EXISTS (
-                    SELECT 1 FROM seasons WHERE seasons.finals_mvp_id = players.id
-                ) THEN 1 ELSE 0 
-            END as is_finals_mvp"),
-            DB::raw("(
-                SELECT GROUP_CONCAT(seasons.name SEPARATOR ', ') 
-                FROM seasons 
-                WHERE seasons.finals_mvp_id = players.id
-            ) as finals_mvp_seasons")
-        )
-            ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
-            ->where('players.contract_years', 0)
-            ->where('players.is_active', 1);
-
-        // Apply search filter if provided
-        if ($search) {
-            $query->where('players.name', 'like', "%{$search}%");
-        }
-
-        // Add ordering for awards, finals MVP status, and role priority
-        $query->orderByRaw("
-            LENGTH(awards) DESC,
-            is_finals_mvp DESC,
-            FIELD(role, 'star player','all star', 'starter', 'role player', 'bench')
-        ");
-
-        // Get total number of records
-        $total = $query->count();
-
-        // Calculate the offset for the query
-        $offset = ($currentPage - 1) * $perPage;
-
-        // Fetch the paginated data
-        $freeAgents = $query->offset($offset)
-            ->limit($perPage)
-            ->get();
-
-        // Calculate total pages
-        $totalPages = (int) ceil($total / $perPage);
-
-        return response()->json([
-            'current_page' => $currentPage,
-            'total_pages' => $totalPages,
-            'total' => $total,
-            'search' => $search,
-            'free_agents' => $freeAgents,
-        ]);
-    }
-
-    public function getAllPlayers(Request $request)
+    public function getAllPlayers($request)
     {
         // Get pagination parameters from the request
         $perPage = $request->input('itemsperpage', 10); // Number of items per page
@@ -965,7 +552,7 @@ class PlayerService
         // Initialize an array to hold formatted player stats
         $formattedPlayerStats = [];
 
-        foreach ($playerStats as $stats) {
+        foreach ($playerStatsLatest as $stats) {
             // Calculate shooting percentages (avoid division by zero)
             $fieldGoalPercentage = $stats->total_field_goal_attempts > 0 ? ($stats->total_field_goals_made / $stats->total_field_goal_attempts) * 100 : 0;
             $twoPointPercentage = $stats->total_two_point_attempts > 0 ? ($stats->total_two_pointers_made / $stats->total_two_point_attempts) * 100 : 0;
@@ -1019,7 +606,7 @@ class PlayerService
             ];
         }
 
-        foreach ($playerStatsLatest as $stats) {
+              foreach ($playerStats as $stats) {
             // Calculate shooting percentages (avoid division by zero)
             $fieldGoalPercentage = $stats->total_field_goal_attempts > 0 ? ($stats->total_field_goals_made / $stats->total_field_goal_attempts) * 100 : 0;
             $twoPointPercentage = $stats->total_two_point_attempts > 0 ? ($stats->total_two_pointers_made / $stats->total_two_point_attempts) * 100 : 0;
@@ -1085,55 +672,7 @@ class PlayerService
         $latestSeasonId = get_current_season_id();
 
         // Fetch player and team details
-        $playerDetails = DB::table('players')
-            ->join('teams', 'players.team_id', '=', 'teams.id', 'left') // Join teams table to get team details
-            ->join('teams as drafted_teams', 'players.drafted_team_id', '=', 'drafted_teams.id', 'left') // Join drafted teams table
-            ->join('seasons', 'players.draft_id', '=', 'seasons.id', 'left') // Join draft seasons
-            ->where('players.id', $playerId)
-            ->select(
-                'players.id as player_id',
-                'teams.primary_color',
-                'teams.secondary_color',
-                'players.contract_type',
-                'players.salary',
-                'players.type as archetype',
-                'players.hardship_contract',
-                'players.position as position',
-                'players.name as player_name',
-                'players.country as country',
-                'players.address as address',
-                'players.age as age',
-                'players.retirement_age as retirement_age',
-                'teams.name as team_name',
-                'players.role',
-                'players.contract_years',
-                'players.is_rookie',
-                'players.is_active',
-                'players.overall_rating',
-                'players.potential_rating',
-                'players.shooting_rating',
-                'players.two_point_rating',
-                'players.three_point_rating',
-                'players.free_throw_rating',
-                'players.defense_rating',
-                'players.passing_rating',
-                'players.rebounding_rating',
-                'players.athleticism_rating',
-                'players.basketball_iq_rating',
-                'players.strength_rating',
-                'players.stamina_rating',
-                'players.clutch_rating',
-                'players.leadership_rating',
-                'players.work_ethic_rating',
-                'players.injury_prone_percentage',
-                'players.type',
-                'players.draft_status as draft_status',
-                'seasons.name as draft_class',
-                'drafted_teams.acronym as drafted_team',
-                'players.injury_recovery_games as injury_recovery_game_count'
-            )
-            ->first();
-
+        $playerDetails = $this->getPlayerDetails($playerId);
 
         if (!$playerDetails) {
             return response()->json([
@@ -1142,19 +681,7 @@ class PlayerService
         }
 
         // Fetch playoff performance
-        $playoffPerformance = DB::table('player_playoff_appearances')
-            ->select(
-                'round_of_16_appearances',
-                'quarter_finals_appearances',
-                'semi_finals_appearances',
-                'interconference_semi_finals_appearances',
-                'finals_appearances',
-                'play_ins_finals_appearances',
-                'play_ins_elims_round_1_appearances',
-                'play_ins_elims_round_2_appearances'
-            )
-            ->where('player_id', $playerId)
-            ->first();
+        $playoffPerformance = $this->getPlayerPlayoffData($playerId); 
 
         // Set default values if no performance data found
         $playoffPerformance = $playoffPerformance ?: (object)[
@@ -1169,118 +696,33 @@ class PlayerService
         ];
 
         // Fetch MVP count and seasons
-        $awardsData = DB::table('season_awards')
-            ->join('players', 'season_awards.player_id', '=', 'players.id')
-            ->join('teams', 'season_awards.team_id', '=', 'teams.id')
-            ->leftJoin('seasons', 'season_awards.season_id', '=', 'seasons.id') // Join the seasons table
-            ->where('season_awards.player_id', $playerId)
-            ->select(
-                'season_awards.award_name as award_name',
-                'season_awards.season_id as season',
-                'seasons.name as season_name', // Select the season name
-                'teams.name as team_name'
-            )
-            ->distinct()
-            ->get();
-
+        $awardsData = $this->getPlayerAwards($playerId);
 
         // Fetch MVP count and seasons
-        $mvpData = DB::table('seasons')
-            ->where('seasons.finals_mvp_id', $playerId)
-            ->select('seasons.name as season_name')
-            ->get();
+        $mvpData = $this->getFinalsMvp($playerId);
 
         $mvpCount = $mvpData->count();
 
         // Fetch championship count and season names
-        $championships = DB::table('seasons')
-            ->join('player_season_stats_archives as player_season_stats', 'seasons.id', '=', 'player_season_stats.season_id')
-            ->join('playoff_series_archives as playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
-            ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
-            ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
-            ->select(
-                'seasons.id as season_id',
-                'seasons.name as season_name',
-                'winner_team.name as championship_team'
-            )
-            ->where('player_season_stats.player_id', $playerId)
-            ->where('playoff_series.round', 'finals')
-            ->where('playoff_series.status', 2) // Series is finished
-            ->whereColumn('playoff_series.winner_team_id', 'player_season_stats.team_id') // Match columns correctly
-            ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
-            ->distinct()
-            ->get();
+        $championships = $this->getPlayerChampionships($playerId,'finals');
 
         // Fetch conference championships (using playoff_series table)
-        $conference_championships = DB::table('seasons')
-            ->join('player_season_stats_archives as player_season_stats', 'seasons.id', '=', 'player_season_stats.season_id')
-            ->join('playoff_series_archives as playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
-            ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
-            ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
-            ->select(
-                'seasons.id as season_id',
-                'seasons.name as season_name',
-                'winner_team.name as championship_team'
-            )
-            ->where('player_season_stats.player_id', $playerId)
-            ->where('playoff_series.round', 'semi_finals')
-            ->where('playoff_series.status', 2) // Series is finished
-            ->whereColumn('playoff_series.winner_team_id', 'player_season_stats.team_id') // Match columns correctly
-            ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
-            ->distinct()
-            ->get();
-
+        $conference_championships = $this->getPlayerChampionships($playerId,'semi_finals');
 
         // Fetch career high stats
-        $careerHighs = DB::table('player_game_highs')
-            ->where('player_id', $playerId)
-            ->first();
+        $careerHighs = $this->getPlayerGameHighs($playerId);
 
         // Calculate season count
-        $seasonCount = DB::table('player_season_stats_archives')
-            ->where('player_id', $playerId)
-            ->distinct('season_id')
-            ->count('season_id');
+        $seasonCount = $this->getPlayerStatsCounter($playerId,'player_season_stats_archives');
 
         // Calculate playoff count
-        $playoffCount = DB::table('player_season_playoff_stats_archives')
-            ->where('player_id', $playerId)
-            ->distinct('season_id')
-            ->count('season_id');
+        $playoffCount = $this->getPlayerStatsCounter($playerId,'player_season_playoff_stats_archives');
 
-        $overallRankSeasons = DB::table('player_season_stats_archives as pssa')
-            ->join('standings_snapshots', function ($join) {
-                $join->on('pssa.team_id', '=', 'standings_snapshots.team_id')
-                    ->on('pssa.season_id', '=', 'standings_snapshots.season_id');
-            })
-            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
-            ->join('teams', 'pssa.team_id', '=', 'teams.id')
-            ->where('pssa.player_id', $playerId)
-            ->where('standings_snapshots.overall_rank', 1)
-            ->distinct()
-            ->get([
-                'standings_snapshots.season_id',
-                'seasons.name as season_name',
-                'standings_snapshots.overall_rank',
-                'teams.name as team_name'
-            ]);
+        $overallRankSeasons = $this->rankOneInASeason($playerId,'overall_rank');
 
-        $conferenceRankSeasons = DB::table('player_season_stats_archives as pssa')
-            ->join('standings_snapshots', function ($join) {
-                $join->on('pssa.team_id', '=', 'standings_snapshots.team_id')
-                    ->on('pssa.season_id', '=', 'standings_snapshots.season_id');
-            })
-            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
-            ->join('teams', 'pssa.team_id', '=', 'teams.id')
-            ->where('pssa.player_id', $playerId)
-            ->where('standings_snapshots.conference_rank', 1)
-            ->distinct()
-            ->get([
-                'standings_snapshots.season_id',
-                'seasons.name as season_name',
-                'standings_snapshots.conference_rank',
-                'teams.name as team_name'
-            ]);
+        $conferenceRankSeasons = $this->rankOneInASeason($playerId,'conference_rank');
+
+        $latestStats = $this->getLatestStats($playerId);
 
         $scoutingReportData = [
             'potential_rating' => $playerDetails->potential_rating,
@@ -1304,6 +746,7 @@ class PlayerService
         $scoutingReport = $this->scout->generateScoutingReport($scoutingReportData);
 
         return response()->json([
+            'latest_stats' => $latestStats,
             'player_details' => $playerDetails,
             'playoff_performance' => $playoffPerformance,
             'mvp_count' => $mvpCount,
@@ -1319,6 +762,13 @@ class PlayerService
             'current_season_id' => $latestSeasonId,
             'scouting_report' => $scoutingReport,
         ]);
+    }
+
+    public function getPlayerAwardsList($request){
+
+        $awards = $this->getPlayerAwards($request->player_id);
+
+        return response()->json($awards);
     }
 
     public function getPlayerGameLogs($request)
@@ -1400,7 +850,7 @@ class PlayerService
             'source' => $playerDatabase,
         ]);
     }
-
+    
     public function getPlayerLatestGameLogs($request)
     {
 
@@ -1750,6 +1200,190 @@ class PlayerService
         return response()->json($transactions);
     }
 
+    ///private functions
+    private function getPlayerDetails($playerId){
+        $data = DB::table('players')
+            ->join('teams', 'players.team_id', '=', 'teams.id', 'left') // Join teams table to get team details
+            ->join('teams as drafted_teams', 'players.drafted_team_id', '=', 'drafted_teams.id', 'left') // Join drafted teams table
+            ->join('seasons', 'players.draft_id', '=', 'seasons.id', 'left') // Join draft seasons
+            ->where('players.id', $playerId)
+            ->select(
+                'players.id as player_id',
+                'teams.primary_color',
+                'teams.secondary_color',
+                'players.contract_type',
+                'players.salary',
+                'players.type as archetype',
+                'players.hardship_contract',
+                'players.position as position',
+                'players.name as player_name',
+                'players.country as country',
+                'players.address as address',
+                'players.age as age',
+                'players.retirement_age as retirement_age',
+                'teams.name as team_name',
+                'players.role',
+                'players.contract_years',
+                'players.is_rookie',
+                'players.is_active',
+                'players.overall_rating',
+                'players.potential_rating',
+                'players.shooting_rating',
+                'players.two_point_rating',
+                'players.three_point_rating',
+                'players.free_throw_rating',
+                'players.defense_rating',
+                'players.passing_rating',
+                'players.rebounding_rating',
+                'players.athleticism_rating',
+                'players.basketball_iq_rating',
+                'players.strength_rating',
+                'players.stamina_rating',
+                'players.clutch_rating',
+                'players.leadership_rating',
+                'players.work_ethic_rating',
+                'players.injury_prone_percentage',
+                'players.type',
+                'players.draft_status as draft_status',
+                'seasons.name as draft_class',
+                'drafted_teams.acronym as drafted_team',
+                'players.injury_recovery_games as injury_recovery_game_count'
+            )
+            ->first();
 
+        return $data;
+    }
+
+    private function getPlayerStatsCounter($playerId,$tableName){
+         // Calculate playoff count
+        $statsCount = DB::table($tableName)
+            ->where('player_id', $playerId)
+            ->distinct('season_id')
+            ->count('season_id');
+
+        return $statsCount;
+    }
+
+    private function getPlayerGameHighs($playerId){
+
+        return DB::table('player_game_highs')
+            ->where('player_id', $playerId)
+            ->first();
+    }
+
+    private function getPlayerPlayoffData($playerId){
+
+        return DB::table('player_playoff_appearances')
+            ->select(
+                'round_of_16_appearances',
+                'quarter_finals_appearances',
+                'semi_finals_appearances',
+                'interconference_semi_finals_appearances',
+                'finals_appearances',
+                'play_ins_finals_appearances',
+                'play_ins_elims_round_1_appearances',
+                'play_ins_elims_round_2_appearances'
+            )
+            ->where('player_id', $playerId)
+            ->first();
+
+    }
+
+    private function getFinalsMvp($playerId){
+
+        return DB::table('seasons')
+                ->where('seasons.finals_mvp_id', $playerId)
+                ->select('seasons.name as season_name')
+                ->get();
+
+    }
+
+    private function getPlayerAwards($playerId){
+
+        return DB::table('season_awards')
+                ->join('players', 'season_awards.player_id', '=', 'players.id')
+                ->join('teams', 'season_awards.team_id', '=', 'teams.id')
+                ->leftJoin('seasons', 'season_awards.season_id', '=', 'seasons.id') // Join the seasons table
+                ->where('season_awards.player_id', $playerId)
+                ->select(
+                    'season_awards.created_at as details',
+                    'season_awards.award_description as description',
+                    'season_awards.award_name as award_name',
+                    'season_awards.season_id as season',
+                    'seasons.name as season_name', // Select the season name
+                    'teams.name as team_name',
+                    'teams.primary_color',
+                    'teams.secondary_color',
+                    'teams.acronym',
+                )
+                ->distinct()
+                ->orderBy('season_awards.season_id','desc')
+                ->orderBy('season_awards.id','desc')
+                ->get();
+    }
+
+    private function getPlayerChampionships($playerId, $round){
+        
+            return DB::table('seasons')
+                    ->join('player_season_stats_archives as player_season_stats', 'seasons.id', '=', 'player_season_stats.season_id')
+                    ->join('playoff_series_archives as playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
+                    ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
+                    ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
+                    ->select(
+                        'seasons.id as season_id',
+                        'seasons.name as season_name',
+                        'winner_team.name as championship_team'
+                    )
+                    ->where('player_season_stats.player_id', $playerId)
+                    ->where('playoff_series.round', $round)
+                    ->where('playoff_series.status', 2) // Series is finished
+                    ->whereColumn('playoff_series.winner_team_id', 'player_season_stats.team_id') // Match columns correctly
+                    ->groupBy('seasons.id', 'seasons.name', 'winner_team.name')
+                    ->distinct()
+                    ->get();
+    }
+
+    private function rankOneInASeason($playerId, $type, $rank = 1){
+        $overallRankSeasons = DB::table('player_season_stats_archives as pssa')
+            ->join('standings_snapshots', function ($join) {
+                $join->on('pssa.team_id', '=', 'standings_snapshots.team_id')
+                    ->on('pssa.season_id', '=', 'standings_snapshots.season_id');
+            })
+            ->join('seasons', 'standings_snapshots.season_id', '=', 'seasons.id')
+            ->join('teams', 'pssa.team_id', '=', 'teams.id')
+            ->where('pssa.player_id', $playerId)
+            ->where('standings_snapshots.'.$type, $rank)
+            ->distinct()
+            ->get([
+                'standings_snapshots.season_id',
+                'seasons.name as season_name',
+                'standings_snapshots.overall_rank',
+                'teams.name as team_name'
+            ]);
+        
+        return $overallRankSeasons;
+    }
+
+    private function getLatestStats($playerId)
+    {
+
+        $seasonId = get_current_season_id();
+
+        $seasonStats = DB::table('player_season_stats as pss')
+            ->join('players', 'pss.player_id', '=', 'players.id')
+            ->leftJoin('teams', 'pss.team_id', '=', 'teams.id')
+            ->leftJoin('seasons', 'pss.season_id', '=', 'seasons.id')
+            ->where('pss.player_id', $playerId)
+            ->where('pss.season_id', $seasonId)
+            ->select(
+                'pss.*',
+                'players.name as player_name',
+                'seasons.name as season_name',
+            )
+            ->orderByDesc('pss.id')
+            ->first();
+
+        return $seasonStats;
+    }
 }
 

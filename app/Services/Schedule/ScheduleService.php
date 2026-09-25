@@ -45,11 +45,7 @@ class ScheduleService
 
     public function getScheduleIds(Request $request)
     {
-        // Validate the request data
-        $request->validate([
-            'season_id' => 'required|exists:seasons,id',
-            'round' => 'required',
-        ]);
+    
 
         $seasonId = $request->season_id;
         $round = $request->round;
@@ -154,14 +150,7 @@ class ScheduleService
 
     public function createSeasonandSchedule(Request $request)
     {
-        $request->validate([
-            'season_name' => 'required|unique:seasons,name',
-            'type' => 'required|in:1,2,3,4,5,6',
-            'start' => 'required',
-            'league_id' => 'required|exists:leagues,id',
-            'playoff_type' => 'required|in:1,2',
-        ]);
-
+    
         DB::beginTransaction();
 
         try {

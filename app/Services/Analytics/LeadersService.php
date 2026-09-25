@@ -172,7 +172,7 @@ class LeadersService
         }
     }
 
-    public function updateAllTimeTopStatsPerSeason(Request $request)
+    public function updateAllTimeTopStatsPerSeason($request)
     {
         // Get the current season id (you can get this from your business logic or the latest game)
         $currentSeasonId = $request->season_id;
@@ -368,7 +368,7 @@ class LeadersService
         return response()->json($sortedPlayers->values());
     }
 
-    public function getTop10PlayersByTeam(Request $request)
+    public function getTop10PlayersByTeam($request)
     {
         $request->validate([
             'team_id' => 'required|exists:teams,id',

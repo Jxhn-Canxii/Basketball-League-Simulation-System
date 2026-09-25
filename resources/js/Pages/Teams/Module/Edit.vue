@@ -4,7 +4,7 @@
         <button
             type="button"
             @click.prevent="fillForm"
-            :disabled="isEditModalOpen"
+            :disabled="isEditModalOpen || props.data.id <= 4"
             class="group inline-flex items-center gap-2 rounded-xl border border-yellow-500/20 bg-yellow-500/[0.08] px-3 py-2 text-xs font-black text-yellow-500 transition-all duration-200 hover:border-yellow-500/40 hover:bg-yellow-500/[0.13] hover:text-yellow-400 disabled:cursor-not-allowed disabled:opacity-40"
         >
             <span

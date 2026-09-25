@@ -106,7 +106,7 @@
                             class="border-b border-white/[0.05] bg-[#080a0d] text-[9px] font-semibold uppercase tracking-[0.12em] text-slate-600"
                         >
                             <th
-                                colspan="3"
+                                colspan="2"
                                 class="sticky left-0 z-30 bg-[#080a0d] px-4 py-2 text-left"
                             >
                                 Player
@@ -150,11 +150,11 @@
                                 Player Name
                             </th>
 
-                            <th
+                            <!-- <th
                                 class="sticky left-[300px] z-30 w-[130px] bg-[#0d1014] px-4 py-3 text-left"
                             >
                                 Role
-                            </th>
+                            </th> -->
 
                             <th
                                 class="w-[430px] px-4 py-3 text-left"
@@ -315,7 +315,7 @@
                                 </td>
 
                                 <!-- Role -->
-                                <td
+                                <!-- <td
                                     class="sticky left-[300px] z-20 bg-[#0b0d10] px-4 py-3.5 transition-colors group-hover:bg-[#11151a]"
                                 >
                                     <span
@@ -331,7 +331,7 @@
                                             "Unknown"
                                         }}
                                     </span>
-                                </td>
+                                </td> -->
 
                                 <!-- Transfer Details -->
                                 <td class="px-4 py-3.5 align-top">

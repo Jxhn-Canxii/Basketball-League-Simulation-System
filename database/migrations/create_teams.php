@@ -26,6 +26,7 @@ return new class extends Migration
             $table->string('sponsor',255)->nullable(); // Added ong text column for sponsor
             $table->string('city',255)->nullable(); // Added long text column for city
             $table->integer('market_size'); // Added integer column for market size
+            $table->boolean('status')->default(true); // Added integer column for market size
             $table->timestamps();
         });
     }

@@ -4,7 +4,7 @@
         <button
             type="button"
             @click.prevent="Delete"
-            :disabled="deleting"
+            :disabled="deleting || props.team_id <= 4"
             class="group inline-flex items-center gap-2 rounded-xl border border-red-500/20 bg-red-500/[0.07] px-3 py-2 text-xs font-black text-red-400 transition-all duration-200 hover:border-red-500/40 hover:bg-red-500/[0.12] hover:text-red-300 disabled:cursor-not-allowed disabled:opacity-40"
         >
             <span

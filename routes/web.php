@@ -88,8 +88,8 @@ Route::middleware('auth')->group(function () {
         Route::post('team-match-history', [TeamsController::class, 'matchHistory'])->name('match.history');
         Route::post('team-recent-season-performance', [TeamsController::class, 'countTeamOnePicksAndCheckChampion'])->name('team.recent.performance');
         Route::post('team-per-conference', [TeamsController::class, 'getTeamsByConference'])->name('conference.team.dropdown');
-        Route::post('team-underperformed-players', [FreeAgentController::class, 'underPerformedPlayersPerTeam'])->name('team.underperformed.players');
-        
+        Route::post('list-players', [TeamsController::class, 'listTeamRoster'])->name('players.team.roster');
+
     });
 
     Route::prefix('simulate/')->group(function(){
@@ -252,12 +252,9 @@ Route::middleware('auth')->group(function () {
 
         Route::get('', [PlayersController::class, 'index'])->name('players.index');
         Route::get('experience', [PlayersController::class, 'experience'])->name('experience.index');
-        Route::get('freeagents', [PlayersController::class, 'freeAgents'])->name('freeagents.index');
-        Route::post('list-players', [PlayersController::class, 'listTeamRoster'])->name('players.team.roster');
         Route::post('add-player', [PlayersController::class, 'addPlayer'])->name('players.add');
         Route::post('add-free-agent', [PlayersController::class, 'addFreeAgentPlayer'])->name('players.add.free.agent');
 
-        Route::post('free-agents', [PlayersController::class, 'getFreeAgents'])->name('players.free.agents');
         Route::post('all-players', [PlayersController::class, 'getAllPlayers'])->name('players.list.all');
         Route::post('player-season-performance', [PlayersController::class, 'getPlayerSeasonperformance'])->name('players.season.performance');
         Route::post('player-play-off-performance', [PlayersController::class, 'getPlayerPlayoffperformance'])->name('players.playoff.performance');
@@ -266,6 +263,7 @@ Route::middleware('auth')->group(function () {
         Route::post('player-contracts', [PlayersController::class, 'getPlayerContracts'])->name('players.contracts.history');
         Route::post('player-career-highs', [PlayersController::class, 'getCareerHighs'])->name('players.career.highs');
         Route::post('player-role-history', [PlayersController::class, 'getRoleChangeHistory'])->name('players.role.history');
+        Route::post('player-awards-history', [PlayersController::class, 'getPlayerAwardsList'])->name('players.awards.history');
         Route::post('player-injury', [PlayersController::class, 'getPlayerInjuryHistory'])->name('players.season.injury');
 
         Route::post('player-game-logs', [PlayersController::class, 'getPlayerGameLogs'])->name('players.game.logs');
@@ -313,6 +311,14 @@ Route::middleware('auth')->group(function () {
         
     });
 
+    Route::prefix('free-agents/')->group(function(){
+        Route::get('freeagents', [FreeAgentController::class, 'freeAgents'])->name('freeagents.index');
+
+        Route::post('free-agents', [FreeAgentController::class, 'getFreeAgents'])->name('players.free.agents');
+        Route::post('team-underperformed-players', [FreeAgentController::class, 'underPerformedPlayersPerTeam'])->name('team.underperformed.players');
+        
+    });
+
     Route::prefix('free-agency/')->group(function() {
         Route::post('run', [FreeAgentController::class, 'runFreeAgencyPeriod'])->name('free.agency.run');
 
@@ -322,7 +328,7 @@ Route::middleware('auth')->group(function () {
         Route::get('override-assign-team-free-agents', [FreeAgentController::class, 'assignRemainingFreeAgents'])->name('override.auto.assign.freeagent.teams');
         Route::post('waive-player', [FreeAgentController::class, 'waivePlayer'])->name('players.waive');
         Route::post('extend-contract-player', [FreeAgentController::class, 'extendContract'])->name('players.contract.extend');
-       
+    
     });
 
     Route::prefix('users/')->group(function(){

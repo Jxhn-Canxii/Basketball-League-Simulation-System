@@ -30,6 +30,80 @@ class FreeAgencyService
         $this->archive = new ArchiveService();
     }
 
+    public function getFreeAgents($request)
+    {
+        // Get pagination parameters from the request
+        $perPage = $request->itemsperpage ?? 10; // Number of items per page
+        $currentPage = $request->page_num ?? 1; // Current page number
+        $search = $request->search; // Search term
+
+        
+        // Build the query with optional search filter
+        $query = Player::select(
+            'players.*',
+            'teams.acronym as drafted_team',
+            DB::raw("(
+                SELECT GROUP_CONCAT(CONCAT(award_name, ' (Season ', season_id, ')') SEPARATOR ', ') 
+                FROM season_awards 
+                WHERE season_awards.player_id = players.id
+            ) as awards"),
+            DB::raw("(
+                SELECT CONCAT('Finals MVP (Season ', seasons.id, ')') 
+                FROM seasons 
+                WHERE seasons.finals_mvp_id = players.id 
+                ORDER BY seasons.id DESC 
+                LIMIT 1
+            ) as finals_mvp"),
+            DB::raw("CASE 
+                WHEN EXISTS (
+                    SELECT 1 FROM seasons WHERE seasons.finals_mvp_id = players.id
+                ) THEN 1 ELSE 0 
+            END as is_finals_mvp"),
+            DB::raw("(
+                SELECT GROUP_CONCAT(seasons.name SEPARATOR ', ') 
+                FROM seasons 
+                WHERE seasons.finals_mvp_id = players.id
+            ) as finals_mvp_seasons")
+        )
+            ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
+            ->where('players.contract_years', 0)
+            ->where('players.is_active', 1);
+
+        // Apply search filter if provided
+        if ($search) {
+            $query->where('players.name', 'like', "%{$search}%");
+        }
+
+        // Add ordering for awards, finals MVP status, and role priority
+        $query->orderByRaw("
+            LENGTH(awards) DESC,
+            is_finals_mvp DESC,
+            FIELD(role, 'star player','all star', 'starter', 'role player', 'bench')
+        ");
+
+        // Get total number of records
+        $total = $query->count();
+
+        // Calculate the offset for the query
+        $offset = ($currentPage - 1) * $perPage;
+
+        // Fetch the paginated data
+        $freeAgents = $query->offset($offset)
+            ->limit($perPage)
+            ->get();
+
+        // Calculate total pages
+        $totalPages = (int) ceil($total / $perPage);
+
+        return response()->json([
+            'current_page' => $currentPage,
+            'total_pages' => $totalPages,
+            'total' => $total,
+            'search' => $search,
+            'free_agents' => $freeAgents,
+        ]);
+    }
+
     public function updateInjuryFreeAgents()
     {
         // Update injury recovery games for free agents and mark them as not injured if recovery games reach 0

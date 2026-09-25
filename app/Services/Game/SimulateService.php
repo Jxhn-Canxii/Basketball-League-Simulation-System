@@ -59,7 +59,7 @@ class SimulateService
         $this->helper = new HelperService();
     }
 
-    public function simulateAllStar(Request $request)
+    public function simulateAllStar($request)
     {
         try{
             DB::beginTransaction(); // Start transaction
@@ -165,7 +165,7 @@ class SimulateService
 
     }
 
-    public function simulateRegular(Request $request)
+    public function simulateRegular($request)
     {
         try{
             DB::beginTransaction(); // Start transaction
@@ -294,7 +294,7 @@ class SimulateService
 
     }
 
-    public function simulatePlayoffSeries(Request $request)
+    public function simulatePlayoffSeries($request)
     {
         try{
             DB::beginTransaction(); // Start transaction
@@ -547,7 +547,7 @@ class SimulateService
 
     //no priority
 
-    public function simulatePlayoff(Request $request)
+    public function simulatePlayoff($request)
     {
         $currentSeasonId = get_current_season_id();
 

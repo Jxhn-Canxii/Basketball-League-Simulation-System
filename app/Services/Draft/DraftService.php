@@ -2229,7 +2229,7 @@ class DraftService
      * ROOKIE DRAFTEES
      * ============================================================
      */
-    public function rookieDraftees(Request $request)
+    public function rookieDraftees($request)
     {
         $perPage =
             max(
@@ -2390,7 +2390,7 @@ class DraftService
      * Kept close to your existing endpoint so your frontend
      * doesn't need a complete rewrite.
      */
-    public function draftResultsPerSeason(Request $request)
+    public function draftResultsPerSeason($request)
     {
         $latestSeasonId =
             (int) $request->season_id;

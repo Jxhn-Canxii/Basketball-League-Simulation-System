@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Player;
 use App\Services\Player\FreeAgencyService;
 use App\Services\Trade\TradeService;
-
+use Inertia\Inertia;
 class FreeAgentController extends Controller
 {
    
@@ -18,6 +18,18 @@ class FreeAgentController extends Controller
     {
         $this->freeAgencyService = new FreeAgencyService();
         $this->tradeService = new TradeService();
+    }
+
+    public function freeagents()
+    {
+        return Inertia::render('FreeAgents/Index', [
+            'status' => session('status'),
+        ]);
+    }
+
+    public function getFreeAgents(Request $request)
+    {
+        return $this->freeAgencyService->getFreeAgents($request);
     }
 
     public function runFreeAgencyPeriod(Request $request)

@@ -28,6 +28,16 @@ class TeamsController extends Controller
     {
         return $this->teamsService->list($request);
     }
+
+    public function listTeamRoster(Request $request)
+    {
+        $request->validate([
+            'team_id' => 'required|exists:teams,id',
+            'season_id' => 'nullable|integer',
+        ]);
+
+        return $this->teamsService->listTeamRoster($request);
+    }
     
     public function teamslatestseason(Request $request)
     {
@@ -41,7 +51,7 @@ class TeamsController extends Controller
 
     public function currentseasonstatistics(Request $request)
     {
-        return $this->teamsService->currentseasonstatistics($request);
+        return $this->teamsService->currentseasonstatistics($request->team_id,$request->season_id);
     }
 
     public function getLastMatchResults($seasonId, $homeId, $awayId)
@@ -108,7 +118,7 @@ class TeamsController extends Controller
     public function update(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer',
+            'id' => 'required|integer|min:5',
             'name' => 'required',
             'acronym' => 'required|max:3',
             'league_id' => 'required|exists:leagues,id',
@@ -120,9 +130,9 @@ class TeamsController extends Controller
     public function delete(Request $request)
     {
         $request->validate([
-            'id' => 'required|integer',
+            'team_id' => 'required|integer|min:5',
         ]);
-        return $this->teamsService->delete($request);
+        // return $this->teamsService->delete($request);
     }
 
     // Remove the specified resource from storage.

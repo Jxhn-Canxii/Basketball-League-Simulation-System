@@ -88,6 +88,12 @@
                     :player_id="props.player_id"
                 />
 
+                <PlayerCareerAwards
+                    v-else-if="activeTab === 'career_awards'"
+                    :key="`career-awards-${props.player_id}`"
+                    :player_id="props.player_id"
+                />
+
                 <!-- Injury -->
                 <PlayerInjury
                     v-else-if="activeTab === 'injury'"
@@ -136,6 +142,7 @@ import PlayerRoleHistory from "./PlayerRoleHistory.vue";
 import PlayerGameLogs from "./PlayerGameLogs.vue";
 import PlayerContracts from "./PlayerContracts.vue";
 import PlayerCareerHighs from "./PlayerCareerHighs.vue";
+import PlayerCareerAwards from "./PlayerCareerAwards.vue";
 
 const props = defineProps({
     player_id: {
@@ -172,6 +179,11 @@ const tabs = [
         id: "career_highs",
         label: "Career Highs",
         icon: "fas fa-star",
+    },
+    {
+        id: "career_awards",
+        label: "Career Awards",
+        icon: "fas fa-medal",
     },
     {
         id: "injury",

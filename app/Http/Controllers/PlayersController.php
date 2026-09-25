@@ -36,32 +36,12 @@ class PlayersController extends Controller
             'status' => session('status'),
         ]);
     }
-    public function freeagents()
-    {
-        return Inertia::render('FreeAgents/Index', [
-            'status' => session('status'),
-        ]);
-    }
+
     public function experience()
     {
         return Inertia::render('Experience/Index', [
             'status' => session('status'),
         ]);
-    }
-    
-    public function listTeamRoster(Request $request)
-    {
-        $request->validate([
-            'team_id' => 'required|exists:teams,id',
-            'season_id' => 'nullable|integer',
-        ]);
-
-        return $this->playerService->listTeamRoster($request);
-    }
-
-    public function getFreeAgents(Request $request)
-    {
-        return $this->playerService->getFreeAgents($request);
     }
 
     public function getAllPlayers(Request $request)
@@ -77,10 +57,23 @@ class PlayersController extends Controller
     // Add a player to a team with random attributes
     public function addPlayer(Request $request)
     {
+
+        $messages = [
+            'name.regex' => 'The name must contain at least one vowel.',
+            'name.max' => 'The name must not exceed 30 characters.',
+        ];
+
         $request->validate([
-            'name' => 'required|string|max:255',
+            'name' => [
+                'required',
+                'string',
+                'max:30',
+                'regex:/[aeiouAEIOU]/',
+            ],
+            'address' => 'required|string|max:255',
+            'country' => 'required|string',
             'team_id' => 'required|exists:teams,id',
-        ]);
+        ], $messages);
 
         return $this->playerGeneratorService->addPlayer($request);
 
@@ -144,6 +137,17 @@ class PlayersController extends Controller
         ]);
 
         return $this->playerService->getPlayerMainPerformance($request);
+
+    }
+
+    public function getPlayerAwardsList(Request $request)
+    {
+        // Validate the request data
+        $request->validate([
+            'player_id' => 'required|exists:players,id',
+        ]);
+
+        return $this->playerService->getPlayerAwardsList($request);
 
     }
 

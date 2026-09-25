@@ -159,7 +159,7 @@ class PlayoffService
         return [];
     }
 
-    public function getPlayoffPendingGames(Request $request)
+    public function getPlayoffPendingGames($request)
     {
         try {
             $seasonId = $request->seasonId; // Assuming seasonId is passed in the request

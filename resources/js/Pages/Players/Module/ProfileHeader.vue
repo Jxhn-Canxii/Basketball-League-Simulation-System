@@ -130,35 +130,67 @@
                 </div>
               </div>
             </div>
+
           </div>
 
           <!-- Quick tags -->
-          <div class="mt-5 flex flex-wrap gap-2">
-            <span
-              v-if="player.position"
-              class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-bold text-white/80"
-            >
-              <i class="fa fa-running mr-1.5 text-blue-400"></i>
-              {{ player.position }}
-            </span>
+          <div class="mt-5 flex justify-between flex-wrap gap-1">
+            <div class="flex flex-wrap gap-2">
+              <span
+                v-if="player.position"
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-bold text-white/80"
+              >
+                <i class="fa fa-running mr-1.5 text-blue-400"></i>
+                {{ player.position }}
+              </span>
 
-            <span
-              v-if="player.role"
-              :class="[
-                roleBadgeClass(player.role),
-                'rounded-lg border border-white/10 px-3 py-1.5 text-xs font-bold'
-              ]"
-            >
-              {{ player.role }}
-            </span>
+              <span
+                v-if="player.role"
+                :class="[
+                  roleBadgeClass(player.role),
+                  'rounded-lg border border-white/10 px-3 py-1.5 text-xs font-bold'
+                ]"
+              >
+                {{ player.role }}
+              </span>
 
-            <span
-              v-if="player.draft_class"
-              class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-bold text-white/70"
-            >
-              <i class="fa fa-graduation-cap mr-1.5 text-purple-400"></i>
-              Draft {{ player.draft_class }}
-            </span>
+              <span
+                v-if="player.draft_class"
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-xs font-bold text-white/70"
+              >
+                <i class="fa fa-graduation-cap mr-1.5 text-purple-400"></i>
+                Draft {{ player.draft_class }}
+              </span>
+            </div>
+            <div class="flex flex-wrap justify-end gap-2" v-if="main_performance?.latest_stats">
+              <span
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold text-white/80"
+              >
+                {{ main_performance?.latest_stats?.avg_points_per_game ?? 0 }} <sub class="text-gray-500">PPG</sub>
+              </span>
+              <span
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold text-white/80"
+              >
+                {{ main_performance?.latest_stats?.avg_rebounds_per_game ?? 0 }} <sub class="text-gray-500">RPG</sub>
+              </span>
+              <span
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold text-white/80"
+              >
+                {{ main_performance?.latest_stats?.avg_assists_per_game ?? 0 }} <sub class="text-gray-500">APG</sub>
+              </span>
+              <span
+                v-if="main_performance?.latest_stats?.avg_steals_per_game > 1"
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold text-white/80"
+              >
+                {{ main_performance?.latest_stats?.avg_steals_per_game ?? 0 }} <sub class="text-gray-500">SPG</sub>
+              </span>
+              <span
+                v-if="main_performance?.latest_stats?.avg_block_per_game > 1"
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold text-white/80"
+              >
+                {{ main_performance?.latest_stats?.avg_blocks_per_game ?? 0 }} <sub class="text-gray-500">BPG</sub>
+              </span>
+            </div>
           </div>
         </div>
       </div>
@@ -271,6 +303,7 @@
                 {{ player.potential_rating ?? "-" }}
               </span>
             </InfoRow>
+
           </div>
         </section>
 
