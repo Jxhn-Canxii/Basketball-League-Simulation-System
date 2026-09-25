@@ -2,8 +2,9 @@
 
 namespace App\Services\Team;
 
-use Illuminate\Support\Facades\DB;
+ini_set('max_execution_time', 0); // 300 seconds = 5 minutes
 
+use Illuminate\Support\Facades\DB;
 class TeamStreakService
 {
 

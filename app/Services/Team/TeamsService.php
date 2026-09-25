@@ -2,6 +2,8 @@
 
 namespace App\Services\Team;
 
+ini_set('max_execution_time', 1024); // 300 seconds = 5 minutes
+
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Illuminate\Support\Facades\DB;
@@ -11,14 +13,12 @@ use App\Services\Helper\HelperService;
 use App\Services\Schedule\ScheduleService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Trade\TradeService;
-use BcMath\Number;
 
 class TeamsService
 {
     protected $chemistry;
     protected $helper;
     protected $tradeService;
-    protected $streak;
     protected $contract;
     protected $scheduleService;
 
@@ -27,7 +27,6 @@ class TeamsService
         $this->chemistry = new TeamChemistryService();
         $this->helper = new HelperService();
         $this->tradeService = new TradeService();
-        $this->streak = new TeamStreakService();
         $this->contract = new ContractService();
         $this->scheduleService = new ScheduleService();
     }
@@ -38,6 +37,7 @@ class TeamsService
             'status' => session('status'),
         ]);
     }
+
     public function list($request)
     {
         // Retrieve search query from request
@@ -99,6 +99,7 @@ class TeamsService
             'data' => $team_info,
         ]);
     }
+
     public function matchhistory($request)
     {
         $home_id = $request->home_id;
@@ -113,6 +114,7 @@ class TeamsService
             'series' => $series,
         ]);
     }
+
     public function currentseasonstatistics($teamId, $seasonId)
     {
         $previousSeasonId = $seasonId - 1;
@@ -216,9 +218,11 @@ class TeamsService
         return $matchResults;
     }
 
-    public function getTeamSeriesResults($season_id, $homeId, $awayId)
+    public function getTeamSeriesResults($seasonId, $homeId, $awayId)
     {
-        $seriesResults = DB::table('playoff_series')
+        $seriesDbName = $this->helper->getSeriesDBName($seasonId);
+
+        $seriesResults = DB::table($seriesDbName.' as playoff_series')
             ->select(
                 'playoff_series.id',
                 'playoff_series.season_id',
@@ -267,13 +271,13 @@ class TeamsService
             ->join('teams as away', 'playoff_series.away_team_id', '=', 'away.id')
             ->leftJoin('teams as winner', 'playoff_series.winner_team_id', '=', 'winner.id')
             ->leftJoin('teams as loser', 'playoff_series.loser_team_id', '=', 'loser.id')
-            ->where(function ($query) use ($homeId, $awayId, $season_id) {
-                $query->where('season_id', '<=', $season_id)
+            ->where(function ($query) use ($homeId, $awayId, $seasonId) {
+                $query->where('season_id', '<=', $seasonId)
                     ->where('home_team_id', $homeId)
                     ->where('away_team_id', $awayId);
             })
-            ->orWhere(function ($query) use ($homeId, $awayId, $season_id) {
-                $query->where('season_id', '<=', $season_id)
+            ->orWhere(function ($query) use ($homeId, $awayId, $seasonId) {
+                $query->where('season_id', '<=', $seasonId)
                     ->where('home_team_id', $awayId)
                     ->where('away_team_id', $homeId);
             })
@@ -1082,14 +1086,8 @@ class TeamsService
     }
 
 
-
     public static function countTeamOnePicksAndCheckChampion($request)
-    {
-        $request->validate([
-            'team_id' => 'required|exists:teams,id',
-            'season_id' => 'nullable|integer',
-        ]);
-
+    {   
         // If validation passes, the $teamId is valid
         $teamId = $request->team_id;
 
@@ -1235,65 +1233,9 @@ class TeamsService
         ];
     }
 
-    public function storeTeamSeasonInfo()
-    {
-        $latestSeasonId = get_current_season_id();
-        $previousSeasonId = $latestSeasonId - 1;
-
-        $teamsCoach = DB::table('teams')->get();
-
-        // Get the previous season's champion team_id
-        $prevChampion = $this->helper->getNationalChampionId($previousSeasonId);
-
-        foreach ($teamsCoach as $team) {
-            try {
-                // Ensure necessary fields are present
-                if (!$team->id || !$latestSeasonId) {
-                    throw new \Exception("Missing team ID or season ID.");
-                }
-
-                $coach = DB::table('coaches')->where('id', $team->coach_id)->first();
-
-                $coachIq = $coach ? $coach->coach_iq : 0;
-                $chemistry = $this->chemistry->getChemistryCalculation($team->id,$latestSeasonId,$previousSeasonId) ?? 0;
-                $conferenceId = $team->conference_id ?? 0;
-                $isDefendingChampion = $team->id == $prevChampion ? 1 : 0;
-                // Perform the insert/update
-                DB::table('team_season_info')->updateOrInsert(
-                    [
-                        'team_id' => $team->id,
-                        'season_id' => $latestSeasonId,
-                    ],
-                    [
-                        'coach_id' => $team->coach_id,
-                        'coach_iq' => $coachIq,
-                        'chemistry' => $chemistry['chemistry_score'],
-                        'conference_id' => $conferenceId,
-                        'is_defending_champion' => $isDefendingChampion,
-                        'updated_at' => now(),
-                    ]
-                );
-
-                $this->streak->newTeamStreak($team->id);
-                
-            } catch (\Exception $e) {
-                // Optional: log individual team errors
-                throw new \Exception("Failed to store team season info for team ID {$team->id}: " . $e->getMessage());
-            }
-        }
-    }
-
     // Store a newly created resource in storage.
     public function add($request)
     {
-        $request->validate([
-            'name' => 'required',
-            'acronym' => 'required',
-            'secondary_color' => 'required',
-            'primary_color' => 'required',
-            'league_id' => 'required|exists:leagues,id', // Assuming there's a leagues table
-            'conference_id' => 'required|exists:conferences,id', // Assuming there's a conferences table
-        ]);
 
         // Generate random color hex codes for primary and secondary colors
         // $primaryColor = $this->generateRandomColor();
@@ -1559,7 +1501,7 @@ class TeamsService
                     ->where('team_id', $teamId)
                     ->count('team_id') + 1;
 
-                $totalSeasonGameSchedule = $this->scheduleService->getScheduleCount($teamId, $seasonId);
+                $totalSeasonGameSchedule = $this->helper->getScheduleCount($teamId, $seasonId);
 
                 // Default values in case there are no stats
                 $stats = [

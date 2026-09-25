@@ -2,20 +2,17 @@
 
 namespace App\Services\League;
 
-use App\Services\Archive\ArchiveService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Services\Helper\HelperService;
 
 class StoryLineService
 {
-   protected $helper;
-   protected $archive;
+    protected $helper;
 
     public function __construct()
     {
         $this->helper = new HelperService();
-        $this->archive = new ArchiveService();
     }
 
     public function generateStoryLine()

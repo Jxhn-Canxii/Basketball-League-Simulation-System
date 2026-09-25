@@ -209,6 +209,37 @@ class HelperService
         return $archiveTable;
     }
 
+    public function getStandingsDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'standings_view';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "standings_snapshots";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getScheduleCount($teamId, $seasonId)
+    {
+                
+        $scheduleTable = $this->getScheduleDBName($seasonId);
+
+        $count = DB::table($scheduleTable)
+            ->where('season_id', $seasonId) // Filter by season_id
+            ->where(function ($query) use ($teamId) {
+                // Check if team_id is in either home_id or away_id
+                $query->where('home_id', $teamId)
+                    ->orWhere('away_id', $teamId);
+            })
+            ->count();
+
+        return $count;
+    }
+
     public function getScheduleDBName(int $seasonId)
     {
 

@@ -37,10 +37,6 @@ class ConferenceService
      */
     public function add($request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'league_id' => 'required|exists:leagues,id',
-        ]);
 
         $conference = new Conference();
         $conference->name = $request->input('name');

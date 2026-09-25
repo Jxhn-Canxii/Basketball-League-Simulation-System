@@ -20,10 +20,6 @@ class AwardsService
     public function getSeasonAwards($request)
     {
 
-        // Validate the incoming request
-        $request->validate([
-            'season_id' => 'required|exists:seasons,id',
-        ]);
         // Fetch awards along with player, team, and season names for the latest season
         $awards = DB::table('season_awards')
             ->leftJoin('players', 'season_awards.player_id', '=', 'players.id')

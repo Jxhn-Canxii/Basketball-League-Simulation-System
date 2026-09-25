@@ -370,10 +370,7 @@ class LeadersService
 
     public function getTop10PlayersByTeam($request)
     {
-        $request->validate([
-            'team_id' => 'required|exists:teams,id',
-        ]);
-
+    
         $teamId = $request->team_id;
 
         // Fetch total stats for players for the given team across all seasons and also current team name

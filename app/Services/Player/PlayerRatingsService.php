@@ -423,12 +423,7 @@ class PlayerRatingsService
         } catch (\Exception $e) {
             // DB::rollBack(); // Rollback transaction on error
 
-            return response()->json([
-                'error' => true,
-                'message' => 'Failed to update player statuses.',
-                'e' => $e,
-                'error_message' => $e->getMessage(), // Display the exception message
-            ], 500);
+            return true;
         }
     }
 

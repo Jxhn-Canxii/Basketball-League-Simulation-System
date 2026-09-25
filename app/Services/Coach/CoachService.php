@@ -68,11 +68,6 @@ class CoachService
     // Create a new coach
     public function addFreeAgentCoach($request)
     {
-        // Validation
-        $request->validate([
-            'name' => 'required|string|max:100',
-            'nationality' => 'required|string|max:100',
-        ]);
 
         // Get the current season ID
         $currentSeasonId = get_current_season_id();
