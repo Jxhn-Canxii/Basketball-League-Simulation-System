@@ -6,7 +6,7 @@ WITH SeasonGroups AS (
         pss.season_id,
         (pss.season_id - ROW_NUMBER() OVER (PARTITION BY pss.team_id, pss.player_id ORDER BY pss.season_id)) AS streak_group
     FROM 
-        player_season_stats pss
+        player_season_stats_archives pss
 ),
 Streaks AS (
     SELECT 

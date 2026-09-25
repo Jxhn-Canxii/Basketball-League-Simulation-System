@@ -78,14 +78,14 @@
                             </th>
 
                             <th
-                                class="sticky left-[105px] z-30 w-[200px] bg-[#080a0c] px-4 py-3 text-left"
+                                class="sticky left-[105px] z-30 w-[5px] bg-[#080a0c] px-4 py-3 text-left"
                             >
                                 <span class="stat-heading">
                                     Team
                                 </span>
                             </th>
 
-                            <th class="w-[125px] px-3 py-3 text-left">
+                            <th class="w-[125px] px-3 py-3 text-left hidden">
                                 <span class="stat-heading">
                                     Role
                                 </span>
@@ -187,7 +187,7 @@
                                 </td>
 
                                 <!-- Role -->
-                                <td class="px-3 py-3">
+                                <td class="px-3 py-3" hidden>
                                     <span
                                         :class="roleBadgeClass(player.player_role)"
                                         class="inline-flex whitespace-nowrap rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
@@ -389,14 +389,14 @@
                             </th>
 
                             <th
-                                class="sticky left-[105px] z-30 w-[200px] bg-[#080a0c] px-4 py-3 text-left"
+                                class="sticky left-[105px] z-30 w-[5px] bg-[#080a0c] px-4 py-3 text-left"
                             >
                                 <span class="stat-heading">
                                     Team
                                 </span>
                             </th>
 
-                            <th class="w-[125px] px-3 py-3 text-left">
+                            <th class="w-[125px] px-3 py-3 text-left hidden">
                                 <span class="stat-heading">
                                     Role
                                 </span>
@@ -492,7 +492,7 @@
                                 </td>
 
                                 <!-- Role -->
-                                <td class="px-3 py-3">
+                                <td class="px-3 py-3 hidden">
                                     <span
                                         :class="roleBadgeClass(player.player_role)"
                                         class="inline-flex whitespace-nowrap rounded-md px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"

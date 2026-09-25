@@ -324,7 +324,11 @@
                             >
                                 Signed By
                             </th>
-
+                            <th
+                                class="w-[200px] px-3 py-3 text-left text-[8px] font-black uppercase tracking-wider text-gray-600"
+                            >
+                                Current Team
+                            </th>
                             <th
                                 class="w-[110px] px-3 py-3 text-center text-[8px] font-black uppercase tracking-wider text-gray-600"
                             >
@@ -470,8 +474,8 @@
                                         Number(player.drafted_team_id)
                                             ? "Original Selection"
                                             : "Picked from " +
-                                              (player.original_team_name ??
-                                                  "Unknown Team")
+                                            (player.original_team_name ??
+                                            "Unknown Team")
                                     }}
                                 </div>
                             </td>
@@ -500,21 +504,45 @@
                                 </div>
                             </td>
 
+                            <!-- CURRENT TEAM -->
+                            <td class="px-3 py-3.5">
+                                <div
+                                    class="font-black"
+                                    :class="
+                                        signingTextClass(
+                                            player.signed_team_id,
+                                            player.current_team_id
+                                        )
+                                    "
+                                >
+                                    {{
+                                        player.current_team_name ??
+                                        "Unsigned"
+                                    }}
+                                </div>
+
+                                <div
+                                    class="mt-1 text-[8px] font-bold uppercase tracking-wider text-gray-600"
+                                >
+                                    Current Team
+                                </div>
+                            </td>
+
                             <!-- STATUS -->
                             <td class="px-3 py-3.5 text-center">
                                 <span
                                     class="inline-flex whitespace-nowrap rounded-full border px-3 py-1 text-[8px] font-black uppercase tracking-wider"
                                     :class="
                                         signingStatusBadge(
-                                            player.drafted_team_id,
-                                            player.signed_team_id
+                                            player.signed_team_id,
+                                            player.current_team_id
                                         )
                                     "
                                 >
                                     {{
                                         signingStatusText(
-                                            player.drafted_team_id,
-                                            player.signed_team_id
+                                            player.signed_team_id,
+                                            player.current_team_id
                                         )
                                     }}
                                 </span>
@@ -692,14 +720,14 @@ const changedTeam = computed(() => {
     return draftResults.value.filter(
         (player) =>
             player.signed_team_id != null &&
-            Number(player.drafted_team_id) !==
+            Number(player.current_team_id) !==
                 Number(player.signed_team_id)
     ).length;
 });
 
 const unsignedPlayers = computed(() => {
     return draftResults.value.filter(
-        (player) => player.signed_team_id == null
+        (player) => player.current_team_id == null
     ).length;
 });
 

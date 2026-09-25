@@ -295,6 +295,7 @@ class FreeAgencyService
                     WHERE seasons.finals_mvp_id = players.id
                 ) as finals_mvp_seasons")
         )
+            ->where('players.draft_id','<=', $seasonId) // Only free agents
             ->where('players.contract_years', 0) // Only free agents
             ->where('players.is_active', 1) // Only active players
             ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id');

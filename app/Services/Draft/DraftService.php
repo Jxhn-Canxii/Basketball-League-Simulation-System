@@ -248,8 +248,7 @@ class DraftService
                         );
                     }
 
-                    $draftStatus =
-                        "S{$currentSeasonId} R{$round} P{$pickNumber}";
+                    $draftStatus = "S{$currentSeasonId} R{$round} P{$pickNumber}";
 
                     /*
                      * Draft row now points to the permanent pick right.
@@ -721,6 +720,7 @@ class DraftService
                  * We don't keep an in-memory rookie collection
                  * because every request is a separate draft event.
                  */
+
                 $availablePlayers = DB::table('players')
                     ->where('is_rookie', 1)
                     ->where('team_id', 0)
@@ -734,7 +734,7 @@ class DraftService
                 if ($availablePlayers->isEmpty()) {
                     throw new \RuntimeException(
                         "No available rookies remain for "
-                            . "Round {$round}, Pick {$pickNumber}."
+                            . "Season {$nextSeasonId} Draft: Round {$round}, Pick {$pickNumber}."
                     );
                 }
 
@@ -2436,12 +2436,21 @@ class DraftService
                 '=',
                 'player_season_stats.team_id'
             )
+            ->leftJoin(
+                'teams as current_team',
+                'current_team.id',
+                '=',
+                'players.team_id'
+            )
             ->select(
                 'players.type as archetype',
                 'players.age',
                 'players.overall_rating',
                 'players.position',
                 'd.team_id',
+                'current_team.id as current_team_id',
+                'current_team.name as current_team_name',
+                'current_team.acronym as current_team_acronym',
                 'ot.name as original_team_name',
                 'ot.acronym as original_team_acronym',
                 'teams.acronym as team_acronym',

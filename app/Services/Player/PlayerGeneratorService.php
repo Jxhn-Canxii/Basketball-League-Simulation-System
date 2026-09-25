@@ -52,10 +52,26 @@ class PlayerGeneratorService
     }
 
     /// this function
-    public function declarePlayerForNextDraft(){
+    public function declarePlayerForNextDraft($round){
     
-        $currentSeasonId = get_current_season_id() + 1;
+        $currentSeasonId = get_current_season_id();
+
+        if($currentSeasonId <= 7 ){
+            return false;
+        }
+        
+        $totalRounds = $this->helper->totalRounds($currentSeasonId);
+        $draftApplicationWindow = is_numeric($round) && $round >= ($totalRounds - 4);
+
+        if(!$draftApplicationWindow){
+            return false;
+        }
+
         $newPlayer = collect($this->playerGenerator());
+        
+        if(!$newPlayer){
+            return false;
+        }
         
         $name = $newPlayer['name'];
         $country = $newPlayer['country'];
@@ -66,18 +82,16 @@ class PlayerGeneratorService
         $player = DB::table('players')->where('name',$name)->first();
 
         if(!$player){
-            return response()->json([
-                'message' => 'Player is not eligible for the draft!',
-                'player' => $player,
-            ],400);
+            return false;
         }
 
-        $details = $player->name.' has declared for the upcoming Season '.$currentSeasonId.' Liga Pilipinas Draft!';
+        $nextSeasonId = $currentSeasonId + 1;
+        $details = $player->name.' has declared for the upcoming Season '. $nextSeasonId.' Liga Pilipinas Draft!';
     
 
         DB::table('transactions')->insert([
             'player_id' => $player->id,
-            'season_id' => $currentSeasonId,
+            'season_id' => $nextSeasonId,
             'details' => $details,
             'from_team_id' => 0,
             'to_team_id' => 0,
@@ -190,19 +204,19 @@ class PlayerGeneratorService
 
         if ($overallRating >= 90) {
             $role = 'star player';
-            $potentialRating = rand(CEIL($overallRating),99);
+            $potentialRating = rand($overallRating,99);
         } elseif ($overallRating >= 85 && $overallRating <= 89) {
             $role = 'all star';
-            $potentialRating = rand(CEIL($overallRating), 95);
+            $potentialRating = rand($overallRating, 95);
         } elseif ($overallRating >= 75 && $overallRating <= 84) {
             $role = 'starter';
-            $potentialRating = rand(CEIL($overallRating), 95);
+            $potentialRating = rand($overallRating, 95);
         } elseif ($overallRating >= 60 && $overallRating <= 74) {
             $role = 'role player';
-            $potentialRating = rand(CEIL($overallRating), 90);
+            $potentialRating = rand($overallRating, 90);
         } else {
             $role = 'bench';
-            $potentialRating = rand(CEIL($overallRating),85);
+            $potentialRating = rand($overallRating,85);
         }
 
         $contractExpiresAt = Carbon::now()->addYears($contractYears);

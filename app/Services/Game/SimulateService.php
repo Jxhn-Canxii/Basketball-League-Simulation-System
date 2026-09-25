@@ -11,6 +11,7 @@ use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\League\NewsService;
 use App\Services\Player\FreeAgencyService;
+use App\Services\Player\PlayerGeneratorService;
 use App\Services\Stats\PlayerCareerStatsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Stats\PlayerStatsService;
@@ -35,13 +36,14 @@ class SimulateService
     protected $career;
     protected $engine;
     protected $gameResultService;
+    protected $playerGenerator;
 
     private $gameMinutes = 240;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
-        // $this->storeStats = new AwardsController();
+        $this->playerGenerator = new PlayerGeneratorService();
         $this->contract = new ContractService();
         $this->teamManagement = new TeamManagementService();
         $this->playOffStats = new PlayoffStatsService();
@@ -232,7 +234,7 @@ class SimulateService
 
             // check if round games is simulated
             $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId,  $gameData->round);
-
+            
             $transactionCount = $this->helper->getTransferTransactionCount();
 
             $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
@@ -246,6 +248,8 @@ class SimulateService
             $this->teamStats->updateHeadToHeadResults($gameData->id);
 
             $this->news->createGameNewsFromGame($gameData->id);
+
+            $this->playerGenerator->declarePlayerForNextDraft($gameData->round);
 
             if ($isRoundsSimulatedForSeason) {
                 $this->freeAgent->updateInjuryFreeAgents();
@@ -451,6 +455,9 @@ class SimulateService
                 $this->playOffStats->updatePlayoffSeriesAppearancesForGame($gameData);
 
                 $this->news->createGameNewsFromGame($gameData->id);
+                
+                $this->playerGenerator->declarePlayerForNextDraft($gameData->round);
+
 
             });
 

@@ -12,7 +12,6 @@ use App\Models\Schedules;
 use App\Services\Archive\ArchiveService;
 use App\Services\Helper\HelperService;
 use App\Services\League\AwardsService;
-use App\Services\Player\PlayerGeneratorService;
 use App\Services\Team\TeamsService;
 use App\Services\Team\TeamStreakService;
 use App\Services\Trade\TradeDecisionService;
@@ -26,7 +25,6 @@ class ScheduleService
     protected $tradeDecision;
     protected $teamService;
     protected $awards;
-    protected $playerGenerator;
 
     public function __construct()
     {
@@ -36,7 +34,6 @@ class ScheduleService
         $this->streak = new TeamStreakService();
         $this->teamService = new TeamsService();
         $this->tradeDecision = new TradeDecisionService();
-        $this->playerGenerator = new PlayerGeneratorService();
     }
     //
     public function index()
@@ -85,14 +82,11 @@ class ScheduleService
         $tradeProposalDeadline = CEIL($totalRounds / 2);
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
         $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) + 2);
+        $draftApplicationWindow = $simulatedRounds >= ($totalRounds - 2);
 
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
         $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
-        // $draftApplicationWindow = $simulatedRounds >= 5;
 
-        // if($draftApplicationWindow){
-        //     $this->playerGenerator->declarePlayerForNextDraft();
-        // }
         if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
             if($simulatedRounds % 2 == 0){
                 $this->tradeDecision->generateTradeProposals(false);

@@ -1548,16 +1548,15 @@ class PlayerService
 
         // Subquery to get the highest-efficiency star player per season
         $sub = DB::table('player_season_stats_archives')
-            ->selectRaw('MAX(eff) as max_eff, season_id')
+            ->selectRaw('MAX(player_valuation) as valuable_player, season_id')
             ->where('team_id', $teamId)
-            ->where('role', 'star player')
             ->groupBy('season_id');
 
         // Join with player and season data
         $starPlayers = DB::table('player_season_stats_archives AS pss')
-            ->joinSub($sub, 'max_eff_stats', function ($join) {
-                $join->on('pss.season_id', '=', 'max_eff_stats.season_id')
-                    ->on('pss.eff', '=', 'max_eff_stats.max_eff');
+            ->joinSub($sub, 'valuable_player_stats', function ($join) {
+                $join->on('pss.season_id', '=', 'valuable_player_stats.season_id')
+                    ->on('pss.player_valuation', '=', 'valuable_player_stats.valuable_player');
             })
             ->join('players AS p', 'pss.player_id', '=', 'p.id')
             ->join('seasons AS s', 'pss.season_id', '=', 's.id')
