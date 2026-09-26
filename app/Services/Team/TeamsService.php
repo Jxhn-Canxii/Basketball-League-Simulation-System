@@ -386,7 +386,7 @@ class TeamsService
                 'seasons.name as season_name',
                 'seasons.status as season_status',
                 DB::raw('CASE WHEN standings_snapshots.overall_rank <= CASE WHEN seasons.start_playoffs = 16 THEN 16 ELSE 32 END THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
-                DB::raw('MAX(schedules.id) as last_round_played')
+                DB::raw('MAX(schedules.id) as last_round_played_id')
             )
             ->join('seasons', 'seasons.id', '=', 'standings_snapshots.season_id')
             ->leftJoin('schedules_archives as schedules', function ($join) use ($teamId) {
@@ -426,7 +426,7 @@ class TeamsService
 
         // Process the collection and append round information
         foreach ($seasonHistory as $season) {
-            $roundInfo = $this->getLastRoundPlayed($season->last_round_played, $teamId);
+            $roundInfo = $this->getLastRoundPlayed($season->last_round_played_id, $teamId);
             $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id, $teamId);
             $season->round_info = $roundInfo;
         }

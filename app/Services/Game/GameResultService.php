@@ -443,9 +443,7 @@ class GameResultService
             ->where('game_id', $game->game_id)
             ->first();
 
-        $isOT = DB::table('schedules')
-            ->where('game_id', $game->game_id)
-            ->value('is_overtime');
+        $isOT = $game->is_overtime;
         // Format data for box score
         $boxScore = [
             'game_id' => $game->game_id,

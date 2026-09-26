@@ -117,112 +117,6 @@ class HelperService
             ->exists();
     }
 
-    public function getPlayerStatsDatabaseName($seasonId)
-    {
-
-        $currentSeasonId = get_current_season_id();
-
-        $MODULO = config('archive.DECADE_MODULO');
-        $tableBatch = ceil($seasonId / $MODULO);
-        $archiveDB = $this->archiveDB();
-
-        $archiveTable = $archiveDB.".player_game_stats_batch_" . $tableBatch;
-        if($currentSeasonId == $seasonId) {
-            $archiveTable = "player_game_stats";
-        }
-
-        return $archiveTable;
-    }
-
-    public function getGameBreakDownDBName($seasonId)
-    {
-
-        $currentSeasonId = get_current_season_id();
-
-        $MODULO = config('archive.DECADE_MODULO');
-        $tableBatch = ceil($seasonId / $MODULO);
-        $archiveDB = $this->archiveDB();
-
-        $archiveTable = $archiveDB.".game_quarter_breakdown_batch_" . $tableBatch;
-        if ($currentSeasonId == $seasonId) {
-            $archiveTable = "game_quarter_breakdown";
-        }
-
-        return $archiveTable;
-    }
-
-    public function getPlayerQuarterStatsDatabaseName($seasonId)
-    {
-        $currentSeasonId = get_current_season_id();
-
-        $MODULO = config('archive.DECADE_MODULO');
-        $tableBatch = ceil($seasonId / $MODULO);
-        $archiveDB = $this->archiveDB();
-
-        $archiveTable = $archiveDB.".player_per_quarter_stats_batch_" . $tableBatch;
-        if ($currentSeasonId == $seasonId) {
-            $archiveTable = "player_per_quarter_stats";
-        }
-
-        return $archiveTable;
-    }
-
-    public function getSeasonStatsDBName($seasonId)
-    {
-
-        $latestSeasonId = get_current_season_id() ?? 1;
-
-        $archiveTable = 'player_season_stats';
-
-        if($latestSeasonId != $seasonId) {
-            $archiveTable = "player_season_stats_archives";
-        }
-
-        return $archiveTable;
-    }
-
-    public function getPlayoffStatsDBName($seasonId)
-    {
-
-        $latestSeasonId = get_current_season_id() ?? 1;
-
-        $archiveTable = 'player_season_playoff_stats';
-
-        if($latestSeasonId != $seasonId) {
-            $archiveTable = "player_season_playoff_stats_archives";
-        }
-
-        return $archiveTable;
-    }
-
-    public function getScheduleViewDBName(int $seasonId)
-    {
-
-        $latestSeasonId = get_current_season_id() ?? 1;
-
-        $archiveTable = 'schedule_view';
-
-        if($latestSeasonId != $seasonId) {
-            $archiveTable = "schedule_view_snapshots";
-        }
-
-        return $archiveTable;
-    }
-
-    public function getStandingsDBName(int $seasonId)
-    {
-
-        $latestSeasonId = get_current_season_id() ?? 1;
-
-        $archiveTable = 'standings_view';
-
-        if($latestSeasonId != $seasonId) {
-            $archiveTable = "standings_snapshots";
-        }
-
-        return $archiveTable;
-    }
-
     public function getScheduleCount($teamId, $seasonId)
     {
                 
@@ -239,35 +133,7 @@ class HelperService
 
         return $count;
     }
-
-    public function getScheduleDBName(int $seasonId)
-    {
-
-        $latestSeasonId = get_current_season_id() ?? 1;
-
-        $archiveTable = 'schedules';
-
-        if($latestSeasonId != $seasonId) {
-            $archiveTable = "schedules_archives";
-        }
-
-        return $archiveTable;
-    }
-
-    public function getSeriesDBName(int $seasonId)
-    {
-
-        $latestSeasonId = get_current_season_id() ?? 1;
-
-        $archiveTable = 'playoff_series';
-
-        if($latestSeasonId != $seasonId) {
-            $archiveTable = "playoff_series_archives";
-        }
-
-        return $archiveTable;
-    }
-
+    
     public function getTeamName($teamId){
 
         return DB::table('teams')->where('id', $teamId)->value('name') ?? 'Unknown Team';
@@ -378,4 +244,139 @@ class HelperService
         return $round;
 
     }
+    
+    public function getPlayerStatsDatabaseName($seasonId)
+    {
+
+        $currentSeasonId = get_current_season_id();
+
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = ceil($seasonId / $MODULO);
+        $archiveDB = $this->archiveDB();
+
+        $archiveTable = $archiveDB.".player_game_stats_batch_" . $tableBatch;
+        if($currentSeasonId == $seasonId) {
+            $archiveTable = "player_game_stats";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getGameBreakDownDBName($seasonId)
+    {
+
+        $currentSeasonId = get_current_season_id();
+
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = ceil($seasonId / $MODULO);
+        $archiveDB = $this->archiveDB();
+
+        $archiveTable = $archiveDB.".game_quarter_breakdown_batch_" . $tableBatch;
+        if ($currentSeasonId == $seasonId) {
+            $archiveTable = "game_quarter_breakdown";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getPlayerQuarterStatsDatabaseName($seasonId)
+    {
+        $currentSeasonId = get_current_season_id();
+
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = ceil($seasonId / $MODULO);
+        $archiveDB = $this->archiveDB();
+
+        $archiveTable = $archiveDB.".player_per_quarter_stats_batch_" . $tableBatch;
+        if ($currentSeasonId == $seasonId) {
+            $archiveTable = "player_per_quarter_stats";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getSeasonStatsDBName($seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'player_season_stats';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "player_season_stats_archives";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getPlayoffStatsDBName($seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'player_season_playoff_stats';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "player_season_playoff_stats_archives";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getScheduleViewDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'schedule_view';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "schedule_view_snapshots";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getStandingsDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'standings_view';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "standings_snapshots";
+        }
+
+        return $archiveTable;
+    }
+    
+    public function getScheduleDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'schedules';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "schedules_archives";
+        }
+
+        return $archiveTable;
+    }
+
+    public function getSeriesDBName(int $seasonId)
+    {
+
+        $latestSeasonId = get_current_season_id() ?? 1;
+
+        $archiveTable = 'playoff_series';
+
+        if($latestSeasonId != $seasonId) {
+            $archiveTable = "playoff_series_archives";
+        }
+
+        return $archiveTable;
+    }
+
 }
