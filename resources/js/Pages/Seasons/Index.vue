@@ -114,8 +114,7 @@
                                 <!-- Rookie Draft -->
                                 <button
                                     v-if="
-                                        seasons.is_new_season == 4 ||
-                                        seasons.is_new_season == 8
+                                        seasons.is_new_season == 4
                                     "
                                     type="button"
                                     :disabled="isDraftModalOpen"
@@ -141,11 +140,7 @@
                                 <!-- Player Signings -->
                                 <button
                                     v-if="
-                                        seasons.is_new_season == 6 ||
-                                        (
-                                            seasons.is_new_season == 8 &&
-                                            seasons.is_draft_finished
-                                        )
+                                        seasons.is_new_season == 6 || seasons.is_new_season == 8
                                     "
                                     type="button"
                                     :disabled="isPlayerSigningModalOpen"

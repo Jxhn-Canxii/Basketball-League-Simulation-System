@@ -325,7 +325,6 @@ Route::middleware('auth')->group(function () {
         Route::post('assign-team-free-agents', [FreeAgentController::class, 'assignPlayerToRandomTeam'])->name('assign.freeagent.teams');
         Route::post('sign-free-agent', [FreeAgentController::class, 'signFreeAgent'])->name('players.sign.free.agent');
         Route::post('auto-assign-team-free-agents', [FreeAgentController::class, 'assignRemainingFreeAgents'])->name('auto.assign.freeagent.teams');
-        Route::get('override-assign-team-free-agents', [FreeAgentController::class, 'assignRemainingFreeAgents'])->name('override.auto.assign.freeagent.teams');
         Route::post('waive-player', [FreeAgentController::class, 'waivePlayer'])->name('players.waive');
         Route::post('extend-contract-player', [FreeAgentController::class, 'extendContract'])->name('players.contract.extend');
     

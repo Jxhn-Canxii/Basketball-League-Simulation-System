@@ -1,7 +1,3 @@
-ALTER TABLE teams ADD COLUMN market_size INT DEFAULT 1;
-
-
-
 UPDATE teams
 SET market_size =
     CASE

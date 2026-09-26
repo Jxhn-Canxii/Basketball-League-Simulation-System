@@ -578,7 +578,8 @@ class PlayerRatingsService
 
     private function updatePlayerAndCoachAge()
     {
-        $seasonId = get_current_season_id();
+        $seasonId = get_current_season_id() ?? 1;
+
         // Update active, free agent players with age <= 65
         DB::table('players')
             ->where('team_id', 0)
@@ -600,6 +601,8 @@ class PlayerRatingsService
                 'contract_years' => 0,
                 'age' => DB::raw('age + 1'),
             ]);
+
+        return true;
     }
 
     private function promoteRetiredPlayersToCoaches()

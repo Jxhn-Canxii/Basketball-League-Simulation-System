@@ -2,11 +2,9 @@
 
 namespace App\Services\Game;
 
-ini_set('max_execution_time', 0); // Unlimited execution time
+ini_set('max_execution_time', 1024); // Unlimited execution time
 
-use Illuminate\Http\Request;
 use App\Models\Seasons;
-use App\Services\Archive\ArchiveService;
 use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\League\NewsService;
@@ -52,7 +50,6 @@ class SimulateService
         $this->teamStreak = new TeamStreakService();
         $this->freeAgent = new FreeAgencyService();
         $this->news = new NewsService();
-        $this->archive = new ArchiveService();
         $this->career = new PlayerCareerStatsService();
         $this->engine = new GameEngineService();
         $this->gameResultService = new GameResultService();

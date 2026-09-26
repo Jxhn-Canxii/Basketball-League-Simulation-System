@@ -341,7 +341,7 @@ class FreeAgencyService
     //getFreeAgentsByPositionAndCompositeScore
     public function getBestAvailableFreeAgent($position, $usedPlayerIds)
     {
-        $seasonId = get_current_season_id();
+        $seasonId = get_current_season_id() ?? 1;
 
         $query = Player::select(
             'players.*',
@@ -911,7 +911,7 @@ class FreeAgencyService
                     'contract_type' => $offer['contract_type'],
                     'player_option' => $offer['player_option'],
                     'team_option' => $offer['team_option'],
-                    'no_trade_clause' => $offer['no_trade_clause']
+                    'no_trade_clause' => $offer['no_trade_clause'],
                 ]);
             
             // Insert the transaction record into the transactions table
@@ -1018,6 +1018,24 @@ class FreeAgencyService
         if ($teamsCount === 0) {
             $update = $this->storeNextSeasonStatsPerTeam();
 
+            if($seasonId == 0){
+                DB::table('seasons')
+                    ->where('team_id',0)
+                    ->update([
+                        'draft_status' => 'Undrafted',
+                        'is_drafted' => 0,
+                        'is_rookie' => 0
+                    ]);
+
+                DB::table('seasons')
+                    ->where('team_id','>',0)
+                    ->update([
+                        'draft_status' => 'Special Draft',
+                        'is_drafted' => 1,
+                        'is_rookie' => 0
+                    ]);
+
+            }
             if ($update) {
                 DB::table('seasons')
                     ->where('id',  $seasonId)
@@ -1053,6 +1071,14 @@ class FreeAgencyService
                         $player = $this->getBestAvailableFreeAgent($position, $usedPlayerIds);
                         if (!$player) break;
 
+                        $corePlayersCount =  DB::table('players')
+                                    ->where('team_id',$team->id)
+                                    ->where('overall_rating','>',90)
+                                    ->count();
+
+                        if($player->overall_rating > 90 && $corePlayersCount >= 3 && $currentSeasonId == 1){
+                            break;
+                        }
                         // Assign player to team
                         $this->assignPlayerToTeam($player, $team, $currentSeasonId, $seasonId);
                         $usedPlayerIds[] = $player->id; // Mark as used
@@ -1067,6 +1093,14 @@ class FreeAgencyService
                     $player = $this->getBestAvailableFreeAgent('SG', $usedPlayerIds);
                     if (!$player) break;
 
+                    $corePlayersCount =  DB::table('players')
+                                ->where('team_id',$team->id)
+                                ->where('overall_rating','>',90)
+                                ->count();
+
+                    if($player->overall_rating > 90 && $corePlayersCount >= 3 && $currentSeasonId == 1){
+                        break;
+                    }
                     // Assign player to team
                     $this->assignPlayerToTeam($player, $team, $currentSeasonId, $seasonId);
                     foreach (explode('/', $player->position) as $pos) {
