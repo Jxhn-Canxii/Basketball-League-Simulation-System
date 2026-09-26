@@ -766,9 +766,105 @@ class PlayerService
 
     public function getPlayerAwardsList($request){
 
+        $playerId = $request->player_id;
+
         $awards = $this->getPlayerAwards($request->player_id);
 
-        return response()->json($awards);
+        $overallRankSeasons = $this->rankOneInASeason($playerId,'overall_rank');
+
+        $conferenceRankSeasons = $this->rankOneInASeason($playerId,'conference_rank');
+
+        // Fetch MVP count and seasons
+        $mvpData = $this->getFinalsMvp($playerId);
+
+        // Fetch championship count and season names
+        $championships = $this->getPlayerChampionships($playerId,'finals');
+
+        // Fetch conference championships (using playoff_series table)
+        $conference_championships = $this->getPlayerChampionships($playerId,'semi_finals');
+
+        $formattedData = [];
+
+        foreach ($awards as $stats) {
+            # code...
+            $formattedData[] = [
+                'details' => $stats->details,
+                'description' => $stats->description,
+                'award_name' => $stats->award_name,
+                'season' => $stats->season,
+                'season_name' => $stats->season_name,
+                'team_name' => $stats->team_name,
+                'primary_color' => $stats->primary_color,
+                'secondary_color' => $stats->secondary_color,
+                'acronym' => $stats->acronym,
+            ];
+        }
+
+        foreach ($overallRankSeasons as $stats) {
+            # code...
+            $formattedData[] = [
+                'details' => 'Overall Top #1 Team',
+                'description' => 'Teams Rank #1 in a Regular Season',
+                'award_name' => 'Overall Top #1 Team',
+                'season' => $stats->season_id,
+                'season_name' => $stats->season_name,
+                'team_name' => $stats->team_name,
+                'primary_color' => $stats->primary_color,
+                'secondary_color' => $stats->secondary_color,
+                'acronym' => $stats->acronym,
+            ];
+        }
+
+        foreach ($conferenceRankSeasons as $stats) {
+            # code...
+            $formattedData[] = [
+                'details' => 'Conference Top #1 Team',
+                'description' => 'Teams Conference Rank #1 in a Regular Season',
+                'award_name' => 'Conference Top #1 Team',
+                'season' => $stats->season_id,
+                'season_name' => $stats->season_name,
+                'team_name' => $stats->team_name,
+                'primary_color' => $stats->primary_color,
+                'secondary_color' => $stats->secondary_color,
+                'acronym' => $stats->acronym,
+            ];
+        }
+
+        foreach ($championships as $stats) {
+            # code...
+            $formattedData[] = [
+                'details' => null,
+                'description' => $stats->season_name.' National Finals Championships.',
+                'award_name' => ' National Finals Champions',
+                'season' => $stats->season_id,
+                'season_name' => $stats->season_name,
+                'team_name' => $stats->team_name,
+                'primary_color' => $stats->primary_color,
+                'secondary_color' => $stats->secondary_color,
+                'acronym' => $stats->acronym,
+            ];
+        }
+
+        foreach ($conference_championships as $stats) {
+            # code...
+            $formattedData[] = [
+                'details' => null,
+                'description' => $stats->season_name.' '.$stats->conference_name.' Conference Finals Championships.',
+                'award_name' => $stats->conference_name.' Conference Champions',
+                'season' => $stats->season_id,
+                'season_name' => $stats->season_name,
+                'team_name' => $stats->team_name,
+                'primary_color' => $stats->primary_color,
+                'secondary_color' => $stats->secondary_color,
+                'acronym' => $stats->acronym,
+            ];
+        }
+
+        $sortedAwards = collect($formattedData)->sort(function ($a, $b) {
+            return $b['season'] <=> $a['season'];
+        })->values();
+    
+        return response()->json($sortedAwards);
     }
 
     public function getPlayerGameLogs($request)

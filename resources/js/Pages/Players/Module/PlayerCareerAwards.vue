@@ -149,10 +149,10 @@
 
                         <!-- Main Value -->
                         <div
-                            class="relative flex min-h-[120px] flex-col items-center justify-center px-4 py-5 text-center"
+                            class="relative flex max-h-[170px] flex-col items-center justify-center px-4 py-5 text-center"
                         >
                             <div
-                                class="text-xl font-black leading-none tracking-tight text-white sm:text-3xl"
+                                class="text-xl font-black leading-none tracking-tight capitalize text-white sm:text-3xl"
                             >
                                 {{ transaction.award_name }}
                             </div>
