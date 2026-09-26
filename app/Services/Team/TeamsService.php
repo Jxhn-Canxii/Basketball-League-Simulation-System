@@ -877,12 +877,13 @@ class TeamsService
                 'round_of_16',
                 'quarter_finals',
                 'semi_finals',
+                'interconference_finals',
                 'interconference_semi_finals',
                 'finals'
             ])
             ->join('seasons', 'schedules.season_id', '=', 'seasons.id')
-            ->selectRaw('SUM(CASE WHEN (round = "finals" OR round = "semi_finals" OR round = "quarter_finals" OR round = "round_of_16" OR round = "round_of_32") AND (away_id = ? AND away_score > home_score OR home_id = ? AND home_score > away_score) THEN 1 ELSE 0 END) AS playoff_wins', [$teamId, $teamId])
-            ->selectRaw('SUM(CASE WHEN (round = "finals" OR round = "semi_finals" OR round = "quarter_finals" OR round = "round_of_16" OR round = "round_of_32") AND (away_id = ? AND away_score < home_score OR home_id = ? AND home_score < away_score) THEN 1 ELSE 0 END) AS playoff_losses', [$teamId, $teamId])
+            ->selectRaw('SUM(CASE WHEN (away_id = ? AND away_score > home_score OR home_id = ? AND home_score > away_score) THEN 1 ELSE 0 END) AS playoff_wins', [$teamId, $teamId])
+            ->selectRaw('SUM(CASE WHEN (away_id = ? AND away_score < home_score OR home_id = ? AND home_score < away_score) THEN 1 ELSE 0 END) AS playoff_losses', [$teamId, $teamId])
             ->selectRaw('COUNT(CASE WHEN (round = "round_of_16" AND seasons.start_playoffs = 16) OR (round = "round_of_32" AND seasons.start_playoffs = 32) THEN 1 END) AS playoff_appearances')
             // Add condition for play-in rounds (teams ranked 7th-10th)
             ->selectRaw('COUNT(CASE WHEN round IN ("play_ins_elims_round_1", "play_ins_elims_round_2") THEN 1 END) AS play_in_appearances')
@@ -1337,11 +1338,13 @@ class TeamsService
                         'players.*',
                         'teams.acronym as drafted_team',
                         'seasons.name as draft_class',
-                        DB::raw('(SELECT COALESCE(SUM(interconference_semi_finals_appearances), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as conference_championships_won'),
-                        DB::raw('(SELECT COALESCE(SUM(championships_won), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as championships_won'),
+                        'player_playoff_appearances.conference_championships_won',
+                        'player_playoff_appearances.championships_won',
+                        'player_playoff_appearances.total_playoff_series_appearances',
                         DB::raw('(SELECT COUNT(*) FROM season_awards WHERE season_awards.player_id = players.id) as awards_won')
                     )
                     ->leftJoin('seasons', 'players.draft_id', '=', 'seasons.id')
+                    ->leftJoin('player_playoff_appearances', 'players.id', '=', 'player_playoff_appearances.player_id')
                     ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
                     ->where('players.id', $stats->player_id)
                     ->first();
@@ -1442,6 +1445,7 @@ class TeamsService
                         'seasons_played_with_team' => $seasonsPlayedWithTeam,
                         'total_seasons_played' => $totalSeasonsPlayed,
                         'latest_season' => $latestSeasonId,
+                        'playoff_appearances' => (int)$player->total_playoff_series_appearances,
                         'conference_championships_won' => (int)$player->conference_championships_won,
                         'championships_won' => (int)$player->championships_won,
                         'awards_won' => (int)$player->awards_won,
@@ -1457,11 +1461,13 @@ class TeamsService
                     'players.*',
                     'teams.acronym as drafted_team',
                     'seasons.name as draft_class',
-                    DB::raw('(SELECT COALESCE(SUM(interconference_semi_finals_appearances), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as conference_championships_won'),
-                    DB::raw('(SELECT COALESCE(SUM(championships_won), 0) FROM player_playoff_appearances WHERE player_playoff_appearances.player_id = players.id) as championships_won'),
+                    'player_playoff_appearances.conference_championships_won',
+                    'player_playoff_appearances.championships_won',
+                    'player_playoff_appearances.total_playoff_series_appearances',
                     DB::raw('(SELECT COUNT(*) FROM season_awards WHERE season_awards.player_id = players.id) as awards_won')
                 )
                 ->leftJoin('seasons', 'players.draft_id', '=', 'seasons.id')
+                ->leftJoin('player_playoff_appearances', 'players.id', '=', 'player_playoff_appearances.player_id')
                 ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
                 ->where('team_id', $teamId)
                 ->get();
@@ -1590,7 +1596,8 @@ class TeamsService
                         'team_total_games' => (float)$totalSeasonGameSchedule,
                         'total_seasons_played' => $totalSeasonsPlayed + 1,
                         'latest_season' => $latestSeasonId,
-                        'playoff_appearances' => (int)$player->conference_championships_won,
+                        'playoff_appearances' => (int)$player->total_playoff_series_appearances,
+                        'conference_championships_won' => (int)$player->conference_championships_won,
                         'championships_won' => (int)$player->championships_won,
                         'awards_won' => (int)$player->awards_won,
                         'player_valuation' =>(int) $stats['player_valuation'] ?? 0,

@@ -385,6 +385,7 @@ class PlayoffStatsService
             'round_of_16' => 'round_of_16_appearances',
             'quarter_finals' => 'quarter_finals_appearances',
             'semi_finals' => 'semi_finals_appearances',
+            'interconference_finals' => 'interconference_finals_appearances',
             'interconference_semi_finals' => 'interconference_semi_finals_appearances',
             'finals' => 'finals_appearances',
         ];
@@ -494,6 +495,7 @@ class PlayoffStatsService
             'round_of_16' => 'round_of_16_appearances',
             'quarter_finals' => 'quarter_finals_appearances',
             'semi_finals' => 'semi_finals_appearances',
+            'interconference_finals' => 'interconference_finals_appearances',
             'interconference_semi_finals' => 'interconference_semi_finals_appearances',
             'finals' => 'finals_appearances',
         ];
@@ -550,6 +552,16 @@ class PlayoffStatsService
                     DB::table('player_playoff_appearances')
                         ->where('player_id', $playerId)
                         ->increment('championships_won');
+                }
+            }
+
+            if ($round === 'semi_finals' && $playerTeamId) {
+
+                // Check if the player's team is the series winner
+                if ($series && $series->winner_team_id == $playerTeamId) {
+                    DB::table('player_playoff_appearances')
+                        ->where('player_id', $playerId)
+                        ->increment('conference_championships_won');
                 }
             }
 

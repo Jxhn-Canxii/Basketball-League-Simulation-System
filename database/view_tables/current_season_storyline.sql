@@ -214,7 +214,7 @@ big4_series AS (
     SELECT
         ss.*
     FROM season_series ss
-    WHERE ss.round = 'interconference_semi_finals'
+    WHERE ss.round = 'interconference_finals'
 ),
 
 big4_summary AS (
@@ -535,6 +535,7 @@ highest_scoring_game AS (
         'quarter_finals',
         'semi_finals',
         'interconference_semi_finals',
+        'interconference_finals',
         'finals'
     )
     ORDER BY points DESC
@@ -577,6 +578,7 @@ top_playoff_scorer AS (
         'round_of_16',
         'quarter_finals',
         'semi_finals',
+        'interconference_finals',
         'interconference_semi_finals',
         'finals'
     )
@@ -608,6 +610,7 @@ top_playoff_rebounder AS (
         'round_of_16',
         'quarter_finals',
         'semi_finals',
+        'interconference_finals',
         'interconference_semi_finals',
         'finals'
     )
@@ -639,6 +642,7 @@ top_playoff_assist AS (
         'round_of_16',
         'quarter_finals',
         'semi_finals',
+        'interconference_finals',
         'interconference_semi_finals',
         'finals'
     )

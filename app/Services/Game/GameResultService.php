@@ -28,10 +28,10 @@ class GameResultService
         $game = DB::table($scheduleViewTable.' as schedule_view')
             ->join('teams as away_team', 'schedule_view.away_id', '=', 'away_team.id') // Join for away team
             ->join('teams as home_team', 'schedule_view.home_id', '=', 'home_team.id') // Join for home team
-            ->join('team_season_info as away_team_info', 'away_team_info.team_id', '=', 'away_team.id') // Join for away team
-            ->join('team_season_info as home_team_info', 'home_team_info.team_id', '=', 'home_team.id') // Join for home team
-            ->join('coaches as away_team_coach', 'away_team_coach.id', '=', 'away_team_info.coach_id') // Join for away team
-            ->join('coaches as home_team_coach', 'home_team_coach.id', '=', 'home_team_info.coach_id') // Join for home team
+            ->leftJoin('team_season_info as away_team_info', 'away_team_info.team_id', '=', 'away_team.id') // Join for away team
+            ->leftJoin('team_season_info as home_team_info', 'home_team_info.team_id', '=', 'home_team.id') // Join for home team
+            ->leftJoin('coaches as away_team_coach', 'away_team_coach.id', '=', 'away_team_info.coach_id') // Join for away team
+            ->leftJoin('coaches as home_team_coach', 'home_team_coach.id', '=', 'home_team_info.coach_id') // Join for home team
             ->where('schedule_view.game_id', $game_id)
             ->select(
                 'schedule_view.*', // Select all columns from schedule_view
@@ -55,6 +55,8 @@ class GameResultService
         if (!$game) {
             return response()->json([
                 'message' => 'Game not found',
+                'source' => $scheduleViewTable,
+                'game_id' => $game_id,
             ], 404);
         }
 
@@ -72,6 +74,7 @@ class GameResultService
                 $join->on('pss.player_id', '=', 'p.id')
                     ->on('pss.season_id', '=', 'player_game_stats.season_id'); // Join player_season_stats on player_id and season_id
             })
+            ->leftJoin('teams as r', 'pss.team_id', '=', 'r.id') // Alias for teams table
             ->leftJoin('season_awards as sa', 'sa.player_id', '=', 'p.id')
             ->leftJoin('player_playoff_appearances as ppa', 'ppa.player_id', '=', 'p.id')
             ->leftJoin('player_game_highs as pgh', 'pgh.player_id', '=', 'p.id')
@@ -89,6 +92,7 @@ class GameResultService
                 'player_game_stats.season_id as game_season_id',
                 'pss.season_id as stats_season_id',
                 't.name as team_name',
+                'r.acronym as team_acronym',
                 'player_game_stats.role as player_role',
                 'p.position as position',
                 'player_game_stats.points',
@@ -306,7 +310,7 @@ class GameResultService
                 return $playerStat && $playerStat->team_id == $game->away_id;
             });
 
-            $homeTeamPlayersArray = $homeTeamPlayers->map(function ($player) use ($playerStats) {
+            $homeTeamPlayersArray = $homeTeamPlayers->map(function ($player) use ($game,$playerStats) {
                 $stats = $playerStats->get($player->id);
 
                 // Field goal percentage, 2-point percentage, 3-point percentage, and free throw percentage calculation
@@ -326,10 +330,13 @@ class GameResultService
                     ($stats->fouls * 0.5)
                 );
 
+                $isSpecialRound = in_array($game->round,['all-rookie','all-star']);
+                $playerNameFormatted = $isSpecialRound ?  $player->name.'('.$stats->team_acronym.')' :  $player->name;
+
                 return [
                     'player_id' => $player->id,
                     'team_id' => $player->team_id,
-                    'name' => $player->name,
+                    'name' => $playerNameFormatted,
                     'position' => $player->position,
                     'role' => $player->role,
                     'fatigue' => $player->fatigue,
@@ -363,7 +370,7 @@ class GameResultService
             })->sortByDesc('minutes')->values()->toArray();  // Sort by composite score in descending order
 
             // Convert away team player stats to an array, including those with no recorded stats
-            $awayTeamPlayersArray = $awayTeamPlayers->map(function ($player) use ($playerStats) {
+            $awayTeamPlayersArray = $awayTeamPlayers->map(function ($player) use ($game,$playerStats) {
                 $stats = $playerStats->get($player->id);
 
                 // Field goal percentage, 2-point percentage, 3-point percentage, and free throw percentage calculation
@@ -383,10 +390,14 @@ class GameResultService
                     ($stats->fouls * 0.5)
                 );
 
+                $isSpecialRound = in_array($game->round,['all-rookie','all-star']);
+                $playerNameFormatted = $isSpecialRound ?  $player->name.'('.$stats->team_acronym.')' :  $player->name;
+
+
                 return [
                     'player_id' => $player->id,
                     'team_id' => $player->team_id,
-                    'name' => $player->name,
+                    'name' => $playerNameFormatted,
                     'position' => $player->position,
                     'role' => $player->role,
                     'fatigue' => $player->fatigue,

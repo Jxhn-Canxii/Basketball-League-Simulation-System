@@ -98,6 +98,9 @@ team_games AS (
             'round_of_16',
             'quarter_finals',
             'semi_finals',
+            'interconference_finals',
+            'all-star',
+            'all-rookie',
             'interconference_semi_finals',
             'finals'
         )
@@ -434,6 +437,9 @@ team_rankings AS (
             'round_of_16',
             'quarter_finals',
             'semi_finals',
+            'interconference_finals',
+            'all-star',
+            'all-rookie',
             'interconference_semi_finals',
             'finals'
         )

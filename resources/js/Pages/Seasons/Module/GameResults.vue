@@ -120,7 +120,7 @@
                     <div class="team-meta">
                         <span>
                             <i class="fas fa-user-tie"></i>
-                            {{ playerFormatter(gameDetails.home_team.coach) }}
+                            {{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}
                         </span>
 
                         <span>
@@ -230,7 +230,7 @@
                     <div class="team-meta">
                         <span>
                             <i class="fas fa-user-tie"></i>
-                            {{ playerFormatter(gameDetails.away_team.coach) }}
+                            {{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}
                         </span>
 
                         <span>

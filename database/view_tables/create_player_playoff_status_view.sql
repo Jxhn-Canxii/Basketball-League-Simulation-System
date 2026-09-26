@@ -6,6 +6,7 @@ SELECT
     COUNT(CASE WHEN s.round = 'quarter_finals' THEN 1 END) AS quarter_finals_appearances,
     COUNT(CASE WHEN s.round = 'semi_finals' THEN 1 END) AS semi_finals_appearances,
     COUNT(CASE WHEN s.round = 'interconference_semi_finals' THEN 1 END) AS interconference_semi_finals_appearances,
+    COUNT(CASE WHEN s.round = 'interconference_finals' THEN 1 END) AS interconference_finals_appearances,
     COUNT(CASE WHEN s.round = 'finals' THEN 1 END) AS finals_appearances,
     COUNT(DISTINCT CASE WHEN se.finals_mvp_id = p.id THEN se.id END) AS finals_mvp_count,
     GROUP_CONCAT(DISTINCT se.name ORDER BY se.name ASC SEPARATOR ', ') AS seasons

@@ -911,7 +911,7 @@ class ScheduleService
         $itemsPerPage = $request->itemsperpage ?: 6;
         $currentPage = $request->page_num ?: 1;
         $currentSeasonId = get_current_season_id();
-        $specialConference = ($seasonId > 5) ? 0 : $conferenceId;
+        $specialConference = 0;
 
         // Calculate offset for pagination based on current page
         $offset = ($currentPage - 1) * $itemsPerPage;

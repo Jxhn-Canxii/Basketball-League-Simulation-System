@@ -11,7 +11,8 @@ SELECT
     ppa.total_playoff_series_appearances AS player_total_playoff_appearances,
     ppa.seasons_played_in_playoffs,
 
-    ppa.interconference_semi_finals_appearances as big_4_appearances,
+    ppa.interconference_semi_finals_appearances as national_8_appearances,
+    ppa.interconference_finals_appearances as big_4_appearances,
     ppa.finals_appearances as finals_appearances
 
 FROM players p
