@@ -71,22 +71,9 @@ class ScheduleService
         // // Check if the time is between 6 PM (18) and 6 AM (6)
         // $isTimeRestricted = ($currentHour >= 18 || $currentHour < 6);
 
-        $tradeProposalDeadline = CEIL($totalRounds / 2);
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
         $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) + 2);
-        $draftApplicationWindow = $simulatedRounds >= ($totalRounds - 2);
-
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
-        $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline && $latestSeasonStatus == 1;
-
-        if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
-            if($simulatedRounds % 2 == 0){
-                $this->tradeDecision->generateTradeProposals(false);
-            }
-            if($simulatedRounds % 2 != 0){
-                $this->tradeDecision->automatedTradeDecision(false);
-            }
-        }
         
         $allStarSchedule = [];
 

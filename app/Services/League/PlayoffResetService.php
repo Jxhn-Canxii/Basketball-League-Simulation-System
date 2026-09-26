@@ -33,7 +33,8 @@ class PlayoffResetService
         'quarter_finals'               => 8,
         'semi_finals'                  => 9,
         'interconference_semi_finals'  => 10,
-        'finals'                       => 11,
+        'interconference_finals'       => 11,
+        'finals'                       => 12,
     ];
 
     /**
@@ -46,6 +47,7 @@ class PlayoffResetService
      * - Quarter finals
      * - Semi finals
      * - Interconference semi finals
+     * - Interconference finals
      * - Finals
      *
      * Previous rounds remain untouched.

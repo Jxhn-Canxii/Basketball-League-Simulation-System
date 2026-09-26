@@ -16,6 +16,7 @@ use App\Services\Stats\PlayerStatsService;
 use App\Services\Team\TeamManagementService;
 use App\Services\Team\TeamStatsService;
 use App\Services\Team\TeamStreakService;
+use App\Services\Trade\TradeDecisionService;
 use Illuminate\Support\Facades\DB;
 
 class SimulateService
@@ -35,6 +36,7 @@ class SimulateService
     protected $engine;
     protected $gameResultService;
     protected $playerGenerator;
+    protected $tradeDecision;
 
     private $gameMinutes = 240;
 
@@ -53,6 +55,7 @@ class SimulateService
         $this->career = new PlayerCareerStatsService();
         $this->engine = new GameEngineService();
         $this->gameResultService = new GameResultService();
+        $this->tradeDecision = new TradeDecisionService();
         $this->helper = new HelperService();
     }
 
@@ -247,6 +250,23 @@ class SimulateService
             $this->news->createGameNewsFromGame($gameData->id);
 
             $this->playerGenerator->declarePlayerForNextDraft($gameData->round);
+
+            $simulatedRounds = $gameData->round;
+
+            // Get the total number of rounds in the season
+            $totalRounds = $this->helper->totalRounds($gameData->season_id);
+
+            $tradeProposalDeadline = CEIL($totalRounds / 2);
+            $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline;
+
+            if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
+                if($gameData->id % 20 == 0){
+                    $this->tradeDecision->generateTradeProposals(false);
+                }
+                if($gameData->id % 80 == 0){
+                    $this->tradeDecision->automatedTradeDecision(false);
+                }
+            }
 
             if ($isRoundsSimulatedForSeason) {
                 $this->freeAgent->updateInjuryFreeAgents();

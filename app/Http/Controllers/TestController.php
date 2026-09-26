@@ -548,21 +548,24 @@ class TestController extends Controller
 
     public function TestArchiving(){
 
-        // $archive =  $this->archive->archivePlayerSeasonStats();
-        // $archive =  $this->archive->archiveQuarterGameBreakDown(1);
+        $seasonId = get_current_season_id();
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+        $round = 1;
+        $conferenceId = 1;
+        // Build base query depending on round
+        $query = DB::table($scheduleTable)
+            ->where('round', $round)
+            ->where('season_id', $seasonId)
+            ->where('conference_id', $conferenceId);
 
 
-        // $archive = $this->schedule->selectAllStarsManual(1);
-        // $archive = $this->schedule->selectAllStarsManual(2);
-        // $archive = $this->schedule->selectAllStarsManual(3);
-    
-        $north = $this->getAllStarTeamConferenceRange(3);
-        $south = $this->getAllStarTeamConferenceRange(4);
+        $home = $query->pluck('home_id')->toArray();
+        $away = $query->pluck('away_id')->toArray();
 
-        return response()->json([
-            'north' => $north,
-            'south' => $south,
-        ]);
+        $winners = array_merge($home,$away);
+        
+        return $winners;
+
     }
 
     private function getAllStarTeamConferenceRange($teamId){

@@ -689,6 +689,7 @@ class PlayerService
             'quarter_finals_appearances' => 0,
             'semi_finals_appearances' => 0,
             'interconference_semi_finals_appearances' => 0,
+            'interconference_finals_appearances' => 0,
             'finals_appearances' => 0,
             'play_ins_finals_appearances' => 0,
             'play_ins_elims_round_1_appearances' => 0,
@@ -1046,14 +1047,20 @@ class PlayerService
             case 'playoff_appearances':
                 $query->orderBy('ppa.total_playoff_series_appearances', $sortOrder);
                 break;
-            case 'big_four':
+            case 'national_eight':
                 $query->orderBy('ppa.interconference_semi_finals_appearances', $sortOrder);
+                break;
+            case 'big_four':
+                $query->orderBy('ppa.interconference_finals_appearances', $sortOrder);
                 break;
             case 'finals_appearances':
                 $query->orderBy('ppa.finals_appearances', $sortOrder);
                 break;
             case 'seasons_played':
                 $query->orderBy('ppa.total_seasons_played', $sortOrder); // NOTE: column must exist or be handled differently
+                break;
+            case 'conference_championships_won':
+                $query->orderBy('ppa.conference_championships_won', $sortOrder);
                 break;
             case 'championships_won':
                 $query->orderBy('ppa.championships_won', $sortOrder);
@@ -1375,6 +1382,7 @@ class PlayerService
                 'quarter_finals_appearances',
                 'semi_finals_appearances',
                 'interconference_semi_finals_appearances',
+                'interconference_finals_appearances',
                 'finals_appearances',
                 'play_ins_finals_appearances',
                 'play_ins_elims_round_1_appearances',

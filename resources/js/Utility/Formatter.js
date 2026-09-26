@@ -160,6 +160,9 @@ export const roundNameFormatter = (round) => {
             return 'Conference Finals'
             break;
         case 'interconference_semi_finals':
+            return 'The National 8'
+            break;
+        case 'interconference_finals':
             return 'The Big 4'
             break;
         case 'finals':
@@ -182,9 +185,9 @@ export const roundGridFormatter = (round,start) => {
                     break;
             case 'round_of_32':
                 return 5;
-                 break;
+                break;
             case 'round_of_16':
-               return 6;
+                return 6;
                 break;
             case 'quarter_finals':
                 return 7;
@@ -195,8 +198,11 @@ export const roundGridFormatter = (round,start) => {
             case 'interconference_semi_finals':
                 return 9;
                 break;
-            case 'finals':
+            case 'interconference_finals':
                 return 10;
+                break;
+            case 'finals':
+                return 11;
                 break;
             default:
                 return 2;
@@ -212,10 +218,10 @@ export const roundGridFormatter = (round,start) => {
                     break;
             case 'play_ins_finals':
                 return 6;
-                    break;
+                break;
             case 'round_of_16':
                 return 7;
-                 break;
+                break;
             case 'quarter_finals':
                 return 8;
                 break;
@@ -224,8 +230,11 @@ export const roundGridFormatter = (round,start) => {
             case 'interconference_semi_finals':
                 return 10;
                 break;
-            case 'finals':
+            case 'interconference_finals':
                 return 11;
+                break;
+            case 'finals':
+                return 12;
                 break;
             default:
                 return 2;
@@ -254,6 +263,9 @@ export const roundStatusFormatter = (round,start,playIns) => {
                 newRound = 'interconference_semi_finals';
                 break;
             case 'interconference_semi_finals':
+                newRound = 'interconference_finals';
+                break;
+            case 'interconference_finals':
                 newRound = 'finals';
                 break;
             default:
@@ -307,6 +319,9 @@ export const roundStatusFormatter = (round,start,playIns) => {
                 newRound = 'interconference_semi_finals';
                 break;
             case 'interconference_semi_finals':
+                newRound = 'interconference_finals';
+                break;
+            case 'interconference_finals':
                 newRound = 'finals';
                 break;
             default:
@@ -326,6 +341,9 @@ export const roundStatusFormatter = (round,start,playIns) => {
                 newRound = 'interconference_semi_finals';
                 break;
             case 'interconference_semi_finals':
+                newRound = 'interconference_finals';
+                break;
+            case 'interconference_finals':
                 newRound = 'finals';
                 break;
             default:

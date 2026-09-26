@@ -20,7 +20,10 @@ return [
         'semi_finals' => [ // conference finals
             'series_length' => 7, // Best-of-7
         ],
-        'interconference_semi_finals' => [ // big 4
+        'interconference_semi_finals' => [ // national 8
+            'series_length' => 7, // Best-of-7
+        ],
+        'interconference_finals' => [ // big 4
             'series_length' => 7, // Best-of-7
         ],
         'finals' => [

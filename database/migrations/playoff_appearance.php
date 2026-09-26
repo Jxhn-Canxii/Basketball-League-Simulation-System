@@ -26,6 +26,7 @@ return new class extends Migration
             $table->integer('quarter_finals_appearances')->default(0);
             $table->integer('semi_finals_appearances')->default(0);
             $table->integer('interconference_semi_finals_appearances')->default(0);
+            $table->integer('interconference_finals_appearances')->default(0);
             $table->integer('finals_appearances')->default(0);
             
             // Career Totals
@@ -33,6 +34,7 @@ return new class extends Migration
             $table->integer('total_playoff_games')->default(0);
             $table->integer('seasons_played_in_playoffs')->default(0);
             $table->integer('total_seasons_played')->default(0);
+            $table->integer('conference_championships_won')->default(0);
             $table->integer('championships_won')->default(0);
             
             $table->timestamps();

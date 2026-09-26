@@ -134,6 +134,8 @@ class RoundService
             case 'semi_finals':
                 return 'Conference Semi-Finals Game ' . $game_number;
             case 'interconference_semi_finals':
+                return 'The National 8 (Quarterfinals) Game ' . $game_number;
+            case 'interconference_finals':
                 return 'The Big 4 (Semifinals) Game ' . $game_number;
             case 'finals':
                 return 'The Finals Game ' . $game_number;
@@ -168,6 +170,9 @@ class RoundService
                 return config('timeline.semi_finals');
             case 'interconference_semi_finals':
                 return config('timeline.interconference_semi_finals');
+                break;
+            case 'interconference_finals':
+                return config('timeline.interconference_finals');
                 break;
             case 'finals':
                 return config('timeline.finals');
@@ -205,8 +210,11 @@ class RoundService
             case 'interconference_semi_finals':
                 return 'semi_finals';
                 break;
-            case 'finals':
+            case 'interconference_finals':
                 return 'interconference_semi_finals';
+                break;
+            case 'finals':
+                return 'interconference_finals';
                 break;
             default:
                 return 8;
@@ -228,7 +236,8 @@ class RoundService
             8 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals'],
             9 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals'],
             10 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals'],
-            11 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals', 'finals'],
+            11 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals', 'interconference_finals'],
+            12 => ['play_ins_elims_round_1', 'play_ins_elims_round_2', 'play_ins_finals', 'round_of_16', 'quarter_finals', 'semi_finals', 'interconference_semi_finals', 'interconference_finals', 'finals'],
         ];
 
         // Return rounds up to the given status, default to all rounds if status is invalid

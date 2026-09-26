@@ -27,6 +27,7 @@ return [
             'quarter_finals',
             'semi_finals',
             'interconference_semi_finals',
+            'interconference_finals',
             'finals',
         ],
     ],

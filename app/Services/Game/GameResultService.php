@@ -116,7 +116,7 @@ class GameResultService
                 'player_game_stats.is_fouled_out',
                 'player_game_stats.eff',
                 'ppa.championships_won',
-                'ppa.interconference_semi_finals_appearances as conference_championship_won',
+                'ppa.conference_championships_won',
                 'ppa.round_of_16_appearances as playoff_appearance',
                 'pgh.all_star_count as all_star_count',
 

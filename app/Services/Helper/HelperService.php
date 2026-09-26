@@ -3,6 +3,7 @@
 namespace App\Services\Helper;
 
 use App\Models\Schedules;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -62,11 +63,13 @@ class HelperService
 
     public function totalRounds($seasonId){
 
+        $exclude = $this->excludedRounds;
+            
         return DB::table('schedules')
-            ->where('season_id', $seasonId)
-            ->whereNotIn('round', $this->excludedRounds)
-            ->distinct('round')
-            ->count();
+                ->where('season_id', $seasonId)
+                ->whereNotIn('round', $exclude)
+                ->distinct('round')
+                ->count();
     }
 
     public function calculateInjuryChance($fatigue)
@@ -230,6 +233,9 @@ class HelperService
                     return 'Conference Finals';
                     break;
                 case 'interconference_semi_finals':
+                    return 'The National 8';
+                    break;
+                case 'interconference_finals':
                     return 'The Big 4';
                     break;
                 case 'finals':

@@ -289,6 +289,21 @@
             <!-- Big 4 -->
             <th
               class="min-w-[95px] px-3 py-3 text-right"
+              :class="search_filters.sort_by === 'national_eight' ? 'bg-slate-800/80' : ''"
+            >
+              <span
+                :class="
+                  search_filters.sort_by === 'national_eight' ? 'text-white' : 'text-slate-300'
+                "
+                class="text-[10px] font-black uppercase tracking-wider"
+              >
+                National 8
+              </span>
+            </th>
+
+            <!-- Big 4 -->
+            <th
+              class="min-w-[95px] px-3 py-3 text-right"
               :class="search_filters.sort_by === 'big_four' ? 'bg-slate-800/80' : ''"
             >
               <span
@@ -320,6 +335,24 @@
               </span>
             </th>
 
+            <!--Conference Championships -->
+            <th
+              class="min-w-[110px] px-3 py-3 text-right"
+              :class="
+                search_filters.sort_by === 'conference_championships_won' ? 'bg-slate-800/80' : ''
+              "
+            >
+              <span
+                :class="
+                  search_filters.sort_by === 'conference_championships_won'
+                    ? 'text-white'
+                    : 'text-slate-300'
+                "
+                class="text-[10px] font-black uppercase tracking-wider"
+              >
+                Conf. Championships
+              </span>
+            </th>
             <!-- Championships -->
             <th
               class="min-w-[110px] px-3 py-3 text-right"
@@ -475,6 +508,14 @@
             <td class="px-3 py-3 text-right">
               <StatCell
                 :value="player.interconference_semi_finals_appearances"
+                :active="search_filters.sort_by === 'national_eight'"
+              />
+            </td>
+
+            <!-- Big 4 -->
+            <td class="px-3 py-3 text-right">
+              <StatCell
+                :value="player.interconference_finals_appearances"
                 :active="search_filters.sort_by === 'big_four'"
               />
             </td>
@@ -486,7 +527,14 @@
                 :active="search_filters.sort_by === 'finals_appearances'"
               />
             </td>
-
+            <!-- Championships -->
+            <td class="px-3 py-3 text-right">
+              <StatCell
+                :value="player.conference_championships_won"
+                :active="search_filters.sort_by === 'conference_championships_won'"
+                :strong="true"
+              />
+            </td>
             <!-- Championships -->
             <td class="px-3 py-3 text-right">
               <StatCell
@@ -566,7 +614,9 @@ const sortLabel = computed(() => {
     playoff_appearances: "Most Playoff Appearances",
     finals_appearances: "Most Finals Appearances",
     big_four: "Most Big 4 Appearances",
+    national_eight: "Most National 8 Appearances",
     seasons_played: "Seasons Played",
+    conference_championships_won: "Conference Championships",
     championships_won: "Championships",
   };
 

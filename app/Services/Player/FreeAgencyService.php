@@ -1019,7 +1019,7 @@ class FreeAgencyService
             $update = $this->storeNextSeasonStatsPerTeam();
 
             if($seasonId == 0){
-                DB::table('seasons')
+                DB::table('players')
                     ->where('team_id',0)
                     ->update([
                         'draft_status' => 'Undrafted',
@@ -1027,7 +1027,7 @@ class FreeAgencyService
                         'is_rookie' => 0
                     ]);
 
-                DB::table('seasons')
+                DB::table('players')
                     ->where('team_id','>',0)
                     ->update([
                         'draft_status' => 'Special Draft',

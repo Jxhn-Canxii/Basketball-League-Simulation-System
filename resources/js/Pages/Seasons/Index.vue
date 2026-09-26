@@ -596,6 +596,12 @@
                                             <!-- Awards -->
                                             <button
                                                 type="button"
+                                                :disabled="season.status <= 12"
+                                                :class="
+                                                    season.status <= 12
+                                                        ? 'cursor-not-allowed opacity-30'
+                                                        : ''
+                                                "
                                                 class="row-action border-amber-500/20 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20"
                                                 @click.prevent="
                                                     isSeasonAwardsModalOpen =

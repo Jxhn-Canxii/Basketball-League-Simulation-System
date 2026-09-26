@@ -656,7 +656,12 @@ class PlayoffService
                     $schedulePlayInFinals = $this->createSchedule($playInFinalsTeams, $seasonId, 'play_ins_finals', $conferenceId);
                     $allSchedules = array_merge($allSchedules, $schedulePlayInFinals);
                 }
-            } else if ($round == 'interconference_semi_finals' || $round == 'finals') {
+            } 
+            else if ($round == 'interconference_semi_finals' || $round == 'finals') {
+                $pairings = $this->generatePairings16($seasonId, 0, $round);
+                $allSchedules = $this->createSchedule($pairings, $seasonId, $round, 0);
+            }
+            else if ($round == 'interconference_finals' || $round == 'finals') {
                 $pairings = $this->generatePairings16($seasonId, 0, $round);
                 $allSchedules = $this->createSchedule($pairings, $seasonId, $round, 0);
             } else {
@@ -1375,9 +1380,15 @@ class PlayoffService
                 $winners = $this->getWinnersOfRound('quarter_finals', $seasonId, $conferenceId);
                 $pairings = $this->pairTeams($winners, 2);
                 break;
-            case 'interconference_semi_finals':
+            case 'interconference_semi_finals': // Pair the conference finalist
                 // Pair the winners of semi-finals for finals
-                $winners = $this->getWinnersOfRound('semi_finals', $seasonId, $conferenceId);
+                $winners = $this->getTeamsOfRound('semi_finals', $seasonId, $conferenceId);
+
+                $pairings = $this->pairTeams($winners, 8);
+                break;
+            case 'interconference_finals':
+                // Pair the winners of semi-finals for finals
+                $winners = $this->getWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
 
                 $pairings = $this->pairTeams($winners, 4);
                 break;
@@ -1409,8 +1420,14 @@ class PlayoffService
                 $pairings = $this->pairTeams($winners, 2);
                 break;
             case 'interconference_semi_finals':
+                // Pair the conference finalist
+                $winners = $this->getTeamsOfRoundSeries('semi_finals', $seasonId, $conferenceId);
+
+                $pairings = $this->pairTeams($winners, 8);
+                break;
+            case 'interconference_finals':
                 // Pair the winners of semi-finals for finals
-                $winners = $this->getSeriesWinnersOfRound('semi_finals', $seasonId, $conferenceId);
+                $winners = $this->getSeriesWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
 
                 $pairings = $this->pairTeams($winners, 4);
                 break;
@@ -1435,15 +1452,15 @@ class PlayoffService
             ->where('round', $round)
             ->where('season_id', $seasonId);
 
-        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
+        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals'])) {
             // Filter by conference only if not special round
             $query->where('conference_id', $conferenceId);
         }
 
         $winners = $query->pluck('winner_id')->toArray();
 
-        // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
-        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals', 'quarter_finals', 'round_of_16'])) {
+        // If the round is semi_finals or inter_conference_semi_finals or inter_conference_finals, rank the winners by overall_rank
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals', 'quarter_finals', 'round_of_16'])) {
             $winners = DB::table('standings_view')
                 ->where('season_id', $seasonId)
                 ->whereIn('team_id', $winners)
@@ -1453,6 +1470,40 @@ class PlayoffService
         }
 
         return $winners;
+    }
+
+    private function getTeamsOfRound($round, $seasonId, $conferenceId)
+    {
+        $qualified = [];
+
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+
+        // Build base query depending on round
+        $query = DB::table($scheduleTable)
+            ->where('round', $round)
+            ->where('season_id', $seasonId);
+
+        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals'])) {
+            // Filter by conference only if not special round
+            $query->where('conference_id', $conferenceId);
+        }
+
+        $home = $query->pluck('home_id')->toArray();
+        $away = $query->pluck('away_id')->toArray();
+
+        $qualified = array_merge($home,$away);
+
+        // If the round is semi_finals or inter_conference_semi_finals or inter_conference_finals, rank the winners by overall_rank
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals', 'quarter_finals', 'round_of_16'])) {
+            $qualified = DB::table('standings_view')
+                ->where('season_id', $seasonId)
+                ->whereIn('team_id', $qualified)
+                ->orderBy('overall_rank', 'asc')
+                ->pluck('team_id')
+                ->toArray();
+        }
+
+        return $qualified;
     }
 
     private function getSeriesWinnersOfRound($round, $seasonId, $conferenceId)
@@ -1465,16 +1516,16 @@ class PlayoffService
             ->where('round', $round)
             ->where('season_id', $seasonId);
 
-        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals'])) {
+        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals'])) {
             // Filter by conference only if not special round
             $query->where('conference_id', $conferenceId);
         }
 
         $winners = $query->pluck('winner_team_id')->toArray();
 
-        // If the round is semi_finals or inter_conference_semi_finals, rank the winners by overall_rank
-        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals', 'quarter_finals', 'round_of_16'])) {
-
+        // If the round is semi_finals or inter_conference_semi_finals or inter_conference_finals, rank the winners by overall_rank
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals', 'quarter_finals', 'round_of_16'])) {
+        
             $winners = DB::table('standings_view')
                 ->where('season_id', $seasonId)
                 ->whereIn('team_id', $winners)
@@ -1483,6 +1534,40 @@ class PlayoffService
                 ->toArray();
         }
         return $winners;
+    }
+
+    private function getTeamsOfRoundSeries($round, $seasonId, $conferenceId)
+    {
+        $qualified = [];
+        $seriesTable = $this->helper->getSeriesDBName($seasonId);
+
+        // Build base query depending on round
+        $query = DB::table($seriesTable)
+            ->where('round', $round)
+            ->where('season_id', $seasonId);
+
+        if (!in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals'])) {
+            // Filter by conference only if not special round
+            $query->where('conference_id', $conferenceId);
+        }
+
+        $home = $query->pluck('home_team_id')->toArray();
+        $away = $query->pluck('away_team_id')->toArray();
+
+        $qualified = array_merge($home,$away);
+
+        // If the round is semi_finals or inter_conference_semi_finals or inter_conference_finals, rank the winners by overall_rank
+        if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals', 'quarter_finals', 'round_of_16'])) {
+        
+            $qualified = DB::table('standings_view')
+                ->where('season_id', $seasonId)
+                ->whereIn('team_id', $qualified)
+                ->orderBy('overall_rank', 'asc')
+                ->pluck('team_id')
+                ->toArray();
+        }
+
+        return $qualified;
     }
 
     private function pairTeams($teams, $pairCount)
@@ -1603,9 +1688,10 @@ class PlayoffService
             // dd($game_number);
             // Create schedule entries for each pairing in the round
             $game_id = 'S' . $seasonId . '-R' . $round . '-G' . ($game_number + 1) . 'C-' . $conferenceId;
+            $isRoundNoConference = in_array($round,['finals','interconference_semi_finals','interconference_finals']);
             $schedule[] = [
                 'home_id' => $pair[0],
-                'conference_id' => ($round == 'finals' || $round == 'interconference_semi_finals') ? 0 : $conferenceId,
+                'conference_id' => $isRoundNoConference ? 0 : $conferenceId,
                 'game_id' => $game_id,
                 'away_id' => $pair[1],
                 'season_id' => $seasonId,
