@@ -558,8 +558,12 @@
                                                 ></i>
 
                                                 <i
-                                                    v-if="player.fouled_out"
+                                                    v-if="player.is_fouled_out"
                                                     class="fas fa-square fouled-icon"
+                                                ></i>
+                                                <i
+                                                    v-if="player.is_starter"
+                                                    class="fas fa-crown text-yellow-500"
                                                 ></i>
                                             </small>
                                         </div>
@@ -761,8 +765,13 @@
                                                 ></i>
 
                                                 <i
-                                                    v-if="player.fouled_out"
+                                                    v-if="player.is_fouled_out"
                                                     class="fas fa-square fouled-icon"
+                                                ></i>
+                                                
+                                                <i
+                                                    v-if="player.is_starter"
+                                                    class="fas fa-crown text-yellow-500"
                                                 ></i>
                                             </small>
                                         </div>
