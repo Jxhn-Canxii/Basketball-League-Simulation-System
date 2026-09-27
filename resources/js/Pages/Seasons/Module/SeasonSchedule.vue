@@ -894,7 +894,7 @@ const simulateGameWithResults = async (
 
         activeGameId.value = response.data.game_id ?? 0;
 
-        if(schedule_id % 4 == 0){
+        if(schedule_id){
             seasonStatus.value = response.data.season_status ?? 0;
 
             currentRound.value = response.data.round ?? 0;
