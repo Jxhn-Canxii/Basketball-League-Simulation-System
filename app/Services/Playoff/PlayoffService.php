@@ -835,7 +835,7 @@ class PlayoffService
                     $allSeries = array_merge($allSeries, $seriesData);
                     $allSchedules = array_merge($allSchedules, $scheduleData);
                 }
-            } else if ($round == 'interconference_semi_finals' || $round == 'finals') {
+            } else if ($round == 'interconference_semi_finals' || $round == 'interconference_finals' || $round == 'finals') {
 
                 $pairings = $this->generateSeriesPairings16($seasonId, 0, $round);
                 list($seriesData, $scheduleData) = $this->createSeriesAndSchedule(
