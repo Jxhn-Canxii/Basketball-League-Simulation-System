@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Schema;
 
 class HelperService
 {
-    protected $excludedRounds = 0;
+    protected $excludedRounds = [];
 
     public function __construct(){
 
@@ -64,6 +64,9 @@ class HelperService
     public function totalRounds($seasonId){
 
         $exclude = $this->excludedRounds;
+        $specialRound = ['all-rookie','all-star'];
+
+        $exclude = array_merge($exclude,$specialRound);
             
         return DB::table('schedules')
                 ->where('season_id', $seasonId)

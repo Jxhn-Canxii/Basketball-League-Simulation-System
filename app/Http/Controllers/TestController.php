@@ -433,23 +433,12 @@ class TestController extends Controller
     }
 
     public function gameFlow(){
-        echo $this->playerGenerator->declarePlayerForNextDraft();
-        // $OT = true;
-        // $tries = 0;
-        // do {
-        //     $homeScore = rand(1,10);
-        //     $awayScore = rand(1,10);
+        $exclude = config('playoffs');
+        $specialRound = ['all-rookie','all-star'];
 
-        //     $tries++;
+        $exclude = array_merge($exclude,$specialRound);
 
-        //     if($homeScore == $awayScore){
-        //         $OT = false;
-
-        //         echo $homeScore." - ".$awayScore;
-        //     }
-        // } while ($OT);
-
-        // echo 'Tied at '.$tries.'x tries';
+        return $exclude;
 
     }
     public function checkUnderPerformedPlayersPerTeam(){

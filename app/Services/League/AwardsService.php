@@ -415,7 +415,7 @@ class AwardsService
 
         // Determine the 6th Man of the Year award
         $rolePlayers = $eligiblePlayerStats->filter(function ($stats) {
-            return $stats->role !== 'star player' && $stats->role !== 'all star' && $stats->role !== 'starter';
+            return $stats->total_games_started <= ($stats->total_games * 0.25);
         });
 
         $sixthManOfTheYear = $rolePlayers->sort(function ($a, $b) {
@@ -578,6 +578,7 @@ class AwardsService
                 ->first(),
         ];
 
+
         // Insert advanced awards
         foreach ($advancedAwards as $awardName => $player) {
             if ($player) {
@@ -598,6 +599,22 @@ class AwardsService
                 $this->insertAward($player, $awardName, $description, $latestSeasonId);
             }
         }
+
+        $tripleCrown = DB::table('players')
+                    ->select('players.*')
+                    ->join('seasons as f','f.finals_winner_id','=','players.team_id')
+                    ->join('seasons as o','o.champion_id','=','players.team_id')
+                    ->join('playoff_series as c','c.winner_team_id','=','players.team_id')
+                    ->where('c.round','semi_finals')
+                    ->get();
+
+        foreach($tripleCrown as $player){
+            $awardName = 'Triple-Crown Champion';
+            $description = 'A super-rare feat where both the team won Conference Champions, Overall National Champions, National Finals Champions in one season.';
+            
+            $this->insertAward($player, $awardName, $description, $latestSeasonId);
+        }
+
 
         // Update season status
         DB::table('seasons')->where('id', $latestSeasonId)->update(['status' => config('timeline.awards')]);

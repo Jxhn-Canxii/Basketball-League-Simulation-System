@@ -82,7 +82,7 @@ class GameResultService
                 'player_game_stats.player_id',
                 'p.name as player_name',
                 'p.is_rookie',
-                'p.is_starter',
+                'player_game_stats.is_starter',
                 'p.draft_status',
                 'player_game_stats.is_injured',
                 'p.draft_id',
@@ -363,6 +363,8 @@ class GameResultService
                     'two_point_percentage' => $twoPPercentage,
                     'three_point_percentage' => $threePPercentage,
                     'free_throw_percentage' => $ftPercentage,
+                    'is_fouled_out' => $stats ? $stats->is_fouled_out : 0,
+                    'is_starter' =>  $stats ? $stats->is_starter : 0,
                     'per' => $stats ? $stats->per : null,  // Player efficiency rating
                     'ts_percent' => $stats ? $stats->ts_percent : null,  // True shooting percentage
                     'efficiency' => $stats ? $stats->eff : null,  // Efficiency
