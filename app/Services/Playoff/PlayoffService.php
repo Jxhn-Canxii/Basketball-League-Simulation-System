@@ -237,7 +237,7 @@ class PlayoffService
 
         // Build rounds
         if (isset($format['round_sequence'])) {
-            $rounds = $this->roundService->buildRoundsFromSequence($format['round_sequence'], 11);
+            $rounds = $this->roundService->buildRoundsFromSequence($format['round_sequence'], 12);
         } else {
             throw new \Exception("No round_sequence defined for format: {$formatKey}");
         }
@@ -835,8 +835,8 @@ class PlayoffService
                     $allSeries = array_merge($allSeries, $seriesData);
                     $allSchedules = array_merge($allSchedules, $scheduleData);
                 }
-            } else if ($round == 'interconference_semi_finals' || $round == 'interconference_finals' || $round == 'finals') {
-
+                
+            } else if (in_array($round,['interconference_semi_finals','interconference_finals','finals'])) {
                 $pairings = $this->generateSeriesPairings16($seasonId, 0, $round);
                 list($seriesData, $scheduleData) = $this->createSeriesAndSchedule(
                     $pairings,
@@ -1433,7 +1433,7 @@ class PlayoffService
                 break;
             case 'finals':
                 // Pair the winners of semi-finals for finals
-                $winners = $this->getSeriesWinnersOfRound('interconference_semi_finals', $seasonId, $conferenceId);
+                $winners = $this->getSeriesWinnersOfRound('interconference_finals', $seasonId, $conferenceId);
                 $pairings = $this->pairTeams($winners, 2);
                 break;
         }

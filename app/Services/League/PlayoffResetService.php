@@ -107,17 +107,6 @@ class PlayoffResetService
                 $stageStatus
             );
 
-            Log::warning(
-                "Playoff round reset",
-                [
-                    'season_id' => $seasonId,
-                    'round'     => $round,
-                    'status'    => $stageStatus,
-                    'games'     => count($gameIds),
-                    'series'    => $seriesDeleted,
-                ]
-            );
-
             return [
                 'success' => true,
                 'type' => 'round',
@@ -369,26 +358,7 @@ class PlayoffResetService
 
         return DB::table('schedules as s')
             ->where('s.season_id', $seasonId)
-            ->where(function ($query) use (
-                $allowedStages,
-                $seasonId
-            ) {
-                $query
-                    ->whereIn('s.round', $allowedStages)
-                    ->orWhereIn(
-                        's.series_id',
-                        function ($subQuery) use (
-                            $seasonId,
-                            $allowedStages
-                        ) {
-                            $subQuery
-                                ->select('id')
-                                ->from('playoff_series')
-                                ->where('season_id', $seasonId)
-                                ->whereIn('round', $allowedStages);
-                        }
-                    );
-            })
+            ->whereIn('s.round',$allowedStages)
             ->pluck('s.game_id')
             ->filter()
             ->unique()
@@ -435,9 +405,16 @@ class PlayoffResetService
             ->whereIn('game_id', $gameIds)
             ->delete();
 
+        $schedules = DB::table(
+            'schedules'
+        )
+            ->whereIn('game_id', $gameIds)
+            ->delete();
+
         return [
             'quarter_breakdown' => $quarterBreakdown,
             'player_game_stats' => $playerGameStats,
+            'schedules' =>  $schedules,
             'player_per_quarter_stats' => $playerQuarterStats,
             'career_highlights' => $careerHighlights,
         ];

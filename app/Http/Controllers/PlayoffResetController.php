@@ -27,7 +27,7 @@ class PlayoffResetController extends Controller
      *     "round": "quarter_finals"
      * }
      */
-    public function resetRound(Request $request): JsonResponse
+    public function resetRound(Request $request)
     {
         $validated = $request->validate([
             'season_id' => [
@@ -39,14 +39,6 @@ class PlayoffResetController extends Controller
             'round' => [
                 'required',
                 'string',
-                'in:play_ins_elims_round_1,
-                    play_ins_elims_round_2,
-                    play_ins_finals,
-                    round_of_16,
-                    quarter_finals,
-                    semi_finals,
-                    interconference_semi_finals,
-                    finals',
             ],
         ]);
 
