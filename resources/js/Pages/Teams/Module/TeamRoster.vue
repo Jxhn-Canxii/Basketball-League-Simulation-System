@@ -403,6 +403,10 @@
                                         GP
                                     </th>
 
+                                    <th title="Games Played">
+                                        GS
+                                    </th>
+
                                     <th title="Minutes Per Game">
                                         MPG
                                     </th>
@@ -713,6 +717,15 @@
                                         {{
                                             Math.round(
                                                 player.games_played ?? 0
+                                            )
+                                        }}
+                                    </td>
+
+                                    <!-- GP -->
+                                    <td>
+                                        {{
+                                            Math.round(
+                                                player.games_started ?? 0
                                             )
                                         }}
                                     </td>

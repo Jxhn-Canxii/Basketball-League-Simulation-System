@@ -96,6 +96,10 @@
                             </th>
 
                             <th class="stat-th">
+                                <span class="stat-heading">GS</span>
+                            </th>
+
+                            <th class="stat-th">
                                 <span class="stat-heading">PPG</span>
                             </th>
 
@@ -144,7 +148,7 @@
                             <tr
                                 v-for="(player, index) in season_logs.player_stats"
                                 :key="`season-${player.player_id}-${player.season_id}-${index}`"
-                                @click="openGameLogs(player.season_id)"
+                                @click.prevent="openGameLogs(player.season_id)"
                                 class="group cursor-pointer border-b border-white/[0.045] transition-colors duration-150 hover:bg-white/[0.025]"
                             >
 
@@ -200,6 +204,12 @@
                                 <td class="stat-td">
                                     <span class="font-semibold text-white/75">
                                         {{ player.total_games_played ?? 0 }}
+                                    </span>
+                                </td>
+
+                                <td class="stat-td">
+                                    <span class="font-semibold text-white/75">
+                                        {{ player.total_games_started ?? 0 }}
                                     </span>
                                 </td>
 
@@ -407,6 +417,10 @@
                             </th>
 
                             <th class="stat-th">
+                                <span class="stat-heading">GS</span>
+                            </th>
+
+                            <th class="stat-th">
                                 <span class="stat-heading">PPG</span>
                             </th>
 
@@ -450,7 +464,7 @@
                             <tr
                                 v-for="(player, index) in playoff_logs.player_stats"
                                 :key="`playoff-${player.player_id}-${player.season_id}-${index}`"
-                                @click="openGameLogs(player.season_id)"
+                                @click.prevent="openGameLogs(player.season_id)"
                                 class="group cursor-pointer border-b border-white/[0.045] transition-colors duration-150 hover:bg-white/[0.025]"
                             >
 
@@ -505,6 +519,13 @@
                                 <td class="stat-td">
                                     <span class="font-semibold text-white/75">
                                         {{ player.total_games_played ?? 0 }}
+                                    </span>
+                                </td>
+
+                                <!-- GS -->
+                                <td class="stat-td">
+                                    <span class="font-semibold text-white/75">
+                                        {{ player.total_games_started ?? 0 }}
                                     </span>
                                 </td>
 
@@ -614,7 +635,7 @@
              GAME LOG MODAL
         ========================================================== -->
         <Modal
-            :show="!!isGameLogsModalOpen"
+            :show="isGameLogsModalOpen"
             :maxWidth="'fullscreen'"
             title="Player Game Logs"
             @close="isGameLogsModalOpen = false"

@@ -1040,7 +1040,7 @@ class PlayerStatsService
         }
     }
 
-    public function updateGameStats($playerId, $gameId, $seasonId, $isReserved)
+    public function updateGameStats($playerId, $gameId, $seasonId, $isReserved, $isStarter)
     {
         if (empty($playerId)) {
             throw new \Exception("Player quarter stats are empty. Cannot update season stats.");
@@ -1109,6 +1109,7 @@ class PlayerStatsService
                         'three_point_attempts' => $playerStats->total_three_point_attempts,
                         'free_throws_made' => $playerStats->total_free_throws_made,
                         'free_throw_attempts' => $playerStats->total_free_throw_attempts,
+                        'is_starter' => $isStarter,
                         'is_fouled_out' => $playerStats->is_fouled_out,
                         'is_reserved' => $isReserved,
                         'created_at' => now(),
@@ -1174,11 +1175,7 @@ class PlayerStatsService
                 $stats['blocks_game_leader'] = ($stats['blocks'] == $maxBlocks) ? 1 : 0;
                 $stats['bpg_game_leader'] = ($stats['player_id'] == $bestPlayerId) ? 1 : 0;
 
-                if ($isPlayoff) {
-                    $this->storeStats->storePlayerSeasonPlayoffStats($stats['team_id'], $stats['player_id']);
-                } else {
-                    $this->storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id']);
-                }
+                $this->storeStats->storePlayerSeasonStats($stats['team_id'], $stats['player_id'], $isPlayoff);
 
                 // Update Player Season Stats (Incrementing Leader Fields)
                 DB::table($seasonStatsTable)->updateOrInsert(

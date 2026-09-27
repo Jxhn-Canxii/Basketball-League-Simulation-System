@@ -278,14 +278,18 @@ class GameEngineService
             }
         }
 
-        $players =  DB::table('players')
-                ->select('id','is_reserved')
-                ->whereIn('team_id', [$gameData->home_team_id,$gameData->away_team_id])
-                ->where('is_active',1)
+        $players =  DB::table('player_per_quarter_stats_temp as pps')
+                ->join('players','players.id','=','pps.player_id')
+                ->select('players.id','players.is_reserved','pps.role')
+                ->whereIn('pps.team_id', [$gameData->home_team_id,$gameData->away_team_id])
+                ->where('players.is_active',1)
+                ->where('pps.quarter','Q1')
                 ->get();
 
         foreach ($players as $player) {
-            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved);
+            $isStarter = in_array($player->role,['all star','starter','star player']);
+
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved,$isStarter);
         }
 
         $playerGameStats =  DB::table('player_game_stats')

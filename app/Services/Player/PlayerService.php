@@ -194,6 +194,7 @@ class PlayerService
                 DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
                 DB::raw('SUM(player_season_stats.total_minutes_played) as total_minutes_played'),
                 DB::raw('SUM(player_season_stats.total_games_played) as total_games_played'),
+                DB::raw('SUM(player_season_stats.total_games_started) as total_games_started'),
                 DB::raw('AVG(player_season_stats.per) as per'),
                 DB::raw('AVG(player_season_stats.ts_percent) as ts_percent'),
                 DB::raw('AVG(player_season_stats.eff) as eff'), // Efficiency
@@ -256,6 +257,7 @@ class PlayerService
                 DB::raw('SUM(player_season_stats.total_fouls) as total_fouls'),
                 DB::raw('SUM(player_season_stats.total_minutes_played) as total_minutes_played'),
                 DB::raw('SUM(player_season_stats.total_games_played) as total_games_played'),
+                DB::raw('SUM(player_season_stats.total_games_started) as total_games_started'),
                 DB::raw('AVG(player_season_stats.per) as per'),
                 DB::raw('AVG(player_season_stats.ts_percent) as ts_percent'),
                 DB::raw('AVG(player_season_stats.eff) as eff'), // Efficiency
@@ -321,6 +323,7 @@ class PlayerService
                 'total_fouls' => $stats->total_fouls,
                 'total_minutes_played' => $stats->total_minutes_played,
                 'total_games_played' => $stats->total_games_played,
+                'total_games_started' => $stats->total_games_started,
                 'per' => $stats->per,
                 'ts_percent' => $stats->ts_percent,
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),
@@ -378,6 +381,7 @@ class PlayerService
                 'total_fouls' => $stats->total_fouls,
                 'total_minutes_played' => $stats->total_minutes_played,
                 'total_games_played' => $stats->total_games_played,
+                'total_games_started' => $stats->total_games_started,
                 'per' => $stats->per,
                 'ts_percent' => $stats->ts_percent,
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),
@@ -453,6 +457,7 @@ class PlayerService
                 DB::raw('SUM(player_season_playoff_stats.total_fouls) as total_fouls'),
                 DB::raw('SUM(player_season_playoff_stats.total_minutes_played) as total_minutes_played'),
                 DB::raw('SUM(player_season_playoff_stats.total_games_played) as total_games_played'),
+                DB::raw('SUM(player_season_playoff_stats.total_games_started) as total_games_started'),
                 DB::raw('AVG(player_season_playoff_stats.per) as per'),
                 DB::raw('AVG(player_season_playoff_stats.ts_percent) as ts_percent'),
                 DB::raw('AVG(player_season_playoff_stats.eff) as eff'), // Efficiency
@@ -516,6 +521,7 @@ class PlayerService
                 DB::raw('SUM(player_season_playoff_stats.total_fouls) as total_fouls'),
                 DB::raw('SUM(player_season_playoff_stats.total_minutes_played) as total_minutes_played'),
                 DB::raw('SUM(player_season_playoff_stats.total_games_played) as total_games_played'),
+                DB::raw('SUM(player_season_playoff_stats.total_games_started) as total_games_started'),
                 DB::raw('AVG(player_season_playoff_stats.per) as per'),
                 DB::raw('AVG(player_season_playoff_stats.ts_percent) as ts_percent'),
                 DB::raw('AVG(player_season_playoff_stats.eff) as eff'), // Efficiency
@@ -580,6 +586,7 @@ class PlayerService
                 'total_fouls' => $stats->total_fouls,
                 'total_minutes_played' => $stats->total_minutes_played,
                 'total_games_played' => $stats->total_games_played,
+                'total_games_started' => $stats->total_games_started,
                 'per' => $stats->per,
                 'ts_percent' => $stats->ts_percent,
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),
@@ -634,6 +641,7 @@ class PlayerService
                 'total_fouls' => $stats->total_fouls,
                 'total_minutes_played' => $stats->total_minutes_played,
                 'total_games_played' => $stats->total_games_played,
+                'total_games_started' => $stats->total_games_started,
                 'per' => $stats->per,
                 'ts_percent' => $stats->ts_percent,
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),

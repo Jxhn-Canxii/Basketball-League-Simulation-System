@@ -1439,6 +1439,7 @@ class TeamsService
                         'free_throw_percentage' => (float)$stats->free_throw_percentage,
                         'team_total_games' => (float)$stats->total_games,
                         'games_played' => (float)$stats->total_games_played,
+                        'games_started' => (float)$stats->total_games_started,
                         'per_game_score' => (float)$stats->per,
                         'total_score' => 0,
                         'combined_score' => 0,
@@ -1532,6 +1533,7 @@ class TeamsService
                     'total_seasons_played' => $totalSeasonsPlayed + 1,
                     'average_eff' => (float)0,
                     'games_played' => (int)0,
+                    'games_started' => (int)0,
                 ];
 
                 // If there are stats for this player, update values
@@ -1549,6 +1551,7 @@ class TeamsService
                         'field_goal_percentage' => (float)$playerGameStats[$playerId]->field_goal_percentage,
                         'per_game_score' => (float)$playerGameStats[$playerId]->per_game_score,
                         'games_played' => (int)$playerGameStats[$playerId]->games_played,
+                        'games_started' => (int)$playerGameStats[$playerId]->games_started,
                         'average_eff' => (float)$playerGameStats[$playerId]->avg_eff,
                     ];
                 }
@@ -1585,6 +1588,7 @@ class TeamsService
                         'bpg_game_leader' => $stats['bpg_game_leader'],
                         'effeciency' => number_format($stats['average_eff'], 2),
                         'games_played' => $stats['games_played'],
+                        'games_started' => $stats['games_started'],
                         'field_goal_percentage' => number_format($stats['field_goal_percentage'], 2),
                         'three_point_percentage' => number_format($stats['three_point_percentage'], 2),
                         'two_point_percentage' => number_format($stats['two_point_percentage'], 2),

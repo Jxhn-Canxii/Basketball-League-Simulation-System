@@ -414,24 +414,7 @@ class TestController extends Controller
 
     public function testGenerateTradeProposals()
     {
-        $seasonId = 2;
-
-        $players =  DB::table('season_awards')
-                    ->select('season_awards.conference_id','players.name as player_name','players.id as player_id','players.is_reserved')
-                    ->join('players','players.id','=','season_awards.player_id')
-                    ->where('season_awards.award_name','all-star')
-                    ->where('season_awards.season_id', $seasonId)
-                    ->get();
-
-        $playerAllStar = [];
-        foreach ($players as $player) {
-            $playerAllStar[$player->player_id.'|'.$player->player_name.'-'.$player->conference_id] = $this->playerStats->updateGameStats($player->player_id,'S2-all-star', $seasonId,$player->is_reserved);
-        }
-
-        return response()->json([
-            'message' => 'success',
-            'data' => $playerAllStar,
-        ],200);
+        
     }
 
     public function testGameStreak(Request $request){
@@ -548,23 +531,43 @@ class TestController extends Controller
 
     public function TestArchiving(){
 
-        $seasonId = get_current_season_id();
-        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
-        $round = 1;
-        $conferenceId = 1;
-        // Build base query depending on round
-        $query = DB::table($scheduleTable)
-            ->where('round', $round)
-            ->where('season_id', $seasonId)
-            ->where('conference_id', $conferenceId);
+        // Calculate the player's aggregated stats for the latest season
+            $quarterStats = DB::table('player_per_quarter_stats')
+                ->whereIn('role',['all star','starter','star player'])
+                ->where('quarter','Q1')
+                ->where('season_id',1)
+                ->select(
+                    'role',
+                    'player_id',
+                    'team_id',
+                    'season_id',
+                    'game_id',
+                )
+                ->get();
 
+            // Insert or update the player's season stats in the player_season_stats table
 
-        $home = $query->pluck('home_id')->toArray();
-        $away = $query->pluck('away_id')->toArray();
-
-        $winners = array_merge($home,$away);
-        
-        return $winners;
+            // dd($quarterStats);
+            if ($quarterStats) {
+                foreach ($quarterStats as  $playerStats) {
+                    # code...
+                    DB::table('player_game_stats')->updateOrInsert(
+                        [
+                            'player_id' => $playerStats->player_id,
+                            'team_id' => $playerStats->team_id,
+                            'season_id' => $playerStats->season_id,
+                            'game_id' => $playerStats->game_id,
+                        ],
+                        [
+                            'is_starter' => true,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]
+                    );
+                }
+                // return true;
+                return 'Done';
+            }
 
     }
 

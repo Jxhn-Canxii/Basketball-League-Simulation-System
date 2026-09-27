@@ -50,6 +50,7 @@ return new class extends Migration
             $table->boolean('total_fouled_out')->default(0);
             $table->integer('total_minutes_played')->default(0);
             $table->integer('total_games_played')->default(0);
+            $table->integer('total_games_started')->default(0);
             $table->integer('total_games')->default(0);
 
             // Leader per game counter
