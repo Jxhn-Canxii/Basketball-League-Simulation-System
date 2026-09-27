@@ -405,7 +405,7 @@ const isProcessing = ref(false);
 
 const form = useForm({
     season_name: "",
-    type: 3,
+    type: 2,
     start: 16,
     league_id: 1,
     seasons_id: 0,
