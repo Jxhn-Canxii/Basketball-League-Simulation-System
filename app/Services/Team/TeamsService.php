@@ -1393,7 +1393,7 @@ class TeamsService
                     $playerCUtfromFinalRoster = ($player->team_id != $teamId && $player->is_active && $stats->total_games_played == 0) ? 1 : 0;
                     // Add player stats to the array
                     //if ($playerCUtfromFinalRoster) continue;
-                    $playerRole = $stats->role == '' ? 'reserved' : $stats->role;
+                    $playerRole = $player->is_reserved ? 'reserved' : $stats->role;
 
                     $playerStats[] = [
                         'player_id' => $player->id,

@@ -892,62 +892,42 @@ const simulateGameWithResults = async (
             color: "#fff",
         });
 
-        activeGameId.value =
-            response.data.game_id ?? 0;
+        activeGameId.value = response.data.game_id ?? 0;
 
-        seasonStatus.value =
-            response.data.season_status ?? 0;
+        if(schedule_id % 4 == 0){
+            seasonStatus.value = response.data.season_status ?? 0;
 
-        currentRound.value =
-            response.data.round ?? 0;
+            currentRound.value = response.data.round ?? 0;
 
-        currentConference.value =
-            response.data.conference_id ?? 0;
+            currentConference.value = response.data.conference_id ?? 0;
 
-        transactionUpdate.value =
-            response.data.transaction_count ?? 0;
+            transactionUpdate.value = response.data.transaction_count ?? 0;
 
-        showGameResults.value = true;
+            showGameResults.value = true;
 
-        activeConferenceTab.value =
-            conference_id;
+            activeConferenceTab.value = conference_id;
 
-        emit(
-            "season_status",
-            seasonStatus.value
-        );
+            emit("season_status",seasonStatus.value);
 
-        emit(
-            "round",
-            currentRound.value
-        );
+            emit("round",currentRound.value);
 
-        emit(
-            "conference",
-            currentConference.value
-        );
+            emit("conference",currentConference.value);
 
-        emit(
-            "transaction_update",
-            transactionUpdate.value
-        );
+            emit("transaction_update",transactionUpdate.value);
 
-        emit(
-            "transaction_id",
-            conference_id
-        );
+            emit("transaction_id",conference_id);
 
-        await new Promise(
-            (resolve) =>
-                setTimeout(resolve, 500)
-        );
-
-        if (flipTimer.value) {
-            clearInterval(
-                flipTimer.value
+            await new Promise(
+                (resolve) => setTimeout(resolve, 500)
             );
 
-            flipTimer.value = null;
+            if (flipTimer.value) {
+                clearInterval(
+                    flipTimer.value
+                );
+
+                flipTimer.value = null;
+            }
         }
     } catch (error) {
         console.error(

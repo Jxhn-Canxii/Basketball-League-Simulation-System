@@ -448,10 +448,16 @@ export const roleBadgeClass = (role) => {
       hover: 'hover:bg-green-600'
     },
     'bench': {
-      background: 'bg-purple-500',
+      background: 'bg-purple-300',
       text: 'text-white',
       border: 'border border-purple-300',
-      hover: 'hover:bg-purple-500'
+      hover: 'hover:bg-purple-300'
+    },
+    'reserved': {
+      background: 'bg-gray-500',
+      text: 'text-white',
+      border: 'border border-gray-300',
+      hover: 'hover:bg-gray-500'
     }
   };
 

@@ -405,7 +405,7 @@ class SimulateService
 
 
             $teamIds = collect([$series->home_team_id, $series->away_team_id])->unique();
-            $standingsTable = ($gameData->season_id == $currentSeasonId) ? 'standings_view' : 'standings_snapshots';
+            $standingsTable = $this->helper->getStandingsDBName($gameData->season_id);
             $standingsData = DB::table($standingsTable)
                 ->whereIn('team_id', $teamIds)
                 ->where('season_id', $gameData->season_id)
