@@ -20,7 +20,28 @@ class PlayoffStatsService
             ->pluck('team_id')
             ->toArray();
 
-        
+
+        $overallChamp = DB::table('standings_view')
+            ->where('season_id', $seasonId)
+            ->where('overall_rank', 1)
+            ->select('team_id','team_name')
+            ->first();
+
+        $bottomTeam = DB::table('standings_view')
+            ->where('season_id', $seasonId)
+            ->where('conference_id','>',0)
+            ->orderBy('overall_rank', 'desc') // Descending order for the bottom team
+            ->first();
+
+        DB::table('seasons')
+            ->where('id', $seasonId)
+            ->update([
+                'champion_id' => $overallChamp->team_id,
+                'champion_name' => $overallChamp->team_name,
+                'weakest_id' => $bottomTeam->team_id,
+                'weakest_name' => $bottomTeam->team_name,
+            ]);
+
         // Step 2: Set is_playoff_qualified = 1 for qualified teams
         DB::table('team_season_info')
             ->where('season_id', $seasonId)

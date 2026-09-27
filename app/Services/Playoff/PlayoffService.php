@@ -235,9 +235,10 @@ class PlayoffService
 
         $format = $formats[$formatKey];
 
+        $finalStatus = config('timeline.finals');
         // Build rounds
         if (isset($format['round_sequence'])) {
-            $rounds = $this->roundService->buildRoundsFromSequence($format['round_sequence'], 12);
+            $rounds = $this->roundService->buildRoundsFromSequence($format['round_sequence'], $finalStatus);
         } else {
             throw new \Exception("No round_sequence defined for format: {$formatKey}");
         }
@@ -476,11 +477,6 @@ class PlayoffService
         $round = $request->round;
         $start = $request->start;
 
-        // Update season champions and losers if needed
-        if (($start == 16 && $round === 'round_of_16')) {
-            $this->updateSeasonChampionsAndLosers($seasonId);
-        }
-
         // Retrieve the league_id from the seasons table
         $leagueId = DB::table('seasons')
             ->where('id', $seasonId)
@@ -553,11 +549,6 @@ class PlayoffService
             $start = $request->start;
 
             $scheduleTable = $this->helper->getScheduleDBName($seasonId);
-
-            // Update season champions and losers if needed
-            if ($start == 16 && $round === 'play_ins_elims_round_1') {
-                $this->updateSeasonChampionsAndLosers($seasonId);
-            }
 
             // Retrieve the league_id from the seasons table
             $leagueId = DB::table('seasons')
@@ -746,11 +737,6 @@ class PlayoffService
             $seasonId = $request->season_id;
             $round = $request->round;
             $start = $request->start;
-
-            // Update season champions and losers if needed
-            if ($start == 16 && $round === 'play_ins_elims_round_1') {
-                $this->updateSeasonChampionsAndLosers($seasonId);
-            }
 
             // Retrieve the league_id from the seasons table
             $leagueId = DB::table('seasons')
@@ -1298,40 +1284,6 @@ class PlayoffService
             'winner_of_7vs8' => $playInRound1Results->winner_id,
             'winner_of_9vs10' => $playInFinalsResults->winner_id,
         ];
-    }
-
-
-    private function updateSeasonChampionsAndLosers($seasonId)
-    {
-        // Retrieve the top and bottom teams from standings view
-        $topTeam = DB::table('standings_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id','>',0)
-            ->orderBy('overall_rank') // Ascending order for the top team
-            ->first();
-
-        $bottomTeam = DB::table('standings_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id','>',0)
-            ->orderBy('overall_rank', 'desc') // Descending order for the bottom team
-            ->first();
-
-
-        // Check if top and bottom teams exist before updating
-        if ($topTeam && $bottomTeam) {
-            // Update the season's champion and weakest teams
-            DB::table('seasons')
-                ->where('id', $seasonId)
-                ->update([
-                    'champion_id' => $topTeam->team_id,
-                    'champion_name' => $topTeam->team_name,
-                    'weakest_id' => $bottomTeam->team_id,
-                    'weakest_name' => $bottomTeam->team_name,
-                ]);
-        } else {
-            // Handle case where top or bottom team is not found
-            // You may log an error or handle it according to your application's logic
-        }
     }
 
     // Function to generate pairings for playoff matches based on the round
