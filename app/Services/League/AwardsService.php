@@ -606,6 +606,9 @@ class AwardsService
                     ->join('seasons as o','o.champion_id','=','players.team_id')
                     ->join('playoff_series as c','c.winner_team_id','=','players.team_id')
                     ->where('c.round','semi_finals')
+                    ->where('c.season_id',$latestSeasonId)
+                    ->where('o.id',$latestSeasonId)
+                    ->where('f.id',$latestSeasonId)
                     ->get();
 
         foreach($tripleCrown as $player){
