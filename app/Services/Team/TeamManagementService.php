@@ -467,11 +467,11 @@ class TeamManagementService
             ->values();
 
         $rolePlayer = $evaluatedPlayers
-            ->slice(5,5)
+            ->slice(5,4)
             ->values();
 
         $benchPlayer = $evaluatedPlayers
-            ->slice(10,2)
+            ->slice(9,3)
             ->values();
 
         /*
@@ -952,11 +952,11 @@ class TeamManagementService
             ->values();
 
         $rolePlayer = $evaluatedPlayers
-            ->slice(5,5)
+            ->slice(5,4)
             ->values();
 
         $benchPlayer = $evaluatedPlayers
-            ->slice(10,2)
+            ->slice(9,3)
             ->values();
 
         /*
