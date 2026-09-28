@@ -824,6 +824,21 @@ class PlayerService
             ];
         }
 
+        foreach ($mvpData as $stats) {
+            # code...
+            $formattedData[] = [
+                'details' => 'Finals MVP',
+                'description' => $stats->season_name.' National Finals MVP',
+                'award_name' => 'Finals MVP',
+                'season' => $stats->season_id,
+                'season_name' => $stats->season_name,
+                'team_name' => $stats->team_name,
+                'primary_color' => $stats->primary_color,
+                'secondary_color' => $stats->secondary_color,
+                'acronym' => $stats->acronym,
+            ];
+        }
+
         foreach ($conferenceRankSeasons as $stats) {
             # code...
             $formattedData[] = [
@@ -1405,7 +1420,15 @@ class PlayerService
 
         return DB::table('seasons')
                 ->where('seasons.finals_mvp_id', $playerId)
-                ->select('seasons.name as season_name')
+                ->join('teams', 'seasons.finals_winner_id', '=', 'teams.id')
+                ->select(
+                    'seasons.id as season_id',
+                    'seasons.name as season_name',
+                    'teams.name as team_name',
+                    'teams.primary_color',
+                    'teams.secondary_color',
+                    'teams.acronym',
+                )
                 ->get();
 
     }

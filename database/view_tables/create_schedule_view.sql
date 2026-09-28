@@ -1,4 +1,4 @@
-CREATE OR REPLACE VIEW schedule_view AS
+CREATE OR REPLACE VIEW schedule_view_backup AS
             SELECT
                 s.*,
                 s.game_number as game_number_formatted,
@@ -17,7 +17,7 @@ CREATE OR REPLACE VIEW schedule_view AS
                 t_winner.name as winning_name,
                 t_winner.city as winning_city
             FROM
-                schedules s
+                schedules_archives s
             JOIN
                 teams t_home ON s.home_id = t_home.id
             JOIN

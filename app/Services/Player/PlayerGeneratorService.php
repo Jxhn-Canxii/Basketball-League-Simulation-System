@@ -61,13 +61,9 @@ class PlayerGeneratorService
     public function declarePlayerForNextDraft($round){
     
         $currentSeasonId = get_current_season_id();
-
-        if($currentSeasonId <= 7 ){
-            return false;
-        }
         
         $totalRounds = $this->helper->totalRounds($currentSeasonId);
-        $draftApplicationWindow = is_numeric($round) && $round >= ($totalRounds - 4);
+        $draftApplicationWindow = is_numeric($round) && $round <= (2);
 
         if(!$draftApplicationWindow){
             return false;

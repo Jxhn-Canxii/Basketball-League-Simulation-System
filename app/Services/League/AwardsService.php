@@ -330,8 +330,6 @@ class AwardsService
         $latestSeasonId = get_current_season_id() ?? 0;
 
         // Clear existing awards for the latest season
-        DB::table('season_awards')->where('season_id', $latestSeasonId)->delete();
-
         // Get player stats from player_season_stats for the latest season
         $playerStats = DB::table('player_season_stats')
             ->where('season_id', $latestSeasonId)
@@ -980,7 +978,7 @@ class AwardsService
         return response()->json($mvpList);
     }
 
-    private function insertAward($playerStats, $awardName, $awardDescription, $seasonId)
+    public function insertAward($playerStats, $awardName, $awardDescription, $seasonId)
     {
         if ($playerStats) {
             try {

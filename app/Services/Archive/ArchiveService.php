@@ -35,11 +35,11 @@ class ArchiveService
 
             $this->archivePlayerSeasonStats($seasonId);
 
+            $this->archivePlayoffSeriesTable($seasonId);
+
             $this->archiveScheduleViewTable($seasonId);
 
             $this->archiveScheduleWriteTable($seasonId);
-
-            $this->archivePlayoffSeriesTable($seasonId);
 
             DB::commit();
 

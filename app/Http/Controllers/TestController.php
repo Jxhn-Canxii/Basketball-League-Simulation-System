@@ -10,6 +10,7 @@ use App\Models\Player; // <-- Add this if not yet imported
 use App\Services\Archive\ArchiveService;
 use App\Services\Draft\DraftPickRightsService;
 use App\Services\Helper\HelperService;
+use App\Services\League\AwardsService;
 use App\Services\Player\PlayerGeneratorService;
 use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
@@ -28,7 +29,7 @@ class TestController extends Controller
     protected $chemistry;
     protected $streak;
     protected $helper;
-    protected $archive;
+    protected $award;
     protected $playoff;
     protected $tradeService;
     protected $teamRole;
@@ -36,9 +37,11 @@ class TestController extends Controller
     protected $draftRights;
     protected $playerStats;
     protected $playerGenerator;
+    protected $archive;
 
     public function __construct(){
 
+        $this->archive = new ArchiveService();
         $this->playerGenerator = new PlayerGeneratorService();
         $this->draftRights = new DraftPickRightsService();
         $this->teamRole = new TeamRoleService();
@@ -46,7 +49,7 @@ class TestController extends Controller
         $this->streak = new TeamStreakService();
         $this->helper = new HelperService();
         $this->schedule = new ScheduleService();
-        $this->archive = new ArchiveService();
+        $this->award = new AwardsService();
         $this->playoff = new PlayoffStatsService();
         $this->tradeService = new TradeService();
         $this->playerStats = new PlayerStatsService();
@@ -433,12 +436,17 @@ class TestController extends Controller
     }
 
     public function gameFlow(){
-        $exclude = config('playoffs');
-        $specialRound = ['all-rookie','all-star'];
+        $data = DB::table('player_game_stats')
+                    ->where('game_id','S1-all-star')
+                    ->get();
 
-        $exclude = array_merge($exclude,$specialRound);
+        foreach ($data as $allStarStats) {
+            $role = $allStarStats->is_starter ? 'starter' : 'reserve';
+            $allStarGroup = $allStarStats->team_id == 1 ? 'North' : 'South';
+            # code...
+            $this->award->insertAward($allStarStats, 'all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.',1);
 
-        return $exclude;
+        }
 
     }
     public function checkUnderPerformedPlayersPerTeam(){
@@ -521,42 +529,9 @@ class TestController extends Controller
     public function TestArchiving(){
 
         // Calculate the player's aggregated stats for the latest season
-            $quarterStats = DB::table('player_per_quarter_stats')
-                ->whereIn('role',['all star','starter','star player'])
-                ->where('quarter','Q1')
-                ->where('season_id',1)
-                ->select(
-                    'role',
-                    'player_id',
-                    'team_id',
-                    'season_id',
-                    'game_id',
-                )
-                ->get();
+        $archive = $this->archive->archiveScheduleViewTable(1);
 
-            // Insert or update the player's season stats in the player_season_stats table
-
-            // dd($quarterStats);
-            if ($quarterStats) {
-                foreach ($quarterStats as  $playerStats) {
-                    # code...
-                    DB::table('player_game_stats')->updateOrInsert(
-                        [
-                            'player_id' => $playerStats->player_id,
-                            'team_id' => $playerStats->team_id,
-                            'season_id' => $playerStats->season_id,
-                            'game_id' => $playerStats->game_id,
-                        ],
-                        [
-                            'is_starter' => true,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ]
-                    );
-                }
-                // return true;
-                return 'Done';
-            }
+        return $archive;
 
     }
 

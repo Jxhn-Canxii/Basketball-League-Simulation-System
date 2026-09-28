@@ -252,6 +252,8 @@ class PlayoffStatsService
         $homeTeamWins = $gameData->home_team_id === $winnerId;
 
         // 4. Update season record with finals results
+        $seasonStatus = config('timeline.finals');
+
         DB::table('seasons')
             ->where('id', $gameData->season_id)
             ->update([
@@ -263,6 +265,7 @@ class PlayoffStatsService
                 'finals_loser_score'  => $homeTeamWins ? $awayScore : $homeScore,
                 'finals_mvp'          => $finalsMVP,
                 'finals_mvp_id'       => $finalsMVPId,
+                'status' => $seasonStatus
             ]);
     }
 
@@ -315,6 +318,7 @@ class PlayoffStatsService
         // Determine if winner is home or away to assign names correctly
         $homeTeamWins = $series->winner_team_id == $series->home_team_id;
 
+        $seasonStatus = config('timeline.finals');
         // Update seasons table with finals results using winner_team_id, loser_team_id, and wins
         DB::table('seasons')
             ->where('id', $gameData->season_id)
@@ -327,6 +331,7 @@ class PlayoffStatsService
                 'finals_loser_score'  => $homeTeamWins ? $series->away_wins : $series->home_wins,
                 'finals_mvp'          => $finalsMVP,
                 'finals_mvp_id'       => $finalsMVPId,
+                'status'              => $seasonStatus,
             ]);
     }
 
