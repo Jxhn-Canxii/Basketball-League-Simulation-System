@@ -63,7 +63,7 @@ class PlayerGeneratorService
         $currentSeasonId = get_current_season_id();
         
         $totalRounds = $this->helper->totalRounds($currentSeasonId);
-        $draftApplicationWindow = is_numeric($round) && ($round <= 6);
+        $draftApplicationWindow = is_numeric($round) && ($round <= 4);
 
         if(!$draftApplicationWindow){
             return false;
