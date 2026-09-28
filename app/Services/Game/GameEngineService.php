@@ -388,7 +388,7 @@ class GameEngineService
         }
 
         $players =  DB::table('season_awards')
-                    ->select('players.id','players.is_reserved')
+                    ->select('players.id','players.is_reserved','players.role')
                     ->join('players','players.id','=','season_awards.player_id')
                     ->where('season_awards.award_name',$gameData->round)
                     ->where('season_awards.season_id',$gameData->season_id)
@@ -396,7 +396,9 @@ class GameEngineService
                     ->get();
 
         foreach ($players as $player) {
-            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved);
+            $isStarter = in_array($player->role,['all star','starter','star player']);
+
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved, $isStarter);
         }
 
         $playerGameStats =  DB::table('player_game_stats')
