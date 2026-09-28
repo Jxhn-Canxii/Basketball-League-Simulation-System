@@ -115,19 +115,18 @@ class AwardsService
             ->whereIn('teams.conference_id',$conferenceGroup)
             ->get();
 
-        $eligiblePlayerStats = $playerStats->filter(function ($stats) {
-            return (int)$stats->total_games_played > 5;
+        $eligiblePlayerStats = $playerStats->filter(function ($stats, $latestSeasonId) {
+            $totalRounds = $this->helper->totalRounds($latestSeasonId);
+            $minimumGamesPlayed = CEIL($totalRounds * 0.25);
+            
+            return (int)$stats->total_games_played >= $minimumGamesPlayed;
         });
 
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player
         $allStars = $eligiblePlayerStats->sort(function ($a, $b) {
-            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
-                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
-                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+            $aStats = $a->eff;
 
-            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
-                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
-                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+            $bStats = $b->eff;
 
             return $bStats <=> $aStats;
         })->take(15)->values();
@@ -142,13 +141,9 @@ class AwardsService
 
         // Filter rookies who have played at least 75% of games for Rookie of the Year
         $topRookies = $rookies->sort(function ($a, $b) {
-            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
-                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
-                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+            $aStats = $a->eff;
 
-            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
-                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
-                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+            $bStats = $b->eff;
 
             return $bStats <=> $aStats;
         })->take(15)->values();
@@ -363,7 +358,7 @@ class AwardsService
 
         // Get previous season's stats for comparison
         $previousSeasonId = get_previous_season_id() ?? 0;
-        $previousSeasonStats = DB::table('player_season_stats_archives')->where('season_id', $previousSeasonId)->pluck('avg_points_per_game', 'player_id');
+        $previousSeasonStats = DB::table('player_season_stats_archives')->where('season_id', $previousSeasonId)->pluck('eff', 'player_id');
 
         // Exclude rookies from the Most Improved Player award
         $nonRookies = DB::table('players')->where('is_rookie', false)->pluck('id');
@@ -373,19 +368,14 @@ class AwardsService
         })
             ->sortByDesc(function ($stats) use ($previousSeasonStats) {
                 $previousPoints = $previousSeasonStats[$stats->player_id] ?? 0;
-                return ($stats->avg_points_per_game - $previousPoints);
+                return ($stats->eff - $previousPoints);
             })
             ->first();
 
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player
         $mvp = $eligiblePlayerStats->sort(function ($a, $b) {
-            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
-                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
-                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
-
-            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
-                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
-                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+            $aStats = $a->eff;
+            $bStats = $b->eff;
 
             return $bStats <=> $aStats;
         })->first();
@@ -402,13 +392,9 @@ class AwardsService
         $rookieOfTheYear = $rookies->filter(function ($stats) {
             return $stats->total_games_played >= 0.75 * $stats->total_games;
         })->sort(function ($a, $b) {
-            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
-                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
-                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
+            $aStats = $a->eff;
 
-            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
-                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
-                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+            $bStats = $b->eff;
 
             return $bStats <=> $aStats;
         })->first();
@@ -419,12 +405,10 @@ class AwardsService
         });
 
         $sixthManOfTheYear = $rolePlayers->sort(function ($a, $b) {
-            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
-                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
-                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
-            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
-                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
-                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
+            $aStats = $a->eff;
+
+            $bStats = $b->eff;
+
             return $bStats <=> $aStats;
         })->first();
 
