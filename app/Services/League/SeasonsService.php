@@ -301,6 +301,6 @@ class SeasonsService
             return 7; // new season
         }
 
-        return $lastSeasonStatus;
+        return 0;
     }
 }

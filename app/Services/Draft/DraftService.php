@@ -66,7 +66,7 @@ class DraftService
                     'drafts.season_id',
                     $currentSeasonId
                 )
-                ->where('teams.conference_id','>',0)
+                ->where('teams.conference_id', '>', 0)
                 ->select(
                     'drafts.id',
                     'drafts.draft_pick_right_id',
@@ -109,7 +109,7 @@ class DraftService
                     'teams.id as team_id',
                     'teams.name as team_name',
                 )
-                ->where('conference_id','>',0)
+                ->where('conference_id', '>', 0)
                 ->orderBy(
                     'market_size',
                     'desc'
@@ -336,7 +336,7 @@ class DraftService
                     'drafts.season_id',
                     $currentSeasonId
                 )
-                ->where('teams.conference_id','>',0)
+                ->where('teams.conference_id', '>', 0)
                 ->select(
                     'drafts.id',
                     'drafts.draft_pick_right_id',
@@ -386,7 +386,7 @@ class DraftService
                     'season_id',
                     $latestSeasonId
                 )
-                ->where('conference_id','>',0)
+                ->where('conference_id', '>', 0)
                 ->orderBy(
                     'overall_rank',
                     'desc'
@@ -616,8 +616,7 @@ class DraftService
     ) {
         try {
 
-            $result = DB::transaction(function () use ($seasonId,$round,$pickNumber)
-            {
+            $result = DB::transaction(function () use ($seasonId, $round, $pickNumber) {
 
                 /**
                  * ==================================================
@@ -628,8 +627,8 @@ class DraftService
                  * processing the same pick simultaneously.
                  */
                 $pick = DB::table('drafts as d')
-                    ->leftJoin('draft_pick_rights as dpr','d.draft_pick_right_id','=','dpr.id')
-                    ->select('d.*','dpr.current_owner_id')
+                    ->leftJoin('draft_pick_rights as dpr', 'd.draft_pick_right_id', '=', 'dpr.id')
+                    ->select('d.*', 'dpr.current_owner_id')
                     ->where('d.season_id', $seasonId)
                     ->where('d.round', $round)
                     ->where('d.pick_number', $pickNumber)
@@ -904,7 +903,7 @@ class DraftService
                  */
                 if ($mustSign && !$this->teamHasRosterSpace($teamId)) {
 
-                    $forcedWaive = $this->findPlayerToWaive($teamId,$selectedPlayer,$seasonId,true);
+                    $forcedWaive = $this->findPlayerToWaive($teamId, $selectedPlayer, $seasonId, true);
 
                     if (!$forcedWaive) {
 
@@ -914,7 +913,7 @@ class DraftService
                         );
                     }
 
-                    $this->waivePlayerForDraft($forcedWaive,$team,$seasonId);
+                    $this->waivePlayerForDraft($forcedWaive, $team, $seasonId);
 
                     $finalTeamId = $teamId;
                     $hasSpace = true;
@@ -1116,9 +1115,9 @@ class DraftService
                  * R1 P30 -> R2 P1
                  */
                 $nextPick = DB::table('drafts')
-                    ->join('teams as original','drafts.original_team_id','=','original.id')
-                    ->join('draft_pick_rights','draft_pick_rights.id','=','drafts.draft_pick_right_id')
-                    ->join('teams as current_owner','current_owner.id','=','drafts.team_id')
+                    ->join('teams as original', 'drafts.original_team_id', '=', 'original.id')
+                    ->join('draft_pick_rights', 'draft_pick_rights.id', '=', 'drafts.draft_pick_right_id')
+                    ->join('teams as current_owner', 'current_owner.id', '=', 'drafts.team_id')
                     ->select(
                         'drafts.*',
                         'original.name as original_team_name',
@@ -1307,9 +1306,9 @@ class DraftService
                             (int) $nextPick->team_id,
 
                             'team_name' =>
-                            $nextPick->original_team_id == $nextPick->team_id ? 
-                                $nextPick->team_name : 
-                                $nextPick->team_name.' via ('.$nextPick->original_team_acronym.')',
+                            $nextPick->original_team_id == $nextPick->team_id ?
+                                $nextPick->team_name :
+                                $nextPick->team_name . ' via (' . $nextPick->original_team_acronym . ')',
 
                             'team_data' =>
                             $nextPick,
@@ -1395,10 +1394,10 @@ class DraftService
                     );
                 }
             )
-            ->where('p.team_id',$teamId)
-            ->where('p.no_trade_clause',0)
-            ->whereNotIn('p.role',['all star','star player'])
-            ->where('p.id','!=',$selectedPlayer->id)
+            ->where('p.team_id', $teamId)
+            ->where('p.no_trade_clause', 0)
+            ->whereNotIn('p.role', ['all star', 'star player'])
+            ->where('p.id', '!=', $selectedPlayer->id)
             ->where(function ($q) use ($selectedPlayer) {
 
                 $q->where(
@@ -1469,10 +1468,10 @@ class DraftService
                         );
                     }
                 )
-                ->where('p.team_id',$teamId)
-                ->where('p.no_trade_clause',0)
-                ->whereNotIn('p.role',['all star','star player'])
-                ->where('p.id','!=',$selectedPlayer->id)
+                ->where('p.team_id', $teamId)
+                ->where('p.no_trade_clause', 0)
+                ->whereNotIn('p.role', ['all star', 'star player'])
+                ->where('p.id', '!=', $selectedPlayer->id)
                 ->select(
                     'p.id',
                     'p.name',
@@ -2406,13 +2405,13 @@ class DraftService
 
         $draftResultsWithNames =
             DB::table('drafts as d')
-            ->join(
+            ->leftJoin(
                 'teams',
                 'd.team_id',
                 '=',
                 'teams.id'
             )
-            ->join(
+            ->leftJoin(
                 'teams as ot',
                 'd.original_team_id',
                 '=',
@@ -2434,7 +2433,7 @@ class DraftService
                 'teams as signed_team',
                 'signed_team.id',
                 '=',
-                'player_season_stats.team_id'
+                'd.team_id'
             )
             ->leftJoin(
                 'teams as current_team',
@@ -2451,6 +2450,7 @@ class DraftService
                 'current_team.id as current_team_id',
                 'current_team.name as current_team_name',
                 'current_team.acronym as current_team_acronym',
+                'ot.id as original_team_id',
                 'ot.name as original_team_name',
                 'ot.acronym as original_team_acronym',
                 'teams.acronym as team_acronym',
@@ -2469,8 +2469,7 @@ class DraftService
                 'd.decision_maker_name',
                 'd.decision_maker_reason',
             )
-            ->where('players.draft_id',$latestSeasonId)
-            ->where('signed_team.conference_id','>',0)
+            ->where('players.draft_id', $latestSeasonId)
             ->orderBy('d.round')
             ->orderBy('d.pick_number')
             ->groupBy('players.id')
@@ -2480,8 +2479,7 @@ class DraftService
             $draftResultsWithNames
             ->pluck('player_id');
 
-        $playerStats =
-            collect();
+        $playerStats = collect();
 
         if (
             $latestSeasonId ==
@@ -2683,8 +2681,8 @@ class DraftService
 
         return response()->json([
             'season_id' => $latestSeasonId,
-            'draft_results' =>
-            $draftResultsWithNamesAndRanks,
+            'draft_results' => $draftResultsWithNamesAndRanks,
+            'source' => $playerSeasonStatsTable
         ]);
     }
 }

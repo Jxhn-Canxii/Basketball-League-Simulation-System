@@ -455,7 +455,7 @@
                                     class="font-black text-gray-200"
                                 >
                                     {{
-                                        player.team_name ??
+                                        player.original_team_name ??
                                         "Undrafted"
                                     }}
                                 </div>
@@ -464,17 +464,17 @@
                                     class="mt-1 text-[8px] font-bold uppercase tracking-wider"
                                     :class="
                                         Number(player.team_id) ===
-                                        Number(player.drafted_team_id)
+                                        Number(player.original_team_id)
                                             ? 'text-gray-600'
                                             : 'text-red-500'
                                     "
                                 >
                                     {{
                                         Number(player.team_id) ===
-                                        Number(player.drafted_team_id)
+                                        Number(player.original_team_id)
                                             ? "Original Selection"
-                                            : "Picked from " +
-                                            (player.original_team_name ??
+                                            : "Traded to " +
+                                            (player.signed_team_name ??
                                             "Unknown Team")
                                     }}
                                 </div>
@@ -486,7 +486,7 @@
                                     class="font-black"
                                     :class="
                                         signingTextClass(
-                                            player.drafted_team_id,
+                                            player.team_id,
                                             player.signed_team_id
                                         )
                                     "
