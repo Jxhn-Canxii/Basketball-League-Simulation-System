@@ -1519,6 +1519,7 @@ class PlayerService
             ->leftJoin('seasons', 'pss.season_id', '=', 'seasons.id')
             ->where('pss.player_id', $playerId)
             ->where('pss.season_id', $seasonId)
+            ->where('teams.conference_id','>',0)
             ->select(
                 'pss.*',
                 'players.name as player_name',
