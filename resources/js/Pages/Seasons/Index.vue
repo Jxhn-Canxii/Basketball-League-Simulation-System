@@ -85,11 +85,12 @@
                                 <button
                                     v-if="seasons.is_new_season == 2"
                                     type="button"
+                                    :disabled="isProcessing"
                                     class="season-action border-sky-500/20 bg-sky-500/10 text-sky-300 hover:bg-sky-500/20"
                                     @click.prevent="updatePlayerStatus"
                                 >
                                     <i class="fa fa-users"></i>
-                                    <span>Update Players</span>
+                                    <span>{{ isProcessing ? 'Updating...' : 'Update Players' }}</span>
                                 </button>
 
                                 <!-- Coach Signings -->
