@@ -1467,7 +1467,11 @@ class PlayerService
                     ->select(
                         'seasons.id as season_id',
                         'seasons.name as season_name',
-                        'winner_team.name as championship_team'
+                        'winner_team.name as championship_team',
+                        'winner_team.name as team_name',
+                        'winner_team.primary_color',
+                        'winner_team.secondary_color',
+                        'winner_team.acronym',
                     )
                     ->where('player_season_stats.player_id', $playerId)
                     ->where('playoff_series.round', $round)
@@ -1493,7 +1497,10 @@ class PlayerService
                 'standings_snapshots.season_id',
                 'seasons.name as season_name',
                 'standings_snapshots.overall_rank',
-                'teams.name as team_name'
+                'teams.name as team_name',
+                'teams.primary_color',
+                'teams.secondary_color',
+                'teams.acronym',
             ]);
         
         return $overallRankSeasons;
