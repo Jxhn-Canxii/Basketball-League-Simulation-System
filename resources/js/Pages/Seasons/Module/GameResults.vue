@@ -75,25 +75,15 @@
                 <!-- HOME -->
                 <div
                     class="score-team home"
-                    :class="{
-                        winner:
-                            gameDetails.home_team.score >
-                            gameDetails.away_team.score
-                    }"
-                    :style="{
-                        '--team-primary':
-                            '#' + gameDetails.home_team.primary_color,
-                        '--team-secondary':
-                            '#' + gameDetails.home_team.secondary_color
-                    }"
+                    :style="winnerScoreClass(gameDetails.winner_team_id,gameDetails.home_team.team_id,gameDetails.home_team.primary_color, gameDetails.home_team.secondary_color)"
                 >
                     <div
-                        :style="{ color:  '#' + gameDetails.home_team.primary_color, opacity: '20%' }"
-                        class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
+                        :style="{ color:  '#' + gameDetails.home_team.primary_color }"
+                        class="pointer-events-none absolute text-wrap text-center top-0 select-none text-[110px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[160px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        {{ gameDetails.home_team.acronym ?? 'NO NAME' }}
-                        {{ gameDetails.home_team.acronym ?? 'NO NAME' }}
+                        {{ gameDetails.home_team.city ?? 'NO NAME' }}
+                        {{ gameDetails.home_team.name ?? 'NO NAME' }}
                     </div>
                     <span class="location-label">HOME</span>
 
@@ -184,25 +174,15 @@
                 <!-- AWAY -->
                 <div
                     class="score-team away"
-                    :class="{
-                        winner:
-                            gameDetails.away_team.score >
-                            gameDetails.home_team.score
-                    }"
-                    :style="{
-                        '--team-primary':
-                            '#' + gameDetails.away_team.primary_color,
-                        '--team-secondary':
-                            '#' + gameDetails.away_team.secondary_color
-                    }"
+                    :style="winnerScoreClass(gameDetails.winner_team_id, gameDetails.away_team.team_id, gameDetails.away_team.primary_color, gameDetails.home_team.secondary_color)"
                 >
                     <div
-                        :style="{ color:  '#' + gameDetails.away_team.primary_color, opacity: '20%' }"
-                        class="pointer-events-none absolute text-wrap text-right -right-10 -top-8 select-none text-xl font-black leading-none tracking-tighter text-white/[0.025] md:text-[190px]"
+                        :style="{ color:  '#' + gameDetails.away_team.primary_color }"
+                        class="pointer-events-none absolute text-wrap text-center top-0 select-none text-[110px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[160px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        {{ gameDetails.away_team.acronym ?? 'NO NAME' }}
-                        {{ gameDetails.away_team.acronym ?? 'NO NAME' }}
+                        {{ gameDetails.away_team.city ?? 'NO NAME' }}
+                        {{ gameDetails.away_team.name ?? 'NO NAME' }}
                     </div>
 
                     <span class="location-label">AWAY</span>
@@ -1504,6 +1484,23 @@ const fetchBoxScore = async () => {
     }
 };
 
+const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
+    if(winnerId != teamId)
+    {
+        return {
+            backgroundColor: '#'+secondaryColor,
+            '--team-primary': '#393b39',
+            '--team-secondary': '#' + secondaryColor,
+            opacity: '40%'
+        };
+    }
+
+    return {
+        backgroundColor: '#'+secondaryColor,
+        '--team-primary': '#' + primaryColor,
+        '--team-secondary': '#' + secondaryColor,
+    };
+}
 /*
 |--------------------------------------------------------------------------
 | PLAYER SORTING
@@ -1842,14 +1839,6 @@ onUnmounted(() => {
     transform: scaleX(-1);
 }
 
-.score-team.winner {
-    background:
-        linear-gradient(
-            180deg,
-            rgba(241, 238, 7, 0.54),
-            rgba(56, 235, 20, 0.01)
-        );
-}
 
 .location-label {
     position: absolute;
@@ -1881,7 +1870,7 @@ onUnmounted(() => {
 }
 
 .team-name :deep(*) {
-    color: #f9fafb !important;
+    color: #f9fafb;
 }
 
 .score {
@@ -1909,7 +1898,7 @@ onUnmounted(() => {
     position: relative;
     z-index: 1;
     color: #9ca3af;
-    font-size: 11px;
+    font-size: 12px;
 }
 
 .team-meta {
@@ -1920,7 +1909,7 @@ onUnmounted(() => {
     margin-top: 20px;
     max-width: 100%;
     color: #6b7280;
-    font-size: 9px;
+    font-size: 15px;
 }
 
 .team-meta span {

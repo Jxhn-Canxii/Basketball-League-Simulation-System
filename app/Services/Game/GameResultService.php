@@ -468,6 +468,7 @@ class GameResultService
             'injury' => $injury,
             'league_leaders' => $randomSeasonStatsLeaders,
             'per_quarter_breakdown' => $quarterBreakDown,
+            'winner_team_id' => $winningTeamId,
             'home_team' => [
                 'team_id' => $game->home_id, // Use the correct field from your query
                 'name' => $game->home_team_name,
