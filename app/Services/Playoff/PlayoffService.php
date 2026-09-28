@@ -7,6 +7,7 @@ use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use App\Services\Helper\HelperService;
 use App\Services\League\RoundService;
+use App\Services\Stats\PlayoffStatsService;
 use Illuminate\Support\Carbon;
 
 class PlayoffService
@@ -14,11 +15,13 @@ class PlayoffService
 
     protected $helper;
     protected $roundService;
+    protected $playOffStats;
 
     public function __construct()
     {
         $this->helper = new HelperService();
         $this->roundService = new RoundService();
+        $this->playOffStats = new PlayoffStatsService();
     }
 
     public function seasonsPlayoffs($request)
@@ -92,22 +95,6 @@ class PlayoffService
 
             // Check if the current round already exists
             $currentRoundExists = $schedules->where('round', $round)->isNotEmpty();
-
-            // $getOngoingRound = $this->getOngoingRound($seasonId);
-
-            // if (!empty($getOngoingRound)) {
-            //     $this->processOngoingSeriesSchedules($seasonId, $getOngoingRound);
-            //     $this->updateSeasonPlayoffRound($seasonId, $getOngoingRound);
-
-            // }
-
-            // if (!$allPrevRoundsSeriesFinished) {
-            //     $this->processOngoingSeriesSchedules($seasonId, $prev_round);
-
-            //     return response()->json([
-            //         'message' => 'Prev round series schedule is ongoing. Cannot create series schedule for next round.',
-            //     ], 500);
-            // }
 
             if ($currentRoundExists) {
                 // $this->processOngoingSeriesSchedules($seasonId, $round);
@@ -499,6 +486,10 @@ class PlayoffService
             ->pluck('id')
             ->toArray();
 
+        if(in_array($round,['round_of_16','round_of_32'])){
+            $this->playOffStats->updatePlayoffQualifiedFlags();
+        }
+        
         if ($round == 'finals') {
             $pairings = $this->generatePairingsOneConference($seasonId, 0, $round);
             $allSchedules = $this->createSchedule($pairings, $seasonId, $round, 0);
@@ -527,17 +518,7 @@ class PlayoffService
             }
         }
         // Insert all playoff schedules into the database in a single batch
-        try {
-            $this->insertSchedule($seasonId, $round, $allSchedules);
-
-            $this->updateSeasonPlayoffRound($seasonId, $round);
-
-            // If the schedule was inserted successfully, return a success response
-            return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
-        } catch (\Exception $e) {
-            // If an exception occurred (due to duplicate schedule), return an error response
-            return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
-        }
+        $this->updateRoundStatusAndCreateSchedules($seasonId,$round,$allSchedules);
     }
 
     private function playoffScheduleByConference($request)
@@ -579,6 +560,10 @@ class PlayoffService
                 ->where('league_id', $leagueId)
                 ->pluck('id')
                 ->toArray();
+
+            if(in_array($round,['round_of_16','round_of_32'])){
+                $this->playOffStats->updatePlayoffQualifiedFlags();
+            }
 
             if ($round == 'play_ins_elims_round_1') {
                 foreach ($conferences as $conferenceId) {
@@ -712,19 +697,9 @@ class PlayoffService
                     $allSchedules = array_merge($allSchedules, $schedule);
                 }
             }
+            
             // Insert all playoff schedules into the database in a single batch
-
-            try {
-                $this->insertSchedule($seasonId, $round, $allSchedules);
-
-                $this->updateSeasonPlayoffRound($seasonId, $round);
-
-                // If the schedule was inserted successfully, return a success response
-                return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
-            } catch (\Exception $e) {
-                // If an exception occurred (due to duplicate schedule), return an error response
-                return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
-            }
+            $this->updateRoundStatusAndCreateSchedules($seasonId,$round,$allSchedules);
         } catch (\Exception $e) {
             // If an exception occurred (due to duplicate schedule), return an error response
             return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
@@ -772,6 +747,10 @@ class PlayoffService
                 ->where('league_id', $leagueId)
                 ->pluck('id')
                 ->toArray();
+
+            if(in_array($round,['round_of_16','round_of_32'])){
+                $this->playOffStats->updatePlayoffQualifiedFlags();
+            }
 
             if ($round == 'play_ins_elims_round_1') {
                 foreach ($conferences as $conferenceId) {
@@ -918,12 +897,12 @@ class PlayoffService
             // Insert series and schedules in a transaction
             try {
                 DB::transaction(function () use ($seasonId, $round, $allSeries, $allSchedules) {
-                    $this->updateSeasonPlayoffRound($seasonId, $round);
+                    $statusUpdated = $this->updateSeasonPlayoffRound($seasonId, $round);
                     
-                    if (!empty($allSeries)) {
+                    if ($statusUpdated && !empty($allSeries)) {
                         $this->insertPlayoffSeries($seasonId, $round, $allSeries);
                     }
-                    if (!empty($allSchedules)) {
+                    if ($statusUpdated && !empty($allSchedules)) {
                         $this->insertSeriesSchedule($seasonId, $round, $allSchedules);
                     }
                 });
@@ -934,6 +913,25 @@ class PlayoffService
             }
         } catch (\Exception $e) {
             return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => __LINE__], 400);
+        }
+    }
+
+    private function updateRoundStatusAndCreateSchedules($seasonId,$round,$allSchedules){
+        try {
+
+            $statusUpdated = $this->updateSeasonPlayoffRound($seasonId, $round);
+            if(!$statusUpdated){
+                // If the schedule was inserted successfully, return a success response
+                return response()->json(['success' => false, 'message' => 'Errooooooooooooooooooooor! Sa pag update!!!'],400);
+            }
+
+            $this->insertSchedule($seasonId, $round, $allSchedules);
+
+            return response()->json(['success' => true, 'message' => 'Schedule inserted successfully']);
+
+        } catch (\Exception $e) {
+            // If an exception occurred (due to duplicate schedule), return an error response
+            return response()->json(['success' => false, 'error' => $e->getMessage(), 'line' => 475], 400);
         }
     }
     /**
@@ -1039,8 +1037,6 @@ class PlayoffService
             $formattedSchedule
         ];
     }
-
-
 
     /**
      * Create both playoff series and schedule for game one (non-play-in rounds)
@@ -1210,6 +1206,9 @@ class PlayoffService
 
         $previousRounds = $this->roundService->prevRoundFormatter($round);
 
+
+        $finalStatus = config('timeline.finals');
+
         // Get current status first
         $currentStatus = DB::table('seasons')
             ->where('id', $seasonId)
@@ -1225,30 +1224,31 @@ class PlayoffService
         $isPastRoundHasPendingSeries = DB::table('playoff_series as ps')
             ->where('ps.season_id', $seasonId)
             ->where('ps.round', $previousRounds)
-            ->where('ps.status','!=', 2)
+            ->where('ps.status', 1)
             ->whereExists(function ($query) {
                 $query->select(DB::raw(1))
                     ->from('schedules as s')
                     ->whereColumn('s.series_id', 'ps.series_id')
-                    ->where('s.status', '!=', 2);
+                    ->where('s.status', 1);
             })
             ->exists();
 
         if ($isPastRoundHasPendingSeries && $previousRounds != 'none') {
-            return response()->json([
-                'success' => false,
-                'message' => "Can't update season status: Previous rounds not finished"
-            ], 500);
+            return false;
         }
 
         // Only update if current status is NOT 11
-        if ($currentStatus !== 11) {
+        if ($currentStatus !=  $finalStatus) {
             DB::table('seasons')
                 ->where('id', $seasonId)
                 ->update([
                     'status' => $status
                 ]);
+
+            return true;
         }
+
+        return false;
     }
 
     private function getPlayInEliminationTeams($seasonId, $conferenceId)

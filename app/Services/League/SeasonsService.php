@@ -271,7 +271,7 @@ class SeasonsService
     private function isNewSeason()
     {
         // Get the total count of seasons
-        $totalSeasons = DB::table('seasons')->count();
+        $totalSeasons = get_current_season_id() ?? 0;
 
         // Return 4 if there are no seasons
         if ($totalSeasons == 0) {
@@ -300,7 +300,7 @@ class SeasonsService
         } elseif ($lastSeasonStatus == config('timeline.player_signings')) {
             return 7; // new season
         }
-        // Optionally, you can return a default value if no status matches
-        return null;
+
+        return $lastSeasonStatus;
     }
 }

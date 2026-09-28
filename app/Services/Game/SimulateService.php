@@ -272,16 +272,6 @@ class SimulateService
                 $this->freeAgent->updateInjuryFreeAgents();
             }
 
-            if ($allRoundsSimulatedForSeason) {
-                // Update the season's status to 2
-                if ($season) {
-                    $season->status = 2;
-                    $season->save();
-
-                    $this->playOffStats->updatePlayoffQualifiedFlags();
-                }
-            }
-
             // Commit the transaction
             DB::commit();
 

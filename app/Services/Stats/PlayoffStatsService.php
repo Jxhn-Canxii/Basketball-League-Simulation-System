@@ -24,12 +24,14 @@ class PlayoffStatsService
         $overallChamp = DB::table('standings_view')
             ->where('season_id', $seasonId)
             ->where('overall_rank', 1)
+            ->where('conference_id','>',0)
             ->select('team_id','team_name')
             ->first();
 
         $bottomTeam = DB::table('standings_view')
             ->where('season_id', $seasonId)
             ->where('conference_id','>',0)
+            ->select('team_id','team_name')
             ->orderBy('overall_rank', 'desc') // Descending order for the bottom team
             ->first();
 
@@ -53,6 +55,7 @@ class PlayoffStatsService
             ->where('season_id', $seasonId)
             ->whereNotIn('team_id', $qualifiedTeamIds)
             ->update(['is_playoff_qualified' => 0]);
+
     }
     // Helper methods for stat calculation
 

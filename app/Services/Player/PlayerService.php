@@ -1464,6 +1464,7 @@ class PlayerService
                     ->join('playoff_series_archives as playoff_series', 'seasons.id', '=', 'playoff_series.season_id')
                     ->join('teams as team', 'player_season_stats.team_id', '=', 'team.id')
                     ->join('teams as winner_team', 'playoff_series.winner_team_id', '=', 'winner_team.id')
+                    ->join('conferences', 'conferences.id', '=', 'winner_team.conference_id')
                     ->select(
                         'seasons.id as season_id',
                         'seasons.name as season_name',
@@ -1472,6 +1473,7 @@ class PlayerService
                         'winner_team.primary_color',
                         'winner_team.secondary_color',
                         'winner_team.acronym',
+                        'conferences.name as conference_name',
                     )
                     ->where('player_season_stats.player_id', $playerId)
                     ->where('playoff_series.round', $round)
