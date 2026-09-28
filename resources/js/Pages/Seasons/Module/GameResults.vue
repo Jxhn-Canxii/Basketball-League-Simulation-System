@@ -85,9 +85,12 @@
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }}
                         {{ gameDetails.home_team.name ?? 'NO NAME' }} -->
                     </div>
-                    <span class="location-label">
-                        <i class="fas fa-user-tie"></i>
-                        {{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}
+                    <span class="location-label text-xs flex items-center">
+                        <TeamDetails
+                            :team_id="gameDetails.home_team.team_id"
+                            :showButton="false"
+                            :text="gameDetails.home_team.acronym"
+                        />
                     </span>
 
                     <div class="team-number">
@@ -95,11 +98,7 @@
                     </div>
 
                     <div class="team-name">
-                        <TeamDetails
-                            :team_id="gameDetails.home_team.team_id"
-                            :showButton="0"
-                            :text="`${gameDetails.home_team.city} ${gameDetails.home_team.name}`"
-                        />
+                        {{ gameDetails.home_team.sponsor }}
                     </div>
 
                     <div 
@@ -109,12 +108,14 @@
                     </div>
 
                     <div class="team-record">
-                        {{ gameDetails.home_team.streak }}
+                        <i class="fas fa-user-tie"></i>
+                        {{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}
                     </div>
 
                     <div class="team-meta">
                         <span>
-                            {{ gameDetails.home_team.sponsor }}
+                            {{ gameDetails.home_team.city }}
+                            {{ gameDetails.home_team.name }}
                         </span>
                     </div>
                     <div
@@ -184,9 +185,12 @@
                         {{ gameDetails.away_team.name ?? 'NO NAME' }} -->
                     </div>
 
-                    <span class="location-label text-xs">
-                        <i class="fas fa-user-tie"></i>
-                        {{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}
+                    <span class="location-label text-xs flex items-center">
+                        <TeamDetails
+                            :team_id="gameDetails.away_team.team_id"
+                            :showButton="false"
+                            :text="gameDetails.away_team.acronym"
+                        />
                     </span>
 
                     <div class="team-number">
@@ -194,11 +198,7 @@
                     </div>
 
                     <div class="team-name">
-                        <TeamDetails
-                            :team_id="gameDetails.away_team.team_id"
-                            :showButton="0"
-                            :text="`${gameDetails.away_team.city} ${gameDetails.away_team.name}`"
-                        />
+                        {{ gameDetails.away_team.sponsor }}
                     </div>
 
                     <div 
@@ -208,12 +208,14 @@
                     </div>
 
                     <div class="team-record">
-                        {{ gameDetails.away_team.streak }}
+                        <i class="fas fa-user-tie"></i>
+                        {{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}
                     </div>
 
                     <div class="team-meta">
                         <span>
-                            {{ gameDetails.away_team.sponsor }}
+                            {{ gameDetails.away_team.city }}
+                            {{ gameDetails.away_team.name }}
                         </span>
                     </div>
 
@@ -1488,8 +1490,8 @@ const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
     {
         return {
             backgroundColor: '#'+secondaryColor,
-            color: '#393b39',
-            '--team-primary': '#393b39',
+            color: '#'+primaryColor,
+            '--team-primary': '#' + primaryColor,
             '--team-secondary': '#' + secondaryColor,
             opacity: '40%'
         };
