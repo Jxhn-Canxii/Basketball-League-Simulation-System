@@ -528,30 +528,11 @@ class TestController extends Controller
 
     public function TestArchiving(){
 
-        $seasonId = 2;
-        // Calculate the player's aggregated stats for the latest season
-        $overallChamp = DB::table('standings_view')
-            ->where('season_id', $seasonId)
-            ->where('overall_rank', 1)
-            ->where('conference_id','>',0)
-            ->select('team_id','team_name')
-            ->first();
+        $archive = [];
+        $archive[] = $this->archive->archivePlayerSeasonStats(2);
+        $archive[] = $this->archive->archivePlayerSeasonStats(3);
 
-        $bottomTeam = DB::table('standings_view')
-            ->where('season_id', $seasonId)
-            ->where('conference_id','>',0)
-            ->select('team_id','team_name')
-            ->orderBy('overall_rank', 'desc') // Descending order for the bottom team
-            ->first();
-
-        $allRoundsSimulatedForSeason =  $this->helper->allRoundsSimulatedForSeason($seasonId);
-
-        //return $allRoundsSimulatedForSeason;
-        echo 'Best';
-        return $overallChamp->team_id;
-
-        // echo 'Worst';
-        // return $bottomTeam;
+        return $archive;
 
     }
 
