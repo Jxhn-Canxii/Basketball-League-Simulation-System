@@ -403,6 +403,7 @@ class GameEngineService
 
         $playerGameStats =  DB::table('player_game_stats')
                 ->where('game_id', $gameData->game_id)
+                ->orderBy('eff','desc')
                 ->get();
 
         $this->playerStats->removeQuarterStats();

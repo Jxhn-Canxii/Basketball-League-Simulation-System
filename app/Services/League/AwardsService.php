@@ -161,7 +161,8 @@ class AwardsService
                 $rookieRankings = 0;
                 foreach ($topRookies as $rookieStats) {
                     $rank = $rookieRankings++;
-                    $role = $rank <= 5 ? 'starter' : 'reserve';
+                    $role =  $rank >= 2 || $rank <= 5 ? 'starter' : 'reserve';
+                    $role = $rank == 1 ? 'captain' : $role;
 
                     $this->insertAward($rookieStats,'all-rookie', 'All-Rookie '.$role.' of the '.$allStarGroup.' All-Rookie Select!',$latestSeasonId);
 
@@ -185,7 +186,8 @@ class AwardsService
             $allStarRankings = 0;
             foreach ($allStars as $allStarStats) {
                 $rank = $allStarRankings++;
-                $role = $rank <= 5 ? 'starter' : 'reserve';
+                $role =  $rank >= 2 || $rank <= 5 ? 'starter' : 'reserve';
+                $role = $rank == 1 ? 'captain' : $role;
 
                 $this->insertAward($allStarStats, 'all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.',$latestSeasonId);
 

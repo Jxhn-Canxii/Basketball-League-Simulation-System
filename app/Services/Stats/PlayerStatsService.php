@@ -1151,6 +1151,7 @@ class PlayerStatsService
 
             // Determine Best Player of the Game (BPG) using Efficiency Formula
             $bestPlayerId = null;
+            $bestPlayerStats = [];
             $bestEfficiency = -INF;
 
 
@@ -1165,6 +1166,7 @@ class PlayerStatsService
                 if ($efficiency > $bestEfficiency) {
                     $bestEfficiency = $efficiency;
                     $bestPlayerId = $stats['player_id'];
+                    $bestPlayerStats = $stats;
                 }
 
                 // Assign Game Leader Titles
@@ -1190,6 +1192,7 @@ class PlayerStatsService
                     ]
                 );
             }
+
         } catch (\Exception $e) {
             // Log error for debugging
             // Log::error("Error updating season stats: " . $e->getMessage());

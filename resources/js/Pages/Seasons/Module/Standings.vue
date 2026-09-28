@@ -619,7 +619,7 @@ const getTeamRowClass = (team) => {
       "standings-playin";
   } else if (rank >= 11) {
     zoneClass =
-      "standings-eliminated";
+      "standings-eliminated opacity-50";
   }
 
   let separatorClass = "";
@@ -630,7 +630,7 @@ const getTeamRowClass = (team) => {
    */
   if (rank === 7) {
     separatorClass =
-      "conference-separator separator-orange";
+      "border-t-2 border-dashed border-orange-500";
   }
 
   /*
@@ -639,7 +639,7 @@ const getTeamRowClass = (team) => {
    */
   if (rank === 11) {
     separatorClass =
-      "conference-separator separator-blue";
+      "border-t-2 border-dashed border-blue-500";
   }
 
   return [
@@ -1107,18 +1107,6 @@ const teamAchievements = (team) => {
 
 .conference-separator {
   position: relative;
-}
-
-.separator-orange {
-  border-top:
-    1px dashed
-    rgba(245, 158, 11, 0.65);
-}
-
-.separator-blue {
-  border-top:
-    1px dashed
-    rgba(59, 130, 246, 0.65);
 }
 
 /*
