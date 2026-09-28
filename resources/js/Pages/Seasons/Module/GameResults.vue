@@ -82,10 +82,13 @@
                         class="pointer-events-none absolute text-wrap text-center top-0 select-none text-[110px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[160px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        {{ gameDetails.home_team.city ?? 'NO NAME' }}
-                        {{ gameDetails.home_team.name ?? 'NO NAME' }}
+                        <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }}
+                        {{ gameDetails.home_team.name ?? 'NO NAME' }} -->
                     </div>
-                    <span class="location-label">HOME</span>
+                    <span class="location-label">
+                        <i class="fas fa-user-tie"></i>
+                        {{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}
+                    </span>
 
                     <div class="team-number">
                         #{{ gameDetails.home_team.team_id }}
@@ -99,7 +102,9 @@
                         />
                     </div>
 
-                    <div class="score">
+                    <div 
+                    :style="{ color:  '#' + gameDetails.home_team.primary_color }"
+                    class="score" >
                         {{ gameDetails.home_team.score }}
                     </div>
 
@@ -109,15 +114,9 @@
 
                     <div class="team-meta">
                         <span>
-                            <i class="fas fa-user-tie"></i>
-                            {{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}
-                        </span>
-
-                        <span>
                             {{ gameDetails.home_team.sponsor }}
                         </span>
                     </div>
-
                     <div
                         v-if="
                             gameDetails.home_team.score >
@@ -174,18 +173,21 @@
                 <!-- AWAY -->
                 <div
                     class="score-team away"
-                    :style="winnerScoreClass(gameDetails.winner_team_id, gameDetails.away_team.team_id, gameDetails.away_team.primary_color, gameDetails.home_team.secondary_color)"
+                    :style="winnerScoreClass(gameDetails.winner_team_id, gameDetails.away_team.team_id, gameDetails.away_team.secondary_color, gameDetails.away_team.primary_color)"
                 >
                     <div
-                        :style="{ color:  '#' + gameDetails.away_team.primary_color }"
+                        :style="{ color:  '#' + gameDetails.away_team.secondary_color }"
                         class="pointer-events-none absolute text-wrap text-center top-0 select-none text-[110px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[160px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        {{ gameDetails.away_team.city ?? 'NO NAME' }}
-                        {{ gameDetails.away_team.name ?? 'NO NAME' }}
+                        <!-- {{ gameDetails.away_team.city ?? 'NO NAME' }}
+                        {{ gameDetails.away_team.name ?? 'NO NAME' }} -->
                     </div>
 
-                    <span class="location-label">AWAY</span>
+                    <span class="location-label text-xs">
+                        <i class="fas fa-user-tie"></i>
+                        {{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}
+                    </span>
 
                     <div class="team-number">
                         #{{ gameDetails.away_team.team_id }}
@@ -199,7 +201,9 @@
                         />
                     </div>
 
-                    <div class="score">
+                    <div 
+                    :style="{ color:  '#' + gameDetails.away_team.secondary_color }"
+                    class="score">
                         {{ gameDetails.away_team.score }}
                     </div>
 
@@ -208,11 +212,6 @@
                     </div>
 
                     <div class="team-meta">
-                        <span>
-                            <i class="fas fa-user-tie"></i>
-                            {{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}
-                        </span>
-
                         <span>
                             {{ gameDetails.away_team.sponsor }}
                         </span>
@@ -1489,6 +1488,7 @@ const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
     {
         return {
             backgroundColor: '#'+secondaryColor,
+            color: '#393b39',
             '--team-primary': '#393b39',
             '--team-secondary': '#' + secondaryColor,
             opacity: '40%'
@@ -1497,6 +1497,7 @@ const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
 
     return {
         backgroundColor: '#'+secondaryColor,
+        color: '#'+primaryColor,
         '--team-primary': '#' + primaryColor,
         '--team-secondary': '#' + secondaryColor,
     };
@@ -1908,8 +1909,8 @@ onUnmounted(() => {
     gap: 10px;
     margin-top: 20px;
     max-width: 100%;
-    color: #6b7280;
-    font-size: 15px;
+    color: #faf7f7;
+    font-size: 30px;
 }
 
 .team-meta span {
@@ -1930,10 +1931,10 @@ onUnmounted(() => {
     gap: 5px;
     padding: 4px 8px;
     border-radius: 5px;
-    background: rgba(245,158,11,.1);
-    border: 1px solid rgba(245,158,11,.2);
-    color: #fbbf24;
-    font-size: 8px;
+    background: rgba(189, 171, 6, 0.94);
+    border: 1px solid rgba(224, 193, 15, 0.84);
+    color: #f0ede7;
+    font-size: 12px;
     font-weight: 800;
     letter-spacing: .08em;
 }
