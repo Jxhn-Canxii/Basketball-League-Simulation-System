@@ -1477,7 +1477,6 @@ const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
     {
         return {
             backgroundColor: '#3b3b3d',
-            color: '#'+primaryColor,
             '--team-primary': '#' + primaryColor,
             '--team-secondary': '#' + secondaryColor,
             opacity: '40%'
@@ -1486,7 +1485,6 @@ const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
 
     return {
         backgroundColor: '#'+secondaryColor,
-        color: '#'+primaryColor,
         '--team-primary': '#' + primaryColor,
         '--team-secondary': '#' + secondaryColor,
     };
