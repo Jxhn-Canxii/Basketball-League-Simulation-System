@@ -97,7 +97,8 @@
                         #{{ gameDetails.home_team.team_id }}
                     </div>
 
-                    <div class="team-name">
+                    <div 
+                    class="team-name">
                         {{ gameDetails.home_team.sponsor }}
                     </div>
 
@@ -114,7 +115,9 @@
                         <i :class="streakStatus(gameDetails.home_team.streak)">{{ gameDetails.home_team.streak }}</i>
                     </div>
 
-                    <div class="team-meta">
+                    <div 
+                    :style="{ color:  '#' + gameDetails.home_team.primary_color }"
+                    class="team-meta">
                         <span>
                             {{ gameDetails.home_team.name }}
                         </span>
@@ -205,7 +208,9 @@
                         <i :class="streakStatus(gameDetails.away_team.streak)">{{ gameDetails.away_team.streak }}</i>
                     </div>
 
-                    <div class="team-meta">
+                    <div 
+                    :style="{ color:  '#' + gameDetails.home_team.secondary_color }"
+                    class="team-meta">
                         <span>
                             {{ gameDetails.away_team.name }}
                         </span>
@@ -1854,10 +1859,6 @@ onUnmounted(() => {
     text-align: center;
 }
 
-.team-name :deep(*) {
-    color: #f9fafb;
-}
-
 .score {
     position: relative;
     z-index: 1;
@@ -1895,6 +1896,7 @@ onUnmounted(() => {
     max-width: 100%;
     color: #faf7f7;
     font-size: 30px;
+    font-weight: 700;
 }
 
 .team-meta span {
