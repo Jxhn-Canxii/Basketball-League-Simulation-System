@@ -733,6 +733,9 @@ class PlayerService
 
         $latestStats = $this->getLatestStats($playerId);
 
+
+        $allStarCount = $this->allStarCount($playerId);
+
         $scoutingReportData = [
             'potential_rating' => $playerDetails->potential_rating,
             'overall_rating' => $playerDetails->overall_rating,
@@ -770,6 +773,7 @@ class PlayerService
             'playoff_count' => $playoffCount,
             'current_season_id' => $latestSeasonId,
             'scouting_report' => $scoutingReport,
+            'all_star_count' => $allStarCount
         ]);
     }
 
@@ -889,6 +893,13 @@ class PlayerService
         })->values();
     
         return response()->json($sortedAwards);
+    }
+
+    private function allStarCount($playerId){
+        
+        return DB::table('player_game_highs')
+                    ->where('player_id', $playerId)
+                    ->value('all_star_count');
     }
 
     public function getPlayerGameLogs($request)
