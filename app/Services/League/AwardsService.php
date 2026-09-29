@@ -115,8 +115,8 @@ class AwardsService
             ->whereIn('teams.conference_id',$conferenceGroup)
             ->get();
 
-        $eligiblePlayerStats = $playerStats->filter(function ($stats, $latestSeasonId) {
-            $totalRounds = $this->helper->totalRounds($latestSeasonId);
+        $totalRounds = $this->helper->totalRounds($latestSeasonId);
+        $eligiblePlayerStats = $playerStats->filter(function ($stats, $totalRounds) {
             $minimumGamesPlayed = CEIL($totalRounds * 0.25);
             
             return (int)$stats->total_games_played >= $minimumGamesPlayed;

@@ -360,10 +360,63 @@ class TeamsService
         return response()->json($teamTransactionHistory);
     }
 
+    private function getLatestSeasonHistory($teamId){
+         // Fetch data from standings_snapshots with pagination
+        $seasonHistoryLatest = DB::table('standings_view as standings_snapshots')
+            ->select(
+                'standings_snapshots.team_id',
+                'standings_snapshots.team_name',
+                'standings_snapshots.team_acronym',
+                'standings_snapshots.conference_id',
+                'standings_snapshots.conference_name',
+                'standings_snapshots.wins',
+                'standings_snapshots.losses',
+                'standings_snapshots.total_home_score',
+                'standings_snapshots.total_away_score',
+                'standings_snapshots.home_ppg',
+                'standings_snapshots.away_ppg',
+                'standings_snapshots.score_difference',
+                'standings_snapshots.season_id',
+                'standings_snapshots.overall_rank',
+                'standings_snapshots.conference_rank',
+                'seasons.name as season_name',
+                'seasons.status as season_status',
+                DB::raw('CASE WHEN standings_snapshots.overall_rank <= CASE WHEN seasons.start_playoffs = 16 THEN 16 ELSE 32 END THEN TRUE ELSE FALSE END AS isPlayoffQualified'),
+                DB::raw('MAX(schedules.id) as last_round_played_id')
+            )
+            ->join('seasons', 'seasons.id', '=', 'standings_snapshots.season_id')
+            ->leftJoin('schedules_archives as schedules', function ($join) use ($teamId) {
+                $join->on('schedules.season_id', '=', 'standings_snapshots.season_id')
+                    ->where('schedules.status', 2) // only finished games
+                    ->where(function ($query) use ($teamId) {
+                        $query->where('schedules.home_id', '=', $teamId)
+                            ->orWhere('schedules.away_id', '=', $teamId);
+                    });
+            })
+            ->where('standings_snapshots.team_id', $teamId)
+            ->orderBy('standings_snapshots.season_id', 'desc')
+            ->get();
+
+        // Process the collection and append round information
+        return $seasonHistoryLatest;
+    }
     private function getSeasonHistory($teamId, $page, $itemsPerPage)
     {
         // Calculate the offset for pagination
         $offset = ($page - 1) * $itemsPerPage;
+
+        $allSeasonHistory = [];
+        if($page == 1){
+            $seasonHistoryLatest = $this->getLatestSeasonHistory($teamId);
+
+            foreach ($seasonHistoryLatest as $season) {
+                $roundInfo = $this->getLastRoundPlayed($season->last_round_played_id, $teamId);
+                $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id, $teamId);
+                $season->round_info = $roundInfo;
+
+                $allSeasonHistory[] = $season;
+            }
+        }
 
         // Fetch data from standings_snapshots with pagination
         $seasonHistory = DB::table('standings_snapshots')
@@ -429,7 +482,10 @@ class TeamsService
             $roundInfo = $this->getLastRoundPlayed($season->last_round_played_id, $teamId);
             $season->coach_info = $this->getTeamCoachSeasonInfo($season->season_id, $teamId);
             $season->round_info = $roundInfo;
+
+            $allSeasonHistory[] = $season;
         }
+
 
         // Get the total number of records
         $totalItems = DB::table('standings_snapshots')
@@ -438,9 +494,9 @@ class TeamsService
 
         // Calculate the total number of pages
         $totalPages = ceil($totalItems / $itemsPerPage);
-
+        
         return [
-            'history' => $seasonHistory,
+            'history' => $allSeasonHistory,
             'total_items' => $totalItems,
             'items_per_page' => $itemsPerPage,
             'current_page' => $page,

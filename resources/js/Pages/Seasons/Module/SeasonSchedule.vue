@@ -358,8 +358,6 @@
                             <option value="1">
                                 All Overtime Games
                             </option>
-                        </<select>
-                            
                         </select>
                         <select
                             id="teamFilter"

@@ -21,6 +21,21 @@
             Team fixtures and completed games
           </p>
         </div>
+        <div>
+          <select
+              id="teamFilter"
+              v-model="search_schedule.is_overtime"
+              @change.prevent="fetchConferenceSchedules"
+              class="w-full appearance-none truncate rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 pr-9 text-xs font-medium text-gray-300 outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+          >
+              <option value="0">
+                  All games
+              </option>
+              <option value="1">
+                  All Overtime Games
+              </option>
+          </select>
+        </div>
       </div>
 
       <!-- Match count -->
@@ -80,7 +95,7 @@
       <div
         v-for="(match, index) in data.schedules"
         :key="match.id ?? index"
-        class="group min-w-0 overflow-hidden rounded-2xl border border-gray-800 bg-gray-950 shadow-lg shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-700 hover:shadow-xl"
+        class="group min-w-0 overflow-hidden rounded-2xl shadow-lg shadow-black/10 transition-all duration-300 hover:-translate-y-0.5 hover:border-gray-700 hover:shadow-xl"
       >
         <ScoreCard :match="match" />
       </div>
@@ -155,6 +170,7 @@ const search_schedule = ref({
   team_id: 0,
   season_id: 0,
   itemsperpage: 6,
+  is_overtime: 0
 });
 
 const fetchConferenceSchedules = async () => {
