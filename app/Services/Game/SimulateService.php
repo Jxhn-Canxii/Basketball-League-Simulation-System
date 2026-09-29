@@ -229,14 +229,6 @@ class SimulateService
             $gameData->status = 2;
             $gameData->save();
 
-            // Check if all rounds have been simulated for the season
-            $allRoundsSimulatedForSeason =  $this->helper->allRoundsSimulatedForSeason($currentSeasonId);
-
-            // check if round games is simulated
-            $isRoundsSimulatedForSeason = $this->helper->isRoundSimulated($currentSeasonId,  $gameData->round);
-            
-            $transactionCount = $this->helper->getTransferTransactionCount();
-
             $this->teamManagement->evaluatePlayerInjury($gameData->home_team_id);
             $this->teamManagement->evaluatePlayerInjury($gameData->away_team_id);
 
@@ -262,7 +254,6 @@ class SimulateService
                 'away_roster_report' => $awayRosterReport,
                 'season_status' => $season->status,
                 'round' => $gameData->round,
-                'transaction_count' => $transactionCount,
                 'conference_id' => $gameData->conference_id,
                 // 'data' => $gameResult,
                 // 'playerGameStats' => $playerGameStats,
