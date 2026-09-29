@@ -17,7 +17,7 @@ return new class extends Migration
             $table->unsignedBigInteger('player_id');
             $table->unsignedBigInteger('team_id');
             $table->unsignedBigInteger('season_id');
-            $table->string('role');
+            $table->string('role')->default('bench');
 
             // Basic Per-Game Averages
             $table->decimal('avg_minutes_per_game', 5, 2)->default(0);
