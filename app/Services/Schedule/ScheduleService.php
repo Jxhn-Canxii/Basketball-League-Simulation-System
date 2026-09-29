@@ -11,6 +11,7 @@ use App\Models\Schedules;
 use App\Services\Archive\ArchiveService;
 use App\Services\Helper\HelperService;
 use App\Services\League\AwardsService;
+use App\Services\Player\FreeAgencyService;
 use App\Services\Team\TeamStreakService;
 use App\Services\Trade\TradeDecisionService;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,7 @@ class ScheduleService
     protected $streak;
     protected $tradeDecision;
     protected $awards;
+    protected $freeAgent;
 
     public function __construct()
     {
@@ -30,6 +32,7 @@ class ScheduleService
         $this->helper = new HelperService();
         $this->streak = new TeamStreakService();
         $this->tradeDecision = new TradeDecisionService();
+        $this->freeAgent = new FreeAgencyService();
     }
     //
     public function index()
@@ -106,6 +109,8 @@ class ScheduleService
             
             $isEndTradeDeadline = true; // Reset after executing
         }
+
+        $this->freeAgent->updateInjuryFreeAgents();
 
         // Group by conference_id
         $groupedByConference = $schedules->groupBy('conference_id');

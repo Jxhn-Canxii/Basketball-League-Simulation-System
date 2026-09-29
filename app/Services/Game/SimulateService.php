@@ -251,15 +251,6 @@ class SimulateService
 
             $this->playerGenerator->declarePlayerForNextDraft($gameData->round);
 
-            $simulatedRounds = $gameData->round;
-
-            // Get the total number of rounds in the season
-            $totalRounds = $this->helper->totalRounds($gameData->season_id);
-
-            if ($isRoundsSimulatedForSeason) {
-                $this->freeAgent->updateInjuryFreeAgents();
-            }
-
             // Commit the transaction
             DB::commit();
 
