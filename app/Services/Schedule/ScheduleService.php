@@ -976,31 +976,31 @@ class ScheduleService
 
         $games = [];
         foreach ($schedules as $game) {
-            $homeTeamName = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->value('name');
-            $awayTeamName = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->value('name');
+            $homeTeam = $standingsData[$game->home_id]->name ?? DB::table('teams')->where('id', $game->home_id)->first();
+            $awayTeam = $standingsData[$game->away_id]->name ?? DB::table('teams')->where('id', $game->away_id)->first();
 
             $games[] = [
                 'id' => $game->id,
                 'game_id' => $game->game_id,
                 'home_team' => [
                     'id' => $game->home_id,
-                    'name' => $homeTeamName,
+                    'name' => $homeTeam->name,
                     'home_score' => $game->home_score,
                     'conference' => $standingsData[$game->home_id]->conference_name ?? 'Special',
                     'conference_rank' => $standingsData[$game->home_id]->conference_rank ?? null,
                     'overall_rank' => $standingsData[$game->home_id]->overall_rank ?? null,
-                    'primary_color' => $standingsData[$game->home_id]->primary_color ?? '00000',
-                    'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? '00000',
+                    'primary_color' => $standingsData[$game->home_id]->primary_color ?? $homeTeam->primary_color,
+                    'secondary_color' => $standingsData[$game->home_id]->secondary_color ?? $homeTeam->secondary_color,
                 ],
                 'away_team' => [
                     'id' => $game->away_id,
-                    'name' => $awayTeamName,
+                    'name' => $awayTeam->name,
                     'away_score' => $game->away_score,
                     'conference' => $standingsData[$game->away_id]->conference_name ?? 'Special',
                     'conference_rank' => $standingsData[$game->away_id]->conference_rank ?? null,
                     'overall_rank' => $standingsData[$game->away_id]->overall_rank ?? null,
-                    'primary_color' => $standingsData[$game->away_id]->primary_color ?? '00000',
-                    'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? '00000',
+                    'primary_color' => $standingsData[$game->away_id]->primary_color ?? $awayTeam->primary_color,
+                    'secondary_color' => $standingsData[$game->away_id]->secondary_color ?? $awayTeam->secondary_color,
                 ],
                 'winner' => $game->winner_id,
                 'is_overtime' => $game->is_overtime,
