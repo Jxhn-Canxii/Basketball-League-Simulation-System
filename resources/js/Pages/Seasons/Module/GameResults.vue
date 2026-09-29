@@ -98,6 +98,7 @@
                     </div>
 
                     <div 
+                    :style="{ color:  '#' + gameDetails.home_team.primary_color }"
                     class="team-name">
                         {{ gameDetails.home_team.sponsor }}
                     </div>
@@ -191,7 +192,9 @@
                         #{{ gameDetails.away_team.team_id }}
                     </div>
 
-                    <div class="team-name">
+                    <div 
+                    :style="{ color:  '#' + gameDetails.away_team.secondary_color }"
+                    class="team-name">
                         {{ gameDetails.away_team.sponsor }}
                     </div>
 
@@ -209,7 +212,7 @@
                     </div>
 
                     <div 
-                    :style="{ color:  '#' + gameDetails.home_team.secondary_color }"
+                    :style="{ color:  '#' + gameDetails.away_team.secondary_color }"
                     class="team-meta">
                         <span>
                             {{ gameDetails.away_team.name }}
