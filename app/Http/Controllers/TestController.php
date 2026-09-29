@@ -528,12 +528,45 @@ class TestController extends Controller
 
     public function TestArchiving(){
 
-        $archive = [];
-        $archive[] = $this->archive->archivePlayerSeasonStats(2);
-        $archive[] = $this->archive->archivePlayerSeasonStats(3);
+        $latestSeasonId = get_current_season_id();
 
-        return $archive;
+        $awards = DB::table('season_awards')
+                    ->where('award_name','all-star')
+                    ->select('player_id')
+                    ->get();
+        
+        foreach ($awards as $award) {
+            DB::table('player_game_highs')->where('player_id', $award->player_id)->increment('all_star_count', 1);
+        }
+    }
 
+    public function updateAllStarCount(){
+
+        $latestSeasonId = get_current_season_id();
+
+        $awards = DB::table('season_awards')
+                    ->where('status','selected')
+                    ->where('award_name','all-star')
+                    ->select('player_id')
+                    ->get();
+        
+        foreach ($awards as $award) {
+            DB::table('player_game_highs')->where('player_id', $award->player_id)->increment('all_star_count', 1);
+
+        }
+    }
+
+    public function allStarCandidate(){
+
+        $northAllStarsConference = [1,2];
+        $southAllStarsConference = [3,4];
+
+        $latestSeasonId = get_current_season_id();
+
+        $data['north'] = $this->award->selectAllStarsForConferenceCandidate('north',$northAllStarsConference, $latestSeasonId);
+        $data['south'] = $this->award->selectAllStarsForConferenceCandidate('south',$southAllStarsConference, $latestSeasonId);
+
+        return $data;
     }
 
     private function getAllStarTeamConferenceRange($teamId){
