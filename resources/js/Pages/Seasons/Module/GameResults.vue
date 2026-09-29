@@ -1882,7 +1882,7 @@ onUnmounted(() => {
 .team-record {
     position: relative;
     z-index: 1;
-    color: #c8f10e;
+    color: #777a67d3;
     font-size: 12px;
 }
 
