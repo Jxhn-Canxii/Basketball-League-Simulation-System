@@ -418,6 +418,10 @@ export const playerExpStatusText = (experience) => {
     }
 };
 
+export const streakStatus = (streakStatus) =>{
+    return (streakStatus && streakStatus.toLowerCase().startsWith('w')) ? 'text-green-400' : 'text-red-400';
+}
+
 // Remove roleClasses and update roleBadgeClass
 export const roleBadgeClass = (role) => {
   const baseClasses = 'rounded-full px-2 py-0.5 text-xs font-medium capitalize shadow-sm';
@@ -460,10 +464,6 @@ export const roleBadgeClass = (role) => {
       hover: 'hover:bg-gray-500'
     }
   };
-
-  const streakStatus = (streakStatus) =>{
-     return (streakStatus && streakStatus.toLowerCase().startsWith('w')) ? 'text-green-400' : 'text-red-400';
-  }
 
   const style = roleStyles[role.toLowerCase()] || {
     background: 'bg-gray-300',
