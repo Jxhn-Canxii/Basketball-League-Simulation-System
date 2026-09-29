@@ -260,10 +260,9 @@ class SimulateService
             $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline;
 
             if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
-                if($gameData->id % 20 == 0){
-                    $this->tradeDecision->generateTradeProposals(false);
-                }
-                if($gameData->id % 80 == 0){
+                $this->tradeDecision->generateTradeProposals(false);
+
+                if($gameData->id % 10 == 0){
                     $this->tradeDecision->automatedTradeDecision(false);
                 }
             }
