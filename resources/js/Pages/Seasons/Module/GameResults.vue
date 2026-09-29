@@ -109,23 +109,15 @@
 
                     <div class="team-record">
                         <i class="fas fa-user-tie"></i>
-                        {{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}
+                        <b>{{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}</b>
+                        <i class="fas text-gray-500">|</i>
+                        <i :class="streakStatus(gameDetails.home_team.streak)">{{ gameDetails.home_team.streak }}</i>
                     </div>
 
                     <div class="team-meta">
                         <span>
                             {{ gameDetails.home_team.name }}
                         </span>
-                    </div>
-                    <div
-                        v-if="
-                            gameDetails.home_team.score >
-                            gameDetails.away_team.score
-                        "
-                        class="winner-label"
-                    >
-                        <i class="fas fa-crown"></i>
-                        WINNER
                     </div>
                 </div>
 
@@ -208,24 +200,15 @@
 
                     <div class="team-record">
                         <i class="fas fa-user-tie"></i>
-                        {{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}
+                        <b>{{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}</b>
+                        <i class="fas">|</i>
+                        <i :class="streakStatus(gameDetails.away_team.streak)">{{ gameDetails.away_team.streak }}</i>
                     </div>
 
                     <div class="team-meta">
                         <span>
                             {{ gameDetails.away_team.name }}
                         </span>
-                    </div>
-
-                    <div
-                        v-if="
-                            gameDetails.away_team.score >
-                            gameDetails.home_team.score
-                        "
-                        class="winner-label"
-                    >
-                        <i class="fas fa-crown"></i>
-                        WINNER
                     </div>
                 </div>
             </div>
@@ -1326,7 +1309,8 @@ import {
     roundNameFormatter,
     roleBadgeClass,
     playerFormatter,
-    boxScoreRoleBadgeClass
+    boxScoreRoleBadgeClass,
+    streakStatus
 } from "@/Utility/Formatter";
 
 import Modal from "@/Components/Modal.vue";
@@ -1487,7 +1471,7 @@ const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
     if(winnerId != teamId)
     {
         return {
-            backgroundColor: '#'+secondaryColor,
+            backgroundColor: '#3b3b3d',
             color: '#'+primaryColor,
             '--team-primary': '#' + primaryColor,
             '--team-secondary': '#' + secondaryColor,
@@ -1898,7 +1882,7 @@ onUnmounted(() => {
 .team-record {
     position: relative;
     z-index: 1;
-    color: #9ca3af;
+    color: #c8f10e;
     font-size: 12px;
 }
 
@@ -1921,22 +1905,6 @@ onUnmounted(() => {
 
 .team-meta i {
     margin-right: 4px;
-}
-
-.winner-label {
-    position: absolute;
-    bottom: 15px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    padding: 4px 8px;
-    border-radius: 5px;
-    background: rgba(189, 171, 6, 0.94);
-    border: 1px solid rgba(224, 193, 15, 0.84);
-    color: #f0ede7;
-    font-size: 12px;
-    font-weight: 800;
-    letter-spacing: .08em;
 }
 
 /* =========================================================

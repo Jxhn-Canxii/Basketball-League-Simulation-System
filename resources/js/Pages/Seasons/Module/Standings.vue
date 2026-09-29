@@ -227,14 +227,7 @@
             <td class="px-1 py-2 text-center text-sm">
               <span
                 class="font-bold"
-                :class="
-                  team.streak_status &&
-                  team.streak_status
-                    .toLowerCase()
-                    .startsWith('w')
-                    ? 'text-green-400'
-                    : 'text-red-400'
-                "
+                :class="streakStatus(team.streak_status)"
               >
                 {{ team.streak_status }}
               </span>
@@ -376,6 +369,7 @@ import axios from "axios";
 import {
   numberFormatter,
   formatHex,
+  streakStatus
 } from "@/Utility/Formatter.js";
 
 import Tooltip from "@/Components/Tooltip.vue";

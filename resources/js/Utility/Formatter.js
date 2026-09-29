@@ -461,6 +461,10 @@ export const roleBadgeClass = (role) => {
     }
   };
 
+  const streakStatus = (streakStatus) =>{
+     return (streakStatus && streakStatus.toLowerCase().startsWith('w')) ? 'text-green-400' : 'text-red-400';
+  }
+
   const style = roleStyles[role.toLowerCase()] || {
     background: 'bg-gray-300',
     text: 'text-gray-700',
