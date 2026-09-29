@@ -1477,10 +1477,10 @@ const fetchBoxScore = async () => {
 
 const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
 
-    let backgroundColor = (winnerId != teamId) ?  '3b3b3d': secondaryColor;
-    
+    let backgroundColor = (winnerId != teamId) ?  '#3b3b3d': '#'+secondaryColor;
+
     return {
-        backgroundColor: '#'+backgroundColor,
+        backgroundColor: backgroundColor,
         '--team-primary': '#' + primaryColor,
         '--team-secondary': '#' + secondaryColor,
     };
