@@ -73,7 +73,11 @@
                                             <i v-if="index <= 4" class="fa fa-square text-yellow-500"></i>
                                             <i v-if="index > 4 && index < 12" class="fa fa-square text-green-500"></i>
                                             <i v-if="index > 11" class="fa fa-lock text-gray-500"></i>
-                                            {{ transaction.player_name }} | <a>{{ transaction.team_acronym }}</a>
+                                            {{ transaction.player_name }}  
+                                        </div>
+                                        <div class="text-xs">
+                                            <a class="text-gray-400">{{ transaction.team_city }} {{ transaction.team_name }}</a> |
+                                            <a class="text-gray-400">{{ transaction.position }}</a>
                                         </div>
                                         <div class="flex justify-start text-center gap-2 mt-2">
                                           <span
@@ -165,7 +169,11 @@
                                             <i v-if="index <= 4" class="fa fa-square text-yellow-500"></i>
                                             <i v-if="index > 4 && index < 12" class="fa fa-square text-green-500"></i>
                                             <i v-if="index > 11" class="fa fa-lock text-gray-500"></i>
-                                            {{ transaction.player_name }} | <a>{{ transaction.team_acronym }}</a>
+                                            {{ transaction.player_name }}  
+                                        </div>
+                                        <div class="text-xs">
+                                            <a class="text-gray-400">{{ transaction.team_city }} {{ transaction.team_name }}</a> |
+                                            <a class="text-gray-400">{{ transaction.position }}</a>
                                         </div>
                                         <div class="flex justify-start text-center gap-2 mt-2">
                                           <span

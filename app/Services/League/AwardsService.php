@@ -224,7 +224,7 @@ class AwardsService
         $playerStats = DB::table($seasonStatsDB.' as pss')
             ->join('teams','teams.id','=','pss.team_id')
             ->join('players','players.id','=','pss.player_id')
-            ->select('players.id as player_id','players.name as player_name','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
+            ->select('players.position','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
             ->join('conferences','conferences.id','=','teams.conference_id')
             ->where('pss.season_id', $latestSeasonId)
             ->whereIn('teams.conference_id',$conferenceGroup)

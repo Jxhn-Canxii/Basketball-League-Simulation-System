@@ -90,12 +90,12 @@
 
                 <span>
                   <i class="fa fa-map-marker-alt mr-1.5 text-white/40"></i>
-                  {{ player.country ?? "-" }}
+                  {{ player.country ?? "N/A" }}
                 </span>
 
                 <span>
                   <i class="fa fa-users mr-1.5 text-white/40"></i>
-                  {{ player.team_name ?? "-" }}
+                  {{ player.team_name ?? "Free Agent" }}
                 </span>
               </div>
             </div>
