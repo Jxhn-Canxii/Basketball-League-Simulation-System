@@ -19,8 +19,9 @@ return new class extends Migration
             $table->integer('draws')->default(0);
             $table->integer('points_for')->default(0);
             $table->integer('points_against')->default(0);
-            $table->decimal('win_percentage', 5, 2)->default(0);
+            $table->integer('win_percentage')->storedAs("`wins` / (`wins` + `losses`) * 100)->default(0);
             $table->timestamps();
+
             
             // Composite primary key
             $table->primary(['team_id', 'opponent_id']);

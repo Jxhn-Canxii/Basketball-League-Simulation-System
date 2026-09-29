@@ -341,6 +341,36 @@ class PlayoffResetService
         });
     }
 
+
+    private function headToHead($teamId)
+    {
+        $data = DB::table('schedules_archives as schedules')
+            ->select(
+                DB::raw('CASE WHEN schedules.away_id = ' . $teamId . ' THEN home_team.id ELSE away_team.id END as opponent_id'),
+                DB::raw('(SUM(CASE WHEN schedules.home_id = ' . $teamId . ' THEN 1 ELSE 0 END) + SUM(CASE WHEN schedules.away_id = ' . $teamId . ' THEN 1 ELSE 0 END)) as total_games'),
+                DB::raw('SUM(CASE WHEN schedules.winner_id = ' . $teamId . ' THEN 1 ELSE 0 END) as wins'),
+                DB::raw('SUM(CASE WHEN schedules.winner_id != ' . $teamId . ' THEN 1 ELSE 0 END) as losses'),
+            )
+            ->join('teams as home_team', 'schedules.home_id', '=', 'home_team.id')
+            ->join('teams as away_team', 'schedules.away_id', '=', 'away_team.id')
+            ->where('schedules.home_id', $teamId)
+            ->where('schedules.status', 2)
+            ->orWhere('schedules.away_id', $teamId)
+            ->groupBy('opponent_name')
+            ->get();
+        
+        foreach ($data as $match) {
+            # code...
+            DB::table('head_to_head')
+                ->where('team_id',$teamId)
+                ->where('opponent_id',$match->opponent_id)
+                ->update([
+                    'wins' => $match->wins,
+                    'losses' => $match->losses,
+                ]);
+        }
+    }
+
     private function redoSeasonSchedule($type,$nextSeasonId,$leagueId){
          // Create schedule based on type
             switch ((int)$type) {

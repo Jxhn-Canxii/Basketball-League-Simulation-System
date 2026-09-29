@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('type'); // the status of the transaction (e.g., "waived")
             $table->string('status'); // the status of the transaction (e.g., "waived")
             $table->timestamps(); // created_at and updated_at timestamps
+
         });
     }
 
