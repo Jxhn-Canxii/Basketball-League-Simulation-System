@@ -345,7 +345,22 @@
 
                 <!-- Team filter -->
                 <div class="w-full sm:w-auto sm:min-w-[190px]">
-                    <div class="relative">
+                    <div class="relative flex float-right gap-2">
+                        <select
+                            id="teamFilter"
+                            v-model="search_schedule.is_overtime"
+                            @change.prevent="searchInput"
+                            class="w-full appearance-none truncate rounded-lg border border-gray-800 bg-gray-900 px-3 py-2 pr-9 text-xs font-medium text-gray-300 outline-none transition focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500"
+                        >
+                            <option value="0">
+                                All games
+                            </option>
+                            <option value="1">
+                                All Overtime Games
+                            </option>
+                        </<select>
+                            
+                        </select>
                         <select
                             id="teamFilter"
                             v-model="search_schedule.team_id"
@@ -557,6 +572,7 @@ const search_schedule = ref({
     team_id: 0,
     season_id: 0,
     itemsperpage: 6,
+    is_overtime: 0
 });
 
 /*

@@ -907,10 +907,13 @@ class ScheduleService
         $seasonId = $request->season_id;
         $teamId = $request->team_id;
         $conferenceId = $request->conference_id;
-        $excludedRounds = config('playoffs');
+        $isOvertime = $request->is_overtime ?: 0;
+
         $itemsPerPage = $request->itemsperpage ?: 6;
         $currentPage = $request->page_num ?: 1;
+
         $currentSeasonId = get_current_season_id();
+        $excludedRounds = config('playoffs');
         $specialConference = 0;
 
         // Calculate offset for pagination based on current page
@@ -921,6 +924,7 @@ class ScheduleService
         // Get total count first
         $totalSchedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
+            ->where('is_overtime', $isOvertime)
             ->whereIn('conference_id', [$specialConference,$conferenceId])
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
@@ -942,6 +946,7 @@ class ScheduleService
         // Fetch the actual schedule data
         $schedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
+            ->where('is_overtime', $isOvertime)
             ->whereIn('conference_id', [$specialConference,$conferenceId])
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
