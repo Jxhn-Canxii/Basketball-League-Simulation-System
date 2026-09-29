@@ -74,7 +74,10 @@ class ScheduleService
         $tradeDeadlineThreshold = CEIL($totalRounds / 2) + 2;
         $allStarBreak = $simulatedRounds == (CEIL($totalRounds / 2) + 2);
         $isEndTradeDeadline = $simulatedRounds >= $tradeDeadlineThreshold && $latestSeasonStatus == 1;
-        
+
+        $tradeProposalDeadline = CEIL($totalRounds / 2);
+        $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline;
+
         $allStarSchedule = [];
 
         if($allStarBreak){
@@ -83,6 +86,15 @@ class ScheduleService
             if(count($allStarSchedule) == 0){
                 $this->selectAllStars();
                 $this->awards->updateAllStarCoach($seasonId);
+            }
+        }
+
+        if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
+
+            if($round % 2 == 0){
+                $this->tradeDecision->automatedTradeDecision(false);
+            }else{
+                $this->tradeDecision->generateTradeProposals(false);
             }
         }
         

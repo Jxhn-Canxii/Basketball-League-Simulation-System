@@ -256,17 +256,6 @@ class SimulateService
             // Get the total number of rounds in the season
             $totalRounds = $this->helper->totalRounds($gameData->season_id);
 
-            $tradeProposalDeadline = CEIL($totalRounds / 2);
-            $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline;
-
-            if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
-                $this->tradeDecision->generateTradeProposals(false);
-
-                if($gameData->id % 10 == 0){
-                    $this->tradeDecision->automatedTradeDecision(false);
-                }
-            }
-
             if ($isRoundsSimulatedForSeason) {
                 $this->freeAgent->updateInjuryFreeAgents();
             }
