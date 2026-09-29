@@ -2,6 +2,7 @@
 
 namespace App\Services\League;
 
+use App\Services\Helper\HelperService;
 use App\Services\Schedule\ScheduleService;
 use App\Services\Stats\PlayerSeasonStatsService;
 use Illuminate\Support\Facades\DB;
@@ -12,10 +13,12 @@ class PlayoffResetService
 {
     protected $schedule;
     protected $storeStats;
+    protected $helper;
 
     public function __construct(){
         $this->schedule = new ScheduleService();
         $this->storeStats = new PlayerSeasonStatsService();
+        $this->helper = new HelperService();
     }
     /**
      * Playoff stage status mapping.
@@ -59,6 +62,13 @@ class PlayoffResetService
         if (!isset($this->playoffStages[$round])) {
             throw new \InvalidArgumentException(
                 "Invalid playoff round: {$round}"
+            );
+        }
+
+        $seasonStatus = $this->helper->seasonStatus($seasonId);
+        if($seasonStatus > 12){
+            throw new \InvalidArgumentException(
+                "Finals Ended: Can't reset {$round}"
             );
         }
 
@@ -126,6 +136,13 @@ class PlayoffResetService
      */
     public function resetPlayoffs(int $seasonId): array
     {
+        $seasonStatus = $this->helper->seasonStatus($seasonId);
+        if($seasonStatus > 12){
+            throw new \InvalidArgumentException(
+                "Finals Ended: Can't reset full play-offs!"
+            );
+        }
+
         return DB::transaction(function () use ($seasonId) {
 
             // ---------------------------------------------------------
@@ -210,6 +227,13 @@ class PlayoffResetService
      */
     public function resetSeason(int $seasonId): array
     {
+        $seasonStatus = $this->helper->seasonStatus($seasonId);
+        if($seasonStatus > 12){
+            throw new \InvalidArgumentException(
+                "Finals Ended: Can't reset full season!"
+            );
+        }
+
         return DB::transaction(function () use ($seasonId) {
 
             // ---------------------------------------------------------
