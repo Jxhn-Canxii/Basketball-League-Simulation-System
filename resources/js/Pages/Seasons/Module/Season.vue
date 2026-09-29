@@ -208,20 +208,7 @@
                 </div>
 
                 <!-- Recent trade -->
-                <div
-                    v-if="seasonStatus == 1"
-                    class="border-t border-gray-800 p-2"
-                >
-                    <div class="min-w-0 overflow-x-auto">
-                        <RecentTradeProposal
-                            :key="updateKey"
-                            :isOffSeason="false"
-                            :seasonId="props.season_id"
-                        />
-                        <!-- <RecentTransactions :showTitle="false" :key="updateKey" /> -->
-                    </div>
-                </div>
-                <div v-else>
+                <div v-if="seasonStatus == 1">
                     <AllStarRace :season_id="props.season_id" :key="selectedConference" />
                 </div>
             </section>
@@ -295,12 +282,12 @@
                         :season_data="season_info"
                     />
                     <br>
-                    <!-- <RecentTradeProposal
+                    <RecentTradeProposal
                         v-if="seasonStatus == 1"
                         :key="updateKey"
                         :isOffSeason="false"
                         :seasonId="props.season_id"
-                    /> -->
+                    />
                 </div>
             </section>
         </div>
