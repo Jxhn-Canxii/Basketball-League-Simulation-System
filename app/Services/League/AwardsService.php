@@ -218,11 +218,13 @@ class AwardsService
     public function selectAllStarsForConferenceCandidate($allStarGroup,$conferenceGroup, $latestSeasonId)
     {
     
+        $seasonStatsDB = $this->helper->getSeasonStatsDBName($latestSeasonId);
+
         // Get player stats from player_season_stats for the latest season
-        $playerStats = DB::table('player_season_stats as pss')
+        $playerStats = DB::table($seasonStatsDB.' as pss')
             ->join('teams','teams.id','=','pss.team_id')
             ->join('players','players.id','=','pss.player_id')
-            ->select('players.name as player_name','teams.name as team_name','pss.*')
+            ->select('players.id as player_id','players.name as player_name','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
             ->join('conferences','conferences.id','=','teams.conference_id')
             ->where('pss.season_id', $latestSeasonId)
             ->whereIn('teams.conference_id',$conferenceGroup)
@@ -243,7 +245,7 @@ class AwardsService
                 $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
 
             return $bStats <=> $aStats;
-        })->take(15)->pluck('team_name','player_name');
+        })->take(15)->values();
 
         // Filter out rookies and determine the Rookie of the Year award
         $rookies = $eligiblePlayerStats->filter(function ($stats) {
@@ -264,15 +266,15 @@ class AwardsService
                 $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
 
             return $bStats <=> $aStats;
-        })->take(15)->pluck('team_name','player_name');
+        })->take(15)->values();
 
-        return response()->json([
+        return [
             'message' => 'All Star Candidates for '.$allStarGroup,
-            'all-rookie' => $topRookies,
-            'all-star' => $allStars,
-            'all-rookie-count' => count($topRookies),
-            'all-star-count' =>  count($allStars),
-        ]);
+            'all_rookie' => $topRookies,
+            'all_star' => $allStars,
+            'all_rookie_count' => count($topRookies),
+            'all_star_count' =>  count($allStars),
+        ];
     }
 
     public function storeSeasonAwards()

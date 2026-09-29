@@ -221,6 +221,9 @@
                         <!-- <RecentTransactions :showTitle="false" :key="updateKey" /> -->
                     </div>
                 </div>
+                <div v-else>
+                    <AllStarRace :season_id="props.season_id" :key="selectedConference" />
+                </div>
             </section>
 
             <!-- ============================================================
@@ -292,7 +295,6 @@
                         :season_data="season_info"
                     />
                     <br>
-                    <!-- <RecentTransactions :showTitle="false" :key="selectedConference" /> -->
                     <!-- <RecentTradeProposal
                         v-if="seasonStatus == 1"
                         :key="updateKey"
@@ -338,6 +340,7 @@ import SeasonSchedule from "./SeasonSchedule.vue";
 import Top15MVPCandidate from "@/Pages/Seasons/Module/Top15MVPCandidate.vue";
 import RecentTradeProposal from "@/Pages/Seasons/Module/RecentTradeProposal.vue";
 import RecentTransactions from "@/Pages/Seasons/Module/RecentTransactions.vue";
+import AllStarRace from "@/Pages/Seasons/Module/AllStarRace.vue";
 
 const props = defineProps({
     season_id: {

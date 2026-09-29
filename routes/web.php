@@ -294,6 +294,7 @@ Route::middleware('auth')->group(function () {
         Route::post('player-season-awards', [AwardsController::class, 'getSeasonAwards'])->name('player.season.awards');
         Route::get('awarding/{season_id}', [AwardsController::class, 'storeSeasonAwardsAuto'])->name('awarding.per.season');
         Route::get('awards-mvp-status', [AwardsController::class, 'getFinalsMVPList'])->name('awards.mvp.status');
+        Route::post('allstar-candidate', [AwardsController::class, 'allStarCandidate'])->name('allstar.candidate');
     });
 
     Route::prefix('trades/')->group(function(){

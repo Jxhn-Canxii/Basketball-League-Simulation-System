@@ -19,13 +19,30 @@ class AwardsController extends Controller
     {
         $this->awardsService = new AwardsService();
     }
+
     public function index()
     {
         return Inertia::render('Awards/Index', [
             'status' => session('status'),
         ]);
     }
-   
+
+    public function allStarCandidate(Request $request){
+
+        $northAllStarsConference = [1,2];
+        $southAllStarsConference = [3,4];
+
+        $latestSeasonId = $request->season_id ?? get_current_season_id();
+
+        $north = $this->awardsService->selectAllStarsForConferenceCandidate('north',$northAllStarsConference, $latestSeasonId);
+        $south = $this->awardsService->selectAllStarsForConferenceCandidate('south',$southAllStarsConference, $latestSeasonId);
+
+        return response()->json([
+            'north' => $north,
+            'south' => $south
+        ]);
+    }
+
     public function getSeasonAwards(Request $request)
     {
 
