@@ -1476,18 +1476,11 @@ const fetchBoxScore = async () => {
 };
 
 const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
-    if(winnerId != teamId)
-    {
-        return {
-            backgroundColor: '#3b3b3d',
-            '--team-primary': '#' + primaryColor,
-            '--team-secondary': '#' + secondaryColor,
-            opacity: '40%'
-        };
-    }
 
+    let backgroundColor = (winnerId != teamId) ?  '3b3b3d': secondaryColor;
+    
     return {
-        backgroundColor: '#'+secondaryColor,
+        backgroundColor: '#'+backgroundColor,
         '--team-primary': '#' + primaryColor,
         '--team-secondary': '#' + secondaryColor,
     };
