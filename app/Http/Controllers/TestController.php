@@ -532,11 +532,15 @@ class TestController extends Controller
 
         $awards = DB::table('season_awards')
                     ->where('award_name','all-star')
-                    ->select('player_id')
+                    ->select(
+                        'player_id',
+                        DB::raw('COUNT(id) as all_star_count')
+                    )
+                    ->groupBy('player_id')
                     ->get();
         
         foreach ($awards as $award) {
-            DB::table('player_game_highs')->where('player_id', $award->player_id)->increment('all_star_count', 1);
+            DB::table('player_game_highs')->where('player_id', $award->player_id)->update(['all_star_count' => $award->all_star_count]);
         }
     }
 
@@ -545,13 +549,16 @@ class TestController extends Controller
         $latestSeasonId = get_current_season_id();
 
         $awards = DB::table('season_awards')
-                    ->where('status','selected')
-                    ->where('award_name','all-star')
-                    ->select('player_id')
-                    ->get();
+                ->where('award_name','all-star')
+                ->select(
+                    'player_id',
+                    DB::raw('COUNT(id) as all_star_count')
+                )
+                ->groupBy('player_id')
+                ->get();
         
         foreach ($awards as $award) {
-            DB::table('player_game_highs')->where('player_id', $award->player_id)->increment('all_star_count', 1);
+            DB::table('player_game_highs')->where('player_id', $award->player_id)->update(['all_star_count' => $award->all_star_count]);
 
         }
     }

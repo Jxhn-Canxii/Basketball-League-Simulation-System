@@ -202,8 +202,7 @@ class AwardsService
                     'updated_at' => now(),
                 ]);
 
-                DB::table('player_game_highs')->where('player_id', $allStarStats->player_id)->increment('all_star_count', 1);
-
+                $this->updatePlayerAllStarCount($allStarStats->player_id);
             }
 
             $this->insertAllStarSchedule('all-star');
@@ -1061,6 +1060,24 @@ class AwardsService
             }
         }
        
+    }
+
+    private function updatePlayerAllStarCount($playerId){
+
+        $latestSeasonId = get_current_season_id();
+
+        $award = DB::table('season_awards')
+                ->where('award_name','all-star')
+                ->where('player_id',$playerId)
+                ->select(
+                    'player_id',
+                    DB::raw('COUNT(id) as all_star_count')
+                )
+                ->groupBy('player_id')
+                ->first();
+        
+        DB::table('player_game_highs')->where('player_id',$playerId)->update(['all_star_count' => $award->all_star_count]);
+
     }
     
 }
