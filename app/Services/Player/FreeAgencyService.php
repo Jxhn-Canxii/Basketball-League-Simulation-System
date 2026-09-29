@@ -902,7 +902,24 @@ class FreeAgencyService
                 throw new \RuntimeException('Team cannot afford this signing under current cap rules.');
             }
 
-            DB::table('players')
+            if($seasonId == 0){
+                DB::table('players')
+                    ->where('id', $player->id)
+                    ->update([
+                        'drafted_team_id' => $teamId,
+                        'draft_status' => 'Special Draft',
+                        'is_drafted' => 1,
+                        'is_rookie' => 0,
+                        'team_id' => $teamId,
+                        'contract_years' => $contractYears,
+                        'salary' => $offer['salary'],
+                        'contract_type' => $offer['contract_type'],
+                        'player_option' => $offer['player_option'],
+                        'team_option' => $offer['team_option'],
+                        'no_trade_clause' => $offer['no_trade_clause'],
+                    ]);
+            }else{
+                DB::table('players')
                 ->where('id', $player->id)
                 ->update([
                     'team_id' => $teamId,
@@ -913,6 +930,7 @@ class FreeAgencyService
                     'team_option' => $offer['team_option'],
                     'no_trade_clause' => $offer['no_trade_clause'],
                 ]);
+            }
             
             // Insert the transaction record into the transactions table
             DB::table('transactions')->insert([
@@ -1026,15 +1044,6 @@ class FreeAgencyService
                         'is_drafted' => 0,
                         'is_rookie' => 0
                     ]);
-
-                DB::table('players')
-                    ->where('team_id','>',0)
-                    ->update([
-                        'draft_status' => 'Special Draft',
-                        'is_drafted' => 1,
-                        'is_rookie' => 0
-                    ]);
-
             }
             if ($update) {
                 DB::table('seasons')
