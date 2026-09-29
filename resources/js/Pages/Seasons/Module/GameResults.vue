@@ -114,7 +114,6 @@
 
                     <div class="team-meta">
                         <span>
-                            {{ gameDetails.home_team.city }}
                             {{ gameDetails.home_team.name }}
                         </span>
                     </div>
@@ -214,7 +213,6 @@
 
                     <div class="team-meta">
                         <span>
-                            {{ gameDetails.away_team.city }}
                             {{ gameDetails.away_team.name }}
                         </span>
                     </div>

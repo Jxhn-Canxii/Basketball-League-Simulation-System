@@ -26,7 +26,6 @@ return new class extends Migration
             $table->integer('winner_id');
             $table->integer('is_overtime');
             $table->integer('status');  
-            $table->integer('is_overtime');  
             $table->string('game_number_formatted'); 
             $table->string('series_id_number'); 
             $table->string('home_team_name'); 
