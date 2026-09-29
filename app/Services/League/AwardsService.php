@@ -582,6 +582,7 @@ class AwardsService
                 'teams.name as team_name',
                 'teams.id as team_id'
             )
+            ->orderBy('id','desc')
             ->get();
 
         return response()->json([
