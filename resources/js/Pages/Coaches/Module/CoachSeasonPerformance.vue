@@ -139,14 +139,10 @@
                             v-for="season in coach_history.history"
                             :key="`${season.season_id}-${season.team_id}`"
                             class="group border-b border-white/[0.05] text-white transition last:border-b-0"
-                            :style="{
-                                backgroundColor: getTeamBackground(
-                                    season.primary_color
-                                )
-                            }"
+                            :style="getTeamBackground(season.primary_color,season.secondary_color)"
                         >
                             <!-- =========================================
-                                 SEASON
+                                SEASON
                             ========================================== -->
                             <td
                                 class="sticky left-0 z-20 border-r border-white/[0.08] px-3 py-3 font-bold whitespace-nowrap"
@@ -158,17 +154,20 @@
                             >
                                 <div class="flex items-center gap-2">
                                     <span
-                                        class="h-1.5 w-1.5 shrink-0 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.35)]"
+                                        class="h-1.2 w-1.5 shrink-0 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.35)]"
                                     ></span>
 
                                     <span class="text-gray-100">
                                         {{ season.season_name }}
+                                        <sup v-if="season.is_ongoing">
+                                            <i class="fas fa-circle fa-bounce text-lime-500"></i>
+                                        </sup>
                                     </span>
                                 </div>
                             </td>
 
                             <!-- =========================================
-                                 TEAM
+                                TEAM
                             ========================================== -->
                             <td
                                 class="whitespace-nowrap px-3 py-3"
@@ -548,8 +547,9 @@ const getTeamColor = (color) => {
     return normalizeColor(color);
 };
 
-const getTeamBackground = (color) => {
-    const normalized = normalizeColor(color);
+const getTeamBackground = (primary,secondary) => {
+    const normalizedPrimary = normalizeColor(primary);
+    const normalizedSecondary = normalizeColor(secondary);
 
     /*
      * Use the team color as a subtle transparent-looking
@@ -557,8 +557,8 @@ const getTeamBackground = (color) => {
      */
     return `linear-gradient(
         90deg,
-        ${normalized}33 0%,
-        rgba(9, 9, 9, 0.96) 55%,
+        ${normalizedPrimary}33 0%,
+        ${normalizedSecondary}33 55%,
         rgba(9, 9, 9, 1) 100%
     )`;
 };

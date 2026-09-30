@@ -97,7 +97,7 @@
 
                                 <span class="text-white/20">•</span>
 
-                                <span>
+                                <span @click.prevent="showCoachProfileModal = true">
                                     Coach:
                                     <span class="text-white/80">
                                         {{
@@ -983,17 +983,37 @@
             </div>
         </div>
     </div>
+    <Modal
+        :show="showCoachProfileModal"
+        :maxWidth="'4xl'"
+        title="Coach Information"
+        @close="showCoachProfileModal = false"
+    >
+        <div
+            v-if="coachId > 0"
+            class="overflow-hidden bg-black p-4 text-white sm:p-6"
+        >
+            <CoachProfile
+                :key="coachId"
+                :coach_id="coachId"
+            />
+        </div>
+    </Modal>
 </template>
 
 <script setup>
 import { ref, computed, watch, onMounted } from "vue";
 import axios from "axios";
 import { roundNameFormatter, numberFormatter } from "@/Utility/Formatter";
+import Modal from "@/Components/Modal.vue";
+import Paginator from "@/Components/Paginator.vue";
+
 import SectionHeader from "./Cards/SectionHeader.vue";
 import HistoryCard from "./Cards/HistoryCard.vue";
 import StatCard from "./Cards/StatCard.vue";
 import EmptyState from "./Cards/EmptyState.vue";
 import AchievementCard from "./Cards/AchievementCard.vue";
+import CoachProfile from "@/Pages/Coaches/Module/CoachProfile.vue";
 
 const props = defineProps({
     team_id: {
@@ -1010,6 +1030,7 @@ const props = defineProps({
 
 const loading = ref(false);
 
+const showCoachProfileModal = ref(false);
 const team_info = ref(false);
 const team_season_standings = ref(false);
 const team_season_finals = ref(false);
@@ -1041,6 +1062,10 @@ const secondaryColor = computed(() => {
         team_info.value?.teams?.secondary_color;
 
     return color ? `#${color.replace("#", "")}` : "#09090b";
+});
+
+const coachId = computed(() => {
+    return team_info.value?.teams?.coach_id ?? 0;
 });
 
 const pageStyle = computed(() => ({

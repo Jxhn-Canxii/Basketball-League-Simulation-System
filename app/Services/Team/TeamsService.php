@@ -48,7 +48,8 @@ class TeamsService
             ->join('leagues', 'teams.league_id', '=', 'leagues.id')
             ->join('conferences', 'teams.conference_id', '=', 'conferences.id','left')
             ->select('teams.*', 'leagues.name as league_name', 'conferences.name as conference_name')
-            ->orderBy('teams.conference_id','desc');
+            ->orderBy('teams.id','asc')
+            ->where('teams.conference_id','>',0);
 
         // Apply search filter if search query is provided
         if ($searchQuery) {
@@ -78,6 +79,7 @@ class TeamsService
             ->get();
 
         $latestSeason = get_current_season_id() ?? 0;
+
         return response()->json([
             'teams' => $teams,
             'total_pages' => $totalPages,
@@ -683,6 +685,7 @@ class TeamsService
                 'teams.primary_color',
                 'teams.secondary_color',
                 'conferences.name as conference_name',
+                'coaches.id as coach_id',
                 'coaches.name as coach_name',
                 'coaches.winning_percentage as coach_winning',
 

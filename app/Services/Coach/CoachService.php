@@ -532,6 +532,109 @@ class CoachService
 
         $offset = ($page - 1) * $itemsPerPage;
 
+        $data = [];
+        if($page == 1){
+            $seasonHistoryLatest = DB::table('team_season_info')
+                ->select(
+                    'team_season_info.coach_id',
+                    'team_season_info.season_id',
+                    'team_season_info.team_id',
+
+                    // Team
+                    'teams.*',
+
+                    // Coach
+                    'coaches.name as coach_name',
+
+                    // Season
+                    'seasons.name as season_name',
+                    'seasons.status as season_status',
+
+                    // Team season info
+                    'team_season_info.is_playoff_qualified',
+                    'team_season_info.is_defending_champion',
+                    'team_season_info.chemistry',
+
+                    // Standings
+                    'standings_snapshots.team_name',
+                    'standings_snapshots.team_acronym',
+                    'standings_snapshots.conference_id',
+                    'standings_snapshots.conference_name',
+                    'standings_snapshots.wins',
+                    'standings_snapshots.losses',
+                    'standings_snapshots.total_home_score',
+                    'standings_snapshots.total_away_score',
+                    'standings_snapshots.home_ppg',
+                    'standings_snapshots.away_ppg',
+                    'standings_snapshots.score_difference',
+                    'standings_snapshots.overall_rank',
+                    'standings_snapshots.conference_rank',
+                    'standings_snapshots.primary_color',
+                    'standings_snapshots.secondary_color',
+
+                    // Won Semi Finals
+                    DB::raw("
+                        EXISTS (
+                            SELECT 1
+                            FROM playoff_series_archives ps
+                            WHERE ps.season_id = team_season_info.season_id
+                            AND ps.round = 'semi_finals'
+                            AND ps.winner_team_id = team_season_info.team_id
+                        ) as won_semi_finals
+                    "),
+
+                    // Won Finals
+                    DB::raw("
+                        EXISTS (
+                            SELECT 1
+                            FROM playoff_series_archives ps
+                            WHERE ps.season_id = team_season_info.season_id
+                            AND ps.round = 'finals'
+                            AND ps.winner_team_id = team_season_info.team_id
+                        ) as won_finals
+                    ")
+                )
+                ->join(
+                    'coaches',
+                    'coaches.id',
+                    '=',
+                    'team_season_info.coach_id'
+                )
+                ->join(
+                    'teams',
+                    'teams.id',
+                    '=',
+                    'team_season_info.team_id'
+                )
+                ->join(
+                    'seasons',
+                    'seasons.season_id',
+                    '=',
+                    'team_season_info.season_id'
+                )
+                ->join('standings_view as standings_snapshots', function ($join) {
+                    $join->on(
+                        'standings_snapshots.season_id',
+                        '=',
+                        'team_season_info.season_id'
+                    )->on(
+                        'standings_snapshots.team_id',
+                        '=',
+                        'team_season_info.team_id'
+                    );
+                })
+                ->where('team_season_info.coach_id',$coach_id)
+                ->where('team_season_info.team_id','>',4)
+                ->orderBy('team_season_info.season_id','desc')
+                ->get();
+
+            foreach ($seasonHistoryLatest as $stats) {
+                # code...
+                $stats->is_ongoing = true;
+                $data[] = $stats;
+            }
+        }
+
         $seasonHistory = DB::table('team_season_info')
             ->select(
                 'team_season_info.coach_id',
@@ -572,49 +675,45 @@ class CoachService
 
                 // Won Semi Finals
                 DB::raw("
-                EXISTS (
-                    SELECT 1
-                    FROM playoff_series_archives ps
-                    WHERE ps.season_id = team_season_info.season_id
-                    AND ps.round = 'semi_finals'
-                    AND ps.winner_team_id = team_season_info.team_id
-                ) as won_semi_finals
-            "),
+                    EXISTS (
+                        SELECT 1
+                        FROM playoff_series_archives ps
+                        WHERE ps.season_id = team_season_info.season_id
+                        AND ps.round = 'semi_finals'
+                        AND ps.winner_team_id = team_season_info.team_id
+                    ) as won_semi_finals
+                "),
 
                 // Won Finals
                 DB::raw("
-                EXISTS (
-                    SELECT 1
-                    FROM playoff_series_archives ps
-                    WHERE ps.season_id = team_season_info.season_id
-                    AND ps.round = 'finals'
-                    AND ps.winner_team_id = team_season_info.team_id
-                ) as won_finals
-            ")
+                    EXISTS (
+                        SELECT 1
+                        FROM playoff_series_archives ps
+                        WHERE ps.season_id = team_season_info.season_id
+                        AND ps.round = 'finals'
+                        AND ps.winner_team_id = team_season_info.team_id
+                    ) as won_finals
+                ")
             )
-
             ->leftJoin(
                 'coaches',
                 'coaches.id',
                 '=',
                 'team_season_info.coach_id'
             )
-
             ->join(
                 'teams',
                 'teams.id',
                 '=',
                 'team_season_info.team_id'
             )
-
-            ->leftJoin(
+            ->join(
                 'seasons',
                 'seasons.season_id',
                 '=',
                 'team_season_info.season_id'
             )
-
-            ->leftJoin('standings_snapshots', function ($join) {
+            ->join('standings_snapshots', function ($join) {
                 $join->on(
                     'standings_snapshots.season_id',
                     '=',
@@ -625,28 +724,19 @@ class CoachService
                     'team_season_info.team_id'
                 );
             })
-
-            ->where(
-                'team_season_info.coach_id',
-                $coach_id
-            )
-
+            ->where('team_season_info.coach_id',$coach_id)
             ->where('team_season_info.team_id','>',4)
-
-            ->where(
-                'seasons.status',
-                17
-            )
-
-            ->orderBy(
-                'team_season_info.season_id',
-                'desc'
-            )
-
+            ->where('seasons.status','>',17)
+            ->orderBy('team_season_info.season_id','desc')
             ->offset($offset)
             ->limit($itemsPerPage)
             ->get();
 
+        foreach ($seasonHistory as $stats) {
+            # code...
+            $stats->is_ongoing = false;
+            $data[] = $stats;
+        }
 
         // Get total number of records
         $totalItems = DB::table('team_season_info')
@@ -671,12 +761,12 @@ class CoachService
 
 
         return [
-            'history' => $seasonHistory,
+            'history' => $data,
             'total_items' => $totalItems,
             'items_per_page' => $itemsPerPage,
             'current_page' => $page,
             'total_pages' => $totalPages,
-            'shit' => true
+            'shit' => $coach_id
         ];
     }
 }
