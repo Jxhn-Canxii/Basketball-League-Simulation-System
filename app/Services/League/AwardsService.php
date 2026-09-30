@@ -681,7 +681,7 @@ class AwardsService
             ->join('teams','teams.id','=','pss.team_id')
             ->join('players','players.id','=','pss.player_id')
             ->join('player_game_highs','player_game_highs.player_id','=','pss.player_id')
-            ->select('player_game_highs.all_star_count','players.position','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
+            ->select('player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
             ->join('conferences','conferences.id','=','teams.conference_id')
             ->where('pss.season_id', $latestSeasonId)
             ->whereIn('teams.conference_id',$conferenceGroup)

@@ -68,16 +68,19 @@
                                     <div class="min-w-0">
                                         <div
                                             class="truncate text-sm font-bold uppercase tracking-wide text-white"
+                                            :title="transaction.player_name"
                                         >
                                             <i v-if="index == 0" class="fa fa-star text-yellow-500"></i>
                                             <i v-if="index <= 4" class="fa fa-square text-yellow-500"></i>
                                             <i v-if="index > 4 && index < 12" class="fa fa-square text-green-500"></i>
                                             <i v-if="index > 11" class="fa fa-lock text-gray-500"></i>
-                                            {{ transaction.player_name }} ({{ transaction.all_star_count }}x) 
+                                            {{ playerFormatter(transaction.player_name) }} 
+                                            <i v-if="currentTab == 'all_star' && transaction.all_star_count > 0">({{ transaction.all_star_count }}x)</i>
                                         </div>
-                                        <div class="text-xs">
+                                        <div class="text-xs text-nowrap">
                                             <a class="text-gray-400">{{ transaction.team_city }} {{ transaction.team_name }}</a> |
-                                            <a class="text-gray-400">{{ transaction.position }}</a>
+                                            <a class="text-gray-400">{{ transaction.position }}</a> |
+                                            <a class="text-gray-400">{{ transaction.draft_status ?? 'Undrafted' }}</a>
                                         </div>
                                         <div class="flex justify-start text-center gap-2 mt-2">
                                           <span
@@ -164,16 +167,19 @@
                                     <div class="min-w-0">
                                         <div
                                             class="truncate text-sm font-bold uppercase tracking-wide text-white"
+                                            :title="transaction.player_name"
                                         >
                                             <i v-if="index == 0" class="fa fa-star text-yellow-500"></i>
                                             <i v-if="index <= 4" class="fa fa-square text-yellow-500"></i>
                                             <i v-if="index > 4 && index < 12" class="fa fa-square text-green-500"></i>
                                             <i v-if="index > 11" class="fa fa-lock text-gray-500"></i>
-                                            {{ transaction.player_name }} ({{ transaction.all_star_count }}x)
+                                            {{ playerFormatter(transaction.player_name) }} 
+                                            <i v-if="currentTab == 'all_star' && transaction.all_star_count > 0">({{ transaction.all_star_count }}x)</i>
                                         </div>
-                                        <div class="text-xs">
+                                        <div class="text-xs text-nowrap">
                                             <a class="text-gray-400">{{ transaction.team_city }} {{ transaction.team_name }}</a> |
-                                            <a class="text-gray-400">{{ transaction.position }}</a>
+                                            <a class="text-gray-400">{{ transaction.position }}</a> |
+                                            <a class="text-gray-400">{{ transaction.draft_status ?? 'Undrafted' }}</a>
                                         </div>
                                         <div class="flex justify-start text-center gap-2 mt-2">
                                           <span
@@ -231,6 +237,7 @@
 import { ref, onMounted, computed } from 'vue';
 import axios from 'axios';
 import Swal from 'sweetalert2';
+import { playerFormatter } from "@/Utility/Formatter";
 
 const props = defineProps({
     season_id: {
