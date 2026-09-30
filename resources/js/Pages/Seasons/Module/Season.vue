@@ -209,7 +209,7 @@
 
                 <!-- Recent trade -->
                 <div v-if="seasonStatus == 1 && currentRound >= 5">
-                    <AllStarRace :season_id="props.season_id" :key="updateKey" />
+                    <AllStarRace :season_id="props.season_id" :key="currentRound" />
                 </div>
             </section>
 
