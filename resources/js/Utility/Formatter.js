@@ -500,6 +500,7 @@ export const playerFormatter = (name, withDot = true) => {
     // Remove extra spaces and split into parts
     const nameParts = name.trim().split(/\s+/);
 
+    console.log(nameParts);
     // If the name has more than one word, shorten the first to an initial
     if (nameParts.length > 2) {
         const initial = withDot ? `${nameParts[0][0]}.` : nameParts[0][0];

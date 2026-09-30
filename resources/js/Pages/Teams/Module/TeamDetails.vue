@@ -489,8 +489,8 @@ const props = defineProps({
     },
 
     showButton: {
-        type: Number,
-        default: 0,
+        type: [Boolean],
+        default: false,
     },
 
     season_id: {

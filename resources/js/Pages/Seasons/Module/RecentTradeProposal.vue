@@ -415,7 +415,7 @@ const props = defineProps({
     default: true,
   },
   seasonId: {
-    type: Number,
+    type: [String, Number],
     default: true,
   },
 });

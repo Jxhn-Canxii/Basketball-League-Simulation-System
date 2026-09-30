@@ -175,7 +175,7 @@
                     class="team-name"
                     :hexPrimaryColor="'ffffff'"
                     :hexSecondaryColor="team.primary_color"
-                    :showButton="0"
+                    :showButton="false"
                     :text="`${team.team_name} (${team.team_acronym})`"
                   />
                 </Tooltip>
