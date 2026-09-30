@@ -386,6 +386,7 @@ const endAwardWindow = async () => {
             text: reponse.data?.message,
         });
         
+        await getSeasonAwards();
     } catch (error) {
         console.log(error);
         Swal.close();

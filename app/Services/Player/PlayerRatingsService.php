@@ -471,7 +471,6 @@ class PlayerRatingsService
                 'updated_at' => now(),
             ]);
 
-       
         $latestSeasonId = get_current_season_id() ?? 0;
         $prevSeasonId = $latestSeasonId - 1;
 
@@ -532,32 +531,7 @@ class PlayerRatingsService
 
         $winRate = $gamesPlayed > 0 ? ($totalWins / $gamesPlayed) : 0;
 
-        if ($winRate >= 0.55 && $newContractYears == 0) {
-            // Re-sign coach
-            $newContractYears = rand(3, 5);
-
-            DB::table('coaches')
-                ->where('id', $coachId)
-                ->update([
-                    'contract_years' => $newContractYears,
-                    'updated_at' => now(),
-                ]);
-
-            // Insert into transactions table (re-signed)
-            DB::table('transactions')->insert([
-                'player_id' => 0,
-                'season_id' => $latestSeasonId,
-                'details' => $coach->name . ' has been re-signed as head coach of ' . $team->name . ' after a good season performance.',
-                'from_team_id' => 0,
-                'to_team_id' => $team->id,
-                'status' => 're-signed',
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return true;
-        } 
-        if($winRate <= 0.10 && $pastTeamPerformance) {
+        if($winRate <= 0.10 && $pastTeamPerformance && $newContractYears > 0) {
             // Waive coach
             DB::table('teams')
                 ->where('id', $teamId)
@@ -586,7 +560,7 @@ class PlayerRatingsService
 
             return true;
         }
-        else {
+        if ($winRate <= 0.55 && $newContractYears == 0) {
             // Waive coach
             DB::table('teams')
                 ->where('id', $teamId)
@@ -615,6 +589,31 @@ class PlayerRatingsService
 
             return true;
         }
+        if ($winRate >= 0.55 && $newContractYears == 0) {
+            // Re-sign coach
+            $newContractYears = rand(3, 5);
+
+            DB::table('coaches')
+                ->where('id', $coachId)
+                ->update([
+                    'contract_years' => $newContractYears,
+                    'updated_at' => now(),
+                ]);
+
+            // Insert into transactions table (re-signed)
+            DB::table('transactions')->insert([
+                'player_id' => 0,
+                'season_id' => $latestSeasonId,
+                'details' => $coach->name . ' has been re-signed as head coach of ' . $team->name . ' after a good season performance.',
+                'from_team_id' => 0,
+                'to_team_id' => $team->id,
+                'status' => 're-signed',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return true;
+        } 
 
         return true;
     }

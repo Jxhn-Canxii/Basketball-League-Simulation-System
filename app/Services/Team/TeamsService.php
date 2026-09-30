@@ -47,16 +47,18 @@ class TeamsService
         $query = Teams::query()
             ->join('leagues', 'teams.league_id', '=', 'leagues.id')
             ->join('conferences', 'teams.conference_id', '=', 'conferences.id','left')
-            ->select('teams.*', 'leagues.name as league_name', 'conferences.name as conference_name')
-            ->orderBy('teams.id','asc')
-            ->where('teams.conference_id','>',0);
+            ->select('teams.*', 'leagues.name as league_name', 'conferences.name as conference_name');
 
         // Apply search filter if search query is provided
-        if ($searchQuery) {
+        if ($searchQuery != '') {
             $query->where('teams.name', 'like', '%' . $searchQuery . '%')
+                ->orWhere('teams.city', 'like', '%' . $searchQuery . '%')
                 ->orWhere('leagues.name', 'like', '%' . $searchQuery . '%')
                 ->orWhere('conferences.name', 'like', '%' . $searchQuery . '%');
         }
+
+        $query->where('teams.conference_id','!=',0)
+            ->orderBy('teams.id','asc');
 
         // Get total count of records before pagination
         $totalCount = $query->count();
@@ -87,6 +89,7 @@ class TeamsService
             'total_count' => $totalCount,
             'search' => $searchQuery,
             'current_season' => $latestSeason,
+            'per_page' => $latestSeason,
         ]);
     }
 
