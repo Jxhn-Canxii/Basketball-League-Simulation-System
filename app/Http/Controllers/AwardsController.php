@@ -55,6 +55,18 @@ class AwardsController extends Controller
         return $this->awardsService->getSeasonAwards($request);
     }
 
+    public function getTeamAwards(Request $request)
+    {
+
+        // Validate the incoming request
+        $request->validate([
+            'team_id' => 'required|exists:teams,id',
+        ]);
+        // Fetch awards along with player, team, and season names for the latest season
+       
+        return $this->awardsService->getTeamAwards($request);
+    }
+
     public function endAwardsWindow(){
         return $this->awardsService->endAwardsWindow();
     }

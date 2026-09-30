@@ -404,6 +404,12 @@
                         :team_id="props.team_id"
                     />
 
+                    <TeamAwards
+                        v-else-if="currentTab === 'awards'"
+                        :key="`awards-${props.team_id}`"
+                        :team_id="props.team_id"
+                    />
+
                     <SeasonTimeLine
                         v-else-if="currentTab === 'timeline'"
                         :key="`timeline-${props.team_id}`"
@@ -464,6 +470,7 @@ import TeamHistory from "./TeamHistory.vue";
 import TeamRoster from "./TeamRoster.vue";
 import Top15Player from "./Top15Player.vue";
 import TeamTransactions from "./TeamTransactions.vue";
+import TeamAwards from "./TeamAwards.vue";
 import Stars from "./Stars.vue";
 
 import SeasonTimeLine from "@/Pages/Analytics/Module/SeasonTimeLine.vue";
@@ -582,8 +589,13 @@ const tabs = [
     },
     {
         key: "timeline",
-        label: "Season Timeline",
-        icon: "fas fa-clock",
+        label: "Timeline",
+        icon: "fas fa-chart-line",
+    },
+    {
+        key: "awards",
+        label: "Awardees",
+        icon: "fas fa-medal",
     },
     {
         key: "legend",

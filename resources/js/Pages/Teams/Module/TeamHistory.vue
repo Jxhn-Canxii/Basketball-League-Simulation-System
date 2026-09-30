@@ -3,27 +3,22 @@
     <div
         class="min-h-screen text-white overflow-hidden"
         v-if="team_info?.teams && !loading"
-        :style="pageStyle"
     >
         <!-- =====================================================
              HEADER
         ====================================================== -->
         <section
-            class="relative overflow-hidden border-b border-white/10"
-            :style="heroStyle"
+            class="relative overflow-hidden border-b border-white/10 bg-black"
         >
-            <!-- Decorative background -->
-            <div class="absolute inset-0 pointer-events-none">
-                <div
-                    class="absolute -right-32 -top-40 w-96 h-96 rounded-full blur-3xl opacity-20"
-                    :style="{ backgroundColor: primaryColor }"
-                ></div>
-
-                <div
-                    class="absolute -left-40 -bottom-40 w-96 h-96 rounded-full blur-3xl opacity-10"
-                    :style="{ backgroundColor: primaryColor }"
-                ></div>
-            </div>
+            <div
+                class="absolute inset-x-0 top-0 h-1"
+                :style="{
+                    background: teamGradient(
+                        primaryColor,
+                        secondaryColor
+                    ),
+                }"
+            ></div>
 
             <div class="relative px-4 sm:px-6 lg:px-8 py-5">
                 <div
@@ -894,33 +889,6 @@ const secondaryColor = computed(() => {
     return `#${String(color).replace("#", "")}`;
 });
 
-const pageStyle = computed(() => ({
-    background: `
-        radial-gradient(
-            circle at 10% 0%,
-            ${primaryColor.value}18 0%,
-            transparent 30%
-        ),
-        linear-gradient(
-            135deg,
-            #09090b 0%,
-            ${secondaryColor.value}45 50%,
-            #09090b 100%
-        )
-    `,
-}));
-
-const heroStyle = computed(() => ({
-    background: `
-        linear-gradient(
-            135deg,
-            ${secondaryColor.value} 0%,
-            ${secondaryColor.value}cc 55%,
-            #09090b 100%
-        )
-    `,
-}));
-
 const teamBadgeStyle = computed(() => ({
     background: `
         linear-gradient(
@@ -1081,6 +1049,29 @@ const handlePagination = (
         page_num ?? 1;
 
     fetchTeamHistory();
+};
+
+const hexColor = (color, fallback = "#1e293b") => {
+    if (!color) {
+        return fallback;
+    }
+
+    const value = String(color).replace("#", "");
+
+    return `#${value}`;
+};
+
+const teamGradient = (
+    primary,
+    secondary,
+    fallbackPrimary = "#334155",
+    fallbackSecondary = "#0f172a"
+) => {
+    return `linear-gradient(
+        135deg,
+        ${hexColor(primary, fallbackPrimary)} 0%,
+        ${hexColor(secondary, fallbackSecondary)} 100%
+    )`;
 };
 </script>
 <style scoped>

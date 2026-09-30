@@ -7,7 +7,7 @@
             class="w-full overflow-x-auto"
         >
             <ul
-                class="mx-auto flex w-max items-center gap-1 rounded-xl border border-gray-800 bg-gray-950 p-1.5 shadow-lg"
+                class="mx-auto flex w-max items-center gap-1 rounded-xl border border-gray-800 bg-black p-1.5 shadow-lg"
             >
                 <!-- First -->
                 <li>
@@ -323,7 +323,7 @@ const buttonClass = (disabled = false) => {
         "flex h-9 min-w-9 items-center justify-center rounded-lg border px-2 text-xs font-semibold transition-all duration-150",
 
         disabled
-            ? "cursor-not-allowed border-gray-900 bg-gray-950 text-gray-700"
+            ? "cursor-not-allowed border-gray-900 bg-black text-gray-700"
             : [
                   "border-gray-800",
                   "bg-gray-900",

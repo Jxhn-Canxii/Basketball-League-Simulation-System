@@ -890,7 +890,7 @@ class TeamsService
 
     private function getFinalsStats(int $teamId)
     {
-        return DB::table('playoff_series')
+        $latest = DB::table('playoff_series')
             ->where('round', 'finals')
             ->where(function ($q) use ($teamId) {
                 $q->where('home_team_id', $teamId)
@@ -900,6 +900,25 @@ class TeamsService
             ->selectRaw('SUM(CASE WHEN loser_team_id = ? THEN 1 ELSE 0 END) AS finals_losses', [$teamId])
             ->selectRaw('COUNT(*) AS finals_appearances')
             ->first();
+
+        $old = DB::table('playoff_series_archives')
+            ->where('round', 'finals')
+            ->where(function ($q) use ($teamId) {
+                $q->where('home_team_id', $teamId)
+                    ->orWhere('away_team_id', $teamId);
+            })
+            ->selectRaw('SUM(CASE WHEN winner_team_id = ? THEN 1 ELSE 0 END) AS finals_wins', [$teamId])
+            ->selectRaw('SUM(CASE WHEN loser_team_id = ? THEN 1 ELSE 0 END) AS finals_losses', [$teamId])
+            ->selectRaw('COUNT(*) AS finals_appearances')
+            ->first();
+
+        $data = [
+                'finals_wins' => $latest->finals_wins + $old->finals_wins,
+                'finals_losses' => $latest->finals_losses + $old->finals_losses,
+                'finals_appearances' => $latest->finals_appearances + $old->finals_appearances,
+            ];
+
+        return $data;
     }
 
     private function getRoundStats($teamId)

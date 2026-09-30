@@ -5,7 +5,7 @@
         <!-- ========================================================= -->
         <div
             v-if="team_info?.teams && !loading"
-            class="relative overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl"
+            class="relative overflow-hidden bg-black shadow-2xl"
         >
             <!-- Team color accent -->
             <div
@@ -79,7 +79,7 @@
 
                     <!-- Transaction count -->
                     <div
-                        class="self-start sm:self-auto flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-800 bg-slate-900"
+                        class="self-start sm:self-auto flex items-center gap-3 px-3 py-2.5 rounded-xl border border-slate-800"
                     >
                         <div
                             class="flex items-center justify-center w-8 h-8 rounded-lg bg-indigo-500/10"
@@ -113,7 +113,7 @@
                     <div>
                         <div class="flex items-center gap-2">
                             <span
-                                class="w-1.5 h-6 rounded-full bg-indigo-500"
+                                class="w-1.5 h-6 rounded-full bg-yellow-500"
                             ></span>
 
                             <h3
@@ -146,14 +146,14 @@
                 <!-- TRANSACTION TABLE -->
                 <!-- ================================================= -->
                 <div
-                    class="rounded-xl border border-slate-800 bg-slate-950 overflow-hidden"
+                    class="rounded-xl border border-slate-800 bg-black overflow-hidden"
                 >
                     <!-- Table scroll container -->
                     <div class="overflow-x-auto">
                         <table class="min-w-[1050px] w-full">
                             <thead>
                                 <tr
-                                    class="bg-slate-900 border-b border-slate-800"
+                                    class="border-b border-slate-800 bg-gray-950"
                                 >
                                     <th class="table-header text-left">
                                         Season
@@ -456,28 +456,29 @@
         <!-- ========================================================= -->
         <div
             v-else-if="loading"
-            class="rounded-2xl border border-slate-800 bg-slate-950 shadow-xl"
+            class="bg-black shadow-xl"
         >
             <div
-                class="flex flex-col items-center justify-center min-h-[280px] p-8"
+                class="flex flex-col items-center justify-center min-h-[300px] p-8"
             >
                 <div
-                    class="flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/10 mb-4"
+                    class="flex items-center justify-center w-12 h-12 rounded-xl border-yellow-500 border mb-4"
                 >
                     <i
-                        class="fas fa-spinner fa-spin text-indigo-400 text-lg"
+                        class="fas fa-spinner fa-spin text-yellow-400 text-lg"
                     ></i>
                 </div>
 
                 <p class="text-sm font-semibold text-slate-300">
-                    Loading Transaction History
+                    Loading Transactions
                 </p>
 
                 <p class="mt-1 text-xs text-slate-600">
-                    Retrieving team activity...
+                    Retrieving transaction records...
                 </p>
             </div>
         </div>
+
 
         <!-- ========================================================= -->
         <!-- FALLBACK -->
@@ -756,8 +757,8 @@ const handlePagination = (page_num) => {
 
 onMounted(async () => {
     await Promise.all([
-        fetchTeamTransactionHistory(),
         fetchTeamInfo(),
+        fetchTeamTransactionHistory()
     ]);
 });
 </script>

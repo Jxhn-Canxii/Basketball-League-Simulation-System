@@ -6,32 +6,23 @@
     <div
         v-if="team_info?.teams && !loading"
         class="min-h-screen text-white overflow-hidden"
-        :style="pageStyle"
     >
         <!-- =====================================================
              HERO / TEAM HEADER
         ====================================================== -->
         <section
             class="relative overflow-hidden border-b border-white/10"
-            :style="heroStyle"
         >
             <!-- Decorative background -->
-            <div class="absolute inset-0 pointer-events-none overflow-hidden">
-                <div
-                    class="absolute -right-24 -top-32 w-80 h-80 rounded-full blur-3xl opacity-20"
-                    :style="{ backgroundColor: primaryColor }"
-                ></div>
-
-                <div
-                    class="absolute -left-32 -bottom-40 w-96 h-96 rounded-full blur-3xl opacity-10"
-                    :style="{ backgroundColor: primaryColor }"
-                ></div>
-
-                <div
-                    class="absolute right-0 bottom-0 w-1/2 h-px opacity-40"
-                    :style="{ backgroundColor: primaryColor }"
-                ></div>
-            </div>
+            <div
+                class="absolute inset-x-0 top-0 h-1"
+                :style="{
+                    background: teamGradient(
+                        team_info.teams?.primary_color,
+                        team_info.teams?.secondary_color
+                    ),
+                }"
+            ></div>
 
             <div class="relative px-4 sm:px-6 lg:px-8 py-5">
                 <!-- Top row -->
@@ -164,8 +155,9 @@
                     class="mt-5 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3"
                 >
                     <div
-                        v-for="metric in headerMetrics"
+                        v-for="(metric,i) in headerMetrics"
                         :key="metric.label"
+                        :style="{ backgroundColor: (i % 2 == 0) ? primaryColor : secondaryColor }"
                         class="rounded-xl border border-white/10 bg-black/20 backdrop-blur-sm px-3 py-3"
                     >
                         <div
@@ -173,7 +165,7 @@
                         >
                             <i
                                 :class="metric.icon"
-                                :style="{ color: metric.color || primaryColor }"
+                                :style="{ color: (i % 2 != 0) ? primaryColor : secondaryColor }"
                             ></i>
 
                             {{ metric.label }}
@@ -414,63 +406,49 @@
                 >
                     <HistoryCard
                         label="Play-In R1"
-                        :value="
-                            team_last_season.lastPlayInsRound1Season
-                        "
+                        :value="team_last_season.lastPlayInsRound1Season"
                         :primary="false"
                         :primary-color="primaryColor"
                     />
 
                     <HistoryCard
                         label="Play-In R2"
-                        :value="
-                            team_last_season.lastPlayInsRound2Season
-                        "
+                        :value="team_last_season.lastPlayInsRound2Season"
                         :primary="true"
                         :primary-color="primaryColor"
                     />
 
                     <HistoryCard
                         label="Play-In Final"
-                        :value="
-                            team_last_season.lastPlayInsFinalsSeason
-                        "
+                        :value="team_last_season.lastPlayInsFinalsSeason"
                         :primary="false"
                         :primary-color="primaryColor"
                     />
 
                     <HistoryCard
                         label="Round of 16"
-                        :value="
-                            team_last_season.lastRoundOf16Season
-                        "
+                        :value="team_last_season.lastRoundOf16Season"
                         :primary="true"
                         :primary-color="primaryColor"
                     />
 
                     <HistoryCard
                         label="Quarter Final"
-                        :value="
-                            team_last_season.lastQuarterFinalSeason
-                        "
+                        :value="team_last_season.lastQuarterFinalSeason"
                         :primary="false"
                         :primary-color="primaryColor"
                     />
 
                     <HistoryCard
-                        label="Semi Final"
-                        :value="
-                            team_last_season.lastSemiFinalSeason
-                        "
+                        label="Conference Final"
+                        :value="team_last_season.lastSemiFinalSeason"
                         :primary="true"
                         :primary-color="primaryColor"
                     />
 
                     <HistoryCard
                         label="Final"
-                        :value="
-                            team_last_season.lastFinalSeason
-                        "
+                        :value="team_last_season.lastFinalSeason"
                         :primary="false"
                         :primary-color="primaryColor"
                     />
@@ -1011,6 +989,11 @@
 import { ref, computed, watch, onMounted } from "vue";
 import axios from "axios";
 import { roundNameFormatter, numberFormatter } from "@/Utility/Formatter";
+import SectionHeader from "./Cards/SectionHeader.vue";
+import HistoryCard from "./Cards/HistoryCard.vue";
+import StatCard from "./Cards/StatCard.vue";
+import EmptyState from "./Cards/EmptyState.vue";
+import AchievementCard from "./Cards/AchievementCard.vue";
 
 const props = defineProps({
     team_id: {
@@ -1569,224 +1552,28 @@ const fetchTeamMatchesHead2Head = async (
         );
     }
 };
-</script>
 
-<script>
-/*
-|--------------------------------------------------------------------------
-| Local presentation components
-|--------------------------------------------------------------------------
-|
-| Keeping these components here means you don't have to create
-| additional Vue component files.
-|--------------------------------------------------------------------------
-*/
+const hexColor = (color, fallback = "#1e293b") => {
+    if (!color) {
+        return fallback;
+    }
 
-export default {
-    components: {
-        SectionHeader: {
-            props: {
-                eyebrow: String,
-                title: String,
-                icon: String,
-            },
+    const value = String(color).replace("#", "");
 
-            template: `
-                <div class="flex items-center justify-between gap-3 mb-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div
-                            class="flex-shrink-0 w-9 h-9 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/50"
-                        >
-                            <i :class="icon"></i>
-                        </div>
+    return `#${value}`;
+};
 
-                        <div class="min-w-0">
-                            <div
-                                class="text-[9px] font-black tracking-[0.2em] text-white/25 uppercase"
-                            >
-                                {{ eyebrow }}
-                            </div>
-
-                            <h2
-                                class="text-lg sm:text-xl font-black truncate"
-                            >
-                                {{ title }}
-                            </h2>
-                        </div>
-                    </div>
-
-                    <slot name="right"></slot>
-                </div>
-            `,
-        },
-
-        StatCard: {
-            props: {
-                title: String,
-                icon: String,
-                accent: String,
-            },
-
-            template: `
-                <div
-                    class="relative overflow-hidden rounded-2xl border border-white/10 bg-white/[0.035] p-4"
-                >
-                    <div
-                        class="absolute top-0 left-0 right-0 h-px opacity-50"
-                        :style="{ backgroundColor: accent }"
-                    ></div>
-
-                    <div class="flex items-center gap-2 mb-4">
-                        <i
-                            :class="icon"
-                            class="text-xs"
-                            :style="{ color: accent }"
-                        ></i>
-
-                        <span
-                            class="text-[10px] uppercase tracking-widest font-bold text-white/40"
-                        >
-                            {{ title }}
-                        </span>
-                    </div>
-
-                    <slot></slot>
-                </div>
-            `,
-        },
-
-        HistoryCard: {
-            props: {
-                label: String,
-                value: [String, Number],
-                primary: Boolean,
-                primaryColor: String,
-            },
-
-            template: `
-                <div
-                    class="rounded-xl border p-3 min-w-0"
-                    :class="
-                        primary
-                            ? 'border-white/5'
-                            : 'border-white/10'
-                    "
-                    :style="
-                        primary
-                            ? {
-                                  backgroundColor:
-                                      primaryColor + '18',
-                              }
-                            : {
-                                  backgroundColor:
-                                      'rgba(255,255,255,0.025)',
-                              }
-                    "
-                >
-                    <div
-                        class="text-[9px] uppercase tracking-wider font-bold text-white/35 truncate"
-                    >
-                        {{ label }}
-                    </div>
-
-                    <div
-                        class="mt-2 text-base font-black truncate"
-                        :style="
-                            primary
-                                ? {
-                                      color: primaryColor,
-                                  }
-                                : {}
-                        "
-                    >
-                        {{ value || 'n/a' }}
-                    </div>
-                </div>
-            `,
-        },
-
-        AchievementCard: {
-            props: {
-                title: String,
-                icon: String,
-                items: {
-                    type: Array,
-                    default: () => [],
-                },
-                accent: String,
-                danger: Boolean,
-            },
-
-            template: `
-                <div
-                    class="rounded-2xl border border-white/10 bg-white/[0.035] p-4 min-h-[150px]"
-                >
-                    <div
-                        class="flex items-center gap-2 mb-4"
-                    >
-                        <i
-                            :class="icon"
-                            class="text-xs"
-                            :style="{ color: accent }"
-                        ></i>
-
-                        <span
-                            class="text-[10px] uppercase tracking-wider font-bold text-white/45"
-                        >
-                            {{ title }}
-                        </span>
-                    </div>
-
-                    <div
-                        v-if="items?.length"
-                        class="flex flex-wrap gap-1.5"
-                    >
-                        <span
-                            v-for="(season, index) in items"
-                            :key="index"
-                            class="px-2 py-1 rounded-lg text-[10px] font-bold border"
-                            :style="{
-                                color: accent,
-                                borderColor: accent + '30',
-                                backgroundColor: accent + '12'
-                            }"
-                        >
-                            {{ season }}
-                        </span>
-                    </div>
-
-                    <div
-                        v-else
-                        class="h-20 flex items-center justify-center text-center text-xs text-white/20"
-                    >
-                        No seasons recorded
-                    </div>
-                </div>
-            `,
-        },
-
-        EmptyState: {
-            props: {
-                message: String,
-            },
-
-            template: `
-                <div
-                    class="rounded-2xl border border-dashed border-white/10 bg-white/[0.02] py-10 px-5 text-center"
-                >
-                    <div
-                        class="w-10 h-10 mx-auto rounded-xl bg-white/5 flex items-center justify-center text-white/20"
-                    >
-                        <i class="fas fa-inbox"></i>
-                    </div>
-
-                    <p class="mt-3 text-sm text-white/30">
-                        {{ message }}
-                    </p>
-                </div>
-            `,
-        },
-    },
+const teamGradient = (
+    primary,
+    secondary,
+    fallbackPrimary = "#334155",
+    fallbackSecondary = "#0f172a"
+) => {
+    return `linear-gradient(
+        135deg,
+        ${hexColor(primary, fallbackPrimary)} 0%,
+        ${hexColor(secondary, fallbackSecondary)} 100%
+    )`;
 };
 </script>
 

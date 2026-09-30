@@ -43,6 +43,32 @@ class AwardsService
         ]);
     }
 
+    public function getTeamAwards($request)
+    {
+
+        // Fetch awards along with player, team, and season names for the latest season
+        $awards = DB::table('season_awards')
+            ->leftJoin('players', 'season_awards.player_id', '=', 'players.id')
+            ->leftJoin('teams', 'season_awards.team_id', '=', 'teams.id')
+            ->leftJoin('seasons', 'season_awards.season_id', '=', 'seasons.id') // Join the seasons table
+            ->where('season_awards.team_id', $request->team_id)
+            ->select(
+                'season_awards.*',
+                'players.name as player_name',
+                'teams.name as team_name',
+                'seasons.name as season_name' // Select the season name
+            )
+            ->orderBy('season_awards.season_id','desc')
+            ->orderBy('season_awards.id','desc')
+            ->get();
+
+
+        return response()->json([
+            'message' => 'Season awards stored successfully.',
+            'awards' => $awards
+        ]);
+    }
+
     public function getawardnamesdropdown()
     {
         // Fetch distinct award names from the season_awards table

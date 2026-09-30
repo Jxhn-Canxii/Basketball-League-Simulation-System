@@ -2,17 +2,23 @@
 <template>
     <div
         v-if="team_info?.teams && !loading"
-        class="min-h-screen w-full overflow-hidden bg-gray-950"
+        class="min-h-screen w-full overflow-hidden bg-black"
     >
         <!-- =========================================================
              TEAM HEADER
         ========================================================== -->
         <section
             class="relative overflow-hidden border-b border-white/10"
-            :style="{
-                background: `linear-gradient(135deg, #${team_info.teams.primary_color} 0%, #${team_info.teams.secondary_color} 100%)`
-            }"
         >
+            <div
+                class="absolute inset-x-0 top-0 h-1"
+                :style="{
+                    background: teamGradient(
+                        team_info.teams?.primary_color,
+                        team_info.teams?.secondary_color
+                    ),
+                }"
+            ></div>
             <!-- Decorative background -->
             <div class="pointer-events-none absolute inset-0 overflow-hidden">
                 <div
@@ -144,7 +150,7 @@
              NAVIGATION
         ========================================================== -->
         <section
-            class="sticky top-0 z-30 border-b border-gray-800 bg-gray-950/95 backdrop-blur-xl"
+            class="sticky top-0 z-30 border-b border-gray-800 bg-black backdrop-blur-xl"
         >
             <div class="px-3 sm:px-5 lg:px-8">
                 <div
@@ -312,7 +318,7 @@
 
                 <!-- Legend -->
                 <div
-                    class="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-gray-800 bg-gray-900/60 px-3 py-2.5"
+                    class="mb-4 flex flex-wrap items-center gap-2 rounded-xl border border-gray-800 bg-black px-3 py-2.5"
                 >
                     <span
                         class="mr-1 text-[10px] font-bold uppercase tracking-wider text-gray-600"
@@ -963,29 +969,30 @@
          LOADING
     ============================================================== -->
     <div
-        v-else
-        class="flex min-h-[420px] items-center justify-center bg-gray-950"
-    >
-        <div class="flex flex-col items-center">
+            v-if="loading"
+            class="bg-black shadow-xl"
+        >
+        <div
+            class="flex flex-col items-center justify-center min-h-[300px] p-8"
+        >
             <div
-                class="flex h-14 w-14 items-center justify-center rounded-2xl border border-gray-800 bg-gray-900"
+                class="flex items-center justify-center w-12 h-12 rounded-xl border-yellow-500 border mb-4"
             >
                 <i
-                    class="fas fa-spinner fa-spin text-xl text-gray-400"
+                    class="fas fa-spinner fa-spin text-yellow-400 text-lg"
                 ></i>
             </div>
 
-            <p
-                class="mt-4 text-sm font-semibold text-gray-400"
-            >
-                Loading team roster...
+            <p class="text-sm font-semibold text-slate-300">
+                Loading Team Roster
             </p>
 
-            <p class="mt-1 text-xs text-gray-600">
-                Preparing player information
+            <p class="mt-1 text-xs text-slate-600">
+                Retrieving players...
             </p>
         </div>
     </div>
+
 </template>
 
 <script setup>
@@ -1443,6 +1450,30 @@ const getMoraleTitle = (chemistry) => {
 
     return "Frustrated";
 };
+
+const hexColor = (color, fallback = "#1e293b") => {
+    if (!color) {
+        return fallback;
+    }
+
+    const value = String(color).replace("#", "");
+
+    return `#${value}`;
+};
+
+const teamGradient = (
+    primary,
+    secondary,
+    fallbackPrimary = "#334155",
+    fallbackSecondary = "#0f172a"
+) => {
+    return `linear-gradient(
+        135deg,
+        ${hexColor(primary, fallbackPrimary)} 0%,
+        ${hexColor(secondary, fallbackSecondary)} 100%
+    )`;
+};
+
 </script>
 
 <style scoped>
@@ -1480,7 +1511,7 @@ const getMoraleTitle = (chemistry) => {
 
 .player-row {
     cursor: pointer;
-    background: #030712;
+    background: #060607;
     transition:
         background-color 150ms ease,
         box-shadow 150ms ease;
