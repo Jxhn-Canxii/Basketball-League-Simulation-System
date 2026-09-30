@@ -392,6 +392,12 @@
                         :team_id="props.team_id"
                     />
 
+                    <TeamPlayerStats
+                        v-else-if="currentTab === 'player-stats'"
+                        :key="`player-stats-${props.team_id}`"
+                        :team_id="props.team_id"
+                    />
+
                     <TeamTransactions
                         v-else-if="currentTab === 'transactions'"
                         :key="`transactions-${props.team_id}`"
@@ -468,6 +474,7 @@ import Modal from "@/Components/Modal.vue";
 import TeamInfo from "./TeamInfo.vue";
 import TeamHistory from "./TeamHistory.vue";
 import TeamRoster from "./TeamRoster.vue";
+import TeamPlayerStats from "./TeamPlayerStats.vue";
 import Top15Player from "./Top15Player.vue";
 import TeamTransactions from "./TeamTransactions.vue";
 import TeamAwards from "./TeamAwards.vue";
@@ -576,6 +583,11 @@ const tabs = [
         key: "roster",
         label: "Team Roster",
         icon: "fas fa-users-cog",
+    },
+    {
+        key: "player-stats",
+        label: "Player Stats",
+        icon: "fas fa-chart-bar",
     },
     {
         key: "transactions",

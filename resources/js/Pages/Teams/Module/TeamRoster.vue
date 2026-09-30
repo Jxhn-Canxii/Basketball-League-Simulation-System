@@ -173,20 +173,6 @@
                             <i class="fas fa-users"></i>
                             Roster
                         </button>
-
-                        <button
-                            type="button"
-                            @click="viewType = 'depth'"
-                            :class="[
-                                'flex shrink-0 items-center gap-2 rounded-lg px-3 py-2 text-xs font-bold transition-all sm:px-4',
-                                viewType === 'depth'
-                                    ? 'bg-white text-gray-950 shadow'
-                                    : 'text-gray-400 hover:bg-gray-800 hover:text-white'
-                            ]"
-                        >
-                            <i class="fas fa-chart-bar"></i>
-                            Depth Chart
-                        </button>
                     </div>
 
                     <!-- Roster filters -->
@@ -375,17 +361,12 @@
                                     <th class="sticky-col first-col">
                                         #
                                     </th>
-
-                                    <th>Achievements</th>
-                                    <th>Draft</th>
-
                                     <th class="sticky-player">
                                         Player
                                     </th>
 
                                     <th>Pos</th>
                                     <th>Exp</th>
-                                    <th>Role</th>
                                     <th title="Years with team">
                                         Team
                                     </th>
@@ -397,14 +378,6 @@
                                         OVR
                                     </th>
 
-                                    <th title="Best Player of the Game">
-                                        BPOTG
-                                    </th>
-
-                                    <th title="Total Team Games">
-                                        GT
-                                    </th>
-
                                     <th title="Games Played">
                                         GP
                                     </th>
@@ -412,51 +385,9 @@
                                     <th title="Games Played">
                                         GS
                                     </th>
-
-                                    <th title="Minutes Per Game">
-                                        MPG
-                                    </th>
-
-                                    <th title="Points Per Game">
-                                        PPG
-                                    </th>
-
-                                    <th title="Rebounds Per Game">
-                                        RPG
-                                    </th>
-
-                                    <th title="Assists Per Game">
-                                        APG
-                                    </th>
-
-                                    <th title="Steals Per Game">
-                                        SPG
-                                    </th>
-
-                                    <th title="Blocks Per Game">
-                                        BPG
-                                    </th>
-
-                                    <th title="Turnovers Per Game">
-                                        TOPG
-                                    </th>
-
-                                    <th title="Fouls Per Game">
-                                        FPG
-                                    </th>
-
-                                    <th title="Efficiency">
-                                        EFF
-                                    </th>
-
-                                    <th title="Player Efficiency Rating">
-                                        PER
-                                    </th>
-
-                                    <th title="Player Valuation">
-                                        PVE
-                                    </th>
-
+                                    <th>PVE</th>
+                                    <th>Draft</th>
+                                    <th>Achievements</th>
                                     <th>Legend</th>
                                 </tr>
                             </thead>
@@ -481,68 +412,6 @@
                                     <!-- Number -->
                                     <td class="sticky-col first-col number-cell">
                                         {{ index + 1 }}
-                                    </td>
-
-                                    <!-- Achievements -->
-                                    <td>
-                                        <div
-                                            class="flex items-center gap-1"
-                                        >
-                                            <span
-                                                v-if="
-                                                    player.championships_won > 0
-                                                "
-                                                :title="`National Championships: ${player.championships_won}`"
-                                                class="achievement gold"
-                                            >
-                                                {{ player.championships_won }}
-                                            </span>
-
-                                            <span
-                                                v-if="
-                                                    player.conference_championships_won >
-                                                    0
-                                                "
-                                                :title="`Conference Championships: ${player.conference_championships_won}`"
-                                                class="achievement silver"
-                                            >
-                                                {{
-                                                    player.conference_championships_won
-                                                }}
-                                            </span>
-
-                                            <span
-                                                v-if="player.awards_won > 0"
-                                                :title="`Awards Won: ${player.awards_won}`"
-                                                class="achievement blue"
-                                            >
-                                                {{ player.awards_won }}
-                                            </span>
-
-                                            <span
-                                                v-if="
-                                                    !player.championships_won &&
-                                                    !player.conference_championships_won &&
-                                                    !player.awards_won
-                                                "
-                                                class="text-gray-700"
-                                            >
-                                                —
-                                            </span>
-                                        </div>
-                                    </td>
-
-                                    <!-- Draft -->
-                                    <td
-                                        :title="
-                                            'Draft class: ' +
-                                            (player.draft_class ?? '-')
-                                        "
-                                        class="max-w-[180px]"
-                                    >
-                                        <span class="truncate text-gray-400">
-                                            {{ draftLabel(player) }}
-                                        </span>
                                     </td>
 
                                     <!-- Player -->
@@ -615,6 +484,13 @@
                                                         class="fas fa-lock shrink-0 text-[9px] text-gray-600"
                                                         title="Reserved"
                                                     ></i>
+                                                    <span
+                                                        v-if="player.all_star_count > 0"
+                                                        class="achievement blue"
+                                                        :title="player.all_star_count+'x All-star'"
+                                                    >
+                                                        {{ player.all_star_count ?? 0 }}x
+                                                    </span>
                                                 </div>
 
                                                 <div
@@ -644,19 +520,6 @@
                                         {{
                                             player.total_seasons_played ?? 0
                                         }}
-                                    </td>
-
-                                    <!-- Role -->
-                                    <td>
-                                        <span
-                                            :class="
-                                                roleBadgeClass(
-                                                    player.role ?? 'reserved'
-                                                )
-                                            "
-                                        >
-                                            {{ player.role ?? "reserved" }}
-                                        </span>
                                     </td>
 
                                     <!-- Team years -->
@@ -700,23 +563,6 @@
                                         </div>
                                     </td>
 
-                                    <!-- BPOTG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.bpg_game_leader
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- GT -->
-                                    <td>
-                                        {{
-                                            Math.round(
-                                                player.team_total_games ?? 0
-                                            )
-                                        }}
-                                    </td>
 
                                     <!-- GP -->
                                     <td>
@@ -736,110 +582,79 @@
                                         }}
                                     </td>
 
-                                    <!-- MPG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.average_minutes_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- PPG -->
-                                    <td class="stat-highlight">
-                                        {{
-                                            number(
-                                                player.average_points_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- RPG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.average_rebounds_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- APG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.average_assists_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- SPG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.average_steals_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- BPG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.average_blocks_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- TOPG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.average_turnovers_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- FPG -->
-                                    <td>
-                                        {{
-                                            number(
-                                                player.average_fouls_per_game
-                                            )
-                                        }}
-                                    </td>
-
-                                    <!-- EFF -->
-                                    <td>
-                                        <span
-                                            :class="
-                                                player.effeciency <= 0
-                                                    ? 'text-red-400'
-                                                    : 'text-lime-400'
-                                            "
-                                            class="font-black"
-                                        >
-                                            {{ player.effeciency ?? "-" }}
-                                        </span>
-                                    </td>
-
-                                    <!-- PER -->
-                                    <td>
-                                        <span
-                                            class="font-bold text-gray-300"
-                                        >
-                                            {{
-                                                player.per_game_score ?? "-"
-                                            }}
-                                        </span>
-                                    </td>
-
                                     <!-- PVE -->
                                     <td>
                                         {{
                                             player.player_valuation ?? "-"
                                         }}
                                     </td>
+                                    <!-- Draft -->
+                                    <td
+                                        :title="
+                                            'Draft class: ' +
+                                            (player.draft_class ?? '-')
+                                        "
+                                        class="max-w-[180px]"
+                                    >
+                                        <span class="truncate text-gray-400">
+                                            {{ draftLabel(player) }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div
+                                            class="flex items-center gap-1"
+                                        >
+                                            <span
+                                                v-if="
+                                                    player.championships_won > 0
+                                                "
+                                                :title="`National Championships: ${player.championships_won}`"
+                                                class="achievement gold"
+                                            >
+                                                {{ player.championships_won }}
+                                            </span>
 
+                                            <span
+                                                v-if="
+                                                    player.conference_championships_won >
+                                                    0
+                                                "
+                                                :title="`Conference Championships: ${player.conference_championships_won}`"
+                                                class="achievement silver"
+                                            >
+                                                {{
+                                                    player.conference_championships_won
+                                                }}
+                                            </span>
+
+                                            <span
+                                                v-if="player.awards_won > 0"
+                                                :title="`Awards Won: ${player.awards_won}`"
+                                                class="achievement blue"
+                                            >
+                                                {{ player.awards_won }}
+                                            </span>
+
+                                            <span
+                                                v-if="
+                                                    !player.championships_won &&
+                                                    !player.conference_championships_won &&
+                                                    !player.awards_won
+                                                "
+                                                class="text-gray-700"
+                                            >
+                                                —
+                                            </span>
+
+                                            <span
+                                                v-if="player.all_star_count > 0"
+                                                class="achievement blue"
+                                                :title="player.all_star_count+'x All-star'"
+                                            >
+                                                {{ player.all_star_count ?? 0 }}x All-Star
+                                            </span>
+                                        </div>
+                                    </td>
                                     <!-- Legend -->
                                     <td>
                                         <PlayerLegend :player="player" />
@@ -1014,7 +829,7 @@ const props = defineProps({
 
 const showExtendModal = ref(false);
 const showTransferred = ref(true);
-const loading = ref(false);
+const loading = ref(true);
 const showPlayerProfileModal = ref(false);
 
 const currentTab = ref("all");

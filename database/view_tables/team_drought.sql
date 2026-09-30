@@ -23,3 +23,20 @@ SELECT
 FROM team_season_info tsi
 JOIN teams t ON t.id = tsi.team_id
 GROUP BY tsi.team_id, t.name;
+
+
+
+CREATE OR REPLACE VIEW team_all_star_count AS
+    SELECT t.name as team_name,COUNT(sa.id) as awards_count FROM `teams` as t 
+    LEFT JOIN `season_awards` as sa 
+    ON sa.team_id = t.id
+	WHERE sa.award_name = 'all-star'
+    GROUP BY sa.team_id
+    ORDER BY awards_count DESC;
+
+CREATE OR REPLACE VIEW team_awards_count AS
+    SELECT t.name as team_name,COUNT(sa.id) as awards_count FROM `teams` as t 
+    LEFT JOIN `season_awards` as sa 
+    ON sa.team_id = t.id
+    GROUP BY sa.team_id
+    ORDER BY awards_count DESC;

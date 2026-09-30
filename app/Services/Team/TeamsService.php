@@ -1416,9 +1416,11 @@ class TeamsService
                         'player_playoff_appearances.conference_championships_won',
                         'player_playoff_appearances.championships_won',
                         'player_playoff_appearances.total_playoff_series_appearances',
+                        'player_game_highs.all_star_count',
                         DB::raw('(SELECT COUNT(*) FROM season_awards WHERE season_awards.player_id = players.id) as awards_won')
                     )
                     ->leftJoin('seasons', 'players.draft_id', '=', 'seasons.id')
+                    ->leftJoin('player_game_highs', 'player_game_highs.player_id', '=', 'players.id')
                     ->leftJoin('player_playoff_appearances', 'players.id', '=', 'player_playoff_appearances.player_id')
                     ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
                     ->where('players.id', $stats->player_id)
@@ -1478,6 +1480,7 @@ class TeamsService
                         'role' => $playerRole,
                         'is_active' => $player->is_active,
                         'morale' => $player->morale,
+                        'all_star_count' => $player->all_star_count,
                         'hardship_contract' => $player->hardship_contract,
                         'salary' => '₱'.number_format($player->salary,2,'.',','),
                         'contract_type' => $player->contract_type,
@@ -1539,10 +1542,12 @@ class TeamsService
                     'seasons.name as draft_class',
                     'player_playoff_appearances.conference_championships_won',
                     'player_playoff_appearances.championships_won',
+                    'player_game_highs.all_star_count',
                     'player_playoff_appearances.total_playoff_series_appearances',
                     DB::raw('(SELECT COUNT(*) FROM season_awards WHERE season_awards.player_id = players.id) as awards_won')
                 )
                 ->leftJoin('seasons', 'players.draft_id', '=', 'seasons.id')
+                ->leftJoin('player_game_highs', 'player_game_highs.player_id', '=', 'players.id')
                 ->leftJoin('player_playoff_appearances', 'players.id', '=', 'player_playoff_appearances.player_id')
                 ->leftJoin('teams', 'players.drafted_team_id', '=', 'teams.id')
                 ->where('team_id', $teamId)
@@ -1641,6 +1646,7 @@ class TeamsService
                         'role' => $player->role ?? 'reserved',
                         'is_active' => $player->is_active,
                         'morale' => $player->morale,
+                        'all_star_count' => $player->all_star_count,
                         'is_rookie' => $player->is_rookie,
                         'is_reserved' => $player->is_reserved,
                         'injury_type' => $player->injury_type,
