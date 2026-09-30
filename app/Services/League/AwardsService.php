@@ -680,17 +680,36 @@ class AwardsService
     
         $seasonStatsDB = $this->helper->getSeasonStatsDBName($latestSeasonId);
 
+        $seasonStatus = $this->helper->seasonStatus($latestSeasonId);
         // Get player stats from player_season_stats for the latest season
-        $playerStats = DB::table($seasonStatsDB.' as pss')
-            ->join('teams','teams.id','=','pss.team_id')
-            ->join('players','players.id','=','pss.player_id')
-            ->join('player_game_highs','player_game_highs.player_id','=','pss.player_id')
-            ->select('player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
-            ->join('conferences','conferences.id','=','teams.conference_id')
-            ->where('pss.season_id', $latestSeasonId)
-            ->where('players.is_injured', 0)
-            ->whereIn('teams.conference_id',$conferenceGroup)
-            ->get();
+        
+        if($seasonStatus == 1){
+            $playerStats = DB::table($seasonStatsDB.' as pss')
+                ->join('teams','teams.id','=','pss.team_id')
+                ->join('players','players.id','=','pss.player_id')
+                ->join('player_game_highs','player_game_highs.player_id','=','pss.player_id')
+                ->select('player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
+                ->join('conferences','conferences.id','=','teams.conference_id')
+                ->where('pss.season_id', $latestSeasonId)
+                ->where('players.is_injured', 0)
+                ->whereIn('teams.conference_id',$conferenceGroup)
+                ->get();
+        }
+        else{
+
+            $playerStats = DB::table($seasonStatsDB.' as pss')
+                ->join('teams','teams.id','=','pss.team_id')
+                ->join('players','players.id','=','pss.player_id')
+                ->join('player_game_highs','player_game_highs.player_id','=','pss.player_id')
+                ->select('player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
+                ->join('conferences','conferences.id','=','teams.conference_id')
+                ->join('season_awards','season_awards.player_id','=','pss.player_id')
+                ->where('pss.season_id', $latestSeasonId)
+                ->where('season_awards.season_id', $latestSeasonId)
+                ->whereIn('season_awards.award_name',['all-star','all-rookie'])
+                ->whereIn('teams.conference_id',$conferenceGroup)
+                ->get();
+        }
 
         $eligiblePlayerStats = $playerStats->filter(function ($stats) {
             return (int)$stats->total_games_played > 5;

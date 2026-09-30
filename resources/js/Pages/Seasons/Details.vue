@@ -98,12 +98,12 @@
                             <!-- Season List -->
                             <a
                                 :href="route('seasons.index')"
-                                class="group flex shrink-0 items-center gap-2 rounded-lg border border-transparent px-3 py-2 text-xs font-semibold text-gray-400 transition hover:border-gray-800 hover:bg-gray-900 hover:text-white"
+                                class="group flex shrink-0 items-center gap-2 rounded-lg border border-yellow-500 bg-yellow-00 px-3 py-2 text-xs font-semibold text-yellow-400 transition hover:border-gray-800 hover:bg-gray-900 hover:text-white"
                             >
                                 <span
                                     class="flex h-6 w-6 items-center justify-center rounded-md bg-gray-900 text-gray-500 transition group-hover:text-white"
                                 >
-                                    <i class="fa fa-list text-[10px]"></i>
+                                    <i class="fa fa-list text-[10px] text-yellow-500"></i>
                                 </span>
 
                                 <span>Season List</span>
@@ -212,6 +212,19 @@
                                 </span>
 
                                 <span>Transactions</span>
+                            </button>
+
+                            <!-- AllStar -->
+                            <button
+                                type="button"
+                                @click="changeTab('AllStar')"
+                                :class="tabClass('AllStar')"
+                            >
+                                <span :class="tabIconClass('AllStar')">
+                                    <i class="fa fa-star text-[10px]"></i>
+                                </span>
+
+                                <span>All Stars</span>
                             </button>
 
                             <!-- Reset -->
@@ -374,6 +387,17 @@
                         </div>
                     </section>
 
+                    <section
+                        v-if="currentTab === 'AllStar' && season_id != 0"
+                        class="min-w-0 overflow-hidden rounded-xl border border-gray-800 bg-gray-900 shadow-lg"
+                    >
+                        <div class="min-w-0 overflow-x-auto p-2 sm:p-4">
+                            <AllStarRace :season_id="season_id" :key="season_id" />
+                        </div>
+                    </section>
+
+
+
                     <!-- Reset -->
                     <section
                         v-if="currentTab === 'Reset' && season_id != 0"
@@ -433,6 +457,7 @@ import Transactions from "./Module/Transactions.vue";
 import AllNews from "./Module/AllNews.vue";
 import ProposedTrade from "./Module/ProposedTrade.vue";
 import ResetControls from "./Module/ResetControls.vue";
+import AllStarRace from "./Module/AllStarRace.vue";
 
 const props = defineProps({
     season_id: {
@@ -506,6 +531,12 @@ const tabDefinitions = {
         active: "text-violet-400",
         icon: "text-violet-400",
         iconBg: "bg-violet-500/10",
+    },
+
+    AllStar: {
+        active: "text-blue-400",
+        icon: "text-blue-400",
+        iconBg: "bg-blue-500/10",
     },
 
     Reset: {
