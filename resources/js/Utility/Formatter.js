@@ -501,7 +501,7 @@ export const playerFormatter = (name, withDot = true) => {
     const nameParts = name.trim().split(/\s+/);
 
     // If the name has more than one word, shorten the first to an initial
-    if (nameParts.length > 1) {
+    if (nameParts.length > 2) {
         const initial = withDot ? `${nameParts[0][0]}.` : nameParts[0][0];
         return `${initial} ${nameParts.slice(1).join(" ")}`;
     }
