@@ -1005,7 +1005,7 @@
                             v-if="bestPlayer.all_star_count > 0"
                             class="award-tag"
                         >
-                            <i class="fas fa-user"></i>
+                            <i class="fas fa-star"></i>
                             {{ bestPlayer.all_star_count ?? 0 }}x All-star
                         </span>
                     </div>
