@@ -73,7 +73,7 @@
                                             <i v-if="index <= 4" class="fa fa-square text-yellow-500"></i>
                                             <i v-if="index > 4 && index < 12" class="fa fa-square text-green-500"></i>
                                             <i v-if="index > 11" class="fa fa-lock text-gray-500"></i>
-                                            {{ transaction.player_name }}  
+                                            {{ transaction.player_name }} ({{ transaction.all_star_count }}x) 
                                         </div>
                                         <div class="text-xs">
                                             <a class="text-gray-400">{{ transaction.team_city }} {{ transaction.team_name }}</a> |
@@ -169,7 +169,7 @@
                                             <i v-if="index <= 4" class="fa fa-square text-yellow-500"></i>
                                             <i v-if="index > 4 && index < 12" class="fa fa-square text-green-500"></i>
                                             <i v-if="index > 11" class="fa fa-lock text-gray-500"></i>
-                                            {{ transaction.player_name }}  
+                                            {{ transaction.player_name }} ({{ transaction.all_star_count }}x)
                                         </div>
                                         <div class="text-xs">
                                             <a class="text-gray-400">{{ transaction.team_city }} {{ transaction.team_name }}</a> |
