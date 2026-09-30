@@ -24,3 +24,4 @@ Homestead.json
 /public/build
 rr
 .rr.yaml
+/database/updated_db
