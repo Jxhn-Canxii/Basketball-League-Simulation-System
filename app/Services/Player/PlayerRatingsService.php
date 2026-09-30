@@ -481,7 +481,7 @@ class PlayerRatingsService
                 ->select('wins', 'losses')
                 ->first();
 
-            $pastTeamPerformance = DB::table('standings_view_snapshots as svs')
+            $pastTeamPerformance = DB::table('standings_snapshots as svs')
                 ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
                 ->where('svs.team_id', $teamId)
                 ->where('team_season_info.season_id', $prevSeasonId)

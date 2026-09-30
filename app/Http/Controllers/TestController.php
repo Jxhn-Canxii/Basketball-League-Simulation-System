@@ -436,17 +436,16 @@ class TestController extends Controller
     }
 
     public function gameFlow(){
-        $data = DB::table('player_game_stats')
-                    ->where('game_id','S1-all-star')
-                    ->get();
-
-        foreach ($data as $allStarStats) {
-            $role = $allStarStats->is_starter ? 'starter' : 'reserve';
-            $allStarGroup = $allStarStats->team_id == 1 ? 'North' : 'South';
-            # code...
-            $this->award->insertAward($allStarStats, 'all-star', 'All-star '.$role.' of the '.$allStarGroup.' All-stars.',1);
-
-        }
+        $pastTeamPerformance = DB::table('standings_snapshots as svs')
+                ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
+                ->where('svs.team_id', 67)
+                ->where('team_season_info.season_id', 4)
+                ->where('team_season_info.coach_id', 14)
+                ->where('svs.season_id', 4)
+                ->select('svs.wins', 'svs.losses')
+                ->first();
+        
+        return $pastTeamPerformance;
 
     }
     public function checkUnderPerformedPlayersPerTeam(){
