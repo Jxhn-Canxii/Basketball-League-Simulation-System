@@ -613,7 +613,7 @@ const getTeamRowClass = (team) => {
       "standings-playin";
   } else if (rank >= 11) {
     zoneClass =
-      "standings-eliminated opacity-50";
+      "standings-eliminated";
   }
 
   let separatorClass = "";
@@ -1088,7 +1088,7 @@ const teamAchievements = (team) => {
   background:
     linear-gradient(
       90deg,
-      rgba(239, 68, 68, 0.045),
+      rgba(119, 14, 14, 0.95),
       rgba(17, 24, 39, 0.96) 35%
     );
 }

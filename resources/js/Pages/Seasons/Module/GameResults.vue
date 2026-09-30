@@ -872,7 +872,7 @@
                         </div>
 
                         <div class="player-award-name">
-                            <h3>
+                            <h3 :title="bestPlayer.name">
                                 {{ playerFormatter(bestPlayer.name) }}
                             </h3>
 
@@ -1001,6 +1001,13 @@
                             <i class="fas fa-user"></i>
                             Sixth Man
                         </span>
+                        <span
+                            v-if="bestPlayer.all_star_count > 0"
+                            class="award-tag"
+                        >
+                            <i class="fas fa-user"></i>
+                            {{ bestPlayer.all_star_count ?? 0 }}x All-star
+                        </span>
                     </div>
 
                     <div class="draft-line">
@@ -1025,7 +1032,7 @@
                             {{ seasonLeaders.message }}
                         </span>
 
-                        <strong>
+                        <strong :title="seasonLeaders.player_name">
                             {{ seasonLeaders.player_name }}
                         </strong>
 
@@ -1102,7 +1109,7 @@
                         <div class="leader-details">
                             <span>POINTS</span>
 
-                            <strong>
+                            <strong :title="statLeaders.points.player_name">
                                 {{
                                     playerFormatter(
                                         statLeaders.points.player_name
@@ -1131,7 +1138,7 @@
                         <div class="leader-details">
                             <span>ASSISTS</span>
 
-                            <strong>
+                            <strong :title="statLeaders.assists.player_name">
                                 {{
                                     playerFormatter(
                                         statLeaders.assists.player_name
@@ -1160,7 +1167,7 @@
                         <div class="leader-details">
                             <span>REBOUNDS</span>
 
-                            <strong>
+                            <strong :title="statLeaders.rebounds.player_name">
                                 {{
                                     playerFormatter(
                                         statLeaders.rebounds.player_name
@@ -1192,7 +1199,7 @@
                         <div class="leader-details">
                             <span>STEALS</span>
 
-                            <strong>
+                            <strong :title="statLeaders.steals.player_name">
                                 {{
                                     playerFormatter(
                                         statLeaders.steals.player_name
@@ -1224,7 +1231,7 @@
                         <div class="leader-details">
                             <span>BLOCKS</span>
 
-                            <strong>
+                            <strong :title="statLeaders.blocks.player_name">
                                 {{
                                     playerFormatter(
                                         statLeaders.blocks.player_name

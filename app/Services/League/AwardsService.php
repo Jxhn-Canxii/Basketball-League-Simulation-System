@@ -427,6 +427,8 @@ class AwardsService
          // Update season status
         $latestSeasonId = get_current_season_id();
 
+        // $this->storeSeasonAwards();
+
         DB::table('seasons')->where('id', $latestSeasonId)->update(['status' => config('timeline.awards')]);
 
         return response()->json([

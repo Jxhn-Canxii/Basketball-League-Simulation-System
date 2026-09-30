@@ -567,6 +567,7 @@ class PlayoffService
 
             if(in_array($round,['round_of_16','round_of_32'])){
                 $this->playOffStats->updatePlayoffQualifiedFlags();
+                $this->award->storeSeasonAwards();
             }
 
             if ($round == 'play_ins_elims_round_1') {

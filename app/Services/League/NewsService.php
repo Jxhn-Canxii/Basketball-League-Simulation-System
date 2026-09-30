@@ -1391,7 +1391,7 @@ class NewsService
 
                     "{winner}'s +{score_difference} scoring differential suggests this result was not an isolated performance.",
                 ];
-            } elseif ($headToHead && $headToHead->win_percentage > 0.6) {
+            } elseif ($headToHead && $headToHead->win_percentage > 60) {
                 $contentMiddles = [
                     "The result also continues a favorable matchup trend, with {winner} holding a {win_percentage}% head-to-head win rate against {loser}.",
 
@@ -1625,7 +1625,7 @@ class NewsService
                         : "N/A",
 
                     $headToHead
-                        ? number_format($headToHead->win_percentage * 100, 1)
+                        ? $headToHead->win_percentage
                         : "N/A",
 
                     $teamInfo ? $teamInfo->chemistry : "N/A",
