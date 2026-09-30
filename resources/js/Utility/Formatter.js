@@ -511,6 +511,24 @@ export const playerFormatter = (name, withDot = true) => {
     return name;
 };
 
+export const playerInitials = (name) => {
+    if (!name) return "?";
+
+    const parts = String(name)
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+
+    if (parts.length === 1) {
+        return parts[0].substring(0, 2).toUpperCase();
+    }
+
+    return (
+        parts[0].charAt(0) +
+        parts[parts.length - 1].charAt(0)
+    ).toUpperCase();
+};
+
 
 export const getTransactionIcon = (status) => {
     switch (status) {

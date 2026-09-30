@@ -327,9 +327,7 @@
                                             class="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-white/[0.08] bg-white/[0.04] text-[10px] font-bold text-slate-400"
                                         >
                                             {{
-                                                playerInitials(
-                                                    transaction.player_name
-                                                )
+                                                playerInitials(transaction.player_name)
                                             }}
                                         </div>
 
@@ -487,10 +485,7 @@
                                 <td class="px-4 py-3.5">
                                     <OptionBadge
                                         label="Player"
-                                        :enabled="
-                                            transaction.player_option !=
-                                            0
-                                        "
+                                        :enabled="transaction.player_option != 0"
                                     />
                                 </td>
 
@@ -498,10 +493,7 @@
                                 <td class="px-4 py-3.5">
                                     <OptionBadge
                                         label="Team"
-                                        :enabled="
-                                            transaction.team_option !=
-                                            0
-                                        "
+                                        :enabled="transaction.team_option != 0"
                                     />
                                 </td>
 
@@ -516,29 +508,7 @@
                                                 : 'border-white/[0.07] bg-white/[0.025] text-slate-500'
                                         "
                                     >
-                                        <svg
-                                            v-if="
-                                                transaction.no_trade_clause !=
-                                                0
-                                            "
-                                            class="h-3 w-3"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.8"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M12 3l7 4v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V7l7-4Z"
-                                            />
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="m9 12 2 2 4-4"
-                                            />
-                                        </svg>
-
+                                        <i v-if="transaction.no_trade_clause !=0" class="fa fa-lock"></i>
                                         {{
                                             transaction.no_trade_clause !=
                                             0
@@ -588,24 +558,7 @@
                                     <div
                                         class="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.07] bg-white/[0.025]"
                                     >
-                                        <svg
-                                            class="h-6 w-6 text-slate-600"
-                                            viewBox="0 0 24 24"
-                                            fill="none"
-                                            stroke="currentColor"
-                                            stroke-width="1.5"
-                                        >
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M7 3h10a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"
-                                            />
-                                            <path
-                                                stroke-linecap="round"
-                                                stroke-linejoin="round"
-                                                d="M9 7h6M9 11h6M9 15h3"
-                                            />
-                                        </svg>
+                                        <i class="fa fa-file-contract"></i>
                                     </div>
 
                                     <p
@@ -633,7 +586,9 @@
 <script setup>
 import { ref, onMounted, watch } from "vue";
 import axios from "axios";
-import { moneyFormatter } from "@/Utility/Formatter.js";
+import { moneyFormatter, playerInitials } from "@/Utility/Formatter.js";
+import OptionBadge from "./OptionBadge.vue";
+import SkeletonBlock from "./SkeletonBlock.vue";
 
 const props = defineProps({
     player_id: {
@@ -651,73 +606,6 @@ const loading = ref(true);
 | Small reusable UI components
 |--------------------------------------------------------------------------
 */
-
-const SkeletonBlock = {
-    props: {
-        width: {
-            type: String,
-            default: "w-20",
-        },
-    },
-
-    template: `
-        <div
-            :class="[
-                'h-3 animate-pulse rounded bg-white/[0.07]',
-                width
-            ]"
-        ></div>
-    `,
-};
-
-const OptionBadge = {
-    props: {
-        label: String,
-        enabled: Boolean,
-    },
-
-    template: `
-        <span
-            class="inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold"
-            :class="
-                enabled
-                    ? 'border-amber-400/20 bg-amber-400/10 text-amber-300'
-                    : 'border-white/[0.07] bg-white/[0.025] text-slate-500'
-            "
-        >
-            <span
-                class="h-1.5 w-1.5 rounded-full"
-                :class="enabled ? 'bg-amber-400' : 'bg-slate-600'"
-            ></span>
-
-            {{ label }} {{ enabled ? 'Option' : '—' }}
-        </span>
-    `,
-};
-
-/*
-|--------------------------------------------------------------------------
-| Player
-|--------------------------------------------------------------------------
-*/
-
-const playerInitials = (name) => {
-    if (!name) return "?";
-
-    const parts = String(name)
-        .trim()
-        .split(/\s+/)
-        .filter(Boolean);
-
-    if (parts.length === 1) {
-        return parts[0].substring(0, 2).toUpperCase();
-    }
-
-    return (
-        parts[0].charAt(0) +
-        parts[parts.length - 1].charAt(0)
-    ).toUpperCase();
-};
 
 /*
 |--------------------------------------------------------------------------
