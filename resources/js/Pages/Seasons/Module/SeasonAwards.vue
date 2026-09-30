@@ -97,11 +97,23 @@
                     </p>
                 </div>
 
-                <div
-                    class="w-fit rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[9px] font-black uppercase tracking-wider text-gray-500"
-                >
-                    {{ awards.length }} Awards
+                <div class="flex items-center justify-end gap-2">
+                    <div
+                        class="w-fit rounded-lg border border-white/[0.08] bg-white/[0.025] px-3 py-2 text-[9px] font-black uppercase tracking-wider text-gray-500"
+                    >
+                        {{ awards.length }} Awards
+                    </div>
+                    <button
+                        type="button"
+                        v-if="showEndButton"
+                        @click="endAwardWindow"
+                        class="inline-flex items-center justify-center gap-2 rounded-lg border border-yellow-500 bg-yellow/[0.04] px-4 py-2.5 text-xs font-bold text-yellow-300 transition hover:bg-yellow/[0.08]"
+                    >
+                        <i class="fa fa-arrow-right text-gray-500"></i>
+                        Skip
+                    </button>
                 </div>
+                
             </div>
 
             <!-- ===================================================== -->
@@ -306,12 +318,16 @@ import axios from "axios";
 import Swal from "sweetalert2";
 
 const awards = ref([]);
-
+const loading = ref(false);
 const props = defineProps({
     season_id: {
-        type: [Array, Number, String],
+        type: [Number, String],
         required: true,
     },
+    showEndButton:{
+        type: Boolean,
+        default: false
+    }
 });
 
 /*
@@ -320,21 +336,9 @@ const props = defineProps({
 |--------------------------------------------------------------------------
 */
 
-const showSeasonAwards = async () => {
+const getSeasonAwards = async () => {
     try {
-        Swal.fire({
-            title: "Fetching Awards...",
-            text: "Please wait while we retrieve the season awards.",
-            allowOutsideClick: false,
-            allowEscapeKey: false,
-            background: "#0a0a0a",
-            color: "#fff",
-            confirmButtonColor: "#eab308",
-            didOpen: () => {
-                Swal.showLoading();
-            },
-        });
-
+        loading.value = true;
         const response = await axios.post(
             route("player.season.awards"),
             {
@@ -345,6 +349,7 @@ const showSeasonAwards = async () => {
         awards.value =
             response.data?.awards ?? [];
 
+        loading.value = false;
         Swal.close();
     } catch (error) {
         console.error(
@@ -364,11 +369,31 @@ const showSeasonAwards = async () => {
             color: "#fff",
             confirmButtonColor: "#eab308",
         });
+
+        loading.value = false;
+
     }
 };
 
+const endAwardWindow = async () => {
+
+    try {
+        const response = await axios.get(route("season.awards.end"));
+
+        Swal.fire({
+            icon: "error",
+            title: "Awarding ended...",
+            text: reponse.data?.message,
+        });
+        
+    } catch (error) {
+        console.log(error);
+        Swal.close();
+    }
+}
+
 onMounted(() => {
-    showSeasonAwards();
+    getSeasonAwards();
 });
 </script>
 

@@ -55,6 +55,10 @@ class AwardsController extends Controller
         return $this->awardsService->getSeasonAwards($request);
     }
 
+    public function endAwardsWindow(){
+        return $this->awardsService->endAwardsWindow();
+    }
+
     public function getawardnamesdropdown()
     {
         // Fetch distinct award names from the season_awards table

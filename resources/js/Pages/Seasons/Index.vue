@@ -774,8 +774,9 @@
                     @close="closeAwardsModal"
                 >
                     <div class="bg-gray-950 p-3">
-                        <Awards
-                            :team_ids="seasons.team_ids"
+                        <SeasonAwards
+                            :season_id="seasons.current_season"
+                            :showEndButton="true"
                             @newSeason="handleNewSeason"
                         />
                     </div>
@@ -885,7 +886,6 @@ import Trade from "@/Pages/Seasons/Module/Trade.vue";
 import FreeAgents from "@/Pages/Seasons/Module/FreeAgents.vue";
 import FreeAgentsCoach from "@/Pages/Coaches/FreeAgentsCoach.vue";
 import SeasonAwards from "@/Pages/Seasons/Module/SeasonAwards.vue";
-import Awards from "@/Pages/Seasons/Module/Awards.vue";
 import Draft from "@/Pages/Seasons/Module/Draft.vue";
 import DraftBoard from "@/Pages/Seasons/Module/DraftBoard.vue";
 import Add from "@/Pages/Seasons/Module/Add.vue";

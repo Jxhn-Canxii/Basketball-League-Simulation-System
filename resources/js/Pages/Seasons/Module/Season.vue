@@ -208,8 +208,8 @@
                 </div>
 
                 <!-- Recent trade -->
-                <div v-if="seasonStatus == 1">
-                    <AllStarRace :season_id="props.season_id" :key="selectedConference" />
+                <div v-if="seasonStatus == 1 && currentRound >= 5">
+                    <AllStarRace :season_id="props.season_id" :key="updateKey" />
                 </div>
             </section>
 
@@ -293,7 +293,7 @@
         </div>
 
         <!-- ================================================================
-             LOADING / EMPTY STATE
+            LOADING / EMPTY STATE
         ================================================================= -->
         <div
             v-else

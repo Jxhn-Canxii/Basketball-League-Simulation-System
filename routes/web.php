@@ -288,13 +288,13 @@ Route::middleware('auth')->group(function () {
     Route::prefix('awards/')->group(function(){
 
         Route::get('', [AwardsController::class, 'index'])->name('awards.index');
-        Route::post('player-awards', [AwardsController::class, 'storeSeasonAwards'])->name('player.awards');
         Route::get('player-awards-dropdown', [AwardsController::class, 'getAwardNamesDropdown'])->name('player.awards.dropdown');
         Route::post('player-awards-filter', [AwardsController::class, 'filterAwardsPerSeason'])->name('player.awards.filter');
         Route::post('player-season-awards', [AwardsController::class, 'getSeasonAwards'])->name('player.season.awards');
         Route::get('awarding/{season_id}', [AwardsController::class, 'storeSeasonAwardsAuto'])->name('awarding.per.season');
         Route::get('awards-mvp-status', [AwardsController::class, 'getFinalsMVPList'])->name('awards.mvp.status');
         Route::post('allstar-candidate', [AwardsController::class, 'allStarCandidate'])->name('allstar.candidate');
+        Route::get('end-season-awards', [AwardsController::class, 'endAwardsWindow'])->name('season.awards.end');
     });
 
     Route::prefix('trades/')->group(function(){

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Models\Player;
 use Illuminate\Support\Facades\DB;
 use App\Services\Helper\HelperService;
+use App\Services\League\AwardsService;
 use App\Services\League\RoundService;
 use App\Services\Stats\PlayoffStatsService;
 use Illuminate\Support\Carbon;
@@ -14,12 +15,14 @@ class PlayoffService
 {
 
     protected $helper;
+    protected $award;
     protected $roundService;
     protected $playOffStats;
 
     public function __construct()
     {
         $this->helper = new HelperService();
+        $this->award = new AwardsService();
         $this->roundService = new RoundService();
         $this->playOffStats = new PlayoffStatsService();
     }
@@ -488,6 +491,7 @@ class PlayoffService
 
         if(in_array($round,['round_of_16','round_of_32'])){
             $this->playOffStats->updatePlayoffQualifiedFlags();
+            $this->award->storeSeasonAwards();
         }
         
         if ($round == 'finals') {
