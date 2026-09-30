@@ -471,16 +471,23 @@ class PlayerRatingsService
                 'updated_at' => now(),
             ]);
 
-
-
-
         if ($newContractYears == 0) {
-            $latestSeasonId = get_current_season_id();
+            $latestSeasonId = get_current_season_id() ?? 0;
+            $prevSeasonId = $latestSeasonId - 1;
 
             $teamPerformance = DB::table('standings_view')
                 ->where('team_id', $teamId)
                 ->where('season_id', $latestSeasonId)
                 ->select('wins', 'losses')
+                ->first();
+
+            $pastTeamPerformance = DB::table('standings_view_snapshots as svs')
+                ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
+                ->where('svs.team_id', $teamId)
+                ->where('team_season_info.season_id', $prevSeasonId)
+                ->where('team_season_info.coach_id', $coachId)
+                ->where('svs.season_id', $prevSeasonId)
+                ->select('svs.wins', 'svs.losses')
                 ->first();
 
             if (!$teamPerformance) {
@@ -515,10 +522,17 @@ class PlayerRatingsService
 
             $wins = $teamPerformance->wins ?? 0;
             $losses = $teamPerformance->losses ?? 0;
-            $gamesPlayed = $wins + $losses;
-            $winRate = $gamesPlayed > 0 ? ($wins / $gamesPlayed) : 0;
 
-            if ($winRate >= 0.55) {
+            $pastWins = $pastTeamPerformance->wins ?? 0;
+            $pastLosses = $teamPerformance->losses ?? 0;
+
+            $totalWins = $wins + $pastWins;
+            $totalLosses = $losses + $pastLosses;
+            $gamesPlayed = $totalWins + $totalLosses;
+
+            $winRate = $gamesPlayed > 0 ? ($totalWins / $gamesPlayed) : 0;
+
+            if ($winRate >= 0.55 && $newContractYears == 0) {
                 // Re-sign coach
                 $newContractYears = rand(3, 5);
 
@@ -542,7 +556,37 @@ class PlayerRatingsService
                 ]);
 
                 return true;
-            } else {
+            } 
+            if($winRate <= 0.10 && $pastTeamPerformance) {
+                // Waive coach
+                DB::table('teams')
+                    ->where('id', $teamId)
+                    ->update([
+                        'coach_id' => 0,
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('coaches')
+                    ->where('id', $coachId)
+                    ->update([
+                        'team_id' => 0,
+                        'updated_at' => now(),
+                    ]);
+                // Insert into transactions table (waived)
+                DB::table('transactions')->insert([
+                    'player_id' => 0,
+                    'season_id' => $latestSeasonId,
+                    'details' => $coach->name . ' has been fired as a head coach of ' . $team->name . ' due to worst win percentage in a 2-year span.',
+                    'from_team_id' => $team->id,
+                    'to_team_id' => 0,
+                    'status' => 'fired',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return true;
+            }
+            else {
                 // Waive coach
                 DB::table('teams')
                     ->where('id', $teamId)
