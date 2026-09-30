@@ -243,6 +243,19 @@ class SimulateService
 
             $this->playerGenerator->declarePlayerForNextDraft($gameData->round);
 
+            // Get the number of rounds that are already simulated (status != 2)
+            $simulatedRounds = $this->helper->simulatedRounds($currentSeasonId);
+
+            // Get the total number of rounds in the season
+            $totalRounds = $this->helper->totalRounds($currentSeasonId);
+
+            $tradeProposalDeadline = CEIL($totalRounds / 2);
+            $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline;
+
+            if($simulatedRounds > 5 && ($simulatedRounds <= $isTradeProposalDeadline) && ($gameData->id % 4 == 0)){
+                $this->tradeDecision->generateTradeProposals(false);
+            }
+
             // Commit the transaction
             DB::commit();
 

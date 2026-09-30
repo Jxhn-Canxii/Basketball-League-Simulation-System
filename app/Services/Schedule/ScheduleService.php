@@ -92,13 +92,8 @@ class ScheduleService
             }
         }
 
-        if($simulatedRounds > 5 && $simulatedRounds <= $isTradeProposalDeadline){
-
-            if($round % 2 == 0){
-                $this->tradeDecision->automatedTradeDecision(false);
-            }else{
-                $this->tradeDecision->generateTradeProposals(false);
-            }
+        if($simulatedRounds > 5 && ($simulatedRounds <= $isTradeProposalDeadline) && ($round % 2 == 0)){
+            $this->tradeDecision->automatedTradeDecision(false);
         }
         
         if($isEndTradeDeadline) {
