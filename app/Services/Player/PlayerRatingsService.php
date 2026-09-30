@@ -471,150 +471,149 @@ class PlayerRatingsService
                 'updated_at' => now(),
             ]);
 
-        if ($newContractYears == 0) {
-            $latestSeasonId = get_current_season_id() ?? 0;
-            $prevSeasonId = $latestSeasonId - 1;
+       
+        $latestSeasonId = get_current_season_id() ?? 0;
+        $prevSeasonId = $latestSeasonId - 1;
 
-            $teamPerformance = DB::table('standings_view')
-                ->where('team_id', $teamId)
-                ->where('season_id', $latestSeasonId)
-                ->select('wins', 'losses')
-                ->first();
+        $teamPerformance = DB::table('standings_view')
+            ->where('team_id', $teamId)
+            ->where('season_id', $latestSeasonId)
+            ->select('wins', 'losses')
+            ->first();
 
-            $pastTeamPerformance = DB::table('standings_snapshots as svs')
-                ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
-                ->where('svs.team_id', $teamId)
-                ->where('team_season_info.season_id', $prevSeasonId)
-                ->where('team_season_info.coach_id', $coachId)
-                ->where('svs.season_id', $prevSeasonId)
-                ->select('svs.wins', 'svs.losses')
-                ->first();
+        $pastTeamPerformance = DB::table('standings_snapshots as svs')
+            ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
+            ->where('svs.team_id', $teamId)
+            ->where('team_season_info.season_id', $prevSeasonId)
+            ->where('team_season_info.coach_id', $coachId)
+            ->where('svs.season_id', $prevSeasonId)
+            ->select('svs.wins', 'svs.losses')
+            ->first();
 
-            if (!$teamPerformance) {
-                // If no standings data, automatically waive coach
-                DB::table('teams')
-                    ->where('id', $teamId)
-                    ->update([
-                        'coach_id' => 0,
-                        'updated_at' => now(),
-                    ]);
-
-                DB::table('coaches')
-                    ->where('id', $coachId)
-                    ->update([
-                        'team_id' => 0,
-                        'updated_at' => now(),
-                    ]);
-                // Insert into transactions table (waived)
-                DB::table('transactions')->insert([
-                    'player_id' => 0,
-                    'season_id' => $latestSeasonId,
-                    'details' => $coach->name . ' has been waived as head coach of ' . $team->name,
-                    'from_team_id' => $team->id,
-                    'to_team_id' => 0,
-                    'status' => 'waived',
-                    'created_at' => now(),
+        if (!$teamPerformance) {
+            // If no standings data, automatically waive coach
+            DB::table('teams')
+                ->where('id', $teamId)
+                ->update([
+                    'coach_id' => 0,
                     'updated_at' => now(),
                 ]);
 
-                return true;
-            }
+            DB::table('coaches')
+                ->where('id', $coachId)
+                ->update([
+                    'team_id' => 0,
+                    'updated_at' => now(),
+                ]);
+            // Insert into transactions table (waived)
+            DB::table('transactions')->insert([
+                'player_id' => 0,
+                'season_id' => $latestSeasonId,
+                'details' => $coach->name . ' has been waived as head coach of ' . $team->name,
+                'from_team_id' => $team->id,
+                'to_team_id' => 0,
+                'status' => 'waived',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-            $wins = $teamPerformance->wins ?? 0;
-            $losses = $teamPerformance->losses ?? 0;
+            return true;
+        }
 
-            $pastWins = $pastTeamPerformance->wins ?? 0;
-            $pastLosses = $teamPerformance->losses ?? 0;
+        $wins = $teamPerformance->wins ?? 0;
+        $losses = $teamPerformance->losses ?? 0;
 
-            $totalWins = $wins + $pastWins;
-            $totalLosses = $losses + $pastLosses;
-            $gamesPlayed = $totalWins + $totalLosses;
+        $pastWins = $pastTeamPerformance->wins ?? 0;
+        $pastLosses = $teamPerformance->losses ?? 0;
 
-            $winRate = $gamesPlayed > 0 ? ($totalWins / $gamesPlayed) : 0;
+        $totalWins = $wins + $pastWins;
+        $totalLosses = $losses + $pastLosses;
+        $gamesPlayed = $totalWins + $totalLosses;
 
-            if ($winRate >= 0.55 && $newContractYears == 0) {
-                // Re-sign coach
-                $newContractYears = rand(3, 5);
+        $winRate = $gamesPlayed > 0 ? ($totalWins / $gamesPlayed) : 0;
 
-                DB::table('coaches')
-                    ->where('id', $coachId)
-                    ->update([
-                        'contract_years' => $newContractYears,
-                        'updated_at' => now(),
-                    ]);
+        if ($winRate >= 0.55 && $newContractYears == 0) {
+            // Re-sign coach
+            $newContractYears = rand(3, 5);
 
-                // Insert into transactions table (re-signed)
-                DB::table('transactions')->insert([
-                    'player_id' => 0,
-                    'season_id' => $latestSeasonId,
-                    'details' => $coach->name . ' has been re-signed as head coach of ' . $team->name . ' after a good season performance.',
-                    'from_team_id' => 0,
-                    'to_team_id' => $team->id,
-                    'status' => 're-signed',
-                    'created_at' => now(),
+            DB::table('coaches')
+                ->where('id', $coachId)
+                ->update([
+                    'contract_years' => $newContractYears,
                     'updated_at' => now(),
                 ]);
 
-                return true;
-            } 
-            if($winRate <= 0.10 && $pastTeamPerformance) {
-                // Waive coach
-                DB::table('teams')
-                    ->where('id', $teamId)
-                    ->update([
-                        'coach_id' => 0,
-                        'updated_at' => now(),
-                    ]);
+            // Insert into transactions table (re-signed)
+            DB::table('transactions')->insert([
+                'player_id' => 0,
+                'season_id' => $latestSeasonId,
+                'details' => $coach->name . ' has been re-signed as head coach of ' . $team->name . ' after a good season performance.',
+                'from_team_id' => 0,
+                'to_team_id' => $team->id,
+                'status' => 're-signed',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-                DB::table('coaches')
-                    ->where('id', $coachId)
-                    ->update([
-                        'team_id' => 0,
-                        'updated_at' => now(),
-                    ]);
-                // Insert into transactions table (waived)
-                DB::table('transactions')->insert([
-                    'player_id' => 0,
-                    'season_id' => $latestSeasonId,
-                    'details' => $coach->name . ' has been fired as a head coach of ' . $team->name . ' due to worst win percentage in a 2-year span.',
-                    'from_team_id' => $team->id,
-                    'to_team_id' => 0,
-                    'status' => 'fired',
-                    'created_at' => now(),
+            return true;
+        } 
+        if($winRate <= 0.10 && $pastTeamPerformance) {
+            // Waive coach
+            DB::table('teams')
+                ->where('id', $teamId)
+                ->update([
+                    'coach_id' => 0,
                     'updated_at' => now(),
                 ]);
 
-                return true;
-            }
-            else {
-                // Waive coach
-                DB::table('teams')
-                    ->where('id', $teamId)
-                    ->update([
-                        'coach_id' => 0,
-                        'updated_at' => now(),
-                    ]);
+            DB::table('coaches')
+                ->where('id', $coachId)
+                ->update([
+                    'team_id' => 0,
+                    'updated_at' => now(),
+                ]);
+            // Insert into transactions table (waived)
+            DB::table('transactions')->insert([
+                'player_id' => 0,
+                'season_id' => $latestSeasonId,
+                'details' => $coach->name . ' has been fired as a head coach of ' . $team->name . ' due to worst win percentage in a 2-year span.',
+                'from_team_id' => $team->id,
+                'to_team_id' => 0,
+                'status' => 'fired',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
 
-                DB::table('coaches')
-                    ->where('id', $coachId)
-                    ->update([
-                        'team_id' => 0,
-                        'updated_at' => now(),
-                    ]);
-                // Insert into transactions table (waived)
-                DB::table('transactions')->insert([
-                    'player_id' => 0,
-                    'season_id' => $latestSeasonId,
-                    'details' => $coach->name . ' has been fired as a head coach of ' . $team->name . ' due to poor season performance.',
-                    'from_team_id' => $team->id,
-                    'to_team_id' => 0,
-                    'status' => 'fired',
-                    'created_at' => now(),
+            return true;
+        }
+        else {
+            // Waive coach
+            DB::table('teams')
+                ->where('id', $teamId)
+                ->update([
+                    'coach_id' => 0,
                     'updated_at' => now(),
                 ]);
 
-                return true;
-            }
+            DB::table('coaches')
+                ->where('id', $coachId)
+                ->update([
+                    'team_id' => 0,
+                    'updated_at' => now(),
+                ]);
+            // Insert into transactions table (waived)
+            DB::table('transactions')->insert([
+                'player_id' => 0,
+                'season_id' => $latestSeasonId,
+                'details' => $coach->name . ' has been fired as a head coach of ' . $team->name . ' due to poor season performance.',
+                'from_team_id' => $team->id,
+                'to_team_id' => 0,
+                'status' => 'fired',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return true;
         }
 
         return true;

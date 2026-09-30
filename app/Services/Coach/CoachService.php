@@ -238,42 +238,154 @@ class CoachService
         }
     }
 
-    public function fixDuplicateCoaches()
+    public function evaluateCoachMidSeason($teamId)
     {
-        $coaches = DB::table('coaches')
-            ->where('team_id', '!=', 0)
-            ->get();
+        $team = DB::table('teams')->where('id', $teamId)->first();
 
-        // Group coaches by team_id
-        $grouped = $coaches->groupBy('team_id');
-
-        foreach ($grouped as $teamId => $teamCoaches) {
-            if ($teamCoaches->count() > 1) {
-                // Sort by (career_wins + career_losses) DESC
-                $sorted = $teamCoaches->sortByDesc(function ($coach) {
-                    return $coach->career_wins + $coach->career_losses;
-                });
-
-                // Get the best coach (keep this one)
-                $bestCoach = $sorted->first();
-
-                // All others need to be "free agents"
-                $otherCoaches = $sorted->slice(1);
-
-                foreach ($otherCoaches as $coach) {
-                    DB::table('coaches')
-                        ->where('id', $coach->id)
-                        ->update([
-                            'team_id' => 0,
-                            'career_wins' => 0,
-                            'career_losses' => 0,
-                            'updated_at' => now(),
-                        ]);
-                }
-            }
+        if (!$team) {
+            return response()->json([
+                'message' => 'Team not found!'
+            ], 404);
         }
 
-        return response()->json(['message' => 'Duplicate coaches fixed successfully!']);
+        $coachId = $team->coach_id;
+
+        if ($coachId == 0) {
+            return response()->json([
+                'message' => 'This team does not have a coach assigned.'
+            ], 400);
+        }
+
+        $coach = DB::table('coaches')->where('id', $coachId)->first();
+
+        if (!$coach || $coach->contract_years <= 0) {
+            return response()->json([
+                'message' => 'The coach does not have any contract years remaining.'
+            ], 400);
+        }
+
+        $latestSeasonId = get_current_season_id() ?? 0;
+        $prevSeasonId = $latestSeasonId - 1;
+
+        $teamPerformance = DB::table('standings_view')
+            ->where('team_id', $teamId)
+            ->where('season_id', $latestSeasonId)
+            ->select('wins', 'losses')
+            ->first();
+
+        $pastTeamPerformance = DB::table('standings_snapshots as svs')
+            ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
+            ->where('svs.team_id', $teamId)
+            ->where('team_season_info.season_id', $prevSeasonId)
+            ->where('team_season_info.coach_id', $coachId)
+            ->where('svs.season_id', $prevSeasonId)
+            ->select('svs.wins', 'svs.losses')
+            ->first();
+
+        $wins = $teamPerformance->wins ?? 0;
+        $losses = $teamPerformance->losses ?? 0;
+
+        $pastWins = $pastTeamPerformance->wins ?? 0;
+        $pastLosses = $teamPerformance->losses ?? 0;
+
+        $totalWins = $wins + $pastWins;
+        $totalLosses = $losses + $pastLosses;
+        $gamesPlayed = $totalWins + $totalLosses;
+
+        $winRate = $gamesPlayed > 0 ? ($totalWins / $gamesPlayed) : 0;
+
+        try{
+            DB::beginTransaction();
+            if($winRate <= 0.10 && $pastTeamPerformance) {
+                $maxCoachesToQuery = 10;
+                $contractYears = rand(3, 7);
+
+                $freeCoaches = DB::table('coaches')
+                    ->where('team_id', 0)
+                    ->where('is_active', 1)
+                    ->select('*')
+                    ->selectRaw('
+                        CASE 
+                            WHEN experience_years = 0 THEN 2
+                            WHEN winning_percentage < 0.3 THEN 3
+                            ELSE 1
+                        END as priority_group
+                    ')
+                    ->orderBy('priority_group', 'asc')
+                    ->orderBy('winning_percentage', 'desc')
+                    ->limit($maxCoachesToQuery)
+                    ->get()
+                    ->shuffle() // Randomize after limiting
+                    ->first(); // Randomize after limiting
+
+                // Sign coach
+                DB::table('teams')
+                    ->where('id', $teamId)
+                    ->update([
+                        'coach_id' => $freeCoaches->id,
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('team_season_info')
+                    ->where('id', $teamId)
+                    ->where('season_id', $latestSeasonId)
+                    ->update([
+                        'coach_id' => $freeCoaches->id,
+                        'coach_iq' => $freeCoaches->coach_iq,
+                        'updated_at' => now(),
+                    ]);
+
+                DB::table('coaches')
+                    ->where('id', $freeCoaches->id)
+                    ->update([
+                        'contract_years' =>  $contractYears,
+                        'team_id' => $teamId,
+                        'updated_at' => now(),
+                    ]);
+
+                // Waive coach
+                DB::table('coaches')
+                    ->where('id', $coachId)
+                    ->update([
+                        'team_id' => 0,
+                        'updated_at' => now(),
+                    ]);
+
+                // Insert into transactions table (waived)
+                DB::table('transactions')->insert([
+                    'player_id' => 0,
+                    'season_id' => $latestSeasonId,
+                    'details' => $coach->name . ' has been fired as a head coach of ' . $team->name . ' due to worst win percentage in a 2-year span.',
+                    'from_team_id' => $team->id,
+                    'to_team_id' => 0,
+                    'status' => 'fired',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                // Insert into transactions table (waived)
+                DB::table('transactions')->insert([
+                    'player_id' => 0,
+                    'season_id' => $latestSeasonId,
+                    'details' => $freeCoaches->name . ' has been signed as a replacement head coach of ' . $team->name . '.',
+                    'from_team_id' => $team->id,
+                    'to_team_id' => 0,
+                    'status' => 'signed',
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+                return true;
+
+            }
+            DB::commit();
+        }catch(\Exception $e){
+            DB::rollBack();
+
+            return response()->json([
+                'message' => 'Failed to evaluate coach. Error: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     public function getCoachInfo($request)

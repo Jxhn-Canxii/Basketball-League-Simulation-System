@@ -436,6 +436,25 @@ class TestController extends Controller
     }
 
     public function gameFlow(){
+
+        $freeCoaches = DB::table('coaches')
+                ->where('team_id', 0)
+                ->where('is_active', 1)
+                ->select('*')
+                ->selectRaw('
+                    CASE 
+                        WHEN experience_years = 0 THEN 2
+                        WHEN winning_percentage < 0.3 THEN 3
+                        ELSE 1
+                    END as priority_group
+                ')
+                ->orderBy('priority_group', 'asc')
+                ->orderBy('winning_percentage', 'desc')
+                ->limit(10)
+                ->get()
+                ->shuffle() // Randomize after limiting
+                ->first(); // Randomize after limiting
+
         $pastTeamPerformance = DB::table('standings_snapshots as svs')
                 ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
                 ->where('svs.team_id', 67)
@@ -445,7 +464,7 @@ class TestController extends Controller
                 ->select('svs.wins', 'svs.losses')
                 ->first();
         
-        return $pastTeamPerformance;
+        return $freeCoaches;
 
     }
     public function checkUnderPerformedPlayersPerTeam(){

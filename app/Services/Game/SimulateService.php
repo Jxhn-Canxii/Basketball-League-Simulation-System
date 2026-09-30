@@ -5,6 +5,7 @@ namespace App\Services\Game;
 ini_set('max_execution_time', 1024); // Unlimited execution time
 
 use App\Models\Seasons;
+use App\Services\Coach\CoachService;
 use App\Services\Contract\ContractService;
 use App\Services\Helper\HelperService;
 use App\Services\League\NewsService;
@@ -37,6 +38,7 @@ class SimulateService
     protected $gameResultService;
     protected $playerGenerator;
     protected $tradeDecision;
+    protected $coach;
 
     private $gameMinutes = 240;
 
@@ -50,6 +52,7 @@ class SimulateService
         $this->playerStats = new PlayerStatsService();
         $this->teamStats = new TeamStatsService();
         $this->teamStreak = new TeamStreakService();
+        $this->coach = new CoachService();
         $this->freeAgent = new FreeAgencyService();
         $this->news = new NewsService();
         $this->career = new PlayerCareerStatsService();
@@ -254,6 +257,11 @@ class SimulateService
 
             if($simulatedRounds > 5 && ($simulatedRounds <= $isTradeProposalDeadline) && ($gameData->id % 4 == 0)){
                 $this->tradeDecision->generateTradeProposals(false);
+            }
+
+            if($simulatedRounds == $tradeProposalDeadline){
+                $this->coach->evaluateCoachMidSeason($gameData->home_team_id);
+                $this->coach->evaluateCoachMidSeason($gameData->away_team_id);
             }
 
             // Commit the transaction
