@@ -936,7 +936,7 @@ class ScheduleService
         // Get total count first
         $totalSchedules = DB::table($scheduleViewTable)
             ->where('season_id', $seasonId)
-            ->where('is_overtime', $isOvertime)
+            ->where('is_overtime','>=', $isOvertime)
             ->whereIn('conference_id', [$specialConference,$conferenceId])
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {
@@ -957,8 +957,8 @@ class ScheduleService
 
         // Fetch the actual schedule data
         $schedules = DB::table($scheduleViewTable)
-            ->where('season_id', $seasonId)
-            ->where('is_overtime', $isOvertime)
+            ->where('season_id', $seasonId)            
+            ->where('is_overtime','>=', $isOvertime)
             ->whereIn('conference_id', [$specialConference,$conferenceId])
             ->when($teamId != 0, function ($query) use ($teamId) {
                 return $query->where(function ($q) use ($teamId) {

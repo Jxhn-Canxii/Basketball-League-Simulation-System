@@ -389,29 +389,21 @@
 
                                 <!-- Team -->
                                 <td
-                                    class="whitespace-nowrap px-3 py-3"
+                                    class="flex whitespace-nowrap px-3 py-3"
                                 >
-                                    <span
-                                        v-if="coach.team_name"
-                                        class="inline-flex items-center gap-1.5 rounded-md border border-white/[0.06] bg-white/[0.025] px-2 py-1 text-[10px] font-semibold text-gray-400"
-                                    >
-                                        <span
-                                            class="h-1.5 w-1.5 rounded-full bg-emerald-500"
-                                        ></span>
+                                    <div>
+                                        <div
+                                            class="font-bold text-gray-200 transition group-hover:text-white"
+                                        >
+                                            {{ coach.team_name ?? 'Free Agent' }}
+                                        </div>
 
-                                        {{ coach.team_name }}
-                                    </span>
-
-                                    <span
-                                        v-else
-                                        class="inline-flex items-center gap-1.5 rounded-md border border-rose-500/10 bg-rose-500/[0.04] px-2 py-1 text-[10px] font-semibold text-rose-400"
-                                    >
-                                        <span
-                                            class="h-1.5 w-1.5 rounded-full bg-rose-500"
-                                        ></span>
-
-                                        Free Agent
-                                    </span>
+                                        <div
+                                            class="mt-0.5 text-[9px] text-gray-700"
+                                        >
+                                            <small class="text-wrap"><b>Coached Teams:</b> {{ coach.teams_coached ?? '-' }}</small>
+                                        </div>
+                                    </div>
                                 </td>
 
                                 <!-- Coach IQ -->

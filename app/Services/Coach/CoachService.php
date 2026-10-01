@@ -15,7 +15,22 @@ class CoachService
         // Query builder for coaches with join on teams
         $query = DB::table('coaches')
             ->leftJoin('teams', 'coaches.team_id', '=', 'teams.id')
-            ->select('coaches.*', 'teams.name as team_name');
+            ->select(
+                'coaches.*', 
+                'teams.name as team_name',
+                DB::raw("
+                    (
+                        SELECT 
+                            GROUP_CONCAT(
+                                DISTINCT CONCAT(t.name, ' (Season ', COALESCE(tsi.season_id, 'FA'), ')') ORDER BY c.name 
+                            SEPARATOR ', ') 
+                        FROM team_season_info tsi
+                        JOIN coaches c ON c.id = tsi.coach_id
+                        LEFT JOIN teams t ON tsi.team_id = t.id
+                        WHERE tsi.coach_id = coaches.id
+                    ) as teams_coached
+                ")
+            );
 
         // Apply search filter if search query is provided
         if ($searchQuery) {
