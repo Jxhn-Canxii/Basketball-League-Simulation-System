@@ -490,7 +490,7 @@ const props = defineProps({
     },
 
     showButton: {
-        type: [Boolean],
+        type: [Boolean, Number],
         default: false,
     },
 
@@ -696,42 +696,22 @@ const init = async () => {
 
 }
 
-const teamNavigations = (e) => {
-  let currentTeamId = teamId.value;
-  console.log(e.key);
+// const teamNavigations = (e) => {
+//   let currentTeamId = teamId.value;
+//   console.log('Key clicked: '+e.key);
 
-  if (e.key === "ArrowRight" || e.key === "A") {
-    currentTeamId--;
-    if(currentTeamId <= 4){
-        Swal.fire({
-            icon: "warning",
-            title: "End of Teams",
-            text: "Reach the end of teams list.",
-            background: "#0a0a0a",
-        });
-        
-        return true;
-    }
-    teamId.value =  currentTeamId;
-  }
-  if (e.key === "ArrowLeft" || e.key === "D") {
-    currentTeamId++;
+//   if (e.key === "ArrowRight" || e.key === "A") {
+//     currentTeamId = currentTeamId - 1;
+//     teamId.value =  currentTeamId;
+//   }
+//   if (e.key === "ArrowLeft" || e.key === "D") {
+//     currentTeamId = currentTeamId + 1;
+//     teamId.value =  currentTeamId;
+//   }
 
-    if(currentTeamId > 64){
-        Swal.fire({
-            icon: "warning",
-            title: "End of Teams",
-            text: "Reach the end of teams list.",
-            background: "#0a0a0a",
-        });
-        
-        return true;
-    }
-    teamId.value =  currentTeamId;
-  }
-
-  console.log(teamId.value);
-};
+//   console.log('Current Team ID: '+currentTeamId);
+//   console.log('Prev Team ID: '+teamId.value);
+// };
 
 // onUnmounted(() => {
 //   document.removeEventListener("keydown", teamNavigations);
@@ -740,7 +720,7 @@ const teamNavigations = (e) => {
 
 onMounted(async () => {
     await init();
-    document.addEventListener("keydown", teamNavigations)
+    // document.addEventListener("keydown", teamNavigations)
 });
 
 /*

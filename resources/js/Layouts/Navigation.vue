@@ -50,7 +50,7 @@
                 </template>
                 Players
             </nav-link>
-             <nav-link :href="route('coaches.index')" :active="route().current('coaches.index')">
+            <nav-link :href="route('coaches.index')" :active="route().current('coaches.index')">
                 <template #icon>
                     <i class="fa fa-user-graduate"></i>
                 </template>
@@ -73,6 +73,12 @@
                     <i class="fa fa-users"></i>
                 </template>
                 Users
+            </nav-link>
+            <nav-link :href="route('system.index')" :active="route().current('system.index')">
+                <template #icon>
+                    <i class="fa fa-cogs"></i>
+                </template>
+                System
             </nav-link>
         </nav>
     </div>

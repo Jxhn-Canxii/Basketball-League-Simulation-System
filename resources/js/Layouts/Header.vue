@@ -291,6 +291,14 @@
                         <i class="fa fa-user-gear"></i>
                         <span>Users</span>
                     </NavLink>
+                    <NavLink
+                        :href="route('system.index')"
+                        :active="route().current('system.index')"
+                        class="dropdown-link"
+                    >
+                        <i class="fa fa-cogs"></i>
+                        <span>System</span>
+                    </NavLink>
                 </div>
             </div>
         </nav>

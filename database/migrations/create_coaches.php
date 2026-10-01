@@ -28,7 +28,7 @@ return new class extends Migration
             $table->integer('leadership_rating')->check('leadership_rating >= 1 AND leadership_rating <= 100');
             $table->integer('strategy_rating')->check('strategy_rating >= 1 AND strategy_rating <= 100');
             $table->integer('work_ethic_rating')->check('work_ethic_rating >= 1 AND work_ethic_rating <= 100');
-            $table->string('preferred_team_composition')->default('any');
+            $table->enum('preferred_team_composition',['balanced','offensive','defensive','any','contenders','rebuilding'])->default('any');
             $table->boolean('is_active')->default(true);
             $table->integer('career_wins')->default(0);
             $table->integer('career_losses')->default(0);

@@ -29,6 +29,7 @@ class GameEngineService
     protected $news;
     protected $career;
     protected $teamChemistry;
+    protected $minutes;
 
     public function __construct()
     {
@@ -43,6 +44,7 @@ class GameEngineService
         $this->freeAgent = new FreeAgencyService();
         $this->news = new NewsService();
         $this->career = new PlayerCareerStatsService();
+        $this->minutes = new MinuteDistributionService();
         $this->helper = new HelperService();
     }
 
@@ -466,10 +468,9 @@ class GameEngineService
 
 
         $playerGameStats = [];
-        $homeMinutes = $this->playerStats->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id);
-        $awayMinutes = $this->playerStats->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id);
+        $homeMinutes = $this->minutes->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->home_coaching_style, $gameData->home_preferred_team_composition);
+        $awayMinutes = $this->minutes->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->away_coaching_style, $gameData->away_preferred_team_composition);
 
-        
         $homeChemistry = $gameData->home_team_chemistry ?? 75;
         $awayChemistry = $gameData->away_team_chemistry ?? 75;
         // Simulate home team player stats with detailed shooting metrics
@@ -571,8 +572,8 @@ class GameEngineService
         // dd($awayTeamPlayers);
 
         $playerGameStats = [];
-        $homeMinutes = $this->playerStats->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id);
-        $awayMinutes = $this->playerStats->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id);
+        $homeMinutes = $this->minutes->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->home_coaching_style, $gameData->home_preferred_team_composition);
+        $awayMinutes = $this->minutes->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->away_coaching_style, $gameData->away_preferred_team_composition);
 
         $homeChemistry = $gameData->home_team_chemistry ?? 75;
         $awayChemistry = $gameData->away_team_chemistry ?? 75;
@@ -736,6 +737,8 @@ class GameEngineService
             ->join('teams as away', 'schedules.away_id', '=', 'away.id')
             ->join('team_season_info as home_info', 'home_info.team_id', '=', 'schedules.home_id')
             ->join('team_season_info as away_info', 'away_info.team_id', '=', 'schedules.away_id')
+            ->join('coaches as home_coach', 'home_coach.id', '=', 'home_info.coach_id')
+            ->join('coaches as away_coach', 'away_coach.id', '=', 'away_info.coach_id')
             ->select(
                 'schedules.id',
                 'schedules.round',
@@ -749,6 +752,10 @@ class GameEngineService
                 'away.name as away_team_name',
                 'home_info.chemistry as home_team_chemistry',
                 'away_info.chemistry as away_team_chemistry',
+                'away_coach.coaching_style as away_coaching_style',
+                'home_coach.coaching_style as home_coaching_style',
+                'away_coach.preferred_team_composition as away_preferred_team_composition',
+                'home_coach.preferred_team_composition as home_preferred_team_composition',
                 'schedules.home_score',
                 'schedules.away_score',
                 'schedules.winner_id',

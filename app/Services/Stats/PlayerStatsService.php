@@ -150,7 +150,7 @@ class PlayerStatsService
         }
     }
 
-    public function distributeMinutes($playersArray, $totalMinutes, $gameId)
+    public function distributeMinutesV1($playersArray, $totalMinutes, $gameId)
     {
 
         $rolePriority = [
@@ -294,7 +294,7 @@ class PlayerStatsService
                 }
             }
 
-            $this->fatigueRate($player, $minutes[$player['id']], $gameId);
+            $this->applyFatigue($player, $minutes[$player['id']], $gameId);
         }
 
         // Step 4: Normalize to total minutes (usually 240)
@@ -334,7 +334,7 @@ class PlayerStatsService
         return $minutes;
     }
 
-    private function fatigueRate($player, $minutes, $gameId)
+    public function applyFatigue($player, $minutes, $gameId)
     {
         try {
             if (is_array($player)) {

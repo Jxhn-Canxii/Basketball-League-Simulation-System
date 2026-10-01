@@ -50,10 +50,6 @@ import axios from "axios";
 import { roundNameFormatter, numberFormatter } from "@/Utility/Formatter";
 
 const props = defineProps({
-    eyebrow: {
-        type: String,
-        required: true,
-    },
     title: {
         type: String,
         required: true,
@@ -73,7 +69,7 @@ const props = defineProps({
     },
     danger: {
         type: Boolean,
-        required: true,
+        default: false,
     },
 });
 </script>

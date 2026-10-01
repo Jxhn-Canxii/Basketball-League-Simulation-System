@@ -20,6 +20,7 @@ use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\FreeAgentController;
 use App\Http\Controllers\SimulateController;
 use App\Http\Controllers\GameController;
+use App\Http\Controllers\HealthCheckController;
 use App\Http\Controllers\LeadersController;
 use App\Http\Controllers\TradeController;
 use App\Http\Controllers\StandingsController;
@@ -53,6 +54,11 @@ Route::get('', function () {
 });
 
 Route::middleware('auth')->group(function () {
+
+    Route::prefix('/system/health/')->group(function(){
+        Route::get('check', [HealthCheckController::class, 'healthCheck'])->name('system.health');
+        Route::get('', [HealthCheckController::class, 'index'])->name('system.index');
+    });
 
     Route::prefix('records/')->group(function(){
 
