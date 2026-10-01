@@ -376,56 +376,56 @@
                 <div class="min-w-0 bg-black">
                     <TeamInfo
                         v-if="currentTab === 'info'"
-                        :key="`info-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`info-${teamId}`"
+                        :team_id="teamId"
                     />
 
                     <TeamHistory
                         v-else-if="currentTab === 'history'"
-                        :key="`history-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`history-${teamId}`"
+                        :team_id="teamId"
                     />
 
                     <TeamRoster
                         v-else-if="currentTab === 'roster'"
-                        :key="`roster-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`roster-${teamId}`"
+                        :team_id="teamId"
                     />
 
                     <TeamPlayerStats
                         v-else-if="currentTab === 'player-stats'"
-                        :key="`player-stats-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`player-stats-${teamId}`"
+                        :team_id="teamId"
                     />
 
                     <TeamTransactions
                         v-else-if="currentTab === 'transactions'"
-                        :key="`transactions-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`transactions-${teamId}`"
+                        :team_id="teamId"
                     />
 
                     <Stars
                         v-else-if="currentTab === 'stars'"
-                        :key="`stars-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`stars-${teamId}`"
+                        :team_id="teamId"
                     />
 
                     <TeamAwards
                         v-else-if="currentTab === 'awards'"
-                        :key="`awards-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`awards-${teamId}`"
+                        :team_id="teamId"
                     />
 
                     <SeasonTimeLine
                         v-else-if="currentTab === 'timeline'"
-                        :key="`timeline-${props.team_id}`"
-                        :teamId="props.team_id"
+                        :key="`timeline-${teamId}`"
+                        :teamId="teamId"
                     />
 
                     <Top15Player
                         v-else-if="currentTab === 'legend'"
-                        :key="`legend-${props.team_id}`"
-                        :team_id="props.team_id"
+                        :key="`legend-${teamId}`"
+                        :team_id="teamId"
                     />
                 </div>
             </div>
@@ -466,8 +466,9 @@
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onUnmounted, ref } from "vue";
 import axios from "axios";
+import Swal from "sweetalert2";
 
 import Modal from "@/Components/Modal.vue";
 
@@ -519,7 +520,7 @@ const props = defineProps({
     },
 
     showInfo: {
-        type: Boolean,
+        type: [Boolean,Number],
         default: false,
     },
 
@@ -539,7 +540,7 @@ const isTeamModalOpen = ref(false);
 const currentTab = ref("info");
 const team_info = ref(null);
 const loading = ref(false);
-
+const teamId = ref(0);
 /*
 |--------------------------------------------------------------------------
 | Team Performance Data
@@ -686,11 +687,60 @@ const rankMovementClass = computed(() => {
 | Lifecycle
 |--------------------------------------------------------------------------
 */
+const init = async () => {
+    teamId.value = props.team_id;
 
-onMounted(() => {
     if (props.showInfo) {
         fetchTeamRecentPerFormance();
     }
+
+}
+
+const teamNavigations = (e) => {
+  let currentTeamId = teamId.value;
+  console.log(e.key);
+
+  if (e.key === "ArrowRight" || e.key === "A") {
+    currentTeamId--;
+    if(currentTeamId <= 4){
+        Swal.fire({
+            icon: "warning",
+            title: "End of Teams",
+            text: "Reach the end of teams list.",
+            background: "#0a0a0a",
+        });
+        
+        return true;
+    }
+    teamId.value =  currentTeamId;
+  }
+  if (e.key === "ArrowLeft" || e.key === "D") {
+    currentTeamId++;
+
+    if(currentTeamId > 64){
+        Swal.fire({
+            icon: "warning",
+            title: "End of Teams",
+            text: "Reach the end of teams list.",
+            background: "#0a0a0a",
+        });
+        
+        return true;
+    }
+    teamId.value =  currentTeamId;
+  }
+
+  console.log(teamId.value);
+};
+
+// onUnmounted(() => {
+//   document.removeEventListener("keydown", teamNavigations);
+//   document.body.style.overflow = null;
+// });
+
+onMounted(async () => {
+    await init();
+    document.addEventListener("keydown", teamNavigations)
 });
 
 /*
@@ -723,7 +773,7 @@ const closeModal = () => {
 */
 
 const fetchTeamInfo = async () => {
-    if (!props.team_id) {
+    if (!teamId.value) {
         return;
     }
 
@@ -734,7 +784,7 @@ const fetchTeamInfo = async () => {
         const response = await axios.post(
             route("teams.info"),
             {
-                team_id: props.team_id,
+                team_id: teamId.value,
             }
         );
 
@@ -758,7 +808,7 @@ const fetchTeamInfo = async () => {
 */
 
 const fetchTeamRecentPerFormance = async () => {
-    if (!props.team_id) {
+    if (!teamId.value) {
         return;
     }
 
@@ -766,7 +816,7 @@ const fetchTeamRecentPerFormance = async () => {
         const response = await axios.post(
             route("team.recent.performance"),
             {
-                team_id: props.team_id,
+                team_id: teamId.value,
                 season_id: props.season_id,
             }
         );

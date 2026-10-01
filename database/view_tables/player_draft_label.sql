@@ -19,6 +19,6 @@ SELECT
 
 FROM drafts d
 JOIN players p ON p.id = d.player_id
-LEFT JOIN player_season_stats ps ON ps.player_id = p.id
+LEFT JOIN player_season_stats_archives ps ON ps.player_id = p.id
 
 GROUP BY d.id, p.id, p.name, d.round, d.pick_number, d.season_id, p.position;

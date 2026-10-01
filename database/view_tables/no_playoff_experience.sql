@@ -11,11 +11,12 @@ JOIN (
     SELECT 
         player_id,
         COUNT(DISTINCT season_id) AS season_experience
-    FROM player_season_stats
+    FROM player_season_stats_archives
     GROUP BY player_id
 ) ps ON p.id = ps.player_id
 WHERE ps.season_experience > 1
   AND p.id NOT IN (
       SELECT DISTINCT player_id
       FROM player_playoff_appearances
-  );
+  )
+ORDER BY ps.season_experience DESC;

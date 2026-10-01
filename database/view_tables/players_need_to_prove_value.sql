@@ -75,13 +75,14 @@ SELECT
 
 FROM players p
 LEFT JOIN teams t ON p.team_id = t.id
-LEFT JOIN player_season_stats ps 
+LEFT JOIN player_season_stats_archives ps 
     ON ps.player_id = p.id AND ps.season_id = (SELECT MAX(id) FROM seasons)
 LEFT JOIN drafts d ON d.player_id = p.id
 LEFT JOIN teams dt ON d.team_id = dt.id
 
 WHERE 
     p.is_active = 1
+    AND p.draft_id != (SELECT MAX(id) FROM seasons) + 1
     AND p.team_id != 0
     AND (
         (p.draft_id = 1 AND ps.eff < 10) OR
@@ -93,4 +94,5 @@ WHERE
             ps.avg_assists_per_game < 2 AND
             ps.avg_rebounds_per_game < 3
         )
-    );
+    )
+ORDER BY p.draft_id DESC;
