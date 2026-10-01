@@ -22,12 +22,14 @@ class CoachService
                     (
                         SELECT 
                             GROUP_CONCAT(
-                                DISTINCT CONCAT(t.name, ' (Season ', COALESCE(tsi.season_id, 'FA'), ')') ORDER BY c.name 
+                                DISTINCT CONCAT(t.name, ' (Season ', COALESCE(tsi.season_id, 'FA'), ')') 
+                                ORDER BY tsi.season_id DESC 
                             SEPARATOR ', ') 
                         FROM team_season_info tsi
                         JOIN coaches c ON c.id = tsi.coach_id
                         LEFT JOIN teams t ON tsi.team_id = t.id
                         WHERE tsi.coach_id = coaches.id
+                            AND t.conference_id > 0
                     ) as teams_coached
                 ")
             );

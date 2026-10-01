@@ -400,8 +400,9 @@
 
                                         <div
                                             class="mt-0.5 text-[9px] text-gray-700"
+                                            :title="'Coached Teams: '+coach.teams_coached"
                                         >
-                                            <small class="text-wrap"><b>Coached Teams:</b> {{ coach.teams_coached ?? '-' }}</small>
+                                            <small class="text-wrap truncate"><b>Coached Teams:</b> {{ coach.teams_coached ?? '-' }}</small>
                                         </div>
                                     </div>
                                 </td>
@@ -641,8 +642,8 @@ const tableHeaders = computed(() => [
     },
     {
         key: "iq",
-        label: "Coach IQ",
-        align: "right",
+        label: "Ratings",
+        align: "center",
     },
     {
         key: "contract",
