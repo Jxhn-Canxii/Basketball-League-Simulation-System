@@ -26,6 +26,10 @@ class SeasonsService
             ->leftJoin('teams as loser', 'seasons.finals_loser_id', '=', 'loser.id')
             ->leftJoin('teams as weakest', 'seasons.weakest_id', '=', 'weakest.id')
             ->leftJoin('teams as champion', 'seasons.champion_id', '=', 'champion.id')
+            ->leftJoin('teams as west', 'seasons.west_champion_id', '=', 'west.id')
+            ->leftJoin('teams as east', 'seasons.east_champion_id', '=', 'east.id')
+            ->leftJoin('teams as north', 'seasons.north_champion_id', '=', 'north.id')
+            ->leftJoin('teams as south', 'seasons.south_champion_id', '=', 'south.id')
             ->leftJoin('conferences as winner_conference', 'winner.conference_id', '=', 'winner_conference.id')
             ->leftJoin('conferences as loser_conference', 'loser.conference_id', '=', 'loser_conference.id')
             ->leftJoin('conferences as weakest_conference', 'weakest.conference_id', '=', 'weakest_conference.id')
@@ -66,7 +70,20 @@ class SeasonsService
         // Retrieve seasons data with pagination after applying search filter
         $seasons = $query->offset($offset)
             ->limit($perPage)
-            ->select('seasons.*', 'winner_conference.name as winner_conference_name', 'loser_conference.name as loser_conference_name', 'weakest_conference.name as weakest_conference_name', 'champion_conference.name as champion_conference_name')
+            ->select('seasons.*', 
+                'winner_conference.name as winner_conference_name', 
+                'loser_conference.name as loser_conference_name', 
+                'weakest_conference.name as weakest_conference_name', 
+                'champion_conference.name as champion_conference_name',
+                'champion.name as champion_current_name', 
+                'winner.name as winner_current_name', 
+                'loser.name as loser_current_name', 
+                'weakest.name as weakest_current_name', 
+                'west.name as west_current_name',
+                'east.name as east_current_name',
+                'south.name as south_current_name',
+                'north.name as north_current_name'
+            )
             ->get();
 
         $isNewSeason = $this->isNewSeason();

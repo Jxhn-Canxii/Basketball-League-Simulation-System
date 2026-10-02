@@ -377,6 +377,14 @@
                                                 }}
                                             </span>
                                         </div>
+                                        <div
+                                            v-if="
+                                                season.finals_winner_name != season.winner_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.winner_current_name }}</small>
+                                        </div>
                                     </td>
 
                                     <!-- Finals Runner Up -->
@@ -399,6 +407,14 @@
                                                     finalsLoserScore(season)
                                                 }}
                                             </span>
+                                        </div>
+                                        <div
+                                            v-if="
+                                                season.finals_loser_name != season.loser_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.loser_current_name }}</small>
                                         </div>
                                     </td>
 
@@ -425,6 +441,14 @@
                                                 season.champion_name ?? "TBD"
                                             }}
                                         </span>
+                                        <div
+                                            v-if="
+                                                season.champion_name != season.champion_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.champion_current_name }}</small>
+                                        </div>
                                     </td>
 
                                     <!-- NCR -->
@@ -458,6 +482,14 @@
                                                 }}
                                             </span>
                                         </div>
+                                        <div
+                                            v-if="
+                                                season.west_champion_name != season.west_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.west_current_name }}</small>
+                                        </div>
                                     </td>
 
                                     <!-- Luzon -->
@@ -488,6 +520,14 @@
                                                     "TBD"
                                                 }}
                                             </span>
+                                        </div>
+                                        <div
+                                            v-if="
+                                                season.east_champion_name != season.east_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.east_current_name }}</small>
                                         </div>
                                     </td>
 
@@ -520,6 +560,14 @@
                                                 }}
                                             </span>
                                         </div>
+                                        <div
+                                            v-if="
+                                                season.north_champion_name != season.north_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.north_current_name }}</small>
+                                        </div>
                                     </td>
 
                                     <!-- Mindanao -->
@@ -551,6 +599,14 @@
                                                 }}
                                             </span>
                                         </div>
+                                        <div
+                                            v-if="
+                                                season.south_champion_name != season.south_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.south_current_name }}</small>
+                                        </div>
                                     </td>
 
                                     <!-- Worst -->
@@ -572,6 +628,14 @@
                                                 season.weakest_name ?? "TBD"
                                             }}
                                         </span>
+                                         <div
+                                            v-if="
+                                                season.weakest_name != season.weakest_current_name
+                                            "
+                                            class="text-gray-800 text-xs font-light"
+                                        >
+                                            <small>Currently as {{ season.weakest_current_name }}</small>
+                                        </div>
                                     </td>
 
                                     <!-- Actions -->

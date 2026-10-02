@@ -1134,9 +1134,84 @@ class PlayerService
         $teamId = $request->team_id;
 
         // Subquery to get the highest-efficiency star player per season
+        $subLatest = DB::table('player_season_stats')
+            ->selectRaw('MAX(player_valuation) as valuable_player, season_id')
+            ->where('team_id', $teamId)
+            ->groupBy('season_id');
+
+        // Join with player and season data
+        $starPlayersLatest = DB::table('player_season_stats AS pss')
+            ->joinSub($subLatest, 'valuable_player_stats', function ($join) {
+                $join->on('pss.season_id', '=', 'valuable_player_stats.season_id')
+                    ->on('pss.player_valuation', '=', 'valuable_player_stats.valuable_player');
+            })
+            ->join('players AS p', 'pss.player_id', '=', 'p.id')
+            ->join('seasons AS s', 'pss.season_id', '=', 's.id')
+            ->leftJoin('teams AS ct', 'p.team_id', '=', 'ct.id') // current team
+            ->leftJoin('teams AS t', 'pss.team_id', '=', 't.id') // season team
+            ->where('pss.team_id', $teamId)
+            ->orderByDesc('pss.season_id')
+            ->select([
+                's.id AS season_id',
+                's.name AS season_name',
+                'p.id AS player_id',
+                'p.draft_status AS draft_status',
+                'p.draft_id AS draft_id',
+                'p.name AS player_name',
+                'p.role AS current_role',
+                'pss.role AS season_role',
+                'ct.name AS current_team',
+                't.name AS season_team',
+                'pss.avg_minutes_per_game',
+                'pss.avg_points_per_game',
+                'pss.avg_rebounds_per_game',
+                'pss.avg_assists_per_game',
+                'pss.avg_steals_per_game',
+                'pss.avg_blocks_per_game',
+                'pss.avg_turnovers_per_game',
+                'pss.avg_fouls_per_game',
+                'pss.total_field_goals_made',
+                'pss.total_field_goal_attempts',
+                'pss.total_two_pointers_made',
+                'pss.total_two_point_attempts',
+                'pss.total_three_pointers_made',
+                'pss.total_three_point_attempts',
+                'pss.total_free_throws_made',
+                'pss.total_free_throw_attempts',
+                'pss.total_points',
+                'pss.total_rebounds',
+                'pss.total_assists',
+                'pss.total_steals',
+                'pss.total_blocks',
+                'pss.total_turnovers',
+                'pss.total_fouls',
+                'pss.total_minutes_played',
+                'pss.total_games_played',
+                'pss.total_games',
+                'pss.bpg_game_leader',
+                'pss.points_game_leader',
+                'pss.rebounds_game_leader',
+                'pss.assists_game_leader',
+                'pss.steals_game_leader',
+                'pss.blocks_game_leader',
+                'pss.per',
+                'pss.ts_percent',
+                'pss.eff',
+                'pss.field_goal_percentage',
+                'pss.two_point_percentage',
+                'pss.three_point_percentage',
+                'pss.free_throw_percentage',
+                'pss.created_at',
+                'pss.updated_at',
+            ])
+            ->get();
+
+
+         // Subquery to get the highest-efficiency star player per season
         $sub = DB::table('player_season_stats_archives')
             ->selectRaw('MAX(player_valuation) as valuable_player, season_id')
             ->where('team_id', $teamId)
+            ->where('total_games_played','>=',10)
             ->groupBy('season_id');
 
         // Join with player and season data
@@ -1205,6 +1280,18 @@ class PlayerService
                 'pss.updated_at',
             ])
             ->get();
+
+        $data = [];
+
+        foreach ($starPlayersLatest as $stats) {
+            # code...
+            $data[] = $stats;
+        }
+
+        foreach ($starPlayers as $stats) {
+            # code...
+            $data[] = $stats;
+        }
 
         return response()->json($starPlayers);
     }
