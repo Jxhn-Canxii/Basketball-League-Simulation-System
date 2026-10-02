@@ -345,9 +345,7 @@ class MinuteDistributionService
             */
 
             $overall = (float) (
-                $player->overall_rating
-                ?? $player->overall
-                ?? 50
+                $player->overall_rating ?? 50
             );
 
             $eff = (float) (

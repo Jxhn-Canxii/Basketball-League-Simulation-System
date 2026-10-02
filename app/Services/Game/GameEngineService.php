@@ -463,9 +463,8 @@ class GameEngineService
         ];
 
         // Fetching sorted active players for both teams
-        $homeTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $quarter);
-        $awayTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $quarter);
-
+        $homeTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+        $awayTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
 
         $playerGameStats = [];
         $homeMinutes = $this->minutes->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->home_coaching_style, $gameData->home_preferred_team_composition);
@@ -566,8 +565,8 @@ class GameEngineService
         ];
 
         // Fetching sorted active players for both teams
-        $homeTeamPlayers = $this->teamManagement->getActiveAllstarPlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $quarter);
-        $awayTeamPlayers = $this->teamManagement->getActiveAllstarPlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $quarter);
+        $homeTeamPlayers = $this->teamManagement->getActiveAllstarPlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+        $awayTeamPlayers = $this->teamManagement->getActiveAllstarPlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
 
         // dd($awayTeamPlayers);
 

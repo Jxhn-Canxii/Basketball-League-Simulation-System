@@ -733,7 +733,7 @@ class DraftService
                 if ($availablePlayers->isEmpty()) {
                     throw new \RuntimeException(
                         "No available rookies remain for "
-                            . "Season {$nextSeasonId} Draft: Round {$round}, Pick {$pickNumber}."
+                            . "Season {$seasonId} Draft: Round {$round}, Pick {$pickNumber}."
                     );
                 }
 

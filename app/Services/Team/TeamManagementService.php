@@ -26,55 +26,37 @@ class TeamManagementService
         
     }
 
-    private function prevQuarter($quarter){
-            switch ($quarter) {
-                case 'Q1':
-                    return 'Q1';
-                    break;
-                case 'Q2':
-                    return 'Q1';
-                    break;
-                case 'Q3':
-                    return 'Q2';
-                    break;
-                case 'Q4':
-                    return 'Q3';
-                    break;
-                case 'OT1':
-                    return 'Q4';
-                    break;
-                case 'OT2':
-                    return 'OT1';
-                    break;
-                case 'OT3':
-                    return 'OT2';
-                    break;
-                default:
-                    return 'Q1';
-                    break;
-            }
-    }
-
-    public function getActivePlayersSorted($teamId, $gameId, $rolePriority, $quarter)
+    public function getActivePlayersSorted($teamId, $gameId, $rolePriority, $round)
     {
         $seasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // You must implement this
-        $prevQuarter = $this->prevQuarter($quarter);
 
-        $players = Player::where('team_id', $teamId)
-            ->select('players.*','pqs.points','pqs.assists','pqs.steals','pqs.rebounds','pqs.block','pqs.steals','pqs.per','pqs.eff')
-            ->join('player_per_quarter_stats as pqs','pqs.player_id','=','players.id','left')
+        $players = Player::where('players.team_id', $teamId)
             ->where('players.is_active', 1)
-            ->where('pqs.quarter', $prevQuarter)
-            ->where('pqs.game_id', $gameId)
-            ->where('pqs.team_id', $teamId)
             ->get();
 
         $playerEfficiencies = [];
 
         foreach ($players as $player) {
+
             $playerId = $player->id;
             $role = $player->role;
+
+            $currentGameStats = DB::table('player_game_stats as pqs')
+                ->select('pqs.points','pqs.assists','pqs.steals','pqs.rebounds','pqs.blocks','pqs.steals','pqs.per','pqs.eff')
+                ->where('pqs.team_id', $teamId)
+                ->where('pqs.game_id', $gameId)
+                ->where('pqs.player_id', $playerId)
+                ->first();
+
+            //stats
+            $player->points = $currentGameStats->points ?? 0;
+            $player->rebounds = $currentGameStats->rebounds ?? 0;
+            $player->assists = $currentGameStats->assists ?? 0;
+            $player->steals = $currentGameStats->steals ?? 0;
+            $player->blocks = $currentGameStats->blocks ?? 0;
+            $player->per = $currentGameStats->per ?? 0;
+            $player->eff = $currentGameStats->eff ?? 0;
 
             // Years pro = distinct seasons
             $yearsPro = DB::table('player_season_stats_archives')

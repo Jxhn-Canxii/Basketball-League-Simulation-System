@@ -65,7 +65,7 @@ class ArchiveService
         $archiveTable = $archiveDB.".player_per_quarter_stats_batch_" . $tableBatch;
         $sourceTable= 'player_per_quarter_stats';
 
-        $this->archiveByBatch($seasonId,$sourceTable,$archiveTable);
+        $this->archiveByBatch($seasonId,$sourceTable,$archiveTable,true);
     }
 
     public function archiveQuarterGameBreakDown(int $seasonId)
@@ -79,7 +79,7 @@ class ArchiveService
         $archiveTable = $archiveDB.".game_quarter_breakdown_batch_" . $tableBatch;
         $sourceTable= 'game_quarter_breakdown';
 
-        $this->archiveByBatch($seasonId,$sourceTable,$archiveTable);
+        $this->archiveByBatch($seasonId,$sourceTable,$archiveTable,true);
     }
 
     public function archiveGameStats(int $seasonId)
@@ -93,7 +93,7 @@ class ArchiveService
         $archiveTable = $archiveDB.".player_game_stats_batch_" . $tableBatch;
         $sourceTable= 'player_game_stats';
 
-        $this->archiveByBatch($seasonId,$sourceTable,$archiveTable);
+        $this->archiveByBatch($seasonId,$sourceTable,$archiveTable,true);
     }
 
     //one segment
