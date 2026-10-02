@@ -208,7 +208,7 @@
                 </div>
 
                 <!-- Recent trade -->
-                <div v-if="seasonStatus == 1 && currentRound >= 5">
+                <div v-if="seasonStatus == 1 && currentRound >= 7 && !boostMode">
                     <AllStarRace :season_id="props.season_id" :key="currentRound" />
                 </div>
             </section>
@@ -283,7 +283,7 @@
                     />
                     <br>
                     <RecentTradeProposal
-                        v-if="seasonStatus == 1"
+                        v-if="seasonStatus == 1 && !boostMode"
                         :key="updateKey"
                         :isOffSeason="false"
                         :seasonId="props.season_id"
