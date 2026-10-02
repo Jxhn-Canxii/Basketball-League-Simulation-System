@@ -26,13 +26,48 @@ class TeamManagementService
         
     }
 
-    public function getActivePlayersSorted($teamId, $gameId, $rolePriority, $round)
+    private function prevQuarter($quarter){
+            switch ($quarter) {
+                case 'Q1':
+                    return 'Q1';
+                    break;
+                case 'Q2':
+                    return 'Q1';
+                    break;
+                case 'Q3':
+                    return 'Q2';
+                    break;
+                case 'Q4':
+                    return 'Q3';
+                    break;
+                case 'OT1':
+                    return 'Q4';
+                    break;
+                case 'OT2':
+                    return 'OT1';
+                    break;
+                case 'OT3':
+                    return 'OT2';
+                    break;
+                default:
+                    return 'Q1';
+                    break;
+            }
+    }
+
+    public function getActivePlayersSorted($teamId, $gameId, $rolePriority, $quarter)
     {
         $seasonId = get_current_season_id();
         $previousSeasonId = get_previous_season_id(); // You must implement this
+        $prevQuarter = $this->prevQuarter($quarter);
 
         $players = Player::where('team_id', $teamId)
-            ->where('is_active', 1)
+            ->select('players.*','pqs.points','pqs.assists','pqs.steals','pqs.rebounds','pqs.block','pqs.steals','pqs.per','pqs.eff')
+            ->join('player_per_quarter_stats as pqs','pqs.player_id','=','players.id','left')
+            ->where('players.is_active', 1)
+            ->where('pqs.quarter', $prevQuarter)
+            ->where('pqs.game_id', $gameId)
+            ->where('pqs.team_id', $teamId)
             ->get();
 
         $playerEfficiencies = [];
