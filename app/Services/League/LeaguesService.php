@@ -88,6 +88,7 @@ class LeaguesService
         $tables = [
             'drafts',
             'draft_pick_rights',
+            'play_by_play',
             'salary_caps',
             'head_to_head',
             'injury_histories',

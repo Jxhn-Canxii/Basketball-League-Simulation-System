@@ -1763,7 +1763,7 @@ class TeamManagementService
             ->update([
                 'role' => $newRole,
                 'is_reserved' => $isReserved,
-                'fatigue' => 0,
+                'fatigue' => min(0,$player->fatigue - 10),
             ]);
             
         if ($currentRole == $newRole) {
@@ -1773,7 +1773,7 @@ class TeamManagementService
         if($currentRole !== $newRole) {
             $status = $newRole == 'star player' ? 'star player change' : 'role change';
             $roundName = is_numeric($round) ? "Round #$round" : "Playoffs";
-
+            
             DB::table('role_change_transaction')->insert([
                 'player_id' => $player->id,
                 'season_id' => $seasonId,

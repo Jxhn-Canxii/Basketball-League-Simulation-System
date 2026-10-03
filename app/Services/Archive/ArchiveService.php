@@ -33,6 +33,8 @@ class ArchiveService
 
             $this->archivePerQuarterGameStats($seasonId);
 
+            $this->archivePlayByPlay($seasonId);
+
             $this->archivePlayerSeasonStats($seasonId);
 
             $this->archivePlayoffSeriesTable($seasonId);
@@ -92,6 +94,20 @@ class ArchiveService
 
         $archiveTable = $archiveDB.".player_game_stats_batch_" . $tableBatch;
         $sourceTable= 'player_game_stats';
+
+        $this->archiveByBatch($seasonId,$sourceTable,$archiveTable,true);
+    }
+
+    public function archivePlayByPlay(int $seasonId)
+    {
+    
+        $MODULO = (int) config('archive.DECADE_MODULO');
+        $tableBatch = CEIL($seasonId / $MODULO);
+        $archiveDB = $this->helper->archiveDB();
+
+
+        $archiveTable = $archiveDB.".play_by_play_batch_" . $tableBatch;
+        $sourceTable= 'play_by_play';
 
         $this->archiveByBatch($seasonId,$sourceTable,$archiveTable,true);
     }

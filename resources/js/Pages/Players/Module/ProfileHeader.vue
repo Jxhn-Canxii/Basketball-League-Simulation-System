@@ -97,6 +97,28 @@
                   <i class="fa fa-users mr-1.5 text-white/40"></i>
                   {{ player.team_name ?? "Free Agent" }}
                 </span>
+
+                <div class="flex">
+                  <i class="fa fa-bolt mr-1.5 text-white/40"></i>
+                
+                  <div
+                      class="inline-flex items-center gap-2"
+                  >
+                      <div
+                          class="h-2 w-10 overflow-hidden rounded-full bg-gray-500"
+                      >
+                          <div
+                              class="h-full rounded-full"
+                              :style="{
+                                  width: `${100 - player.fatigue}%`,
+                                  backgroundColor : primaryColor ?? '#ca1414',
+                              }"
+                          >
+                          </div>
+                      </div>
+                      {{ Math.round(100 - player.fatigue ?? 0) }}%
+                  </div>
+                </div>
               </div>
             </div>
 

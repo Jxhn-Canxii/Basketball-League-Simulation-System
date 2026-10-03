@@ -1468,6 +1468,7 @@ class PlayerService
                 'players.work_ethic_rating',
                 'players.injury_prone_percentage',
                 'players.type',
+                'players.fatigue',
                 'players.draft_status as draft_status',
                 'seasons.name as draft_class',
                 'drafted_teams.acronym as drafted_team',

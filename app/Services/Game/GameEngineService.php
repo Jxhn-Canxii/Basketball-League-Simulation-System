@@ -30,11 +30,13 @@ class GameEngineService
     protected $career;
     protected $teamChemistry;
     protected $minutes;
+    protected $playByPlayEngine;
 
     public function __construct()
     {
         // instantiate once so other methods can use it via $this->storeStats
         // $this->storeStats = new AwardsController();
+        $this->playByPlayEngine = new PlayByPlayService();
         $this->contract = new ContractService();
         $this->teamChemistry = new TeamChemistryService();
         $this->teamManagement = new TeamManagementService();
@@ -224,15 +226,17 @@ class GameEngineService
         $homeTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->home_team_id,$gameData->round);
         $awayTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->away_team_id,$gameData->round);
 
+        $totalPossessions = rand(160,310);
          //core of the game
         $quarterMinutes = $totalMinutes / 4;
+        $quarterPossessions = $totalPossessions / 4;
 
 
         for ($quarterNumber=1; $quarterNumber <= 4; $quarterNumber++) { 
 
             $quarter = 'Q'.$quarterNumber;
 
-            $playerQuarterStats = $this->gameEngine($gameData,$quarter,$quarterMinutes);
+            $playerQuarterStats = $this->gameEngine($gameData,$quarter,$quarterMinutes, $quarterPossessions);
 
             $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$quarter);
             
@@ -244,6 +248,7 @@ class GameEngineService
         if ($isTied) {
 
             $otMinutes = $totalMinutes / 8;
+            $otPossessions = $totalPossessions / 8;
 
             $maxOvertimes = 3;
 
@@ -251,7 +256,7 @@ class GameEngineService
 
                 $overtimeQuarter = 'OT' . $OTNumber;
 
-                $playerQuarterStats = $this->gameEngine($gameData,$overtimeQuarter,$otMinutes);
+                $playerQuarterStats = $this->gameEngine($gameData,$overtimeQuarter,$otMinutes, $otPossessions);
 
                 $this->playerStats->updateQuarterStats($playerQuarterStats,$gameData,$overtimeQuarter);
 
@@ -445,7 +450,7 @@ class GameEngineService
         ];
     }
 
-    private function gameEngine($gameData,$quarter,$totalMinutes)
+    private function gameEngineV1($gameData,$quarter,$totalMinutes)
     {
 
         $currentSeasonId = get_current_season_id();
@@ -547,6 +552,57 @@ class GameEngineService
         // Distribute assists for the away team
         $this->playerStats->distributeAssists($playerGameStats, $gameData->away_team_id, $maxAwayAssists, $awayAssistsAssigned);
         
+        return $playerGameStats ?? [];
+
+    }
+
+    private function gameEngine($gameData,$quarter,$totalMinutes,$totalPossessions)
+    {
+
+        $currentSeasonId = get_current_season_id();
+        
+        $this->teamChemistry->updateSeasonTeamChemistryBeforeGame($gameData->home_team_id);
+        $this->teamChemistry->updateSeasonTeamChemistryBeforeGame($gameData->away_team_id);
+        //check first to balance team positions
+
+        $rolePriority = [
+            'star player' => 1,
+            'all star' => 2,
+            'starter' => 2,
+            'role player' => 5,
+            'bench' => 5,
+        ];
+
+        // Fetching sorted active players for both teams
+        $homeTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->home_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+        $awayTeamPlayers = $this->teamManagement->getActivePlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
+
+        $playerGameStats = [];
+        $homeMinutes = $this->minutes->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->home_coaching_style, $gameData->home_preferred_team_composition);
+        $awayMinutes = $this->minutes->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->away_coaching_style, $gameData->away_preferred_team_composition);
+
+        $homeChemistry = $gameData->home_team_chemistry ?? 75;
+        $awayChemistry = $gameData->away_team_chemistry ?? 75;
+        // Simulate home team player stats with detailed shooting metrics
+
+        $data = $this->playByPlayEngine->simulateQuarterPossessions(
+            $currentSeasonId,
+            $gameData,
+            $homeTeamPlayers,
+            $awayTeamPlayers,
+            $homeMinutes,
+            $awayMinutes,
+            $quarter,
+            (float) $homeChemistry,
+            (float) $awayChemistry,
+            $totalPossessions
+        );
+
+        $playerGameStats = $data['stats'];
+        $gamePlayByPlay = $data['events'];
+    
+        $this->playByPlayEngine->recordGameEvents($gamePlayByPlay);
+
         return $playerGameStats ?? [];
 
     }

@@ -304,6 +304,22 @@ class HelperService
         return $archiveTable;
     }
 
+    public function getPlayByPlayDatabaseName($seasonId)
+    {
+        $currentSeasonId = get_current_season_id();
+
+        $MODULO = config('archive.DECADE_MODULO');
+        $tableBatch = ceil($seasonId / $MODULO);
+        $archiveDB = $this->archiveDB();
+
+        $archiveTable = $archiveDB.".play_by_play_batch_" . $tableBatch;
+        if ($currentSeasonId == $seasonId) {
+            $archiveTable = "play_by_play";
+        }
+
+        return $archiveTable;
+    }
+
     public function getSeasonStatsDBName($seasonId)
     {
 
