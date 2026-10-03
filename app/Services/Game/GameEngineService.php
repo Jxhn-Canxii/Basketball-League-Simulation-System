@@ -226,13 +226,13 @@ class GameEngineService
         $homeTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->home_team_id,$gameData->round);
         $awayTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->away_team_id,$gameData->round);
 
-        $totalPossessions = rand(160,310);
-         //core of the game
-        $quarterMinutes = $totalMinutes / 4;
-        $quarterPossessions = $totalPossessions / 4;
-
 
         for ($quarterNumber=1; $quarterNumber <= 4; $quarterNumber++) { 
+
+            $totalPossessions = rand(160,310);
+            //core of the game
+            $quarterMinutes = $totalMinutes / 4;
+            $quarterPossessions = $totalPossessions / 4;
 
             $quarter = 'Q'.$quarterNumber;
 
@@ -247,12 +247,14 @@ class GameEngineService
         
         if ($isTied) {
 
-            $otMinutes = $totalMinutes / 8;
-            $otPossessions = $totalPossessions / 8;
-
             $maxOvertimes = 3;
 
             for ($OTNumber = 1; $OTNumber <= $maxOvertimes; $OTNumber++) {
+
+                $totalPossessions = rand(160,310);
+                //core of the game
+                $otMinutes = $totalMinutes / 8;
+                $otPossessions = $totalPossessions / 8;
 
                 $overtimeQuarter = 'OT' . $OTNumber;
 
@@ -342,13 +344,11 @@ class GameEngineService
         $homeTeamRosterReport = $this->teamManagement->prepareAllStarFinalRoster($gameData->home_team_id,$gameData->round);
         $awayTeamRosterReport = $this->teamManagement->prepareAllStarFinalRoster($gameData->away_team_id,$gameData->round);
 
-        $totalPossessions = rand(160,310);
-         //core of the game
-        $quarterMinutes = $totalMinutes / 4;
-        $quarterPossessions = $totalPossessions / 4;
-
-
         for ($quarterNumber=1; $quarterNumber <= 4; $quarterNumber++) { 
+            $totalPossessions = rand(160,310);
+            //core of the game
+            $quarterMinutes = $totalMinutes / 4;
+            $quarterPossessions = $totalPossessions / 4;
 
             $quarter = 'Q'.$quarterNumber;
 
@@ -363,12 +363,13 @@ class GameEngineService
         
         if ($isTied) {
 
-            $otMinutes = $totalMinutes / 8;
-            $otPossessions = $totalPossessions / 8;
-
             $maxOvertimes = 3;
 
             for ($OTNumber = 1; $OTNumber <= $maxOvertimes; $OTNumber++) {
+                $totalPossessions = rand(160,310);
+
+                $otMinutes = $totalMinutes / 8;
+                $otPossessions = $totalPossessions / 8;
 
                 $overtimeQuarter = 'OT' . $OTNumber;
 

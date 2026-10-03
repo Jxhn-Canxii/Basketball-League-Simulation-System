@@ -308,9 +308,18 @@ class GameResultService
                 ->keyBy('id');
 
             $playByPlayDB = $this->helper->getPlayByPlayDatabaseName($game->season_id);
-            $playByPlay = DB::table($playByPlayDB)
-                ->where('game_id', $game->game_id)
-                ->get();
+            $basePlayByPlay = DB::table($playByPlayDB.' as pbp')
+                ->join('teams','teams.id','=','pbp.team_id')
+                ->select('teams.name as team_name','pbp.id','pbp.possession_number','pbp.quarter','pbp.description')
+                ->where('pbp.game_id', $game->game_id);
+
+            if($quarter > 0){
+                $basePlayByPlay->where('pbp.quarter', $quarter);
+            }
+
+            $playByPlay = $basePlayByPlay
+                        ->orderBy('pbp.id','desc')    
+                        ->get();
 
             // Split player stats into home and away teams, using the game team IDs
             $homeTeamPlayers = $players->filter(function ($player) use ($game, $playerStats) {
