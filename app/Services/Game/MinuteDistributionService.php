@@ -232,9 +232,9 @@ class MinuteDistributionService
         $roleMaximumMinutes = [
             'star player' => 12,
             'all star'    => 11,
-            'starter'     => 12,
-            'role player' => 12,
-            'bench'       => 12,
+            'starter'     => 10,
+            'role player' => 8,
+            'bench'       => 6,
         ];
 
         /*

@@ -107,10 +107,11 @@
                         type="button"
                         v-if="showEndButton"
                         @click="endAwardWindow"
+                        :disabled="loading"
                         class="inline-flex items-center justify-center gap-2 rounded-lg border border-yellow-500 bg-yellow/[0.04] px-4 py-2.5 text-xs font-bold text-yellow-300 transition hover:bg-yellow/[0.08]"
                     >
-                        <i class="fa fa-arrow-right text-gray-500"></i>
-                        Skip
+                        <i :class="loading? 'fa-loader fa-spin' : 'fa-arrow-right'" class="fa text-gray-500"></i>
+                        {{ loading ? 'Loading...' : 'Skip' }}
                     </button>
                 </div>
                 
@@ -378,18 +379,25 @@ const getSeasonAwards = async () => {
 const endAwardWindow = async () => {
 
     try {
+        loading.value = true;
+
         const response = await axios.get(route("season.awards.end"));
 
         Swal.fire({
             icon: "error",
             title: "Awarding ended...",
-            text: reponse.data?.message,
+            text: response.data?.message,
         });
         
         await getSeasonAwards();
+        loading.value = false;
+
     } catch (error) {
         console.log(error);
         Swal.close();
+
+        loading.value = false;
+
     }
 }
 

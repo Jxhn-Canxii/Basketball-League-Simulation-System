@@ -56,7 +56,7 @@ class TeamManagementService
             $player->steals = $currentGameStats->steals ?? 0;
             $player->blocks = $currentGameStats->blocks ?? 0;
             $player->per = $currentGameStats->per ?? 0;
-            $player->eff = $currentGameStats->eff ?? 0;
+            // $player->eff = $currentGameStats->eff ?? 0;
 
             // Years pro = distinct seasons
             $yearsPro = DB::table('player_season_stats_archives')
@@ -78,6 +78,8 @@ class TeamManagementService
                 ->limit(5)
                 ->sum('eff') ?? 0;
 
+            $player->eff = $currentGameStats->eff ?? $lastFiveGamesEff;
+            
             $totalEff = $currentEff + $lastFiveGamesEff;
 
             // Draft info
@@ -100,6 +102,7 @@ class TeamManagementService
                 'player' => $player,
                 'role' => $player->role,
                 'total_eff' => $totalEff,
+                'current_eff' =>  $player->eff,
                 'years_pro' => $yearsPro,
                 'is_rookie' => $draft ? true : false,
                 'draft_round' => $draft->round ?? null,
@@ -114,7 +117,7 @@ class TeamManagementService
 
         // Sort by: total_eff DESC, role_priority ASC,fatigue ASC,years_pro DESC,
         $sortedPlayers = collect($playerEfficiencies)->sort(function ($a, $b) {
-            return $b['total_eff'] <=> $a['total_eff']
+            return $b['current_eff'] <=> $a['current_eff']
                 ?: $a['role_rank'] <=> $b['role_rank']
                 ?: $a['fatigue'] <=> $b['fatigue']
                 ?: $b['years_pro'] <=> $a['years_pro'];

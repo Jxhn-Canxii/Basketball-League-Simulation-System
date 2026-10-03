@@ -481,6 +481,9 @@
                                     <th>BLK</th>
                                     <th>TO</th>
                                     <th>FG</th>
+                                    <th>2P</th>
+                                    <th>3P</th>
+                                    <th>FT</th>
                                     <th>PER</th>
                                     <th>EFF</th>
                                 </tr>
@@ -581,6 +584,24 @@
                                         {{ player.field_goals_made }}
                                         /
                                         {{ player.field_goal_attempts }}
+                                    </td>
+
+                                    <td class="number">
+                                        {{ player.two_pointers_made }}
+                                        /
+                                        {{ player.two_point_attempts }}
+                                    </td>
+
+                                    <td class="number">
+                                        {{ player.three_pointers_made }}
+                                        /
+                                        {{ player.three_point_attempts }}
+                                    </td>
+
+                                    <td class="number">
+                                        {{ player.free_throws_made }}
+                                        /
+                                        {{ player.free_throw_attempts }}
                                     </td>
 
                                     <td class="number">
@@ -688,6 +709,9 @@
                                     <th>BLK</th>
                                     <th>TO</th>
                                     <th>FG</th>
+                                    <th>2P</th>
+                                    <th>3P</th>
+                                    <th>FT</th>
                                     <th>PER</th>
                                     <th>EFF</th>
                                 </tr>
@@ -789,6 +813,24 @@
                                         {{ player.field_goals_made }}
                                         /
                                         {{ player.field_goal_attempts }}
+                                    </td>
+
+                                    <td class="number">
+                                        {{ player.two_pointers_made }}
+                                        /
+                                        {{ player.two_point_attempts }}
+                                    </td>
+
+                                    <td class="number">
+                                        {{ player.three_pointers_made }}
+                                        /
+                                        {{ player.three_point_attempts }}
+                                    </td>
+
+                                    <td class="number">
+                                        {{ player.free_throws_made }}
+                                        /
+                                        {{ player.free_throw_attempts }}
                                     </td>
 
                                     <td class="number">

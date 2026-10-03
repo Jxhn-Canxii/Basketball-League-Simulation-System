@@ -740,12 +740,12 @@ class PlayerStatsService
         // Position provides a tendency, while actual 3PT rating strongly
         // influences whether the player takes those shots.
         $positionThree = [
-            'PG' => 0.48,
+            'PG' => 0.40,
             'SG' => 0.52,
-            'SF' => 0.40,
-            'PF' => 0.30,
-            'C' => 0.16,
-        ][$position] ?? 0.35;
+            'SF' => 0.30,
+            'PF' => 0.25,
+            'C' => 0.10,
+        ][$position] ?? 0.30;
         $threeSkill = 0.65 + (($threePoint - 60) / 300);
         $threeShare = $this->clamp($positionThree * $threeSkill, 0.08, 0.62);
 

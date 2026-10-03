@@ -27,7 +27,7 @@ class TradeDecisionService
     |--------------------------------------------------------------------------
     */
 
-    protected int $maxGeneratedTrades = 20;
+    protected int $maxGeneratedTrades = 30;
 
     protected int $maxTeamsPerTrade = 6;
 
@@ -47,7 +47,7 @@ class TradeDecisionService
      * This makes the generator less restrictive and allows
      * more realistic uneven-but-reasonable packages.
      */
-    protected float $maxPackageDifferencePercentage = 35.0;
+    protected float $maxPackageDifferencePercentage = 50.0;
 
     /*
      * Chance that a generated proposal becomes a larger

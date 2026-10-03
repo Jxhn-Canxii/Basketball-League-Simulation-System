@@ -204,9 +204,13 @@ class AwardsService
         $rookieOfTheYear = $rookies->filter(function ($stats) {
             return $stats->total_games_played >= 0.75 * $stats->total_games;
         })->sort(function ($a, $b) {
-            $aStats = $a->eff;
+            $aStats = $a->avg_points_per_game * 1.0 + $a->avg_rebounds_per_game * 1.2 +
+                $a->avg_assists_per_game * 1.5 + $a->avg_steals_per_game * 2.0 +
+                $a->avg_blocks_per_game * 2.0 - $a->avg_turnovers_per_game * 1.5;
 
-            $bStats = $b->eff;
+            $bStats = $b->avg_points_per_game * 1.0 + $b->avg_rebounds_per_game * 1.2 +
+                $b->avg_assists_per_game * 1.5 + $b->avg_steals_per_game * 2.0 +
+                $b->avg_blocks_per_game * 2.0 - $b->avg_turnovers_per_game * 1.5;
 
             return $bStats <=> $aStats;
         })->first();
