@@ -298,13 +298,19 @@ class GameResultService
 
         $homeTeamPlayersArray = [];
         $awayTeamPlayersArray = [];
-
+        $playByPlay = [];
+        
         if ($show_stats) {
             // Fetch all players that might be relevant to the game (ignoring team_id here)
             $players = DB::table('players')
                 ->whereIn('id', $playerStats->pluck('player_id')->toArray())
                 ->get()
                 ->keyBy('id');
+
+            $playByPlayDB = $this->helper->getPlayByPlayDatabaseName($game->season_id);
+            $playByPlay = DB::table($playByPlayDB)
+                ->where('game_id', $game->game_id)
+                ->get();
 
             // Split player stats into home and away teams, using the game team IDs
             $homeTeamPlayers = $players->filter(function ($player) use ($game, $playerStats) {
@@ -469,6 +475,7 @@ class GameResultService
         $boxScore = [
             'game_id' => $game->game_id,
             'round' => $game->round,
+            'play_by_play' => $playByPlay,
             'news' =>  $gameNews,
             'is_overtime' => $isOT,
             'injury' => $injury,

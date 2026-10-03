@@ -1329,7 +1329,16 @@ class PlayByPlayService
     }
 
     public function recordGameEvents($events){
-        DB::table('play_by_play')->insert($events);
+        try {
+            DB::beginTransaction();
+            //code...
+            DB::table('play_by_play')->insert($events);
+
+            DB::commit();
+        } catch (\Throwable $e) {
+            //throw $th;
+            DB::rollBack();
+        }
     }
 
     private function event(
