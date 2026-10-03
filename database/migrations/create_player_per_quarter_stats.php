@@ -35,6 +35,7 @@ return new class extends Migration
             $table->integer('two_point_attempts')->default(0);
             $table->integer('two_pointers_made')->default(0);
             $table->boolean('is_fouled_out')->default(0);
+            $table->boolean('is_starter')->default(0);
             $table->timestamps();
         });
 

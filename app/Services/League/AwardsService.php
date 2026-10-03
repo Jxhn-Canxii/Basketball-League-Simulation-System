@@ -400,13 +400,23 @@ class AwardsService
             }
         }
 
-        $tripleCrown = DB::table('players')
-                    ->select('players.*')
-                    ->join('seasons as f','f.finals_winner_id','=','players.team_id')
-                    ->join('seasons as o','o.champion_id','=','players.team_id')
-                    ->join('playoff_series as c','c.winner_team_id','=','players.team_id')
+        $tripleCrown = DB::table('player_season_stats as ps')
+                    ->select('ps.*')
+                    ->join('players','players.id','=','ps.player_id')
+                    ->join('playoff_series as c', function ($join) {
+                        $join->on('c.winner_team_id', '=', 'ps.team_id')
+                            ->on('c.season_id', '=', 'ps.season_id');
+                    })
+                    ->join('seasons as o', function ($join) {
+                        $join->on('o.champion_id', '=', 'ps.team_id')
+                            ->on('o.id', '=', 'ps.season_id');
+                    })
+                    ->join('seasons as f', function ($join) {
+                        $join->on('f.finals_winner_id', '=', 'ps.team_id')
+                            ->on('f.id', '=', 'ps.season_id');
+                    })
                     ->where('c.round','semi_finals')
-                    ->where('c.season_id',$latestSeasonId)
+                    ->where('ps.season_id',$latestSeasonId)
                     ->where('o.id',$latestSeasonId)
                     ->where('f.id',$latestSeasonId)
                     ->get();

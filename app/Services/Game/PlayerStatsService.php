@@ -1,12 +1,10 @@
 <?php
 
-namespace App\Services\Stats;
+namespace App\Services\Game;
 
 use App\Services\Stats\PlayerSeasonStatsService;
-use App\Models\PlayerGameStats;
 use App\Models\Player;
 use App\Services\Helper\HelperService;
-use Hamcrest\Type\IsArray;
 use Illuminate\Support\Facades\DB;
 
 class PlayerStatsService
@@ -150,190 +148,6 @@ class PlayerStatsService
         }
     }
 
-    public function distributeMinutesV1($playersArray, $totalMinutes, $gameId)
-    {
-
-        $rolePriority = [
-            'star player' => 1,
-            'all star'    => 2,
-            'starter'     => 3,
-            'role player' => 4,
-            'bench'       => 5,
-        ];
-
-        $roleMinuteRanges = [
-            'star player' => [10, 12],
-            'all star'    => [8, 12],
-            'starter'     => [6, 12],
-            'role player' => [0, 10],
-            'bench'       => [0, 6],
-        ];
-
-        $positionTargets = [
-            'PG' => 48,
-            'SG' => 48,
-            'SF' => 48,
-            'PF' => 48,
-            'C'  => 48,
-        ];
-
-        $sorted = collect($playersArray)
-            ->sortBy(fn($p) => $rolePriority[$p['role']] ?? 5)
-            ->values();
-
-
-       // Step 1: Sit injured players
-        $dnpPlayers = $sorted->filter(fn($p) => $p['is_injured']);
-
-        $maxDNPs = 0;
-
-       // Step 2: Fill remaining DNP slots, but protect star players and all-stars
-        if ($dnpPlayers->count() < $maxDNPs) {
-            $remainingSlots = $maxDNPs - $dnpPlayers->count();
-
-            $additionalDNP = $sorted
-                ->reject(
-                    fn($p) =>
-                    $dnpPlayers->contains('id', $p['id']) ||
-                        $p['is_injured'] ||
-                        $p['is_reserved'] ||
-                        $p['is_fouled_out'] ||
-                        $p['role'] === 'star player' ||
-                        $p['role'] === 'all star'
-                )
-                ->sortBy([
-                    ['per', 'asc'],
-                    ['eff', 'asc'],
-                ])
-                ->take($remainingSlots);
-
-            $dnpPlayers = $dnpPlayers->merge($additionalDNP);
-        }
-        
-        // Ensure minimum of 8 players with minutes
-        $rotation = $sorted->reject(fn($p) => $dnpPlayers->contains('id', $p['id']));
-
-        if ($rotation->count() < 6) {
-            $needed = 8 - $rotation->count();
-
-            $reAddCandidates = $dnpPlayers
-                ->filter(fn($p) => !$p['is_injured'] && !$p['is_fouled_out'] && !$p['is_reserved'])
-                ->sortBy([
-                    ['per', 'desc'],
-                    ['eff', 'desc'],
-                ])
-                ->take($needed);
-
-            $dnpPlayers = $dnpPlayers->reject(fn($p) => $reAddCandidates->contains('id', $p['id']));
-            $rotation = $rotation->merge($reAddCandidates);
-        }
-
-        $minutes = [];
-        foreach ($dnpPlayers as $p) {
-            $minutes[$p['id']] = 0;
-        }
-
-        // Step 3: Assign minutes based on role and position
-        $assignedTotal = 0;
-
-        // First pass: Assign minimum minutes to star players and all-stars
-        foreach ($rotation as $player) {
-            if ($player['role'] === 'star player' || $player['role'] === 'all star') {
-                $role = $player['role'];
-                $range = $roleMinuteRanges[$role];
-                $baseMinutes = rand($range[0], $range[1]);
-
-                $positions = explode('/', $player['position']);
-                foreach ($positions as $pos) {
-                    if (($positionTargets[$pos] ?? 0) > 0) {
-                        $assigned = min($baseMinutes, $positionTargets[$pos]);
-                        $minutes[$player['id']] = $assigned;
-                        $positionTargets[$pos] -= $assigned;
-                        $assignedTotal += $assigned;
-                        break;
-                    }
-                }
-            }
-        }
-
-        // Second pass: Assign minutes to remaining players
-        foreach ($rotation as $player) {
-            if (!isset($minutes[$player['id']])) {
-                $role = $player['role'];
-                $range = $roleMinuteRanges[$role] ?? [5, 15];
-                $baseMinutes = rand($range[0], $range[1]);
-
-                $positions = explode('/', $player['position']);
-                $positionAssigned = false;
-
-                foreach ($positions as $pos) {
-                    if (($positionTargets[$pos] ?? 0) > 0) {
-                        $assigned = min($baseMinutes, $positionTargets[$pos]);
-                        $minutes[$player['id']] = $assigned;
-                        $positionTargets[$pos] -= $assigned;
-                        $assignedTotal += $assigned;
-                        $positionAssigned = true;
-                        break;
-                    }
-                }
-
-                if (!$positionAssigned) {
-                    foreach ($positions as $pos) {
-                        if (isset($positionTargets[$pos])) {
-                            $assigned = min($baseMinutes, $positionTargets[$pos]);
-                            $minutes[$player['id']] = $assigned;
-                            $positionTargets[$pos] -= $assigned;
-                            $assignedTotal += $assigned;
-                            break;
-                        }
-                    }
-                }
-
-                if (!isset($minutes[$player['id']])) {
-                    $minutes[$player['id']] = 0;
-                }
-            }
-
-            $this->applyFatigue($player, $minutes[$player['id']], $gameId);
-        }
-
-        // Step 4: Normalize to total minutes (usually 240)
-        $difference = $totalMinutes - array_sum($minutes);
-
-        if (abs($difference) > 0) {
-            // Prioritize star players and all-stars when distributing remaining minutes
-            $eligible = $rotation->sortBy(function ($p) use ($rolePriority) {
-                $role = $p['role'];
-                if ($role === 'star player' || $role === 'all star') {
-                    return 0; // Highest priority
-                }
-                return $rolePriority[$role] ?? 5;
-            })->values();
-
-            $i = 0;
-            while ($difference !== 0 && $eligible->isNotEmpty()) {
-                $player = $eligible[$i % $eligible->count()];
-                $id = $player['id'];
-
-                if (!isset($minutes[$id])) {
-                    $minutes[$id] = 0;
-                }
-
-                if ($difference > 0 && $minutes[$id] < 48) {
-                    $minutes[$id]++;
-                    $difference--;
-                } elseif ($difference < 0 && $minutes[$id] > 0) {
-                    $minutes[$id]--;
-                    $difference++;
-                }
-
-                $i++;
-            }
-        }
-
-        return $minutes;
-    }
-
     public function applyFatigue($player, $minutes, $gameId)
     {
         try {
@@ -372,7 +186,7 @@ class PlayerStatsService
             if ($minutes == 0) {
                 $newFatigue = max(0, $currentFatigue - 20); // Auto-recovery for DNP
             } else {
-                $fatigueIncrease = $minutes * (1.0 - $staminaFactor * 0.55);
+                $fatigueIncrease = $minutes * (1.8 - $staminaFactor * 0.55);
                 $newFatigue = min(100, $currentFatigue + round($fatigueIncrease));
             }
 
@@ -508,6 +322,7 @@ class PlayerStatsService
 
     public function calculateDefensiveImpact($opponentTeamId)
     {
+        
         $players = DB::table('players')
             ->where('team_id', $opponentTeamId)
             ->where('is_active', 1)
@@ -520,6 +335,7 @@ class PlayerStatsService
                 'morale',
                 'stamina_rating'
             ])
+            ->orderBy('defense_rating','desc')
             ->get();
 
         if ($players->isEmpty()) {
@@ -543,7 +359,7 @@ class PlayerStatsService
 
         // Return a small fraction used by shot-volume formulas, not a raw
         // 0-100 rating. Around .05 is weak and .12-.15 is elite.
-        return round($this->clamp(0.035 + (($defenseRating - 50) / 1000), 0.02, 0.15), 3);
+        return round($this->clamp(0.035 + (($defenseRating - 10) / 1000), 0.02, 0.15), 3);
     }
 
     public function calculateTurnOver($player, $minutes, $performanceFactor, $defensiveImpact)

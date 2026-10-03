@@ -1163,8 +1163,8 @@ class ScheduleService
         $northAllStarsConference = [1,2];
         $southAllStarsConference = [3,4];
         
-        $this->awards->selectAllStarsForConferenceArchive('north',$northAllStarsConference,$seasonId);
-        $this->awards->selectAllStarsForConferenceArchive('south',$southAllStarsConference,$seasonId);
+        $this->awards->selectAllStarsForConference('north',$northAllStarsConference,$seasonId);
+        $this->awards->selectAllStarsForConference('south',$southAllStarsConference,$seasonId);
 
         return response()->json([
             'success' => true,

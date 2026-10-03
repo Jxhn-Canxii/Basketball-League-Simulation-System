@@ -567,9 +567,7 @@ class TeamsService
         });
 
         // Exclude "transfer" status
-        $transactionQuery->where('transactions.status', '!=', 'transfer')
-            ->where('transactions.status', '!=', 'claimed-via-waiver')
-            ->where('transactions.status', '!=', 'role change');
+        $transactionQuery->whereNotIn('transactions.status', ['transfer','claimed-via-waiver','role change']);
 
         // Sorting
         $transactionQuery->orderBy('transactions.season_id', 'desc')

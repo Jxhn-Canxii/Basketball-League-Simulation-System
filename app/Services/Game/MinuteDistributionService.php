@@ -4,7 +4,7 @@ namespace App\Services\Game;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use App\Services\Stats\PlayerStatsService;
+use App\Services\Game\PlayerStatsService;
 
 class MinuteDistributionService
 {
@@ -580,13 +580,17 @@ class MinuteDistributionService
             $rotationSize = 7;
         }
 
-        if (
-            $preferredTeamComposition === 'rebuilding'
-        ) {
-            $rotationSize = max(
-                9,
-                $rotationSize
-            );
+        // if (
+        //     $preferredTeamComposition === 'rebuilding'
+        // ) {
+        //     $rotationSize = max(
+        //         9,
+        //         $rotationSize
+        //     );
+        // }
+
+        if ($coachingStyle === 'balanced') {
+            $rotationSize = 12;
         }
 
         $rotationSize = min(

@@ -11,7 +11,7 @@ use App\Services\League\NewsService;
 use App\Services\Player\FreeAgencyService;
 use App\Services\Stats\PlayerCareerStatsService;
 use App\Services\Stats\PlayoffStatsService;
-use App\Services\Stats\PlayerStatsService;
+use App\Services\Game\PlayerStatsService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Team\TeamManagementService;
 use App\Services\Team\TeamStreakService;
@@ -670,6 +670,8 @@ class GameEngineService
         $totalFouls = $player->last_quarter_fouls + $fouls;
         $isPlayerOut = $totalFouls > 5 ? 1 : 0;
 
+        $isHomeAdvantage = ($gameData->home_team_id == $player->team_id);
+
         //set is foul out to true
         $player->is_fouled_out = $isPlayerOut;
 
@@ -677,7 +679,7 @@ class GameEngineService
             $playerGameStats = $this->playerStats->createInactivePlayerStats($player, $gameData, $currentSeasonId);
         }
         else{
-            $shotStats =  $this->playerStats->calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry, true, false);
+            $shotStats =  $this->playerStats->calculateShotAttempts($player, $minutes, $defensiveImpact, $fouls, $turnovers, $chemistry, false, $isHomeAdvantage);
 
             // Assign returned values to variables
             $twoPointAttempts = $shotStats['two_point_attempts'];

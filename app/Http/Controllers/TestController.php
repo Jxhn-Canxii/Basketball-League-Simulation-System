@@ -15,7 +15,7 @@ use App\Services\Player\PlayerGeneratorService;
 use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Schedule\ScheduleService;
-use App\Services\Stats\PlayerStatsService;
+use App\Services\Game\PlayerStatsService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Team\TeamRoleService;
 use App\Services\Team\TeamStreakService;
@@ -435,38 +435,92 @@ class TestController extends Controller
 
     }
 
-    public function gameFlow(){
+    public function gameflow(){
 
-        $freeCoaches = DB::table('coaches')
-                ->where('team_id', 0)
-                ->where('is_active', 1)
-                ->select('*')
-                ->selectRaw('
-                    CASE 
-                        WHEN experience_years = 0 THEN 2
-                        WHEN winning_percentage < 0.3 THEN 3
-                        ELSE 1
-                    END as priority_group
-                ')
-                ->orderBy('priority_group', 'asc')
-                ->orderBy('winning_percentage', 'desc')
-                ->limit(10)
-                ->get()
-                ->shuffle() // Randomize after limiting
-                ->first(); // Randomize after limiting
+        $latestSeasonId = 9;
 
-        $pastTeamPerformance = DB::table('standings_snapshots as svs')
-                ->join('team_season_info','team_season_info.team_id','=','svs.team_id')
-                ->where('svs.team_id', 67)
-                ->where('team_season_info.season_id', 4)
-                ->where('team_season_info.coach_id', 14)
-                ->where('svs.season_id', 4)
-                ->select('svs.wins', 'svs.losses')
-                ->first();
-        
-        return $freeCoaches;
+        $tripleCrown = DB::table('player_season_stats_archives as ps')
+                    ->select('ps.*')
+                    ->join('players','players.id','=','ps.player_id')
+                    ->join('playoff_series_archives as c', function ($join) {
+                        $join->on('c.winner_team_id', '=', 'ps.team_id')
+                            ->on('c.season_id', '=', 'ps.season_id');
+                    })
+                    ->join('seasons as o', function ($join) {
+                        $join->on('o.champion_id', '=', 'ps.team_id')
+                            ->on('o.id', '=', 'ps.season_id');
+                    })
+                    ->join('seasons as f', function ($join) {
+                        $join->on('f.finals_winner_id', '=', 'ps.team_id')
+                            ->on('f.id', '=', 'ps.season_id');
+                    })
+                    ->where('c.round','semi_finals')
+                    ->where('ps.season_id',$latestSeasonId)
+                    ->where('o.id',$latestSeasonId)
+                    ->where('f.id',$latestSeasonId)
+                    ->get();
+
+        foreach($tripleCrown as $player){
+            $awardName = 'Triple-Crown Champion';
+            $description = 'A super-rare feat where both the team won Conference Champions, Overall National Champions, National Finals Champions in one season.';
+            
+            $this->award->insertAward($player, $awardName, $description, $latestSeasonId);
+        }
+
+        return $tripleCrown;
+    }
+
+    public function defensiveImpact(){
+
+        $minutes = 12;
+        $currentFatigue = 0;
+        $staminaFactor = 90 / 100;
+        $fatigueIncrease = $minutes * (1.8 - $staminaFactor * 0.55);
+        $newFatigue = min(100, $currentFatigue + round($fatigueIncrease));
+
+        $teams = DB::table('teams')->where('id','>',4)->get();
+
+        $data = [];
+        // dd($teams);
+        foreach ($teams as $team) {
+            # code...
+            $defense = $this->calculateDefensiveImpact($team->id);
+            $data[$team->name] = [
+                'team' => $team->name,
+                'defense' => $defense
+            ];
+
+        }
+
+        usort($data, function ($a, $b) {
+            return $b['defense'] <=> $a['defense'];
+        });
+        return $data;
+    }
+
+    public function calculateDefensiveImpact($opponentTeamId)
+    {
+        $players = DB::table('players')
+            ->where('team_id', $opponentTeamId)
+            ->where('is_active', 1)
+            ->where('is_injured', 0)
+            ->select([
+                'defense_rating',
+                'basketball_iq_rating',
+                'athleticism_rating',
+                'strength_rating',
+                'morale',
+                'stamina_rating'
+            ])
+            ->avg('defense_rating');
+            // ->limit(8)
+            // ->get();
+
+        return number_format($players ?? 0,2);
+
 
     }
+
     public function checkUnderPerformedPlayersPerTeam(){
         
         $activeTeams = DB::table('teams')

@@ -13,7 +13,7 @@ use App\Services\Player\FreeAgencyService;
 use App\Services\Player\PlayerGeneratorService;
 use App\Services\Stats\PlayerCareerStatsService;
 use App\Services\Stats\PlayoffStatsService;
-use App\Services\Stats\PlayerStatsService;
+use App\Services\Game\PlayerStatsService;
 use App\Services\Team\TeamManagementService;
 use App\Services\Team\TeamStatsService;
 use App\Services\Team\TeamStreakService;

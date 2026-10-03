@@ -28,8 +28,14 @@ class GameResultService
         $game = DB::table($scheduleViewTable.' as schedule_view')
             ->join('teams as away_team', 'schedule_view.away_id', '=', 'away_team.id') // Join for away team
             ->join('teams as home_team', 'schedule_view.home_id', '=', 'home_team.id') // Join for home team
-            ->leftJoin('team_season_info as away_team_info', 'away_team_info.team_id', '=', 'away_team.id') // Join for away team
-            ->leftJoin('team_season_info as home_team_info', 'home_team_info.team_id', '=', 'home_team.id') // Join for home team
+            ->leftJoin('team_season_info as away_team_info', function ($join) {
+                $join->on('away_team_info.team_id', '=', 'away_team.id')
+                    ->on('away_team_info.season_id', '=', 'schedule_view.season_id');
+            })
+            ->leftJoin('team_season_info as home_team_info', function ($join) {
+                $join->on('home_team_info.team_id', '=', 'home_team.id')
+                    ->on('home_team_info.season_id', '=', 'schedule_view.season_id');
+            })
             ->leftJoin('coaches as away_team_coach', 'away_team_coach.id', '=', 'away_team_info.coach_id') // Join for away team
             ->leftJoin('coaches as home_team_coach', 'home_team_coach.id', '=', 'home_team_info.coach_id') // Join for home team
             ->where('schedule_view.game_id', $game_id)

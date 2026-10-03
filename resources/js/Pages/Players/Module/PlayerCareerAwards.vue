@@ -139,8 +139,9 @@
                                     color: '#'+transaction.primary_color,
                                     backgroundColor: '#'+transaction.secondary_color,
                                 }"
-                                class="rounded-full border px-2 py-1 text-[9px] font-semibold uppercase tracking-wide"
+                                class="rounded-full border px-2 py-1 text-[6px] font-semibold uppercase tracking-wide"
                             >
+                                {{ transaction.season_name }}
                                 {{
                                     formatText(transaction.team_name)
                                 }}
@@ -158,7 +159,7 @@
                             </div>
 
                             <div
-                                class="mt-3 text-xs font-bold uppercase tracking-[0.12em] text-amber-300"
+                                class="mt-3 text-[9px] font-bold uppercase tracking-[0.12em] text-amber-300"
                             >
                                 {{
                                     formatText(
@@ -170,7 +171,7 @@
 
                         <!-- Details -->
                         <div
-                            class="relative border-t border-white/[0.05] bg-black/[0.12] px-4 py-3"
+                            class="relative hidden max-h-[20px] bottom-0 border-t border-white/[0.05] bg-black/[0.12] px-4 py-3"
                         >
                             <div
                                 class="flex items-start gap-2"
