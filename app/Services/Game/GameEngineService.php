@@ -251,7 +251,7 @@ class GameEngineService
 
             for ($OTNumber = 1; $OTNumber <= $maxOvertimes; $OTNumber++) {
 
-                $totalPossessions = rand(160,310);
+                $totalPossessions = rand(100,160);
                 //core of the game
                 $otMinutes = $totalMinutes / 8;
                 $otPossessions = $totalPossessions / 8;
@@ -489,7 +489,8 @@ class GameEngineService
             $quarter,
             (float) $homeChemistry,
             (float) $awayChemistry,
-            $totalPossessions
+            $totalPossessions,
+            $totalMinutes
         );
 
         $playerGameStats = $data['stats'];
@@ -540,7 +541,8 @@ class GameEngineService
             $quarter,
             (float) $homeChemistry,
             (float) $awayChemistry,
-            $totalPossessions
+            $totalPossessions,
+            $totalMinutes
         );
 
         $playerGameStats = $data['stats'];

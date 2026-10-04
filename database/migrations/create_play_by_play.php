@@ -13,7 +13,7 @@ return new class extends Migration
             $table->id();
             $table->string('game_id',200);
             $table->integer('season_id')->default(0);
-            $table->string('quarter',2)->default('Q1');
+            $table->string('quarter',3)->default('Q1');
             $table->integer('possession_number')->default(0);
             $table->integer('team_id')->default(0);
             $table->integer('player_id')->default(0);
@@ -24,6 +24,8 @@ return new class extends Migration
             $table->integer('shot_value')->default(0);
             $table->boolean('shot_made')->default(0);
             $table->string('description',255)->default(0);
+            $table->integer('home_score')->default(0);
+            $table->integer('away_score')->default(0);
             $table->string('score_update',10)->default('0-0');
             $table->timestamps();
         });

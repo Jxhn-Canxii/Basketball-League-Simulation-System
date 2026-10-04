@@ -5,7 +5,7 @@
                 <tr>
                     <th>Quarter</th>
                     <th>Team</th>
-                    <th>Possession</th>
+                    <th>Time</th>
                     <th class="text-left">Play By Play</th>
                     <th class="text-left">Score</th>
                 </tr>
@@ -29,8 +29,8 @@
                         </span>
                     </td>
                     <td class="p-1">
-                        <span class="text-md">
-                            {{ event.possession_number }}
+                        <span class="text-md" :title="event.possession_number">
+                            {{ formatTime(event.clock) }}
                         </span>
                     </td>
                     <td class="p-1 text-left">
@@ -70,6 +70,7 @@ import {
     roleBadgeClass,
     playerFormatter,
     boxScoreRoleBadgeClass,
+    formatTime,
     streakStatus
 } from "@/Utility/Formatter";
 import Modal from "@/Components/Modal.vue";

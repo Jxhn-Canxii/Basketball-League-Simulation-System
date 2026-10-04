@@ -500,7 +500,7 @@ export const playerFormatter = (name, withDot = true) => {
     // Remove extra spaces and split into parts
     const nameParts = name.trim().split(/\s+/);
 
-    console.log(nameParts);
+    // console.log(nameParts);
     // If the name has more than one word, shorten the first to an initial
     if (name.length > 15) {
         const initial = withDot ? `${nameParts[0][0]}.` : nameParts[0][0];
@@ -692,4 +692,16 @@ export const teamGradient = (team) => {
         return `background: linear-gradient(90deg, #${primary} 0%, #${secondary} 100%); color: #fff;`;
     }
     return '';
+};
+
+export const formatTime = (clock) => {
+    console.log(clock);
+    
+    const minutes = Math.floor((clock % 3600) / 60).toString().padStart(2,0);
+    const seconds = Math.floor((clock % 60)).toString().padStart(2,0);
+
+    // Combine components to form "Y-m-d H:i:s" format
+    const formattedDateTime = `${minutes}:${seconds}`;
+
+    return formattedDateTime;
 };

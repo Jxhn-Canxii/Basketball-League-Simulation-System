@@ -52,7 +52,8 @@ class PlayByPlayService
         $quarter,
         float $homeChemistry = 75,
         float $awayChemistry = 75,
-        int $possessions = 115
+        int $possessions = 115,
+        float $gameMinutes,
     ): array {
 
         /*
@@ -61,7 +62,7 @@ class PlayByPlayService
         $stats = [];
 
         foreach ($homePlayers as $player) {
-          
+        
             $stats[$player->id] = [
                 'player_id' => $player->id,
                 'game_id' => $gameData->game_id,
@@ -210,10 +211,15 @@ class PlayByPlayService
          * It is not used to determine statistics.
          * It simply gives play-by-play a believable clock.
          */
-        $clock = 60 * 60;
+        $clock = ($gameMinutes / 5) * 60;
 
+        // dd('gameMinutes:'.$gameMinutes.' clock:'.$clock);
         for ($possession = 1; $possession <= $possessions; $possession++) {
 
+            if($clock == 0){
+                break;
+            }
+            
             $offensePlayers = $offenseIsHome
                 ? $homePlayers
                 : $awayPlayers;
@@ -280,7 +286,6 @@ class PlayByPlayService
                 )
             ) {
                 $stats[$offensivePlayer->id]['turnovers']++;
-
                 /*
                  * Credit steal to defender sometimes.
                  */
@@ -334,10 +339,7 @@ class PlayByPlayService
                         );
                 }
 
-                $clock = max(
-                    0,
-                    $clock - mt_rand(10, 20)
-                );
+                $clock = max(0,$clock - rand(10,20));
 
                 $offenseIsHome = !$offenseIsHome;
 
@@ -467,10 +469,7 @@ class PlayByPlayService
                  * from future defensive selections.
                  */
 
-                $clock = max(
-                    0,
-                    $clock - mt_rand(8, 18)
-                );
+                $clock = max(0,$clock - mt_rand(8, 18));
 
                 /*
                  * After free throws possession changes.
@@ -665,10 +664,7 @@ class PlayByPlayService
                         $description
                     );
 
-                $clock = max(
-                    0,
-                    $clock - mt_rand(12, 22)
-                );
+                $clock = max(0,$clock - mt_rand(12, 22));
 
                 /*
                  * Made basket → other team gets possession.
@@ -784,10 +780,7 @@ class PlayByPlayService
                 $offenseIsHome = !$offenseIsHome;
             }
 
-            $clock = max(
-                0,
-                $clock - mt_rand(10, 22)
-            );
+            $clock = max(0,$clock - mt_rand(10, 22));
         }
 
         /*
@@ -1383,7 +1376,7 @@ class PlayByPlayService
         $this->awayScore = !$isHomeTeamId ? $this->awayScore + $points :  $this->awayScore;
 
         $scoreUpdate = $this->homeScore.'-'.$this->awayScore;
-
+        
         return [
             'season_id' => $seasonId,
             'game_id' => $gameId,
@@ -1398,6 +1391,8 @@ class PlayByPlayService
             'shot_value' => $shotValue,
             'shot_made' => $shotMade,
             'description' => $description,
+            'home_score' => $this->homeScore,
+            'away_score' => $this->awayScore,
             'score_update' => $scoreUpdate,
             'created_at' => now(),
             'updated_at' => now(),

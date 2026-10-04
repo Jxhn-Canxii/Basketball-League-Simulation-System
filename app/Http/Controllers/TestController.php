@@ -434,8 +434,27 @@ class TestController extends Controller
         return $prevChampion;
 
     }
-
     public function gameflow(){
+        $events = DB::table('play_by_play')->get();
+
+        foreach ($events as $event) {
+            # code...
+            $scoreUpdate = $event->score_update;
+
+            $splitScore = explode('-',$scoreUpdate);
+
+            $homeScore = $splitScore[0];
+            $awayScore = $splitScore[1];
+
+            DB::table('play_by_play')
+                ->where('id',$event->id)
+                ->update([
+                    'home_score' => $homeScore,
+                    'away_score' => $awayScore,
+                ]);
+        }
+    }
+    public function tripleCrown(){
 
         $latestSeasonId = 9;
 
