@@ -272,10 +272,6 @@ class PlayerStatsService
                 $factor *= 0.70;
             }
 
-            if (!empty($player->is_rookie)) {
-                $factor -= 0.30; //--deduct 5 % on performance
-            }
-
             if ($isClutchTime) {
                 $clutch = $this->clamp((float) ($player->clutch_rating ?? 50), 1, 99);
                 $factor += (($clutch - 50) / 2500); // roughly +/- 2%

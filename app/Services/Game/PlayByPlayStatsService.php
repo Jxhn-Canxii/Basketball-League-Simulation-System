@@ -674,5 +674,60 @@ class PlayByPlayStatsService
             'bench' => 0.65,
         ][$role] ?? 0.90;
     }
+
+    public function inGameInjury($player, $gameId, $seasonId)
+    {
+        // Non-injury factors that shouldn't affect retirement age
+        // **Injury Logic**
+        $injuryTypes = config('injuries');
+        if (!empty($injuryTypes)) {
+            $injuryTypeName = array_rand($injuryTypes);
+            $recoveryGames = $injuryTypes[$injuryTypeName]['recovery_games'];
+
+            $nonInjuryFactors = [
+                'resting',
+                'suspension',
+                'personal_reason',
+                'logistics_issue',
+                'family_emergency',
+                'contract_dispute',
+                'mental_health',
+                'player_protest',
+                'travel_fatigue'
+            ];
+
+            // Check if the current injury is severe and not a non-injury factor
+            if (in_array($injuryTypeName, $nonInjuryFactors)) {
+                return false;
+            }
+
+            // **Update Injury in Database**
+            DB::table('players')->where('id', $player->id)->update([
+                'fatigue' => 100,
+                'is_injured' => true,
+                'injury_type' => $injuryTypeName,
+                'injury_recovery_games' => $recoveryGames,
+            ]);
+
+            DB::table('players')->where('id', $player->id)->increment('injury_history', 1);
+
+            // Insert injury history
+            DB::table('injury_histories')->insert([
+                'player_id' => $player->id,
+                'game_id' => $gameId,
+                'team_id' => $player->team_id,
+                'season_id' => $seasonId,
+                'injury_type' => $injuryTypeName,
+                'recovery_games' => $recoveryGames,
+                'performance_impact' => $injuryTypes[$injuryTypeName]['performance_impact'],
+                'injury_date' => now(),
+                'recovery_date' => null,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        } else {
+            // \Log::error("Injury types configuration is missing.");
+        }
+    }
     
 }

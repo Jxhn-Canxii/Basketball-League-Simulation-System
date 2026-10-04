@@ -18,7 +18,7 @@ class InjuryService
         $this->roundService = new RoundService();
     }
 
-     public function getPlayerInjuryHistory($request)
+    public function getPlayerInjuryHistory($request)
     {
         $player_id = $request->input('player_id');
 
@@ -114,5 +114,5 @@ class InjuryService
             'data' => $injuryHistory
         ]);
     }
-   
+
 }

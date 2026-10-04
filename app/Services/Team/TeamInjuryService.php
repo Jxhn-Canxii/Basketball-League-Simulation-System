@@ -294,7 +294,7 @@ class TeamInjuryService
                 'updated_at' => now(),
             ]);
         } else {
-            \Log::error("Injury types configuration is missing.");
+            // \Log::error("Injury types configuration is missing.");
         }
     }
 
