@@ -7,6 +7,7 @@
                     <th>Team</th>
                     <th>Possession</th>
                     <th class="text-left">Play By Play</th>
+                    <th class="text-left">Score</th>
                 </tr>
             </thead>
 
@@ -34,6 +35,9 @@
                     </td>
                     <td class="p-1 text-left">
                         {{ event?.description }}
+                    </td>
+                    <td class="p-1 text-left">
+                        {{ event?.score_update }}
                     </td>
                 </tr>
                 <tr v-if="props.players?.length === 0">

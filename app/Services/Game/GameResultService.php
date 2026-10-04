@@ -310,7 +310,7 @@ class GameResultService
             $playByPlayDB = $this->helper->getPlayByPlayDatabaseName($game->season_id);
             $basePlayByPlay = DB::table($playByPlayDB.' as pbp')
                 ->join('teams','teams.id','=','pbp.team_id')
-                ->select('teams.name as team_name','pbp.id','pbp.event_type','pbp.possession_number','pbp.quarter','pbp.description')
+                ->select('teams.name as team_name','pbp.id','pbp.event_type','pbp.score_update','pbp.possession_number','pbp.quarter','pbp.description')
                 ->where('pbp.game_id', $game->game_id);
 
             if($quarter > 0){

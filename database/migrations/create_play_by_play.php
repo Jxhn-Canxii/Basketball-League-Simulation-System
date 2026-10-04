@@ -24,6 +24,7 @@ return new class extends Migration
             $table->integer('shot_value')->default(0);
             $table->boolean('shot_made')->default(0);
             $table->string('description',255)->default(0);
+            $table->string('score_update',10)->default('0-0');
             $table->timestamps();
         });
     }

@@ -25,6 +25,9 @@ class PlayByPlayService
         $this->playerStats = new PlayerStatsService();
         $this->playByPlay = new PlayByPlayStatsService();
         $this->helper = new HelperService();
+
+        $this->homeScore = 0;
+        $this->awayScore = 0;
     }
 
     /**
@@ -301,6 +304,7 @@ class PlayByPlayService
                             $quarter,
                             $possession,
                             $clock,
+                            $gameData->home_team_id,
                             $offensivePlayer->team_id,
                             $offensivePlayer->id,
                             $defensivePlayer->id,
@@ -318,6 +322,7 @@ class PlayByPlayService
                             $quarter,
                             $possession,
                             $clock,
+                            $gameData->home_team_id,
                             $offensivePlayer->team_id,
                             $offensivePlayer->id,
                             null,
@@ -383,6 +388,7 @@ class PlayByPlayService
                             $quarter,
                             $possession,
                             $clock,
+                            $gameData->home_team_id,
                             $offensivePlayer->team_id,
                             $defensivePlayer->id,
                             $offensivePlayer->id,
@@ -445,6 +451,7 @@ class PlayByPlayService
                         $quarter,
                         $possession,
                         $clock,
+                        $gameData->home_team_id,
                         $offensivePlayer->team_id,
                         $offensivePlayer->id,
                         $defensivePlayer->id,
@@ -536,6 +543,7 @@ class PlayByPlayService
                             $quarter,
                             $possession,
                             $clock,
+                            $gameData->home_team_id,
                             $offensivePlayer->team_id,
                             $offensivePlayer->id,
                             $defensivePlayer->id,
@@ -642,6 +650,7 @@ class PlayByPlayService
                         $quarter,
                         $possession,
                         $clock,
+                        $gameData->home_team_id,
                         $offensivePlayer->team_id,
                         $offensivePlayer->id,
                         $assistGiven
@@ -681,6 +690,7 @@ class PlayByPlayService
                     $quarter,
                     $possession,
                     $clock,
+                    $gameData->home_team_id,
                     $offensivePlayer->team_id,
                     $offensivePlayer->id,
                     $defensivePlayer->id,
@@ -727,6 +737,7 @@ class PlayByPlayService
                             $quarter,
                             $possession,
                             $clock,
+                            $gameData->home_team_id,
                             $offensivePlayer->team_id,
                             $rebounder->id,
                             null,
@@ -758,6 +769,7 @@ class PlayByPlayService
                             $quarter,
                             $possession,
                             $clock,
+                            $gameData->home_team_id,
                             $rebounder->team_id,
                             $rebounder->id,
                             $offensivePlayer->id,
@@ -781,7 +793,12 @@ class PlayByPlayService
         /*
          * Return final stats.
          */
-        
+        usort(
+            $events,
+            fn($a, $b) =>
+            $a['possession_number'] <=> $b['possession_number']
+        );
+
         return [
             'stats' => array_values($stats),
             'events' => $events,
@@ -1341,21 +1358,32 @@ class PlayByPlayService
         }
     }
 
+    private $homeScore = 0;
+    private $awayScore = 0;
+
     private function event(
         $seasonId,
         $gameId,
         $quarter,
         int $possession,
         int $clock,
-        $teamId,
+        int $homeTeamId,
+        int $teamId,
         $playerId = null,
         $secondaryPlayerId = null,
         string $eventType = 'play',
         int $points = 0,
-        ?int $shotValue = null,
-        ?bool $shotMade = null,
-        ?string $description = null
+        ?int $shotValue = 0,
+        ?bool $shotMade = false,
+        ?string $description = null,
     ): array {
+
+        $isHomeTeamId = ($homeTeamId == $teamId);
+        $this->homeScore = $isHomeTeamId ?  $this->homeScore + $points :  $this->homeScore;
+        $this->awayScore = !$isHomeTeamId ? $this->awayScore + $points :  $this->awayScore;
+
+        $scoreUpdate = $this->homeScore.'-'.$this->awayScore;
+
         return [
             'season_id' => $seasonId,
             'game_id' => $gameId,
@@ -1370,6 +1398,7 @@ class PlayByPlayService
             'shot_value' => $shotValue,
             'shot_made' => $shotMade,
             'description' => $description,
+            'score_update' => $scoreUpdate,
             'created_at' => now(),
             'updated_at' => now(),
         ];
