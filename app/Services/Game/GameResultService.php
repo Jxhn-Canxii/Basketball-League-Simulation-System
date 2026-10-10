@@ -426,7 +426,7 @@ class GameResultService
                     'role' => $player->role,
                     'fatigue' => $player->fatigue,
                     'is_rookie' => $player->is_rookie,
-                    'is_injured' => $player->is_injured,
+                    'is_injured' => $stats->is_injured,
                     'points' => $stats ? $stats->points : 0,
                     'assists' => $stats ? $stats->assists : 0,
                     'rebounds' => $stats ? $stats->rebounds : 0,

@@ -284,7 +284,7 @@ class GameEngineService
 
         $players =  DB::table('player_per_quarter_stats_temp as pps')
                 ->join('players','players.id','=','pps.player_id')
-                ->select('players.id','players.is_reserved','pps.role')
+                ->select('players.id','players.is_reserved','players.is_injured','pps.role')
                 ->whereIn('pps.team_id', [$gameData->home_team_id,$gameData->away_team_id])
                 ->where('players.is_active',1)
                 ->where('pps.quarter','Q1')
@@ -293,7 +293,7 @@ class GameEngineService
         foreach ($players as $player) {
             $isStarter = in_array($player->role,['all star','starter','star player']);
 
-            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved,$isStarter, $totalMinutesPlayed);
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved,$isStarter,$player->is_injured,$totalMinutesPlayed);
         }
 
         $playerGameStats =  DB::table('player_game_stats')
@@ -406,7 +406,7 @@ class GameEngineService
         }
 
         $players =  DB::table('season_awards')
-                    ->select('players.id','players.is_reserved','players.role')
+                    ->select('players.id','players.is_reserved','players.is_injured','players.role')
                     ->join('players','players.id','=','season_awards.player_id')
                     ->where('season_awards.award_name',$gameData->round)
                     ->where('season_awards.season_id',$gameData->season_id)
@@ -415,7 +415,7 @@ class GameEngineService
 
         foreach ($players as $player) {
             $isStarter = in_array($player->role,['all star','starter','star player']);
-            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved, $isStarter, $totalMinutesPlayed);
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved,$isStarter,$player->is_injured,$totalMinutesPlayed);
         }
 
         $playerGameStats =  DB::table('player_game_stats')

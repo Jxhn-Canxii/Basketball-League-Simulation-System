@@ -350,7 +350,7 @@ class PlayerStatsService
         }
     }
 
-    public function updateGameStats($playerId, $gameId, $seasonId, $isReserved, $isStarter, $totalMinutesPlayed)
+    public function updateGameStats($playerId, $gameId, $seasonId, $isReserved, $isStarter, $isInjured, $totalMinutesPlayed)
     {
         if (empty($playerId)) {
             throw new \Exception("Player quarter stats are empty. Cannot update season stats.");
@@ -426,6 +426,7 @@ class PlayerStatsService
                         'free_throw_attempts' => $playerStats->total_free_throw_attempts,
                         'is_starter' => $isStarter,
                         'is_fouled_out' => $playerStats->is_fouled_out,
+                        'is_injured' => $isInjured,
                         'is_reserved' => $isReserved,
                         'created_at' => now(),
                         'updated_at' => now(),
