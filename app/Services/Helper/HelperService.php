@@ -47,6 +47,15 @@ class HelperService
             ->value('conference_rank'); // Get the 'conference_rank' of the current season standings
     }
 
+    public function seasonConferenceRank($teamId,$seasonId){
+        
+        $standingsDB = $this->getStandingsDBName($seasonId);
+
+        return DB::table($standingsDB)
+            ->where('team_id', $teamId)
+            ->value('conference_rank'); // Get the 'conference_rank' of the current season standings
+    }
+
     public function getTeamConferenceId($teamId){
         
         return DB::table('teams')

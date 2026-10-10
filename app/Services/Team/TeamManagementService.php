@@ -1766,6 +1766,12 @@ class TeamManagementService
                 'fatigue' => min(0,$player->fatigue - 10),
             ]);
             
+        DB::table('player_season_stats')
+            ->where('player_id', $player->id)
+            ->where('season_id', $seasonId)
+            ->where('team_id', $player->team_id)
+            ->update(['role' => $newRole, 'is_reserved' => $isReserved]);
+            
         if ($currentRole == $newRole) {
             return true;
         }
@@ -1782,12 +1788,6 @@ class TeamManagementService
                 'status' => $status,
             ]);
         }
-
-        DB::table('player_season_stats')
-            ->where('player_id', $player->id)
-            ->where('season_id', $seasonId)
-            ->where('team_id', $player->team_id)
-            ->update(['role' => $newRole]);
 
     }
 

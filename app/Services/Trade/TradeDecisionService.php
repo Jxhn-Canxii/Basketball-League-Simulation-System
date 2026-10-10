@@ -27,7 +27,7 @@ class TradeDecisionService
     |--------------------------------------------------------------------------
     */
 
-    protected int $maxGeneratedTrades = 30;
+    protected int $maxGeneratedTrades = 70;
 
     protected int $maxTeamsPerTrade = 6;
 
@@ -83,10 +83,6 @@ class TradeDecisionService
         );
     }
 
-    public function testGenerateTradeProposals()
-    {
-        return $this->generateTradeProposalsInternal(false);
-    }
 
     private function generateTradeProposalsInternal(bool $isOffSeason)
     {

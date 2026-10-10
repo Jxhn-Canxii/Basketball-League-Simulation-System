@@ -12,10 +12,13 @@
             <th>STL</th>
             <th>BLK</th>
             <th>TO</th>
+            <th>FLS</th>
             <th>FG</th>
             <th>2P</th>
             <th>3P</th>
             <th>FT</th>
+            <th>FG%</th>
+            <th>TS%</th>
             <th>PER</th>
             <th>EFF</th>
             </tr>
@@ -81,6 +84,10 @@
             </td>
 
             <td class="number">
+                {{ player.minutes === 0 ? "0.0" : player.fouls.toFixed(1) }}
+            </td>
+
+            <td class="number">
                 {{ player.field_goals_made }}
                 /
                 {{ player.field_goal_attempts }}
@@ -102,6 +109,18 @@
                 {{ player.free_throws_made }}
                 /
                 {{ player.free_throw_attempts }}
+            </td>
+
+            <td class="number">
+                {{
+                isNaN(parseFloat(player.field_goal_percentage)) ? "0.00" : parseFloat(player.field_goal_percentage).toFixed(2)
+                }}%
+            </td>
+
+            <td class="number">
+                {{
+                isNaN(parseFloat(player.ts_percent)) ? "0.00" : parseFloat(player.ts_percent * 100).toFixed(2)
+                }}%
             </td>
 
             <td class="number">

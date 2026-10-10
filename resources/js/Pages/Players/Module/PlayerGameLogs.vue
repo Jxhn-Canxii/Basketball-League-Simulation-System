@@ -719,6 +719,11 @@ const props = defineProps({
         type: Number,
         required: true,
     },
+
+    is_playoff: {
+        type: Boolean,
+        default: false,
+    },
 });
 
 
@@ -859,8 +864,9 @@ async function fetchPlayerGameLogs() {
     isLoading.value = true;
 
     try {
-        search.value.player_id = player_id.value;
-        search.value.season_id = season_id.value;
+        search.value.player_id = props.player_id;
+        search.value.season_id = props.season_id;
+        search.value.is_playoff = props.is_playoff;
 
         const response = await axios.post(
             route("players.game.logs"),
@@ -915,47 +921,6 @@ onMounted(() => {
     fetchPlayerGameLogs();
 });
 
-
-/*
-|--------------------------------------------------------------------------
-| React when modal/player changes
-|--------------------------------------------------------------------------
-*/
-
-watch(
-    () => props.player_id,
-    (newPlayerId, oldPlayerId) => {
-
-        if (
-            newPlayerId &&
-            newPlayerId !== oldPlayerId
-        ) {
-            player_id.value = newPlayerId;
-
-            search.value.page_num = 1;
-
-            fetchPlayerGameLogs();
-        }
-    }
-);
-
-
-watch(
-    () => props.season_id,
-    (newSeasonId, oldSeasonId) => {
-
-        if (
-            newSeasonId &&
-            newSeasonId !== oldSeasonId
-        ) {
-            season_id.value = newSeasonId;
-
-            search.value.page_num = 1;
-
-            fetchPlayerGameLogs();
-        }
-    }
-);
 </script>
 
 

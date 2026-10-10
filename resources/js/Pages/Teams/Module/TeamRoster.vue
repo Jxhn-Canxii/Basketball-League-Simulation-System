@@ -82,7 +82,7 @@
                             </div>
 
                             <div
-                                v-if="team_info.remaining_cap_space > 0"
+                                v-if="team_info.remaining_cap_space != 0"
                                 class="inline-flex items-center gap-2 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-xs font-semibold text-white/90 backdrop-blur"
                             >
                                 <i
@@ -770,10 +770,10 @@
             title="Player Profile"
             @close="showPlayerProfileModal = false"
         >
-            <div class="bg-gray-950 p-3 sm:p-6">
+            <div class="bg-gray-950 p-3 text-white sm:p-6">
                 <PlayerPerformance
-                    v-if="selectedPlayer?.player_id"
-                    :key="selectedPlayer.player_id"
+                    v-if="selectedPlayer"
+                    :key="selectedPlayer?.player_id"
                     :player_id="selectedPlayer.player_id"
                 />
             </div>
@@ -828,7 +828,7 @@ const props = defineProps({
 });
 
 const showExtendModal = ref(false);
-const showTransferred = ref(true);
+const showTransferred = ref(false);
 const loading = ref(true);
 const showPlayerProfileModal = ref(false);
 

@@ -358,6 +358,7 @@ class PlayerRatingsService
                     'is_rookie' => $player->is_rookie,
                     'age' => $player->age,
                     'role' => $player->role,
+                    'fatigue' => 0,
                     'shooting_rating' => $player->shooting_rating,
                     'defense_rating' => $player->defense_rating,
                     'passing_rating' => $player->passing_rating,
@@ -629,6 +630,7 @@ class PlayerRatingsService
             ->where('draft_id','<=', $seasonId)
             ->update([
                 'is_rookie' => 0,
+                'fatigue' => 0,
                 'age' => DB::raw('age + 1'),
                 'contract_years' => DB::raw("CASE WHEN age + 1 >= retirement_age THEN 0 ELSE contract_years END"),
                 'team_id' => 0,

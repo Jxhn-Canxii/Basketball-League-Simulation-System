@@ -159,6 +159,7 @@ class PlayersController extends Controller
             'season_id' => 'required|exists:seasons,id',
             'page_num' => 'required|integer|min:1',
             'itemsperpage' => 'required|integer|min:1',
+            'is_playoff' => 'required|boolean',
         ]);
 
         return $this->playerService->getPlayerGameLogs($request);

@@ -297,6 +297,9 @@ class LeadersService
                 'players.is_active as is_active',
                 'current_team.id as current_team_id', // Current team of the player
                 'current_team.name as current_team_name', // Current team of the player
+                'current_team.primary_color', // Current team of the player
+                'current_team.secondary_color', // Current team of the player
+                'current_team.acronym', // Current team of the player
                 DB::raw('SUM(player_season_stats.total_points) as total_points'),
                 DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
                 DB::raw('SUM(player_season_stats.total_assists) as total_assists'),

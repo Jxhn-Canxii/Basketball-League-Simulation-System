@@ -23,6 +23,8 @@ return new class extends Migration
             $table->decimal('avg_minutes_per_game', 5, 2)->default(0);
             $table->decimal('avg_points_per_game', 5, 2)->default(0);
             $table->decimal('avg_rebounds_per_game', 5, 2)->default(0);
+            $table->decimal('avg_offensive_rebounds_per_game', 5, 2)->default(0);
+            $table->decimal('avg_defensive_rebounds_per_game', 5, 2)->default(0);
             $table->decimal('avg_assists_per_game', 5, 2)->default(0);
             $table->decimal('avg_steals_per_game', 5, 2)->default(0);
             $table->decimal('avg_blocks_per_game', 5, 2)->default(0);
@@ -42,6 +44,8 @@ return new class extends Migration
             // Totals
             $table->integer('total_points')->default(0);
             $table->integer('total_rebounds')->default(0);
+            $table->integer('total_offensive_rebounds')->default(0);
+            $table->integer('total_defensive_rebounds')->default(0);
             $table->integer('total_assists')->default(0);
             $table->integer('total_steals')->default(0);
             $table->integer('total_blocks')->default(0);
@@ -74,6 +78,8 @@ return new class extends Migration
 
             $table->decimal('player_valuation',5,2)->default(100);
             $table->integer('performance_points')->default(100);
+            $table->boolean('is_reserved')->default(0);
+            $table->boolean('is_cut')->default(0);
 
             $table->timestamps();
         });

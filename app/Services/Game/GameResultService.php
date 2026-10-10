@@ -380,9 +380,9 @@ class GameResultService
                     'three_pointers_made' => $stats ? $stats->three_pointers_made : 0,
                     'free_throw_attempts' => $stats ? $stats->free_throw_attempts : 0,
                     'free_throws_made' => $stats ? $stats->free_throws_made : 0,
-                    'field_goal_percentage' => $fgPercentage,
-                    'two_point_percentage' => $twoPPercentage,
-                    'three_point_percentage' => $threePPercentage,
+                    'field_goal_percentage' => $stats ? $stats->field_goal_percentage : 0,
+                    'two_point_percentage' => $stats ? $stats->two_point_percentage : 0,
+                    'three_point_percentage' => $stats ? $stats->three_point_percentage : 0,
                     'free_throw_percentage' => $ftPercentage,
                     'is_fouled_out' => $stats ? $stats->is_fouled_out : 0,
                     'is_starter' =>  $stats ? $stats->is_starter : 0,
@@ -479,6 +479,9 @@ class GameResultService
             ->where('game_id', $game->game_id)
             ->first();
 
+        $homeConferenceRank = $this->helper->seasonConferenceRank($game->home_id,$game->season_id);
+        $awayConferenceRank = $this->helper->seasonConferenceRank($game->away_id,$game->season_id);
+
         $isOT = $game->is_overtime;
         // Format data for box score
         $boxScore = [
@@ -504,7 +507,8 @@ class GameResultService
                 'streak' => $homeTeamStreak,
                 'ratings' => $homeTeamRatings,
                 'coach' => $game->home_team_coach_name,
-                'exhausted_players' => $homePlayersFatigue
+                'exhausted_players' => $homePlayersFatigue,
+                'conference_rank' => $homeConferenceRank ?? 0
             ],
             'away_team' => [
                 'team_id' => $game->away_id, // Use the correct field from your query
@@ -519,7 +523,8 @@ class GameResultService
                 'streak' => $awayTeamStreak,
                 'ratings' => $awayTeamRatings,
                 'coach' => $game->away_team_coach_name,
-                'exhausted_players' => $awayPlayersFatigue
+                'exhausted_players' => $awayPlayersFatigue,
+                'conference_rank' => $awayConferenceRank ?? 0
             ],
             'player_stats' => [
                 'home' => $homeTeamPlayersArray,

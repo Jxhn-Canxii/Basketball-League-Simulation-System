@@ -2,7 +2,7 @@
 
 namespace App\Services\Schedule;
 
-ini_set('max_execution_time', 1024); // 300 seconds = 5 minutes
+ini_set('max_execution_time', 2048); // 300 seconds = 5 minutes
 
 use Inertia\Inertia;
 use App\Models\Seasons;
@@ -88,11 +88,13 @@ class ScheduleService
             
             if(count($allStarSchedule) == 0){
                 $this->selectAllStars();
-                $this->awards->updateAllStarCoach($seasonId);
             }
         }
 
-        if($simulatedRounds > 5 && ($simulatedRounds <= $isTradeProposalDeadline) && ($round % 2 == 0)){
+        if(($simulatedRounds > 5) && ($simulatedRounds % 2 == 0) && ($simulatedRounds < $tradeProposalDeadline)){
+            $this->tradeDecision->generateTradeProposals(false);
+        }
+        if($isTradeProposalDeadline){
             $this->tradeDecision->automatedTradeDecision(false);
         }
         
@@ -1192,6 +1194,10 @@ class ScheduleService
 
         $this->awards->selectAllStarsForConference('north',$northAllStarsConference);
         $this->awards->selectAllStarsForConference('south',$southAllStarsConference);
+
+        $this->awards->updateAllStarCoach($seasonId,$northAllStarsConference,[1,3]);
+        $this->awards->updateAllStarCoach($seasonId,$northAllStarsConference,[2,4]);
+
 
         $schedules = DB::table('schedules')
                 ->where('season_id',$seasonId)

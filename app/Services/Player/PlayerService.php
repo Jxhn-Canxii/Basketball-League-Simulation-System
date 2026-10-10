@@ -178,8 +178,11 @@ class PlayerService
                 DB::raw('GROUP_CONCAT(DISTINCT teams.primary_color ORDER BY player_season_stats.id ASC) as team_primary_colors'),
                 DB::raw('GROUP_CONCAT(DISTINCT teams.secondary_color ORDER BY player_season_stats.id ASC) as team_secondary_colors'),
                 DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
+                DB::raw('AVG(player_season_stats.avg_minutes_per_game) as avg_minutes_per_game'),
                 DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
                 DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
+                DB::raw('AVG(player_season_stats.avg_offensive_rebounds_per_game) as avg_offensive_rebounds_per_game'),
+                DB::raw('AVG(player_season_stats.avg_defensive_rebounds_per_game) as avg_defensive_rebounds_per_game'),
                 DB::raw('AVG(player_season_stats.avg_assists_per_game) as avg_assists_per_game'),
                 DB::raw('AVG(player_season_stats.avg_steals_per_game) as avg_steals_per_game'),
                 DB::raw('AVG(player_season_stats.avg_blocks_per_game) as avg_blocks_per_game'),
@@ -187,6 +190,8 @@ class PlayerService
                 DB::raw('AVG(player_season_stats.avg_fouls_per_game) as avg_fouls_per_game'),
                 DB::raw('SUM(player_season_stats.total_points) as total_points'),
                 DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
+                DB::raw('SUM(player_season_stats.total_offensive_rebounds) as total_offensive_rebounds'),
+                DB::raw('SUM(player_season_stats.total_defensive_rebounds) as total_defensive_rebounds'),
                 DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
                 DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
                 DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
@@ -241,8 +246,11 @@ class PlayerService
                 DB::raw('GROUP_CONCAT(DISTINCT teams.primary_color ORDER BY player_season_stats.id ASC) as team_primary_colors'),
                 DB::raw('GROUP_CONCAT(DISTINCT teams.secondary_color ORDER BY player_season_stats.id ASC) as team_secondary_colors'),
                 DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
+                DB::raw('AVG(player_season_stats.avg_minutes_per_game) as avg_minutes_per_game'),
                 DB::raw('AVG(player_season_stats.avg_points_per_game) as avg_points_per_game'),
                 DB::raw('AVG(player_season_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
+                DB::raw('AVG(player_season_stats.avg_offensive_rebounds_per_game) as avg_offensive_rebounds_per_game'),
+                DB::raw('AVG(player_season_stats.avg_defensive_rebounds_per_game) as avg_defensive_rebounds_per_game'),
                 DB::raw('AVG(player_season_stats.avg_assists_per_game) as avg_assists_per_game'),
                 DB::raw('AVG(player_season_stats.avg_steals_per_game) as avg_steals_per_game'),
                 DB::raw('AVG(player_season_stats.avg_blocks_per_game) as avg_blocks_per_game'),
@@ -250,6 +258,8 @@ class PlayerService
                 DB::raw('AVG(player_season_stats.avg_fouls_per_game) as avg_fouls_per_game'),
                 DB::raw('SUM(player_season_stats.total_points) as total_points'),
                 DB::raw('SUM(player_season_stats.total_rebounds) as total_rebounds'),
+                DB::raw('SUM(player_season_stats.total_offensive_rebounds) as total_offensive_rebounds'),
+                DB::raw('SUM(player_season_stats.total_defensive_rebounds) as total_defensive_rebounds'),
                 DB::raw('SUM(player_season_stats.total_assists) as total_assists'),
                 DB::raw('SUM(player_season_stats.total_steals) as total_steals'),
                 DB::raw('SUM(player_season_stats.total_blocks) as total_blocks'),
@@ -316,6 +326,8 @@ class PlayerService
                 'efficiency' => $stats->eff, // Efficiency
                 'total_points' => $stats->total_points,
                 'total_rebounds' => $stats->total_rebounds,
+                'total_offensive_rebounds' => $stats->total_offensive_rebounds,
+                'total_defensive_rebounds' => $stats->total_defensive_rebounds,
                 'total_assists' => $stats->total_assists,
                 'total_steals' => $stats->total_steals,
                 'total_blocks' => $stats->total_blocks,
@@ -325,9 +337,13 @@ class PlayerService
                 'total_games_played' => $stats->total_games_played,
                 'total_games_started' => $stats->total_games_started,
                 'per' => $stats->per,
+                'eff' => $stats->eff,
                 'ts_percent' => $stats->ts_percent,
+                'average_minutes_per_game' => round($stats->avg_minutes_per_game, 2),
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),
                 'average_rebounds_per_game' => round($stats->avg_rebounds_per_game, 2),
+                'average_offensive_rebounds_per_game' => round($stats->avg_offensive_rebounds_per_game, 2),
+                'average_defensive_rebounds_per_game' => round($stats->avg_defensive_rebounds_per_game, 2),
                 'average_assists_per_game' => round($stats->avg_assists_per_game, 2),
                 'average_steals_per_game' => round($stats->avg_steals_per_game, 2),
                 'average_blocks_per_game' => round($stats->avg_blocks_per_game, 2),
@@ -374,6 +390,8 @@ class PlayerService
                 'efficiency' => $stats->eff, // Efficiency
                 'total_points' => $stats->total_points,
                 'total_rebounds' => $stats->total_rebounds,
+                'total_offensive_rebounds' => $stats->total_offensive_rebounds,
+                'total_defensive_rebounds' => $stats->total_defensive_rebounds,
                 'total_assists' => $stats->total_assists,
                 'total_steals' => $stats->total_steals,
                 'total_blocks' => $stats->total_blocks,
@@ -383,9 +401,13 @@ class PlayerService
                 'total_games_played' => $stats->total_games_played,
                 'total_games_started' => $stats->total_games_started,
                 'per' => $stats->per,
+                'eff' => $stats->eff,
                 'ts_percent' => $stats->ts_percent,
+                'average_minutes_per_game' => round($stats->avg_minutes_per_game, 2),
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),
                 'average_rebounds_per_game' => round($stats->avg_rebounds_per_game, 2),
+                'average_offensive_rebounds_per_game' => round($stats->avg_offensive_rebounds_per_game, 2),
+                'average_defensive_rebounds_per_game' => round($stats->avg_defensive_rebounds_per_game, 2),
                 'average_assists_per_game' => round($stats->avg_assists_per_game, 2),
                 'average_steals_per_game' => round($stats->avg_steals_per_game, 2),
                 'average_blocks_per_game' => round($stats->avg_blocks_per_game, 2),
@@ -441,8 +463,11 @@ class PlayerService
                 DB::raw('GROUP_CONCAT(DISTINCT teams.primary_color ORDER BY player_season_playoff_stats.id ASC) as team_primary_colors'),
                 DB::raw('GROUP_CONCAT(DISTINCT teams.secondary_color ORDER BY player_season_playoff_stats.id ASC) as team_secondary_colors'),
                 DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
+                DB::raw('AVG(player_season_playoff_stats.avg_minutes_per_game) as avg_minutes_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_points_per_game) as avg_points_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
+                DB::raw('AVG(player_season_playoff_stats.avg_offensive_rebounds_per_game) as avg_offensive_rebounds_per_game'),
+                DB::raw('AVG(player_season_playoff_stats.avg_defensive_rebounds_per_game) as avg_defensive_rebounds_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_assists_per_game) as avg_assists_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_steals_per_game) as avg_steals_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_blocks_per_game) as avg_blocks_per_game'),
@@ -450,6 +475,8 @@ class PlayerService
                 DB::raw('AVG(player_season_playoff_stats.avg_fouls_per_game) as avg_fouls_per_game'),
                 DB::raw('SUM(player_season_playoff_stats.total_points) as total_points'),
                 DB::raw('SUM(player_season_playoff_stats.total_rebounds) as total_rebounds'),
+                DB::raw('SUM(player_season_playoff_stats.total_offensive_rebounds) as total_offensive_rebounds'),
+                DB::raw('SUM(player_season_playoff_stats.total_defensive_rebounds) as total_defensive_rebounds'),
                 DB::raw('SUM(player_season_playoff_stats.total_assists) as total_assists'),
                 DB::raw('SUM(player_season_playoff_stats.total_steals) as total_steals'),
                 DB::raw('SUM(player_season_playoff_stats.total_blocks) as total_blocks'),
@@ -505,8 +532,11 @@ class PlayerService
                 DB::raw('GROUP_CONCAT(DISTINCT teams.primary_color ORDER BY player_season_playoff_stats.id ASC) as team_primary_colors'),
                 DB::raw('GROUP_CONCAT(DISTINCT teams.secondary_color ORDER BY player_season_playoff_stats.id ASC) as team_secondary_colors'),
                 DB::raw('COALESCE(player_ratings.role, players.role) as player_role'), // Use COALESCE to handle NULL roles
+                DB::raw('AVG(player_season_playoff_stats.avg_minutes_per_game) as avg_minutes_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_points_per_game) as avg_points_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_rebounds_per_game) as avg_rebounds_per_game'),
+                DB::raw('AVG(player_season_playoff_stats.avg_offensive_rebounds_per_game) as avg_offensive_rebounds_per_game'),
+                DB::raw('AVG(player_season_playoff_stats.avg_defensive_rebounds_per_game) as avg_defensive_rebounds_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_assists_per_game) as avg_assists_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_steals_per_game) as avg_steals_per_game'),
                 DB::raw('AVG(player_season_playoff_stats.avg_blocks_per_game) as avg_blocks_per_game'),
@@ -514,6 +544,8 @@ class PlayerService
                 DB::raw('AVG(player_season_playoff_stats.avg_fouls_per_game) as avg_fouls_per_game'),
                 DB::raw('SUM(player_season_playoff_stats.total_points) as total_points'),
                 DB::raw('SUM(player_season_playoff_stats.total_rebounds) as total_rebounds'),
+                DB::raw('SUM(player_season_playoff_stats.total_offensive_rebounds) as total_offensive_rebounds'),
+                DB::raw('SUM(player_season_playoff_stats.total_defensive_rebounds) as total_defensive_rebounds'),
                 DB::raw('SUM(player_season_playoff_stats.total_assists) as total_assists'),
                 DB::raw('SUM(player_season_playoff_stats.total_steals) as total_steals'),
                 DB::raw('SUM(player_season_playoff_stats.total_blocks) as total_blocks'),
@@ -579,6 +611,8 @@ class PlayerService
                 'efficiency' => $stats->eff, // Efficiency
                 'total_points' => $stats->total_points,
                 'total_rebounds' => $stats->total_rebounds,
+                'total_offensive_rebounds' => $stats->total_offensive_rebounds,
+                'total_defensive_rebounds' => $stats->total_defensive_rebounds,
                 'total_assists' => $stats->total_assists,
                 'total_steals' => $stats->total_steals,
                 'total_blocks' => $stats->total_blocks,
@@ -587,10 +621,14 @@ class PlayerService
                 'total_minutes_played' => $stats->total_minutes_played,
                 'total_games_played' => $stats->total_games_played,
                 'total_games_started' => $stats->total_games_started,
+                'eff' => $stats->eff,
                 'per' => $stats->per,
                 'ts_percent' => $stats->ts_percent,
+                'average_minutes_per_game' => round($stats->avg_minutes_per_game, 2),
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),
                 'average_rebounds_per_game' => round($stats->avg_rebounds_per_game, 2),
+                'average_offensive_rebounds_per_game' => round($stats->avg_offensive_rebounds_per_game, 2),
+                'average_defensive_rebounds_per_game' => round($stats->avg_defensive_rebounds_per_game, 2),
                 'average_assists_per_game' => round($stats->avg_assists_per_game, 2),
                 'average_steals_per_game' => round($stats->avg_steals_per_game, 2),
                 'average_blocks_per_game' => round($stats->avg_blocks_per_game, 2),
@@ -613,7 +651,7 @@ class PlayerService
             ];
         }
 
-              foreach ($playerStats as $stats) {
+            foreach ($playerStats as $stats) {
             // Calculate shooting percentages (avoid division by zero)
             $fieldGoalPercentage = $stats->total_field_goal_attempts > 0 ? ($stats->total_field_goals_made / $stats->total_field_goal_attempts) * 100 : 0;
             $twoPointPercentage = $stats->total_two_point_attempts > 0 ? ($stats->total_two_pointers_made / $stats->total_two_point_attempts) * 100 : 0;
@@ -634,6 +672,8 @@ class PlayerService
                 'efficiency' => $stats->eff, // Efficiency
                 'total_points' => $stats->total_points,
                 'total_rebounds' => $stats->total_rebounds,
+                'total_offensive_rebounds' => $stats->total_offensive_rebounds,
+                'total_defensive_rebounds' => $stats->total_defensive_rebounds,
                 'total_assists' => $stats->total_assists,
                 'total_steals' => $stats->total_steals,
                 'total_blocks' => $stats->total_blocks,
@@ -642,10 +682,14 @@ class PlayerService
                 'total_minutes_played' => $stats->total_minutes_played,
                 'total_games_played' => $stats->total_games_played,
                 'total_games_started' => $stats->total_games_started,
+                'eff' => $stats->eff,
                 'per' => $stats->per,
                 'ts_percent' => $stats->ts_percent,
+                'average_minutes_per_game' => round($stats->avg_minutes_per_game, 2),
                 'average_points_per_game' => round($stats->avg_points_per_game, 2),
                 'average_rebounds_per_game' => round($stats->avg_rebounds_per_game, 2),
+                'average_offensive_rebounds_per_game' => round($stats->avg_offensive_rebounds_per_game, 2),
+                'average_defensive_rebounds_per_game' => round($stats->avg_defensive_rebounds_per_game, 2),
                 'average_assists_per_game' => round($stats->avg_assists_per_game, 2),
                 'average_steals_per_game' => round($stats->avg_steals_per_game, 2),
                 'average_blocks_per_game' => round($stats->avg_blocks_per_game, 2),
@@ -907,11 +951,17 @@ class PlayerService
 
         $playerId = $request->player_id;
         $seasonId = $request->season_id;
+        $isPlayoff = $request->is_playoff;
         $page = $request->page_num;
         $perPage = $request->itemsperpage;
 
         // Calculate offset
         $offset = ($page - 1) * $perPage;
+
+        $playerDatabase = $this->helper->getPlayerStatsDatabaseName($seasonId);
+        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
+        $excludedRounds = config('playoffs');
+
 
         $playerName = DB::table('players')
             ->join('teams', 'players.team_id', '=', 'teams.id', 'left')
@@ -919,12 +969,8 @@ class PlayerService
             ->select('players.name as player_name', 'teams.name as team_name') // Select player name and team name
             ->first();
 
-
-        $playerDatabase = $this->helper->getPlayerStatsDatabaseName($seasonId);
-        $scheduleTable = $this->helper->getScheduleDBName($seasonId);
-
         // Fetch player game logs for the given player and season with pagination
-        $playerGameLogs = DB::table($playerDatabase . ' as player_game_stats')
+        $gameLogs = DB::table($playerDatabase . ' as player_game_stats')
             ->join('players', 'player_game_stats.player_id', '=', 'players.id')
             ->join('teams as player_team', 'player_game_stats.team_id', '=', 'player_team.id') // Join with player's team to get team name
             ->join($scheduleTable.' as schedules', 'player_game_stats.game_id', '=', 'schedules.game_id') // Join with schedules table
@@ -948,13 +994,20 @@ class PlayerService
                 ELSE
                     (CASE WHEN schedules.away_score > schedules.home_score THEN "Win" ELSE "Loss" END)
             END) as game_result'), // Determine win/loss
-            )
-            ->where('player_game_stats.player_id', $playerId)
-            ->where('player_game_stats.season_id', $seasonId)
-            ->orderBy('player_game_stats.id', 'desc') // Order by player_game_stats.id in descending order
-            ->offset($offset)
-            ->limit($perPage)
-            ->get();
+            );
+
+        if($isPlayoff){
+            $playerGameLogs = $gameLogs->whereIn('schedules.round',$excludedRounds);
+        }else{
+            $playerGameLogs = $gameLogs->whereNotIn('schedules.round',$excludedRounds);
+        }
+
+        $playerGameLogs = $gameLogs->where('player_game_stats.player_id', $playerId)
+                    ->where('player_game_stats.season_id', $seasonId)
+                    ->orderBy('player_game_stats.id', 'desc') // Order by player_game_stats.id in descending order
+                    ->offset($offset)
+                    ->limit($perPage)
+                    ->get();
 
         // Fetch total count of records for pagination info
         $totalRecords = DB::table($playerDatabase . ' as player_game_stats')

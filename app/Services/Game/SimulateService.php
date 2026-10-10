@@ -244,7 +244,7 @@ class SimulateService
 
             $this->news->createGameNewsFromGame($gameData->id);
 
-            $this->playerGenerator->declarePlayerForNextDraft($gameData->round);
+            // $this->playerGenerator->declarePlayerForNextDraft($gameData->round);
 
             // Get the number of rounds that are already simulated (status != 2)
             $simulatedRounds = $this->helper->simulatedRounds($currentSeasonId);
@@ -253,13 +253,9 @@ class SimulateService
             $totalRounds = $this->helper->totalRounds($currentSeasonId);
 
             $tradeProposalDeadline = CEIL($totalRounds / 2);
-            $isTradeProposalDeadline = $simulatedRounds <= $tradeProposalDeadline;
+            $isTradeProposalDeadline = $simulatedRounds == $tradeProposalDeadline;
 
-            if($simulatedRounds > 5 && ($simulatedRounds <= $isTradeProposalDeadline) && ($gameData->id % 4 == 0)){
-                $this->tradeDecision->generateTradeProposals(false);
-            }
-
-            if($simulatedRounds == $tradeProposalDeadline){
+            if($isTradeProposalDeadline){
                 $this->coach->evaluateCoachMidSeason($gameData->home_team_id);
                 $this->coach->evaluateCoachMidSeason($gameData->away_team_id);
             }

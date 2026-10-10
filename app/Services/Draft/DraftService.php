@@ -2058,7 +2058,7 @@ class DraftService
             ->where('is_active', 1)
             ->count();
 
-        return $count < 15;
+        return $count < 20;
     }
 
     /**

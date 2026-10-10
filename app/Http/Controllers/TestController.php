@@ -16,6 +16,7 @@ use App\Services\Player\PlayerRatingsService;
 use App\Services\Stats\PlayoffStatsService;
 use App\Services\Schedule\ScheduleService;
 use App\Services\Game\PlayerStatsService;
+use App\Services\Stats\PlayerSeasonStatsService;
 use App\Services\Team\TeamChemistryService;
 use App\Services\Team\TeamRoleService;
 use App\Services\Team\TeamStreakService;
@@ -38,9 +39,11 @@ class TestController extends Controller
     protected $playerStats;
     protected $playerGenerator;
     protected $archive;
+    protected $store;
 
     public function __construct(){
 
+        $this->store = new PlayerSeasonStatsService();
         $this->archive = new ArchiveService();
         $this->playerGenerator = new PlayerGeneratorService();
         $this->draftRights = new DraftPickRightsService();
@@ -435,6 +438,9 @@ class TestController extends Controller
 
     }
     public function gameflow(){
+        return true;
+    }
+    public function playByPlay(){
         $events = DB::table('play_by_play')->get();
 
         foreach ($events as $event) {
@@ -619,20 +625,17 @@ class TestController extends Controller
 
     public function TestArchiving(){
 
-        $latestSeasonId = get_current_season_id();
+        $winnerIds = [1,2,3,4];
+        $loserIds = [5,6,7,8];
+        $teams = array_merge($winnerIds,$loserIds);
+        $pairCount = 8;
 
-        $awards = DB::table('season_awards')
-                    ->where('award_name','all-star')
-                    ->select(
-                        'player_id',
-                        DB::raw('COUNT(id) as all_star_count')
-                    )
-                    ->groupBy('player_id')
-                    ->get();
-        
-        foreach ($awards as $award) {
-            DB::table('player_game_highs')->where('player_id', $award->player_id)->update(['all_star_count' => $award->all_star_count]);
+        $pairings = [];
+        for ($i = 0; $i < $pairCount / 2; $i++) {
+            $pairings[] = [$teams[$i], $teams[$pairCount - $i - 1]];
         }
+
+        return $pairings;
     }
 
     public function updateAllStarCount(){

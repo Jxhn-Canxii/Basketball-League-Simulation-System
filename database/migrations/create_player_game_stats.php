@@ -19,6 +19,8 @@ return new class extends Migration
             $table->float('minutes')->default(0);
             $table->integer('points')->default(0);
             $table->integer('rebounds')->default(0);
+            $table->integer('offensive_rebounds')->default(0);
+            $table->integer('defensive_rebounds')->default(0);
             $table->integer('assists')->default(0);
             $table->integer('steals')->default(0);
             $table->integer('blocks')->default(0);

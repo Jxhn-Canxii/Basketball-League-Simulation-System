@@ -35,6 +35,8 @@ class PlayerCareerStatsService
                 $min = number_format($careerHighs->minutes ?? 0,'1');
                 $points = $careerHighs->points ?? 0;
                 $reb = $careerHighs->rebounds ?? 0;
+                $oReb = $careerHighs->offensive_rebounds ?? 0;
+                $dReb = $careerHighs->defensive_rebounds ?? 0;
                 $ast = $careerHighs->assists ?? 0;
                 $stl = $careerHighs->steals ?? 0;
                 $blk = $careerHighs->blocks ?? 0;
@@ -53,6 +55,8 @@ class PlayerCareerStatsService
                     'points' => $this->compareStats($stats,$gameData, $points, $stats['points'], 'points'),
                     'assists' => $this->compareStats($stats,$gameData, $ast, $stats['assists'], 'assists'),
                     'rebounds' => $this->compareStats($stats,$gameData, $reb, $stats['rebounds'], 'rebounds'),
+                    'offensive_rebounds' => $this->compareStats($stats,$gameData, $oReb, $stats['offensive_rebounds'], 'offensive_rebounds'),
+                    'defensive_rebounds' => $this->compareStats($stats,$gameData, $dReb, $stats['defensive_rebounds'], 'defensive_rebounds'),
                     'steals' => $this->compareStats($stats,$gameData, $stl, $stats['steals'], 'steals'),
                     'blocks' => $this->compareStats($stats,$gameData, $blk, $stats['blocks'], 'blocks'),
                     'turnovers' => $this->compareStats($stats,$gameData, $to, $stats['turnovers'], 'turnovers'),

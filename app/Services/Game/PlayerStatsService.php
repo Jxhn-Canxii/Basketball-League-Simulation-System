@@ -350,7 +350,7 @@ class PlayerStatsService
         }
     }
 
-    public function updateGameStats($playerId, $gameId, $seasonId, $isReserved, $isStarter)
+    public function updateGameStats($playerId, $gameId, $seasonId, $isReserved, $isStarter, $totalMinutesPlayed)
     {
         if (empty($playerId)) {
             throw new \Exception("Player quarter stats are empty. Cannot update season stats.");
@@ -372,6 +372,8 @@ class PlayerStatsService
                     DB::raw('SUM(minutes) as total_minutes'),
                     DB::raw('SUM(points) as total_points'),
                     DB::raw('SUM(rebounds) as total_rebounds'),
+                    DB::raw('SUM(offensive_rebounds) as total_offensive_rebounds'),
+                    DB::raw('SUM(defensive_rebounds) as total_defensive_rebounds'),
                     DB::raw('SUM(assists) as total_assists'),
                     DB::raw('SUM(steals) as total_steals'),
                     DB::raw('SUM(blocks) as total_blocks'),
@@ -389,6 +391,7 @@ class PlayerStatsService
                 ->groupBy('player_id')
                 ->first();
 
+            $maxMinutes = $totalMinutesPlayed;
             // Insert or update the player's season stats in the player_season_stats table
 
             // dd($playerStats);
@@ -403,9 +406,11 @@ class PlayerStatsService
                     ],
                     [
                         'role' => $playerStats->game_role,
-                        'minutes' => $playerStats->total_minutes,
+                        'minutes' => min($maxMinutes,$playerStats->total_minutes),
                         'points' => $playerStats->total_points,
                         'rebounds' => $playerStats->total_rebounds,
+                        'offensive_rebounds' => $playerStats->total_offensive_rebounds,
+                        'defensive_rebounds' => $playerStats->total_defensive_rebounds,
                         'assists' => max(0,$playerStats->total_assists),
                         'steals' => $playerStats->total_steals,
                         'blocks' => $playerStats->total_blocks,

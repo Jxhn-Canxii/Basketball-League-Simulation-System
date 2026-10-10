@@ -164,7 +164,11 @@ class MinuteDistributionService
                     $player->is_fouled_out ?? false
                 );
 
-                return !$isInjured && !$isFouledOut;
+                $isReserved = (bool) (
+                    $player->is_reserved ?? false
+                );
+
+                return !$isInjured && !$isFouledOut && !$isReserved;
             })
             ->values();
 

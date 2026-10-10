@@ -282,12 +282,12 @@
                         :season_data="season_info"
                     />
                     <br>
-                    <RecentTradeProposal
+                    <!-- <RecentTradeProposal
                         v-if="seasonStatus == 1 && !boostMode"
                         :key="updateKey"
                         :isOffSeason="false"
                         :seasonId="props.season_id"
-                    />
+                    /> -->
                 </div>
             </section>
         </div>

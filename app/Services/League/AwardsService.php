@@ -270,24 +270,6 @@ class AwardsService
         $this->insertAward($topPlaymaker, 'Top Playmaker', 'Player with the highest average assists per game', $latestSeasonId);
         $this->insertAward($topStealer, 'Top Stealer', 'Player with the highest average steals per game', $latestSeasonId);
         $this->insertAward($topBlocker, 'Top Blocker', 'Player with the highest average blocks per game', $latestSeasonId);
-        $this->insertAward($bestDefender, 'Best Defensive Player', 'Player with the highest combined average steals and blocks per game', $latestSeasonId);
-        $this->insertAward($mvp, 'Best Overall Player', 'Player with the best overall performance score', $latestSeasonId);
-
-        // Only insert these awards if it's not season 1
-        if ($latestSeasonId > 1) {
-            // Most Improved Player (needs previous season stats)
-            $this->insertAward($mostImprovedPlayer, 'Most Improved Player', 'Player with the highest increase in average points per game from the previous season', $latestSeasonId);
-
-            // Rookie of the Year (not applicable in season 1)
-            if ($rookieOfTheYear) {
-                $this->insertAward($rookieOfTheYear, 'Rookie of the Season', 'Best rookie player of the season', $latestSeasonId);
-            }
-
-            // Sixth Man of the Year
-            if ($sixthManOfTheYear) {
-                $this->insertAward($sixthManOfTheYear, 'Sixth Man of the Year', 'Best player coming off the bench', $latestSeasonId);
-            }
-        }
 
         // Insert Top 5 Players awards (these are given every season)
         $counter = 1;
@@ -421,6 +403,7 @@ class AwardsService
                     })
                     ->where('c.round','semi_finals')
                     ->where('ps.season_id',$latestSeasonId)
+                    ->where('ps.is_cut',0)
                     ->where('o.id',$latestSeasonId)
                     ->where('f.id',$latestSeasonId)
                     ->get();
@@ -431,6 +414,23 @@ class AwardsService
             
             $this->insertAward($player, $awardName, $description, $latestSeasonId);
         }
+
+        $this->insertAward($sixthManOfTheYear, 'Sixth Man of the Year', 'Best player coming off the bench', $latestSeasonId);
+
+        // Only insert these awards if it's not season 1
+        if ($latestSeasonId > 1) {
+            // Most Improved Player (needs previous season stats)
+            $this->insertAward($mostImprovedPlayer, 'Most Improved Player', 'Player with the highest increase in average points per game from the previous season', $latestSeasonId);
+
+            // Rookie of the Year (not applicable in season 1)
+            if ($rookieOfTheYear) {
+                $this->insertAward($rookieOfTheYear, 'Rookie of the Season', 'Best rookie player of the season', $latestSeasonId);
+            }
+        }
+
+        $this->insertAward($bestDefender, 'Best Defensive Player', 'Player with the highest combined average steals and blocks per game', $latestSeasonId);
+        $this->insertAward($mvp, 'Best Overall Player', 'Player with the best overall performance score', $latestSeasonId);
+
 
         return response()->json([
             'message' => 'Season awards stored successfully.',
@@ -583,7 +583,7 @@ class AwardsService
             ->join('teams','teams.id','=','pss.team_id')
             ->join('players','players.id','=','pss.player_id')
             ->join('player_game_highs','player_game_highs.player_id','=','pss.player_id')
-            ->select('player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.id as team_id','teams.acronym as team_acronym','pss.*')
+            ->select('players.is_rookie','players.is_injured','player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.id as team_id','teams.acronym as team_acronym','pss.*')
             ->join('conferences','conferences.id','=','teams.conference_id')
             ->where('pss.season_id', $latestSeasonId)
             ->where('players.is_injured', 0)
@@ -591,7 +591,7 @@ class AwardsService
             ->get();
 
         $eligiblePlayerStats = $playerStats->filter(function ($stats) {
-            return (int)$stats->total_games_played > 5;
+            return (int)$stats->total_games_played > 5 && !$stats->is_rookie && !$stats->is_injured;
         });
 
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player
@@ -702,7 +702,7 @@ class AwardsService
                 ->join('teams','teams.id','=','pss.team_id')
                 ->join('players','players.id','=','pss.player_id')
                 ->join('player_game_highs','player_game_highs.player_id','=','pss.player_id')
-                ->select('player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
+                ->select('players.is_rookie','players.is_injured','player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
                 ->join('conferences','conferences.id','=','teams.conference_id')
                 ->where('pss.season_id', $latestSeasonId)
                 ->where('players.is_injured', 0)
@@ -715,7 +715,7 @@ class AwardsService
                 ->join('teams','teams.id','=','pss.team_id')
                 ->join('players','players.id','=','pss.player_id')
                 ->join('player_game_highs','player_game_highs.player_id','=','pss.player_id')
-                ->select('player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
+                ->select('players.is_rookie','players.is_injured','player_game_highs.all_star_count','players.position','players.draft_status','players.id as player_id','players.name as player_name','teams.city as team_city','teams.name as team_name','teams.primary_color as primary_color','teams.secondary_color as secondary_color','teams.acronym as team_acronym','pss.*')
                 ->join('conferences','conferences.id','=','teams.conference_id')
                 ->join('season_awards','season_awards.player_id','=','pss.player_id')
                 ->where('pss.season_id', $latestSeasonId)
@@ -726,7 +726,7 @@ class AwardsService
         }
 
         $eligiblePlayerStats = $playerStats->filter(function ($stats) {
-            return (int)$stats->total_games_played > 5;
+            return (int)$stats->total_games_played > 5 && !$stats->is_rookie && !$stats->is_injured;
         });
 
         // Calculate MVP by sorting the players based on the weighted stats and returning the top player
@@ -743,7 +743,7 @@ class AwardsService
         })->take(15)->values();
 
         // Filter out rookies and determine the Rookie of the Year award
-        $rookies = $eligiblePlayerStats->filter(function ($stats) {
+        $rookies = $playerStats->filter(function ($stats) {
             return DB::table('players')
                 ->where('id', $stats->player_id)
                 ->where('draft_id', $stats->season_id)
@@ -773,34 +773,43 @@ class AwardsService
         ];
     }
 
-    public function updateAllStarCoach($seasonId)
+    public function updateAllStarCoach($seasonId,$conferenceGroup,$teamIds)
     {
 
         $bestCoach = DB::table('standings_view as sv')
-            ->select('teams.coach_id','coaches.name as coach_name','teams.name as team_name','teams.city as team_city')
+            ->select('teams.coach_id','coaches.name as coach_name','coaches.coach_iq','teams.name as team_name','teams.city as team_city')
             ->join('teams','teams.id','=','sv.team_id')
             ->join('conferences','conferences.id','=','teams.conference_id')
             ->join('coaches','coaches.id','=','teams.coach_id')
             ->where('sv.season_id', $seasonId)
+            ->whereIn('teams.conference_id', $conferenceGroup)
             ->orderBy('overall_rank','asc')
-            ->limit(4)
+            ->limit(2)
             ->get();
 
         if($bestCoach){
-            $teamId = 0;
+            $teamId = -1; 
             foreach ($bestCoach as $coach) {
                 # code...
                 $teamId++;
-
+             
                 DB::table('teams')
-                    ->where('id',$teamId)
+                    ->where('id',$teamIds[$teamId])
                     ->update([
                         'coach_id' => $coach->coach_id
                     ]);
 
+                DB::table('team_season_info')
+                    ->where('team_id',$teamIds[$teamId])
+                    ->where('season_id',$seasonId)
+                    ->update([
+                        'coach_id' => $coach->coach_id,
+                        'coach_iq' => $coach->coach_iq,
+                    ]);
+
                 $teamInfo = DB::table('teams')
                             ->select('name','city')
-                            ->where('id',$teamId)
+                            ->where('id',$teamIds[$teamId])
                             ->first();
 
                 //log tansactions
@@ -809,19 +818,14 @@ class AwardsService
                     'season_id' => $seasonId,
                     'details' => $coach->coach_name . ' has been appointed to coach the ' . $teamInfo->city.' '.$teamInfo->name,
                     'from_team_id' => 0,
-                    'to_team_id' => $teamId,
+                    'to_team_id' => $teamIds[$teamId],
                     'status' => 'appointed',
                     'created_at' => now(),
                     'updated_at' => now(),
-                ]);
-
-                if($teamId > 4){
-                    break;
-                }
-                
+                ]);                
             }
         }
-       
+    
     }
 
     private function updatePlayerAllStarCount($playerId){

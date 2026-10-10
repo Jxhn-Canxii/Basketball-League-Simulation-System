@@ -15,7 +15,77 @@ class TeamInjuryService
         $this->helper = new HelperService();
     }
 
-    public function handleInjuredPlayer($player, $seasonId, $seasonStatus)
+
+    public function fatigueRate($player, $minutes, $gameId)
+    {
+        try {
+            if (is_array($player)) {
+                $player = (object) $player;
+            }
+
+            $seasonId = get_current_season_id() ?? 1;
+            $staminaFactor  = $player->stamina_rating / 100;
+            $strengthFactor = $player->strength_rating / 100;
+            $currentFatigue = $player->fatigue;
+            $retirementAge = $player->retirement_age ?? 36;
+            $age = $player->age;
+
+            // STEP 1: Calculate recovery rate
+            $baseRecoveryRate = ($staminaFactor + $strengthFactor) * 0.1;
+
+            // Age-based slowdown
+            $ageGap = $retirementAge - $age;
+            if ($ageGap <= 0) {
+                $recoverySlowdown = 0.5;
+            } elseif ($ageGap <= 5) {
+                $recoverySlowdown = 1 - (0.1 * (5 - $ageGap));
+            } else {
+                $recoverySlowdown = 1;
+            }
+
+            $recoveryRate = $baseRecoveryRate * $recoverySlowdown;
+
+            // STEP 2: Apply Recovery
+            if (!$player->is_injured && $currentFatigue > 0) {
+                $currentFatigue = max(0, $currentFatigue - $recoveryRate);
+            }
+
+            // STEP 3: Add fatigue from this game
+            if ($minutes == 0) {
+                $newFatigue = max(0, $currentFatigue - 20); // Auto-recovery for DNP
+            } else {
+                $fatigueIncrease = $minutes * (1 - $staminaFactor * 0.5);
+                $newFatigue = min(20, $currentFatigue + round($fatigueIncrease)); // Cap at 20
+            }
+
+            // STEP 4: Injury chance check using injury_prone_percentage
+            if ($newFatigue >= 20) {
+                $triggerInjuryChance = rand(1, 100);
+            
+                if ($triggerInjuryChance <= 30) { // 30% chance to trigger injury logic
+                    $injuryRoll = rand(1, 100);
+                    if ($injuryRoll <= $player->injury_prone_percentage) {
+                        $this->causeInjury($player, $gameId, $seasonId);
+                        return;
+                    }
+                }
+            
+                // If not injured, reset fatigue
+                $newFatigue = 0;
+            }
+            
+
+            // STEP 5: Save fatigue
+            DB::table('players')->where('id', $player->id)->update([
+                'fatigue' => $newFatigue,
+            ]);
+
+        } catch (\Exception $e) {
+            // Log::error("Error updating fatigue for player {$player->id}: " . $e->getMessage());
+        }
+    }
+
+        public function handleInjuredPlayer($player, $seasonId, $seasonStatus)
     {
         try {
             // Check if player is already retired or inactive
@@ -160,97 +230,6 @@ class TeamInjuryService
         }
     }
 
-    public function resetFatigue($teamId)
-    {
-
-        DB::table('players')
-            ->where('team_id', $teamId)
-            ->where('is_injured', 0)
-            ->where('is_active', 1)
-            ->update([
-                'fatigue' => 0,
-            ]);
-    }
-
-    public function fatigueAdjustment($morale, $fatigue)
-    {
-
-        $moraleFactor = $this->moraleFactor($morale);
-
-        $newFatigue = min(0, ($fatigue - ($fatigue * $moraleFactor)));
-
-        return $newFatigue;
-    }
-
-    public function fatigueRate($player, $minutes, $gameId)
-    {
-        try {
-            if (is_array($player)) {
-                $player = (object) $player;
-            }
-
-            $seasonId = get_current_season_id() ?? 1;
-            $staminaFactor  = $player->stamina_rating / 100;
-            $strengthFactor = $player->strength_rating / 100;
-            $currentFatigue = $player->fatigue;
-            $retirementAge = $player->retirement_age ?? 36;
-            $age = $player->age;
-
-            // STEP 1: Calculate recovery rate
-            $baseRecoveryRate = ($staminaFactor + $strengthFactor) * 0.1;
-
-            // Age-based slowdown
-            $ageGap = $retirementAge - $age;
-            if ($ageGap <= 0) {
-                $recoverySlowdown = 0.5;
-            } elseif ($ageGap <= 5) {
-                $recoverySlowdown = 1 - (0.1 * (5 - $ageGap));
-            } else {
-                $recoverySlowdown = 1;
-            }
-
-            $recoveryRate = $baseRecoveryRate * $recoverySlowdown;
-
-            // STEP 2: Apply Recovery
-            if (!$player->is_injured && $currentFatigue > 0) {
-                $currentFatigue = max(0, $currentFatigue - $recoveryRate);
-            }
-
-            // STEP 3: Add fatigue from this game
-            if ($minutes == 0) {
-                $newFatigue = max(0, $currentFatigue - 20); // Auto-recovery for DNP
-            } else {
-                $fatigueIncrease = $minutes * (1 - $staminaFactor * 0.5);
-                $newFatigue = min(20, $currentFatigue + round($fatigueIncrease)); // Cap at 20
-            }
-
-            // STEP 4: Injury chance check using injury_prone_percentage
-            if ($newFatigue >= 20) {
-                $triggerInjuryChance = rand(1, 100);
-            
-                if ($triggerInjuryChance <= 30) { // 30% chance to trigger injury logic
-                    $injuryRoll = rand(1, 100);
-                    if ($injuryRoll <= $player->injury_prone_percentage) {
-                        $this->causeInjury($player, $gameId, $seasonId);
-                        return;
-                    }
-                }
-            
-                // If not injured, reset fatigue
-                $newFatigue = 0;
-            }
-            
-
-            // STEP 5: Save fatigue
-            DB::table('players')->where('id', $player->id)->update([
-                'fatigue' => $newFatigue,
-            ]);
-
-        } catch (\Exception $e) {
-            // Log::error("Error updating fatigue for player {$player->id}: " . $e->getMessage());
-        }
-    }
-
     public function calculateInjuryChance($fatigue)
     {
         // Calculate injury chance based on fatigue
@@ -296,6 +275,28 @@ class TeamInjuryService
         } else {
             // \Log::error("Injury types configuration is missing.");
         }
+    }
+
+        public function resetFatigue($teamId)
+    {
+
+        DB::table('players')
+            ->where('team_id', $teamId)
+            ->where('is_injured', 0)
+            ->where('is_active', 1)
+            ->update([
+                'fatigue' => 0,
+            ]);
+    }
+
+    public function fatigueAdjustment($morale, $fatigue)
+    {
+
+        $moraleFactor = $this->moraleFactor($morale);
+
+        $newFatigue = min(0, ($fatigue - ($fatigue * $moraleFactor)));
+
+        return $newFatigue;
     }
 
     private function moraleFactor(int $morale)

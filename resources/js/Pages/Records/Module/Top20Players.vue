@@ -230,9 +230,9 @@
                     </template>
 
                     <!-- Players -->
-                    <template v-else-if="players.data?.length">
+                    <template v-else-if="players?.length">
                         <tr
-                            v-for="(player, index) in players.data"
+                            v-for="(player, index) in players"
                             :key="player.player_id ?? index"
                             class="group border-b border-slate-800/70 transition-colors duration-150 hover:bg-white/[0.025]"
                         >
@@ -451,31 +451,6 @@
                 </tbody>
             </table>
         </div>
-
-        <!-- Footer -->
-        <div
-            v-if="players.total"
-            class="border-t border-slate-800 bg-[#0a0d12] px-4 py-3 sm:px-6"
-        >
-            <div
-                class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
-            >
-                <div
-                    class="text-[9px] font-bold uppercase tracking-widest text-slate-600"
-                >
-                    All-Time Player Records
-                </div>
-
-                <div class="flex overflow-x-auto">
-                    <Paginator
-                        :page_number="search_filters.page_num"
-                        :total_rows="players.total ?? 0"
-                        :itemsperpage="search_filters.itemsperpage"
-                        @page_num="handlePagination"
-                    />
-                </div>
-            </div>
-        </div>
     </div>
 </template>
 
@@ -516,11 +491,7 @@ const fetchTopPlayers = async (
             route("best.players.alltime")
         );
 
-        players.value = response.data ?? {
-            data: [],
-            total: 0,
-            total_pages: 0,
-        };
+        players.value = response.data;
 
         console.log("loaded top 20 module");
     } catch (error) {

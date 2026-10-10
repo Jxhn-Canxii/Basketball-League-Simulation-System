@@ -2,7 +2,7 @@
 
 namespace App\Services\Player;
 
-ini_set('max_execution_time', 600); // 300 seconds = 5 minutes
+ini_set('max_execution_time', 1024); // 300 seconds = 5 minutes
 
 use App\Models\Player;
 use App\Services\Archive\ArchiveService;
@@ -500,6 +500,7 @@ class FreeAgencyService
     */
     public function auditTeamRosterSpot(
         int $teamId,
+        int $round,
         ?int $maxSignings = null,
         ?string $preferredPosition = null
     ): array 
@@ -547,7 +548,7 @@ class FreeAgencyService
             if ($rosterCount > 15) {
                 $playerNeedsToWaive = CEIL($rosterCount - 15); //18 - 15 = 3 needs to be waived
 
-                $this->clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive);
+                $this->clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive, $round);
 
                 break;
             }
@@ -992,11 +993,11 @@ class FreeAgencyService
 
         // Minimum required players per position for each team
         $minimumPositionCounts = [
-            'PG' => 3,
-            'SG' => 3,
-            'SF' => 3,
-            'PF' => 3,
-            'C' => 3,
+            'PG' => 4,
+            'SG' => 4,
+            'SF' => 4,
+            'PF' => 4,
+            'C' => 4,
         ];
 
         // Step 1: Check position availability first
@@ -1022,7 +1023,7 @@ class FreeAgencyService
             ->where('teams.conference_id','>',0)
             ->select('teams.id', 'teams.name', DB::raw('COUNT(players.id) as player_count'))
             ->groupBy('teams.id', 'teams.name')
-            ->havingRaw('COUNT(players.id) < 15')
+            ->havingRaw('COUNT(players.id) < 20')
             ->inRandomOrder() // Add randomization
             ->get();
         
@@ -1033,6 +1034,7 @@ class FreeAgencyService
             ->get();
 
         $teamsCount = $teamsWithFewMembers->count();
+        // dd($teamsCount);
         if ($teamsCount === 0) {
             $update = $this->storeNextSeasonStatsPerTeam();
 
@@ -1075,7 +1077,7 @@ class FreeAgencyService
 
                 // Fill minimum position requirements first
                 foreach ($minimumPositionCounts as $position => $minRequired) {
-                    while (($teamPosCounts[$position] ?? 0) < $minRequired && $currentPlayerCount < 15) {
+                    while (($teamPosCounts[$position] ?? 0) < $minRequired && $currentPlayerCount < 20) {
                         // Get the best available player for the current position
                         $player = $this->getBestAvailableFreeAgent($position, $usedPlayerIds);
                         if (!$player) break;
@@ -1097,7 +1099,7 @@ class FreeAgencyService
                 }
 
                 // Fill remaining roster spots with best available players
-                while ($currentPlayerCount < 15) {
+                while ($currentPlayerCount < 20) {
                     // Get the best available player (no position requirement)
                     $player = $this->getBestAvailableFreeAgent('SG', $usedPlayerIds);
                     if (!$player) break;
@@ -1127,12 +1129,12 @@ class FreeAgencyService
                 ->select('teams.name', DB::raw('COUNT(players.id) as player_count'))
                 ->where('teams.conference_id','>',0)
                 ->groupBy('teams.name')
-                ->havingRaw('COUNT(players.id) < 15')
+                ->havingRaw('COUNT(players.id) < 20')
                 ->get()
                 ->map(function ($team) {
                     return [
                         'team_name' => $team->name,
-                        'players_needed' => 15 - $team->player_count,
+                        'players_needed' => 20 - $team->player_count,
                     ];
                 })->filter(fn($team) => $team['players_needed'] > 0);
 
@@ -1194,7 +1196,7 @@ class FreeAgencyService
 
             // Fill minimum positional requirements
             foreach ($minimumPositionCounts as $position => $minRequired) {
-                while (($teamPosCounts[$position] ?? 0) < $minRequired && $currentPlayerCount < 15) {
+                while (($teamPosCounts[$position] ?? 0) < $minRequired && $currentPlayerCount < 20) {
                     $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, $position, $usedPlayerIds, $cred);
                     if (!$player) break;
 
@@ -1209,7 +1211,7 @@ class FreeAgencyService
             }
 
             // Fill remaining slots
-            while ($currentPlayerCount < 15) {
+            while ($currentPlayerCount < 20) {
                 $player = $this->selectBestCompatiblePlayer($activePlayers, $team, $teamPosCounts, null, $usedPlayerIds, $cred);
                 if (!$player) break;
 
@@ -1336,7 +1338,7 @@ class FreeAgencyService
         $totalTeams = DB::table('teams')->count();
 
         // Calculate the total required players per position (5 positions, 3 per position)
-        $totalRequiredPlayers = $totalTeams * 3;
+        $totalRequiredPlayers = $totalTeams * 4;
 
         // Loop through each position to check the availability of players
         $positions = ['PG', 'SG', 'SF', 'PF', 'C'];
@@ -1481,7 +1483,7 @@ class FreeAgencyService
         return true;
     }
     
-    private function clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive): void 
+    private function clearRosterSpot($teamId,$seasonId,$playerNeedsToWaive,$round): void 
     {
         $playersToCut = DB::table('player_season_stats as pss')
                 ->select('teams.name as team_name','pss.season_id','pss.team_id','pss.player_id')
@@ -1522,14 +1524,27 @@ class FreeAgencyService
                     'updated_at' => now(),
                 ]);
 
+            DB::table('player_season_stats')
+                ->where('player_id', $player->player_id)
+                ->where('season_id', $player->season_id)
+                ->where('team_id', $player->team_id)
+                ->update([
+                    'is_cut' => ($round == 1),
+                    'updated_at' => now(),
+                ]);
+
+            $status = ($round == 1) ? 'cut' : 'waived';
+            $details = ($round == 1) ?  "Has been cut by {$player->team_name} to finalize regular season roster." 
+                : "Waived by {$player->team_name} to make roster space";
+
             DB::table('transactions')
                 ->insert([
                     'player_id' => $player->player_id,
                     'season_id' => $player->season_id,
                     'from_team_id' => $player->team_id,
                     'to_team_id' => 0,
-                    'status' => 'waived',
-                    'details' => "Waived by {$player->team_name} to make roster space",
+                    'status' => $status,
+                    'details' => $details,
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);

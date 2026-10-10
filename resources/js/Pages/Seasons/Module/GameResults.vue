@@ -114,6 +114,8 @@
                         <b>{{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}</b>
                         <i class="fas text-gray-500">|</i>
                         <i :class="streakStatus(gameDetails.home_team.streak)">{{ gameDetails.home_team.streak }}</i>
+                        <i class="fas text-gray-500">|</i>
+                        <b> #{{ gameDetails.home_team.conference_rank }}</b>
                     </div>
 
                     <div 
@@ -209,6 +211,8 @@
                         <b>{{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}</b>
                         <i class="fas">|</i>
                         <i :class="streakStatus(gameDetails.away_team.streak)">{{ gameDetails.away_team.streak }}</i>
+                        <i class="fas">|</i>
+                        <b> #{{ gameDetails.away_team.conference_rank }}</b>
                     </div>
 
                     <div 

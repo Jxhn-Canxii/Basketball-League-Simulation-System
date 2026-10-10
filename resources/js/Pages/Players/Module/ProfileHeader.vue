@@ -855,11 +855,11 @@ const props = defineProps({
   },
   season_logs: {
     type: Number,
-    required: true,
+    default: 0,
   },
   playoff_logs: {
     type: Number,
-    required: true,
+    default: 0,
   },
 });
 

@@ -72,6 +72,8 @@ class PlayByPlayService
                 'role' => $player->role,
                 'points' => 0,
                 'rebounds' => 0,
+                'offensive_rebounds' => 0,
+                'defensive_rebounds' => 0,
                 'assists' => 0,
                 'steals' => 0,
                 'blocks' => 0,
@@ -100,6 +102,8 @@ class PlayByPlayService
                 'role' => $player->role,
                 'points' => 0,
                 'rebounds' => 0,
+                'offensive_rebounds' => 0,
+                'defensive_rebounds' => 0,
                 'assists' => 0,
                 'steals' => 0,
                 'blocks' => 0,
@@ -122,15 +126,17 @@ class PlayByPlayService
          * Minutes are already determined by your existing
          * distributeMinutes() system.
          */
+        $maxMinutesPerPlayer = ($gameMinutes / 5);
+
         foreach ($homeMinutes as $playerId => $minutes) {
             if (isset($stats[$playerId])) {
-                $stats[$playerId]['minutes'] = (int) $minutes;
+                $stats[$playerId]['minutes'] = (int) min($maxMinutesPerPlayer,$minutes);
             }
         }
 
         foreach ($awayMinutes as $playerId => $minutes) {
             if (isset($stats[$playerId])) {
-                $stats[$playerId]['minutes'] = (int) $minutes;
+                $stats[$playerId]['minutes'] = (int) min($maxMinutesPerPlayer,$minutes);
             }
         }
 
@@ -148,6 +154,9 @@ class PlayByPlayService
                     $player,
                     false
                 );
+
+            $this->teamManagement->fatigueRate($player, $stats[$player->id]['minutes'], $gameData->game_id);
+            
         }
 
         foreach ($awayPlayers as $player) {
@@ -156,6 +165,9 @@ class PlayByPlayService
                     $player,
                     false
                 );
+
+            $this->teamManagement->fatigueRate($player, $stats[$player->id]['minutes'], $gameData->game_id);
+        
         }
 
         /*
@@ -725,6 +737,7 @@ class PlayByPlayService
 
                 if ($rebounder) {
                     $stats[$rebounder->id]['rebounds']++;
+                    $stats[$rebounder->id]['offensive_rebounds']++;
 
                     $events[] =
                         $this->event(
@@ -757,6 +770,7 @@ class PlayByPlayService
 
                 if ($rebounder) {
                     $stats[$rebounder->id]['rebounds']++;
+                    $stats[$rebounder->id]['defensive_rebounds']++;
 
                     $events[] =
                         $this->event(
@@ -776,7 +790,6 @@ class PlayByPlayService
                             "{$rebounder->name} grabs the defensive rebound."
                         );
                 }
-
                 $offenseIsHome = !$offenseIsHome;
             }
 

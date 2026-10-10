@@ -373,28 +373,24 @@ playin_summary AS (
                 WHEN round = 'play_ins_elims_round_2' THEN
                     CONCAT(
                         winner_name,
-                        ' advances in the Play-ins Finals to decide who will get the last ticket to the playoffs. While,',
+                        ' advances to Play-ins Finals',
                         loser_name,
-                        ' has been eliminated in the play-ins.'
+                        ' eliminated'
                     )
                 WHEN round = 'play_ins_elims_round_1' THEN
                     CONCAT(
                         winner_name,
-                        ' advances in the play-offs as a 7th seed as they beat ',
+                        ' advances to playoffs',
                         loser_name,
-                        ' The ',
-                        loser_name,
-                        ' will take the the winner of the Play-ins(9th vs 10th) as the battle for the last ticket for the playoffs.'
+                        ' has another chance to qualify!'
                     )
                 WHEN round = 'play_ins_finals' THEN
                     CONCAT(
                         winner_name,
-                        ' advances in the play-offs as the 8th seed as they beat ',
+                        ' advances to playoffs',
                         loser_name,
-                        '. The ',
-                        loser_name,
-                        ' season will come to the end.'
-                    ) 
+                        ' has been eliminated!'
+                    )
                 ELSE
                     CONCAT(
                         winner_name,

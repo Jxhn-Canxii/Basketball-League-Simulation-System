@@ -32,7 +32,7 @@ class InjuryService
             ->join('teams as ta', 's.away_id', '=', 'ta.id')   // away team
             ->join('teams as ti', 'ti.id', '=', 'ipv.team_id')   // team when injured
             ->where('ipv.player_id', $player_id)
-            ->orderByDesc('ipv.game_id')
+            ->orderByDesc('s.id')
             ->select(
                 'ipv.*',
                 's.season_id',
@@ -59,7 +59,7 @@ class InjuryService
             ->join('teams as ta', 's.away_id', '=', 'ta.id')   // away team
             ->join('teams as ti', 'ti.id', '=', 'ipv.team_id')   // team when injured
             ->where('ipv.player_id', $player_id)
-            ->orderByDesc('ipv.game_id')
+            ->orderByDesc('s.id')
             ->select(
                 'ipv.*',
                 's.season_id',

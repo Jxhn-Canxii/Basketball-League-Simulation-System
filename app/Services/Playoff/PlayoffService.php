@@ -864,7 +864,7 @@ class PlayoffService
 
 
                     // Generate pairings
-                    $pairings = $this->pairSeriesTeams($topTeamsByOverallRank, 8);
+                    $pairings = $this->pairTeams($topTeamsByOverallRank, 8);
 
                     //  dd($pairings );
                     // Create series and schedule for the round
@@ -1508,20 +1508,30 @@ class PlayoffService
             $query->where('conference_id', $conferenceId);
         }
 
-        $home = $query->pluck('home_team_id')->toArray();
-        $away = $query->pluck('away_team_id')->toArray();
+        $winner = $query->pluck('winner_team_id')->toArray();
+        $loser = $query->pluck('loser_team_id')->toArray();
 
-        $qualified = array_merge($home,$away);
+        $qualified = array_merge($winner,$loser);
 
         // If the round is semi_finals or inter_conference_semi_finals or inter_conference_finals, rank the winners by overall_rank
         if (in_array($round, ['semi_finals', 'inter_conference_semi_finals','inter_conference_finals', 'quarter_finals', 'round_of_16'])) {
         
-            $qualified = DB::table('standings_view')
+            $winnerIds = DB::table('standings_view')
                 ->where('season_id', $seasonId)
-                ->whereIn('team_id', $qualified)
+                ->whereIn('team_id', $winner)
                 ->orderBy('overall_rank', 'asc')
                 ->pluck('team_id')
                 ->toArray();
+                
+            $loserIds = DB::table('standings_view')
+                ->where('season_id', $seasonId)
+                ->whereIn('team_id', $loser)
+                ->orderBy('overall_rank', 'asc')
+                ->pluck('team_id')
+                ->toArray();
+
+            $qualified = array_merge($winnerIds,$loserIds);
+            
         }
 
         return $qualified;
@@ -1538,16 +1548,6 @@ class PlayoffService
         return $pairings;
     }
 
-    private function pairSeriesTeams($teams, $pairCount)
-    {
-        // Generate pairings based on the teams array
-        $pairings = [];
-        for ($i = 0; $i < $pairCount / 2; $i++) {
-            $pairings[] = [$teams[$i], $teams[$pairCount - $i - 1]];
-        }
-
-        return $pairings;
-    }
     /**
      * Get play-in teams for a given conference, round, and rank range.
      *

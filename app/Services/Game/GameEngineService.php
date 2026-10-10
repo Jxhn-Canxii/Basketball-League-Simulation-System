@@ -77,8 +77,8 @@ class GameEngineService
             ], 400);
         }
 
-        $this->freeAgent->auditTeamRosterSpot($gameData->home_team_id);
-        $this->freeAgent->auditTeamRosterSpot($gameData->away_team_id);
+        $this->freeAgent->auditTeamRosterSpot($gameData->home_team_id,$gameData->round);
+        $this->freeAgent->auditTeamRosterSpot($gameData->away_team_id,$gameData->round);
         
         $gameResults = $this->runGame($scheduleId, $gameData,$totalMinutes);
     
@@ -226,13 +226,14 @@ class GameEngineService
         $homeTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->home_team_id,$gameData->round);
         $awayTeamRosterReport = $this->teamManagement->prepareFinalRoster($gameData->away_team_id,$gameData->round);
 
-
+        $totalPossessions = rand(450,600);
+        $totalMinutesPlayed = 0;
         for ($quarterNumber=1; $quarterNumber <= 4; $quarterNumber++) { 
-
-            $totalPossessions = rand(160,310);
             //core of the game
             $quarterMinutes = $totalMinutes / 4;
             $quarterPossessions = $totalPossessions / 4;
+
+            $totalMinutesPlayed += $quarterMinutes;
 
             $quarter = 'Q'.$quarterNumber;
 
@@ -250,11 +251,11 @@ class GameEngineService
             $maxOvertimes = 3;
 
             for ($OTNumber = 1; $OTNumber <= $maxOvertimes; $OTNumber++) {
-
-                $totalPossessions = rand(100,160);
                 //core of the game
                 $otMinutes = $totalMinutes / 8;
                 $otPossessions = $totalPossessions / 8;
+
+                $totalMinutesPlayed += $otMinutes;
 
                 $overtimeQuarter = 'OT' . $OTNumber;
 
@@ -292,7 +293,7 @@ class GameEngineService
         foreach ($players as $player) {
             $isStarter = in_array($player->role,['all star','starter','star player']);
 
-            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved,$isStarter);
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved,$isStarter, $totalMinutesPlayed);
         }
 
         $playerGameStats =  DB::table('player_game_stats')
@@ -313,6 +314,8 @@ class GameEngineService
                 'minutes' => $playerStats->minutes,
                 'points' => $playerStats->points,
                 'rebounds' => $playerStats->rebounds,
+                'offensive_rebounds' => $playerStats->offensive_rebounds,
+                'defensive_rebounds' => $playerStats->defensive_rebounds,
                 'assists' => max(0,$playerStats->assists),
                 'steals' => $playerStats->steals,
                 'blocks' => $playerStats->blocks,
@@ -344,11 +347,15 @@ class GameEngineService
         $homeTeamRosterReport = $this->teamManagement->prepareAllStarFinalRoster($gameData->home_team_id,$gameData->round);
         $awayTeamRosterReport = $this->teamManagement->prepareAllStarFinalRoster($gameData->away_team_id,$gameData->round);
 
+        $totalPossessions = rand(450,600);
+        $totalMinutesPlayed = 0;
         for ($quarterNumber=1; $quarterNumber <= 4; $quarterNumber++) { 
-            $totalPossessions = rand(160,310);
+            // $totalPossessions = rand(160,310);
             //core of the game
             $quarterMinutes = $totalMinutes / 4;
             $quarterPossessions = $totalPossessions / 4;
+
+            $totalMinutesPlayed += $quarterMinutes;
 
             $quarter = 'Q'.$quarterNumber;
 
@@ -366,10 +373,12 @@ class GameEngineService
             $maxOvertimes = 3;
 
             for ($OTNumber = 1; $OTNumber <= $maxOvertimes; $OTNumber++) {
-                $totalPossessions = rand(160,310);
+                // $totalPossessions = rand(160,310);
 
                 $otMinutes = $totalMinutes / 8;
                 $otPossessions = $totalPossessions / 8;
+
+                $totalMinutesPlayed += $otMinutes;
 
                 $overtimeQuarter = 'OT' . $OTNumber;
 
@@ -406,7 +415,7 @@ class GameEngineService
 
         foreach ($players as $player) {
             $isStarter = in_array($player->role,['all star','starter','star player']);
-            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved, $isStarter);
+            $this->playerStats->updateGameStats($player->id,$gameData->game_id,$gameData->season_id,$player->is_reserved, $isStarter, $totalMinutesPlayed);
         }
 
         $playerGameStats =  DB::table('player_game_stats')
@@ -427,6 +436,8 @@ class GameEngineService
                 'minutes' => $playerStats->minutes,
                 'points' => $playerStats->points,
                 'rebounds' => $playerStats->rebounds,
+                'offensive_rebounds' => $playerStats->offensive_rebounds,
+                'defensive_rebounds' => $playerStats->defensive_rebounds,
                 'assists' => max(0,$playerStats->assists),
                 'steals' => $playerStats->steals,
                 'blocks' => $playerStats->blocks,
@@ -524,8 +535,8 @@ class GameEngineService
         $awayTeamPlayers = $this->teamManagement->getActiveAllstarPlayersSorted($gameData->away_team_id,$gameData->game_id, $rolePriority, $gameData->round);
 
         $playerGameStats = [];
-        $homeMinutes = $this->minutes->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->home_coaching_style, $gameData->home_preferred_team_composition);
-        $awayMinutes = $this->minutes->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id, $gameData->away_coaching_style, $gameData->away_preferred_team_composition);
+        $homeMinutes = $this->minutes->distributeMinutes($homeTeamPlayers, $totalMinutes, $gameData->game_id);
+        $awayMinutes = $this->minutes->distributeMinutes($awayTeamPlayers, $totalMinutes, $gameData->game_id);
 
         $homeChemistry = $gameData->home_team_chemistry ?? 75;
         $awayChemistry = $gameData->away_team_chemistry ?? 75;

@@ -5,8 +5,8 @@
         <div
             v-for="(item, index) in scoreData"
             :key="index"
-            @click.prevent="isGameResultModalOpen = item.game_id"
-            class="flex flex-col items-center border border-gray-300 p-6 bg-white rounded-lg shadow-md relative"
+            @click.prevent="isGameResultModalOpen = item"
+            class="flex flex-col items-center border border-gray-300 p-6 bg-gray-900 rounded-lg shadow-md relative"
         >
             <div :class="item.scoreColor" class="text-5xl font-bold">
                 {{ item.score }}
@@ -24,15 +24,13 @@
     </div>
 
     <!-- Modal for Game Results -->
-    <Modal :show="isGameResultModalOpen" :maxWidth="'4xl'" title="Game Result" @close="isGameResultModalOpen = false">
-        <button
-            class="flex float-end bg-gray-100 p-3"
-            @click.prevent="isGameResultModalOpen = false"
-        >
-            <i class="fa fa-times text-black-600"></i>
-        </button>
+    <Modal :show="isGameResultModalOpen" :maxWidth="'fullscreen'" title="Game Result" @close="isGameResultModalOpen = false">
         <div class="mt-4">
-            <GameResults :game_id="isGameResultModalOpen" />
+            <GameResults 
+            :season_id="isGameResultModalOpen.season_id" 
+            :key="isGameResultModalOpen.game_id" 
+            :game_id="isGameResultModalOpen.game_id" 
+            />
         </div>
     </Modal>
 </template>

@@ -94,6 +94,11 @@ class AnalyticsService
             ->where('is_active', 1)
             ->count();
 
+        $seasonStatus = DB::table('seasons')
+            ->select('status')
+            ->orderBy('id','desc')
+            ->first() ?? 18;
+
         // Count retired players
         $retiredPlayers = DB::table('players')
             ->where('is_active', 0)
@@ -122,7 +127,7 @@ class AnalyticsService
             ->count();
 
         // Define max roster size
-        $maxRosterSize = 15;
+        $maxRosterSize = 20;
 
         // Calculate total available slots
         $totalAvailableSlots = ($totalTeams * $maxRosterSize) - $activePlayersInTeams;
