@@ -93,7 +93,10 @@ class StandingsService
                 ->get();
 
             $reservedPlayers = DB::table('players as p')
-                ->join($playerSeasonStatsDBName.' as ps','ps.player_id', '=', 'p.id')
+                ->join($playerSeasonStatsDBName.' as ps', function ($join) {
+                    $join->on('ps.player_id', '=', 'p.id')
+                        ->on('ps.team_id', '=', 'p.team_id');
+                })
                 ->where('ps.team_id', $team->team_id)
                 ->where('ps.is_cut', 0)
                 ->where('ps.is_reserved', 1) // Only reserved in this season

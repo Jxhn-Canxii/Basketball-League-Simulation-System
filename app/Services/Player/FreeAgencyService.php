@@ -251,6 +251,7 @@ class FreeAgencyService
             ->where('team_id', 0)
             ->where('is_active', 1)
             ->where('age', '<=', 65)
+            ->orderBy('overall_rating','desc')
             ->get();
 
         $offers = [];
@@ -383,8 +384,10 @@ class FreeAgencyService
         }
 
         $query->orderByRaw("
+            overall_rating DESC,
             LENGTH(awards) DESC,
             is_finals_mvp DESC,
+            age ASC,
             FIELD(role, 'star player', 'all star', 'starter', 'role player', 'bench')
         ");
 
@@ -457,7 +460,8 @@ class FreeAgencyService
 
     public function runFreeAgencyPeriod($seasonId = null): array
     {
-        $seasonId = $seasonId ?? get_current_season_id();
+        $nextSeason = get_current_season_id() + 1;
+        $seasonId = $seasonId ?? $nextSeason;
         $offers = $this->generateFreeAgencyOffers($seasonId);
         $signed = [];
 
@@ -480,7 +484,25 @@ class FreeAgencyService
             }
         }
 
+        // Final check for incomplete teams
+        $incompleteTeams = DB::table('teams')
+            ->leftJoin('players', 'teams.id', '=', 'players.team_id')
+            ->select('teams.name', DB::raw('COUNT(players.id) as player_count'))
+            ->where('teams.conference_id','>',0)
+            ->groupBy('teams.name')
+            ->havingRaw('COUNT(players.id) < 20')
+            ->get()
+            ->map(function ($team) {
+                return [
+                    'team_name' => $team->name,
+                    'players_needed' => 20 - $team->player_count,
+                ];
+            })->filter(fn($team) => $team['players_needed'] > 0);
+
         return [
+            'message' => 'Players have been assigned to teams.',
+            // 'remaining_players' => count($activePlayers) - count($usedPlayerIds), // Calculate remaining players
+            'incomplete_teams' => $incompleteTeams,
             'season_id' => $seasonId,
             'signed' => $signed,
             'signed_count' => count($signed),

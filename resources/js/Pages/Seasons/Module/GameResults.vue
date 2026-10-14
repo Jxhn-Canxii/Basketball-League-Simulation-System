@@ -78,12 +78,12 @@
                     :style="winnerScoreClass(gameDetails.winner_team_id,gameDetails.home_team.team_id,gameDetails.home_team.primary_color, gameDetails.home_team.secondary_color)"
                 >
                     <div
-                        :style="{ color:  '#' + gameDetails.home_team.primary_color }"
-                        class="pointer-events-none absolute text-wrap text-center top-0 select-none text-[110px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[160px]"
+                        :style="{ color:  '#' + gameDetails.home_team.primary_color, opacity: '10%' }"
+                        class="pointer-events-none  absolute text-wrap text-center top-0 select-none text-[110px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[160px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }}
-                        {{ gameDetails.home_team.name ?? 'NO NAME' }} -->
+                        <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
+                        #{{ gameDetails.home_team.conference_rank }}
                     </div>
                     <span class="location-label text-xs flex items-center">
                         <TeamDetails
@@ -109,13 +109,13 @@
                         {{ gameDetails.home_team.score }}
                     </div>
 
-                    <div class="team-record">
+                    <div class="team-record" :title="gameDetails.home_team.coach">
                         <i class="fas fa-user-tie"></i>
                         <b>{{ playerFormatter(gameDetails.home_team.coach ?? 'Head Coach') }}</b>
                         <i class="fas text-gray-500">|</i>
                         <i :class="streakStatus(gameDetails.home_team.streak)">{{ gameDetails.home_team.streak }}</i>
-                        <i class="fas text-gray-500">|</i>
-                        <b> #{{ gameDetails.home_team.conference_rank }}</b>
+                        <!-- <i class="fas text-gray-500">|</i>
+                        <b> #{{ gameDetails.home_team.conference_rank }}</b> -->
                     </div>
 
                     <div 
@@ -124,6 +124,12 @@
                         <span>
                             {{ gameDetails.home_team.name }}
                         </span>
+                    </div>
+
+                    <div 
+                    :style="{ color:  '#' + gameDetails.home_team.primary_color }"
+                    class="team-city">
+                        <sup>{{ gameDetails.home_team.city ?? '-' }}</sup>
                     </div>
                 </div>
 
@@ -174,12 +180,12 @@
                     :style="winnerScoreClass(gameDetails.winner_team_id, gameDetails.away_team.team_id, gameDetails.away_team.secondary_color, gameDetails.away_team.primary_color)"
                 >
                     <div
-                        :style="{ color:  '#' + gameDetails.away_team.secondary_color }"
+                        :style="{ color:  '#' + gameDetails.away_team.secondary_color, opacity: '10%' }"
                         class="pointer-events-none absolute text-wrap text-center top-0 select-none text-[110px] font-black leading-none tracking-tighter text-white/[0.025] md:text-[160px]"
                     >
                         <!-- {{ gameDetails.home_team.city ?? 'NO NAME' }} -->
-                        <!-- {{ gameDetails.away_team.city ?? 'NO NAME' }}
-                        {{ gameDetails.away_team.name ?? 'NO NAME' }} -->
+                        <!-- {{ gameDetails.away_team.city ?? 'NO NAME' }}-->
+                        #{{ gameDetails.away_team.conference_rank }}
                     </div>
 
                     <span class="location-label text-xs flex items-center">
@@ -206,13 +212,13 @@
                         {{ gameDetails.away_team.score }}
                     </div>
 
-                    <div class="team-record">
+                    <div class="team-record" :title="gameDetails.away_team.coach">
                         <i class="fas fa-user-tie"></i>
                         <b>{{ playerFormatter(gameDetails.away_team.coach ?? 'Head Coach') }}</b>
                         <i class="fas">|</i>
                         <i :class="streakStatus(gameDetails.away_team.streak)">{{ gameDetails.away_team.streak }}</i>
-                        <i class="fas">|</i>
-                        <b> #{{ gameDetails.away_team.conference_rank }}</b>
+                        <!-- <i class="fas">|</i>
+                        <b> #{{ gameDetails.away_team.conference_rank }}</b> -->
                     </div>
 
                     <div 
@@ -221,6 +227,12 @@
                         <span>
                             {{ gameDetails.away_team.name }}
                         </span>
+                    </div>
+
+                    <div 
+                    :style="{ color:  '#' + gameDetails.away_team.secondary_color }"
+                    class="team-city">
+                        <sup>{{ gameDetails.away_team.city ?? '-' }}</sup>
                     </div>
                 </div>
             </div>
@@ -803,7 +815,7 @@
                 <!-- NEWS -->
                 <div
                     v-if="showGameNews"
-                    class="news-container"
+                    class="news-container p-2"
                 >
                     <GameNews
                         :key="gameNews.id"
@@ -1192,12 +1204,14 @@ const fetchBoxScore = async () => {
 
 const winnerScoreClass = (winnerId,teamId,primaryColor, secondaryColor) =>{
 
-    let backgroundColor = (winnerId != teamId) ?  '#3b3b3d': '#'+secondaryColor;
+    let backgroundColor = (winnerId != teamId) ?  '#'+secondaryColor: '#'+secondaryColor;
+    let borderColor = (winnerId != teamId) ?  '#'+secondaryColor: '#e6d70b';
 
     return {
         backgroundColor: backgroundColor,
         '--team-primary': '#' + primaryColor,
         '--team-secondary': '#' + secondaryColor,
+        border: '1px solid '+borderColor,
     };
 }
 
@@ -1565,6 +1579,13 @@ onUnmounted(() => {
     z-index: 1;
     color: #777a67d3;
     font-size: 12px;
+}
+
+.team-city {
+    position: relative;
+    z-index: 1;
+    color: #777a67d3;
+    font-size: 15px;
 }
 
 .team-meta {

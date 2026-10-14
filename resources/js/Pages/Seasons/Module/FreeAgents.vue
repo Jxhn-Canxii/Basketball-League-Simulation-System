@@ -1121,6 +1121,10 @@ const assignTeamsAuto = async () => {
             route("auto.assign.freeagent.teams")
         );
 
+        // const response = await axios.post(
+        //     route("free.agency.run")
+        // );
+
         const responseData = response.data;
 
         let message = "";

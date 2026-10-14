@@ -189,12 +189,20 @@
               >
                 {{ main_performance?.all_star_count ?? 0 }}x <a class="text-gray-500">All-star</a>
               </span>
+              <!-- {{ main_performance }} -->
 
               <span
-                v-if="main_performance?.national_championships > 0"
+                v-if="main_performance?.playoff_performance.conference_championships_won > 0"
                 class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold text-white/80"
               >
-                {{ main_performance?.national_championships ?? 0 }}x <a class="text-gray-500">Champions</a>
+                {{ main_performance?.playoff_performance.conference_championships_won ?? 0 }}x <a class="text-gray-500">Conf. Champions</a>
+              </span>
+
+              <span
+                v-if="main_performance?.playoff_performance.championships_won > 0"
+                class="rounded-lg border border-white/10 bg-black/40 px-3 py-1.5 text-sm font-bold text-white/80"
+              >
+                {{ main_performance?.playoff_performance.championships_won ?? 0 }}x <a class="text-gray-500">Champions</a>
               </span>
             </div>
             <div class="flex flex-wrap justify-end gap-2" v-if="main_performance?.latest_stats">

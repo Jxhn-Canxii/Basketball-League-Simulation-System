@@ -213,6 +213,7 @@ class PlayerService
                 DB::raw('SUM(player_season_stats.total_free_throw_attempts) as total_free_throw_attempts')
             )
             ->where('teams.conference_id','>',0)
+            ->where('player_season_stats.is_cut',0)
             ->where('player_season_stats.player_id', $playerId)
             ->groupBy(
                 'players.id',
@@ -281,6 +282,7 @@ class PlayerService
                 DB::raw('SUM(player_season_stats.total_free_throw_attempts) as total_free_throw_attempts')
             )
             ->where('teams.conference_id','>',0)
+            ->where('player_season_stats.is_cut',0)
             ->where('player_season_stats.player_id', $playerId)
             ->groupBy(
                 'players.id',
@@ -745,7 +747,9 @@ class PlayerService
             'finals_appearances' => 0,
             'play_ins_finals_appearances' => 0,
             'play_ins_elims_round_1_appearances' => 0,
-            'play_ins_elims_round_2_appearances' => 0
+            'play_ins_elims_round_2_appearances' => 0,
+            'conference_championships_won' => 0,
+            'championships_won => 0'
         ];
 
         // Fetch MVP count and seasons
@@ -1561,7 +1565,9 @@ class PlayerService
                 'finals_appearances',
                 'play_ins_finals_appearances',
                 'play_ins_elims_round_1_appearances',
-                'play_ins_elims_round_2_appearances'
+                'play_ins_elims_round_2_appearances',
+                'conference_championships_won',
+                'championships_won'
             )
             ->where('player_id', $playerId)
             ->first();
