@@ -1196,7 +1196,7 @@ class ScheduleService
         $this->awards->selectAllStarsForConference('south',$southAllStarsConference);
 
         $this->awards->updateAllStarCoach($seasonId,$northAllStarsConference,[1,3]);
-        $this->awards->updateAllStarCoach($seasonId,$northAllStarsConference,[2,4]);
+        $this->awards->updateAllStarCoach($seasonId,$southAllStarsConference,[2,4]);
 
 
         $schedules = DB::table('schedules')

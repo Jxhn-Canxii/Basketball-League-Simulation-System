@@ -26,6 +26,7 @@
             >
               Rookie Draft
             </p>
+            <sup class="text-gray-400 text-[8px]">{{ maxRookieCount ?? 0 }} Max Applicants</sup>
           </div>
         </div>
 
@@ -41,7 +42,7 @@
 
           <button
             v-if="!isHide && !draftFinished"
-            @click.prevent="addMultiplePlayers(160)"
+            @click.prevent="addMultiplePlayers()"
             class="rounded-lg bg-green-600 px-3 py-2.5 text-xs font-bold shadow-lg transition hover:bg-green-500 disabled:opacity-50"
             :disabled="draftRunning"
           >
@@ -1074,6 +1075,7 @@ const emits = defineEmits(["newSeason"]);
 | STATE
 |--------------------------------------------------------------------------
 */
+const maxRookieCount = ref(160);
 
 const availablePlayers = ref({
   rookies: [],
@@ -1195,8 +1197,8 @@ const fetchDraftOrder = async () => {
     
     const response = await axios.get(route(draftOrderLink));
 
-    draftOrder.value =
-      response.data.draft_order ?? [];
+    draftOrder.value = response.data?.draft_order ?? [];
+    maxRookieCount.value = response.data?.max_rookies ?? 160;
 
     isHide.value = false;
   } catch (error) {
@@ -1721,7 +1723,9 @@ const fetchRandomFullName3 = async () => {
   }
 };
 
-const addMultiplePlayers = async (count) => {
+const addMultiplePlayers = async () => {
+  let count = maxRookieCount.value;
+
   if (draftRunning.value) {
     return;
   }

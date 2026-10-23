@@ -405,24 +405,9 @@
                     </div>
                 </div>
 
-                <!-- Schedule cards -->
-                <div
-                    v-else-if="
-                        data &&
-                        data.schedules?.length > 0
-                    "
-                    class="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2"
-                >
-                    <ScoreCard
-                        v-for="match in data.schedules"
-                        :key="match.id ?? match.schedule_id"
-                        :match="match"
-                    />
-                </div>
-
                 <!-- Empty -->
                 <div
-                    v-else
+                    v-if="data && data.schedules?.length == 0 && !loadingSchedules"
                     class="flex min-h-[220px] items-center justify-center rounded-lg border border-dashed border-gray-800 bg-gray-950/50"
                 >
                     <div class="text-center">
@@ -440,6 +425,22 @@
                             There are no games matching the current filter.
                         </p>
                     </div>
+                </div>
+
+                <!-- Schedule cards -->
+                <div
+                    v-else-if="
+                        data &&
+                        data.schedules?.length > 0
+                        && !loadingSchedules
+                    "
+                    class="grid min-w-0 grid-cols-1 gap-3 xl:grid-cols-2"
+                >
+                    <ScoreCard
+                        v-for="match in data.schedules"
+                        :key="match.id ?? match.schedule_id"
+                        :match="match"
+                    />
                 </div>
 
                 <!-- Pagination -->
@@ -541,7 +542,7 @@ const showMVPLeaders = ref(false);
 const isHide = ref(false);
 const activeConferenceTab = ref(0);
 
-const loadingSchedules = ref(false);
+const loadingSchedules = ref(true);
 
 const teams = ref([]);
 const data = ref(null);

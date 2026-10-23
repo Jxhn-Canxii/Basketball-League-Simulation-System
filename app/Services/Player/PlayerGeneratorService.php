@@ -51,7 +51,28 @@ class PlayerGeneratorService
        /// generate player for post request -> manual generation
     public function generateNewPlayer()
     {
-        
+        $nextSeasonId = get_current_season_id() + 1;
+
+        $playerCount = DB::table('players')
+                ->where('draft_id',$nextSeasonId)
+                ->count();
+
+        $teamCount = DB::table('teams')
+                ->where('conference_id', '>', 0)
+                ->count();
+
+        $maxRookieDrafted = $teamCount * 2 ?? 120;
+            $maxRookieUndrafted = $teamCount * 0.50 ?? 30;
+
+        $maxRookieCount = CEIL($maxRookieDrafted + $maxRookieUndrafted);
+
+        if($playerCount >= $maxRookieCount){
+            return response()->json([
+                'error' => true,
+                'message' => "Rookie player maximum treshold has reached. Can't add more players!",
+            ], 400);
+        }
+
         $newPlayer = $this->playerGenerator();
 
         return response()->json($newPlayer);

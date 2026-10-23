@@ -20,7 +20,7 @@ INSERT INTO `teams` (
 -- Conference 3 (Visayas)
 ('Storms',          'STM', 'Sipalay',          'Unleash the Tempest!',   '0000FF', 'B0C4DE', 1, 3, 'TempestCore',       NOW(), NOW()),
 ('Elites',          'ECE', 'Escalante',        'Rise to Excellence!',    '8B0000', '000000', 1, 3, 'PrimeWorks',        NOW(), NOW()),
-('Sky Express',     'SSE', 'Silay',            'Soar to Victory!',       '1E90FF', 'ADD8E6', 1, 3, 'AeroGlide',         NOW(), NOW()),
+('Stars',     'SIL', 'Silay',            'Soar to Victory!',       '1E90FF', 'ADD8E6', 1, 3, 'SpaceX',         NOW(), NOW()),
 ('Ravens',          'MAN', 'Mandaue',          'Strike with Stealth!',   '000000', '800080', 1, 3, 'ShadowNest',        NOW(), NOW()),
 
 -- Conference 4 (Mindanao)

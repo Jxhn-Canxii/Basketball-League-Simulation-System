@@ -60,14 +60,14 @@
                         season_info?.seasons &&
                         (
                             season_info.seasons[0].status < 2 ||
-                            season_info.seasons[0].status > 11
+                            season_info.seasons[0].status > 12
                         )
                     "
                     :class="
                         season_info?.seasons &&
                         (
                             season_info.seasons[0].status < 2 ||
-                            season_info.seasons[0].status > 11
+                            season_info.seasons[0].status > 12
                         )
                             ? 'cursor-not-allowed border-gray-800 bg-gray-800 text-gray-600'
                             : 'border-orange-500/30 bg-orange-500/10 text-orange-400 hover:border-orange-400/50 hover:bg-orange-500/20'

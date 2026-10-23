@@ -306,6 +306,7 @@ class PlayoffStatsService
         $mvpPlayer = PlayerGameStats::join('players', 'player_game_stats.player_id', '=', 'players.id')
             ->whereIn('player_game_stats.game_id', $finalsGameIds)
             ->where('player_game_stats.team_id', $series->winner_team_id)
+            ->where('player_game_stats.is_injured', 0)
             ->select(
                 'player_game_stats.player_id',
                 'players.name as mvp_name',

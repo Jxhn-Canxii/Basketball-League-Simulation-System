@@ -565,11 +565,19 @@ class DraftService
                 }
             }
 
+            $teamCount = $allTeams->count() ?? 60;
+
+            $maxRookieDrafted = $teamCount * 2 ?? 120;
+            $maxRookieUndrafted = $teamCount * 0.50 ?? 30;
+
+            $maxRookieCount = CEIL($maxRookieDrafted + $maxRookieUndrafted);
+
             DB::commit();
 
             return response()->json([
                 'season_id' => $currentSeasonId,
                 'draft_order' => $draftOutput,
+                'max_rookies' => $maxRookieCount,
                 'message' => 'Draft successfully generated.',
             ]);
         } catch (\Throwable $e) {

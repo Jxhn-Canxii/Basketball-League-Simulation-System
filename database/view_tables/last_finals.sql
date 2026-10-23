@@ -1,11 +1,11 @@
 CREATE OR REPLACE VIEW team_finals_summary AS
 WITH finals_games AS (
     SELECT home_id AS team_id, season_id
-    FROM schedule_view
+    FROM schedule_view_snapshots
     WHERE round = 'Finals'
     UNION ALL
     SELECT away_id AS team_id, season_id
-    FROM schedule_view
+    FROM schedule_view_snapshots
     WHERE round = 'Finals'
 ),
 finals_summary AS (
@@ -21,12 +21,12 @@ champions_summary AS (
         winner_id AS team_id,
         COUNT(DISTINCT season_id) AS championships_won,
         MAX(season_id) AS last_championship_season_id
-    FROM schedule_view
+    FROM schedule_view_snapshots
     WHERE round = 'Finals'
     GROUP BY winner_id
 ),
 latest_season AS (
-    SELECT MAX(season_id) AS current_season_id FROM schedule_view
+    SELECT MAX(season_id) AS current_season_id FROM schedule_view_snapshots
 ),
 ranked AS (
     SELECT 

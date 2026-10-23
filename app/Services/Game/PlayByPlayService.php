@@ -268,6 +268,42 @@ class PlayByPlayService
                 continue;
             }
 
+            // Rare in-game injuries remove the player from later possessions.
+            foreach ([$offensivePlayer, $defensivePlayer] as $participant) {
+                $injuryChance = min(0.006, max(0.0005, ((float) ($participant->injury_prone_percentage ?? 10)) / 10000));
+                if (empty($participant->is_injured) && $this->playByPlay->possessionChance($injuryChance)) {
+                    $this->playByPlay->inGameInjury($participant, $gameData->game_id, $currentSeasonId);
+                    $participant->is_injured = true;
+                    $stats[$participant->id]['is_injured'] = 1;
+                    $teamPlayers = $participant->team_id == $offensivePlayer->team_id ? $offensePlayers : $defensePlayers;
+                    $substitute = $this->pickSubstitute($teamPlayers, $participant, $stats);
+                    $events[] = $this->event(
+                        $currentSeasonId,
+                        $gameData->game_id,
+                        $quarter,
+                        $possession,
+                        $clock,
+                        $gameData->home_team_id,
+                        $participant->team_id,
+                        $participant->id,
+                        $substitute?->id,
+                        'injury',
+                        0,
+                        null,
+                        false,
+                        $substitute
+                            ? "{$participant->name} is injured and replaced by {$substitute->name}."
+                            : "{$participant->name} is injured and leaves the game."
+                    );
+                    $injuryOccurred = true;
+                }
+            }
+
+            if (!empty($injuryOccurred)) {
+                $injuryOccurred = false;
+                continue;
+            }
+
             $defensiveImpact = $offenseIsHome
                 ? $awayDefense
                 : $homeDefense;
@@ -386,6 +422,11 @@ class PlayByPlayService
                     $stats[$defensivePlayer->id]['is_fouled_out'] = 1;
                 }
 
+                $foulDescription = "{$defensivePlayer->name} commits a foul on {$offensivePlayer->name}.";
+                if ($isFouledOut) {
+                    $foulDescription .= " {$defensivePlayer->name} has fouled out.";
+                }
+
                 /*
                  * Decide whether this was a shooting foul.
                  */
@@ -410,7 +451,7 @@ class PlayByPlayService
                             0,
                             null,
                             false,
-                            "{$defensivePlayer->name} commits a foul on {$offensivePlayer->name}."
+                            $foulDescription
                         );
 
                     $offenseIsHome = !$offenseIsHome;
@@ -473,8 +514,34 @@ class PlayByPlayService
                         $ftMade,
                         null,
                         false,
-                        "{$defensivePlayer->name} fouls {$offensivePlayer->name}. {$offensivePlayer->name} makes {$ftMade} of {$ftAttempts} free throws."
+                        "{$defensivePlayer->name} fouls {$offensivePlayer->name}. {$offensivePlayer->name} makes {$ftMade} of {$ftAttempts} free throws." . ($isFouledOut ? " {$defensivePlayer->name} has fouled out." : '')
                     );
+
+                if ($isFouledOut) {
+                    $substitute = $this->pickSubstitute(
+                        $defensePlayers,
+                        $defensivePlayer,
+                        $stats
+                    );
+                    $events[] = $this->event(
+                        $currentSeasonId,
+                        $gameData->game_id,
+                        $quarter,
+                        $possession,
+                        $clock,
+                        $gameData->home_team_id,
+                        $defensivePlayer->team_id,
+                        $defensivePlayer->id,
+                        $substitute?->id,
+                        'substitution',
+                        0,
+                        null,
+                        false,
+                        $substitute
+                            ? "{$defensivePlayer->name} fouls out and is replaced by {$substitute->name}."
+                            : "{$defensivePlayer->name} fouls out."
+                    );
+                }
 
                 /*
                  * Fouled-out player is automatically removed
@@ -975,6 +1042,23 @@ class PlayByPlayService
         );
     }
 
+    private function pickSubstitute($players, $removedPlayer, $stats)
+    {
+        foreach ($players as $player) {
+            if (
+                $player->id !== $removedPlayer->id &&
+                ($stats[$player->id]['minutes'] ?? 0) > 0 &&
+                empty($stats[$player->id]['is_fouled_out']) &&
+                empty($player->is_injured) &&
+                empty($player->is_reserved)
+            ) {
+                return $player;
+            }
+        }
+
+        return null;
+    }
+
     /**
      * In-memory version of your existing defensive-impact calculation.
      *
@@ -1426,3 +1510,4 @@ class PlayByPlayService
         );
     }
 }
+
